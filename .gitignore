@@ -1,7 +1,11 @@
-impl/node_modules/
-**/.vscode/
+/node_modules
+/bin
+/.vscode
+/test/apps/*/*.smt2
+/test/apps/*/bin/_build_.json
+/test/apps/*/bin/_build_.smt2
+*.xml
+*.dgml
 
 **/.DS_Store
-
 **/output/*
-**/*.pdb

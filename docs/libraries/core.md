@@ -1,1 +1,0 @@
-# Bosque Core Types

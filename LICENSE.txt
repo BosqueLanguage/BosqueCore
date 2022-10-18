@@ -1,4 +1,4 @@
-    Bosque Language
+    Bosque Stack
 
     MIT License
 

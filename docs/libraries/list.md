@@ -1,1 +1,0 @@
-# Bosque List<T> Type
