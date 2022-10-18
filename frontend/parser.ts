@@ -9,9 +9,61 @@ import { Arguments, TemplateArguments, NamedArgument, PositionalArgument, Invali
 import { Assembly, NamespaceUsing, NamespaceDeclaration, NamespaceTypedef, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ConceptTypeDecl, EntityTypeDecl, NamespaceConstDecl, NamespaceFunctionDecl, InvokeDecl, TemplateTermDecl, PreConditionDecl, PostConditionDecl, BuildLevel, TypeConditionRestriction, InvariantDecl, TemplateTypeRestriction, StaticOperatorDecl, NamespaceOperatorDecl, OOPTypeDecl, ValidateDecl } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
+const KW_recursive_q = "recursive?";
+const KW_recursive = "recursive";
+
+const KW__debug = "_debug";
+const KW_abort = "abort";
+const KW_assert = "assert";
+const KW_astype = "astype";
+const KW_concept = "concept";
+const KW_const = "const";
+const KW_debug = "debug";
+const KW_elif = "elif";
+const KW_else = "else";
+const KW_enum = "enum";
+const KW_entity = "entity";
+const KW_ensures = "ensures";
+const KW_err = "err";
+const KW_false = "false";
+const KW_field = "field";
+const KW_fn = "fn";
+const KW_function = "function";
+const KW_if = "if";
+const KW_import = "import";
+const KW_invariant = "invariant";
+const KW_istype = "istype";
+const KW_let = "let";
+const KW_match = "match";
+const KW_method = "method";
+const KW_namespace = "namespace";
+const KW_none = "none";
+const KW_nothing = "nothing";
+const KW_of = "of";
+const KW_ok = "ok";
+const KW_operator = "operator";
+const KW_pred = "pred";
+const KW_provides = "provides";
+const KW_ref = "ref";
+const KW_release = "release";
+const KW_return = "return";
+const KW_requires = "requires";
+const KW_something = "something";
+const KW_switch = "switch";
+const KW_test = "test";
+const KW_then = "then";
+const KW_true = "true";
+const KW_type = "type";
+const KW_typedef = "typedef";
+const KW_typedecl = "typedecl";
+const KW_datatype = "datatype";
+const KW_using = "using";
+const KW_var = "var";
+const KW_when = "when";
+
 const KeywordStrings = [
-    "recursive?",
-    "recursive",
+    KW_recursive_q,
+    KW_recursive,
     
     "_debug",
     "abort",
@@ -45,8 +97,6 @@ const KeywordStrings = [
     "operator",
     "provides",
     "ref",
-    "out",
-    "out?",
     "release",
     "return",
     "requires",
@@ -54,13 +104,13 @@ const KeywordStrings = [
     "debug",
     "switch",
     "test",
+    "then",
     "true",
     "type",
     "typedef",
     "typedecl",
     "datatype",
     "using",
-    "validate",
     "var",
     "when",
     "yield"

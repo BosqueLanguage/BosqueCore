@@ -1,11 +1,6 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
+import * as assert from "assert";
 
 import { ConceptTypeDecl, EntityTypeDecl } from "./assembly";
-
-import * as assert from "assert";
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
@@ -163,19 +158,14 @@ class ResolvedType {
         this.options = options;
     }
 
-    static createEmpty(): ResolvedType {
-        return new ResolvedType("", []);
-    }
-
     static createSingle(type: ResolvedAtomType): ResolvedType {
         return new ResolvedType(type.typeID, [type]);
     }
 
     static create(types: ResolvedAtomType[]): ResolvedType {
-        if (types.length === 0) {
-            return ResolvedType.createEmpty();
-        }
-        else if (types.length === 1) {
+        assert(types.length !== 0, "Empty Type??")
+         
+        if (types.length === 1) {
             return ResolvedType.createSingle(types[0]);
         }
         else {
@@ -202,25 +192,12 @@ class ResolvedType {
         }
     }
 
-    isEmptyType(): boolean {
-        return this.options.length === 0;
-    }
-
     hasTemplateType(): boolean {
         return this.options.some((opt) => opt.hasTemplateType());
     }
 
     isTupleTargetType(): boolean {
         return this.options.every((opt) => opt instanceof ResolvedTupleAtomType);
-    }
-
-    getTupleTargetTypeIndexRange(): { req: number, opt: number } {
-        assert(this.isTupleTargetType());
-
-        const req = Math.min(...this.options.map((tup) => (tup as ResolvedTupleAtomType).types.length));
-        const opt = Math.max(...this.options.map((tup) => (tup as ResolvedTupleAtomType).types.length));
-
-        return { req: req, opt: opt };
     }
 
     isUniqueTupleTargetType(): boolean {
@@ -243,22 +220,6 @@ class ResolvedType {
 
     isRecordTargetType(): boolean {
         return this.options.every((opt) => opt instanceof ResolvedRecordAtomType);
-    }
-
-    getRecordTargetTypePropertySets(): {req: Set<string>, opt: Set<string>} {
-        let allopts = new Set<string>();
-        this.options.forEach((opt) => {
-            (opt as ResolvedRecordAtomType).entries.forEach((entry) => allopts.add(entry.pname));
-        });
-
-        let req = new Set<string>();
-        allopts.forEach((oname) => {
-            if(this.options.every((opt) => (opt as ResolvedRecordAtomType).entries.findIndex((entry) => entry.pname === oname) !== -1)) {
-                req.add(oname);
-            }
-        });
-
-        return { req: req, opt: allopts };
     }
 
     isUniqueRecordTargetType(): boolean {
