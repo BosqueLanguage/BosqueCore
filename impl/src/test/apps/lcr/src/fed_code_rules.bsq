@@ -1,0 +1,197 @@
+namespace NSFedCodeRules;
+
+import NSCountry;
+import NSCurrency;
+import NSCentralBank;
+
+typedecl ValidPartyName = /[a-zA-Z0-9_]+/;
+typedef PartyID = StringOf<ValidPartyName>;
+
+typedecl ValidCountryCodeISO3 = /[A-Z]{3,3}/;
+typedef CountryCode = StringOf<ValidCountryCodeISO3>;
+
+typedef ProductType = String;
+
+typedef Description5G = String;
+
+typedef AdjustedAmountUSD = Float;
+
+typedef AdjustedMXAmount = Float;
+
+typedef Account = String;
+
+typedef CostCenterCode = String;
+
+typedef CostCenterDescription = String;
+
+typedef LegalEntityCode = String;
+
+typedef TenQLevel1 = String;
+
+typedef TenQLevel2 = String;
+
+typedef TenQLevel3 = String;
+
+typedef TenQLevel4 = String;
+
+typedecl ValidTenQLevel5 = /[A-z0-9 ]+/;
+typedef TenQLevel5 = String;
+
+typedef TenQLevel6 = String;
+
+orderable algebraic typedecl Usd = Float;
+orderable algebraic typedecl Mx = Float;
+
+entity LegalEntity provides APIType
+{ 
+    field code: LegalEntityCode;
+    field country: NSCountry::Country;
+}
+
+entity CostCenter provides APIType
+{ 
+    field code: CostCenterCode;
+    field description: CostCenterDescription;
+}
+
+entity Counterparty provides APIType
+{ 
+    field country: NSCountry::Country;
+    field description5G: Description5G;
+    field account: Account;
+}
+
+entity Cashflow provides APIType
+{ 
+    field legalEntity: LegalEntity;
+    field partyId: PartyID;
+    field currency: NSCurrency::Currency;
+    field counterparty: Counterparty;
+    field amountUSD: AdjustedAmountUSD;
+    field amountMx: AdjustedMXAmount;
+    field tenQLevel1: TenQLevel1;
+    field tenQLevel2: TenQLevel2;
+    field tenQLevel3: TenQLevel3;
+    field tenQLevel4: TenQLevel4;
+    field tenQLevel5: TenQLevel5;
+    field tenQLevel6: TenQLevel6;
+}
+
+typedef RuleCode = String;
+
+function makeRuleCode(...codes: List<String>): String {
+    return String::join(codes, ".");
+}
+
+function makeRuleCodeSuffix(pfx: String, tail: String): String {
+    return pfx.append(".").append(tail);
+}
+
+enum CentralBankSubProduct
+{
+    frb,
+    snb,
+    boe,
+    ecb,
+    boj,
+    rba,
+    boc,
+    ocb,
+    other_cash_currency_and_coin
+}
+
+function calculate(centralBanks: Map<PartyID, NSCentralBank::CentralBank>, cashflows: List<Cashflow>): List<[Cashflow, RuleCode?]> {
+    return cashflows.map((cashflow) => [cashflow, classify(centralBanks, cashflow)]);
+}
+
+function classify(centralBanks: Map<PartyID, NSCentralBank::CentralBank>, cashflow: Cashflow): RuleCode? {
+    let centralBank = centralBanks.getOrNone(cashflow.partyId);
+
+    if(centralBank !== none) {
+        return rules_I_A(cashflow.tenQLevel4, centralBank);
+    }
+    else {
+        if(cashflow.tenQLevel5 === "CASH AND DUE FROM BANKS" || cashflow.tenQLevel5 === "OVERNIGHT AND TERM DEPOSITS" || cashflow.tenQLevel5 === "CASH EQUIVALENTS") {
+            return rule_I_U(cashflow.amountUSD, cashflow.legalEntity.country, cashflow.currency, cashflow.counterparty.country);
+        }
+        else {
+            return none;
+        }
+    }
+}
+
+function rules_I_A(tenQLevel4: String, centralBank: CentralBank): RuleCode {
+    let tailrule = if(tenQLevel4 === NSFedCodeRules::segregatedCash) rule_I_A_4(centralBank) else rule_I_A_3(centralBank);
+    return makeRuleCodeSuffix("I.A", tailrule);
+}
+
+function rule_I_A_3(centralBank: CentralBank): RuleCode {
+    let cbp = centralBankToSubProduct(centralBank);
+    switch(cbp) {
+        CentralBankSubProduct::frb   => return "3.1";
+        | CentralBankSubProduct::snb => return "3.2";
+        | CentralBankSubProduct::boe => return "3.3";
+        | CentralBankSubProduct::ecb => return "3.4";
+        | CentralBankSubProduct::boj => return "3.5";
+        | CentralBankSubProduct::rba => return "3.6";
+        | CentralBankSubProduct::boc => return "3.7";
+        | CentralBankSubProduct::ocb => return "3.8";
+        | CentralBankSubProduct::other_cash_currency_and_coin => return "3.9";
+    }
+}
+
+function rule_I_A_4(centralBank: CentralBank): RuleCode {
+    let cbp = centralBankToSubProduct(centralBank);
+    switch(cbp) {
+        CentralBankSubProduct::frb   => return "4.1";
+        | CentralBankSubProduct::snb => return "4.2";
+        | CentralBankSubProduct::boe => return "4.3";
+        | CentralBankSubProduct::ecb => return "4.4";
+        | CentralBankSubProduct::boj => return "4.5";
+        | CentralBankSubProduct::rba => return "4.6";
+        | CentralBankSubProduct::boc => return "4.7";
+        | CentralBankSubProduct::ocb => return "4.8";
+        | CentralBankSubProduct::other_cash_currency_and_coin => return "4.9";
+    }
+}
+
+function rule_I_U(adjustedAmountUSD: Float, legalEntityCountry: NSCountry::Country, cashflowCurrency: NSCurrency::Currency, counterpartyCountry: NSCountry::Country): RuleCode {
+    var tail: String;
+    if(netCashUSD(adjustedAmountUSD) >= 0.0f) {
+        if(isOnshore(legalEntityCountry, cashflowCurrency, counterpartyCountry)) {
+            tail = "1";
+        }
+        else {
+            tail = "2";
+        }
+    }
+    else {
+        tail = "4";
+    }
+
+    return makeRuleCodeSuffix("I.U", tail);
+}
+
+
+function centralBankToSubProduct(cb: NSCentralBank::CentralBank): CentralBankSubProduct {
+    switch(cb) {
+        NSCentralBank::CentralBank::federal_Reserve_Bank        => return CentralBankSubProduct::frb;
+        | NSCentralBank::CentralBank::swiss_National_Bank       => return CentralBankSubProduct::snb;
+        | NSCentralBank::CentralBank::bank_of_England           => return CentralBankSubProduct::boe;
+        | NSCentralBank::CentralBank::european_Central_Bank     => return CentralBankSubProduct::ecb;
+        | NSCentralBank::CentralBank::bank_of_Japan             => return CentralBankSubProduct::boj;
+        | NSCentralBank::CentralBank::reserve_Bank_of_Australia => return CentralBankSubProduct::rba;
+        | NSCentralBank::CentralBank::bank_of_Canada            => return CentralBankSubProduct::boc;
+        | _                                                     => return CentralBankSubProduct::ocb;
+    }
+}
+
+const segregatedCash: String = "Seg Cash";
+
+function isOnshore(legalEntityCountry: NSCountry::Country, cashflowCurrency: NSCurrency::Currency, counterpartyCountry: NSCountry::Country): Bool {
+    return legalEntityCountry === NSCurrency::country(cashflowCurrency) && legalEntityCountry === counterpartyCountry;
+}
+
+function netCashUSD(adjustedAmountUSD: AdjustedAmountUSD): Float {
+    return adjustedAmountUSD;
+}

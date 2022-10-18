@@ -1,0 +1,63 @@
+{
+    "name": "bosque-language-tools",
+    "displayName": "Bosque Language Tools",
+    "description": "IDE support for the Bosque programming language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.32.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onCommand:extension.typecheck",
+        "onCommand:extension.symtest"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "bosque",
+                "aliases": [
+                    "Bosque",
+                    "bosque"
+                ],
+                "extensions": [
+                    ".bsq",
+                    ".bsqtest",
+                    ".bsqapi"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "bosque",
+                "scopeName": "source.bsq",
+                "path": "./syntaxes/bosque.tmLanguage.json"
+            }
+        ],
+        "commands": [
+            {
+                "command": "extension.typecheck",
+                "title": "Bosque TypeCheck"
+            },
+            {
+                "command": "extension.symtest",
+                "title": "Bosque SymTest"
+            },
+            {
+                "command": "extension.bsqcompile",
+                "title": "Bosque Compile"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./"
+    },
+    "devDependencies": {
+        "@types/node": ">10.0.0",
+        "@types/vscode": "^1.32.0"
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "name": "surfboard-rental",
+    "version": "0.0.0.0",
+    "description": "A surfboard rental sample",
+    "license": "MIT",
+    "src": {
+        "bsqsource": [
+            "./src/*"
+        ],
+        "entrypoints": [
+            "./rental.bsqapi"
+        ],
+        "testfiles": [
+            "./rental.bsqtest"
+        ]
+    }
+}

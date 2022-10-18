@@ -1,0 +1,27 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Main;
+
+entrypoint function main(request: Request, marketPrice: Price, startOfDayPosition: Quantity, responses: List<BuyResponse>): Response {
+    if(request.is<BuyRequest>()) {
+        let availableInventory = availability(startOfDayPosition, responses);
+        return processBuy(request, marketPrice, availableInventory);
+    }
+    else {
+        return processSell(request, marketPrice);
+    }
+}
+
+entrypoint function elm_main(): Bool {
+    let request = BuyRequest{id="rq1", requestPrice=Market{}, quantity=5_Quantity, product="apples"};
+    let marketPrice = 10.0_Price;
+    let availableInventory = 100_Quantity;
+
+    let res = processBuy(request, marketPrice, availableInventory);
+    
+    return res.is<BuyAccepted>() && res.quantity == 5_Quantity;
+}
+

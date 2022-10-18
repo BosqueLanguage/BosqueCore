@@ -1,0 +1,26 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Main;
+
+chktest function createEnergy_Not0(): Bool {
+    let system = NBodySystem::create{};
+    return system.energy() != 0.0f;
+}
+
+errtest function checkErrors(doadvance: Bool): Float {
+    var system = NBodySystem::create{};
+    
+    if(doadvance) {
+        let step = 0.01f;
+
+        system = system.advance(step);
+        system = system.advance(step);
+        system = system.advance(step);
+    }
+
+    return system.energy();
+}
+

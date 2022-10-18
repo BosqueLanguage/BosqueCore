@@ -1,0 +1,17 @@
+{
+    "name": "calc",
+    "version": "0.0.0.0",
+    "description": "A simple calculator",
+    "license": "MIT",
+    "src": {
+        "bsqsource": [
+            "./src/*"
+        ],
+        "entrypoints": [
+            "./calc_app.bsqapi"
+        ],
+        "testfiles": [
+            "./calc_test.bsqtest"
+        ]
+    }
+}

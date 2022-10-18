@@ -1,0 +1,29 @@
+namespace NSRules;
+
+import NSCounterParty;
+import NSFlows;
+
+typedef Weight = Float;
+
+concept Rule provides TestableType {
+    field name: String;
+    field weight: Weight;
+
+    abstract method applies(flow: NSFlows::Flow): Bool;
+}
+
+function findApplicable(flow: NSFlows::Flow, rules: List<Rule>): Rule? {
+    return rules.findOrNone(pred(rr) => rr.applies(flow));
+}
+
+function isAnyApplicable(flow: NSFlows::Flow, rules: List<Rule>): Bool {
+    return rules.someOf(pred(rr) => rr.applies(flow));
+}
+
+function find(name: String, rules: List<Rule>): Rule? {
+    return rules.findOrNone(pred(rr) => rr.name === name);
+}
+
+function findAll(names: List<String>, rules: List<Rule>): List<Rule> {
+    return rules.filter(pred(rr) => names.contains(rr.name));
+}

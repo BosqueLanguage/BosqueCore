@@ -1,0 +1,327 @@
+namespace NSOutflows;
+
+import NSBasics;
+import NSCurrency;
+import NSCountry;
+import NSCounterParty;
+import NSFlows;
+import NSMaturityBucket;
+import NSRules;
+
+entity Rule32a1 provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return (flow.ruleCode === "O.D.1" || flow.ruleCode === "O.D.2") && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32a2 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        let isod1_or_2 = (flow.ruleCode === "O.D.1" || flow.ruleCode === "O.D.2") && flow.insured !== InsuranceType::fdic;
+
+        let isod3 = flow.ruleCode === "O.D.3" 
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness);
+    
+        return isod1_or_2 || isod3;
+    }
+}
+
+entity Rule32a3 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.12" 
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness) 
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32a4 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.12" 
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness) 
+            && flow.insured !== InsuranceType::fdic;
+    }
+}
+
+entity Rule32a5 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return (flow.ruleCode === "O.D.13" || flow.ruleCode === "O.W.18")
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness);
+    }
+}
+
+entity Rule32b provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return (flow.ruleCode === "O.W.1" || flow.ruleCode === "O.W.2" || flow.ruleCode === "O.W.4" || flow.ruleCode === "O.W.21");
+    }
+}
+
+entity Rule32c provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return flow.ruleCode === "O.O.20";
+    }
+}
+
+entity Rule32d provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return flow.ruleCode === "O.O.6";
+    }
+}
+
+entity Rule32e provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return flow.ruleCode === "O.O.6";
+    }
+}
+
+entity Rule32f provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return flow.ruleCode === "O.O.6";
+    }
+}
+
+entity Rule32g1 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+        let remainingDays = daysToMaturity(this.t, flow.maturityDate);
+
+        return flow.ruleCode === "O.D.7"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && (0i < remainingDays && remainingDays <= 30i);
+    }
+}
+
+entity Rule32g2 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+        let remainingDays = daysToMaturity(this.t, flow.maturityDate);
+
+        return flow.ruleCode === "O.D.7"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && remainingDays <= 30i;
+    }
+}
+
+entity Rule32g3 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+        let remainingDays = daysToMaturity(this.t, flow.maturityDate);
+
+        return flow.ruleCode === "O.D.7"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && remainingDays == 0i
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32g4 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+        let remainingDays = daysToMaturity(this.t, flow.maturityDate);
+
+        return flow.ruleCode === "O.D.7"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && remainingDays == 0i
+            && flow.insured !== InsuranceType::fdic;
+    }
+}
+
+entity Rule32g5 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.11"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32g6 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.11"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && flow.insured !== InsuranceType::fdic;
+    }
+}
+
+entity Rule32g7 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.8"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32g8 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.9"
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32g9 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return (flow.ruleCode === "O.D.8" || flow.ruleCode === "O.D.9")
+            && (cpty.counterpartyType === NSCounterParty::CounterpartyType::retail || cpty.counterpartyType === NSCounterParty::CounterpartyType::smallBusiness)
+            && flow.insured !== InsuranceType::fdic;
+    }
+}
+
+entity Rule32h3 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    const acceptedCounterParty: List<NSCounterParty::CounterpartyType> = List<NSCounterParty::CounterpartyType>{
+        NSCounterParty::CounterpartyType::nonFinancialCorporate,
+        NSCounterParty::CounterpartyType::sovereign,
+        NSCounterParty::CounterpartyType::centralBank,
+        NSCounterParty::CounterpartyType::governmentSponsoredEntity,
+        NSCounterParty::CounterpartyType::publicSectorEntity,
+        NSCounterParty::CounterpartyType::multilateralDevelopmentBank,
+        NSCounterParty::CounterpartyType::otherSupranational,
+        NSCounterParty::CounterpartyType::bank,
+        NSCounterParty::CounterpartyType::supervisedNonBankFinancialEntity,
+        NSCounterParty::CounterpartyType::debtIssuingSpecialPurposeEntity,
+        NSCounterParty::CounterpartyType::otherFinancialEntity,
+        NSCounterParty::CounterpartyType::other
+    };
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.4"
+            && Rule32h3::acceptedCounterParty.contains(cpty.counterpartyType)
+            && flow.insured === InsuranceType::fdic;
+    }
+}
+
+entity Rule32h4 provides NSRules::Rule {
+    field toCounterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>;
+
+    const acceptedCounterParty: List<NSCounterParty::CounterpartyType> = List<NSCounterParty::CounterpartyType>{
+        NSCounterParty::CounterpartyType::nonFinancialCorporate,
+        NSCounterParty::CounterpartyType::sovereign,
+        NSCounterParty::CounterpartyType::centralBank,
+        NSCounterParty::CounterpartyType::governmentSponsoredEntity,
+        NSCounterParty::CounterpartyType::publicSectorEntity,
+        NSCounterParty::CounterpartyType::multilateralDevelopmentBank,
+        NSCounterParty::CounterpartyType::otherSupranational,
+        NSCounterParty::CounterpartyType::bank,
+        NSCounterParty::CounterpartyType::supervisedNonBankFinancialEntity,
+        NSCounterParty::CounterpartyType::debtIssuingSpecialPurposeEntity,
+        NSCounterParty::CounterpartyType::otherFinancialEntity,
+        NSCounterParty::CounterpartyType::other
+    };
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let cpty = this.toCounterparty.get(flow.counterpartyId);
+
+        return flow.ruleCode === "O.D.4"
+            && Rule32h4::acceptedCounterParty.contains(cpty.counterpartyType)
+            && flow.insured !== InsuranceType::fdic;
+    }
+}
+
+entity Rule32l provides NSRules::Rule {
+    override method applies(flow: NSFlows::Flow): Bool {
+        return flow.ruleCode === "O.O.22";
+    }
+}
+
+entity Rule33f1iii provides NSRules::Rule {
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let days = daysToMaturity(this.t, flow.effectiveMaturityDate);
+
+        return (flow.ruleCode === "I.S.1" || flow.ruleCode === "I.S.2" || flow.ruleCode === "I.S.5" || flow.ruleCode === "I.S.6" || flow.ruleCode === "I.S.7")
+            && flow.assetType === NSBasics::AssetCategoryCodes::level1Assets
+            && (0i < days && days <= 30i);
+    }
+}
+
+entity Rule33f1iv provides NSRules::Rule {
+    field t: DateTime;
+
+    override method applies(flow: NSFlows::Flow): Bool {
+        let days = daysToMaturity(this.t, flow.effectiveMaturityDate);
+
+        return (flow.ruleCode === "I.S.1" || flow.ruleCode === "I.S.2" || flow.ruleCode === "I.S.5" || flow.ruleCode === "I.S.6" || flow.ruleCode === "I.S.7")
+            && flow.assetType === NSBasics::AssetCategoryCodes::level2aAssets
+            && (0i < days && days <= 30i);
+    }
+}
+
+function outflowRules(counterparty: Map<NSCounterParty::CounterpartyId, NSCounterParty::Counterparty>, t: DateTime): List<Rule> {
+    return List<Rule>{ 
+        Rule32a1{"32(a)(1)", 0.03f},
+        Rule32a2{"32(a)(2)", 0.1f, counterparty},
+        Rule32a3{"32(a)(3)", 0.2f, counterparty},
+        Rule32a4{"32(a)(4)", 0.4f, counterparty},
+        Rule32a5{"32(a)(5)", 0.4f, counterparty},
+        Rule32b{"32(b)", 1.0f},
+        Rule32c{"32(c)", 0.2f},
+        Rule32d{"32(d)", 0.1f},
+        Rule32e{"32(e)", 0.0f},
+        Rule32f{"32(f)", 0.0f},
+        Rule32g1{"32(g)(1)", 0.0f, counterparty, t},
+        Rule32g2{"32(g)(2)", 0.0f, counterparty, t},
+        Rule32g3{"32(g)(3)", 0.0f, counterparty, t},
+        Rule32g4{"32(g)(4)", 0.0f, counterparty, t},
+        Rule32g5{"32(g)(5)", 0.0f, counterparty},
+        Rule32g6{"32(g)(6)", 0.0f, counterparty},
+        Rule32g7{"32(g)(7)", 0.0f, counterparty},
+        Rule32g8{"32(g)(8)", 0.0f, counterparty},
+        Rule32g9{"32(g)(9)", 0.0f, counterparty},
+        Rule32h3{"32(h)(3)", 0.05f, counterparty},
+        Rule32h4{"32(h)(4)", 0.25f, counterparty},
+        Rule32l{"32(l)", 0.0f},
+        Rule33f1iii{"33(f)(1)(iii)", 0.0f, t},
+        Rule33f1iv{"33(f)(1)(iv)", 0.15f, t}
+    };
+}
+

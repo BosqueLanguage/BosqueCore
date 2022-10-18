@@ -1,0 +1,79 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Main;
+
+function createDefaultEmptyDB(): Database {
+    return Database{
+        "default",
+        LogicalTime::zero,
+        List<DBEntryFormat>{
+            DBEntryFormat{true, 0n, "User", none},
+            DBEntryFormat{false, 1n, "Name", none},
+            DBEntryFormat{false, 2n, "ID", /[a-z]+/}
+        },
+        Map<String, DBFieldID>{
+            "User" => 0n,
+            "Name" => 1n,
+            "ID" => 2n
+        },
+        List<DBRecordData>{
+        }
+    };
+}
+
+function createDefault3DB(): Database {
+    return Database{
+        "default",
+        LogicalTime::zero,
+        List<DBEntryFormat>{
+            DBEntryFormat{true, 0n, "User", none},
+            DBEntryFormat{false, 1n, "Name", none},
+            DBEntryFormat{false, 2n, "ID", /[a-z]+/}
+        },
+        Map<String, DBFieldID>{
+            "User" => 0n,
+            "Name" => 1n,
+            "ID" => 2n
+        },
+        List<DBRecordData>{
+            List<String>{"--", "Bob", "bob"},
+            List<String>{"--", "Steve", "sam"},
+            List<String>{"--", "Eugene", "az"}
+        }
+    };
+}
+
+chktest function createDB(): Bool {
+    let dd = createDefaultEmptyDB();
+    return dd.empty();
+}
+
+chktest function createDB3(): Bool {
+    let dd = createDefault3DB();
+    return dd.numRecords() == 3n;
+}
+
+chktest function db_start(): Bool {
+    var dd = createDefault3DB();
+
+    let ee = Database::startCursor(ref dd);
+    return ee !== none && ee.getOrNone(1) === "Bob";
+}
+
+chktest function db_empty_add_start(name: String): Bool {
+    let dd = createDefaultEmptyDB();
+    Database::add(ref dd, List<String>{"--", "Bob", "bob"});
+
+    let ee = Database::startCursor(ref dd);
+    return dd.numRecords() == 1n && ee !== none && ee.getOrNone(1) === name;
+}
+
+/*
+errtest function checkErrors(doadvance: Bool): Float {
+    return 0.0f;
+}
+*/
+

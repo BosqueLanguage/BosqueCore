@@ -1,0 +1,20 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Main;
+
+function abs_impl(arg: BigInt): BigInt {
+    var res = arg;
+
+    if(arg < 0I) {
+        res = -arg;
+    }
+   
+    return res;
+}
+
+function sign_impl(arg: BigInt): BigInt {
+    return arg > 0I ? 1I : -1I;
+}

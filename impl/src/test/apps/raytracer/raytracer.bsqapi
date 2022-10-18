@@ -1,0 +1,26 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Main;
+
+entrypoint function main(): Color {
+    let tracer = RayTracer{8n, 8n};
+    let scene = RayTracer::createDefaultScene();
+    let clr = tracer.renderPixel(scene, 4, 3);
+
+    return clr; //{blue=0.7595520248956552, green=0.896312128581779, red=0.9388144506120109}
+}
+
+
+entrypoint function rpx(x: Nat, y: Nat): Color 
+    requires x < 8n;
+    requires y < 8n;
+{
+    let tracer = RayTracer{8n, 8n};
+    let scene = RayTracer::createDefaultScene();
+    let clr = tracer.renderPixel(scene, 4, 3);
+
+    return Color{0.0f, 0.0f, 0.0f};
+}

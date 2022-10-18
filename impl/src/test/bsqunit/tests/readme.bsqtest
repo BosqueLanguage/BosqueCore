@@ -1,0 +1,377 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+namespace Readme;
+
+////////
+//
+function add2(x: Nat, y: Nat): Nat {
+    return x + y;
+}
+
+chktest function add2_1(): Bool {
+    return add2(2n, 3n) == 5n;
+}
+
+chktest function add2_2(): Bool {
+    return add2(x=2n, y=3n) == 5n;
+}
+
+chktest function add2_3(): Bool {
+    return add2(y=2n, 5n) == 7n;
+}
+
+chktest function add2_x(x: Nat): Bool {
+    return add2(2n, x) > x;
+}
+
+__chktest function add2_x_fail(x: Nat): Bool {
+    return add2(5n, x) > 5n;
+}
+
+////////
+//
+function allPositive(...args: List<Int>): Bool {
+    return args.allOf(fn(x) => x >= 0i);
+}
+
+chktest function allpositive_1(): Bool {
+    return allPositive(1, 3, 4);
+}
+
+chktest function allpositive_2(): Bool {
+    return !allPositive(1, 3, -1);
+}
+
+__chktest function allpositive_x_fail(x: Int): Bool {
+    return allPositive(1, x, 4);
+}
+
+////////
+//
+function structural_types(tup: [Int, Bool], rec: {f: String, g: Int}): Int {
+    return tup.0 + rec.g;
+}
+
+chktest function structural_types_1(): Bool {
+    return structural_types([1, false], {f="ok", g=3}) == 4i;
+}
+
+__chktest function structural_types_fail(tup: [Int, Bool], rec: {f: String, g: Int}): Bool {
+    return structural_types(tup, rec) != 4i;
+}
+
+////////
+//
+function sign(x?: Int=0i): Int {
+    var y: Int;
+
+    if(x == 0i) {
+        y = 0i;
+    }
+    else {
+        y = (x > 0i) ? 1i : -1i;
+    }
+
+    return y;
+}
+
+chktest function sign_pos(): Bool {
+    return sign(5i) == 1i;
+}
+
+chktest function sign_neg(): Bool {
+    return sign(-5i) == -1i;
+}
+
+chktest function sign_default(): Bool {
+    return sign() == 0i;
+}
+
+__chktest function sign_fail_pos(x: Int): Bool {
+    return sign(x) > 0i;
+}
+
+__chktest function sign_fail_0(x: Int): Bool {
+    return sign(x) != 0i;
+}
+
+////////
+//
+concept WithName {
+    invariant $name !== "";
+
+    field name: String;
+}
+
+concept Greeting {
+    abstract method sayHello(): String;
+
+    virtual method sayGoodbye(): String {
+        return "goodbye";
+    }
+}
+
+entity GenericGreeting provides Greeting {
+    const instance: GenericGreeting = GenericGreeting{};
+
+    override method sayHello(): String {
+        return "hello world";
+    }
+}
+
+entity NamedGreeting provides WithName, Greeting {
+    override method sayHello(): String {
+        return String::concat("hello ", this.name);
+    }
+}
+
+chktest function genericGreeting_1(): Bool {
+    return GenericGreeting{}.sayHello() === "hello world";
+}
+
+chktest function genericGreeting_2(): Bool {
+    return GenericGreeting::instance.sayHello() === "hello world";
+}
+
+chktest function genericGreeting_3(): Bool {
+    return NamedGreeting{"bob"}.sayHello() === "hello bob";
+}
+
+__chktest function genericGreeting_fail_bob(n: String): Bool {
+    return NamedGreeting{n}.sayHello() !== "hello bob";
+}
+
+////////
+//
+datatype BoolOp provides APIType using {
+    line: Nat
+} of
+LConst { val: Bool }
+| NotOp { arg: BoolOp }
+| AndOp { larg: BoolOp, rarg: BoolOp }
+| OrOp { larg: BoolOp, rarg: BoolOp }
+& {
+    recursive method evaluate(): Bool {
+        match(this) {
+            LConst                  => return this.val;
+            | NotOp                 => return !this.arg.evaluate[recursive]();
+            | AndOp{_, larg, rarg} => return larg.evaluate[recursive]() && rarg.evaluate[recursive]();
+            | OrOp{_, larg, rarg}  => return larg.evaluate[recursive]() || rarg.evaluate[recursive]();
+        }
+    } 
+}
+
+chktest function logiceval_1(): Bool {
+    return !AndOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]();
+}
+
+chktest function logiceval_2(): Bool {
+    return OrOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]();
+}
+
+__chktest function logiceval_fail_1(bv: Bool): Bool {
+    return AndOp{2, LConst{1, true}, LConst{1, bv}}.evaluate[recursive]();
+}
+
+__chktest function logiceval_fail_2(lc: LConst): Bool {
+    return AndOp{2, LConst{1, true}, lc}.evaluate[recursive]();
+}
+
+////////
+//
+function printType(x: Bool | Int | String | None ): String {
+    return match(x) {|
+        Bool     => "b"
+        | Int    => "i"
+        | String => "s"
+        | _        => "n"
+    |};
+}
+
+chktest function printtype_1(): Bool {
+    return printType(true) === "b";
+}
+
+chktest function printtype_2(): Bool {
+    return printType(none) === "n";
+}
+
+__chktest function printtype_fail_1(v: Bool | Int | String | None): Bool {
+    return printType(v) === "i";
+}
+
+__chktest function printtype_fail_2(v: Bool | Int | String | None): Bool {
+    return printType(v) === "s";
+}
+
+__chktest function printtype_fail_3(v: Bool | Int | String | None): Bool {
+    return printType(v) === "n";
+}
+
+////////
+//
+typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
+typedecl CSSpt = /[0-9]+pt/;
+
+function is3pt(s1: StringOf<CSSpt>): Bool {
+    return s1.value() === "3pt";
+}
+
+chktest function accepts_1(): Bool {
+    return ZipcodeUS::accepts("98052-0000");
+}
+
+chktest function accepts_2(): Bool {
+    return !ZipcodeUS::accepts("abc");
+}
+
+__chktest function accepts_fail_1(s: String): Bool {
+    return ZipcodeUS::accepts(s);
+}
+
+__chktest function accepts_fail_2(s: String): Bool {
+    return !ZipcodeUS::accepts(s);
+}
+
+chktest function iscsspt_1(): Bool {
+    return is3pt('3pt'_CSSpt);
+}
+
+chktest function iscsspt_2(): Bool {
+    return !is3pt('4pt'_CSSpt);
+}
+
+////////
+//
+entity StatusCode provides Parsable {
+    field code: Int;
+    field name: String;
+
+    function parse(name: String): Result<StatusCode, String> {
+        return switch(name) {|
+            "IO"        => ok(StatusCode{1, name})
+            | "Network" => ok(StatusCode{2, name})
+            | _         => err("Unknown code")
+        |};
+    }
+
+    function accepts(name: String): Bool {
+        return name === "IO" || name === "Network";
+    }
+}
+
+function isIOCode(s: DataString<StatusCode>): Bool {
+    return s === 'IO'_StatusCode;
+}
+
+chktest function isiscode_1(): Bool {
+    return !isIOCode('Network'_StatusCode);
+}
+
+chktest function isiscode_2(): Bool {
+    return isIOCode('IO'_StatusCode);
+}
+
+chktest function isiscode_3(): Bool {
+    let ec: StatusCode = StatusCode{'IO'};
+    return ec.code == 1i;
+}
+
+__chktest function statuscode_fail_1(s: String): Bool {
+    return StatusCode::accepts(s);
+}
+
+__chktest function statuscode_fail_2(s: String): Bool {
+    return !StatusCode::accepts(s);
+}
+
+__chktest function statuscode_fail_3(s: String): Bool {
+    return StatusCode::parse(s).isOk();
+}
+
+////////
+//
+orderable algebraic typedecl Fahrenheit = Int;
+orderable algebraic typedecl Celsius = Int;
+
+orderable typedecl Percentage = Nat & {
+    invariant $value <= 100n;
+}
+
+function isFreezing(temp: Celsius): Bool {
+    return temp <= 0_Celsius;
+}
+
+chktest function isfreezing_1(): Bool {
+    return !isFreezing(5_Celsius);
+}
+
+chktest function isfreezing_2(): Bool {
+    return isFreezing(-5_Celsius);
+}
+
+__chktest function isfreezing_fail_1(t: Celsius): Bool {
+    return isFreezing(t);
+}
+
+__chktest function is50pct_fail_1(p: Percentage): Bool {
+    return p == 50_Percentage;
+}
+
+////////
+//
+function abs_impl(arg: BigInt): BigInt {
+    var res = arg;
+
+    if(arg < 0I) {
+        res = -arg;
+    }
+   
+    return res;
+}
+
+function sign_impl(arg: BigInt): BigInt {
+    return arg > 0I ? 1I : -1I;
+}
+
+chktest function abs_neg(): Bool {
+    return abs_impl(-3I) == 3I;
+}
+
+chktest function sign_pos_bsqtest(): Bool {
+    return sign_impl(5I) > 0I;
+}
+
+chktest function sign_neg_bsqtest(): Bool {
+    return sign_impl(-4I) < 0I;
+}
+
+chktest function sign_neg_is_minus1(x: BigInt): Bool 
+    requires x < 0I;
+{
+    return sign_impl(x) == -1I;
+}
+
+__chktest function sign_pos_is_1(x: BigInt): Bool 
+    requires x >= 0I;
+{
+    return sign_impl(x) == 1I;
+}
+
+chktest function abs_apptest(arg: BigInt): Bool {
+    let res = abs_impl(arg);
+    return (res == arg || res == -arg) && (res >= 0I);
+}
+
+chktest function sign_apptest(arg: BigInt): Bool {
+    let res = sign_impl(arg);
+    return res == 1I || res == -1I;
+}
+
+__chktest function abs_ensures_fail(arg: BigInt): Bool {
+    let res = abs_impl(arg);
+    return res == 5I && res != arg;
+}
