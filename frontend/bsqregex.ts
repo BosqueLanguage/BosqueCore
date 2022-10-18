@@ -1,8 +1,3 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
 import * as assert from "assert";
 
 class RegexParser {
@@ -284,6 +279,7 @@ class BSQRegex {
     compileToJS(): string {
         //
         //TODO: we actually have NFA semantics for our regex -- JS matching is a subset so we need to replace this!!!
+        //      e.g. see https://dannysu.com/2015/10/31/regex-nfa/
         //
         return "^" + this.re.compileToJS() + "$";
     }

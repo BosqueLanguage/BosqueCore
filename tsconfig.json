@@ -13,14 +13,6 @@
         "outDir": "bin"
     },
     "include": [
-        "src/ast/*.ts",
-        "src/type_checker/*.ts",
-        "src/compiler/*.ts",
-        "src/tooling/checker/*.ts",
-        "src/tooling/icpp/transpiler/*.ts",
-        "src/tooling/morphir/bsqtranspiler/*.ts",
-        "src/test/runner/*.ts",
-        "src/test/bsqunit/*.ts",
-        "src/cmd/*.ts"
+        "frontend/*.ts"
     ]
 }
