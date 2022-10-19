@@ -5,7 +5,7 @@
 
 import { ResolvedType, ResolvedRecordAtomType, ResolvedTupleAtomType, ResolvedAtomType, ResolvedFunctionTypeParam, ResolvedFunctionType, ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedEntityAtomType, ResolvedEphemeralListType, ResolvedTemplateUnifyType } from "./resolved_type";
 import { TemplateTypeSignature, NominalTypeSignature, TypeSignature, TupleTypeSignature, RecordTypeSignature, FunctionTypeSignature, UnionTypeSignature, ParseErrorTypeSignature, AutoTypeSignature, FunctionParameter, ProjectTypeSignature, EphemeralListTypeSignature, PlusTypeSignature, AndTypeSignature } from "./type_signature";
-import { Expression, BodyImplementation, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression, AccessStaticFieldExpression, AccessNamespaceConstantExpression, ConstantExpressionValue, LiteralNumberinoExpression, LiteralTypedStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, LiteralStringExpression } from "./body";
+import { Expression, BodyImplementation, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression, AccessStaticFieldExpression, AccessNamespaceConstantExpression, ConstantExpressionValue, LiteralNumberinoExpression, LiteralTypedStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, LiteralStringExpression, LiteralExpressionValue } from "./body";
 import { SourceInfo } from "./parser";
 
 import * as assert from "assert";
@@ -29,6 +29,18 @@ function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
     }
     else {
         return check === "release";
+    }
+}
+
+class FunctionParameter {
+    readonly name: string;
+    readonly type: TypeSignature;
+    readonly litexp: LiteralExpressionValue | undefined;
+
+    constructor(name: string, type: TypeSignature, litexp: LiteralExpressionValue | undefined) {
+        this.name = name;
+        this.type = type;
+        this.litexp = litexp;
     }
 }
 

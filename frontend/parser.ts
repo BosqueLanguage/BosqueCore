@@ -1,12 +1,9 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
+import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
-import { FunctionParameter, TypeSignature, NominalTypeSignature, TemplateTypeSignature, ParseErrorTypeSignature, TupleTypeSignature, RecordTypeSignature, FunctionTypeSignature, UnionTypeSignature, AutoTypeSignature, ProjectTypeSignature, EphemeralListTypeSignature, PlusTypeSignature, AndTypeSignature } from "./type_signature";
-import { Arguments, TemplateArguments, NamedArgument, PositionalArgument, InvalidExpression, Expression, LiteralNoneExpression, LiteralBoolExpression, LiteralStringExpression, LiteralTypedStringExpression, AccessVariableExpression, AccessNamespaceConstantExpression, LiteralTypedStringConstructorExpression, CallNamespaceFunctionOrOperatorExpression, AccessStaticFieldExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorPrimaryExpression, ConstructorPrimaryWithFactoryExpression, PostfixOperation, PostfixAccessFromIndex, PostfixAccessFromName, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixModifyWithIndecies, PostfixModifyWithNames, PostfixInvoke, PostfixOp, PrefixNotOp, BinLogicExpression, SelectExpression, BlockStatement, Statement, BodyImplementation, EmptyStatement, InvalidStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, YieldStatement, CondBranchEntry, IfElse, IfElseStatement, InvokeArgument, CallStaticFunctionOrOperatorExpression, AssertStatement, DebugStatement, StructuredAssignment, TupleStructuredAssignment, RecordStructuredAssignment, VariableDeclarationStructuredAssignment, IgnoreTermStructuredAssignment, VariableAssignmentStructuredAssignment, StructuredVariableAssignmentStatement, MatchStatement, MatchEntry, MatchGuard, WildcardMatchGuard, StructureMatchGuard, AbortStatement, BlockStatementExpression, IfExpression, MatchExpression, RecursiveAnnotation, ConstructorPCodeExpression, PCodeInvokeExpression, ExpOrExpression, LiteralRegexExpression, ValidateStatement, NakedCallStatement, ValueListStructuredAssignment, NominalStructuredAssignment, VariablePackDeclarationStatement, VariablePackAssignmentStatement, ConstructorEphemeralValueList, MapEntryConstructorExpression, SpecialConstructorExpression, TypeMatchGuard, PostfixIs, PostfixHasIndex, PostfixHasProperty, PostfixAs, LiteralExpressionValue, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression, IsTypeExpression, AsTypeExpression, PostfixGetIndexOrNone, PostfixGetIndexTry, PostfixGetPropertyOrNone, PostfixGetPropertyTry, ConstantExpressionValue, LiteralNumberinoExpression, BinKeyExpression, LiteralNothingExpression, LiteralTypedPrimitiveConstructorExpression, PostfixGetIndexOption, PostfixGetPropertyOption, SwitchEntry, SwitchExpression, StructuredAssignementPrimitive, SwitchStatement, SwitchGuard, WildcardSwitchGuard, LiteralSwitchGuard, LogicActionExpression } from "./body";
-import { Assembly, NamespaceUsing, NamespaceDeclaration, NamespaceTypedef, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ConceptTypeDecl, EntityTypeDecl, NamespaceConstDecl, NamespaceFunctionDecl, InvokeDecl, TemplateTermDecl, PreConditionDecl, PostConditionDecl, BuildLevel, TypeConditionRestriction, InvariantDecl, TemplateTypeRestriction, StaticOperatorDecl, NamespaceOperatorDecl, OOPTypeDecl, ValidateDecl } from "./assembly";
+import {  } from "./type_signature";
+import {  } from "./body";
+import {  } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
 const KW_recursive_q = "recursive?";
@@ -58,172 +55,147 @@ const KW_typedef = "typedef";
 const KW_typedecl = "typedecl";
 const KW_datatype = "datatype";
 const KW_using = "using";
+const KW_validate = "validate";
 const KW_var = "var";
 const KW_when = "when";
 
 const KeywordStrings = [
     KW_recursive_q,
-    KW_recursive,
-    
-    "_debug",
-    "abort",
-    "assert",
-    "astype",
-    "concept",
-    "const",
-    "elif",
-    "else",
-    "enum",
-    "entity",
-    "ensures",
-    "err",
-    "false",
-    "field",
-    "fn",
-    "pred",
-    "function",
-    "if",
-    "import",
-    "invariant",
-    "istype",
-    "let",
-    "match",
-    "method",
-    "namespace",
-    "none",
-    "nothing",
-    "of",
-    "ok",
-    "operator",
-    "provides",
-    "ref",
-    "release",
-    "return",
-    "requires",
-    "something",
-    "debug",
-    "switch",
-    "test",
-    "then",
-    "true",
-    "type",
-    "typedef",
-    "typedecl",
-    "datatype",
-    "using",
-    "var",
-    "when",
-    "yield"
+    KW_recursive
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
 
-const SymbolStrings = [
-    "[",
-    "(",
-    "{",
-    "]",
-    ")",
-    "}",
-    "(|",
-    "|)",
-    "{|",
-    "|}",
+const SYM_lbrack = "[";
+const SYM_lparen = "(";
+const SYM_lbrace = "{";
+const SYM_rbrack = "]";
+const SYM_rparen = ")";
+const SYM_rbrace = "}";
+const SYM_lel = "(|";
+const SYM_rel = "|)";
 
-    "&",
-    "&&",
-    "!",
-    "!=",
-    "!==",
-    ":",
-    "::",
-    ",",
-    ".",
-    ".$",
-    "...",
-    "=",
-    "==",
-    "===",
-    "=>",
-    "==>",
-    ";",
-    "|",
-    "||",
-    "+",
-    "?",
-    "<",
-    "<=",
-    ">",
-    ">=",
-    "-",
-    "->",
-    "*",
-    "/",
-    "/\\",
-    "\\/"
+const SYM_amp = "&";
+const SYM_ampamp = "&&";
+const SYM_bang = "!";
+const SYM_bangeq = "!=";
+const SYM_bangeqeq = "!==";
+const SYM_colon = ":";
+const SYM_coloncolon = "::";
+const SYM_coma = ",";
+const SYM_dot = ".";
+const SYM_eq = "=";
+const SYM_eqeq = "==";
+const SYM_eqeqeq = "===";
+const SYM_bigarrow = "=>";
+const SYM_implies = "==>";
+const SYM_arrow = "->";
+const SYM_semicolon = ";";
+const SYM_bar = "|";
+const SYM_barbar = "||";
+const SYM_plus = "+";
+const SYM_question = "?";
+const SYM_le = "<";
+const SYM_leq = "<=";
+const SYM_ge = ">";
+const SYM_geq = ">=";
+const SYM_minus = "-";
+const SYM_times = "*";
+const SYM_div = "/";
+const SYM_land = "/\\";
+const SYM_lor = "\\/";
+
+const SymbolStrings = [
+    SYM_lbrack,
+    SYM_lparen,
+    SYM_lbrace,
+    SYM_rbrack,
+    SYM_rparen,
+    SYM_rbrace,
+    SYM_lel,
+    SYM_rel,
+
+    SYM_amp,
+    SYM_bang,
+    SYM_ampamp,
+    SYM_bangeq,
+    SYM_bangeqeq,
+    SYM_colon,
+    SYM_coloncolon,
+    SYM_coma,
+    SYM_dot,
+    SYM_eq,
+    SYM_eqeq,
+    SYM_eqeqeq,
+    SYM_bigarrow,
+    SYM_implies,
+    SYM_arrow,
+    SYM_semicolon,
+    SYM_bar,
+    SYM_barbar,
+    SYM_plus,
+    SYM_question,
+    SYM_le,
+    SYM_leq,
+    SYM_ge,
+    SYM_geq,
+    SYM_minus,
+    SYM_times,
+    SYM_div,
+    SYM_land,
+    SYM_lor
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
 
 const RegexFollows = new Set<string>([
-    "_debug",
-    "ensures",
-    "invariant",
-    "return",
-    "requires",
-    "validate",
-    "yield",
-    "[",
-    "(",
-    "(|",
-    "{|",
-    "&&",
-    "!",
-    "!=",
-    ",",
-    "=",
-    "==",
-    "===",
-    "=>",
-    "==>",
-    "?",
-    "||",
-    "+",
-    "<",
-    "<=",
-    ">",
-    ">=",
-    "-",
-    "*",
-    "/"
+    KW__debug,
+    KW_ensures,
+    KW_invariant,
+    KW_return,
+    KW_requires,
+    KW_validate,
+    SYM_lbrack,
+    SYM_lparen,
+    SYM_lbrace,
+    SYM_lel,
+    SYM_ampamp,
+    SYM_bang,
+    SYM_bangeq,
+    SYM_bangeqeq,
+    SYM_coma,
+    SYM_eq,
+    SYM_eqeq,
+    SYM_eqeqeq,
+    SYM_bigarrow,
+    SYM_implies,
+    SYM_barbar,
+    SYM_plus,
+    SYM_le,
+    SYM_leq,
+    SYM_ge,
+    SYM_geq,
+    SYM_minus,
+    SYM_times,
+    SYM_div
 ]);
 
-const LeftScanParens = ["[", "(", "{", "(|", "{|"];
-const RightScanParens = ["]", ")", "}", "|)", "|}"];
+const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lel];
+const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rel];
 
 const AttributeStrings = [
-    "algebraic",
-    "orderable",
-    "entrypoint",
-    "private",
-    "internal",
-    "factory",
-    "virtual",
     "abstract",
+    "chktest",
+    "debug",
+    "errtest",
+    "exposed",
+    "internal",
     "override",
     "recursive?",
     "recursive",
-    "derived",
-    "lazy",
-    "memoized",
-    "interned",
-    "inline",
-    "prefix",
-    "infix",
-    "dynamic",
     "sensitive",
-    "chktest",
-    "errtest",
-    "debug",
-    "test",
+    "private",
+    "public",
     "release",
-
+    "test",
+    "virtual",
+    
     "__chktest",
 
     "__internal",
@@ -237,13 +209,12 @@ const AttributeStrings = [
     "__universal"
 ];
 
-const UnsafeFieldNames = ["is", "as", "isNone", "isSome", "asTry", "asOrNone", "asOptional", "asResult", "hasProperty", "getPropertyOrNone", "getPropertyOption", "getPropertyTry"]
+const UnsafeFieldNames = ["is", "as", "isNone", "isSome", "asOrNone", "asOptional", "asResult", "hasProperty", "getPropertyOrNone", "getPropertyOption"]
 
 const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",
 
-    Numberino: "[LITERAL_NUMBERINO]",
     Int: "[LITERAL_INT]",
     Nat: "[LITERAL_NAT]",
     Float: "[LITERAL_FLOAT]",
@@ -261,7 +232,6 @@ const TokenStrings = {
     ScopeName: "[SCOPE]",
     Template: "[TEMPLATE]",
     Identifier: "[IDENTIFIER]",
-    Operator: "[OPERATOR]",
     FollowTypeSep: "[FOLLOWTYPE]",
 
     EndOfStream: "[EOS]"
@@ -299,11 +269,6 @@ class SourceInfo {
         this.pos = cpos;
         this.span = span;
     }
-
-    static createIgnoreSourceInfo(): SourceInfo
-    {
-        return new SourceInfo(-1, -1, -1, -1);
-    }
 }
 
 type CodeFileInfo = { 
@@ -313,15 +278,8 @@ type CodeFileInfo = {
 };
 
 function unescapeLiteralString(str: string): string {
-    let rs = str
-        .replace(/\\0/g, "\0")
-        .replace(/\\'/g, "'")
-        .replace(/\\"/g, "\"")
-        .replace(/\\n/g, "\n")
-        .replace(/\\r/g, "\r")
-        .replace(/\\t/g, "\t");
-
-    return rs.replace(/\\\\/g, "\\");
+    assert(false, "unescapeLiteralString -- implementation");
+    return str;
 }
 
 class Lexer {
@@ -502,9 +460,6 @@ class Lexer {
         return true;
     }
 
-    private static readonly _s_intNumberinoRe = /0|[1-9][0-9]*/y;
-    private static readonly _s_realNumberinoRe = /([0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?/y;
-
     private static readonly _s_intRe = /(0|[1-9][0-9]*)i/y;
     private static readonly _s_natRe = /(0|[1-9][0-9]*)n/y;
 
@@ -565,20 +520,6 @@ class Lexer {
             return true;
         }
 
-        Lexer._s_realNumberinoRe.lastIndex = this.m_cpos;
-        const rnio = Lexer._s_realNumberinoRe.exec(this.m_input);
-        if (rnio !== null) {
-            this.recordLexTokenWData(this.m_cpos + rnio[0].length, TokenStrings.Numberino, rnio[0]);
-            return true;
-        }
-
-        Lexer._s_intNumberinoRe.lastIndex = this.m_cpos;
-        const inio = Lexer._s_intNumberinoRe.exec(this.m_input);
-        if (inio !== null) {
-            this.recordLexTokenWData(this.m_cpos + inio[0].length, TokenStrings.Numberino, inio[0]);
-            return true;
-        }
-
         return false;
     }
 
@@ -615,16 +556,7 @@ class Lexer {
     }
 
     private static readonly _s_symbolRe = /[\W]+/y;
-    private static readonly _s_operatorRe = /%[a-zA-Z0-9_]+%/y;
     private tryLexSymbol() {
-        Lexer._s_operatorRe.lastIndex = this.m_cpos;
-        const mo = Lexer._s_operatorRe.exec(this.m_input);
-        if (mo !== null) {
-            const oper = mo[0];
-            this.recordLexTokenWData(this.m_cpos + oper.length, TokenStrings.Operator, oper);
-            return true;
-        }
-        
         Lexer._s_symbolRe.lastIndex = this.m_cpos;
         const ms = Lexer._s_symbolRe.exec(this.m_input);
         if (ms !== null) {
@@ -638,7 +570,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_nameRe = /(recursive\?)|(out\?)|([$]?\w+)/y;
+    private static readonly _s_nameRe = /(recursive\?)|([$]?\w+)/y;
     private tryLexName(): boolean {
         Lexer._s_nameRe.lastIndex = this.m_cpos;
         const m = Lexer._s_nameRe.exec(this.m_input);
@@ -814,7 +746,6 @@ enum InvokableKind {
     Member,
     PCodeFn,
     PCodePred,
-    StaticOperator,
     DynamicOperator
 }
 

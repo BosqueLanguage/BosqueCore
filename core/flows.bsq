@@ -1,11 +1,9 @@
-//TODO: should this go in a non-core package. We don't want to overly encourage using it but it should be available.
-
 namespace Core;
 
 entity FlowOp provides Some {
-    internal recursive? function s_while<S>(istate: S, p: recursive? pred(_: S) -> Bool, op: recursive? fn(_: S) -> S): S = s_while;
+    internal recursive? function s_while<S>(istate: S, p: recursive? pred(S) -> Bool, op: recursive? fn(S) -> S): S = s_while;
     
-    recursive? function while<S>(istate: S, p: recursive? pred(_: S) -> Bool, op: recursive? fn(_: S) -> S): S {
+    recursive? function while<S>(istate: S, p: recursive? pred(S) -> Bool, op: recursive? fn(S) -> S): S {
         return FlowOp::s_while<S>[recursive?](istate, p, op);
     }
 }

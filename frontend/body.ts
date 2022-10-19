@@ -1,139 +1,11 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
+import * as assert from "assert";
 
 import { SourceInfo } from "./parser";
 import { AutoTypeSignature, TypeSignature } from "./type_signature";
 import { InvokeDecl, BuildLevel } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
-class InvokeArgument {
-    readonly value: Expression;
-    readonly ref: "ref" | "out" | "out?" | undefined;
-
-    constructor(value: Expression, ref: "ref" | "out" | "out?" | undefined) {
-        this.value = value;
-        this.ref = ref;
-    }
-}
-
-class NamedArgument extends InvokeArgument {
-    readonly name: string;
-
-    constructor(ref: "ref" | "out" | "out?" | undefined, name: string, value: Expression) {
-        super(value, ref);
-        this.name = name;
-    }
-}
-
-class PositionalArgument extends InvokeArgument {
-    readonly isSpread: boolean;
-
-    constructor(ref: "ref" | "out" | "out?" | undefined, isSpread: boolean, value: Expression) {
-        super(value, ref);
-        this.isSpread = isSpread;
-    }
-}
-
-class Arguments {
-    readonly argList: InvokeArgument[];
-
-    constructor(args: InvokeArgument[]) {
-        this.argList = args;
-    }
-}
-
-class TemplateArguments {
-    readonly targs: TypeSignature[];
-
-    constructor(targs: TypeSignature[]) {
-        this.targs = targs;
-    }
-}
-
 type RecursiveAnnotation = "yes" | "no" | "cond";
-
-class CondBranchEntry<T> {
-    readonly cond: Expression;
-    readonly action: T;
-
-    constructor(cond: Expression, action: T) {
-        this.cond = cond;
-        this.action = action;
-    }
-}
-
-class IfElse<T> {
-    readonly conds: CondBranchEntry<T>[];
-    readonly elseAction: T | undefined;
-
-    constructor(conds: CondBranchEntry<T>[], elseAction: T | undefined) {
-        this.conds = conds;
-        this.elseAction = elseAction;
-    }
-}
-
-abstract class SwitchGuard {
-}
-
-class WildcardSwitchGuard extends SwitchGuard {
-}
-
-class LiteralSwitchGuard extends SwitchGuard {
-    readonly litmatch: LiteralExpressionValue;
-
-    constructor(litmatch: LiteralExpressionValue) {
-        super();
-        this.litmatch = litmatch;
-    }
-}
-
-class SwitchEntry<T> {
-    readonly check: SwitchGuard;
-    readonly action: T;
-
-    constructor(check: SwitchGuard, action: T) {
-        this.check = check;
-        this.action = action;
-    }
-}
-
-abstract class MatchGuard {
-}
-
-class WildcardMatchGuard extends MatchGuard {
-}
-
-class TypeMatchGuard extends MatchGuard {
-    readonly oftype: TypeSignature;
-
-    constructor(oftype: TypeSignature) {
-        super();
-        this.oftype = oftype;
-    }
-}
-
-class StructureMatchGuard extends MatchGuard {
-    readonly match: StructuredAssignment;
-    readonly decls: Set<string>;
-
-    constructor(match: StructuredAssignment, decls: Set<string>) {
-        super();
-        this.match = match;
-        this.decls = decls;
-    }
-}
-
-class MatchEntry<T> {
-    readonly check: MatchGuard;
-    readonly action: T;
-
-    constructor(check: MatchGuard, action: T) {
-        this.check = check;
-        this.action = action;
-    }
-}
 
 enum ExpressionTag {
     Clear = "[CLEAR]",
@@ -142,23 +14,20 @@ enum ExpressionTag {
     LiteralNoneExpression = "LiteralNoneExpression",
     LiteralNothingExpression = "LiteralNothingExpression",
     LiteralBoolExpression = "LiteralBoolExpression",
-    LiteralNumberinoExpression = "LiteralNumberinoExpression",
     LiteralIntegralExpression = "LiteralIntegralExpression",
     LiteralRationalExpression = "LiteralRationalExpression",
     LiteralFloatPointExpression = "LiteralFloatExpression",
     LiteralStringExpression = "LiteralStringExpression",
     LiteralRegexExpression = "LiteralRegexExpression",
-    LiteralTypedStringExpression = "LiteralTypedStringExpression",
 
+    LiteralTypedStringExpression = "LiteralTypedStringExpression",
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
-    LiteralTypedStringConstructorExpression = "LiteralTypedStringConstructorExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
 
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
-    ConstructorPrimaryWithFactoryExpression = "ConstructorPrimaryWithFactoryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
     ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
@@ -167,7 +36,7 @@ enum ExpressionTag {
     PCodeInvokeExpression = "PCodeInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionOrOperatorExpression = "CallNamespaceFunctionOrOperatorExpression",
-    CallStaticFunctionOrOperatorExpression = "CallStaticFunctionOrOperatorExpression",
+    CallStaticFunctionExpression = "CallStaticFunctionExpression",
 
     LogicActionExpression = "LogicActionExpression",
 
@@ -183,10 +52,6 @@ enum ExpressionTag {
 
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
-    SelectExpression = "SelectExpression",
-    ExpOrExpression = "ExpOrExpression",
-
-    BlockStatementExpression = "BlockStatementExpression",
     IfExpression = "IfExpression",
     SwitchExpression = "SwitchExpression",
     MatchExpression = "MatchExpression"

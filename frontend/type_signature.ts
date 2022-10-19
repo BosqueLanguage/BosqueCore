@@ -1,9 +1,4 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
-import {  ConstantExpressionValue, LiteralExpressionValue } from "./body";
+import { LiteralExpressionValue } from "./body";
 
 class TypeSignature {
     getDiagnosticName(): string {
@@ -29,6 +24,21 @@ class TemplateTypeSignature extends TypeSignature {
     constructor(name: string) {
         super();
         this.name = name;
+    }
+
+    getDiagnosticName(): string {
+        return this.name;
+    }
+}
+
+class LiteralTypeSignature extends TypeSignature {
+    readonly name: string;
+    readonly lvalue: LiteralExpressionValue;
+
+    constructor(name: string, lvalue: LiteralExpressionValue) {
+        super();
+        this.name = name;
+        this.lvalue = lvalue;
     }
 
     getDiagnosticName(): string {
@@ -96,44 +106,22 @@ class EphemeralListTypeSignature extends TypeSignature {
     }
 }
 
-class FunctionParameter {
-    readonly name: string;
-    readonly type: TypeSignature;
-    readonly refKind: "ref" | "out" | "out?" | undefined;
-    readonly isOptional: boolean;
-    readonly defaultexp: ConstantExpressionValue | undefined;
-    readonly litexp: LiteralExpressionValue | undefined;
-
-    constructor(name: string, type: TypeSignature, isOpt: boolean, refKind: "ref" | "out" | "out?" | undefined, defaultexp: ConstantExpressionValue | undefined, litexp: LiteralExpressionValue | undefined) {
-        this.name = name;
-        this.type = type;
-        this.isOptional = isOpt;
-        this.refKind = refKind;
-        this.defaultexp = defaultexp;
-        this.litexp = litexp;
-    }
-}
-
 class FunctionTypeSignature extends TypeSignature {
     readonly recursive: "yes" | "no" | "cond";
-    readonly params: FunctionParameter[];
-    readonly optRestParamName: string | undefined;
-    readonly optRestParamType: TypeSignature | undefined;
+    readonly params: TypeSignature[];
     readonly resultType: TypeSignature;
     readonly isPred: boolean;
 
-    constructor(recursive: "yes" | "no" | "cond", params: FunctionParameter[], optRestParamName: string | undefined, optRestParamType: TypeSignature | undefined, resultType: TypeSignature, isPred: boolean) {
+    constructor(recursive: "yes" | "no" | "cond", params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
         super();
         this.recursive = recursive;
         this.params = params;
-        this.optRestParamName = optRestParamName;
-        this.optRestParamType = optRestParamType;
         this.resultType = resultType;
         this.isPred = isPred;
     }
 
     getDiagnosticName(): string {
-        return "function (" + this.params.map((p) => p.type.getDiagnosticName()).join(", ") + ")";
+        return (this.isPred ? "pred" : "fn") + " (" + this.params.map((ptype) => ptype.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
     }
 }
 
@@ -149,19 +137,6 @@ class ProjectTypeSignature extends TypeSignature {
 
     getDiagnosticName(): string {
         return this.fromtype + "!" + this.oftype;
-    }
-}
-
-class PlusTypeSignature extends TypeSignature {
-    readonly types: TypeSignature[];
-
-    constructor(types: TypeSignature[]) {
-        super();
-        this.types = types;
-    }
-
-    getDiagnosticName(): string {
-        return this.types.map((tt) => tt.getDiagnosticName()).join("+");
     }
 }
 
@@ -193,7 +168,7 @@ class UnionTypeSignature extends TypeSignature {
 
 export { 
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
-    TemplateTypeSignature, NominalTypeSignature, 
+    TemplateTypeSignature, LiteralTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EphemeralListTypeSignature,
-    FunctionParameter, FunctionTypeSignature, ProjectTypeSignature, PlusTypeSignature, AndTypeSignature, UnionTypeSignature
+    FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };
