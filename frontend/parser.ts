@@ -1646,7 +1646,8 @@ class Parser {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
             if(this.testToken(TokenStrings.FollowTypeSep)) {
                 const ttype = this.parseFollowTypeTag("ASCIIString check");
-                if(ttype)
+                xxx;
+
                 return new LiteralASCIIStringExpression(sinfo, sstr);
             }
             else {
