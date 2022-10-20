@@ -8,16 +8,21 @@ import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type_s
 
 class FunctionScope {
     private readonly m_rtype: TypeSignature;
-    private m_captured: Set<string>;
+    private m_capturedvars: Set<string>;
+    private m_capturedtemplates: Set<string>;
+
     private readonly m_ispcode: boolean;
     private readonly m_args: Set<string>;
-    private m_locals: { name: string, scopedname: string, isbinder: boolean }[][];
+    private readonly m_boundtemplates: Set<string>;
+    private m_locals: string[][];
 
-    constructor(args: Set<string>, rtype: TypeSignature, ispcode: boolean) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature, ispcode: boolean) {
         this.m_rtype = rtype;
-        this.m_captured = new Set<string>();
+        this.m_capturedvars = new Set<string>();
+        this.m_capturedtemplates = new Set<string>();
         this.m_ispcode = ispcode;
         this.m_args = args;
+        this.m_boundtemplates = boundtemplates;
         this.m_locals = [];
     }
 
@@ -34,26 +39,27 @@ class FunctionScope {
     }
 
     isVarNameDefined(name: string): boolean {
-        return this.m_args.has(name) || this.m_locals.some((frame) => frame.some((fr) => fr.name === name));
+        return this.m_args.has(name) || this.m_locals.some((frame) => frame.some((nn) => nn === name));
     }
 
-    getScopedVarName(name: string): string {
-        for (let i = this.m_locals.length - 1; i >= 0; --i) {
-            const vinfo = this.m_locals[i].find((fr) => fr.name === name);
-            if (vinfo !== undefined) {
-                return vinfo.scopedname;
-            }
-        }
-
-        return name;
+    isTemplateNameDefined(name: string): boolean {
+        return this.m_boundtemplates.has(name);
     }
 
-    defineLocalVar(name: string, scopedname: string, isbinder: boolean) {
-        this.m_locals[this.m_locals.length - 1].push({ name: name, scopedname: scopedname, isbinder: isbinder });
+    defineLocalVar(name: string) {
+        this.m_locals[this.m_locals.length - 1].push(name);
     }
 
     getCaptureVars(): Set<string> {
-        return this.m_captured;
+        return this.m_capturedvars;
+    }
+
+    getCaptureTemplates(): Set<string> {
+        return this.m_capturedtemplates;
+    }
+
+    getBoundTemplates(): Set<string> {
+        return this.m_boundtemplates;
     }
 
     getReturnType(): TypeSignature {
@@ -142,17 +148,18 @@ class ParserEnvironment {
     useLocalVar(name: string): string {
         const cscope = this.getCurrentFunctionScope();
 
-        if(name.startsWith("$")) {
-            for(let i = this.m_functionScopes.length - 1; i >= 0; --i) {
-                if(this.m_functionScopes[i].isVarNameDefined(name)) {
-                    name = this.m_functionScopes[i].getScopedVarName(name);
-                    break;
-                }
-            }
-        }
-
         if (!cscope.isVarNameDefined(name) && cscope.isPCodeEnv()) {
             cscope.getCaptureVars().add(name);
+        }
+        
+        return name;
+    }
+
+    useTemplateType(name: string): string {
+        const cscope = this.getCurrentFunctionScope();
+
+        if (!cscope.isTemplateNameDefined(name) && cscope.isPCodeEnv()) {
+            cscope.getCaptureTemplates().add(name);
         }
         
         return name;

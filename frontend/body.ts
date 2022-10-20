@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
 import * as assert from "assert";
 
 import { SourceInfo } from "./parser";
@@ -26,6 +31,8 @@ enum ExpressionTag {
     
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
+    LiteralTypeValueExpression = "LiteralTypeValueExpression",
+
     AccessEnvValue = "AccessEnvValue",
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -43,9 +50,6 @@ enum ExpressionTag {
     CallStaticFunctionExpression = "CallStaticFunctionExpression",
 
     LogicActionExpression = "LogicActionExpression",
-
-    IsTypeExpression = "IsTypeExpression",
-    AsTypeExpression = "AsTypeExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -284,10 +288,10 @@ class LiteralTemplateStringExpression extends Expression {
 
 class LiteralTypedPrimitiveConstructorExpression extends Expression {
     readonly value: string;
-    readonly oftype: TypeSignature | undefined;
+    readonly oftype: TypeSignature;
     readonly vtype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: string, oftype: TypeSignature | undefined, vtype: TypeSignature) {
+    constructor(sinfo: SourceInfo, value: string, oftype: TypeSignature, vtype: TypeSignature) {
         super(ExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo);
         this.value = value;
         this.oftype = oftype;
@@ -303,12 +307,31 @@ class LiteralTypedPrimitiveConstructorExpression extends Expression {
     }
 }
 
-class AccessEnvValue extends Expression {
-    readonly name: ConstantExpressionValue;
+class LiteralTypeValueExpression extends Expression {
+    readonly vtype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, name: ConstantExpressionValue) {
+    constructor(sinfo: SourceInfo, vtype: TypeSignature) {
+        super(ExpressionTag.LiteralTypeValueExpression, sinfo);
+        this.vtype = vtype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
+class AccessEnvValue extends Expression {
+    readonly keyname: string;
+    readonly valtype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, keyname: string, valtype: TypeSignature) {
         super(ExpressionTag.AccessEnvValue, sinfo);
-        this.name = name;
+        this.keyname = keyname;
+        this.valtype = valtype;
     }
 }
 
@@ -420,82 +443,50 @@ class CallNamespaceFunctionOrOperatorExpression extends Expression {
     readonly ns: string;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
-    readonly terms: TemplateArguments;
-    readonly args: Arguments;
-    readonly opkind: "prefix" | "infix" | "std";
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, ns: string, name: string, terms: TemplateArguments, rec: RecursiveAnnotation, args: Arguments, opkind: "prefix" | "infix" | "std") {
+    constructor(sinfo: SourceInfo, ns: string, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
         super(ExpressionTag.CallNamespaceFunctionOrOperatorExpression, sinfo);
         this.ns = ns;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
         this.args = args;
-        this.opkind = opkind;
     }
 }
 
-class CallStaticFunctionOrOperatorExpression extends Expression {
+class CallStaticFunctionExpression extends Expression {
     readonly ttype: TypeSignature;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
-    readonly terms: TemplateArguments;
-    readonly args: Arguments;
-    readonly opkind: "prefix" | "infix" | "std";
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TemplateArguments, rec: RecursiveAnnotation, args: Arguments, opkind: "prefix" | "infix" | "std") {
-        super(ExpressionTag.CallStaticFunctionOrOperatorExpression, sinfo);
+    constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
+        super(ExpressionTag.CallStaticFunctionExpression, sinfo);
         this.ttype = ttype;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
         this.args = args;
-        this.opkind = opkind;
     }
 }
 
-
 class LogicActionExpression extends Expression {
     readonly opkind: "/\\" | "\\/";
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, opkind: "/\\" | "\\/", args: Arguments) {
+    constructor(sinfo: SourceInfo, opkind: "/\\" | "\\/", args: Expression[]) {
         super(ExpressionTag.LogicActionExpression, sinfo);
         this.opkind = opkind;
         this.args = args;
     }
 }
 
-class IsTypeExpression extends Expression {
-    readonly arg: Expression;
-    readonly oftype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, arg: Expression, oftype: TypeSignature) {
-        super(ExpressionTag.IsTypeExpression, sinfo);
-        this.arg = arg;
-        this.oftype = oftype;
-    }
-}
-
-class AsTypeExpression extends Expression {
-    readonly arg: Expression;
-    readonly oftype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, arg: Expression, oftype: TypeSignature) {
-        super(ExpressionTag.AsTypeExpression, sinfo);
-        this.arg = arg;
-        this.oftype = oftype;
-    }
-}
-
 enum PostfixOpTag {
     PostfixAccessFromIndex = "PostfixAccessFromIndex",
-    PostfixProjectFromIndecies = "PostfixProjectFromIndecies",
     PostfixAccessFromName = "PostfixAccessFromName",
-    PostfixProjectFromNames = "PostfixProjectFromNames",
-
-    PostfixModifyWithIndecies = "PostfixModifyWithIndecies",
-    PostfixModifyWithNames = "PostfixModifyWithNames",
 
     PostfixIs = "PostfixIs",
     PostfixAs = "PostfixAs",
@@ -503,10 +494,8 @@ enum PostfixOpTag {
     PostfixHasProperty = "PostfixHasProperty",
     PostfixGetIndexOrNone = "PostfixGetIndexOrNone",
     PostfixGetIndexOption = "PostfixGetIndexOption",
-    PostfixGetIndexTry = "PostfixGetIndexTry",
     PostfixGetPropertyOrNone = "PostfixGetPropertyOrNone",
     PostfixGetPropertyOption = "PostfixGetPropertyOption",
-    PostfixGetPropertyTry = "PostfixGetPropertyTry",
     PostfixInvoke = "PostfixInvoke"
 }
 
@@ -1127,13 +1116,12 @@ export {
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
     LiteralStringExpression, LiteralRegexExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression,
-    LiteralTypedPrimitiveConstructorExpression,
+    LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression,
     AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
-    ConstructorPrimaryExpression, ConstructorPrimaryWithFactoryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
+    ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
-    CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionOrOperatorExpression,
+    CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
     LogicActionExpression,
-    IsTypeExpression, AsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames, PostfixModifyWithIndecies, PostfixModifyWithNames,
     PostfixIs, PostfixAs, PostfixHasIndex, PostfixHasProperty, PostfixGetIndexOrNone, PostfixGetIndexOption , PostfixGetIndexTry, PostfixGetPropertyOrNone, PostfixGetPropertyOption, PostfixGetPropertyTry,

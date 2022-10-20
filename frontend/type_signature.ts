@@ -1,3 +1,8 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
 import { LiteralExpressionValue } from "./body";
 
 class TypeSignature {
@@ -32,17 +37,15 @@ class TemplateTypeSignature extends TypeSignature {
 }
 
 class LiteralTypeSignature extends TypeSignature {
-    readonly name: string;
     readonly lvalue: LiteralExpressionValue;
 
-    constructor(name: string, lvalue: LiteralExpressionValue) {
+    constructor(lvalue: LiteralExpressionValue) {
         super();
-        this.name = name;
         this.lvalue = lvalue;
     }
 
     getDiagnosticName(): string {
-        return this.name;
+        return "[Literal Type]";
     }
 }
 
@@ -108,20 +111,22 @@ class EphemeralListTypeSignature extends TypeSignature {
 
 class FunctionTypeSignature extends TypeSignature {
     readonly recursive: "yes" | "no" | "cond";
+    readonly isThisRef: boolean;
     readonly params: TypeSignature[];
     readonly resultType: TypeSignature;
     readonly isPred: boolean;
 
-    constructor(recursive: "yes" | "no" | "cond", params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
+    constructor(isThisRef: boolean, recursive: "yes" | "no" | "cond", params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
         super();
         this.recursive = recursive;
+        this.isThisRef = isThisRef;
         this.params = params;
         this.resultType = resultType;
         this.isPred = isPred;
     }
 
     getDiagnosticName(): string {
-        return (this.isPred ? "pred" : "fn") + " (" + this.params.map((ptype) => ptype.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
+        return (this.isPred ? "pred" : "fn") + (this.isThisRef ? "ref(" : " (") + this.params.map((ptype) => ptype.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
     }
 }
 

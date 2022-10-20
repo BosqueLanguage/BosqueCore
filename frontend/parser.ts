@@ -1,9 +1,14 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
 import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
-import { TypeSignature } from "./type_signature";
-import {  } from "./body";
-import { Assembly, BuildLevel, InvokeDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
+import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
+import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, InvalidExpression, LiteralASCIIStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionExpression, PCodeInvokeExpression, PostfixOperation, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
+import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
 const KW_recursive_q = "recursive?";
@@ -12,13 +17,13 @@ const KW_recursive = "recursive";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
-const KW_astype = "astype";
 const KW_concept = "concept";
 const KW_const = "const";
 const KW_debug = "debug";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_enum = "enum";
+const KW_env = "environment";
 const KW_entity = "entity";
 const KW_ensures = "ensures";
 const KW_err = "err";
@@ -29,7 +34,6 @@ const KW_function = "function";
 const KW_if = "if";
 const KW_import = "import";
 const KW_invariant = "invariant";
-const KW_istype = "istype";
 const KW_let = "let";
 const KW_match = "match";
 const KW_method = "method";
@@ -61,7 +65,8 @@ const KW_when = "when";
 
 const KeywordStrings = [
     KW_recursive_q,
-    KW_recursive
+    KW_recursive,
+    xxxx
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
 
 const SYM_lbrack = "[";
@@ -73,6 +78,7 @@ const SYM_rbrace = "}";
 const SYM_lel = "(|";
 const SYM_rel = "|)";
 
+const SYM_percent = "%";
 const SYM_amp = "&";
 const SYM_ampamp = "&&";
 const SYM_bang = "!";
@@ -113,6 +119,7 @@ const SymbolStrings = [
     SYM_lel,
     SYM_rel,
 
+    SYM_percent,
     SYM_amp,
     SYM_bang,
     SYM_ampamp,
@@ -217,6 +224,7 @@ const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",
 
+    Numberino: "[LITERAL_NUMBERINO]",
     Int: "[LITERAL_INT]",
     Nat: "[LITERAL_NAT]",
     Float: "[LITERAL_FLOAT]",
@@ -368,7 +376,7 @@ class Lexer {
                 return fullscope;
             }
             else {
-                let ttrim = fullscope.lastIndexOf("::");
+                let ttrim = fullscope.lastIndexOf(SYM_coloncolon);
                 let pscope = fullscope;
                 while(ttrim !== -1) {
                     pscope = pscope.substring(0, ttrim);
@@ -377,7 +385,7 @@ class Lexer {
                         return pscope;
                     }
                    
-                    ttrim = pscope.lastIndexOf("::");
+                    ttrim = pscope.lastIndexOf(SYM_coloncolon);
                 }
                 return undefined;
             }
@@ -462,6 +470,8 @@ class Lexer {
         return true;
     }
 
+    private static readonly _s_intNumberinoRe = /0|[1-9][0-9]*/y;
+
     private static readonly _s_intRe = /(0|[1-9][0-9]*)i/y;
     private static readonly _s_natRe = /(0|[1-9][0-9]*)n/y;
 
@@ -519,6 +529,13 @@ class Lexer {
         const mi = Lexer._s_intRe.exec(this.m_input);
         if (mi !== null) {
             this.recordLexTokenWData(this.m_cpos + mi[0].length, TokenStrings.Int, mi[0]);
+            return true;
+        }
+
+        Lexer._s_intNumberinoRe.lastIndex = this.m_cpos;
+        const inio = Lexer._s_intNumberinoRe.exec(this.m_input);
+        if (inio !== null) {
+            this.recordLexTokenWData(this.m_cpos + inio[0].length, TokenStrings.Numberino, inio[0]);
             return true;
         }
 
@@ -769,6 +786,7 @@ class Parser {
         this.m_epos = 0;
 
         this.m_penv = new ParserEnvironment(assembly);
+
         this.m_errors = [];
         this.m_recoverStack = [];
 
@@ -981,7 +999,7 @@ class Parser {
         while (true) {
             result.push(fn());
 
-            if(!this.testAndConsumeTokenIf(",")) {
+            if(!this.testAndConsumeTokenIf(SYM_coma)) {
                 break;
             }
         }
@@ -990,7 +1008,7 @@ class Parser {
     }
 
     parseBuildInfo(cb: BuildLevel): BuildLevel {
-        if( this.testToken("debug") || this.testToken("test") || this.testToken("release")) {
+        if( this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release)) {
             return this.consumeTokenAndGetValue() as "debug" | "test" | "release";
         }
         else {
@@ -998,10 +1016,18 @@ class Parser {
         }
     }
 
+    private extractStringTemplateArgs(sstr: string): Expression[] {
+        //
+        //TODO: implment this!!!
+        //
+
+        return [];
+    }
+
     ////
     //Misc parsing
 
-    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef?: boolean, optSelfType?: TypeSignature): InvokeDecl {
+    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean, optSelfType: TypeSignature | undefined): InvokeDecl {
         const sinfo = this.getCurrentSrcInfo();
         const srcFile = this.m_penv.getCurrentFile();
         const line = this.getCurrentLine();
@@ -1010,82 +1036,39 @@ class Parser {
 
         let fparams: FunctionParameter[] = [];
         if (ikind === InvokableKind.Member) {
-            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, false, optSelfRef, undefined, undefined));
+            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, undefined));
         }
 
-        let restName: string | undefined = undefined;
-        let restType: TypeSignature | undefined = undefined;
         let resultInfo = this.m_penv.SpecialAutoSignature;
 
-        const params = this.parseListOf<[string, TypeSignature, boolean, boolean, "ref" | "out" | "out?" | undefined, ConstantExpressionValue | undefined, LiteralExpressionValue | undefined]>("(", ")", ",", () => {
-            const isrest = this.testAndConsumeTokenIf("...");
-
-            let rref: "ref" | "out" | "out?" | undefined = undefined;
-            if(this.testToken("ref") || this.testToken("out") || this.testToken("out?")) {
-                rref = this.consumeTokenAndGetValue() as "ref" | "out" | "out?";
-            }
-
-            this.ensureToken(TokenStrings.Identifier);
+        const params = this.parseListOf<FunctionParameter>("function declaration", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            this.ensureToken(TokenStrings.Identifier, "function parameter");
             const pname = this.consumeTokenAndGetValue();
-            const isopt = this.testAndConsumeTokenIf("?");
-            let argtype = this.m_penv.SpecialAutoSignature;
 
-            if (this.testAndConsumeTokenIf(":")) {
+            let argtype = this.m_penv.SpecialAutoSignature;
+            if (this.testAndConsumeTokenIf(SYM_colon)) {
                 argtype = this.parseTypeSignature();
             }
             else {
                 if (ikind !== InvokableKind.PCodeFn && ikind !== InvokableKind.PCodePred) {
-                    this.raiseError(line, "Auto typing is not supported for this");
+                    this.raiseError(line, "Missing type specifier -- auto typing is only supported for lambda parameter declarations");
                 }
             }
 
-            if (rref !== undefined && (isopt || isrest)) {
-                this.raiseError(line, "Cannot use ref parameters here");
-            }
-
-            let defaultexp: ConstantExpressionValue | undefined = undefined;
-            if(isopt && this.testAndConsumeTokenIf("=")) {
-                defaultexp = this.parseConstExpression(true);
-            }
-
             let litexp: LiteralExpressionValue | undefined = undefined;
-            if(this.testAndConsumeTokenIf("==")) {
+            if(this.testAndConsumeTokenIf(SYM_eqeq)) {
                 if(ikind !== InvokableKind.DynamicOperator) {
                     this.raiseError(line, "Literal match parameters are only allowed on dynamic operator definitions");
                 }
 
-                litexp = this.parseLiteralExpression();
+                litexp = this.parseLiteralExpression(undefined);
             }
 
-            if(ikind === InvokableKind.DynamicOperator || ikind === InvokableKind.StaticOperator) {
-                if(isopt || isrest) {
-                    this.raiseError(line, "Cannot use opt or rest parameters in operators");
-                }
-            }
+            return new FunctionParameter(pname, argtype, litexp);
+        });
 
-            return [pname, argtype, isopt, isrest, rref, defaultexp, litexp];
-        })[0];
-
-        for (let i = 0; i < params.length; i++) {
-            if (!params[i][3]) {
-                fparams.push(new FunctionParameter(params[i][0], params[i][1], params[i][2], params[i][4], params[i][5], params[i][6]));
-            }
-            else {
-                if (i + 1 !== params.length) {
-                    this.raiseError(line, "Rest parameter must be last in parameter list");
-                }
-
-                restName = params[i][0];
-                restType = params[i][1];
-            }
-        }
-
-        if (restName !== undefined && params.some((p) => p[2])) {
-            this.raiseError(line, "Cannot have optional and rest parameters in a function");
-        }
-
-        const allTypedParams = params.every((param) => !(param[1] instanceof AutoTypeSignature));
-        if (this.testAndConsumeTokenIf(":")) {
+        const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
+        if (this.testAndConsumeTokenIf(SYM_colon)) {
             resultInfo = this.parseResultType(false);
         }
         else {
@@ -1094,33 +1077,36 @@ class Parser {
             }
 
             if (ikind !== InvokableKind.PCodeFn && ikind !== InvokableKind.PCodePred) {
-                if(!params.some((p) => p[4])) {
-                    this.raiseError(line, "Cannot have void return unless one of the params is by-ref");
+                if(!optSelfRef !== true) {
+                    this.raiseError(line, "Cannot have void return unless one of the reciver is by ref");
                 }
                 resultInfo = this.m_penv.SpecialNoneSignature; //void conversion
             }
         }
 
-        const argNames = new Set<string>([...(restName ? [restName] : []), ...fparams.map((param) => param.name)]);
+        const argNames = new Set<string>(...fparams.map((param) => param.name));
         let preconds: PreConditionDecl[] = [];
         let postconds: PostConditionDecl[] = [];
         let body: BodyImplementation | undefined = undefined;
-        let captured = new Set<string>();
+        let capturedvars = new Set<string>();
+        let capturedtemplates = new Set<string>();
         if (noBody) {
-            this.ensureAndConsumeToken(";");
+            this.ensureAndConsumeToken(SYM_semicolon, "an abstract function declaration");
         }
         else {
             if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
-                this.ensureAndConsumeToken("=>");
+                this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
             }
             else {
                 [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, resultInfo);
             }
 
             try {
-                this.m_penv.pushFunctionScope(new FunctionScope(argNames, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
+                const boundtemplates = new Set<string>(...terms.map((tt) => tt.name), ...implicitTemplates);
+                this.m_penv.pushFunctionScope(new FunctionScope(argNames, boundtemplates, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
                 body = this.parseBody(bodyid, srcFile);
-                captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
+                capturedvars = this.m_penv.getCurrentFunctionScope().getCaptureVars();
+                capturedtemplates = this.m_penv.getCurrentFunctionScope().getCaptureTemplates();
                 this.m_penv.popFunctionScope();
             }
             catch (ex) {
@@ -1131,14 +1117,14 @@ class Parser {
 
         if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
             const bbody = body as BodyImplementation;
-            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, fparams, restName, restType, resultInfo, captured, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
+            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, fparams, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
         }
         else {
             if(body !== undefined) {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, restName, restType, resultInfo, preconds, postconds, body);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, body);
             }
             else {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, restName, restType, resultInfo, preconds, postconds, undefined);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, undefined);
             }
         }
     }
@@ -1147,13 +1133,13 @@ class Parser {
     //Type parsing
 
     private parseResultType(parensreq: boolean): TypeSignature {
-        if (this.testAndConsumeTokenIf("(|")) {
+        if (this.testAndConsumeTokenIf(SYM_lel)) {
             const decls = this.parseEphemeralListOf(() => {
                 const tdecl = this.parseTypeSignature();
                 return tdecl;
             });
 
-            this.ensureAndConsumeToken("|)");
+            this.ensureAndConsumeToken(SYM_rel, "ephemeral list (mismatched parens?)");
             return new EphemeralListTypeSignature(decls);
         }
         else {
@@ -1177,7 +1163,7 @@ class Parser {
 
     private parseOrCombinatorType(): TypeSignature {
         const ltype = this.parsePostfixTypeReference();
-        if (!this.testToken("|")) {
+        if (!this.testToken(SYM_bar)) {
             return ltype;
         }
         else {
@@ -1188,37 +1174,30 @@ class Parser {
 
     private parsePostfixTypeReference(): TypeSignature {
         let roottype = this.parseCombineCombinatorType();
-        while (this.testToken("?")) {
+        while (this.testAndConsumeTokenIf(SYM_question)) {
             roottype = this.parseNoneableType(roottype);
         }
         return roottype;
     }
 
     private parseNoneableType(basetype: TypeSignature): TypeSignature {
-        this.ensureAndConsumeToken("?");
         return Parser.orOfTypeSignatures(basetype, this.m_penv.SpecialNoneSignature);
     }
 
     private parseCombineCombinatorType(): TypeSignature {
         const ltype = this.parseProjectType();
-        if (!this.testToken("&") && !this.testToken("+")) {
+        if (!this.testToken(SYM_amp)) {
             return ltype;
         }
         else {
-            if(this.testToken("&")) {
-                this.consumeToken();
-                return this.andOfTypeSignatures(ltype, this.parseCombineCombinatorType());
-            }
-            else {
-                this.consumeToken();
-                return this.plusOfTypeSignatures(ltype, this.parseCombineCombinatorType());
-            }
+            this.consumeToken();
+            return this.andOfTypeSignatures(ltype, this.parseCombineCombinatorType());
         }
     }
 
     private parseProjectType(): TypeSignature {
         const ltype = this.parseBaseTypeReference();
-        if (!this.testToken("!")) {
+        if (!this.testToken(SYM_bang)) {
             return ltype;
         }
         else {
@@ -1231,48 +1210,60 @@ class Parser {
 
     private parseBaseTypeReference(): TypeSignature {
         switch (this.peekToken()) {
-            case TokenStrings.Template:
+            case TokenStrings.Template: {
                 return this.parseTemplateTypeReference();
+            }
             case TokenStrings.Namespace:
             case TokenStrings.Type:
                 return this.parseNominalType();
-            case "[":
+            case SYM_lbrack:
                 return this.parseTupleType();
-            case "{":
+            case SYM_lbrace:
                 return this.parseRecordType();
-            case "fn":
-            case "pred":
-            case "recursive?":
-            case "recursive":
+            case KW_function:
+            case KW_pred:
+            case KW_recursive_q:
+            case KW_recursive:
                 return this.parsePCodeType();
+            case SYM_lparen: {
+                this.consumeToken();
+                const ptype = this.parseTypeSignature();
+                this.ensureAndConsumeToken(SYM_rparen, "(TYPE _<- missing paren?");
+
+                return ptype;
+            }
             case TokenStrings.ScopeName: {
                 //TODO: This is a dummy case for the parse provides call in pass1 where we just need to scan and discard the type info -- we should actually write a better pass for this
                 this.consumeToken();
                 this.parseTermList();
                 return new NominalTypeSignature("Core", ["DummySig"]);
             }
+            case SYM_percent: {
+                const lve = this.parseLiteralExpression("literal type");
+                return new LiteralTypeSignature(lve);
+            }
             default: {
-                this.ensureAndConsumeToken("(");
-                const ptype = this.parseTypeSignature();
-                this.ensureAndConsumeToken(")");
-
-                return ptype;
+                this.raiseError(this.getCurrentLine(), "Could not parse type");
+                return new ParseErrorTypeSignature();
             }
         }
     }
 
     private parseTemplateTypeReference(): TypeSignature {
-        return new TemplateTypeSignature(this.consumeTokenAndGetValue());
+        const tname = this.consumeTokenAndGetValue();
+        this.m_penv.useTemplateType(tname);
+
+        return new TemplateTypeSignature(tname);
     }
 
     private parseTermList(): TypeSignature[] {
         let terms: TypeSignature[] = [];
-        if (this.testToken("<")) {
+        if (this.testToken(SYM_le)) {
             try {
-                this.setRecover(this.scanMatchingParens("<", ">"));
-                terms = this.parseListOf<TypeSignature>("<", ">", ",", () => {
+                this.setRecover(this.scanMatchingParens(SYM_le, SYM_ge));
+                terms = this.parseListOf<TypeSignature>("template term list", SYM_le, SYM_ge, SYM_coma, () => {
                     return this.parseTypeSignature();
-                })[0];
+                });
 
                 this.clearRecover();
             }
@@ -1287,7 +1278,7 @@ class Parser {
         let ns: string | undefined = undefined;
         if (this.testToken(TokenStrings.Namespace)) {
             ns = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeToken("::");
+            this.ensureAndConsumeToken(SYM_coloncolon, "nominal type after namespace");
         }
 
         const tname = this.consumeTokenAndGetValue();
@@ -1299,10 +1290,10 @@ class Parser {
         let tnames: string[] = [tname];
         let terms: TypeSignature[] = this.parseTermList();
 
-        while (this.testFollows("::", TokenStrings.Type)) {
-            this.ensureAndConsumeToken("::");
+        while (this.testFollows(SYM_coloncolon, TokenStrings.Type)) {
+            this.ensureAndConsumeToken(SYM_coloncolon, "nominal type after nested type");
 
-            this.ensureToken(TokenStrings.Type);
+            this.ensureToken(TokenStrings.Type, "nominal type after scope operator");
             const stname = this.consumeTokenAndGetValue();
             tnames.push(stname);
 
@@ -1317,12 +1308,12 @@ class Parser {
         let entries: TypeSignature[] = [];
 
         try {
-            this.setRecover(this.scanMatchingParens("[", "]"));
-            entries = this.parseListOf<TypeSignature>("[", "]", ",", () => {
+            this.setRecover(this.scanMatchingParens(SYM_lbrack, SYM_rbrack));
+            entries = this.parseListOf<TypeSignature>("tuple type", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
                 const rtype = this.parseTypeSignature();
 
                 return rtype;
-            })[0];
+            });
 
             this.clearRecover();
             return new TupleTypeSignature(entries);
@@ -1337,15 +1328,15 @@ class Parser {
         let entries: [string, TypeSignature][] = [];
 
         try {
-            this.setRecover(this.scanMatchingParens("{", "}"));
+            this.setRecover(this.scanMatchingParens(SYM_lbrace, SYM_rbrace));
 
             let pnames = new Set<string>();
-            entries = this.parseListOf<[string, TypeSignature]>("{", "}", ",", () => {
-                this.ensureToken(TokenStrings.Identifier);
+            entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_lbrace, SYM_coma, () => {
+                this.ensureToken(TokenStrings.Identifier, "record type entry property name");
 
                 const name = this.consumeTokenAndGetValue();
                 if(UnsafeFieldNames.includes(name)) {
-                    this.raiseError(this.getCurrentLine(), `Property name "${name}" is ambigious with the methods that Record may provide`);
+                    this.raiseError(this.getCurrentLine(), `Property name "${name}" is ambigious with the methods that record may provide`);
                 }
 
                 if(pnames.has(name)) {
@@ -1353,11 +1344,11 @@ class Parser {
                 }
                 pnames.add(name);
 
-                this.ensureAndConsumeToken(":");
+                this.ensureAndConsumeToken(SYM_colon, "record type property type");
                 const rtype = this.parseTypeSignature();
 
                 return [name, rtype];
-            })[0];
+            });
 
             this.clearRecover();
             return new RecordTypeSignature(entries);
@@ -1370,68 +1361,28 @@ class Parser {
 
     private parsePCodeType(): TypeSignature {
         let recursive: "yes" | "no" | "cond" = "no";
-        if (this.testAndConsumeTokenIf("recursive?")) {
+        if (this.testAndConsumeTokenIf(KW_recursive_q)) {
             recursive = "cond";
         }
-        if (this.testAndConsumeTokenIf("recursive")) {
+        if (this.testAndConsumeTokenIf(KW_recursive)) {
             recursive = "yes";
         }
 
-        const ispred = this.testToken("pred");
+        const ispred = this.testToken(KW_pred);
         this.consumeToken();
 
         try {
-            this.setRecover(this.scanMatchingParens("(", ")"));
+            this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
 
-            let fparams: FunctionParameter[] = [];
-            let restName: string | undefined = undefined;
-            let restType: TypeSignature | undefined = undefined;
+            const params = this.parseListOf<TypeSignature>("lambda function parameters", SYM_lparen, SYM_rparen, SYM_coma, () => {
+                return this.parseTypeSignature();
+            });
 
-            const params = this.parseListOf<[string, TypeSignature, boolean, boolean, "ref" | "out" | "out?" | undefined]>("(", ")", ",", () => {
-                const isrest = this.testAndConsumeTokenIf("...");
-                
-                let rref: "ref" | "out" | "out?" | undefined = undefined;
-                if(this.testToken("ref") || this.testToken("out") || this.testToken("out?")) {
-                    rref = this.consumeTokenAndGetValue() as "ref" | "out" | "out?";
-                }
-
-                this.ensureToken(TokenStrings.Identifier);
-                const pname = this.consumeTokenAndGetValue();
-                const isopt = this.testAndConsumeTokenIf("?");
-               
-                this.ensureAndConsumeToken(":");
-                const argtype = this.parseTypeSignature();
-
-                if (rref !== undefined && (isopt || isrest)) {
-                    this.raiseError(this.getCurrentLine(), "Cannot use ref/borrow parameters here");
-                }
-
-                return [pname, argtype, isopt, isrest, rref];
-            })[0];
-
-            for (let i = 0; i < params.length; i++) {
-                if (!params[i][3]) {
-                    fparams.push(new FunctionParameter(params[i][0], params[i][1], params[i][2], params[i][4], undefined, undefined));
-                }
-                else {
-                    if (i + 1 !== params.length) {
-                        this.raiseError(this.getCurrentLine(), "Rest parameter must be last in parameter list");
-                    }
-
-                    restName = params[i][0];
-                    restType = params[i][1];
-                }
-            }
-
-            if (restName !== undefined && params.some((p) => p[2])) {
-                this.raiseError(this.getCurrentLine(), "Cannot have optional and rest parameters in a function type");
-            }
-
-            this.ensureAndConsumeToken("->");
+            this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
             const resultInfo = this.parseResultType(true);
 
             this.clearRecover();
-            return new FunctionTypeSignature(recursive, fparams, restName, restType, resultInfo, ispred);
+            return new FunctionTypeSignature(false, recursive, params, resultInfo, ispred);
         }
         catch (ex) {
             this.processRecover();
@@ -1449,10 +1400,6 @@ class Parser {
     }
 
     private andOfTypeSignatures(t1: TypeSignature, t2: TypeSignature): TypeSignature {
-        if(t1 instanceof PlusTypeSignature || t2 instanceof PlusTypeSignature) {
-            this.raiseError(this.getCurrentLine(), "Cannot mix & and + type combiners");
-        }
-
         const types = [
             ...((t1 instanceof AndTypeSignature) ? t1.types : [t1]),
             ...((t2 instanceof AndTypeSignature) ? t2.types : [t2]),
@@ -1461,188 +1408,120 @@ class Parser {
         return new AndTypeSignature(types);
     }
 
-    private plusOfTypeSignatures(t1: TypeSignature, t2: TypeSignature): TypeSignature {
-        if(t1 instanceof AndTypeSignature || t2 instanceof AndTypeSignature) {
-            this.raiseError(this.getCurrentLine(), "Cannot mix & and + type combiners");
-        }
-
-        const types = [
-            ...((t1 instanceof PlusTypeSignature) ? t1.types : [t1]),
-            ...((t2 instanceof PlusTypeSignature) ? t2.types : [t2]),
-        ];
-
-        return new PlusTypeSignature(types);
-    }
-
     ////
     //Expression parsing
-    private parseArguments(lparen: string, rparen: string): Arguments {
-        const argSrcInfo = this.getCurrentSrcInfo();
-
-        let seenNames = new Set<string>();
-        let args: InvokeArgument[] = [];
+    private parseArguments(lparen: string, rparen: string): Expression[] {
+        let args: Expression[] = [];
 
         try {
             this.setRecover(this.scanMatchingParens(lparen, rparen));
 
-            this.ensureAndConsumeToken(lparen);
+            this.consumeToken();
             while (!this.testAndConsumeTokenIf(rparen)) {
-                const line = this.getCurrentLine();
+                let exp = this.parseExpression();
+                args.push(exp);
 
-                let rref: "ref" | "out" | "out?" | undefined = undefined;
-                if(this.testToken("ref") || this.testToken("out") || this.testToken("out?")) {
-                    rref = this.consumeTokenAndGetValue() as "ref" | "out" | "out?";
-                }
-
-                if (this.testFollows(TokenStrings.Identifier, "=")) {
-                    const name = this.consumeTokenAndGetValue();
-                    this.ensureAndConsumeToken("=");
-                    let exp = this.parseExpression();
-
-                    if (seenNames.has(name)) {
-                        this.raiseError(line, "Cannot have duplicate named argument name");
-                    }
-
-                    if (name === "_") {
-                        this.raiseError(line, `"_" is not a valid named parameter name`);
-                    }
-                    seenNames.add(name);
-
-                    args.push(new NamedArgument(rref, name, exp));
+                if (this.testAndConsumeTokenIf(SYM_coma)) {
+                    this.ensureNotToken(rparen, "argument list after \",\"");
                 }
                 else {
-                    const isSpread = this.testAndConsumeTokenIf("...");
-                    let exp = this.parseExpression();
-
-                    args.push(new PositionalArgument(rref, isSpread, exp));
-                }
-
-                if (this.testAndConsumeTokenIf(",")) {
-                    this.ensureNotToken(rparen);
-                }
-                else {
-                    this.ensureToken(rparen);
+                    this.ensureToken(rparen, "argument list -- maybe missing a \",\"");
                 }
             }
 
             this.clearRecover();
-            return new Arguments(args);
+            return args;
         }
         catch (ex) {
             this.processRecover();
-            return new Arguments([new PositionalArgument(undefined, false, new InvalidExpression(argSrcInfo))]);
+            return [];
         }
     }
 
-    private parseTemplateArguments(): TemplateArguments {
+    private parseTemplateArguments(): TypeSignature[] {
         try {
-            this.setRecover(this.scanMatchingParens("<", ">"));
+            this.setRecover(this.scanMatchingParens(SYM_le, SYM_ge));
             let targs: TypeSignature[] = [];
 
-            this.ensureAndConsumeToken("<");
-            while (!this.testAndConsumeTokenIf(">")) {
+            this.consumeToken();
+            while (!this.testAndConsumeTokenIf(SYM_ge)) {
                 targs.push(this.parseTypeSignature());
 
-                if (this.testAndConsumeTokenIf(",")) {
-                    this.ensureNotToken(">");
+                if (this.testAndConsumeTokenIf(SYM_coma)) {
+                    this.ensureNotToken(SYM_ge, "template argument list after \",\"");
                 }
                 else {
-                    this.ensureToken(">");
+                    this.ensureToken(SYM_ge, "template argument list -- maybe missing a \",\"");
                 }
             }
 
             this.clearRecover();
-            return new TemplateArguments(targs);
+            return targs;
         }
         catch (ex) {
             this.processRecover();
-            return new TemplateArguments([]);
+            return [];
         }
     }
 
     private parseRecursiveAnnotation(): RecursiveAnnotation {
-        try {
-            this.setRecover(this.scanMatchingParens("[", "]"));
-
-            let recursive: "yes" | "no" | "cond" = "no";
-            this.ensureAndConsumeToken("[");
-            while (!this.testAndConsumeTokenIf("]")) {
-                if (!this.testToken("recursive") && !this.testToken("recursive?")) {
-                    this.raiseError(this.getCurrentLine(), "Expected recursive annotation");
-                }
-
-                if (recursive !== "no") {
-                    this.raiseError(this.getCurrentLine(), "Multiple recursive annotations on call");
-                }
-
-                recursive = this.testToken("recursive") ? "yes" : "cond";
-                this.consumeToken();
-
-                if (this.testAndConsumeTokenIf(",")) {
-                    this.ensureNotToken("]");
-                }
-                else {
-                    this.ensureToken("]");
-                }
-            }
-
-            this.clearRecover();
-            return recursive;
+        let recursive: "yes" | "no" | "cond" = "no";
+        
+        this.consumeToken();
+        if (!this.testToken(KW_recursive) && !this.testToken(KW_recursive_q)) {
+            this.raiseError(this.getCurrentLine(), "Expected recursive annotation");
         }
-        catch (ex) {
-            this.processRecover();
-            return "no";
-        }
+
+        this.ensureToken(SYM_rbrack, "recursive annotation");
+         
+        return recursive;
     }
 
     private parseConstructorPrimary(otype: TypeSignature): Expression {
         const sinfo = this.getCurrentSrcInfo();
-        const args = this.parseArguments("{", "}");
+        const args = this.parseArguments(SYM_lbrace, SYM_rbrace);
 
         return new ConstructorPrimaryExpression(sinfo, otype, args);
     }
-
-    private parseConstructorPrimaryWithFactory(otype: TypeSignature, fname: string, targs: TemplateArguments, rec: RecursiveAnnotation): Expression {
-        const sinfo = this.getCurrentSrcInfo();
-        const args = this.parseArguments("{", "}");
-
-        return new ConstructorPrimaryWithFactoryExpression(sinfo, otype, fname, rec, targs, args);
-    }
-
+    
     private parsePCodeTerm(): Expression {
         const line = this.getCurrentLine();
         const sinfo = this.getCurrentSrcInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
-        if(this.testAndConsumeTokenIf("recursive")) {
+        if(this.testAndConsumeTokenIf(KW_recursive)) {
             isrecursive = "yes";
         }
-        else if(this.testAndConsumeTokenIf("recursive?")) {
+        else if(this.testAndConsumeTokenIf(KW_recursive_q)) {
             isrecursive = "cond";
         }
         else {
             isrecursive = "no";
         }
 
-        const ispred = this.testToken("pred");
+        const ispred = this.testToken(KW_pred);
         this.consumeToken();
 
-        const sig = this.parseInvokableCommon(ispred ? InvokableKind.PCodePred : InvokableKind.PCodeFn, false, [], isrecursive, [], undefined);
-        const someAuto = sig.params.some((param) => param.type instanceof AutoTypeSignature) || (sig.optRestType !== undefined && sig.optRestType instanceof AutoTypeSignature) || (sig.resultType instanceof AutoTypeSignature);
-        const allAuto = sig.params.every((param) => param.type instanceof AutoTypeSignature) && (sig.optRestType === undefined || sig.optRestType instanceof AutoTypeSignature) && (sig.resultType instanceof AutoTypeSignature);
+        const sig = this.parseInvokableCommon(ispred ? InvokableKind.PCodePred : InvokableKind.PCodeFn, false, [], isrecursive, [], [...this.m_penv.getCurrentFunctionScope().getBoundTemplates()], undefined, false, undefined);
+        const someAuto = sig.params.some((param) => param.type instanceof AutoTypeSignature) || (sig.resultType instanceof AutoTypeSignature);
+        const allAuto = sig.params.every((param) => param.type instanceof AutoTypeSignature) && (sig.resultType instanceof AutoTypeSignature);
         if (someAuto && !allAuto) {
             this.raiseError(line, "Cannot have mixed of auto propagated and explicit types on lambda arguments/return");
         }
 
-        sig.captureSet.forEach((v) => {
+        sig.captureVarSet.forEach((v) => {
             this.m_penv.useLocalVar(v);
+        });
+
+        sig.captureTemplateSet.forEach((t) => {
+            this.m_penv.useTemplateType(t);
         });
 
         return new ConstructorPCodeExpression(sinfo, allAuto, sig);
     }
 
-    private parseFollowTypeTag(): TypeSignature {
-        this.ensureAndConsumeToken(TokenStrings.FollowTypeSep);
+    private parseFollowTypeTag(incontext: string): TypeSignature {
+        this.ensureAndConsumeToken(TokenStrings.FollowTypeSep, incontext);
 
         if (this.testToken(TokenStrings.Template)) {
             return this.parseTemplateTypeReference();
@@ -1653,87 +1532,30 @@ class Parser {
             let ns: string | undefined = undefined;
             if (this.testToken(TokenStrings.Namespace)) {
                 ns = this.consumeTokenAndGetValue();
-                this.ensureAndConsumeToken("::");
+                this.ensureAndConsumeToken(SYM_coloncolon, "namespace scope resolve");
             }
 
             const tname = this.consumeTokenAndGetValue();
+            const ons = ns;
             ns = this.m_penv.tryResolveNamespace(ns, tname);
             if (ns === undefined) {
-                this.raiseError(line, "Could not resolve namespace");
+                this.raiseError(line, `Could not resolve namespace/type${ns !== undefined ? (" " + ons + SYM_coloncolon + tname) : tname}`);
             }
 
             return new NominalTypeSignature(ns as string, [tname], []);
         }
     }
 
-    private parseFollowTypeConstructor(): TypeSignature {
-        if (this.testToken(TokenStrings.Template)) {
-            return this.parseTemplateTypeReference();
-        }
-        else {
-            const ostype = this.parseNominalType();
-
-            return ostype;
-        }
-    }
-
-    private processPrefixOnLiteralExpressionsIfNeeded(exp: Expression, op: "!" | "+" | "-"): [boolean, Expression] {
-        if(op === "!") {
-            if(exp instanceof LiteralBoolExpression) {
-                return [true, new LiteralBoolExpression(exp.sinfo, !exp.value)];
-            }
-            else {
-                return [false, exp];
-            }
-        }
-        else {
-            if(op === "+") {
-                if(exp instanceof LiteralIntegralExpression) {
-                    return [true, exp];
-                }
-                else if(exp instanceof LiteralNumberinoExpression) {
-                    return [true, exp];
-                }
-                else if(exp instanceof LiteralRationalExpression) {
-                    return [true, exp];
-                }
-                else if(exp instanceof LiteralFloatPointExpression) {
-                    return [true, exp];
-                }
-                else {
-                    return [false, exp];
-                }
-            }
-            else {
-                if(exp instanceof LiteralIntegralExpression) {
-                    return [true, new LiteralIntegralExpression(exp.sinfo, exp.value.startsWith("-") ? exp.value.slice(1) : ("-" + exp.value), exp.itype)];
-                }
-                else if(exp instanceof LiteralNumberinoExpression) {
-                    return [true, new LiteralNumberinoExpression(exp.sinfo, exp.value.startsWith("-") ? exp.value.slice(1) : ("-" + exp.value))];
-                }
-                else if(exp instanceof LiteralRationalExpression) {
-                    return [true, new LiteralRationalExpression(exp.sinfo, exp.value.startsWith("-") ? exp.value.slice(1) : ("-" + exp.value), exp.rtype)];
-                }
-                else if(exp instanceof LiteralFloatPointExpression) {
-                    return [true, new LiteralFloatPointExpression(exp.sinfo, exp.value.startsWith("-") ? exp.value.slice(1) : ("-" + exp.value), exp.fptype)];
-                }
-                else {
-                    return [false, exp];
-                }
-            }
-        }
-    }
-
-    private parseLiteralExpression(): LiteralExpressionValue {
+    private parseLiteralExpression(incontext: string | undefined): LiteralExpressionValue {
         const sinfo = this.getCurrentSrcInfo();
 
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.SpecialAutoSignature, true));
+            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.getCurrentFunctionScope().getBoundTemplates(), this.m_penv.SpecialAutoSignature, true));
             const exp = this.parsePrefixExpression();
             const captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
 
             if(captured.size !== 0) {
-                this.raiseError(sinfo.line, "Cannot reference local variables in constant expression");
+                this.raiseError(sinfo.line, "Cannot reference local variables in literal expression");
             }
 
             this.m_penv.popFunctionScope();
@@ -1750,7 +1572,7 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.SpecialAutoSignature, true));
+            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.getCurrentFunctionScope().getBoundTemplates(), this.m_penv.SpecialAutoSignature, true));
             const exp = this.parseOfExpression();
             const captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
 
@@ -1769,7 +1591,7 @@ class Parser {
     }
 
     private checkTypeScopeBasedExpressionFollowsParens(): boolean {
-        const lpos = this.scanMatchingParens("(", ")");
+        const lpos = this.scanMatchingParens(SYM_lparen, SYM_rparen);
         const ptok = this.peekToken(lpos - this.m_cpos);
 
         return ptok === "::";
@@ -1780,21 +1602,17 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         const tk = this.peekToken();
-        if (tk === "none") {
+        if (tk === KW_none) {
             this.consumeToken();
             return new LiteralNoneExpression(sinfo);
         }
-        else if (tk === "nothing") {
+        else if (tk === KW_nothing) {
             this.consumeToken();
             return new LiteralNothingExpression(sinfo);
         }
-        else if (tk === "true" || tk === "false") {
+        else if (tk === KW_true || tk === KW_false) {
             this.consumeToken();
-            return new LiteralBoolExpression(sinfo, tk === "true");
-        }
-        else if(tk === TokenStrings.Numberino) {
-            const niostr = this.consumeTokenAndGetValue();
-            return new LiteralNumberinoExpression(sinfo, niostr);
+            return new LiteralBoolExpression(sinfo, tk === KW_true);
         }
         else if (tk === TokenStrings.Int) {
             const istr = this.consumeTokenAndGetValue();
@@ -1825,8 +1643,27 @@ class Parser {
             return new LiteralRationalExpression(sinfo, istr, this.m_penv.SpecialRationalSignature);
         }
         else if (tk === TokenStrings.String) {
-            const sstr = this.consumeTokenAndGetValue(); //keep in escaped format
-            return new LiteralStringExpression(sinfo, sstr);
+            const sstr = this.consumeTokenAndGetValue(); //keep in original format
+            if(this.testToken(TokenStrings.FollowTypeSep)) {
+                const ttype = this.parseFollowTypeTag("ASCIIString check");
+                if(ttype)
+                return new LiteralASCIIStringExpression(sinfo, sstr);
+            }
+            else {
+                return new LiteralStringExpression(sinfo, sstr);
+            }
+        }
+        else if (tk === TokenStrings.TypedString) {
+            const sstr = this.consumeTokenAndGetValue(); //keep in original format
+            const ttype = this.parseFollowTypeTag("typed string");
+
+            const args = this.extractStringTemplateArgs(sstr);
+            if(args.length !== 0) {
+                return new LiteralTemplateStringExpression(sinfo, sstr, args, ttype);
+            }
+            else {
+                return new LiteralTypedStringExpression(sinfo, sstr, ttype);
+            }
         }
         else if (tk === TokenStrings.Regex) {
             const restr = this.consumeTokenAndGetValue(); //keep in escaped format
@@ -1838,11 +1675,11 @@ class Parser {
             this.m_penv.assembly.addLiteralRegex(re as BSQRegex);
             return new LiteralRegexExpression(sinfo, re as BSQRegex);
         }
-        else if (tk === "ok" || tk === "err" || tk === "something") {
+        else if (tk === KW_ok || tk === KW_err || tk === KW_something) {
             this.consumeToken();
-            this.ensureAndConsumeToken("(");
+            this.ensureAndConsumeToken("(", tk + " constructor");
             let arg = new LiteralNoneExpression(this.getCurrentSrcInfo());
-            if(tk === "ok" || tk === "something") {
+            if(tk === KW_ok || tk === KW_something) {
                 arg = this.parseExpression();
             }
             else {
@@ -1850,9 +1687,30 @@ class Parser {
                     arg = this.parseExpression();
                 }
             }
-            this.ensureAndConsumeToken(")");
+            this.ensureAndConsumeToken(")", tk + "constructor -- missing closing \")\"?");
 
             return new SpecialConstructorExpression(sinfo, tk, arg);
+        }
+        else if (tk === SYM_percent) {
+            this.consumeToken();
+            const vtype = this.parseTypeSignature();
+            return new LiteralTypeValueExpression(sinfo, vtype);
+        }
+        else if (tk === KW_env) {
+            this.consumeToken();
+
+            let opttype = this.m_penv.SpecialStringSignature;
+            if(this.testAndConsumeTokenIf(SYM_le)) {
+                opttype = this.parseTypeSignature();
+                this.ensureAndConsumeToken(SYM_ge, "");
+            }
+
+            this.ensureAndConsumeToken(SYM_lbrack, "environment access");
+            this.ensureToken(TokenStrings.String, "environment access");
+            const keyname = this.consumeTokenAndGetValue();
+            this.ensureToken(SYM_rbrack, "environment access");
+
+            return new AccessEnvValue(sinfo, keyname, opttype);
         }
         else if (tk === TokenStrings.Identifier) {
             let namestr = this.consumeTokenAndGetValue();
@@ -1862,14 +1720,14 @@ class Parser {
             if (isvar) {
                 const istr = this.m_penv.useLocalVar(namestr);
 
-                if (this.testToken("[")) {
+                if (this.testToken(SYM_lbrack)) {
                     const rec = this.parseRecursiveAnnotation();
-                    const args = this.parseArguments("(", ")");
+                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
                     return new PCodeInvokeExpression(sinfo, istr, rec, args);
                 }
-                else if (this.testToken("(")) {
-                    const args = this.parseArguments("(", ")");
+                else if (this.testToken(SYM_lparen)) {
+                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
                     return new PCodeInvokeExpression(sinfo, istr, "no", args);
                 }
@@ -1882,35 +1740,23 @@ class Parser {
                     this.raiseError(line, `Cannot resolve namespace for "${namestr}"`);
                 }
 
-                const targs = this.testToken("<") ? this.parseTemplateArguments() : new TemplateArguments([]);
-                const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-                const args = this.parseArguments("(", ")");
+                const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
+                const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
+                const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                return new CallNamespaceFunctionOrOperatorExpression(sinfo, tryfunctionns as string, namestr, targs, rec, args, "std");
+                return new CallNamespaceFunctionOrOperatorExpression(sinfo, tryfunctionns as string, namestr, targs, rec, args);
             }
         }
-        else if (tk === TokenStrings.Operator) {
-            const istr = this.consumeTokenAndGetValue();
-            const ns = this.m_penv.tryResolveNamespace(undefined, istr);
-            if (ns === undefined) {
-                this.raiseError(line, "Cannot resolve namespace for invoke");
-            }
-
-            const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-            const args = this.parseArguments("(", ")");
-
-            return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns as string, istr, new TemplateArguments([]), rec, args, "std");
-        }
-        else if (tk === "fn" || this.testFollows("recursive", "fn") || this.testFollows("recursive?", "fn") || tk === "pred" || this.testFollows("recursive", "pred") || this.testFollows("recursive?", "pred")) {
+        else if (tk === KW_fn || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn) || tk === KW_pred || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
             return this.parsePCodeTerm();
         }
-        else if (tk === "(" && !this.checkTypeScopeBasedExpressionFollowsParens()) {
+        else if (tk === SYM_lparen && !this.checkTypeScopeBasedExpressionFollowsParens()) {
             try {
-                this.setRecover(this.scanMatchingParens("(", ")"));
+                this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
 
                 this.consumeToken();
                 const exp = this.parseExpression();
-                this.ensureAndConsumeToken(")");
+                this.ensureAndConsumeToken(SYM_rparen, "(Exp _<- Missing \")\"?");
 
                 this.clearRecover();
                 return exp;
@@ -1920,24 +1766,24 @@ class Parser {
                 return new InvalidExpression(sinfo);
             }
         }
-        else if (this.testToken("[")) {
-            const args = this.parseArguments("[", "]");
+        else if (this.testToken(SYM_lbrack)) {
+            const args = this.parseArguments(SYM_lbrack, SYM_rbrack);
             return new ConstructorTupleExpression(sinfo, args);
         }
-        else if  (this.testToken("{")) {
-            const args = this.parseArguments("{", "}");
+        else if  (this.testToken(SYM_lbrace)) {
+            const args = this.parseArguments(SYM_lbrace, SYM_rbrace);
             return new ConstructorRecordExpression(sinfo, args);
         }
-        else if (this.testToken("(|")) {
-            const args = this.parseArguments("(|", "|)");
+        else if (this.testToken(SYM_lel)) {
+            const args = this.parseArguments(SYM_lel, SYM_rel);
             return new ConstructorEphemeralValueList(sinfo, args);
         }
-        else if (this.testToken("/\\") || this.testToken("\\/")) {
+        else if (this.testToken(SYM_land) || this.testToken(SYM_lor)) {
             const op = this.consumeTokenAndGetValue() as "/\\" | "\\/";
-            const args = this.parseArguments("(", ")");
+            const args = this.parseArguments(SYM_lparen, SYM_rparen);
             return new LogicActionExpression(sinfo, op, args);
         }
-        else if (this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Identifier)) {
+        else if (this.testFollows(TokenStrings.Namespace, SYM_coloncolon, TokenStrings.Identifier)) {
             //it is a namespace access of some type
             let ns: string | undefined = this.consumeTokenAndGetValue();
             this.consumeToken();
@@ -1948,66 +1794,37 @@ class Parser {
                 ns = "[Unresolved Error]";
             }
 
-            if (!this.testToken("<") && !this.testToken("[") && !this.testToken("(")) {
+            if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen)) {
                 //just a constant access
                 return new AccessNamespaceConstantExpression(sinfo, ns, name);
             }
             else {
-                const targs = this.testToken("<") ? this.parseTemplateArguments() : new TemplateArguments([]);
-                const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-                const args = this.parseArguments("(", ")");
+                const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
+                const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
+                const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args, "std");
+                return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args);
             }
-        }
-        else if (this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Operator)) {
-            //it is a namespace access of some type
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            ns = this.m_penv.tryResolveNamespace(ns, name);
-            if (ns === undefined) {
-                ns = "[Unresolved Error]";
-            }
-
-            const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-            const args = this.parseArguments("(", ")");
-
-            return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, new TemplateArguments([]), rec, args, "std");
         }
         else {
             const ttype = this.parseTypeSignature();
+
             if (this.testFollows("::", TokenStrings.Identifier)) {
                 this.consumeToken();
                 const name = this.consumeTokenAndGetValue();
-                if (!this.testToken("<") && !this.testToken("[") && !this.testToken("(") && !this.testToken("{")) {
+                if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen) && !this.testToken(SYM_lbrace)) {
                     //just a static access
                     return new AccessStaticFieldExpression(sinfo, ttype, name);
                 }
                 else {
-                    const targs = this.testToken("<") ? this.parseTemplateArguments() : new TemplateArguments([]);
-                    const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-                    if(this.testToken("{")) {
-                        return this.parseConstructorPrimaryWithFactory(ttype, name, targs, rec);
-                    }
-                    else {
-                        const args = this.parseArguments("(", ")");
-                        return new CallStaticFunctionOrOperatorExpression(sinfo, ttype, name, targs, rec, args, "std");
-                    }
+                    const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
+                    const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
+                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
+                    return new CallStaticFunctionExpression(sinfo, ttype, name, targs, rec, args);
                 }
             }
-            else if (this.testFollows("{")) {
-                if(this.testFollows("{", TokenStrings.TypedString)) {
-                    this.ensureAndConsumeToken("{");
-                    const tstring = this.consumeTokenAndGetValue();
-                    this.ensureAndConsumeToken("}");
-
-                    return new LiteralTypedStringConstructorExpression(sinfo, tstring, ttype)
-                }
-                else {
-                    return this.parseConstructorPrimary(ttype);
-                }
+            else if (this.testFollows(SYM_lbrace)) {
+                return this.parseConstructorPrimary(ttype);
             }
             else {
                 this.raiseError(line, "Unknown token sequence in parsing expression");
@@ -2019,54 +1836,27 @@ class Parser {
     private literalPrefixStackAndTypedConstructorHandler(ops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[]] {
         const sinfo = this.getCurrentSrcInfo();
 
-        if (this.testToken(TokenStrings.TypedString)) {
-            const tstring = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeToken(TokenStrings.FollowTypeSep);
-             
-            const ttype = this.parseFollowTypeConstructor();
-            return [new LiteralTypedStringExpression(sinfo, tstring, ttype), ops];
-        }
-        else {
-            let exp = this.parsePrimaryExpression();
+        let exp = this.parsePrimaryExpression();
+        if (this.testToken(TokenStrings.FollowTypeSep)) {
+            const ttype = this.parseFollowTypeTag("typed primitive");
 
-            let cpos = 0;
-            while(cpos < ops.length) {
-                const op = ops[cpos];
-
-                let done = false;
-                [done, exp] = this.processPrefixOnLiteralExpressionsIfNeeded(exp, op);
-                if (!done) {
-                    break;
-                }
-
-                cpos++;
+            if (exp instanceof LiteralIntegralExpression) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.itype, ttype), ops];
             }
-            
-            const rops = ops.slice(cpos);
-            if (this.testToken(TokenStrings.FollowTypeSep)) {
-                const ttype = this.parseFollowTypeTag();
-
-                if(exp instanceof LiteralIntegralExpression) {
-                    return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.itype, ttype), rops];
-                }
-                else if(exp instanceof LiteralFloatPointExpression) {
-                    return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.fptype, ttype), rops];
-                }
-                else if(exp instanceof LiteralRationalExpression) {
-                    return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.rtype, ttype), rops];
-                }
-                else {
-                    if(!(exp instanceof LiteralNumberinoExpression)) {
-                        this.raiseError(sinfo.line, "Expected literal value -- int, float, rational, or numberino");
-                    }
-
-                    const rexp = exp as LiteralNumberinoExpression;
-                    return [new LiteralTypedPrimitiveConstructorExpression(sinfo, rexp.value, undefined, ttype), rops];
-                }
+            else if (exp instanceof LiteralFloatPointExpression) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.fptype, ttype), ops];
+            }
+            else if (exp instanceof LiteralRationalExpression) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.rtype, ttype), ops];
             }
             else {
-                return [exp, rops];
+                this.raiseError(sinfo.line, "Expected literal value -- int, float, or rational");
+
+                return [new InvalidExpression(sinfo), ops];
             }
+        }
+        else {
+            return [exp, ops];
         }
     }
 
@@ -2158,17 +1948,6 @@ class Parser {
             this.ensureAndConsumeToken(")");
             return new PostfixGetIndexOption(sinfo, idx);
         }
-        else if (name === "getIndexTry") {
-            this.ensureAndConsumeToken("<");
-            const idx = this.parseTupleIndex();
-            this.ensureAndConsumeToken(">");
-            this.ensureAndConsumeToken("(");
-            this.ensureAndConsumeToken("out?");
-            this.ensureToken(TokenStrings.Identifier);
-            const exp = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeToken(")");
-            return new PostfixGetIndexTry(sinfo, idx, exp);
-        }
         else if (name === "getPropertyOrNone") {
             this.ensureAndConsumeToken("<");
             this.ensureToken(TokenStrings.Identifier);
@@ -2186,18 +1965,6 @@ class Parser {
             this.ensureAndConsumeToken("(");
             this.ensureAndConsumeToken(")");
             return new PostfixGetPropertyOption(sinfo, pname);
-        }
-        else if (name === "getPropertyTry") {
-            this.ensureAndConsumeToken("<");
-            this.ensureToken(TokenStrings.Identifier);
-            const pname = this.consumeTokenAndGetValue(); 
-            this.ensureAndConsumeToken(">");
-            this.ensureAndConsumeToken("(");
-            this.ensureAndConsumeToken("out?");
-            this.ensureToken(TokenStrings.Identifier);
-            const exp = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeToken(")");
-            return new PostfixGetPropertyTry(sinfo, pname, exp);
         }
         else {
             this.raiseError(line, "unknown special operation");

@@ -4,8 +4,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { ResolvedType, ResolvedRecordAtomType, ResolvedTupleAtomType, ResolvedAtomType, ResolvedFunctionTypeParam, ResolvedFunctionType, ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedEntityAtomType, ResolvedEphemeralListType, ResolvedTemplateUnifyType } from "./resolved_type";
-import { TemplateTypeSignature, NominalTypeSignature, TypeSignature, TupleTypeSignature, RecordTypeSignature, FunctionTypeSignature, UnionTypeSignature, ParseErrorTypeSignature, AutoTypeSignature, FunctionParameter, ProjectTypeSignature, EphemeralListTypeSignature, PlusTypeSignature, AndTypeSignature } from "./type_signature";
-import { Expression, BodyImplementation, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression, AccessStaticFieldExpression, AccessNamespaceConstantExpression, ConstantExpressionValue, LiteralNumberinoExpression, LiteralTypedStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, LiteralStringExpression, LiteralExpressionValue } from "./body";
+import { TemplateTypeSignature, NominalTypeSignature, TypeSignature, TupleTypeSignature, RecordTypeSignature, FunctionTypeSignature, UnionTypeSignature, ParseErrorTypeSignature, AutoTypeSignature, ProjectTypeSignature, EphemeralListTypeSignature, AndTypeSignature } from "./type_signature";
+import { Expression, BodyImplementation, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression, AccessStaticFieldExpression, AccessNamespaceConstantExpression, ConstantExpressionValue, LiteralTypedStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, LiteralStringExpression, LiteralExpressionValue } from "./body";
 import { SourceInfo } from "./parser";
 
 import * as assert from "assert";
@@ -147,10 +147,9 @@ class InvokeDecl {
     readonly terms: TemplateTermDecl[];
     readonly termRestrictions: TypeConditionRestriction | undefined;
 
+    readonly isThisRef: boolean;
     readonly params: FunctionParameter[];
-    readonly optRestName: string | undefined;
-    readonly optRestType: TypeSignature | undefined;
-
+    
     readonly resultType: TypeSignature;
 
     readonly preconditions: PreConditionDecl[];
@@ -158,10 +157,12 @@ class InvokeDecl {
 
     readonly isPCodeFn: boolean;
     readonly isPCodePred: boolean;
-    readonly captureSet: Set<string>;
+    readonly captureVarSet: Set<string>;
+    readonly captureTemplateSet: Set<string>;
+
     readonly body: BodyImplementation | undefined;
 
-    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], optRestName: string | undefined, optRestType: TypeSignature | undefined, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], isPCodeFn: boolean, isPCodePred: boolean, captureSet: Set<string>, body: BodyImplementation | undefined) {
+    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
         this.namespace = ns;
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
@@ -174,9 +175,8 @@ class InvokeDecl {
         this.terms = terms;
         this.termRestrictions = termRestrictions;
 
+        this.isThisRef = isThisRef;
         this.params = params;
-        this.optRestName = optRestName;
-        this.optRestType = optRestType;
 
         this.resultType = resultType;
 
@@ -185,20 +185,21 @@ class InvokeDecl {
 
         this.isPCodeFn = isPCodeFn;
         this.isPCodePred = isPCodePred;
-        this.captureSet = captureSet;
+        this.captureVarSet = captureVarSet;
+        this.captureTemplateSet = captureTemplateSet;
         this.body = body;
     }
 
     generateSig(): TypeSignature {
-        return new FunctionTypeSignature(this.recursive, [...this.params], this.optRestName, this.optRestType, this.resultType, this.isPCodePred);
+        return new FunctionTypeSignature(this.isThisRef, this.recursive, this.params.map((p) => p.type), this.resultType, this.isPCodePred);
     }
 
-    static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], optRestName: string | undefined, optRestType: TypeSignature | undefined, resultInfo: TypeSignature, captureSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
-        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, [], undefined, params, optRestName, optRestType, resultInfo, [], [], isPCodeFn, isPCodePred, captureSet, body);
+    static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
+        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
     }
 
-    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], optRestName: string | undefined, optRestType: TypeSignature | undefined, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], body: BodyImplementation | undefined) {
-        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, terms, termRestrictions, params, optRestName, optRestType, resultInfo, preconds, postconds, false, false, new Set<string>(), body);
+    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], body: BodyImplementation | undefined) {
+        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, false, false, new Set<string>(), new Set<string>(), body);
     }
 }
 
@@ -235,7 +236,6 @@ class StaticFunctionDecl implements OOMemberDecl {
     readonly srcFile: string;
 
     readonly name: string;
-
     readonly invoke: InvokeDecl;
 
     constructor(sinfo: SourceInfo, srcFile: string, name: string, invoke: InvokeDecl) {
@@ -248,37 +248,6 @@ class StaticFunctionDecl implements OOMemberDecl {
 
     getName(): string {
         return this.name;
-    }
-}
-
-class StaticOperatorDecl implements OOMemberDecl {
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly isPrefix: boolean;
-    readonly isInfix: boolean;
-    readonly isDynamic: boolean;
-    readonly name: string;
-
-    readonly invoke: InvokeDecl;
-
-    constructor(sinfo: SourceInfo, srcFile: string, name: string, invoke: InvokeDecl) {
-        this.sourceLocation = sinfo;
-        this.srcFile = srcFile;
-        this.isPrefix = invoke.attributes.includes("prefix");
-        this.isInfix = invoke.attributes.includes("infix");
-        this.isDynamic = invoke.attributes.includes("dynamic");
-        this.name = name;
-
-        this.invoke = invoke;
-    }
-
-    getName(): string {
-        return this.name;
-    }
-
-    doesKindTagMatch(tag: "prefix" | "infix" | "std"): boolean {
-        return (tag === "prefix" && this.isPrefix) || (tag === "infix" && this.isInfix) || (tag === "std" && !this.isPrefix && !this.isInfix);
     }
 }
 
@@ -290,15 +259,13 @@ class MemberFieldDecl implements OOMemberDecl {
     readonly name: string;
 
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue | undefined;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, value: ConstantExpressionValue | undefined) {
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature) {
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
         this.name = name;
         this.declaredType = dtype;
-        this.value = value;
     }
 
     getName(): string {
@@ -311,14 +278,11 @@ class MemberMethodDecl implements OOMemberDecl {
     readonly srcFile: string;
 
     readonly name: string;
-    readonly refRcvr: boolean;
-
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, name: string, refrcvr: boolean, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
-        this.refRcvr = refrcvr;
         this.name = name;
         this.invoke = invoke;
     }
@@ -345,7 +309,6 @@ class OOPTypeDecl {
 
     readonly staticMembers: StaticMemberDecl[];
     readonly staticFunctions: StaticFunctionDecl[];
-    readonly staticOperators: StaticOperatorDecl[];
     readonly memberFields: MemberFieldDecl[];
     readonly memberMethods: MemberMethodDecl[];
 
@@ -353,7 +316,7 @@ class OOPTypeDecl {
 
     constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], staticOperators: StaticOperatorDecl[],
+        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
         nestedEntityDecls: Map<string, EntityTypeDecl>) {
         this.sourceLocation = sourceLocation;
@@ -367,70 +330,29 @@ class OOPTypeDecl {
         this.validates = validates;
         this.staticMembers = staticMembers;
         this.staticFunctions = staticFunctions;
-        this.staticOperators = staticOperators;
         this.memberFields = memberFields;
         this.memberMethods = memberMethods;
         this.nestedEntityDecls = nestedEntityDecls;
-    }
-
-    isTypeAnExpandoableCollection(): boolean {
-        return ["__list_type", "__stack_type", "__queue_type", "__set_type", "__map_type"].some((otype) => OOPTypeDecl.attributeSetContains(otype, this.attributes));
-    }
-
-    isListType(): boolean {
-        return OOPTypeDecl.attributeSetContains("__list_type", this.attributes);
-    }
-
-    isStackType(): boolean {
-        return OOPTypeDecl.attributeSetContains("__stack_type", this.attributes);
-    }
-
-    isQueueType(): boolean {
-        return OOPTypeDecl.attributeSetContains("__queue_type", this.attributes);
-    }
-
-    isSetType(): boolean {
-        return OOPTypeDecl.attributeSetContains("__set_type", this.attributes);
-    }
-
-    isMapType(): boolean {
-        return OOPTypeDecl.attributeSetContains("__map_type", this.attributes);
-    }
-
-    isInternalType(): boolean { 
-        return this.attributes.includes("__internal"); 
-    }
-    
-    isUniversalConceptType(): boolean { 
-        return this.attributes.includes("__universal"); 
-    }
-
-    isSpecialConstructableEntity(): boolean {
-        return this.attributes.includes("__constructable"); 
-    }
-
-    static attributeSetContains(attr: string, attrSet: string[]): boolean {
-        return attrSet.indexOf(attr) !== -1;
     }
 }
 
 class ConceptTypeDecl extends OOPTypeDecl {
     constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], staticOperators: StaticOperatorDecl[],
+        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
         nestedEntityDecls: Map<string, EntityTypeDecl>) {
-        super(sourceLocation, srcFile, attributes, ns, name, terms, provides, invariants, validates, staticMembers, staticFunctions, staticOperators, memberFields, memberMethods, nestedEntityDecls);
+        super(sourceLocation, srcFile, attributes, ns, name, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntityDecls);
     }
 }
 
 class EntityTypeDecl extends OOPTypeDecl {
     constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], staticOperators: StaticOperatorDecl[],
+        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
         nestedEntityDecls: Map<string, EntityTypeDecl>) {
-        super(sourceLocation, srcFile, attributes, ns, name, terms, provides, invariants, validates, staticMembers, staticFunctions, staticOperators, memberFields, memberMethods, nestedEntityDecls);
+        super(sourceLocation, srcFile, attributes, ns, name, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntityDecls);
     }
 }
 
@@ -2585,7 +2507,7 @@ class Assembly {
 
 export {
     BuildApplicationMode, BuildLevel, isBuildLevelEnabled,
-    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
+    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, FunctionParameter, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, StaticOperatorDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     OOMemberLookupInfo, Assembly
