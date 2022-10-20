@@ -1,9 +1,9 @@
 import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
-import {  } from "./type_signature";
+import { TypeSignature } from "./type_signature";
 import {  } from "./body";
-import {  } from "./assembly";
+import { Assembly, BuildLevel, InvokeDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
 const KW_recursive_q = "recursive?";
@@ -200,6 +200,8 @@ const AttributeStrings = [
 
     "__internal",
     "__typedeclable",
+    "__enumable", 
+    "__litvaluetype",
     "__constructable",
     "__primitive",
     "__typebase",
@@ -913,21 +915,21 @@ class Parser {
         return td as string;
     }
 
-    private ensureToken(kind: string) {
+    private ensureToken(kind: string, contextinfo: string) {
         if (!this.testToken(kind)) {
             const found = this.m_tokens[this.m_cpos].data || this.m_tokens[this.m_cpos].kind;
-            this.raiseError(this.m_tokens[this.m_cpos].line, `Expected "${kind}" but found "${found}"`);
+            this.raiseError(this.m_tokens[this.m_cpos].line, `Expected "${kind}" but found "${found}" when trying to parse: ${contextinfo}`);
         }
     }
 
-    private ensureAndConsumeToken(kind: string) {
-        this.ensureToken(kind);
+    private ensureAndConsumeToken(kind: string, contextinfo: string) {
+        this.ensureToken(kind, contextinfo);
         this.consumeToken();
     }
 
-    private ensureNotToken(kind: string) {
+    private ensureNotToken(kind: string, contextinfo: string) {
         if (this.testToken(kind)) {
-            this.raiseError(this.m_tokens[this.m_cpos].line, `Token "${kind}" is not allowed`);
+            this.raiseError(this.m_tokens[this.m_cpos].line, `Token "${kind}" was not expected when trying to parse: ${contextinfo}`);
         }
     }
 
@@ -955,29 +957,22 @@ class Parser {
         return this.m_epos;
     }
 
-    private parseListOf<T>(start: string, end: string, sep: string, fn: () => T, specialToken?: string): [T[], boolean] {
-        let specialFound = false;
+    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
         let result: T[] = [];
 
-        this.ensureAndConsumeToken(start);
+        this.ensureAndConsumeToken(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end)) {
-            if (specialToken !== undefined && this.testAndConsumeTokenIf(specialToken)) {
-                specialFound = true;
-                this.ensureToken(end);
-            }
-            else {
-                result.push(fn());
-            }
-
+            result.push(fn());
+            
             if (this.testAndConsumeTokenIf(sep)) {
-                this.ensureNotToken(end);
+                this.ensureNotToken(end, `element in ${contextinfobase} list`);
             }
             else {
-                this.ensureToken(end);
+                this.ensureToken(end, `element in ${contextinfobase} list`);
             }
         }
 
-        return [result, specialFound];
+        return result;
     }
 
     private parseEphemeralListOf<T>(fn: () => T): T[] {
@@ -1006,7 +1001,7 @@ class Parser {
     ////
     //Misc parsing
 
-    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef?: "ref" | "out" | "out?" | undefined, optSelfType?: TypeSignature): InvokeDecl {
+    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef?: boolean, optSelfType?: TypeSignature): InvokeDecl {
         const sinfo = this.getCurrentSrcInfo();
         const srcFile = this.m_penv.getCurrentFile();
         const line = this.getCurrentLine();

@@ -73,11 +73,11 @@ __internal entity None provides KeyType, APIType {
 }
 
 //<summary>Primitive boolean value.</summary>
-__internal entity Bool provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype entity Bool provides Some, KeyType, APIType {
 }
 
 //<summary>Primitive integer value.</summary>
-__internal __typedeclable __typebase entity Int provides Some,, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity Int provides Some,, KeyType, APIType {
     method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
     method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
@@ -90,7 +90,7 @@ __internal __typedeclable __typebase entity Int provides Some,, KeyType, APIType
 }
 
 //<summary>Primitive natural number value.</summary>
-__internal __typedeclable __typebase entity Nat provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity Nat provides Some, KeyType, APIType {
     method toBigNat(): BigNat { return NumericOps::s_natToBigNat(this); }
     method toInt(): Int { return NumericOps::s_natToInt(this); }
     method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(NumericOps::s_natToBigNat(this)); }
@@ -103,7 +103,7 @@ __internal __typedeclable __typebase entity Nat provides Some, KeyType, APIType 
 }
 
 //<summary>Primitive big-integer value.</summary>
-__internal __typedeclable __typebase entity BigInt provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity BigInt provides Some, KeyType, APIType {
     method toNat(): Nat { assert(this >= 0I); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(this)); }
     method toBigNat(): BigNat { assert(this >= 0I); return NumericOps::s_bigIntToBigNat(this); }
     method toInt(): Int { return NumericOps::s_bigIntToInt(this); }
@@ -116,7 +116,7 @@ __internal __typedeclable __typebase entity BigInt provides Some, KeyType, APITy
 }
 
 //<summary>Primitive big-integer value.</summary>
-__internal __typedeclable __typebase entity BigNat provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity BigNat provides Some, KeyType, APIType {
     method toNat(): Nat { return NumericOps::s_bigNatToNat(this); }
     method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_bigNatToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(this); }
@@ -218,7 +218,7 @@ __internal __typedeclable __typebase entity Decimal provides Some, APIType {
 }
 
 //<summary>Primitive string value.</summary>
-__internal __typedeclable __typebase entity String provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType, APIType {
     __safe private function s_empty(s: String): Bool = string_empty;
     __assume_safe private function s_concat2(s1: String, s2: String): String = string_append;
 
@@ -282,7 +282,7 @@ __internal __typedeclable __typebase entity String provides Some, KeyType, APITy
 }
 
 //<summary>Primitive safe string value.</summary>
-__internal __constructable __typedeclable entity StringOf<T unique Validator> provides Some, KeyType, APIType {
+__internal __constructable __enumable __litvaluetype __typedeclable entity StringOf<T unique Validator> provides Some, KeyType, APIType {
     private function s_into(s: String): StringOf<T> = special_inject;
     method value(): String = special_extract;
 
@@ -302,7 +302,7 @@ __internal __constructable __typedeclable entity StringOf<T unique Validator> pr
 }
 
 //<summary>Primitive string value.</summary>
-__internal __typedeclable __typebase entity ASCIIString provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIString provides Some, KeyType, APIType {
     __safe private function s_empty(s: ASCIIString): Bool = string_empty;
     __assume_safe private function s_concat2(s1: ASCIIString, s2: ASCIIString): ASCIIString = string_append;
 
@@ -366,7 +366,7 @@ __internal __typedeclable __typebase entity ASCIIString provides Some, KeyType, 
 }
 
 //<summary>Primitive safe string value.</summary>
-__internal __constructable __typedeclable entity ASCIIStringOf<T unique Validator> provides Some, KeyType, APIType {
+__internal __constructable __enumable __litvaluetype __typedeclable entity ASCIIStringOf<T unique Validator> provides Some, KeyType, APIType {
     private function s_into(s: ASCIIString): ASCIIStringOf<T> = special_inject;
     method value(): ASCIIString = special_extract;
 
@@ -476,6 +476,18 @@ __internal __typedeclable __typebase entity UUID7 provides Some, KeyType, APITyp
 
 //<summary>Primitive hash value suitable for content addressable operations or crypto secure digests.</summary>
 __internal __typedeclable __typebase entity SHAContentHash provides Some, KeyType, APIType {
+}
+
+//<summary>Primitive Lat/Long</summary>
+__internal __typedeclable __typebase entity LatLongCoordinate provides Some, APIType {
+    __assume_safe internal function s_create(lat: Float, long: Float): LatLongCoordinate = latlongcoordinate_create;
+
+    function create(lat: Float, long: Float): LatLongCoordinate
+        requires -90.0f <= lat && lat <= 90.0f;
+        requires -180.0f < long && long <= 180.0f;
+    {
+        return LatLongCoordinate::s_create(lat, long);
+    }
 }
 
 //<summary>Primitive regex value.</summary>

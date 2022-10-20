@@ -20,9 +20,13 @@ enum ExpressionTag {
     LiteralStringExpression = "LiteralStringExpression",
     LiteralRegexExpression = "LiteralRegexExpression",
 
+    LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
+    
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
+    AccessEnvValue = "AccessEnvValue",
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
@@ -84,7 +88,7 @@ class LiteralExpressionValue {
     }
 }
 
-//This just holds a constant expression (for use where we expect and constant -- or restricted constant expression) but not a subtype of Expression so we can distinguish as types
+//This just holds a constant expression (for use where we expect a constant -- or restricted constant expression) but not a subtype of Expression so we can distinguish as types
 class ConstantExpressionValue {
     readonly exp: Expression;
     readonly captured: Set<string>;
@@ -142,19 +146,6 @@ class LiteralBoolExpression extends Expression {
     }
 
     isLiteralValueExpression(): boolean {
-        return true;
-    }
-}
-
-class LiteralNumberinoExpression extends Expression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string) {
-        super(ExpressionTag.LiteralNumberinoExpression, sinfo);
-        this.value = value;
-    }
-
-    isCompileTimeInlineValue(): boolean {
         return true;
     }
 }
@@ -234,6 +225,23 @@ class LiteralRegexExpression extends Expression {
     }
 }
 
+class LiteralASCIIStringExpression extends Expression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralASCIIStringExpression, sinfo);
+        this.value = value;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
 class LiteralTypedStringExpression extends Expression {
     readonly value: string;
     readonly stype: TypeSignature;
@@ -241,6 +249,27 @@ class LiteralTypedStringExpression extends Expression {
     constructor(sinfo: SourceInfo, value: string, stype: TypeSignature) {
         super(ExpressionTag.LiteralTypedStringExpression, sinfo);
         this.value = value;
+        this.stype = stype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
+class LiteralTemplateStringExpression extends Expression {
+    readonly value: string;
+    readonly args: Expression[];
+    readonly stype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, args: Expression[], stype: TypeSignature) {
+        super(ExpressionTag.LiteralTemplateStringExpression, sinfo);
+        this.value = value;
+        this.args = args;
         this.stype = stype;
     }
 
@@ -274,14 +303,12 @@ class LiteralTypedPrimitiveConstructorExpression extends Expression {
     }
 }
 
-class LiteralTypedStringConstructorExpression extends Expression {
-    readonly value: string;
-    readonly stype: TypeSignature;
-    
-    constructor(sinfo: SourceInfo, value: string, stype: TypeSignature) {
-        super(ExpressionTag.LiteralTypedStringConstructorExpression, sinfo);
-        this.value = value;
-        this.stype = stype;
+class AccessEnvValue extends Expression {
+    readonly name: ConstantExpressionValue;
+
+    constructor(sinfo: SourceInfo, name: ConstantExpressionValue) {
+        super(ExpressionTag.AccessEnvValue, sinfo);
+        this.name = name;
     }
 }
 
@@ -318,54 +345,37 @@ class AccessVariableExpression extends Expression {
 
 class ConstructorPrimaryExpression extends Expression {
     readonly ctype: TypeSignature;
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, ctype: TypeSignature, args: Arguments) {
+    constructor(sinfo: SourceInfo, ctype: TypeSignature, args: Expression[]) {
         super(ExpressionTag.ConstructorPrimaryExpression, sinfo);
         this.ctype = ctype;
         this.args = args;
     }
 }
 
-class ConstructorPrimaryWithFactoryExpression extends Expression {
-    readonly ctype: TypeSignature;
-    readonly factoryName: string;
-    readonly terms: TemplateArguments;
-    readonly rec: RecursiveAnnotation;
-    readonly args: Arguments;
-
-    constructor(sinfo: SourceInfo, ctype: TypeSignature, factory: string, rec: RecursiveAnnotation, terms: TemplateArguments, args: Arguments) {
-        super(ExpressionTag.ConstructorPrimaryWithFactoryExpression, sinfo);
-        this.ctype = ctype;
-        this.factoryName = factory;
-        this.rec = rec;
-        this.terms = terms;
-        this.args = args;
-    }
-}
-
 class ConstructorTupleExpression extends Expression {
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, args: Arguments) {
+    constructor(sinfo: SourceInfo, args: Expression[]) {
         super(ExpressionTag.ConstructorTupleExpression, sinfo);
         this.args = args;
     }
 }
 
 class ConstructorRecordExpression extends Expression {
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, args: Arguments) {
+    constructor(sinfo: SourceInfo, args: Expression[]) {
         super(ExpressionTag.ConstructorRecordExpression, sinfo);
         this.args = args;
     }
 }
 
 class ConstructorEphemeralValueList extends Expression {
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, args: Arguments) {
+    constructor(sinfo: SourceInfo, args: Expression[]) {
         super(ExpressionTag.ConstructorEphemeralValueList, sinfo);
         this.args = args;
     }
@@ -385,9 +395,9 @@ class ConstructorPCodeExpression extends Expression {
 class PCodeInvokeExpression extends Expression {
     readonly pcode: string;
     readonly rec: RecursiveAnnotation;
-    readonly args: Arguments;
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, pcode: string, rec: RecursiveAnnotation, args: Arguments) {
+    constructor(sinfo: SourceInfo, pcode: string, rec: RecursiveAnnotation, args: Expression[]) {
         super(ExpressionTag.PCodeInvokeExpression, sinfo);
         this.pcode = pcode;
         this.rec = rec;
@@ -1112,13 +1122,13 @@ class BodyImplementation {
 }
 
 export {
-    InvokeArgument, NamedArgument, PositionalArgument, Arguments, TemplateArguments, RecursiveAnnotation, CondBranchEntry, IfElse,
+    RecursiveAnnotation,
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
-    LiteralNumberinoExpression, LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
-    LiteralStringExpression, LiteralRegexExpression, LiteralTypedStringExpression, 
-    LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringConstructorExpression,
-    AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
+    LiteralStringExpression, LiteralRegexExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression,
+    LiteralTypedPrimitiveConstructorExpression,
+    AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorPrimaryWithFactoryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionOrOperatorExpression,

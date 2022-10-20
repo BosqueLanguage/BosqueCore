@@ -696,6 +696,9 @@ class Assembly {
                 }
             }
         }
+
+        xxxx; //env variable
+
         else if (exp instanceof AccessNamespaceConstantExpression) {
             if (!this.hasNamespace(exp.ns)) {
                 return undefined;
