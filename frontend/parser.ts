@@ -232,9 +232,14 @@ const TokenStrings = {
     BigInt: "[LITERAL_BIGINT]",
     BigNat: "[LITERAL_BIGNAT]",
     Rational: "[LITERAL_RATIONAL]",
-    String: "[LITERAL_STRING]",
     Regex: "[LITERAL_REGEX]",
+    
+    String: "[LITERAL_STRING]",
+    ASCIIString: "[LITERAL_ASCII_STRING]",
     TypedString: "[LITERAL_TYPED_STRING]",
+
+    TemplateString: "[LITERAL_TEMPLATE_STRING]",
+    TemplateASCIIString: "[LITERAL_TEMPLATE_ASCII_STRING]",
 
     //Names
     Namespace: "[NAMESPACE]",
@@ -543,12 +548,38 @@ class Lexer {
     }
 
     private static readonly _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
+    private static readonly _s_ascii_stringRe = /ascii{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
     private static readonly _s_typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
+
+    private static readonly _s_template_stringRe = /[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
+    private static readonly _s_ascii_template_stringRe = /ascii{[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
+
     private tryLexString() {
+        Lexer._s_template_stringRe.lastIndex = this.m_cpos;
+        const template_string_m = Lexer._s_template_stringRe.exec(this.m_input);
+        if (template_string_m !== null) {
+            this.recordLexTokenWData(this.m_cpos + template_string_m[0].length, TokenStrings.TemplateString, template_string_m[0]);
+            return true;
+        }
+
+        Lexer._s_ascii_template_stringRe.lastIndex = this.m_cpos;
+        const ascii_template_string_m = Lexer._s_ascii_template_stringRe.exec(this.m_input);
+        if (ascii_template_string_m !== null) {
+            this.recordLexTokenWData(this.m_cpos + ascii_template_string_m[0].length, TokenStrings.TemplateASCIIString, ascii_template_string_m[0]);
+            return true;
+        }
+
         Lexer._s_stringRe.lastIndex = this.m_cpos;
         const ms = Lexer._s_stringRe.exec(this.m_input);
         if (ms !== null) {
             this.recordLexTokenWData(this.m_cpos + ms[0].length, TokenStrings.String, ms[0]);
+            return true;
+        }
+
+        Lexer._s_ascii_stringRe.lastIndex = this.m_cpos;
+        const mas = Lexer._s_ascii_stringRe.exec(this.m_input);
+        if (mas !== null) {
+            this.recordLexTokenWData(this.m_cpos + mas[0].length, TokenStrings.ASCIIString, mas[0]);
             return true;
         }
 
