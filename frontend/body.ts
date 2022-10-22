@@ -22,12 +22,15 @@ enum ExpressionTag {
     LiteralIntegralExpression = "LiteralIntegralExpression",
     LiteralRationalExpression = "LiteralRationalExpression",
     LiteralFloatPointExpression = "LiteralFloatExpression",
-    LiteralStringExpression = "LiteralStringExpression",
     LiteralRegexExpression = "LiteralRegexExpression",
 
+    LiteralStringExpression = "LiteralStringExpression",
     LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
+    
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
+    LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
     
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
@@ -267,14 +270,27 @@ class LiteralTypedStringExpression extends Expression {
 
 class LiteralTemplateStringExpression extends Expression {
     readonly value: string;
-    readonly args: Expression[];
-    readonly stype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: string, args: Expression[], stype: TypeSignature) {
+    constructor(sinfo: SourceInfo, value: string) {
         super(ExpressionTag.LiteralTemplateStringExpression, sinfo);
         this.value = value;
-        this.args = args;
-        this.stype = stype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
+class LiteralASCIITemplateStringExpression extends Expression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(ExpressionTag.LiteralASCIITemplateStringExpression, sinfo);
+        this.value = value;
     }
 
     isCompileTimeInlineValue(): boolean {
@@ -682,12 +698,11 @@ class PostfixInvoke extends PostfixOperation {
     readonly specificResolve: TypeSignature | undefined;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
-    readonly terms: TemplateArguments;
-    readonly args: Arguments;
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isBinder: boolean, specificResolve: TypeSignature | undefined, name: string, terms: TemplateArguments, rec: RecursiveAnnotation, args: Arguments) {
+    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
-        this.isBinder = isBinder;
         this.specificResolve = specificResolve;
         this.name = name;
         this.rec = rec;
@@ -1115,7 +1130,7 @@ export {
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
-    LiteralStringExpression, LiteralRegexExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression,
+    LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression,
     AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 

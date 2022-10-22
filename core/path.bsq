@@ -59,6 +59,8 @@ __internal __constructable __enumable __typedeclable entity Path<T unique PathVa
             return Path<T>::s_into(s);
         }
     }
+
+    function interpolate(): Path<T> = special_method;
 }
 
 /*
@@ -83,6 +85,8 @@ __internal __constructable __typedeclable entity PathFragment<T unique PathValid
             return Path<T>::s_into(s);
         }
     }
+
+    function interpolate(): PathFragment = special_method;
 }
 
 //<summary>Primitive safe string value.</summary>
@@ -105,4 +109,6 @@ __internal __constructable __typedeclable entity PathGlob<T unique PathValidator
     }
     //can have *, **, ? (a dot), [a-b]*+{x-y}, (A | B) in each component otherwise must match PathValidator path components
     //any parameters must be in a top-level position (i.e. not nested in a repitition contruct or range)
+
+    function interpolate(): PathGlob = special_method;
 }

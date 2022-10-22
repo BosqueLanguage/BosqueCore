@@ -247,6 +247,8 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
         return String::s_concat2(s, this);
     }
 
+    function interpolate(): String = special_method;
+
     /*
     method startsWith(v: String | Regex): Bool {
         use RE(.*)
@@ -330,6 +332,8 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIStrin
     method prepend(s: ASCIIString): ASCIIString {
         return ASCIIString::s_concat2(s, this);
     }
+
+    function interpolate(): ASCIIString = special_method;
 
     /*
     method startsWith(v: String | Regex): Bool {
