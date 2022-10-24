@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNotOp, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
+import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinDivExpression, BinMultExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -1825,7 +1825,12 @@ class Parser {
         else if (this.testToken(SYM_land) || this.testToken(SYM_lor)) {
             const op = this.consumeTokenAndGetValue() as "/\\" | "\\/";
             const args = this.parseArguments(SYM_lparen, SYM_rparen);
-            return new LogicActionExpression(sinfo, op, args);
+            if(op === SYM_land) {
+                return new LogicActionAndExpression(sinfo, args);
+            }
+            else {
+                return new LogicActionOrExpression(sinfo, args);
+            }
         }
         else if (this.testFollows(TokenStrings.Namespace, SYM_coloncolon, TokenStrings.Identifier)) {
             //it is a namespace access of some type
@@ -1853,7 +1858,7 @@ class Parser {
         else {
             const ttype = this.parseTypeSignature();
 
-            if (this.testFollows("::", TokenStrings.Identifier)) {
+            if (this.testFollows(SYM_coloncolon, TokenStrings.Identifier)) {
                 this.consumeToken();
                 const name = this.consumeTokenAndGetValue();
                 if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen) && !this.testToken(SYM_lbrace)) {
@@ -2054,7 +2059,7 @@ class Parser {
                         ops.push(new PostfixAccessFromName(sinfo, name));
                     }
                     else {
-                        if (this.testToken("<")) {
+                        if (this.testToken(SYM_le)) {
                             const nextnonlptokenidx = this.peekToken(1) === SYM_lparen ? this.scanLParens(this.m_cpos + 1) : this.m_cpos + 1;
                             if(nextnonlptokenidx === this.m_epos) {
                                 this.raiseError(this.getCurrentLine(), "Truncated statement?");
@@ -2117,12 +2122,14 @@ class Parser {
         for (let i = 0; i < remainingops.length; ++i) {
             const op = remainingops[i];
 
-            if (op === "!") {
+            if (op === SYM_bang) {
                 exp = new PrefixNotOp(sinfo, exp);
             }
+            else if (op === SYM_minus) {
+                exp = new PrefixNegateOp(sinfo, exp);
+            }
             else {
-                const arg = new PositionalArgument(undefined, false, exp);
-                return new CallNamespaceFunctionOrOperatorExpression(sinfo, "Core" as string, op, new TemplateArguments([]), "no", new Arguments([arg]), "prefix");
+                return exp;
             }
         }
 
@@ -2133,7 +2140,7 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         let ops:  ("!" | "+" | "-")[] = [];
-        while(this.testToken("!") || this.testToken("+") || this.testToken("-")) {
+        while(this.testToken(SYM_bang) || this.testToken(SYM_plus) || this.testToken(SYM_minus)) {
             ops.push(this.consumeTokenAndGetValue() as "!" | "+" | "-");
         }
 
@@ -2141,7 +2148,7 @@ class Parser {
     }
 
     private isMultiplicativeFollow(): boolean {
-        if(this.testToken("*") || this.testToken("/")) {
+        if(this.testToken(SYM_times) || this.testToken(SYM_div)) {
             return true;
         }
         else {
@@ -2161,9 +2168,14 @@ class Parser {
             while (this.isMultiplicativeFollow()) {
                 const op = this.consumeTokenAndGetValue();
 
-                const lhs = new PositionalArgument(undefined, false, aexp);
-                const rhs = new PositionalArgument(undefined, false, this.parsePrefixExpression());
-                aexp = new CallNamespaceFunctionOrOperatorExpression(sinfo, "Core" as string, op, new TemplateArguments([]), "no", new Arguments([lhs, rhs]), "infix");
+                const lhs = aexp;
+                const rhs = this.parsePrefixExpression();
+                if(op === SYM_times) {
+                    return new BinMultExpression(sinfo, lhs, rhs);
+                }
+                else {
+                    return new BinDivExpression(sinfo, lhs, rhs);
+                }
             }
 
             return aexp;
@@ -2171,7 +2183,7 @@ class Parser {
     }
 
     private isAdditiveFollow(): boolean {
-        if(this.testToken("+") || this.testToken("-")) {
+        if(this.testToken(SYM_plus) || this.testToken(SYM_minus)) {
             return true;
         }
         else {

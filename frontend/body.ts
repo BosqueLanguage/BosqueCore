@@ -52,14 +52,25 @@ enum ExpressionTag {
     CallNamespaceFunctionOrOperatorExpression = "CallNamespaceFunctionOrOperatorExpression",
     CallStaticFunctionExpression = "CallStaticFunctionExpression",
 
-    LogicActionExpression = "LogicActionExpression",
+    LogicActionAndExpression = "LogicActionAndExpression",
+    LogicActionOrExpression = "LogicActionOrExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
     PrefixNotOpExpression = "PrefixNotOpExpression",
-    
-    BinKeyExpression = "BinKeyExpression",
-    BinLogicExpression = "BinLogicExpression",
+    PrefixNegateOpExpression = "PrefixNegateOpExpression",
+
+    BinAddExpression = "BinAddExpression",
+    BinSubExpression = "BinSubExpression",
+    BinMultExpression = "BinMultExpression",
+    BinDivExpression = "BinDivExpression",
+
+    BinKeyEqExpression = "BinKeyEqExpression",
+    BinKeyNeqExpression = "BinKeyNeqExpression",
+
+    BinLogicAndExpression = "BinLogicAndExpression",
+    BinLogicOrExpression = "BinLogicOrExpression",
+    BinLogicImpliesExpression = "BinLogicImpliesExpression",
 
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
@@ -489,13 +500,20 @@ class CallStaticFunctionExpression extends Expression {
     }
 }
 
-class LogicActionExpression extends Expression {
-    readonly opkind: "/\\" | "\\/";
+class LogicActionAndExpression extends Expression {
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, opkind: "/\\" | "\\/", args: Expression[]) {
-        super(ExpressionTag.LogicActionExpression, sinfo);
-        this.opkind = opkind;
+    constructor(sinfo: SourceInfo, args: Expression[]) {
+        super(ExpressionTag.LogicActionAndExpression, sinfo);
+        this.args = args;
+    }
+}
+
+class LogicActionOrExpression extends Expression {
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, args: Expression[]) {
+        super(ExpressionTag.LogicActionOrExpression, sinfo);
         this.args = args;
     }
 }
@@ -720,28 +738,111 @@ class PrefixNotOp extends Expression {
     }
 }
 
-class BinKeyExpression extends Expression {
+class PrefixNegateOp extends Expression {
+    readonly exp: Expression;
+
+    constructor(sinfo: SourceInfo, exp: Expression) {
+        super(ExpressionTag.PrefixNegateOpExpression, sinfo);
+        this.exp = exp;
+    }
+}
+
+class BinAddExpression extends Expression {
     readonly lhs: Expression;
-    readonly op: string; //===, !==
     readonly rhs: Expression;
 
-    constructor(sinfo: SourceInfo, lhs: Expression, op: string, rhs: Expression) {
-        super(ExpressionTag.BinKeyExpression, sinfo);
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinAddExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinSubExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinSubExpression, sinfo);
         this.lhs = lhs;
         this.op = op;
         this.rhs = rhs;
     }
 }
 
-class BinLogicExpression extends Expression {
+class BinMultExpression extends Expression {
     readonly lhs: Expression;
-    readonly op: string; //==>, &&, ||
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinMultExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinDivExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinDivExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinKeyEqExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinKeyEqExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinKeyNeqExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinKeyNEeqExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinLogicAndxpression extends Expression {
+    readonly lhs: Expression;
     readonly rhs: Expression;
 
     constructor(sinfo: SourceInfo, lhs: Expression, op: string, rhs: Expression) {
-        super(ExpressionTag.BinLogicExpression, sinfo);
+        super(ExpressionTag.BinLogicAndExpression, sinfo);
         this.lhs = lhs;
-        this.op = op;
+        this.rhs = rhs;
+    }
+}
+
+class BinLogicOrExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinLogicOrExpression, sinfo);
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+}
+
+class BinLogicImpliesExpression extends Expression {
+    readonly lhs: Expression;
+    readonly rhs: Expression;
+
+    constructor(sinfo: SourceInfo, lhs: Expression, op: string, rhs: Expression) {
+        super(ExpressionTag.BinLogicImpliesExpression, sinfo);
+        this.lhs = lhs;
         this.rhs = rhs;
     }
 }
@@ -1136,13 +1237,15 @@ export {
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
-    LogicActionExpression,
+    LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames, PostfixModifyWithIndecies, PostfixModifyWithNames,
-    PostfixIs, PostfixAs, PostfixHasIndex, PostfixHasProperty, PostfixGetIndexOrNone, PostfixGetIndexOption , PostfixGetIndexTry, PostfixGetPropertyOrNone, PostfixGetPropertyOption, PostfixGetPropertyTry,
+    PostfixAccessFromIndex, PostfixAccessFromName,
+    PostfixIs, PostfixAs, PostfixHasIndex, PostfixHasProperty, PostfixGetIndexOrNone, PostfixGetIndexOption, PostfixGetPropertyOrNone, PostfixGetPropertyOption,
     PostfixInvoke, PCodeInvokeExpression,
-    PrefixNotOp, 
-    BinKeyExpression, BinLogicExpression,
+    PrefixNotOp, PrefixNegateOp,
+    BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
+    BinKeyEqExpression, BinKeyNeqExpression, 
+    BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
     SelectExpression, ExpOrExpression,
     BlockStatementExpression, IfExpression, SwitchExpression, MatchExpression,
