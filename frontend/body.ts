@@ -34,6 +34,7 @@ enum ExpressionTag {
 
     LiteralTypeValueExpression = "LiteralTypeValueExpression",
 
+    AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -353,6 +354,17 @@ class LiteralTypeValueExpression extends Expression {
 
     isLiteralValueExpression(): boolean {
         return true;
+    }
+}
+
+class AccessFormatInfo extends Expression {
+    readonly namespace: string;
+    readonly keyname: string;
+
+    constructor(sinfo: SourceInfo, namespace: string, keyname: string) {
+        super(ExpressionTag.AccessFormatInfo, sinfo);
+        this.namespace = namespace;
+        this.keyname = keyname;
     }
 }
 
@@ -886,10 +898,10 @@ class MatchExpression extends Expression {
     readonly sval: Expression;
     readonly matchflow: {mtype: TypeSignature | undefined, value: Expression}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: MatchEntry<Expression>[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: Expression}[]) {
         super(ExpressionTag.MatchExpression, sinfo);
         this.sval = sval;
-        this.flow = flow;
+        this.matchflow = flow;
     }
 }
 
@@ -906,7 +918,6 @@ enum StatementTag {
     StructuredVariableAssignmentStatement = "StructuredVariableAssignmentStatement",
 
     ReturnStatement = "ReturnStatement",
-    YieldStatement = "YieldStatement",
 
     IfElseStatement = "IfElseStatement",
     SwitchStatement = "SwitchStatement",
@@ -914,10 +925,31 @@ enum StatementTag {
 
     AbortStatement = "AbortStatement",
     AssertStatement = "AssertStatement", //assert(x > 0)
-    ValidateStatement = "ValidateStatement", //validate exp else err -> if (!exp) return Result<INVOKE_RESULT>@error(err);
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
-    NakedCallStatement = "NakedCallStatement",
+    RefCallStatement = "RefCallStatement",
+
+    TaskRunSingleStatement = "TaskRunSingleStatement",
+    TaskRunSetStatement = "TaskRunSetStatement",
+    TaskRunAllStatement = "TaskRunAllStatement",
+    TaskRunRaceStatement = "TaskRunAllStatement",
+
+    TaskCallWithStatement = "TaskCallWithStatement",
+    TaskResultWithStatement = "TaskResultWithStatement",
+
+    TaskCancelRequestedStatement = "TaskCancelRequested",
+    TaskStatusStatement = "TaskStatusStatement",
+    
+    EventsEmitStatement = "EventsEmitStatement",
+    EventsEmitBracketStatement = "EventsEmitBracketStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerControlStatement = "LoggerControlStatement",
+    LoggerChildLoggeroggerStatement = "LoggerChildLoggerStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+    LoggerEmitBracketStatement = "LoggerEmitBracketStatement",
+    LoggerControlBracketStatement = "LoggerEmitControlBracketStatement",
+    LoggerChildLoggerBracketStatement = "LoggerChildLoggerBracketStatement",
 
     BlockStatement = "BlockStatement"
 }
@@ -1090,15 +1122,6 @@ class ReturnStatement extends Statement {
     }
 }
 
-class YieldStatement extends Statement {
-    readonly values: Expression[];
-
-    constructor(sinfo: SourceInfo, values: Expression[]) {
-        super(StatementTag.YieldStatement, sinfo);
-        this.values = values;
-    }
-}
-
 class IfElseStatement extends Statement {
     readonly flow: IfElse<BlockStatement>;
 
@@ -1147,17 +1170,6 @@ class AssertStatement extends Statement {
     }
 }
 
-class ValidateStatement extends Statement {
-    readonly cond: Expression;
-    readonly err: Expression;
-
-    constructor(sinfo: SourceInfo, cond: Expression, err: Expression) {
-        super(StatementTag.ValidateStatement, sinfo);
-        this.cond = cond;
-        this.err = err;
-    }
-}
-
 class DebugStatement extends Statement {
     readonly value: Expression | undefined;
 
@@ -1167,14 +1179,36 @@ class DebugStatement extends Statement {
     }
 }
 
-class NakedCallStatement extends Statement {
-    readonly call: CallNamespaceFunctionOrOperatorExpression | CallStaticFunctionOrOperatorExpression;
+class RefCallStatement extends Statement {
+    readonly call: PostfixOp;
 
-    constructor(sinfo: SourceInfo, call: CallNamespaceFunctionOrOperatorExpression | CallStaticFunctionOrOperatorExpression) {
-        super(StatementTag.NakedCallStatement, sinfo);
+    constructor(sinfo: SourceInfo, call: PostfixOp) {
+        super(StatementTag.RefCallStatement, sinfo);
         this.call = call;
     }
 }
+
+    TaskRunSingleStatement = "TaskRunSingleStatement",
+    TaskRunSetStatement = "TaskRunSetStatement",
+    TaskRunAllStatement = "TaskRunAllStatement",
+    TaskRunRaceStatement = "TaskRunAllStatement",
+
+    TaskCallWithStatement = "TaskCallWithStatement",
+    TaskResultWithStatement = "TaskResultWithStatement",
+
+    TaskCancelRequestedStatement = "TaskCancelRequested",
+    TaskStatusStatement = "TaskStatusStatement",
+    
+    EventsEmitStatement = "EventsEmitStatement",
+    EventsEmitBracketStatement = "EventsEmitBracketStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerControlStatement = "LoggerControlStatement",
+    LoggerChildLoggeroggerStatement = "LoggerChildLoggerStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+    LoggerEmitBracketStatement = "LoggerEmitBracketStatement",
+    LoggerControlBracketStatement = "LoggerEmitControlBracketStatement",
+    LoggerChildLoggerBracketStatement = "LoggerChildLoggerBracketStatement",
 
 class BlockStatement extends Statement {
     readonly statements: Statement[];
@@ -1204,7 +1238,7 @@ export {
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
     LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression,
-    AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    AccessFormatInfo, AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
@@ -1219,14 +1253,13 @@ export {
     NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
-    SelectExpression, ExpOrExpression,
-    BlockStatementExpression, IfExpression, SwitchExpression, MatchExpression,
+    IfExpression, SwitchExpression, MatchExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, VariablePackDeclarationStatement, VariableAssignmentStatement, VariablePackAssignmentStatement,
     StructuredAssignment, StructuredAssignementPrimitive, IgnoreTermStructuredAssignment, VariableDeclarationStructuredAssignment, VariableAssignmentStructuredAssignment, StructuredVariableAssignmentStatement, 
     TupleStructuredAssignment, RecordStructuredAssignment, NominalStructuredAssignment, ValueListStructuredAssignment,
-    ReturnStatement, YieldStatement,
-    IfElseStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement, NakedCallStatement,
+    ReturnStatement,
+    IfElseStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,
     BlockStatement, BodyImplementation
 };

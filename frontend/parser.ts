@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, SwitchExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -75,10 +75,9 @@ const SYM_lbrace = "{";
 const SYM_rbrack = "]";
 const SYM_rparen = ")";
 const SYM_rbrace = "}";
-const SYM_lel = "(|";
-const SYM_rel = "|)";
 
 const SYM_percent = "%";
+const SYM_hash = "%";
 const SYM_amp = "&";
 const SYM_ampamp = "&&";
 const SYM_bang = "!";
@@ -116,10 +115,9 @@ const SymbolStrings = [
     SYM_rbrack,
     SYM_rparen,
     SYM_rbrace,
-    SYM_lel,
-    SYM_rel,
 
     SYM_percent,
+    SYM_hash,
     SYM_amp,
     SYM_bang,
     SYM_ampamp,
@@ -161,7 +159,6 @@ const RegexFollows = new Set<string>([
     SYM_lbrack,
     SYM_lparen,
     SYM_lbrace,
-    SYM_lel,
     SYM_ampamp,
     SYM_bang,
     SYM_bangeq,
@@ -183,8 +180,8 @@ const RegexFollows = new Set<string>([
     SYM_div
 ]);
 
-const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lel];
-const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rel];
+const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace];
+const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace];
 
 const AttributeStrings = [
     "abstract",
@@ -1177,28 +1174,17 @@ class Parser {
     ////
     //Type parsing
 
-    private parseResultType(parensreq: boolean): TypeSignature {
-        if (this.testAndConsumeTokenIf(SYM_lel)) {
+    private parseResultType(ispcode: boolean): TypeSignature {
+        if(ispcode) {
+            return this.parseTypeSignature();
+        }
+        else {
             const decls = this.parseEphemeralListOf(() => {
                 const tdecl = this.parseTypeSignature();
                 return tdecl;
             });
-
-            this.ensureAndConsumeToken(SYM_rel, "ephemeral list (mismatched parens?)");
-            return new EphemeralListTypeSignature(decls);
-        }
-        else {
-            if(parensreq) {
-                return this.parseTypeSignature();
-            }
-            else {
-                const decls = this.parseEphemeralListOf(() => {
-                    const tdecl = this.parseTypeSignature();
-                    return tdecl;
-                });
     
-                return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
-            }
+            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
         }
     } 
 
@@ -1818,10 +1804,6 @@ class Parser {
             const args = this.parseArguments(SYM_lbrace, SYM_rbrace);
             return new ConstructorRecordExpression(sinfo, args);
         }
-        else if (this.testToken(SYM_lel)) {
-            const args = this.parseArguments(SYM_lel, SYM_rel);
-            return new ConstructorEphemeralValueList(sinfo, args);
-        }
         else if (this.testToken(SYM_land) || this.testToken(SYM_lor)) {
             const op = this.consumeTokenAndGetValue() as "/\\" | "\\/";
             const args = this.parseArguments(SYM_lparen, SYM_rparen);
@@ -1854,6 +1836,19 @@ class Parser {
 
                 return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args);
             }
+        }
+        else if (this.testFollows(TokenStrings.Namespace, SYM_hash, TokenStrings.Identifier)) {
+            //it is a namespace access of some formatter info
+            let ns: string | undefined = this.consumeTokenAndGetValue();
+            this.consumeToken();
+            const name = this.consumeTokenAndGetValue();
+
+            ns = this.m_penv.tryResolveNamespace(ns, name);
+            if (ns === undefined) {
+                ns = "[Unresolved Error]";
+            }
+
+            return new AccessFormatInfo(sinfo, ns, name);
         }
         else {
             const ttype = this.parseTypeSignature();
@@ -2306,85 +2301,120 @@ class Parser {
         let conds: {cond: Expression, value: Expression}[] = [];
 
         this.consumeToken();
-        this.ensureAndConsumeToken("(");
+        this.ensureAndConsumeToken(SYM_lparen, "if expression test condition");
         const iftest = this.parseExpression();
-        this.ensureAndConsumeToken(")");
+        this.ensureAndConsumeToken(SYM_rparen, "if expression test condition");
 
-        this.ensureAndConsumeToken(KW_then)
+        this.ensureAndConsumeToken(KW_then, "if expression value")
         const ifbody = this.parseExpression();
-        conds.push(new CondBranchEntry<Expression>(iftest, ifbody));
+        conds.push({ cond: iftest, value: ifbody });
 
-        while (this.testAndConsumeTokenIf("elif")) {
-            this.ensureAndConsumeToken("(");
+        while (this.testAndConsumeTokenIf(KW_elif)) {
+            this.ensureAndConsumeToken(SYM_lparen, "elif expression test condition");
             const eliftest = this.parseExpression();
-            this.ensureAndConsumeToken(")");
+            this.ensureAndConsumeToken(SYM_rparen, "elif expression test condition");
 
-            this.ensureAndConsumeToken(KW_then)
+            this.ensureAndConsumeToken(KW_then, "elif expression value")
             const elifbody = this.parseExpression();
 
-            conds.push(new CondBranchEntry<Expression>(eliftest, elifbody));
+            conds.push({ cond: eliftest, value: elifbody });
         }
 
-        this.ensureAndConsumeToken("else");
+        this.ensureAndConsumeToken(KW_else, "if expression else value");
         const elsebody = this.parseExpression();
 
-        return new IfExpression(sinfo, new IfElse<Expression>(conds, elsebody));
+        return new IfExpression(sinfo, conds, elsebody);
+    }
+
+    private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
+        if (this.testToken(TokenStrings.Identifier)) {
+            const tv = this.consumeTokenAndGetValue();
+            if (tv !== "_") {
+                this.raiseError(this.getCurrentSrcInfo().line, "Expected wildcard match");
+            }
+
+            return undefined;
+        }
+        else {
+            return this.parseLiteralExpression("switch literal guard");
+        }
     }
 
     private parseSwitchExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
 
-        this.ensureAndConsumeToken("switch");
+        this.ensureAndConsumeToken(KW_switch, "switch expression dispatch value");
 
-        this.ensureAndConsumeToken("(");
+        this.ensureAndConsumeToken(SYM_lparen, "switch expression dispatch value");
         const mexp = this.parseExpression();
-        this.ensureAndConsumeToken(")");
+        this.ensureAndConsumeToken(SYM_rparen, "switch expression dispatch value");
 
-        try {
-            this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$switch", `$switch_@${sinfo.pos}`, true);
-            
-            let entries: SwitchEntry<Expression>[] = [];
-            this.ensureAndConsumeToken("{|");
-            entries.push(this.parseSwitchEntry<Expression>(this.getCurrentSrcInfo(), "|}", () => this.parseExpression()));
-            while (this.testToken("|")) {
-                entries.push(this.parseSwitchEntry<Expression>(this.getCurrentSrcInfo(), "|}", () => this.parseExpression()));
-            }
-            this.ensureAndConsumeToken("|}");
+        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression }[] = [];
+        this.ensureAndConsumeToken(SYM_lbrace, "switch expression options");
+        
+        const swlit = this.parseSwitchLiteralGuard();
+        this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+        const swvalue = this.parseExpression();
 
-            return new SwitchExpression(sinfo, mexp, entries);
+        entries.push({ condlit: swlit, value: swvalue });
+        while (this.testToken(SYM_bar)) {
+            this.consumeToken();
+
+            const swlitx = this.parseSwitchLiteralGuard();
+            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+            const swvaluex = this.parseExpression();
+
+            entries.push({ condlit: swlitx, value: swvaluex });
         }
-        finally {
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
+        this.ensureAndConsumeToken(SYM_rbrace, "switch expression options");
+
+        return new SwitchExpression(sinfo, mexp, entries);
+    }
+
+    private parseMatchTypeGuard(): TypeSignature | undefined {
+        if (this.testToken(TokenStrings.Identifier)) {
+            const tv = this.consumeTokenAndGetValue();
+            if (tv !== "_") {
+                this.raiseError(this.getCurrentSrcInfo().line, "Expected wildcard match");
+            }
+
+            return undefined;
+        }
+        else {
+            return this.parseTypeSignature();
         }
     }
 
     private parseMatchExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
 
-        this.ensureAndConsumeToken("match");
+        this.ensureAndConsumeToken(KW_match, "match expression dispatch value");
 
-        this.ensureAndConsumeToken("(");
+        this.ensureAndConsumeToken(SYM_lparen, "match expression dispatch value");
         const mexp = this.parseExpression();
-        this.ensureAndConsumeToken(")");
+        this.ensureAndConsumeToken(SYM_rparen, "match expression dispatch value");
+ 
+        let entries: { mtype: TypeSignature | undefined, value: Expression }[] = [];
+        this.ensureAndConsumeToken(SYM_lbrace, "switch expression options");
 
-        try {
-            this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$match", `$match_@${sinfo.pos}`, true);
+        const mtype = this.parseMatchTypeGuard();
+        this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+        const mvalue = this.parseExpression();
+
+        entries.push({ mtype: mtype, value: mvalue });
+        while (this.testToken(SYM_bar)) {
+            this.consumeToken();
             
-            let entries: MatchEntry<Expression>[] = [];
-            this.ensureAndConsumeToken("{|");
-            entries.push(this.parseMatchEntry<Expression>(this.getCurrentSrcInfo(), "|}", () => this.parseExpression()));
-            while (this.testToken("|")) {
-                entries.push(this.parseMatchEntry<Expression>(this.getCurrentSrcInfo(), "|}", () => this.parseExpression()));
-            }
-            this.ensureAndConsumeToken("|}");
+            const mtypex = this.parseMatchTypeGuard();
+            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+            const mvaluex = this.parseExpression();
 
-            return new MatchExpression(sinfo, mexp, entries);
+
+            entries.push({ mtype: mtypex, value: mvaluex });
         }
-        finally {
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
-        }
+        this.ensureAndConsumeToken(SYM_rbrace, "switch expression options");
+
+        return new MatchExpression(sinfo, mexp, entries);
     }
 
     private parseExpression(): Expression {
@@ -2394,17 +2424,12 @@ class Parser {
     ////
     //Statement parsing
 
-    parsePrimitiveStructuredAssignment(sinfo: SourceInfo, vars: "let" | "var" | undefined, decls: Set<string>): StructuredAssignementPrimitive {
-        this.ensureToken(TokenStrings.Identifier);
+    parseAssignmentVarInfo(sinfo: SourceInfo, vars: "let" | "var" | undefined): {name: string, vtype: TypeSignature} | undefined {
+        this.ensureToken(TokenStrings.Identifier, "assignment statement");
         const name = this.consumeTokenAndGetValue();
 
         if (name === "_") {
-            let itype = this.m_penv.SpecialAnySignature;
-            if (this.testAndConsumeTokenIf(":")) {
-                itype = this.parseTypeSignature();
-            }
-
-            return new IgnoreTermStructuredAssignment(itype);
+            return undefined;
         }
         else {
             let itype = this.m_penv.SpecialAutoSignature;
@@ -2413,12 +2438,7 @@ class Parser {
             }
 
             if (vars !== undefined) {
-                if (decls.has(name)) {
-                    this.raiseError(sinfo.line, `Variable "${name}" is already defined in scope`);
-                }
-                decls.add(name);
-
-                return new VariableDeclarationStructuredAssignment(name, itype);
+                return {name: name, vtype: itype};
             }
             else {
                 if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(name)) {
@@ -2429,62 +2449,8 @@ class Parser {
                     this.raiseError(sinfo.line, `Cannot redeclare type of variable "${name}" on assignment`);
                 }
 
-                return new VariableAssignmentStructuredAssignment(name);
+                return {name: name, vtype: itype};
             }
-        }
-    }
-
-    parseStructuredAssignment(sinfo: SourceInfo, vars: "let" | "var" | undefined, decls: Set<string>): StructuredAssignment {
-        if (this.testToken("[")) {
-            const assigns = this.parseListOf<StructuredAssignementPrimitive>("[", "]", ",", () => {
-                return this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), vars, decls);
-            })[0];
-
-            return new TupleStructuredAssignment(assigns);
-        }
-        else if (this.testToken("{")) {
-            const assigns = this.parseListOf<[string, StructuredAssignementPrimitive]>("{", "}", ",", () => {
-                this.ensureToken(TokenStrings.Identifier);
-                const name = this.consumeTokenAndGetValue();
-
-                this.ensureAndConsumeToken("=");
-                const subg = this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), vars, decls);
-
-                return [name, subg];
-            })[0];
-
-            return new RecordStructuredAssignment(assigns);
-        }
-        else if (this.testToken("(|")) {
-            const assigns = this.parseListOf<StructuredAssignementPrimitive>("(|", "|)", ",", () => {
-                return this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), vars, decls);
-            })[0];
-
-            return new ValueListStructuredAssignment(assigns);
-        }
-        else if (this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Type ) || this.testToken(TokenStrings.Type)) {
-            const ttype = this.parseTypeSignature();
-            const assigns = this.parseListOf<[string | undefined, StructuredAssignementPrimitive]>("{", "}", ",", () => {
-                if (this.testFollows(TokenStrings.Identifier, "=")) {
-                    this.ensureToken(TokenStrings.Identifier);
-                    const name = this.consumeTokenAndGetValue();
-
-                    this.ensureAndConsumeToken("=");
-                    const subg = this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), vars, decls);
-
-                    return [name, subg];
-                }
-                else {
-                    const subg = this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), vars, decls);
-
-                    return [undefined, subg];
-                }
-            })[0];
-
-            return new NominalStructuredAssignment(ttype, assigns);
-        }
-        else {
-            return this.parsePrimitiveStructuredAssignment(sinfo, vars, decls);
         }
     }
 
@@ -2493,39 +2459,27 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         const tk = this.peekToken();
-        if (tk === ";") {
+        if (tk === SYM_semicolon) {
             this.consumeToken();
             return new EmptyStatement(sinfo);
         }
-        else if (tk === "let" || tk === "var") {
+        else if (tk === KW_let || tk === KW_var) {
             this.consumeToken();
-            const isConst = tk === "let";
+            const isConst = tk === KW_let;
 
-            if (this.testToken("[") || this.testToken("{") || this.testToken("(|") || this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Type) || this.testToken(TokenStrings.Type)) {
-                let decls = new Set<string>();
-                const assign = this.parseStructuredAssignment(this.getCurrentSrcInfo(), isConst ? "let" : "var", decls);
-                decls.forEach((dv) => {
-                    if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(dv)) {
-                        this.raiseError(line, "Variable name is already defined");
-                    }
-                    this.m_penv.getCurrentFunctionScope().defineLocalVar(dv, dv, false);
-                });
+            const assigns = this.parseEphemeralListOf(() => {
+                return this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isConst ? KW_let : KW_var);
+            });
 
-                this.ensureAndConsumeToken("=");
-                const exp = this.parseExpression();
-                this.ensureAndConsumeToken(";");
-
-                return new StructuredVariableAssignmentStatement(sinfo, isConst, assign, exp);
+            const decls = assigns.map((aa, i) => aa !== undefined ? {name: aa.name, pos: i, vtype: aa.vtype} : undefined).filter((aa) => aa !== undefined) as {name: string, pos: number, vtype: TypeSignature}[];
+            const declnames = new Set<string>(decls.map((aa) => aa.name));
+            if(decls.length !== declnames.size) {
+                this.raiseError(sinfo.line, "Cannot assign to variable multiple times in single statement");
             }
-            else {
-                let decls = new Set<string>();
-                const assigns = this.parseEphemeralListOf(() => {
-                    return this.parseStructuredAssignment(this.getCurrentSrcInfo(), isConst ? "let" : "var", decls);
-                });
 
-                if(assigns.length === 0 || (assigns.length === 1 && !(assigns[0] instanceof VariableDeclarationStructuredAssignment))) {
-                    this.raiseError(sinfo.line, "Vacuous variable declaration");
-                }
+            if(decls.length === 0) {
+                this.raiseError(sinfo.line, "Vacuous variable declaration");
+            }
                 
                 let vars: {name: string, vtype: TypeSignature}[] = [];
                 for(let i = 0; i < assigns.length; ++i) {
@@ -2548,7 +2502,7 @@ class Parser {
                 }
 
                 let exp: Expression[] | undefined = undefined;
-                if(this.testAndConsumeTokenIf("=")) {
+                if(this.testAndConsumeTokenIf(SYM_eq)) {
                     exp = this.parseEphemeralListOf(() => {
                         return this.parseExpression();
                     });
@@ -2558,7 +2512,7 @@ class Parser {
                     this.raiseError(line, "Const variable declaration must include an assignment to the variable");
                 }
 
-                this.ensureAndConsumeToken(";");
+                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
                 if(vars.length === 1) {
                     if (exp !== undefined && exp.length !== 1) {
@@ -2571,17 +2525,6 @@ class Parser {
                 else {
                     return new VariablePackDeclarationStatement(sinfo, isConst, vars, exp);
                 }
-            }
-        }
-        else if (this.testToken("[") || this.testToken("{") || this.testToken("(|")) {
-            let decls = new Set<string>();
-            const assign = this.parseStructuredAssignment(this.getCurrentSrcInfo(), undefined, decls);
-            
-            this.ensureAndConsumeToken("=");
-            const exp = this.parseExpression();
-            this.ensureAndConsumeToken(";");
-
-            return new StructuredVariableAssignmentStatement(sinfo, false, assign, exp);
         }
         else if (tk === TokenStrings.Identifier) {
             let decls = new Set<string>();
@@ -2612,12 +2555,12 @@ class Parser {
                 }
             }
 
-            this.ensureAndConsumeToken("=");
+            this.ensureAndConsumeToken(SYM_eq, "assignment statement");
 
             let exps: Expression[] = this.parseEphemeralListOf(() => {
                 return this.parseExpression();
             });
-            this.ensureAndConsumeToken(";");
+            this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
             if(vars.length === 1) {
                 if (exps.length !== 1) {
@@ -2630,68 +2573,48 @@ class Parser {
                 return new VariablePackAssignmentStatement(sinfo, vars, exps);
             }
         }
-        else if (tk === "return") {
+        else if (tk === KW_return) {
             this.consumeToken();
 
-            if(this.testAndConsumeTokenIf(";")) {
+            if(this.testAndConsumeTokenIf(SYM_semicolon)) {
                 return new ReturnStatement(sinfo, [new LiteralNoneExpression(sinfo)]);
             }
             else {
                 const exps = this.parseEphemeralListOf(() => this.parseExpression());
 
-                this.ensureAndConsumeToken(";");
+                this.ensureAndConsumeToken(SYM_semicolon, "return statement");
                 return new ReturnStatement(sinfo, exps);
             }
         }
-        else if (tk === "yield") {
+        else if (tk === KW_abort) {
             this.consumeToken();
 
-            const exps = this.parseEphemeralListOf(() => this.parseExpression());
-
-            this.ensureAndConsumeToken(";");
-            return new YieldStatement(sinfo, exps);
-        }
-        else if (tk === "abort") {
-            this.consumeToken();
-
-            this.ensureAndConsumeToken(";");
+            this.ensureAndConsumeToken(SYM_semicolon, "abort statement");
             return new AbortStatement(sinfo);
         }
-        else if (tk === "assert") {
+        else if (tk === KW_assert) {
             this.consumeToken();
 
             const level = this.parseBuildInfo("release");
             const exp = this.parseExpression();
 
-            this.ensureAndConsumeToken(";");
+            this.ensureAndConsumeToken(SYM_semicolon, "assert statement");
             return new AssertStatement(sinfo, exp, level);
         }
-        else if (tk === "validate") {
-            this.consumeToken();
-
-            const exp = this.parseOfExpression();
-            let err = new LiteralNoneExpression(sinfo);
-            if (this.testAndConsumeTokenIf("else")) {
-                err = this.parseExpression();
-            }
-
-            this.ensureAndConsumeToken(";");
-            return new ValidateStatement(sinfo, exp, err);
-        }
-        else if (tk === "_debug") {
+        else if (tk === KW__debug) {
             this.consumeToken();
 
             let value = undefined;
             if (this.testToken("(")) {
                 this.consumeToken();
                 value = this.parseExpression();
-                this.ensureAndConsumeToken(")");
+                this.ensureAndConsumeToken(SYM_rparen, "_debug statement");
             }
 
-            this.ensureAndConsumeToken(";");
+            this.ensureAndConsumeToken(SYM_semicolon, "_debug statement");
             return new DebugStatement(sinfo, value);
         }
-        else if (this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Identifier)) {
+        else if (tk === KW_ref) {
             //it is a namespace function call
             let ns: string | undefined = this.consumeTokenAndGetValue();
             this.consumeToken();
@@ -2708,23 +2631,9 @@ class Parser {
 
             return new NakedCallStatement(sinfo, new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args, "std"));
         }
-        else if (this.testFollows(TokenStrings.Namespace, "::", TokenStrings.Operator)) {
-            //it is a namespace function call
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            ns = this.m_penv.tryResolveNamespace(ns, name);
-            if (ns === undefined) {
-                ns = "[Unresolved Error]";
-            }
-
-            const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-            const args = this.parseArguments("(", ")");
-
-            return new NakedCallStatement(sinfo, new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, new TemplateArguments([]), rec, args, "std"));
-        }
         else {
+            //Task, Events, Log, etc.
+
             //we should find a type (nominal here) and it is a static invoke or a structured assign
             const ttype = this.parseTypeSignature();
 
