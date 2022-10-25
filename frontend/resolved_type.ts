@@ -31,6 +31,9 @@ class ResolvedTemplateUnifyType extends ResolvedAtomType {
     }
 }
 
+//resolved literal type
+xxxx;
+
 class ResolvedEntityAtomType extends ResolvedAtomType {
     readonly object: EntityTypeDecl;
     readonly binds: Map<string, ResolvedType>;

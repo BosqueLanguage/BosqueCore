@@ -46,20 +46,6 @@ __internal __constructable __enumable __typedeclable entity Path<T unique PathVa
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
 
-    function coerce(s: String): Path<T> {
-        assert T::accepts(s);
-        return Path<T>::s_into(s);
-    } 
-
-    function tryCoerce(s: String): Path<T>? {
-        if(!T::accepts(s)) {
-            return none;
-        } 
-        else {
-            return Path<T>::s_into(s);
-        }
-    }
-
     function interpolate(): Path<T> = special_method;
 }
 
@@ -72,20 +58,6 @@ __internal __constructable __typedeclable entity PathFragment<T unique PathValid
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
 
-    function coerce(s: String): Path<T> {
-        assert T::accepts(s);
-        return Path<T>::s_into(s);
-    } 
-
-    function tryCoerce(s: String): Path<T>? {
-        if(!T::accepts(s)) {
-            return none;
-        } 
-        else {
-            return Path<T>::s_into(s);
-        }
-    }
-
     function interpolate(): PathFragment = special_method;
 }
 
@@ -94,19 +66,6 @@ __internal __constructable __typedeclable entity PathGlob<T unique PathValidator
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
 
-    function coerce(s: String): Path<T> {
-        assert T::accepts(s);
-        return Path<T>::s_into(s);
-    } 
-
-    function tryCoerce(s: String): Path<T>? {
-        if(!T::accepts(s)) {
-            return none;
-        } 
-        else {
-            return Path<T>::s_into(s);
-        }
-    }
     //can have *, **, ? (a dot), [a-b]*+{x-y}, (A | B) in each component otherwise must match PathValidator path components
     //any parameters must be in a top-level position (i.e. not nested in a repitition contruct or range)
 

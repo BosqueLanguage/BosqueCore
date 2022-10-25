@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinDivExpression, BinMultExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
+import { AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, SpecialConstructorExpression } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -2201,11 +2201,16 @@ class Parser {
         else {
             let aexp: Expression = exp;
             while (this.isAdditiveFollow()) {
-               const op = this.consumeTokenAndGetValue();
+                const op = this.consumeTokenAndGetValue();
                     
-                const lhs = new PositionalArgument(undefined, false, aexp);
-                const rhs = new PositionalArgument(undefined, false, this.parseMultiplicativeExpression());
-                aexp = new CallNamespaceFunctionOrOperatorExpression(sinfo, "Core" as string, op, new TemplateArguments([]), "no", new Arguments([lhs, rhs]), "infix");
+                const lhs = aexp;
+                const rhs = this.parseMultiplicativeExpression();
+                if(op === SYM_plus) {
+                    return new BinAddExpression(sinfo, lhs, rhs);
+                }
+                else {
+                    return new BinSubExpression(sinfo, lhs, rhs);
+                }
             }
 
             return aexp;
@@ -2216,16 +2221,29 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
         const exp = this.parseAdditiveExpression();
 
-        if (this.testToken("===") || this.testToken("!==")) {
-            const op = this.consumeTokenAndGetValue();
-            return new BinKeyExpression(sinfo, exp, op, this.parseRelationalExpression());
+        if (this.testAndConsumeTokenIf(SYM_eqeqeq)) {
+            return new BinKeyEqExpression(sinfo, exp, this.parseRelationalExpression());
         }
-        else if(this.testToken("==") || this.testToken("!=") || this.testToken("<") || this.testToken(">") || this.testToken("<=") || this.testToken(">=")) {
-            const op = this.consumeTokenAndGetValue();
-
-            const lhs = new PositionalArgument(undefined, false, exp);
-            const rhs = new PositionalArgument(undefined, false, this.parseRelationalExpression());
-            return new CallNamespaceFunctionOrOperatorExpression(sinfo, "Core" as string, op, new TemplateArguments([]), "no", new Arguments([lhs, rhs]), "infix");
+        else if(this.testAndConsumeTokenIf(SYM_bangeqeq)) {
+            return new BinKeyNeqExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_eqeq)) {
+            return new NumericEqExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_bangeq)) {
+            return new NumericNeqExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_le)) {
+            return new NumericLessExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_leq)) {
+            return new NumericLessEqExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_ge)) {
+            return new NumericGreaterExpression(sinfo, exp, this.parseRelationalExpression());
+        }
+        else if(this.testAndConsumeTokenIf(SYM_geq)) {
+            return new NumericGreaterEqExpression(sinfo, exp, this.parseRelationalExpression());
         }
         else {
             return exp;
@@ -2236,8 +2254,8 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
         const exp = this.parseRelationalExpression();
 
-        if (this.testAndConsumeTokenIf("&&")) {
-            return new BinLogicExpression(sinfo, exp, "&&", this.parseAndExpression());
+        if (this.testAndConsumeTokenIf(SYM_ampamp)) {
+            return new BinLogicAndxpression(sinfo, exp, this.parseAndExpression());
         }
         else {
             return exp;
@@ -2248,8 +2266,8 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
         const exp = this.parseAndExpression();
 
-        if (this.testAndConsumeTokenIf("||")) {
-            return new BinLogicExpression(sinfo, exp, "||", this.parseOrExpression());
+        if (this.testAndConsumeTokenIf(SYM_barbar)) {
+            return new BinLogicOrExpression(sinfo, exp, this.parseOrExpression());
         }
         else {
             return exp;
@@ -2260,8 +2278,8 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
         const exp = this.parseOrExpression();
 
-        if (this.testAndConsumeTokenIf("==>")) {
-            return new BinLogicExpression(sinfo, exp, "==>", this.parseImpliesExpression());
+        if (this.testAndConsumeTokenIf(SYM_implies)) {
+            return new BinLogicImpliesExpression(sinfo, exp, this.parseImpliesExpression());
         }
         else {
             return exp;
@@ -2285,9 +2303,9 @@ class Parser {
     private parseIfExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
 
-        let conds: CondBranchEntry<Expression>[] = [];
+        let conds: {cond: Expression, value: Expression}[] = [];
 
-        this.ensureAndConsumeToken("if");
+        this.consumeToken();
         this.ensureAndConsumeToken("(");
         const iftest = this.parseExpression();
         this.ensureAndConsumeToken(")");
@@ -2370,7 +2388,7 @@ class Parser {
     }
 
     private parseExpression(): Expression {
-        return this.parseExpOrExpression();
+        return this.parseMapEntryConstructorExpression();
     }
 
     ////

@@ -619,7 +619,7 @@ class Assembly {
             }
         }
 
-        xxxx; //env variable
+        xxxx; //formats variable
 
         else if (exp instanceof AccessNamespaceConstantExpression) {
             if (!this.hasNamespace(exp.ns)) {
