@@ -82,7 +82,11 @@ enum ExpressionTag {
 
     IfExpression = "IfExpression",
     SwitchExpression = "SwitchExpression",
-    MatchExpression = "MatchExpression"
+    MatchExpression = "MatchExpression",
+
+    TaskSelfFieldExpression = "TaskSelfFieldExpression",
+    TaskGetIDExpression = "TaskGetIDExpression",
+    TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
 }
 
 abstract class Expression {
@@ -905,6 +909,27 @@ class MatchExpression extends Expression {
     }
 }
 
+class TaskSelfFieldExpression extends Expression {
+    readonly sfield: string;
+
+    constructor(sinfo: SourceInfo, sfield: string) {
+        super(ExpressionTag.TaskSelfFieldExpression, sinfo);
+        this.sfield = sfield;
+    }
+}
+
+class TaskGetIDExpression extends Expression {
+    constructor(sinfo: SourceInfo) {
+        super(ExpressionTag.TaskGetIDExpression, sinfo);
+    }
+}
+
+class TaskCancelRequestedExpression extends Expression {
+    constructor(sinfo: SourceInfo) {
+        super(ExpressionTag.TaskIsCancelRequestedExpression, sinfo);
+    }
+}
+
 enum StatementTag {
     Clear = "[CLEAR]",
     InvalidStatement = "[INVALID]",
@@ -912,10 +937,9 @@ enum StatementTag {
     EmptyStatement = "EmptyStatement",
 
     VariableDeclarationStatement = "VariableDeclarationStatement",
-    VariablePackDeclarationStatement = "VariablePackDeclarationStatement",
+    MultiReturnWithDeclarationStatement = "MultiReturnWithDeclarationStatement",
     VariableAssignmentStatement = "VariableAssignmentStatement",
-    VariablePackAssignmentStatement = "VariablePackAssignmentStatement",
-    StructuredVariableAssignmentStatement = "StructuredVariableAssignmentStatement",
+    MultiReturnWithAssignmentStatement = "MultiReturnWithAssignmentStatement",
 
     ReturnStatement = "ReturnStatement",
 
@@ -937,9 +961,10 @@ enum StatementTag {
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
 
-    TaskCancelRequestedStatement = "TaskCancelRequested",
-    TaskStatusStatement = "TaskStatusStatement",
-    
+    TaskSetStatusStatement = "TaskStatusStatement",
+
+    TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+
     EventsEmitStatement = "EventsEmitStatement",
     EventsEmitBracketStatement = "EventsEmitBracketStatement",
 
@@ -991,13 +1016,13 @@ class VariableDeclarationStatement extends Statement {
     }
 }
 
-class VariablePackDeclarationStatement extends Statement {
+class MultiReturnWithDeclarationStatement extends Statement {
     readonly isConst: boolean;
-    readonly vars: {name: string, vtype: TypeSignature /*may be auto*/}[];
-    readonly exp: Expression[] | undefined; //may be undef
+    readonly vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[];
+    readonly exp: Expression | undefined; //may be undef -- or must be a invoke with a multi-return
 
-    constructor(sinfo: SourceInfo, isConst: boolean, vars: {name: string, vtype: TypeSignature /*may be auto*/}[], exp: Expression[] | undefined) {
-        super(StatementTag.VariablePackDeclarationStatement, sinfo);
+    constructor(sinfo: SourceInfo, isConst: boolean, vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[], exp: Expression | undefined) {
+        super(StatementTag.MultiReturnWithDeclarationStatement, sinfo);
         this.isConst = isConst;
         this.vars = vars;
         this.exp = exp;
@@ -1015,100 +1040,13 @@ class VariableAssignmentStatement extends Statement {
     }
 }
 
-class VariablePackAssignmentStatement extends Statement {
-    readonly names: string[];
-    readonly exp: Expression[];
+class MultiReturnWithAssignmentStatement extends Statement {
+    readonly vars: {name: string, pos: number}[];
+    readonly exp: Expression; //must be an invoke with a multi-return
 
-    constructor(sinfo: SourceInfo, names: string[], exp: Expression[]) {
-        super(StatementTag.VariablePackAssignmentStatement, sinfo);
-        this.names = names;
-        this.exp = exp;
-    }
-}
-
-class StructuredAssignment {
-}
-
-class StructuredAssignementPrimitive extends StructuredAssignment {
-    readonly assigntype: TypeSignature;
-
-    constructor(assigntype: TypeSignature) {
-        super();
-        this.assigntype = assigntype;
-    }
-}
-
-class IgnoreTermStructuredAssignment extends StructuredAssignementPrimitive {
-    constructor(ignoretype: TypeSignature) {
-        super(ignoretype);
-    }
-}
-
-class VariableDeclarationStructuredAssignment extends StructuredAssignementPrimitive {
-    readonly vname: string;
-
-    constructor(vname: string, vtype: TypeSignature) {
-        super(vtype);
-        this.vname = vname;
-    }
-}
-
-class VariableAssignmentStructuredAssignment extends StructuredAssignementPrimitive {
-    readonly vname: string;
-
-    constructor(vname: string) {
-        super(new AutoTypeSignature());
-        this.vname = vname;
-    }
-}
-
-class TupleStructuredAssignment extends StructuredAssignment {
-    readonly assigns: StructuredAssignementPrimitive[];
-
-    constructor(assigns: StructuredAssignementPrimitive[]) {
-        super();
-        this.assigns = assigns;
-    }
-}
-
-class RecordStructuredAssignment extends StructuredAssignment {
-    readonly assigns: [string, StructuredAssignementPrimitive][];
-
-    constructor(assigns: [string, StructuredAssignementPrimitive][]) {
-        super();
-        this.assigns = assigns;
-    }
-}
-
-class NominalStructuredAssignment extends StructuredAssignment {
-    readonly atype: TypeSignature;
-    readonly assigns: [string | undefined, StructuredAssignementPrimitive][];
-
-    constructor(atype: TypeSignature, assigns: [string | undefined, StructuredAssignementPrimitive][]) {
-        super();
-        this.atype = atype;
-        this.assigns = assigns;
-    }
-}
-
-class ValueListStructuredAssignment extends StructuredAssignment {
-    readonly assigns: StructuredAssignementPrimitive[];
-
-    constructor(assigns: StructuredAssignementPrimitive[]) {
-        super();
-        this.assigns = assigns;
-    }
-}
-
-class StructuredVariableAssignmentStatement extends Statement {
-    readonly isConst: boolean;
-    readonly assign: StructuredAssignment;
-    readonly exp: Expression;
-
-    constructor(sinfo: SourceInfo, isConst: boolean, assign: StructuredAssignment, exp: Expression) {
-        super(StatementTag.StructuredVariableAssignmentStatement, sinfo);
-        this.isConst = isConst;
-        this.assign = assign;
+    constructor(sinfo: SourceInfo, vars: {name: string, pos: number}[], exp: Expression) {
+        super(StatementTag.MultiReturnWithAssignmentStatement, sinfo);
+        this.vars = vars;
         this.exp = exp;
     }
 }
@@ -1196,9 +1134,10 @@ class RefCallStatement extends Statement {
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
 
-    TaskCancelRequestedStatement = "TaskCancelRequested",
-    TaskStatusStatement = "TaskStatusStatement",
+    TaskSetStatusStatement = "TaskStatusStatement",
     
+    TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+
     EventsEmitStatement = "EventsEmitStatement",
     EventsEmitBracketStatement = "EventsEmitBracketStatement",
 
@@ -1254,10 +1193,9 @@ export {
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
     IfExpression, SwitchExpression, MatchExpression,
+    TaskSelfFieldExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
-    VariableDeclarationStatement, VariablePackDeclarationStatement, VariableAssignmentStatement, VariablePackAssignmentStatement,
-    StructuredAssignment, StructuredAssignementPrimitive, IgnoreTermStructuredAssignment, VariableDeclarationStructuredAssignment, VariableAssignmentStructuredAssignment, StructuredVariableAssignmentStatement, 
-    TupleStructuredAssignment, RecordStructuredAssignment, NominalStructuredAssignment, ValueListStructuredAssignment,
+    VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, 
     ReturnStatement,
     IfElseStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,

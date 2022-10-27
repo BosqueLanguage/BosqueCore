@@ -431,8 +431,8 @@ __internal __typedeclable __typebase entity UTCDateTime provides Some, APIType, 
     }
 }
 
-__internal __typedeclable __typebase entity CalendarDate provides Some, APIType, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): CalendarDate = calendardate_create;
+__internal __typedeclable __typebase entity PlainDate provides Some, APIType, KeyType {
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): PlainDate = plaindate_create;
 
     function create(year: Nat, month: Nat, day: Nat): CalendarDate
         requires 1900n <= year && year <= 2200n;
@@ -440,6 +440,20 @@ __internal __typedeclable __typebase entity CalendarDate provides Some, APIType,
         requires DateOps::s_check_DayInMonth(day, month, year);
     {
         return CalendarDate::s_create(year, month, day);
+    }
+}
+
+__internal __typedeclable __typebase entity PlainTime provides Some, APIType, KeyType {
+    __assume_safe internal function s_create(hour: Nat, min: Nat): PlainTime = plaintime_create;
+
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat): UTCDateTime
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+        requires hour < 24n;
+        requires min < 60n;
+    {
+        return UTCDateTime::s_create(year, month, day, hour, min);
     }
 }
 
