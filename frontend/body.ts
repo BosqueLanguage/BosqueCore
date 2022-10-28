@@ -105,6 +105,10 @@ abstract class Expression {
     isLiteralValueExpression(): boolean {
         return false;
     }
+
+    isTaskOperation(): boolean {
+        return false;
+    }
 }
 
 //This just holds a constant expression that can be evaluated without any arguments but not a subtype of Expression so we can distinguish as types
@@ -380,6 +384,10 @@ class AccessEnvValue extends Expression {
         super(ExpressionTag.AccessEnvValue, sinfo);
         this.keyname = keyname;
         this.valtype = valtype;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
     }
 }
 
@@ -916,17 +924,29 @@ class TaskSelfFieldExpression extends Expression {
         super(ExpressionTag.TaskSelfFieldExpression, sinfo);
         this.sfield = sfield;
     }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
 }
 
 class TaskGetIDExpression extends Expression {
     constructor(sinfo: SourceInfo) {
         super(ExpressionTag.TaskGetIDExpression, sinfo);
     }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
 }
 
 class TaskCancelRequestedExpression extends Expression {
     constructor(sinfo: SourceInfo) {
         super(ExpressionTag.TaskIsCancelRequestedExpression, sinfo);
+    }
+
+    isTaskOperation(): boolean {
+        return true;
     }
 }
 
@@ -953,10 +973,13 @@ enum StatementTag {
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
     RefCallStatement = "RefCallStatement",
 
+    EnvironmentSetStatement = "EnvironmentSetStatement",
+    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+
     TaskRunSingleStatement = "TaskRunSingleStatement",
-    TaskRunSetStatement = "TaskRunSetStatement",
+    TaskRunMixedStatement = "TaskRunMixedStatement",
     TaskRunAllStatement = "TaskRunAllStatement",
-    TaskRunRaceStatement = "TaskRunAllStatement",
+    TaskRunRaceStatement = "TaskRunRaceStatement",
 
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
@@ -964,6 +987,7 @@ enum StatementTag {
     TaskSetStatusStatement = "TaskStatusStatement",
 
     TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+    TaskSelfActionStatement = "TaskSelfActionStatement",
 
     EventsEmitStatement = "EventsEmitStatement",
     EventsEmitBracketStatement = "EventsEmitBracketStatement",
@@ -986,6 +1010,10 @@ abstract class Statement {
     constructor(tag: StatementTag, sinfo: SourceInfo) {
         this.tag = tag;
         this.sinfo = sinfo;
+    }
+
+    isTaskOperation(): boolean {
+        return false;
     }
 }
 
@@ -1126,10 +1154,71 @@ class RefCallStatement extends Statement {
     }
 }
 
-    TaskRunSingleStatement = "TaskRunSingleStatement",
-    TaskRunSetStatement = "TaskRunSetStatement",
+class EnvironmentSetStatement extends Statement {
+    readonly assigns: {keyname: string, valexp: Expression}[];
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[]) {
+        super(StatementTag.EnvironmentSetStatement, sinfo);
+        this.assigns = assigns;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class EnvironmentSetStatementBracket extends Statement {
+    readonly assigns: {keyname: string, valexp: Expression}[];
+    readonly block: BlockStatement;
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[], block: BlockStatement) {
+        super(StatementTag.EnvironmentSetStatementBracket, sinfo);
+        this.assigns = assigns;
+        this.block = block;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskRunSingleStatement extends Statement {
+    readonly vtrgt: string;
+    readonly task: TypeSignature;
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, vtrgt: string, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(StatementTag.TaskRunSingleStatement, sinfo);
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskRunMixedStatement extends Statement {
+    readonly task: TypeSignature[];
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(StatementTag.TaskRunMixedStatement, sinfo);
+        this.task = task;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
     TaskRunAllStatement = "TaskRunAllStatement",
-    TaskRunRaceStatement = "TaskRunAllStatement",
+    TaskRunRaceStatement = "TaskRunRaceStatement",
 
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
@@ -1137,6 +1226,7 @@ class RefCallStatement extends Statement {
     TaskSetStatusStatement = "TaskStatusStatement",
     
     TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+    TaskSelfActionStatement = "TaskSelfActionStatement",
 
     EventsEmitStatement = "EventsEmitStatement",
     EventsEmitBracketStatement = "EventsEmitBracketStatement",

@@ -1830,16 +1830,12 @@ class Parser {
             this.consumeToken();
             const name = this.consumeTokenAndGetValue();
 
-            if(ns === "Task") {
+            if(ns === "Task" && (name === "getTaskID" || name === "isCanceled")) {
                 if(name === "getTaskID") {
                     return new TaskGetIDExpression(sinfo);
                 }
-                else if(name === "isCanceled") {
-                    return new TaskCancelRequestedExpression(sinfo);
-                }
                 else {
-                    this.raiseError(this.getCurrentLine(), "Only \"getTaskID\" and \"isCanceled\" are valid Task expressions");
-                    return new InvalidExpression(sinfo);
+                    return new TaskCancelRequestedExpression(sinfo);
                 }
             }
             else {
@@ -2478,25 +2474,47 @@ class Parser {
         }
     }
 
-    private parseTaskRunStatement(sinfo: SourceInfo, vv: {name: string, pos: number, vtype: TypeSignature}): Statement {
+    private parseTaskRunStatement(sinfo: SourceInfo, vv: {name: string, pos: number, vtype: TypeSignature}, assigncount: number): Statement {
         this.consumeToken();
         this.ensureAndConsumeToken(SYM_coloncolon, "Task run statement");
         this.ensureToken(TokenStrings.Identifier, "Task run statement");
 
         const name = this.consumeTokenAndGetValue();
+
+        let argpack: {argn: string, argv: Expression}[] = [];
+        if(this.testToken(SYM_lbrack)) {
+            this.parseListOf("Task Run arguments", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
+                this.ensureAndConsumeToken("=", "Task run argument");
+                const argv = this.parseExpression();
+
+                return {argn: argn, argv: argv};
+            });
+        }
+
+        const terms = this.parseTemplateArguments();
+        const args = this.parseArguments(SYM_lparen, SYM_rparen);
+
         if(name === "run") {
-            if(xxx) {
-            xxxx;
+            if(terms.length === 1) {
+                //x = Task::rin<T>(args)
             }
             else {
-                
+                //Distinguish on number of vars on lhs????
+
+                if(assigncount === 1) {
+                    //x, y = Task::run<T, U>([...], [...])
+                }
+                else {
+                    //x = Task::dash<T, U>([...], [...]) <-- race for first done
+                }
             }
         }
         else if (name === "all") {
-            xxxx;
+            //x: List<V> = Task::all<T>(List<U>) <-- result list all done
         }
         else if (name === "race") {
-            xxxx;
+            //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
         }
         else {
             this.raiseError();
@@ -2541,11 +2559,9 @@ class Parser {
 
             const hasassign = this.testAndConsumeTokenIf(SYM_eq);
             if(hasassign && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                if(vars.length !== 1) {
-                    this.raiseError(line, "Too many result variables for Task run invocation");
-                }
-                
-                return this.parseTaskRunStatement(vars[0]);
+                xxxx; //check for canceled expressoin here
+
+                return this.parseTaskRunStatement(sinfo, vars[0]);
             }
             else {
                 let exp: Expression | undefined = undefined;
