@@ -36,6 +36,8 @@ enum ExpressionTag {
 
     AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
+    HasEnvValue = "HasEnvValue",
+
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
@@ -379,11 +381,13 @@ class AccessFormatInfo extends Expression {
 class AccessEnvValue extends Expression {
     readonly keyname: string;
     readonly valtype: TypeSignature;
+    readonly orNoneMode: boolean;
 
-    constructor(sinfo: SourceInfo, keyname: string, valtype: TypeSignature) {
+    constructor(sinfo: SourceInfo, keyname: string, valtype: TypeSignature, orNoneMode: boolean) {
         super(ExpressionTag.AccessEnvValue, sinfo);
         this.keyname = keyname;
         this.valtype = valtype;
+        this.orNoneMode = orNoneMode;
     }
 
     isTaskOperation(): boolean {
@@ -973,34 +977,35 @@ enum StatementTag {
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
     RefCallStatement = "RefCallStatement",
 
+    EnvironmentFreshStatement = "EnvironmentFreshStatement",
     EnvironmentSetStatement = "EnvironmentSetStatement",
     EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
 
-    TaskRunSingleStatement = "TaskRunSingleStatement",
-    TaskRunMixedStatement = "TaskRunMixedStatement",
-    TaskRunAllStatement = "TaskRunAllStatement",
-    TaskRunRaceStatement = "TaskRunRaceStatement",
+    TaskRunStatement = "TaskRunStatement", //run single task
+    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
+    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
 
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
 
-    TaskSetStatusStatement = "TaskStatusStatement",
+    TaskSetStatusStatement = "TaskSetStatusStatement",
 
-    TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
     TaskSelfActionStatement = "TaskSelfActionStatement",
 
     EventsEmitStatement = "EventsEmitStatement",
-    EventsEmitBracketStatement = "EventsEmitBracketStatement",
 
     LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerControlStatement = "LoggerControlStatement",
-    LoggerChildLoggeroggerStatement = "LoggerChildLoggerStatement",
     LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
-    LoggerEmitBracketStatement = "LoggerEmitBracketStatement",
-    LoggerControlBracketStatement = "LoggerEmitControlBracketStatement",
-    LoggerChildLoggerBracketStatement = "LoggerChildLoggerBracketStatement",
 
-    BlockStatement = "BlockStatement"
+    LoggerControlStatement = "LoggerControlStatement",
+    LoggerPushChildLoggerStatement = "LoggerPushChildLoggerStatement",
+    LoggerPopChildLoggerStatement = "LoggerPopChildLoggerStatement",
+
+    UnscopedBlockStatement = "UnscopedBlockStatement",
+    ScopedBlockStatement = "ScopedBlockStatement"
 }
 
 abstract class Statement {
@@ -1154,8 +1159,21 @@ class RefCallStatement extends Statement {
     }
 }
 
-class EnvironmentSetStatement extends Statement {
+class EnvironmentFreshStatement extends Statement {
     readonly assigns: {keyname: string, valexp: Expression}[];
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[]) {
+        super(StatementTag.EnvironmentFreshStatement, sinfo);
+        this.assigns = assigns;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class EnvironmentSetStatement extends Statement {
+    readonly assigns: {keyname: string, valexp: Expression | undefined}[];
 
     constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[]) {
         super(StatementTag.EnvironmentSetStatement, sinfo);
@@ -1169,7 +1187,7 @@ class EnvironmentSetStatement extends Statement {
 
 class EnvironmentSetStatementBracket extends Statement {
     readonly assigns: {keyname: string, valexp: Expression}[];
-    readonly block: BlockStatement;
+    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
 
     constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[], block: BlockStatement) {
         super(StatementTag.EnvironmentSetStatementBracket, sinfo);
@@ -1182,14 +1200,14 @@ class EnvironmentSetStatementBracket extends Statement {
     }
 }
 
-class TaskRunSingleStatement extends Statement {
+class TaskRunStatement extends Statement {
     readonly vtrgt: string;
     readonly task: TypeSignature;
     readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
     constructor(sinfo: SourceInfo, vtrgt: string, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
-        super(StatementTag.TaskRunSingleStatement, sinfo);
+        super(StatementTag.TaskRunStatement, sinfo);
         this.vtrgt = vtrgt;
         this.task = task;
         this.taskargs = taskargs;
@@ -1201,13 +1219,34 @@ class TaskRunSingleStatement extends Statement {
     }
 }
 
-class TaskRunMixedStatement extends Statement {
+class TaskMultiStatement extends Statement {
+    readonly vtrgts: string[];
+    readonly tasks: TypeSignature[];
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, vtrgts: string[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(StatementTag.TaskMultiStatement, sinfo);
+        this.vtrgts = vtrgts;
+        this.tasks = tasks;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskDashStatement extends Statement {
+    readonly vtrgt: string;
     readonly task: TypeSignature[];
     readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
-        super(StatementTag.TaskRunMixedStatement, sinfo);
+    constructor(sinfo: SourceInfo, vtrgt: string, task: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(StatementTag.TaskDashStatement, sinfo);
+        this.vtrgt = vtrgt;
         this.task = task;
         this.taskargs = taskargs;
         this.args = args;
@@ -1217,33 +1256,44 @@ class TaskRunMixedStatement extends Statement {
         return true;
     }
 }
-    TaskRunAllStatement = "TaskRunAllStatement",
-    TaskRunRaceStatement = "TaskRunRaceStatement",
+
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
 
     TaskCallWithStatement = "TaskCallWithStatement",
     TaskResultWithStatement = "TaskResultWithStatement",
 
-    TaskSetStatusStatement = "TaskStatusStatement",
-    
-    TaskSetSelfFieldStatement = "TaskSetFieldStatement",
+    TaskSetStatusStatement = "TaskSetStatusStatement",
+
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
     TaskSelfActionStatement = "TaskSelfActionStatement",
 
     EventsEmitStatement = "EventsEmitStatement",
-    EventsEmitBracketStatement = "EventsEmitBracketStatement",
 
     LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerControlStatement = "LoggerControlStatement",
-    LoggerChildLoggeroggerStatement = "LoggerChildLoggerStatement",
     LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
-    LoggerEmitBracketStatement = "LoggerEmitBracketStatement",
-    LoggerControlBracketStatement = "LoggerEmitControlBracketStatement",
-    LoggerChildLoggerBracketStatement = "LoggerChildLoggerBracketStatement",
 
-class BlockStatement extends Statement {
+    LoggerControlStatement = "LoggerControlStatement",
+    LoggerPushChildLoggerStatement = "LoggerPushChildLoggerStatement",
+    LoggerPopChildLoggerStatement = "LoggerPopChildLoggerStatement",
+
+    UnscopedBlockStatement = "UnscopedBlockStatement",
+    ScopedBlockStatement = "ScopedBlockStatement"
+
+class UnscopedBlockStatement extends Statement {
     readonly statements: Statement[];
 
     constructor(sinfo: SourceInfo, statements: Statement[]) {
-        super(StatementTag.BlockStatement, sinfo);
+        super(StatementTag.UnscopedBlockStatement, sinfo);
+        this.statements = statements;
+    }
+}
+
+class ScopedBlockStatement extends Statement {
+    readonly statements: Statement[];
+
+    constructor(sinfo: SourceInfo, statements: Statement[]) {
+        super(StatementTag.ScopedBlockStatement, sinfo);
         this.statements = statements;
     }
 }
