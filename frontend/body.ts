@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { SourceInfo } from "./parser";
-import { AutoTypeSignature, TypeSignature } from "./type_signature";
+import { TypeSignature } from "./type_signature";
 import { InvokeDecl, BuildLevel } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -87,7 +87,9 @@ enum ExpressionTag {
     MatchExpression = "MatchExpression",
 
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
+    TaskSelfActionExpression = "TaskSelfActionExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
+    TaskGetEventLogExpression = "TaskGetEventLogExpression", //Trim to when this task started
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
 }
 
@@ -934,9 +936,35 @@ class TaskSelfFieldExpression extends Expression {
     }
 }
 
+class TaskSelfActionExpression extends Expression {
+    readonly name: string;
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
+        super(ExpressionTag.TaskSelfActionExpression, sinfo);
+        this.name = name;
+        this.terms = terms;
+        this.args = args;
+    }
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
 class TaskGetIDExpression extends Expression {
     constructor(sinfo: SourceInfo) {
         super(ExpressionTag.TaskGetIDExpression, sinfo);
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskGetEventLogExpression extends Expression {
+    constructor(sinfo: SourceInfo) {
+        super(ExpressionTag.TaskGetEventLogExpression, sinfo);
     }
 
     isTaskOperation(): boolean {
@@ -993,7 +1021,6 @@ enum StatementTag {
     TaskSetStatusStatement = "TaskSetStatusStatement",
 
     TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
-    TaskSelfActionStatement = "TaskSelfActionStatement",
 
     EventsEmitStatement = "EventsEmitStatement",
 
@@ -1001,8 +1028,8 @@ enum StatementTag {
     LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
 
     LoggerControlStatement = "LoggerControlStatement",
-    LoggerPushChildLoggerStatement = "LoggerPushChildLoggerStatement",
-    LoggerPopChildLoggerStatement = "LoggerPopChildLoggerStatement",
+    LoggerControlBracketStatement = "LoggerControlBracketStatement",
+    LoggerSubLoggerBracketStatement = "LoggerPushSubLoggerBracketStatement",
 
     UnscopedBlockStatement = "UnscopedBlockStatement",
     ScopedBlockStatement = "ScopedBlockStatement"
@@ -1094,33 +1121,35 @@ class ReturnStatement extends Statement {
 }
 
 class IfElseStatement extends Statement {
-    readonly flow: IfElse<BlockStatement>;
+    readonly condflow: {cond: Expression, value: ScopedBlockStatement}[];
+    readonly elseflow: ScopedBlockStatement;
 
-    constructor(sinfo: SourceInfo, flow: IfElse<BlockStatement>) {
+    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: ScopedBlockStatement) {
         super(StatementTag.IfElseStatement, sinfo);
-        this.flow = flow;
+        this.condflow = condflow;
+        this.elseflow = elseflow;
     }
 }
 
 class SwitchStatement extends Statement {
     readonly sval: Expression;
-    readonly flow: SwitchEntry<BlockStatement>[];
+    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: SwitchEntry<BlockStatement>[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);
         this.sval = sval;
-        this.flow = flow;
+        this.switchflow = switchflow;
     }
 }
 
 class MatchStatement extends Statement {
     readonly sval: Expression;
-    readonly flow: MatchEntry<BlockStatement>[];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: MatchEntry<BlockStatement>[]) {
-        super(StatementTag.MatchStatement, sinfo);
+    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[]) {
+        super(StatementTag.ScopedBlockStatement, sinfo);
         this.sval = sval;
-        this.flow = flow;
+        this.matchflow = flow;
     }
 }
 
@@ -1188,11 +1217,13 @@ class EnvironmentSetStatement extends Statement {
 class EnvironmentSetStatementBracket extends Statement {
     readonly assigns: {keyname: string, valexp: Expression}[];
     readonly block: UnscopedBlockStatement | ScopedBlockStatement;
+    readonly isFresh: boolean;
 
-    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[], block: BlockStatement) {
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement, isFresh: boolean) {
         super(StatementTag.EnvironmentSetStatementBracket, sinfo);
         this.assigns = assigns;
         this.block = block;
+        this.isFresh = isFresh;
     }
 
     isTaskOperation(): boolean {
@@ -1257,28 +1288,205 @@ class TaskDashStatement extends Statement {
     }
 }
 
-    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
-    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
 
-    TaskCallWithStatement = "TaskCallWithStatement",
-    TaskResultWithStatement = "TaskResultWithStatement",
+class TaskAllStatement extends Statement {
+    readonly vtrgt: string;
+    readonly task: TypeSignature;
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly arg: Expression;
 
-    TaskSetStatusStatement = "TaskSetStatusStatement",
+    constructor(sinfo: SourceInfo, vtrgt: string, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+        super(StatementTag.TaskAllStatement, sinfo);
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.arg = arg;
+    }
 
-    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
-    TaskSelfActionStatement = "TaskSelfActionStatement",
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
 
-    EventsEmitStatement = "EventsEmitStatement",
+class TaskRaceStatement extends Statement {
+    readonly vtrgt: string;
+    readonly task: TypeSignature;
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly arg: Expression;
 
-    LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+    constructor(sinfo: SourceInfo, vtrgt: string, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+        super(StatementTag.TaskRaceStatement, sinfo);
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.arg = arg;
+    }
 
-    LoggerControlStatement = "LoggerControlStatement",
-    LoggerPushChildLoggerStatement = "LoggerPushChildLoggerStatement",
-    LoggerPopChildLoggerStatement = "LoggerPopChildLoggerStatement",
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
 
-    UnscopedBlockStatement = "UnscopedBlockStatement",
-    ScopedBlockStatement = "ScopedBlockStatement"
+class TaskCallWithStatement extends Statement {
+    readonly name: string;
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
+        super(StatementTag.TaskCallWithStatement, sinfo);
+        this.name = name;
+        this.terms = terms;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskResultWithStatement extends Statement {
+    readonly name: string;
+    readonly terms: TypeSignature[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
+        super(StatementTag.TaskResultWithStatement, sinfo);
+        this.name = name;
+        this.terms = terms;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskSetStatusStatement extends Statement {
+    readonly arg: Expression;
+
+    constructor(sinfo: SourceInfo, arg: Expression) {
+        super(StatementTag.TaskSetStatusStatement, sinfo);
+        this.arg = arg;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TaskSetSelfFieldStatement extends Statement {
+    readonly fname: string;
+    readonly value: Expression;
+
+    constructor(sinfo: SourceInfo, fname: string, value: Expression) {
+        super(StatementTag.TaskSetSelfFieldStatement, sinfo);
+        this.fname = fname;
+        this.value = value;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class EventsEmitStatement extends Statement {
+    readonly arg: Expression;
+
+    constructor(sinfo: SourceInfo, arg: Expression) {
+        super(StatementTag.EventsEmitStatement, sinfo);
+        this.arg = arg;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+enum LoggerLevel {
+    fatal = "fatal",
+    error = "error",
+    warn = "Warn",
+    info = "info",
+    detail = "detail",
+    debug = "debug",
+    trace = "trace"
+}
+
+class LoggerEmitStatement extends Statement {
+    readonly level: LoggerLevel;
+    readonly msg: AccessFormatInfo;
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, level: LoggerLevel, msg: AccessFormatInfo, args: Expression[]) {
+        super(StatementTag.LoggerEmitStatement, sinfo);
+        this.level = level;
+        this.msg = msg;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+
+class LoggerEmitConditionalStatement extends Statement {
+    readonly level: LoggerLevel;
+    readonly cond: Expression;
+    readonly msg: AccessFormatInfo;
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: Expression, msg: AccessFormatInfo, args: Expression[]) {
+        super(StatementTag.LoggerEmitConditionalStatement, sinfo);
+        this.level = level;
+        this.cond = cond;
+        this.msg = msg;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+
+class LoggerControlStatement extends Statement {
+    constructor(sinfo: SourceInfo) {
+        super(StatementTag.LoggerControlStatement, sinfo);
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class LoggerControlBracketStatement extends Statement {
+    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
+
+    constructor(sinfo: SourceInfo, block: UnscopedBlockStatement | ScopedBlockStatement) {
+        super(StatementTag.LoggerControlBracketStatement, sinfo);
+        this.block = block;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class LoggerSubLoggerBracketStatement extends Statement {
+    readonly msg: AccessFormatInfo;
+    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
+
+    constructor(sinfo: SourceInfo, msg: AccessFormatInfo, block: UnscopedBlockStatement | ScopedBlockStatement) {
+        super(StatementTag.LoggerSubLoggerBracketStatement, sinfo);
+        this.msg = msg;
+        this.block = block;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
 
 class UnscopedBlockStatement extends Statement {
     readonly statements: Statement[];
@@ -1301,9 +1509,9 @@ class ScopedBlockStatement extends Statement {
 class BodyImplementation {
     readonly id: string;
     readonly file: string;
-    readonly body: string | BlockStatement | Expression;
+    readonly body: string | ScopedBlockStatement | Expression;
 
-    constructor(bodyid: string, file: string, body: string | BlockStatement | Expression) {
+    constructor(bodyid: string, file: string, body: string | ScopedBlockStatement | Expression) {
         this.id = bodyid;
         this.file = file;
         this.body = body;
@@ -1333,11 +1541,17 @@ export {
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
     IfExpression, SwitchExpression, MatchExpression,
-    TaskSelfFieldExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
+    TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskGetEventLogExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, 
     ReturnStatement,
     IfElseStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,
-    BlockStatement, BodyImplementation
+    EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket,
+    TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement,
+    TaskCallWithStatement, TaskResultWithStatement,
+    TaskSetStatusStatement, TaskSetSelfFieldStatement,
+    EventsEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerControlStatement, LoggerControlBracketStatement, LoggerSubLoggerBracketStatement,
+    UnscopedBlockStatement, ScopedBlockStatement, 
+    BodyImplementation
 };

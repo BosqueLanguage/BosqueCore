@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskCancelRequestedExpression, TaskGetIDExpression, TaskSelfFieldExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskCancelRequestedExpression, TaskGetEventLogExpression, TaskGetIDExpression, TaskSelfActionExpression, TaskSelfFieldExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -78,7 +78,7 @@ const SYM_rparen = ")";
 const SYM_rbrace = "}";
 
 const SYM_percent = "%";
-const SYM_hash = "%";
+const SYM_hash = "#";
 const SYM_amp = "&";
 const SYM_ampamp = "&&";
 const SYM_bang = "!";
@@ -1736,12 +1736,14 @@ class Parser {
                 this.ensureAndConsumeToken(SYM_ge, "");
             }
 
+            const isNoneMode = this.testAndConsumeTokenIf(SYM_question);
+
             this.ensureAndConsumeToken(SYM_lbrack, "environment access");
             this.ensureToken(TokenStrings.String, "environment access");
             const keyname = this.consumeTokenAndGetValue();
             this.ensureToken(SYM_rbrack, "environment access");
 
-            return new AccessEnvValue(sinfo, keyname, opttype);
+            return new AccessEnvValue(sinfo, keyname, opttype, isNoneMode);
         }
         else if (tk === KW_self) {
             this.consumeToken();
@@ -1750,7 +1752,15 @@ class Parser {
             this.ensureNotToken(TokenStrings.Identifier, "self field access");
             const sfname = this.consumeTokenAndGetValue();
 
-            return new TaskSelfFieldExpression(sinfo, sfname);
+            if (!this.testToken(SYM_le) && !this.testToken(SYM_lparen)) {
+                return new TaskSelfFieldExpression(sinfo, sfname);
+            }
+            else {
+                const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
+                const args = this.parseArguments(SYM_lparen, SYM_rparen);
+
+                return new TaskSelfActionExpression(sinfo, sfname, targs, args);
+            }
         }
         else if (tk === TokenStrings.Identifier) {
             let namestr = this.consumeTokenAndGetValue();
@@ -1830,9 +1840,12 @@ class Parser {
             this.consumeToken();
             const name = this.consumeTokenAndGetValue();
 
-            if(ns === "Task" && (name === "getTaskID" || name === "isCanceled")) {
+            if(ns === "Task" && (name === "getTaskID" || name === "getEventLog" || name === "isCanceled")) {
                 if(name === "getTaskID") {
                     return new TaskGetIDExpression(sinfo);
+                }
+                else if(name === "getEventLog") {
+                    return new TaskGetEventLogExpression(sinfo);
                 }
                 else {
                     return new TaskCancelRequestedExpression(sinfo);
