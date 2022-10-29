@@ -70,6 +70,7 @@ class FunctionScope {
 class ParserEnvironment {
     private m_currentFile: string | undefined;
     private m_currentNamespace: string | undefined;
+    private m_taskenabled: boolean = false;
 
     private m_functionScopes: FunctionScope[];
 
@@ -131,6 +132,7 @@ class ParserEnvironment {
     setNamespaceAndFile(ns: string, file: string) {
         this.m_currentFile = file;
         this.m_currentNamespace = ns;
+        this.m_taskenabled = file.endsWith("bsqtask");
     }
 
     getCurrentFile(): string {
@@ -139,6 +141,10 @@ class ParserEnvironment {
 
     getCurrentNamespace(): string {
         return this.m_currentNamespace as string;
+    }
+
+    taskOpsOk(): boolean {
+        return this.m_taskenabled;
     }
 
     isVarDefinedInAnyScope(name: string): boolean {

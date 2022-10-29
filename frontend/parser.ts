@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskAllStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskGetEventLogExpression, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskAllStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -866,6 +866,12 @@ class Parser {
     private raiseError(line: number, msg: string) {
         this.m_errors.push([this.m_penv.getCurrentFile(), line, msg]);
         throw new ParseError(line, msg);
+    }
+
+    private ensureTaskOpOk() {
+        if(!this.m_penv.taskOpsOk()) {
+            this.raiseError(this.getCurrentLine(), "Task operations are only permitted in \".bsqtask\" files");
+        }
     }
 
     private scanMatchingParens(lp: string, rp: string, sindex?: number): number {
@@ -1728,6 +1734,7 @@ class Parser {
             return new LiteralTypeValueExpression(sinfo, vtype);
         }
         else if (tk === KW_env) {
+            this.ensureTaskOpOk();
             this.consumeToken();
 
             let opttype = this.m_penv.SpecialStringSignature;
@@ -1746,6 +1753,7 @@ class Parser {
             return new AccessEnvValue(sinfo, keyname, opttype, isNoneMode);
         }
         else if (tk === KW_self) {
+            this.ensureTaskOpOk();
             this.consumeToken();
 
             this.ensureAndConsumeToken(SYM_dot, "self field access");
@@ -1840,12 +1848,11 @@ class Parser {
             this.consumeToken();
             const name = this.consumeTokenAndGetValue();
 
-            if(ns === "Task" && (name === "getTaskID" || name === "getEventLog" || name === "isCanceled")) {
+            if(ns === "Task" && (name === "getTaskID" || name === "isCanceled")) {
+                this.ensureTaskOpOk();
+
                 if(name === "getTaskID") {
                     return new TaskGetIDExpression(sinfo);
-                }
-                else if(name === "getEventLog") {
-                    return new TaskGetEventLogExpression(sinfo);
                 }
                 else {
                     return new TaskCancelRequestedExpression(sinfo);
@@ -2488,6 +2495,8 @@ class Parser {
     }
 
     private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature}[] | undefined, assigncount: number): Statement {
+        this.ensureTaskOpOk();
+        
         if(vv !== undefined && vv.length !== assigncount) {
             this.raiseError(sinfo.line, "All task results must be used/consumed");
         }
@@ -2498,7 +2507,7 @@ class Parser {
 
         const name = this.consumeTokenAndGetValue();
 
-        if(name === "getTaskID" || name === "getEventLog" || name === "isCanceled") {
+        if(name === "getTaskID" || name === "isCanceled") {
             if(name === "getTaskID") {
                 if(vv === undefined) {
                     return new ReturnStatement(sinfo, [new TaskGetIDExpression(sinfo)]);
@@ -2510,16 +2519,11 @@ class Parser {
                     return new VariableAssignmentStatement(sinfo, vv[0].name, new TaskGetIDExpression(sinfo));
                 }
             }
-            else if(name === "getEventLog") {
-                if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv[0].name, isconst, vv[0].vtype, new TaskGetEventLogExpression(sinfo));
-                }
-                else {
-                    return new VariableAssignmentStatement(sinfo, vv[0].name, new TaskGetEventLogExpression(sinfo));
-                }
-            }
             else {
-                if(isdefine) {
+                if(vv === undefined) {
+                    return new ReturnStatement(sinfo, [new TaskCancelRequestedExpression(sinfo)])
+                }
+                else if(isdefine) {
                     return new VariableDeclarationStatement(sinfo, vv[0].name, isconst, vv[0].vtype, new TaskCancelRequestedExpression(sinfo));
                 }
                 else {
@@ -2555,7 +2559,7 @@ class Parser {
 
                 if (terms.length === 1) {
                     //x = Task::run<T>(args)
-                    return new TaskRunStatement(sinfo, isdefine, isconst, vv[0], terms[0], argpack, args);
+                    return new TaskRunStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args);
                 }
                 else {
                     //y, z = Task::run<T, U>(argv, ...)
@@ -2567,36 +2571,36 @@ class Parser {
                     this.raiseError(sinfo.line, "dashing to a result on a single task is redundant -- use \"run\" instead");
                 }
 
-                if (vv.length !== 1) {
+                if (vv !== undefined && vv.length !== 1) {
                     this.raiseError(sinfo.line, "Task::dash produces a single Result");
                 }
 
                 //x = Task::dash<T, U>(argv, ...)
-                return new TaskDashStatement(sinfo, isdefine, isconst, vv[0], terms, argpack, args);
+                return new TaskDashStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms, argpack, args);
             }
             else if (name === "all") {
                 if (terms.length !== 1 || args.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
                 }
 
-                if (vv.length !== 1) {
+                if (vv !== undefined && vv.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all produces a single result List");
                 }
 
                 //x: List<V> = Task::all<T>(List<U>) <-- result list all done
-                return new TaskAllStatement(sinfo, isdefine, isconst, vv[0], terms[0], argpack, args[0]);
+                return new TaskAllStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args[0]);
             }
             else if (name === "race") {
                 if (terms.length !== 1 || args.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
                 }
 
-                if (vv.length !== 1) {
+                if (vv !== undefined && vv.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all produces a single Result");
                 }
 
                 //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
-                return new TaskRaceStatement(sinfo, isdefine, isconst, vv[0], terms[0], argpack, args[0]);
+                return new TaskRaceStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args[0]);
             }
             else {
                 this.raiseError(sinfo.line, "Unknown \"Task\" operation");
@@ -2692,8 +2696,8 @@ class Parser {
                 }
             }
 
-            const hasassign = this.testAndConsumeTokenIf(SYM_eq);
-            if(hasassign && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
+            this.ensureAndConsumeToken(SYM_eq, "assignment statement");
+            if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
                 return this.parseTaskRunStatement(sinfo, false, false, vars, assigns.length);
             }
             else {
@@ -2720,12 +2724,15 @@ class Parser {
                 return new ReturnStatement(sinfo, [new LiteralNoneExpression(sinfo)]);
             }
             else {
-                xxxx;
+                if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
+                    return this.parseTaskRunStatement(sinfo, false, false, undefined, 0);
+                }
+                else {
+                    const exps = this.parseEphemeralListOf(() => this.parseExpression());
 
-                const exps = this.parseEphemeralListOf(() => this.parseExpression());
-
-                this.ensureAndConsumeToken(SYM_semicolon, "return statement");
-                return new ReturnStatement(sinfo, exps);
+                    this.ensureAndConsumeToken(SYM_semicolon, "return statement");
+                    return new ReturnStatement(sinfo, exps);
+                }
             }
         }
         else if (tk === KW_abort) {
@@ -2796,7 +2803,7 @@ class Parser {
     
                         return [undefined, subg];
                     }
-                })[0];
+                });
 
                 const assign = new NominalStructuredAssignment(ttype, assigns);
                 decls.forEach((dv) => {

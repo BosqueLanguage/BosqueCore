@@ -89,7 +89,6 @@ enum ExpressionTag {
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
     TaskSelfActionExpression = "TaskSelfActionExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
-    TaskGetEventLogExpression = "TaskGetEventLogExpression", //Trim to when this task started
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
 }
 
@@ -962,16 +961,6 @@ class TaskGetIDExpression extends Expression {
     }
 }
 
-class TaskGetEventLogExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.TaskGetEventLogExpression, sinfo);
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
 class TaskCancelRequestedExpression extends Expression {
     constructor(sinfo: SourceInfo) {
         super(ExpressionTag.TaskIsCancelRequestedExpression, sinfo);
@@ -1560,7 +1549,7 @@ export {
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
     IfExpression, SwitchExpression, MatchExpression,
-    TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskGetEventLogExpression, TaskCancelRequestedExpression,
+    TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, 
     ReturnStatement,
