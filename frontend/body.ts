@@ -680,14 +680,16 @@ class PostfixGetPropertyOption extends PostfixOperation {
 
 class PostfixInvoke extends PostfixOperation {
     readonly specificResolve: TypeSignature | undefined;
+    readonly isRefThis: boolean;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
+    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, isRefThis: boolean, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
         this.specificResolve = specificResolve;
+        this.isRefThis = isRefThis;
         this.name = name;
         this.rec = rec;
         this.terms = terms;

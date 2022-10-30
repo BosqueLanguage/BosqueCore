@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskAllStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, VariableAssignmentStatement, VariableAssignmentStructuredAssignment, VariableDeclarationStatement, VariableDeclarationStructuredAssignment, VariablePackAssignmentStatement, VariablePackDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, TaskAllStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TypeConditionRestriction } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
@@ -33,6 +33,7 @@ const KW_fn = "fn";
 const KW_function = "function";
 const KW_if = "if";
 const KW_import = "import";
+const KW_in = "in";
 const KW_invariant = "invariant";
 const KW_let = "let";
 const KW_match = "match";
@@ -73,9 +74,11 @@ const KeywordStrings = [
 const SYM_lbrack = "[";
 const SYM_lparen = "(";
 const SYM_lbrace = "{";
+const SYM_lbracebar = "{|";
 const SYM_rbrack = "]";
 const SYM_rparen = ")";
 const SYM_rbrace = "}";
+const SYM_rbracebar = "|}";
 
 const SYM_percent = "%";
 const SYM_hash = "#";
@@ -113,9 +116,11 @@ const SymbolStrings = [
     SYM_lbrack,
     SYM_lparen,
     SYM_lbrace,
+    SYM_lbracebar,
     SYM_rbrack,
     SYM_rparen,
     SYM_rbrace,
+    SYM_rbracebar,
 
     SYM_percent,
     SYM_hash,
@@ -181,8 +186,8 @@ const RegexFollows = new Set<string>([
     SYM_div
 ]);
 
-const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace];
-const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace];
+const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar];
+const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar];
 
 const AttributeStrings = [
     "abstract",
@@ -2060,6 +2065,8 @@ class Parser {
         const rootinfo = this.getCurrentSrcInfo();
         let [rootexp, remainingops] = this.literalPrefixStackAndTypedConstructorHandler(pfxops);
 
+        let refpfx = this.testAndConsumeTokenIf(KW_ref);
+
         let ops: PostfixOperation[] = [];
         while (true) {
             const sinfo = this.getCurrentSrcInfo();
@@ -2068,6 +2075,10 @@ class Parser {
                 this.consumeToken();
 
                 if (this.testToken(TokenStrings.Numberino)) {
+                    if(refpfx) {
+                        this.raiseError(sinfo.line, "Cannot use \"ref on numeric index op\"");
+                    }
+
                     const index = this.parseTupleIndex();
                     ops.push(new PostfixAccessFromIndex(sinfo, index));
                 }
@@ -2084,9 +2095,17 @@ class Parser {
                     if (name === "as" || name === "is" || name === "isSome" || name === "isNone"
                         || name === "hasIndex" || name === "getIndexOrNone" || name === "getIndexOption" 
                         || name === "hasProperty" || name === "getPropertyOrNone" || name === "getPropertyOption") {
+                        if(refpfx) {
+                            this.raiseError(sinfo.line, "cannot use \"ref on Any type method call\"");
+                        }
+
                         ops.push(this.handleSpecialCaseMethods(sinfo, specificResolve, name));
                     }
                     else if (!(this.testToken(SYM_le) || this.testToken(SYM_lbrack) || this.testToken(SYM_lparen))) {
+                        if(refpfx) {
+                            this.raiseError(sinfo.line, "Cannot use \"ref on field/property index op\"");
+                        }
+
                         if (specificResolve !== undefined) {
                             this.raiseError(this.getCurrentLine(), "Encountered named access but given type resolver (only valid on method calls)");
                         }
@@ -2106,9 +2125,13 @@ class Parser {
                                 const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
 
                                 const args = this.parseArguments(SYM_lparen, SYM_rparen);
-                                ops.push(new PostfixInvoke(sinfo, specificResolve, name, terms, rec, args));
+                                ops.push(new PostfixInvoke(sinfo, specificResolve, refpfx, name, terms, rec, args));
                             }
                             else {
+                                if(refpfx) {
+                                    this.raiseError(sinfo.line, "Cannot use \"ref on field/property index op\"");
+                                }
+
                                 if (specificResolve !== undefined) {
                                     this.raiseError(this.getCurrentLine(), "Encountered named access but given type resolver (only valid on method calls)");
                                 }
@@ -2120,10 +2143,12 @@ class Parser {
                             const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
 
                             const args = this.parseArguments(SYM_lparen, SYM_rparen);
-                            ops.push(new PostfixInvoke(sinfo, specificResolve, name, [], rec, args));
+                            ops.push(new PostfixInvoke(sinfo, specificResolve, refpfx, name, [], rec, args));
                         }
                     }
                 }
+
+                refpfx = false;
             }
             else {
                 if (ops.length === 0) {
@@ -2735,6 +2760,32 @@ class Parser {
                 }
             }
         }
+        else if (tk === KW_env) {
+            this.ensureTaskOpOk();
+
+            this.consumeToken();
+            const isfresh = this.testToken(SYM_lbrace);
+            let binds = xxx;
+            if(isfresh) {
+                binds = ;
+            }
+            else {
+                binds = ;
+            }
+
+            if(this.testToken(SYM_semicolon)) {
+                //env set value here
+                xxxx;
+            }
+            else if(this.testToken(KW_in)) {
+                //envset bracket here -- multi + fresh
+                xxx;
+            }
+            else {
+                this.raiseError(sinfo.line, "expected a \";\" or \"in\" keyword as part of an environment statement");
+                return new InvalidStatement(sinfo);
+            }
+        }
         else if (tk === KW_abort) {
             this.consumeToken();
 
@@ -2764,96 +2815,49 @@ class Parser {
             return new DebugStatement(sinfo, value);
         }
         else if (tk === KW_ref) {
-            //it is a namespace function call
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            ns = this.m_penv.tryResolveNamespace(ns, name);
-            if (ns === undefined) {
-                ns = "[Unresolved Error]";
+            const call = this.parsePostfixExpression([]);
+            if(!(call[0] instanceof PostfixOp)) {
+                this.raiseError(sinfo.line, "ref invoke statement");
             }
 
-            const targs = this.testToken("<") ? this.parseTemplateArguments() : new TemplateArguments([]);
-            const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-            const args = this.parseArguments("(", ")");
+            return new RefCallStatement(sinfo, call[0] as PostfixOp);
+        }
+        else if(tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
+            this.ensureTaskOpOk();
 
-            return new NakedCallStatement(sinfo, new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args, "std"));
+            xxx;
+        }
+        else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Task") {
+            this.ensureTaskOpOk();
+
+            xxx;
+        }
+        else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Events") {
+            this.ensureTaskOpOk();
+
+            xxx;
+        }
+        else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Log") {
+            this.ensureTaskOpOk();
+
+            xxx;
         }
         else {
-            //Task, Events, Log, etc.
-
-            //we should find a type (nominal here) and it is a static invoke or a structured assign
-            const ttype = this.parseTypeSignature();
-
-            if (this.testToken("{")) {
-                let decls = new Set<string>();
-                const assigns = this.parseListOf<[string | undefined, StructuredAssignementPrimitive]>("{", "}", ",", () => {
-                    if (this.testFollows(TokenStrings.Identifier, "=")) {
-                        this.ensureToken(TokenStrings.Identifier);
-                        const name = this.consumeTokenAndGetValue();
-    
-                        this.ensureAndConsumeToken("=");
-                        const subg = this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), undefined, decls);
-    
-                        return [name, subg];
-                    }
-                    else {
-                        const subg = this.parsePrimitiveStructuredAssignment(this.getCurrentSrcInfo(), undefined, decls);
-    
-                        return [undefined, subg];
-                    }
-                });
-
-                const assign = new NominalStructuredAssignment(ttype, assigns);
-                decls.forEach((dv) => {
-                    if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(dv)) {
-                        this.raiseError(line, "Variable name is already defined");
-                    }
-                    this.m_penv.getCurrentFunctionScope().defineLocalVar(dv, dv, false);
-                });
-
-                this.ensureAndConsumeToken("=");
-                const exp = this.parseExpression();
-                this.ensureAndConsumeToken(";");
-
-                return new StructuredVariableAssignmentStatement(sinfo, false, assign, exp);
-            }
-            else if(this.testFollows("::", TokenStrings.Identifier)) {
-                this.consumeToken();
-                const name = this.consumeTokenAndGetValue();
-                const targs = this.testToken("<") ? this.parseTemplateArguments() : new TemplateArguments([]);
-                const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-                const args = this.parseArguments("(", ")");
-
-                return new NakedCallStatement(sinfo, new CallStaticFunctionOrOperatorExpression(sinfo, ttype, name, targs, rec, args, "std"));
-            }
-            else if(this.testFollows("::", TokenStrings.Operator)) {
-                this.consumeToken();
-                const name = this.consumeTokenAndGetValue();
-                const rec = this.testToken("[") ? this.parseRecursiveAnnotation() : "no";
-                const args = this.parseArguments("(", ")");
-
-                return new NakedCallStatement(sinfo, new CallStaticFunctionOrOperatorExpression(sinfo, ttype, name, new TemplateArguments([]), rec, args, "std"));
-            }
-            else {
-                this.raiseError(line, "Unknown statement structure");
-
-                return new InvalidStatement(sinfo);
-            }
+            this.raiseError(line, "Unknown statement structure");
+            return new InvalidStatement(sinfo);
         }
     }
 
-    private parseBlockStatement(): BlockStatement {
+    private parseUnscopedBlockStatement(): UnscopedBlockStatement {
         const sinfo = this.getCurrentSrcInfo();
 
         this.m_penv.getCurrentFunctionScope().pushLocalScope();
         let stmts: Statement[] = [];
         try {
-            this.setRecover(this.scanMatchingParens("{", "}"));
+            this.setRecover(this.scanMatchingParens(SYM_lbracebar, SYM_rbracebar));
 
             this.consumeToken();
-            while (!this.testAndConsumeTokenIf("}")) {
+            while (!this.testAndConsumeTokenIf(SYM_rbracebar)) {
                 stmts.push(this.parseStatement());
             }
 
@@ -2864,12 +2868,41 @@ class Parser {
             }
 
             this.clearRecover();
-            return new BlockStatement(sinfo, stmts);
+            return new UnscopedBlockStatement(sinfo, stmts);
         }
         catch (ex) {
             this.m_penv.getCurrentFunctionScope().popLocalScope();
             this.processRecover();
-            return new BlockStatement(sinfo, [new InvalidStatement(sinfo)]);
+            return new UnscopedBlockStatement(sinfo, [new InvalidStatement(sinfo)]);
+        }
+    }
+
+    private parseScopedBlockStatement(): ScopedBlockStatement {
+        const sinfo = this.getCurrentSrcInfo();
+
+        this.m_penv.getCurrentFunctionScope().pushLocalScope();
+        let stmts: Statement[] = [];
+        try {
+            this.setRecover(this.scanMatchingParens(SYM_lbrace, SYM_rbrace));
+
+            this.consumeToken();
+            while (!this.testAndConsumeTokenIf(SYM_rbrace)) {
+                stmts.push(this.parseStatement());
+            }
+
+            this.m_penv.getCurrentFunctionScope().popLocalScope();
+
+            if (stmts.length === 0) {
+                this.raiseError(this.getCurrentLine(), "No empty blocks -- requires at least ';'");
+            }
+
+            this.clearRecover();
+            return new ScopedBlockStatement(sinfo, stmts);
+        }
+        catch (ex) {
+            this.m_penv.getCurrentFunctionScope().popLocalScope();
+            this.processRecover();
+            return new ScopedBlockStatement(sinfo, [new InvalidStatement(sinfo)]);
         }
     }
 
