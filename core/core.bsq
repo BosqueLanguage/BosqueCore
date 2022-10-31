@@ -349,7 +349,9 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIStrin
     }
 
     method extractFront(v: String | Regex): String, String {
-        use search on RE(.*) -- take maximal slice
+        use search on RE(.*) -- take slice -- max or min
+                             -- enforce regex is "monotone" in that there is one valid match length only -- no overlapping unbounded fragments like [a-z]+[a-z]{2,3}
+                             -- | is ok (maybe only at top-level) since we can expand paths/anchors and then pick maximal/minimal -- maybe want to do this generally
     }
 
     method extractEnd(v: String | Regex): String, String {

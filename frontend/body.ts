@@ -1013,14 +1013,14 @@ enum StatementTag {
 
     TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
 
-    EventsEmitStatement = "EventsEmitStatement",
+    TaskEventEmitStatement = "TaskEventEmitStatement",
 
     LoggerEmitStatement = "LoggerEmitStatement",
     LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
 
-    LoggerControlStatement = "LoggerControlStatement",
-    LoggerControlBracketStatement = "LoggerControlBracketStatement",
-    LoggerSubLoggerBracketStatement = "LoggerPushSubLoggerBracketStatement",
+    LoggerLevelStatement = "LoggerLevelStatement",
+    LoggerCategoryStatement = "LoggerCategoryStatement",
+    LoggerPrefixStatement = "LoggerPrefixStatement",
 
     UnscopedBlockStatement = "UnscopedBlockStatement",
     ScopedBlockStatement = "ScopedBlockStatement"
@@ -1400,11 +1400,11 @@ class TaskSetSelfFieldStatement extends Statement {
     }
 }
 
-class EventsEmitStatement extends Statement {
+class TaskEventEmitStatement extends Statement {
     readonly arg: Expression;
 
     constructor(sinfo: SourceInfo, arg: Expression) {
-        super(StatementTag.EventsEmitStatement, sinfo);
+        super(StatementTag.TaskEventEmitStatement, sinfo);
         this.arg = arg;
     }
 
@@ -1413,15 +1413,7 @@ class EventsEmitStatement extends Statement {
     }
 }
 
-enum LoggerLevel {
-    fatal = "fatal",
-    error = "error",
-    warn = "Warn",
-    info = "info",
-    detail = "detail",
-    debug = "debug",
-    trace = "trace"
-}
+type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "trace";
 
 class LoggerEmitStatement extends Statement {
     readonly level: LoggerLevel;
@@ -1459,22 +1451,13 @@ class LoggerEmitConditionalStatement extends Statement {
     }
 }
 
-
-class LoggerControlStatement extends Statement {
-    constructor(sinfo: SourceInfo) {
-        super(StatementTag.LoggerControlStatement, sinfo);
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerControlBracketStatement extends Statement {
+class LoggerLevelStatement extends Statement {
+    readonly levels: {lname: string, lvalue: Expression}[];
     readonly block: UnscopedBlockStatement | ScopedBlockStatement;
 
-    constructor(sinfo: SourceInfo, block: UnscopedBlockStatement | ScopedBlockStatement) {
-        super(StatementTag.LoggerControlBracketStatement, sinfo);
+    constructor(sinfo: SourceInfo, levels: {lname: string, lvalue: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement) {
+        super(StatementTag.LoggerLevelStatement, sinfo);
+        this.levels = levels;
         this.block = block;
     }
 
@@ -1483,13 +1466,30 @@ class LoggerControlBracketStatement extends Statement {
     }
 }
 
-class LoggerSubLoggerBracketStatement extends Statement {
-    readonly msg: AccessFormatInfo;
+class LoggerCategoryStatement extends Statement {
+    readonly categories: {cname: string, cvalue: Expression}[];
     readonly block: UnscopedBlockStatement | ScopedBlockStatement;
 
-    constructor(sinfo: SourceInfo, msg: AccessFormatInfo, block: UnscopedBlockStatement | ScopedBlockStatement) {
-        super(StatementTag.LoggerSubLoggerBracketStatement, sinfo);
+    constructor(sinfo: SourceInfo, categories: {cname: string, cvalue: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement) {
+        super(StatementTag.LoggerCategoryStatement, sinfo);
+        this.categories = categories;
+        this.block = block;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class LoggerPrefixStatement extends Statement {
+    readonly msg: AccessFormatInfo;
+    readonly args: Expression[];
+    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
+
+    constructor(sinfo: SourceInfo, msg: AccessFormatInfo, args: Expression[], block: UnscopedBlockStatement | ScopedBlockStatement) {
+        super(StatementTag.LoggerPrefixStatement, sinfo);
         this.msg = msg;
+        this.args = args;
         this.block = block;
     }
 
@@ -1560,8 +1560,8 @@ export {
     EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket,
     TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement,
     TaskCallWithStatement, TaskResultWithStatement,
-    TaskSetStatusStatement, TaskSetSelfFieldStatement,
-    EventsEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerControlStatement, LoggerControlBracketStatement, LoggerSubLoggerBracketStatement,
+    TaskSetStatusStatement, TaskEventEmitStatement, TaskSetSelfFieldStatement, 
+    LoggerLevel, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement,
     UnscopedBlockStatement, ScopedBlockStatement, 
     BodyImplementation
 };
