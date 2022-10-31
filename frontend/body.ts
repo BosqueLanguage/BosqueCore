@@ -448,9 +448,9 @@ class ConstructorTupleExpression extends Expression {
 }
 
 class ConstructorRecordExpression extends Expression {
-    readonly args: Expression[];
+    readonly args: {property: string, value: Expression}[];
 
-    constructor(sinfo: SourceInfo, args: Expression[]) {
+    constructor(sinfo: SourceInfo, args: {property: string, value: Expression}[]) {
         super(ExpressionTag.ConstructorRecordExpression, sinfo);
         this.args = args;
     }
