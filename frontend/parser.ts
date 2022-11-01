@@ -14,6 +14,7 @@ import { BSQRegex } from "./bsqregex";
 const KW_recursive_q = "recursive?";
 const KW_recursive = "recursive";
 
+const KW_as = "as";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
@@ -1180,15 +1181,16 @@ class Parser {
             this.ensureAndConsumeToken(SYM_semicolon, "an abstract function declaration");
         }
         else {
+            const boundtemplates = new Set<string>(...terms.map((tt) => tt.name), ...implicitTemplates);
+
             if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
                 this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
             }
             else {
-                [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, resultInfo);
+                [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, boundtemplates, resultInfo);
             }
 
             try {
-                const boundtemplates = new Set<string>(...terms.map((tt) => tt.name), ...implicitTemplates);
                 this.m_penv.pushFunctionScope(new FunctionScope(argNames, boundtemplates, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
                 body = this.parseBody(bodyid, srcFile);
                 capturedvars = this.m_penv.getCurrentFunctionScope().getCaptureVars();
@@ -3372,29 +3374,19 @@ class Parser {
         return new TypeConditionRestriction(trl);
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(argnames), rtype, false));
-            while (this.testToken("requires") || this.testToken("validate")) {
-                const isvalidate = this.testToken("validate");
+            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, false));
+            while (this.testToken(KW_requires)) {
                 this.consumeToken();
                 
-                let level: BuildLevel = "release";
-                if (!isvalidate) {
-                    level = this.parseBuildInfo(level);
-                }
+                const level = this.parseBuildInfo("release");
+                const exp = this.parseExpression();
 
-                const exp = this.parseOfExpression();
+                preconds.push(new PreConditionDecl(sinfo, level, exp));
 
-                let err = new LiteralNoneExpression(sinfo);
-                if (this.testAndConsumeTokenIf("else")) {
-                    err = this.parseExpression();
-                }
-
-                preconds.push(new PreConditionDecl(sinfo, isvalidate, level, exp, err));
-
-                this.ensureAndConsumeToken(";");
+                this.ensureAndConsumeToken(SYM_semicolon, "requires");
             }
         } finally {
             this.m_penv.popFunctionScope();
@@ -3402,8 +3394,8 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(argnames, rtype, false));
-            while (this.testToken("ensures")) {
+            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, false));
+            while (this.testToken(KW_ensures)) {
                 this.consumeToken();
 
                 const level = this.parseBuildInfo("release");
@@ -3411,7 +3403,7 @@ class Parser {
 
                 postconds.push(new PostConditionDecl(sinfo, level, exp));
 
-                this.ensureAndConsumeToken(";");
+                this.ensureAndConsumeToken(SYM_semicolon, "ensures");
             }
         } finally {
             this.m_penv.popFunctionScope();
@@ -3424,18 +3416,18 @@ class Parser {
         //import NS;
         //import NS as NS;
 
-        this.ensureAndConsumeToken("import");
-        this.ensureToken(TokenStrings.ScopeName);
+        this.ensureAndConsumeToken("import", "namespace import");
+        this.ensureToken(TokenStrings.ScopeName, "namespace import");
         const fromns = this.consumeTokenAndGetValue();
 
         let nsp = {fromns: fromns, asns: fromns}; //case of import NS;
         if(this.testToken(TokenStrings.Identifier)) {
             const nn = this.consumeTokenAndGetValue();
-            if(nn !== "as") {
+            if(nn !== KW_as) {
                 this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
             }
 
-            this.ensureToken(TokenStrings.ScopeName);
+            this.ensureToken(TokenStrings.ScopeName, "namespace import");
             const asns = this.consumeTokenAndGetValue();
 
             nsp = {fromns: fromns, asns: asns};

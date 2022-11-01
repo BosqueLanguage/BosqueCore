@@ -86,17 +86,13 @@ class TypeConditionRestriction {
 
 class PreConditionDecl {
     readonly sinfo: SourceInfo;
-    readonly isvalidate: boolean;
     readonly level: BuildLevel;
     readonly exp: Expression;
-    readonly err: Expression | undefined;
 
-    constructor(sinfo: SourceInfo, isvalidate: boolean, level: BuildLevel, exp: Expression, err: Expression | undefined) {
+    constructor(sinfo: SourceInfo, level: BuildLevel, exp: Expression) {
         this.sinfo = sinfo;
-        this.isvalidate = isvalidate;
         this.level = level;
         this.exp = exp;
-        this.err = err;
     }
 }
 
