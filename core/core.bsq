@@ -227,6 +227,14 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
     __safe private function s_empty(s: String): Bool = string_empty;
     __assume_safe private function s_concat2(s1: String, s2: String): String = string_append;
 
+    function concat(s1: String, s2: String): String {
+        return String::s_concat2(s1, s2);
+    }
+
+    function concat(s1: String, s2: String, s3: String): String {
+        return String::s_concat2(s1, String::s_concat2(s2, s3);)
+    }
+
     function concat(sl: List<String>): String {
         return StringOps::s_strconcat(sl);
     }

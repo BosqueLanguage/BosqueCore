@@ -7,13 +7,14 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, EventsEmitStatement, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
-import { Assembly, BuildLevel, FunctionParameter, InvokeDecl, PostConditionDecl, PreConditionDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction } from "./assembly";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
+import { Assembly, BuildLevel, EntityTypeDecl, FunctionParameter, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceDeclaration, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TaskResourceEffect, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex } from "./bsqregex";
 
 const KW_recursive_q = "recursive?";
 const KW_recursive = "recursive";
 
+const KW_action = "action";
 const KW_as = "as";
 const KW__debug = "_debug";
 const KW_abort = "abort";
@@ -22,6 +23,7 @@ const KW_callwith = "callwith";
 const KW_concept = "concept";
 const KW_const = "const";
 const KW_debug = "debug";
+const KW_default = "default";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_enum = "enum";
@@ -55,6 +57,7 @@ const KW_return = "return";
 const KW_requires = "requires";
 const KW_something = "something";
 const KW_switch = "switch";
+const KW_task = "task";
 const KW_test = "test";
 const KW_then = "then";
 const KW_true = "true";
@@ -208,6 +211,10 @@ const AttributeStrings = [
     "test",
     "virtual",
     
+    "onCancel",
+    "onFailure",
+    "onTimeout",
+
     "__chktest",
 
     "__internal",
@@ -2998,7 +3005,7 @@ class Parser {
                 return new TaskSetStatusStatement(sinfo, args[0]);
             }
             else {
-                return new EventsEmitStatement(sinfo, args[0]);
+                return new TaskEventEmitStatement(sinfo, args[0]);
             }
         }
         else if(tk === TokenStrings.Namespace && this.peekTokenData() === "Log") {
@@ -3416,7 +3423,7 @@ class Parser {
         //import NS;
         //import NS as NS;
 
-        this.ensureAndConsumeToken("import", "namespace import");
+        this.ensureAndConsumeToken(KW_import, "namespace import");
         this.ensureToken(TokenStrings.ScopeName, "namespace import");
         const fromns = this.consumeTokenAndGetValue();
 
@@ -3433,7 +3440,7 @@ class Parser {
             nsp = {fromns: fromns, asns: asns};
         }
         
-        this.ensureAndConsumeToken(";");
+        this.ensureAndConsumeToken(SYM_semicolon, "namespce import");
 
         return nsp;
     }
@@ -3442,22 +3449,22 @@ class Parser {
         //import NS;
         //import NS as NS;
 
-        this.ensureAndConsumeToken("import");
-        this.ensureToken(TokenStrings.Namespace);
+        this.ensureAndConsumeToken(KW_import, "namespce import");
+        this.ensureToken(TokenStrings.Namespace, "namespce import");
         const fromns = this.consumeTokenAndGetValue();
 
         let asns = fromns; //case of import NS;
         if(this.testToken(TokenStrings.Identifier)) {
             const nn = this.consumeTokenAndGetValue();
-            if(nn !== "as") {
+            if(nn !== KW_as) {
                 this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
             }
 
-            this.ensureToken(TokenStrings.Namespace);
+            this.ensureToken(TokenStrings.Namespace, "namespace import");
             asns = this.consumeTokenAndGetValue();
         }
         
-        this.ensureAndConsumeToken(";");
+        this.ensureAndConsumeToken(SYM_semicolon, "namespace import");
 
         const ffns = this.m_penv.assembly.getNamespace(fromns);
         const names = [...ffns.declaredNames];
@@ -3484,8 +3491,8 @@ class Parser {
 
         const attributes = this.parseAttributes();
 
-        this.ensureAndConsumeToken("typedef");
-        this.ensureToken(TokenStrings.Type);
+        this.ensureAndConsumeToken(KW_typedef, "typedef");
+        this.ensureToken(TokenStrings.Type, "typedef");
         const tyname = this.consumeTokenAndGetValue();
 
         if (currentDecl.checkDeclNameClash(currentDecl.ns, tyname)) {
@@ -3494,8 +3501,8 @@ class Parser {
 
         const terms = this.parseTermDeclarations();
 
-        this.ensureAndConsumeToken("=");
-        const rpos = this.scanToken(";");
+        this.ensureAndConsumeToken(SYM_eq, "typedef");
+        const rpos = this.scanToken(SYM_semicolon);
         if (rpos === this.m_epos) {
             this.raiseError(this.getCurrentLine(), "Missing ; on typedef");
         }
@@ -3508,13 +3515,13 @@ class Parser {
 
     private parseProvides(iscorens: boolean, endtoken: string[]): [TypeSignature, TypeConditionRestriction | undefined][] {
         let provides: [TypeSignature, TypeConditionRestriction | undefined][] = [];
-        if (this.testAndConsumeTokenIf("provides")) {
+        if (this.testAndConsumeTokenIf(KW_provides)) {
             while (!endtoken.some((tok) => this.testToken(tok))) {
-                this.consumeTokenIf(",");
+                this.consumeTokenIf(SYM_coma);
 
                 const pv = this.parseTypeSignature();
                 let res: TypeConditionRestriction | undefined = undefined;
-                if(this.testAndConsumeTokenIf("when")) {
+                if(this.testAndConsumeTokenIf(KW_when)) {
                     res = this.parseTermRestriction(false);
                 }
                 provides.push([pv, res]);
@@ -3532,17 +3539,17 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] const NAME: T = exp;
-        this.ensureAndConsumeToken("const");
+        this.ensureAndConsumeToken(KW_const, "const member");
 
-        this.ensureToken(TokenStrings.Identifier);
+        this.ensureToken(TokenStrings.Identifier, "const member");
         const sname = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(":");
+        this.ensureAndConsumeToken(SYM_colon, "const member");
         const stype = this.parseTypeSignature();
 
-        this.ensureAndConsumeToken("=");
+        this.ensureAndConsumeToken(SYM_eq, "const member");
         const value = this.parseConstExpression(false);
 
-        this.ensureAndConsumeToken(";");
+        this.ensureAndConsumeToken(SYM_semicolon, "const member");
 
         if (allMemberNames.has(sname)) {
             this.raiseError(this.getCurrentLine(), "Collision between const and other names");
@@ -3552,110 +3559,126 @@ class Parser {
         staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), attributes, sname, stype, value));
     }
 
-    private parseStaticFunction(staticFunctions: StaticFunctionDecl[], allMemberNames: Set<string>, attributes: string[]) {
+    private parseDefaultMember(staticMembers: StaticMemberDecl[], allMemberNames: Set<string>, attributes: string[]) {
+        this.ensureTaskOpOk();
+
+        const sinfo = this.getCurrentSrcInfo();
+
+        //[attr] default NAME: T = exp;
+        this.ensureAndConsumeToken(KW_default, "default task value");
+
+        this.ensureToken(TokenStrings.Identifier, "default task value");
+        const sname = this.consumeTokenAndGetValue();
+        this.ensureAndConsumeToken(SYM_colon, "default task value");
+        const stype = this.parseTypeSignature();
+
+        this.ensureAndConsumeToken(SYM_eq, "default task value");
+        const value = this.parseConstExpression(false);
+
+        this.ensureAndConsumeToken(SYM_semicolon, "default task value");
+
+        if (allMemberNames.has(sname)) {
+            this.raiseError(this.getCurrentLine(), "Collision between const and other names");
+        }
+
+        allMemberNames.add(sname);
+        staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["task_default", ...attributes], sname, stype, value));
+    }
+
+    private parseStaticFunction(staticFunctions: StaticFunctionDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] function NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        this.ensureAndConsumeToken("function");
+        this.ensureAndConsumeToken(KW_function, "function member");
         const termRestrictions = this.parseTermRestriction(true);
 
-        this.ensureToken(TokenStrings.Identifier);
+        this.ensureToken(TokenStrings.Identifier, "function member");
         const fname = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
         let recursive: "yes" | "no" | "cond" = "no";
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, termRestrictions);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false, undefined);
 
         if (allMemberNames.has(fname)) {
             this.raiseError(this.getCurrentLine(), "Collision between static and other names");
         }
         allMemberNames.add(fname);
 
-        staticFunctions.push(new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), fname, sig));
-    }
-
-    private parseStaticOperator(staticOperators: StaticOperatorDecl[], allMemberNames: Set<string>, attributes: string[]) {
-        const sinfo = this.getCurrentSrcInfo();
-
-        //[attr] operator NAME(params): type [requires...] [ensures...] { ... }
-        this.ensureAndConsumeToken("operator");
-        const termRestrictions = this.parseTermRestriction(true);
-
-        if(!this.testToken(TokenStrings.Identifier) && !this.testToken(TokenStrings.Operator)) {
-            this.raiseError(sinfo.line, "Expected valid name for operator");
-        }
-
-        const fname = this.consumeTokenAndGetValue();
-        let recursive: "yes" | "no" | "cond" = "no";
-        if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
-            recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
-        }
-
-        const ikind = attributes.includes("dynamic") ? InvokableKind.DynamicOperator : InvokableKind.StaticOperator;
-        const sig = this.parseInvokableCommon(ikind, Parser.attributeSetContains("abstract", attributes), attributes, recursive, [], termRestrictions);
-
-        if (allMemberNames.has(fname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between static and other names");
-        }
-        allMemberNames.add(fname);
-
-        staticOperators.push(new StaticOperatorDecl(sinfo, this.m_penv.getCurrentFile(), fname, sig));
+        staticFunctions.push(new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, sig));
     }
 
     private parseMemberField(memberFields: MemberFieldDecl[], allMemberNames: Set<string>, attributes: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] field NAME: T = exp;
-        this.ensureAndConsumeToken("field");
+        this.ensureAndConsumeToken(KW_field, "member field");
 
-        this.ensureToken(TokenStrings.Identifier);
+        this.ensureToken(TokenStrings.Identifier, "member field");
         const fname = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(":");
+        this.ensureAndConsumeToken(SYM_colon, "member field");
         const stype = this.parseTypeSignature();
-        let value: ConstantExpressionValue | undefined = undefined;
 
-        if (this.testAndConsumeTokenIf("=")) {
-            value = this.parseConstExpression(true);
-        }
-
-        this.ensureAndConsumeToken(";");
+        this.ensureAndConsumeToken(SYM_semicolon, "member field");
 
         if (allMemberNames.has(fname)) {
             this.raiseError(this.getCurrentLine(), "Collision between const and other names");
         }
 
-        memberFields.push(new MemberFieldDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, stype, value));
+        memberFields.push(new MemberFieldDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, stype));
     }
 
-    private parseMemberMethod(thisRef: "ref" | undefined, thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[]) {
+    private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
-        //[attr] [ref] method NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        const refrcvr = this.testAndConsumeTokenIf("ref");
-        this.ensureAndConsumeToken("method");
+        this.ensureAndConsumeToken("method", "member method");
+
+        //[attr] method ref NAME<T where C...>(params): type [requires...] [ensures...] { ... }
+        const refrcvr = this.testAndConsumeTokenIf(KW_ref);
+        this.ensureAndConsumeToken(KW_method, "member method");
         const termRestrictions = this.parseTermRestriction(true);
 
-        this.ensureToken(TokenStrings.Identifier);
+        this.ensureToken(TokenStrings.Identifier, "member method");
         const mname = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
         let recursive: "yes" | "no" | "cond" = "no";
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, termRestrictions, thisRef, thisType);
+        const sig = this.parseInvokableCommon(InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr, thisType);
 
         allMemberNames.add(mname);
 
-        memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), mname, refrcvr, sig));
+        memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), attributes, mname, sig));
     }
 
-    private parseInvariantsInto(invs: InvariantDecl[], vdates: ValidateDecl[]) {
+    private parseMemberAction(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
+        this.ensureTaskOpOk();
+
+        const sinfo = this.getCurrentSrcInfo();
+
+        this.ensureAndConsumeToken("action", "member action");
+
+        //[attr] action NAME<T where C...>(params): type { ... }
+        this.ensureAndConsumeToken("action", "task action");
+        const termRestrictions = this.parseTermRestriction(true);
+
+        this.ensureToken(TokenStrings.Identifier, "task action");
+        const mname = this.consumeTokenAndGetValue();
+        const terms = this.parseTermDeclarations();
+        const sig = this.parseInvokableCommon(InvokableKind.Member, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true, thisType);
+
+        allMemberNames.add(mname);
+
+        memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["task_action", ...attributes], mname, sig));
+    }
+
+    private parseInvariantsInto(invs: InvariantDecl[], vdates: ValidateDecl[], boundtemplates: Set<string>) {
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), new NominalTypeSignature("Core", ["Bool"]), false));
-            while (this.testToken("invariant") || this.testToken("validate")) {
-                if(this.testToken("validate")) {
+            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), boundtemplates, new NominalTypeSignature("Core", ["Bool"]), false));
+            while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+                if(this.testToken(KW_validate)) {
                     this.consumeToken();
 
                     const sinfo = this.getCurrentSrcInfo();
@@ -3666,51 +3689,114 @@ class Parser {
                 else {
                     this.consumeToken();
 
-                    const level = this.parseBuildInfo("release");
+                    const level = this.parseBuildInfo(KW_release);
                     const sinfo = this.getCurrentSrcInfo();
                     const exp = this.parseConstExpression(true);
 
                     invs.push(new InvariantDecl(sinfo, level, exp));
                 }
 
-                this.ensureAndConsumeToken(";");
+                this.ensureAndConsumeToken(SYM_semicolon, "invariant");
             }
         } finally {
             this.m_penv.popFunctionScope();
         }
     }
 
-    private parseOOPMembersCommon(thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], 
+    private parseEffect(effects: TaskEffectFlag[], enveffects: TaskEnvironmentEffect[], resourceeffects: TaskResourceEffect[]) {
+        this.ensureTaskOpOk();
+
+        const sinfo = this.getCurrentSrcInfo();
+
+        this.ensureAndConsumeToken(KW_effect, "effect");
+
+        this.ensureToken(TokenStrings.Identifier, "effect notation");
+        const rw = this.consumeTokenAndGetValue();
+
+        const isread = rw.includes("r");
+        const iswrite = rw.includes("w");
+        if (rw.length > 2 || (rw[0] !== "r" && rw[0] !== "w") || (rw[1] !== "r" && rw[1] !== "w")) {
+            this.raiseError(sinfo.line, `Unknown read/write value "${rw}" on effect`);
+        }
+
+        this.ensureAndConsumeToken(SYM_plus, "effect notation");
+        this.ensureToken(TokenStrings.Type, "effect type");
+        const effect = this.consumeTokenAndGetValue();
+
+        if(effect === "Status") {
+            effects.push(TaskEffectFlag.Status);
+        }
+        else if(effect === "Event") {
+            effects.push(TaskEffectFlag.Event);
+        }
+        else if(effect === "Environment") {
+            effects.push(TaskEffectFlag.Environment);
+
+            this.ensureToken(SYM_le, "Environment effect");
+            this.parseListOf("Environment effect", SYM_le, SYM_ge, SYM_coma, () => {
+                //
+                //TODO: we probably want to allow this to be dynamically computed (like for the resource) based on the args but for now we will go with string literals
+                //
+                return this.parseConstExpression(true);
+            });
+        }
+        else if(effect === "Resource") {
+            effects.push(TaskEffectFlag.Resource);
+
+            xxxx;
+        }
+        else {
+            this.raiseError(sinfo.line, `Unknon effect kind ${effect}`);
+        }
+
+
+        this.ensureAndConsumeToken(SYM_semicolon, "effect notation");
+    }
+
+    parseEnsuresOnTask() {
+        ????;
+    }
+
+    private parseOOPMembersCommon(thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
         nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], staticOperators: StaticOperatorDecl[], 
+        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[]) {
         let allMemberNames = new Set<string>();
-        while (!this.testToken("}")) {
+        while (!this.testToken(SYM_lparen)) {
             const attributes = this.parseAttributes();
 
-            if(this.testToken("entity")) {
+            if(this.testToken(KW_entity)) {
                 this.parseObject(currentNamespace, nestedEntities, currentTypeNest, currentTermNest);
             }
-            else if (this.testToken("invariant") || this.testToken("validate")) {
-                this.parseInvariantsInto(invariants, validates);
+            else if(this.testToken(KW_task)) {
+                this.parseObject(currentNamespace, nestedEntities, currentTypeNest, currentTermNest);
             }
-            else if (this.testToken("const")) {
+            else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+                this.parseInvariantsInto(invariants, validates, currentTerms);
+            }
+            else if (this.testToken(KW_const)) {
                 this.parseConstMember(staticMembers, allMemberNames, attributes);
             }
-            else if (this.testToken("function")) {
-                this.parseStaticFunction(staticFunctions, allMemberNames, attributes);
+            else if (this.testToken(KW_default)) {
+                this.parseDefaultMember(staticMembers, allMemberNames, attributes);
             }
-            else if (this.testToken("operator")) {
-                this.parseStaticOperator(staticOperators, allMemberNames, attributes);
+            else if (this.testToken(KW_function)) {
+                this.parseStaticFunction(staticFunctions, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
             }
-            else if (this.testToken("field")) {
+            else if (this.testToken(KW_field)) {
                 this.parseMemberField(memberFields, allMemberNames, attributes);
             }
+            else if(this.testToken(KW_method)) {
+                this.parseMemberMethod(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
+            }
+            else if(this.testToken(KW_action)) {
+                this.parseMemberAction(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name))
+            }
+            else if(this.testToken(KW_effect)) {
+                xxxx;
+            }
             else {
-                this.ensureToken("method");
-
-                const thisRef = attributes.find((attr) => attr === "ref") as "ref" | undefined;
-                this.parseMemberMethod(thisRef, thisType, memberMethods, allMemberNames, attributes);
+                this.raiseError(this.getCurrentLine(), `Unknown member ${this.peekTokenData()}`);
             }
         }
     }
@@ -4542,6 +4628,9 @@ class Parser {
 
                     nsdecl.declaredNames.add(fname);
                 }
+                else if(this.testToken(KW_logmsg) || this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_format)) {
+                    xxxx;
+                }
                 else if (this.testToken("operator")) {
                     this.consumeToken();
                     if (this.testToken("+") || this.testToken("-") || this.testToken("*") || this.testToken("/")
@@ -4755,6 +4844,9 @@ class Parser {
                 }
                 else if (tk === "const") {
                     this.parseNamespaceConst(nsdecl);
+                }
+                else if(this.testToken(KW_logmsg) || this.testToken(KW_event) || this.testToken(KW_status) || this.testToken(KW_format)) {
+                    xxxx;
                 }
                 else if (tk === "typedef") {
                     this.parseNamespaceTypedef(nsdecl);

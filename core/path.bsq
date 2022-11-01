@@ -12,7 +12,7 @@ __universal concept PathValidator provides Any {
     //- port as Nat (optional but must have host)
     //- path
     //-- pathprefix as a regex (optional)
-    //-- pathgeneral as a regex per segment
+    //-- pathgeneral as a regex per segment (optional -- say the resource is a UUID or timecode)
     //-- pathfile as a regex (optional)
     //-- pathext as a regex (optional but needs path also must be .xxx or defaults to empty string and anything else is in pathfile)
     //- query as map of string -> regex
@@ -39,7 +39,6 @@ validator ThingInfo = {
 
 //Validator -> defines Path
 //Path<T> is actual type associated with Path
-//New operation PathTemplateConstructor is string + expressions which we will convert to a special StringJoin method
 
 //<summary>Primitive path value.</summary>
 __internal __constructable __enumable __typedeclable entity Path<T unique PathValidator> provides Some, KeyType, APIType {
@@ -58,7 +57,7 @@ __internal __constructable __typedeclable entity PathFragment<T unique PathValid
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
 
-    function interpolate(): PathFragment = special_method;
+    function interpolate(): PathFragment<T> = special_method;
 }
 
 //<summary>Primitive safe string value.</summary>
@@ -69,5 +68,5 @@ __internal __constructable __typedeclable entity PathGlob<T unique PathValidator
     //can have *, **, ? (a dot), [a-b]*+{x-y}, (A | B) in each component otherwise must match PathValidator path components
     //any parameters must be in a top-level position (i.e. not nested in a repitition contruct or range)
 
-    function interpolate(): PathGlob = special_method;
+    function interpolate(): PathGlob<T> = special_method;
 }

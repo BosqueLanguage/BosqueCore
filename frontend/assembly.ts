@@ -231,14 +231,15 @@ class StaticFunctionDecl implements OOMemberDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
+    readonly attributes: string[];
     readonly name: string;
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
+        this.attributes = attributes;
         this.name = name;
-
         this.invoke = invoke;
     }
 
@@ -273,12 +274,14 @@ class MemberMethodDecl implements OOMemberDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
+    readonly attributes: string[];
     readonly name: string;
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
+        this.attributes = attributes;
         this.name = name;
         this.invoke = invoke;
     }
@@ -352,6 +355,71 @@ class EntityTypeDecl extends OOPTypeDecl {
     }
 }
 
+enum TaskEffectFlag {
+    Status,
+    Event,
+    Resource,
+    Environment
+}
+
+class TaskEnvironmentEffect {
+    readonly evar: string | BSQRegex;
+    readonly isread: boolean;
+    readonly iswrite: boolean;
+
+    constructor(evar: string | BSQRegex, isread: boolean, iswrite: boolean) {
+        this.evar = evar;
+        this.isread = isread;
+        this.iswrite = iswrite;
+    }
+}
+
+class TaskResourceEffect {
+    readonly pathdescriptor: TypeSignature; //the resource validator
+    readonly pathglob: Expression; //returns a glob string of type PathGlob<pathdescriptor>
+    readonly isread: boolean;
+    readonly iswrite: boolean;
+
+    constructor(pathdescriptor: TypeSignature, pathglob: Expression, isread: boolean, iswrite: boolean) {
+        this.pathdescriptor = pathdescriptor;
+        this.pathglob = pathglob;
+        this.isread = isread;
+        this.iswrite = iswrite;
+    }
+}
+
+class TaskTypeDecl extends OOPTypeDecl {
+    readonly defaults: StaticMemberDecl[];
+    readonly actions: MemberMethodDecl[];
+    readonly mainfunc: StaticFunctionDecl;
+    readonly onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined };
+
+    readonly effects: TaskEffectFlag[];
+    readonly enveffect: TaskEnvironmentEffect[];
+    readonly resourceeffect: TaskResourceEffect[];
+
+    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[],
+        validates: ValidateDecl[],
+        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
+        memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
+        defaults: StaticMemberDecl[],
+        mainfunc: StaticFunctionDecl,
+        actions: MemberMethodDecl[],
+        onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
+        effects: TaskEffectFlag[], enveffect: TaskEnvironmentEffect[], resourceeffect: TaskResourceEffect[]) {
+        super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature("Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
+
+        this.defaults = defaults;
+        this.mainfunc = mainfunc;
+        this.actions = actions;
+        this.onfuncs = onfuncs;
+
+        this.effects = effects;
+        this.enveffect = enveffect;
+        this.resourceeffect = resourceeffect;
+    }
+}
+
 class NamespaceConstDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -380,15 +448,17 @@ class NamespaceFunctionDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
+    readonly attributes: string[];
     readonly ns: string;
     readonly name: string;
 
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, ns: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
 
+        this.attributes = attributes;
         this.ns = ns;
         this.name = name;
 
@@ -399,30 +469,21 @@ class NamespaceFunctionDecl {
 class NamespaceOperatorDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
-    readonly isPrefix: boolean;
-    readonly isInfix: boolean;
-    readonly isDynamic: boolean;
 
+    readonly attributes: string[];
     readonly ns: string;
     readonly name: string;
-
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, ns: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
 
-        this.isPrefix = invoke.attributes.includes("prefix");
-        this.isInfix = invoke.attributes.includes("infix");
-        this.isDynamic = invoke.attributes.includes("dynamic");
+        this.attributes = attributes;
         this.ns = ns;
         this.name = name;
 
         this.invoke = invoke;
-    }
-
-    doesKindTagMatch(tag: "prefix" | "infix" | "std"): boolean {
-        return (tag === "prefix" && this.isPrefix) || (tag === "infix" && this.isInfix) || (tag === "std" && !this.isPrefix && !this.isInfix);
     }
 }
 
@@ -468,6 +529,7 @@ class NamespaceDeclaration {
     operators: Map<string, NamespaceOperatorDecl[]>;
     concepts: Map<string, ConceptTypeDecl>;
     objects: Map<string, EntityTypeDecl>;
+    tasks: Map<string, TaskTypeDecl>;
 
     constructor(ns: string) {
         this.ns = ns;
@@ -480,6 +542,7 @@ class NamespaceDeclaration {
         this.operators = new Map<string, NamespaceOperatorDecl[]>();
         this.concepts = new Map<string, ConceptTypeDecl>();
         this.objects = new Map<string, EntityTypeDecl>();
+        this.tasks = new Map<string, TaskTypeDecl>();
     }
 
     checkUsingNameClash(names: string[]): boolean {
@@ -488,7 +551,7 @@ class NamespaceDeclaration {
 
     checkDeclNameClash(ns: string, name: string): boolean {
         const rname = ns + "::" + name;
-        return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.objects.has(rname) || this.usings.some((usedecl) => usedecl.names.indexOf(name) !== -1);
+        return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.objects.has(rname) || this.tasks.has(rname) || this.usings.some((usedecl) => usedecl.names.indexOf(name) !== -1);
     }
 }
 
@@ -509,6 +572,7 @@ class Assembly {
     private m_namespaceMap: Map<string, NamespaceDeclaration> = new Map<string, NamespaceDeclaration>();
     private m_conceptMap: Map<string, ConceptTypeDecl> = new Map<string, ConceptTypeDecl>();
     private m_objectMap: Map<string, EntityTypeDecl> = new Map<string, EntityTypeDecl>();
+    private m_taskMap: Map<string, TaskTypeDecl> = new Map<string, TaskTypeDecl>();
 
     private m_literalRegexs: BSQRegex[] = [];
     private m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
@@ -517,82 +581,6 @@ class Assembly {
     private m_atomSubtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
 
     private m_typedeclResolutions: Map<string, ResolvedType> = new Map<string, ResolvedType>();
-
-    private resolveTemplateBinds(declterms: TemplateTermDecl[], giventerms: TypeSignature[], binds: Map<string, ResolvedType>): Map<string, ResolvedType> | undefined {
-        let fullbinds = new Map<string, ResolvedType>();
-
-        for (let i = 0; i < declterms.length; ++i) {
-            if (giventerms.length <= i) {
-                if (declterms[i].defaultType !== undefined) {
-                    fullbinds.set(declterms[i].name, this.normalizeTypeOnly(declterms[i].defaultType as TypeSignature, new Map<string, ResolvedType>()));
-                }
-                else {
-                    return undefined;
-                }
-            }
-            else {
-                fullbinds.set(declterms[i].name, this.normalizeTypeOnly(giventerms[i], binds));
-            }
-        }
-
-        if([...fullbinds].some((bb) => bb[1].isEmptyType())) {
-            return undefined;
-        }
-        else {
-            return fullbinds;
-        }
-    }
-
-    processNumberinoExpressionIntoTypedExpression(exp: LiteralNumberinoExpression, infertype: ResolvedType): Expression | undefined {
-        //We will do bounds checking later so just make sure general format is ok here
-        const isfpnum = exp.value.includes(".");
-
-        if(infertype.isSameType(this.getSpecialIntType())) {
-            return !isfpnum ? new LiteralIntegralExpression(exp.sinfo, exp.value + "i", new NominalTypeSignature("Core", ["Int"])) : undefined;
-        }
-        else if(infertype.isSameType(this.getSpecialNatType())) {
-            return !isfpnum ? new LiteralIntegralExpression(exp.sinfo, exp.value + "n", new NominalTypeSignature("Core", ["Nat"])) : undefined;
-        }
-        else if(infertype.isSameType(this.getSpecialBigIntType())) {
-            return !isfpnum ? new LiteralIntegralExpression(exp.sinfo, exp.value + "I", new NominalTypeSignature("Core", ["BigInt"])) : undefined;
-        }
-        else if(infertype.isSameType(this.getSpecialBigNatType())) {
-            return !isfpnum ? new LiteralIntegralExpression(exp.sinfo, exp.value + "N", new NominalTypeSignature("Core", ["BigNat"])) : undefined;
-        }
-        else if(infertype.isSameType(this.getSpecialFloatType())) {
-            return new LiteralFloatPointExpression(exp.sinfo, exp.value + "f", new NominalTypeSignature("Core", ["Float"]));
-        }
-        else if(infertype.isSameType(this.getSpecialDecimalType())) {
-            return new LiteralFloatPointExpression(exp.sinfo, exp.value + "d", new NominalTypeSignature("Core", ["Decimal"]));
-        }
-        else if(infertype.isSameType(this.getSpecialRationalType())) {
-            return new LiteralRationalExpression(exp.sinfo, exp.value + "/1R", new NominalTypeSignature("Core", ["Rational"]));
-        }
-        else {
-            if(!infertype.isUniqueCallTargetType() || !infertype.getUniqueCallTargetType().object.attributes.includes("__typedprimitive")) {
-                return undefined;
-            }
-
-            const tt = (infertype.getUniqueCallTargetType().object.memberMethods.find((mmf) => mmf.name === "value") as MemberMethodDecl).invoke.resultType;
-            const rtt = this.normalizeTypeOnly(tt, new Map<string, ResolvedType>());
-
-            const le = this.processNumberinoExpressionIntoTypedExpression(exp, rtt);
-            if (le === undefined) {
-                return undefined;
-            }
-
-            if (le instanceof LiteralIntegralExpression) {
-                return new LiteralTypedPrimitiveConstructorExpression(exp.sinfo, le.value, le.itype, tt);
-            }
-            else if (le instanceof LiteralFloatPointExpression) {
-                return new LiteralTypedPrimitiveConstructorExpression(exp.sinfo, le.value, le.fptype, tt);
-            }
-            else {
-                const re = le as LiteralRationalExpression;
-                return new LiteralTypedPrimitiveConstructorExpression(exp.sinfo, re.value, re.rtype, tt);
-            }
-        }
-    }
 
     compileTimeReduceConstantExpression(exp: Expression, binds: Map<string, ResolvedType>, infertype: ResolvedType | undefined): Expression | undefined {
         if(exp.isCompileTimeInlineValue()) {
@@ -2504,7 +2492,8 @@ class Assembly {
 export {
     BuildApplicationMode, BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, FunctionParameter, InvokeDecl,
-    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, StaticOperatorDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl,
+    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
+    TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     OOMemberLookupInfo, Assembly
 };
