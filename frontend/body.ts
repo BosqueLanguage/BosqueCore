@@ -1113,9 +1113,9 @@ class ReturnStatement extends Statement {
 
 class IfElseStatement extends Statement {
     readonly condflow: {cond: Expression, value: ScopedBlockStatement}[];
-    readonly elseflow: ScopedBlockStatement;
+    readonly elseflow: ScopedBlockStatement | undefined;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: ScopedBlockStatement) {
+    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: ScopedBlockStatement | undefined) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
