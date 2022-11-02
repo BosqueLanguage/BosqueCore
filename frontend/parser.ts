@@ -4343,6 +4343,9 @@ class Parser {
         else if(this.testToken(SYM_lbrace)) {
             xxxx;
             //it is a PathValidator -- needs some parsing
+            const vv = this.parsePathValidator();
+
+            xxxx;
         }
         else {
             //[attr] typedecl NAME = PRIMITIVE [& {...}];
