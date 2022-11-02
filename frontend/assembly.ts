@@ -363,11 +363,11 @@ enum TaskEffectFlag {
 }
 
 class TaskEnvironmentEffect {
-    readonly evar: string | BSQRegex;
+    readonly evar: string; //string "*" is wildcard
     readonly isread: boolean;
     readonly iswrite: boolean;
 
-    constructor(evar: string | BSQRegex, isread: boolean, iswrite: boolean) {
+    constructor(evar: string, isread: boolean, iswrite: boolean) {
         this.evar = evar;
         this.isread = isread;
         this.iswrite = iswrite;
@@ -376,15 +376,27 @@ class TaskEnvironmentEffect {
 
 class TaskResourceEffect {
     readonly pathdescriptor: TypeSignature; //the resource validator
-    readonly pathglob: Expression; //returns a glob string of type PathGlob<pathdescriptor>
+    readonly pathglob: ConstantExpressionValue | undefined; //returns a glob string of type PathGlob<pathdescriptor>
     readonly isread: boolean;
     readonly iswrite: boolean;
 
-    constructor(pathdescriptor: TypeSignature, pathglob: Expression, isread: boolean, iswrite: boolean) {
+    constructor(pathdescriptor: TypeSignature, pathglob: ConstantExpressionValue | undefined, isread: boolean, iswrite: boolean) {
         this.pathdescriptor = pathdescriptor;
         this.pathglob = pathglob;
         this.isread = isread;
         this.iswrite = iswrite;
+    }
+}
+
+class TaskEnsures {
+    readonly sinfo: SourceInfo;
+    readonly level: BuildLevel;
+    readonly exp: ConstantExpressionValue;
+
+    constructor(sinfo: SourceInfo, level: BuildLevel, exp: ConstantExpressionValue) {
+        this.sinfo = sinfo;
+        this.level = level;
+        this.exp = exp;
     }
 }
 
@@ -398,6 +410,8 @@ class TaskTypeDecl extends OOPTypeDecl {
     readonly enveffect: TaskEnvironmentEffect[];
     readonly resourceeffect: TaskResourceEffect[];
 
+    readonly ensures: TaskEnsures[];
+
     constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[],
         validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
@@ -406,7 +420,8 @@ class TaskTypeDecl extends OOPTypeDecl {
         mainfunc: StaticFunctionDecl,
         actions: MemberMethodDecl[],
         onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
-        effects: TaskEffectFlag[], enveffect: TaskEnvironmentEffect[], resourceeffect: TaskResourceEffect[]) {
+        effects: TaskEffectFlag[], enveffect: TaskEnvironmentEffect[], resourceeffect: TaskResourceEffect[],
+        ensures: TaskEnsures[]) {
         super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature("Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
 
         this.defaults = defaults;
@@ -417,6 +432,8 @@ class TaskTypeDecl extends OOPTypeDecl {
         this.effects = effects;
         this.enveffect = enveffect;
         this.resourceeffect = resourceeffect;
+
+        this.ensures = ensures;
     }
 }
 
@@ -555,6 +572,83 @@ class NamespaceDeclaration {
     }
 }
 
+class PathValidator {
+    readonly scheme: string | undefined;
+    readonly userinfo: BSQRegex | undefined;
+    readonly host: BSQRegex | undefined;
+    readonly port: number | undefined;
+    readonly path: {
+        prefix: BSQRegex | undefined,
+        segments: BSQRegex | undefined, 
+        file: BSQRegex | undefined,
+        extension: BSQRegex | undefined
+    };
+    readonly query: Map<string, BSQRegex> | undefined;
+    readonly fragment: BSQRegex | undefined;
+
+    constructor(scheme: string | undefined, userinfo: BSQRegex | undefined, host: BSQRegex | undefined, port: number | undefined,
+        path: { prefix: BSQRegex | undefined, segments: BSQRegex | undefined, file: BSQRegex | undefined, extension: BSQRegex | undefined },
+        query: Map<string, BSQRegex> | undefined, fragment: BSQRegex | undefined) {
+            this.scheme = scheme;
+            this.userinfo = userinfo;
+            this.host = host;
+            this.port = port;
+            this.path = path;
+            this.query = query;
+            this.fragment = fragment;
+    }
+}
+
+class InfoTemplate {
+}
+
+class InfoTemplateRecord extends InfoTemplate {
+    readonly entries: { name: string, value: InfoTemplate }[];
+
+    constructor(entries: { name: string, value: InfoTemplate }[]) {
+        super();
+        this.entries = entries;
+    }
+}
+
+class InfoTemplateTuple extends InfoTemplate {
+    readonly entries: InfoTemplate[];
+
+    constructor(entries: InfoTemplate[]) {
+        super();
+        this.entries = entries;
+    }
+}
+
+class InfoTemplateConst extends InfoTemplate {
+    readonly cexp: ConstantExpressionValue;
+
+    constructor(cexp: ConstantExpressionValue) {
+        super();
+        this.cexp = cexp;
+    }
+}
+
+class InfoTemplateMacro extends InfoTemplate {
+    readonly macro: string;
+
+    constructor(macro: string) {
+        super();
+        this.macro = macro;
+    }
+}
+
+class InfoTemplateValue extends InfoTemplate {
+    readonly argpos: number;
+    readonly argtype: TypeSignature;
+
+    constructor(argpos: number, argtype: TypeSignature) {
+        super();
+        this.argpos = argpos;
+        this.argtype = argtype;
+    }
+}
+
 class OOMemberLookupInfo<T> {
     readonly contiainingType: OOPTypeDecl;
     readonly decl: T;
@@ -576,6 +670,7 @@ class Assembly {
 
     private m_literalRegexs: BSQRegex[] = [];
     private m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
+    private m_validatorPaths: Map<string, xxx> = new Map<string, xxx>();
 
     private m_subtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
     private m_atomSubtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
@@ -2493,7 +2588,9 @@ export {
     BuildApplicationMode, BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, FunctionParameter, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
-    TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
+    TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,
+    PathValidator,
+    InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     OOMemberLookupInfo, Assembly
 };
