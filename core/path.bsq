@@ -27,7 +27,7 @@ validator ThingInfo = {
     //no host
     //no port
     path={
-        prefix="files" | "docs",
+        prefix="files" | "docs/tmp",
         dirs=/[a-z0-9]/,
         file="temp"
     },

@@ -99,7 +99,7 @@ class RegexParser {
             return new RegexConstClass(ns, ccname);            
         }
         else {
-            res = new RegexLiteral(this.token(), this.token(), this.token());
+            res = new RegexLiteral(this.token(), this.token());
             this.advance();
         }
 
@@ -119,24 +119,13 @@ class RegexParser {
                 const cc = this.token();
                 this.advance();
 
-                return new RegexLiteral(`\\${cc}`, cc, cc);
+                return new RegexLiteral(`\\${cc}`, cc);
             }
             else {
                 const cc = this.token();
                 this.advance();
 
-                let rc = "";
-                if(cc == "n") {
-                    rc = "\n";
-                }
-                else if(cc == "r") {
-                    rc = "\r";
-                }
-                else {
-                    rc = "\t";
-                }
-
-                return new RegexLiteral(`\\${cc}`, `\\${cc}`, rc);
+                return new RegexLiteral(`\\${cc}`, `\\${cc}`);
             }
         }
         else {
@@ -289,7 +278,7 @@ class BSQRegex {
     }
 
     static parse(currentns: string, rstr: string): BSQRegex | string {
-        const reparser = new RegexParser(currentns, rstr.substr(1, rstr.length - 2));
+        const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 2));
         const rep = reparser.parseComponent();
        
         if(typeof(rep) === "string") {
@@ -349,26 +338,24 @@ abstract class RegexComponent {
 class RegexLiteral extends RegexComponent {
     readonly restr: string;
     readonly escstr: string;
-    readonly litstr: string;
 
-    constructor(restr: string, escstr: string, litstr: string) {
+    constructor(restr: string, escstr: string) {
         super();
 
         this.restr = restr;
         this.escstr = escstr;
-        this.litstr = litstr;
     }
 
     jemit(): any {
-        return {tag: "Literal", restr: this.restr, escstr: this.escstr, litstr: this.litstr};
+        return {tag: "Literal", restr: this.restr, escstr: this.escstr};
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexLiteral(obj.restr, obj.escstr, obj.litstr);
+        return new RegexLiteral(obj.restr, obj.escstr);
     }
 
     static mergeLiterals(l1: RegexLiteral, l2: RegexLiteral): RegexLiteral {
-        return new RegexLiteral(l1.restr + l2.restr, l1.escstr + l2.escstr, l1.litstr + l2.litstr);
+        return new RegexLiteral(l1.restr + l2.restr, l1.escstr + l2.escstr);
     }
 
     compileToJS(): string {

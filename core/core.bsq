@@ -78,11 +78,11 @@ __internal entity None provides KeyType, APIType {
 }
 
 //<summary>Primitive boolean value.</summary>
-__internal __enumable __litvaluetype entity Bool provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity Bool provides Some, KeyType, APIType {
 }
 
 //<summary>Primitive integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity Int provides Some,, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase entity Int provides Some, KeyType, APIType {
     method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
     method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
@@ -468,11 +468,11 @@ __internal __typedeclable __typebase entity PlainTime provides Some, APIType, Ke
 }
 
 //<summary>Primitive TickTime value.</summary>
-__internal __typedeclable __typebase entity TickTime provides Some, Orderable, KeyType APIType {
+__internal __typedeclable __typebase entity TickTime provides Some, KeyType APIType {
 }
 
 //<summary>Primitive LogicalTime value.</summary>
-__internal __typedeclable __typebase entity LogicalTime provides Some, Orderable, KeyType, APIType {
+__internal __typedeclable __typebase entity LogicalTime provides Some, KeyType, APIType {
     __safe internal function s_zero(): LogicalTime = logicaltime_zero;
     __safe internal function s_increment(t: LogicalTime): LogicalTime = logicaltime_increment;
 

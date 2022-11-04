@@ -546,7 +546,10 @@ class NamespaceDeclaration {
     operators: Map<string, NamespaceOperatorDecl[]>;
     concepts: Map<string, ConceptTypeDecl>;
     objects: Map<string, EntityTypeDecl>;
+    
     tasks: Map<string, TaskTypeDecl>;
+    msgformats: Map<string, InfoTemplate>;
+    stringformats: Map<string, StringTemplate>;
 
     constructor(ns: string) {
         this.ns = ns;
@@ -559,16 +562,15 @@ class NamespaceDeclaration {
         this.operators = new Map<string, NamespaceOperatorDecl[]>();
         this.concepts = new Map<string, ConceptTypeDecl>();
         this.objects = new Map<string, EntityTypeDecl>();
+
         this.tasks = new Map<string, TaskTypeDecl>();
+        this.msgformats = new Map<string, InfoTemplate>();
+        this.stringformats = new Map<string, StringTemplate>();
     }
 
-    checkUsingNameClash(names: string[]): boolean {
-        return names.some((name) => this.usings.some((usedecl) => usedecl.names.indexOf(name) !== -1));
-    }
-
-    checkDeclNameClash(ns: string, name: string): boolean {
-        const rname = ns + "::" + name;
-        return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.objects.has(rname) || this.tasks.has(rname) || this.usings.some((usedecl) => usedecl.names.indexOf(name) !== -1);
+    checkDeclNameClash(rname: string): boolean {
+        return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.objects.has(rname) || 
+        this.tasks.has(rname) || this.msgformats.has(rname) || this.stringformats.has(rname);
     }
 }
 
@@ -579,7 +581,8 @@ class PathValidator {
     readonly port: number | undefined;
     readonly path: {
         prefix: BSQRegex | undefined,
-        segments: BSQRegex | undefined, 
+        segments: BSQRegex | undefined,
+        suffix: BSQRegex | undefined,
         file: BSQRegex | undefined,
         extension: BSQRegex | undefined
     };
@@ -587,7 +590,7 @@ class PathValidator {
     readonly fragment: BSQRegex | undefined;
 
     constructor(scheme: string | undefined, userinfo: BSQRegex | undefined, host: BSQRegex | undefined, port: number | undefined,
-        path: { prefix: BSQRegex | undefined, segments: BSQRegex | undefined, file: BSQRegex | undefined, extension: BSQRegex | undefined },
+        path: { prefix: BSQRegex | undefined, segments: BSQRegex | undefined, suffix: BSQRegex | undefined, file: BSQRegex | undefined, extension: BSQRegex | undefined },
         query: Map<string, BSQRegex> | undefined, fragment: BSQRegex | undefined) {
             this.scheme = scheme;
             this.userinfo = userinfo;
@@ -649,6 +652,18 @@ class InfoTemplateValue extends InfoTemplate {
     }
 }
 
+class StringTemplate {
+    readonly str: string;
+
+    //
+    //TODO: want to pre-process this for formats and such
+    //
+
+    constructor(str: string) {
+        this.str = str;
+    }
+}
+
 class OOMemberLookupInfo<T> {
     readonly contiainingType: OOPTypeDecl;
     readonly decl: T;
@@ -670,7 +685,7 @@ class Assembly {
 
     private m_literalRegexs: BSQRegex[] = [];
     private m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
-    private m_validatorPaths: Map<string, xxx> = new Map<string, xxx>();
+    private m_validatorPaths: Map<string, PathValidator> = new Map<string, PathValidator>();
 
     private m_subtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
     private m_atomSubtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
@@ -1634,6 +1649,10 @@ class Assembly {
         this.m_validatorRegexs.set(resolvedName, this.m_literalRegexs[ere]);
     }
 
+    addValidatorPath(resolvedName: string, validator: PathValidator) {
+        this.m_validatorPaths.set(resolvedName, validator);
+    }
+
     addLiteralRegex(re: BSQRegex) {
         const ere = this.m_literalRegexs.findIndex((lre) => lre.restr === re.restr);
         if(ere === -1) {
@@ -2591,6 +2610,7 @@ export {
     TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,
     PathValidator,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
+    StringTemplate,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     OOMemberLookupInfo, Assembly
 };
