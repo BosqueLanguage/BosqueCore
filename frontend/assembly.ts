@@ -1639,6 +1639,10 @@ class Assembly {
         this.m_objectMap.set(resolvedName, object);
     }
 
+    addTaskDecl(resolvedName: string, task: TaskTypeDecl) {
+        this.m_taskMap.set(resolvedName, task);
+    }
+
     addValidatorRegex(resolvedName: string, validator: BSQRegex) {
         let ere = this.m_literalRegexs.findIndex((lre) => lre.restr === validator.restr);
         if(ere === -1) {

@@ -8,7 +8,7 @@ import * as assert from "assert";
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type_signature";
 import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixGetIndexOption, PostfixGetIndexOrNone, PostfixGetPropertyOption, PostfixGetPropertyOrNone, PostfixHasIndex, PostfixHasProperty, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
-import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, FunctionParameter, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
+import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, FunctionParameter, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "./bsqregex";
 
 const KW_recursive_q = "recursive?";
@@ -1310,16 +1310,24 @@ class Parser {
     //Type parsing
 
     private parseResultType(ispcode: boolean): TypeSignature {
-        if(ispcode) {
-            return this.parseTypeSignature();
+        if(this.testToken(SYM_lparen)) {
+            const decls = this.parseListOf("result type", SYM_lparen, SYM_rparen, SYM_coma, () => {
+                return this.parseTypeSignature();
+            });
+
+            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
         }
         else {
-            const decls = this.parseEphemeralListOf(() => {
-                const tdecl = this.parseTypeSignature();
-                return tdecl;
-            });
-    
-            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
+            if (ispcode) {
+                return this.parseTypeSignature();
+            }
+            else {
+                const decls = this.parseEphemeralListOf(() => {
+                    return this.parseTypeSignature();
+                });
+
+                return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
+            }
         }
     } 
 
@@ -3663,7 +3671,7 @@ class Parser {
         const stype = this.parseTypeSignature();
 
         this.ensureAndConsumeToken(SYM_eq, "default task value");
-        const value = this.parseConstExpression(false);
+        const value = this.parseConstExpression(true);
 
         this.ensureAndConsumeToken(SYM_semicolon, "default task value");
 
@@ -3881,7 +3889,7 @@ class Parser {
                 this.parseObject(currentNamespace, nestedEntities, currentTypeNest, currentTermNest);
             }
             else if(this.testToken(KW_task)) {
-                this.parseObject(currentNamespace, nestedEntities, currentTypeNest, currentTermNest);
+                this.parseTask(currentNamespace, currentTermNest);
             }
             else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
                 this.parseInvariantsInto(invariants, validates, currentTerms);
@@ -4078,6 +4086,82 @@ class Parser {
             if(enclosingMap !== undefined) {
                 enclosingMap.set(ename, edecl);
             }
+        }
+        catch (ex) {
+            this.processRecover();
+        }
+    }
+
+    private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
+        const line = this.getCurrentLine();
+
+        //[attr] task NAME[T where C...] provides {...}
+        const attributes = this.parseAttributes();
+
+        const sinfo = this.getCurrentSrcInfo();
+        this.ensureAndConsumeToken(KW_task, "task declaration");
+        this.ensureToken(TokenStrings.Type, "task declaration");
+
+        const ename = this.consumeTokenAndGetValue();
+        const terms = this.parseTermDeclarations();
+        const provides = this.parseProvides(currentDecl.ns === "Core", [SYM_lbrace]);
+
+        try {
+            this.setRecover(this.scanCodeParens());
+            this.ensureAndConsumeToken(SYM_lbrace, "task declaration");
+
+            const thisType = new NominalTypeSignature(currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(term.name)));
+
+            const invariants: InvariantDecl[] = [];
+            const validates: ValidateDecl[] = [];
+            const staticMembers: StaticMemberDecl[] = [];
+            const staticFunctions: StaticFunctionDecl[] = [];
+            const memberFields: MemberFieldDecl[] = [];
+            const memberMethods: MemberMethodDecl[] = [];
+            const nestedEntities = new Map<string, EntityTypeDecl>();
+            
+            const effects: TaskEffectFlag[] = [];
+            const enveffects: TaskEnvironmentEffect[] = [];
+            const resourceeffects: TaskResourceEffect[] = [];
+            const taskensures: TaskEnsures[] = [];
+
+            this.parseOOPMembersCommon(thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods,  effects, enveffects, resourceeffects, taskensures);
+
+            if(invariants.length !== 0) {
+                this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
+            }
+
+            if(nestedEntities.size !== 0) {
+                this.raiseError(sinfo.line, "Cannot define nested types on tasks");
+            }
+
+            this.ensureAndConsumeToken(SYM_rbrace, "task declaration");
+
+            if (currentDecl.checkDeclNameClash(ename)) {
+                this.raiseError(line, "Collision between task and other names");
+            }
+
+            this.clearRecover();
+
+            const feterms = [...currentTermNest, ...terms];
+
+            const defaults = staticMembers.filter((sm) => sm.attributes.includes("task_default"));
+
+            const mainfunc = staticFunctions.find((ff) => ff.name === "main");
+            if(mainfunc === undefined) {
+                this.raiseError(sinfo.line, "Does not have a \"main\" function defined")
+            }
+
+            const actions = memberMethods.filter((mf) => mf.attributes.includes("task_action"));
+            const onfuncs = {
+                onCanel: memberMethods.find((mf) => mf.attributes.includes("onCancel")),
+                onFailure: memberMethods.find((mf) => mf.attributes.includes("onFailure")), 
+                onTimeout: memberMethods.find((mf) => mf.attributes.includes("onTimeout"))
+            };
+
+            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, defaults, mainfunc as StaticFunctionDecl, actions, onfuncs, effects, enveffects, resourceeffects, taskensures);
+            this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
+            currentDecl.tasks.set(ename, edecl);
         }
         catch (ex) {
             this.processRecover();
