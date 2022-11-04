@@ -5,7 +5,8 @@
 
 import * as assert from "assert";
 
-import { ConceptTypeDecl, EntityTypeDecl } from "./assembly";
+import { ConceptTypeDecl, EntityTypeDecl, TaskTypeDecl } from "../ast/assembly";
+import { LiteralTypeSignature } from "../ast/type";
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
@@ -13,26 +14,20 @@ abstract class ResolvedAtomType {
     constructor(typeID: string) {
         this.typeID = typeID;
     }
-
-    abstract hasTemplateType(): boolean;
 }
 
-class ResolvedTemplateUnifyType extends ResolvedAtomType {
-    constructor(typeID: string) {
-        super(typeID);
-    }
+class ResolvedLiteralAtomType extends ResolvedAtomType {
+    readonly ltype: LiteralTypeSignature;
+    readonly lexp: TIRLiteralValue;
+    readonly ofype: ResolvedAtomType;
 
-    static create(name: string): ResolvedTemplateUnifyType {
-        return new ResolvedTemplateUnifyType(name);
-    }
-
-    hasTemplateType(): boolean {
-        return true;
+    constructor(lvalue: string, ltype: LiteralTypeSignature, lexp: TIRLiteralValue, ofype: ResolvedAtomType) {
+        super(lvalue);
+        this.ltype = ltype;
+        this.lexp = lexp;
+        this.ofype = ofype;
     }
 }
-
-//resolved literal type
-xxxx;
 
 class ResolvedEntityAtomType extends ResolvedAtomType {
     readonly object: EntityTypeDecl;
@@ -41,6 +36,30 @@ class ResolvedEntityAtomType extends ResolvedAtomType {
     constructor(typeID: string, object: EntityTypeDecl, binds: Map<string, ResolvedType>) {
         super(typeID);
         this.object = object;
+        this.binds = binds;
+    }
+
+    static create(object: EntityTypeDecl, binds: Map<string, ResolvedType>): ResolvedEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        if (object.terms.length !== 0) {
+            name += "<" + object.terms.map((arg) => (binds.get(arg.name) as ResolvedType).typeID).join(", ") + ">";
+        }
+
+        return new ResolvedEntityAtomType(name, object, binds);
+    }
+}
+
+
+
+xxxx;
+
+class ResolvedTaskAtomType extends ResolvedAtomType {
+    readonly task: TaskTypeDecl;
+    readonly binds: Map<string, ResolvedType>;
+
+    constructor(typeID: string, task: TaskTypeDecl, binds: Map<string, ResolvedType>) {
+        super(typeID);
+        this.task = task;
         this.binds = binds;
     }
 
@@ -157,34 +176,88 @@ class ResolvedEphemeralListType extends ResolvedAtomType {
     }
 }
 
+enum TypePropertyFlags {
+    Grounded,
+    Unique,
+    Numeric
+}
+
 class ResolvedType {
     readonly typeID: string;
     readonly options: ResolvedAtomType[];
+    readonly flags: TypePropertyFlags[];
 
-    constructor(typeID: string, options: ResolvedAtomType[]) {
+    constructor(typeID: string, options: ResolvedAtomType[], flags: TypePropertyFlags[]) {
         this.typeID = typeID;
         this.options = options;
+        this.flags = flags;
     }
 
-    static createSingle(type: ResolvedAtomType): ResolvedType {
-        return new ResolvedType(type.typeID, [type]);
+    private static isGroundedType(options: ResolvedAtomType[]): boolean {
+        return options.every((opt) => {
+            if(opt instanceof ResolvedConceptAtomType) {
+                return opt.conceptTypes.every((cpt) => !cpt.concept.attributes.includes("__universal"));
+            }
+            else if (opt instanceof ResolvedTupleAtomType) {
+                return opt.types.every((tt) => ResolvedType.isGroundedType(tt.options));
+            }
+            else if (opt instanceof ResolvedRecordAtomType) {
+                return opt.entries.every((entry) => ResolvedType.isGroundedType(entry.ptype.options));
+            }
+            else {
+                return true;
+            }
+        });
     }
 
-    static create(types: ResolvedAtomType[]): ResolvedType {
-        assert(types.length !== 0, "Empty Type??")
+    private static isUniqueType(options: ResolvedAtomType[]): boolean {
+        if(options.length !== 1) {
+            return false;
+        }
+
+        return !(options[0] instanceof ResolvedConceptAtomType);
+    }
+
+    private static isNumericType(options: ResolvedAtomType[]): boolean {
+        if(options.length !== 1 || !(options[0] instanceof ResolvedEntityAtomType)) {
+            return false;
+        }
+
+        const atom = options[0] as ResolvedEntityAtomType;
+        if(atom.object.attributes.includes)
+    }
+
+    static createSingle(type: ResolvedAtomType, flags: TypePropertyFlags[]): ResolvedType {
+        if(!flags.includes(TypePropertyFlags.Unique, xxxx)) {
+            flags = [...flags, TypePropertyFlags.Unique]
+        }
+
+        if(!flags.includes(TypePropertyFlags.Grounded) && ResolvedType.isGroundedType([type])) {
+            flags = [...flags, TypePropertyFlags.Grounded];
+        }
+
+        return new ResolvedType(type.typeID, [type], flags);
+    }
+
+    static create(types: ResolvedAtomType[], flags: TypePropertyFlags[]): ResolvedType {
+        assert(types.length !== 0, "Invalid Type??")
          
         if (types.length === 1) {
-            return ResolvedType.createSingle(types[0]);
+            return ResolvedType.createSingle(types[0], flags);
         }
         else {
             const atoms = types.sort((a, b) => a.typeID.localeCompare(b.typeID));
             const name = atoms.map((arg) => arg.typeID).join(" | ");
 
-            return new ResolvedType(name, atoms);
+            if(!flags.includes(TypePropertyFlags.Grounded) && ResolvedType.isGroundedType(types)) {
+                flags = [...flags, TypePropertyFlags.Grounded];
+            }
+
+            return new ResolvedType(name, atoms, flags);
         }
     }
 
-    static tryGetOOTypeInfo(t: ResolvedType): ResolvedEntityAtomType | ResolvedConceptAtomType | undefined {
+    static tryGetUniqueOOTypeInfo(t: ResolvedType): ResolvedEntityAtomType | ResolvedConceptAtomType | undefined {
         if (t.options.length !== 1) {
             return undefined;
         }
@@ -200,64 +273,17 @@ class ResolvedType {
         }
     }
 
-    hasTemplateType(): boolean {
-        return this.options.some((opt) => opt.hasTemplateType());
-    }
-
-    isTupleTargetType(): boolean {
-        return this.options.every((opt) => opt instanceof ResolvedTupleAtomType);
-    }
-
-    isUniqueTupleTargetType(): boolean {
-        return this.isTupleTargetType() && this.options.length === 1;
-    }
-
-    getUniqueTupleTargetType(): ResolvedTupleAtomType {
-        return (this.options[0] as ResolvedTupleAtomType);
-    }
-
-    tryGetInferrableTupleConstructorType(): ResolvedTupleAtomType | undefined {
-        const tcopts = this.options.filter((opt) => opt instanceof ResolvedTupleAtomType);
-
-        if (tcopts.length !== 1) {
+    static tryGetUniqueTaskTypeInfo(t: ResolvedType): ResolvedTaskAtomType | undefined {
+        if (t.options.length !== 1) {
             return undefined;
         }
 
-        return tcopts[0] as ResolvedTupleAtomType;
-    }
-
-    isRecordTargetType(): boolean {
-        return this.options.every((opt) => opt instanceof ResolvedRecordAtomType);
-    }
-
-    isUniqueRecordTargetType(): boolean {
-        return this.isRecordTargetType() && this.options.length === 1;
-    }
-
-    getUniqueRecordTargetType(): ResolvedRecordAtomType {
-        return (this.options[0] as ResolvedRecordAtomType);
-    }
-
-    tryGetInferrableRecordConstructorType(): ResolvedRecordAtomType | undefined {
-        const rcopts = this.options.filter((opt) => opt instanceof ResolvedRecordAtomType);
-
-        if (rcopts.length !== 1) {
+        if (t.options[0] instanceof ResolvedTaskAtomType) {
+            return (t.options[0] as ResolvedTaskAtomType);
+        }
+        else {
             return undefined;
         }
-
-        return rcopts[0] as ResolvedRecordAtomType;
-    }
-
-    isUniqueCallTargetType(): boolean {
-        if (this.options.length !== 1) {
-            return false;
-        }
-
-        return this.options[0] instanceof ResolvedEntityAtomType;
-    }
-
-    getUniqueCallTargetType(): ResolvedEntityAtomType {
-        return this.options[0] as ResolvedEntityAtomType;
     }
 
     getCollectionContentsType(): ResolvedType {
@@ -271,34 +297,6 @@ class ResolvedType {
         return etype;
     }
 
-    isGroundedType(): boolean {
-        return this.options.every((opt) => {
-            if(opt instanceof ResolvedConceptAtomType) {
-                return opt.conceptTypes.every((cpt) => !cpt.concept.attributes.includes("__universal"));
-            }
-            else if (opt instanceof ResolvedTupleAtomType) {
-                return opt.types.every((tt) => tt.isGroundedType());
-            }
-            else if (opt instanceof ResolvedRecordAtomType) {
-                return opt.entries.every((entry) => entry.ptype.isGroundedType());
-            }
-            else {
-                return true;
-            }
-        });
-    }
-
-    tryGetInferrableValueListConstructorType(): ResolvedEphemeralListType | undefined {
-        const vlopts = this.options.filter((opt) => opt instanceof ResolvedEphemeralListType);
-
-        if (vlopts.length !== 1) {
-            return undefined;
-        }
-
-        return (vlopts[0] as ResolvedEphemeralListType);
-    }
-
-    
     isSameType(otype: ResolvedType): boolean {
         return this.typeID === otype.typeID;
     }
@@ -363,14 +361,6 @@ class ResolvedType {
         const ccpt = this.options[0] as ResolvedConceptAtomType;
         return ccpt.conceptTypes.length === 1 && ccpt.conceptTypes[0].concept.attributes.includes("__option_type");
     }
-
-    isUniqueType(): boolean {
-        if(this.options.length !== 1) {
-            return false;
-        }
-
-        return !(this.options[0] instanceof ResolvedConceptAtomType);
-    }
 }
 
 class ResolvedFunctionTypeParam {
@@ -426,12 +416,70 @@ class ResolvedFunctionType {
     }
 }
 
+class TemplateBindScope {
+    readonly scopes: Map<string, ResolvedType | string>[] = [];
+
+    constructor(scopes: Map<string, ResolvedType | string>[]) {
+        this.scopes = scopes;
+    }
+
+    private tryTemplateResolveType_RecUp(tt: string, idx: number): ResolvedType | undefined {
+        const midx = this.scopes.findIndex((sc) => sc.has(tt), idx);
+        if(midx === -1) {
+            return undefined;
+        }
+
+        const bb = this.scopes[midx].get(tt);
+        if(bb === undefined) {
+            return undefined;
+        }
+
+        if(typeof(bb) !== "string") {
+            return bb;
+        }
+        else {
+            return this.tryTemplateResolveType_RecUp(bb, midx + 1);
+        }
+    }
+
+    tryTemplateResolveType(tt: string): ResolvedType | undefined {
+        const midx = this.scopes.findIndex((sc) => sc.has(tt));
+        if(midx === -1) {
+            return undefined;
+        }
+
+        const bb = this.scopes[midx].get(tt);
+        if(bb === undefined) {
+            return undefined;
+        }
+
+        if(typeof(bb) !== "string") {
+            return bb;
+        }
+        else {
+            return this.tryTemplateResolveType_RecUp(bb, midx + 1);
+        }
+    }
+
+    templateResolveType(tt: string): ResolvedType {
+        const bb = this.tryTemplateResolveType(tt);
+        assert(bb !== undefined, "Template name expected to have binding -- would \"tryTemplateResolveType\" be the right choice?");
+
+        return bb as ResolvedType;
+    }
+
+    pushScope(nscope: Map<string, ResolvedType | string>): TemplateBindScope {
+        return new TemplateBindScope([new Map<string, ResolvedType | string>(nscope), ...this.scopes]);
+    }
+}
+
 export {
     ResolvedAtomType,
-    ResolvedTemplateUnifyType,
-    ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedEntityAtomType,
+    ResolvedLiteralAtomType,
+    ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedEntityAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType, 
     ResolvedEphemeralListType,
-    ResolvedType, 
-    ResolvedFunctionTypeParam, ResolvedFunctionType
+    TypePropertyFlags, ResolvedType, 
+    ResolvedFunctionTypeParam, ResolvedFunctionType,
+    TemplateBindScope
 };

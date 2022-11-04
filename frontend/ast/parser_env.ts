@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { Assembly } from "./assembly";
-import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type_signature";
+import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class FunctionScope {
     private readonly m_rtype: TypeSignature;

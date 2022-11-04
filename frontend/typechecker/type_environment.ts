@@ -3,12 +3,12 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import assert = require("assert");
-
 import { Assembly } from "../ast/assembly";
-import { ResolvedType } from "../ast/resolved_type";
-import { MIRInvokeKey } from "../compiler/mir_ops";
-import { PCode } from "../compiler/mir_emitter";
+import { ResolvedType } from "../tree_ir/tir_type";
+import { MIRInvokeKey } from "../../impl/src/compiler/mir_ops";
+import { PCode } from "../../impl/src/compiler/mir_emitter";
+
+import * as assert from "assert";
 
 enum FlowTypeTruthValue {
     True = "True",
@@ -17,14 +17,6 @@ enum FlowTypeTruthValue {
 }
 
 class FlowTypeTruthOps {
-    static equal(e1: FlowTypeTruthValue, e2: FlowTypeTruthValue): boolean {
-        return e1 === e2;
-    }
-
-    static subvalue(e1: FlowTypeTruthValue, e2: FlowTypeTruthValue): boolean {
-        return e2 === FlowTypeTruthOps.join(e1, e2);
-    }
-
     static join(...values: FlowTypeTruthValue[]): FlowTypeTruthValue {
         if (values.length === 0) {
             return FlowTypeTruthValue.Unknown;
@@ -51,41 +43,39 @@ class FlowTypeTruthOps {
     }
 }
 
-class ValueType {
+class ExpType {
     readonly layout: ResolvedType;
-    readonly flowtype: ResolvedType;
+    readonly flow: ResolvedType;
 
-    constructor(layout: ResolvedType, flowtype: ResolvedType) {
+    constructor(layout: ResolvedType, flow: ResolvedType) {
         this.layout = layout;
-        this.flowtype = flowtype;
+        this.flow = flow;
     }
 
-    inferFlow(nflow: ResolvedType): ValueType {
-        return new ValueType(this.layout, nflow);
+    inferFlow(nflow: ResolvedType): ExpType {
+        return new ExpType(this.layout, nflow);
     }
 
-    static createUniform(ttype: ResolvedType): ValueType {
-        return new ValueType(ttype, ttype);
+    static createUniform(ttype: ResolvedType): ExpType {
+        return new ExpType(ttype, ttype);
     }
 
-    static join(assembly: Assembly, ...args: ValueType[]): ValueType {
+    static join(assembly: Assembly, ...args: ExpType[]): ExpType {
         assert(args.length !== 0);
 
         const jlayout = assembly.typeUpperBound(args.map((ei) => ei.layout));
-        assert(jlayout.isSameType(args[0].layout)); //we should not let this happen!!!
-
-        const jflow = assembly.typeUpperBound(args.map((ei) => ei.flowtype));
-        return new ValueType(jlayout, jflow);
+        const jflow = assembly.typeUpperBound(args.map((ei) => ei.flow));
+        return new ExpType(jlayout, jflow);
     }
 }
 
 class ExpressionReturnResult {
-    readonly valtype: ValueType;
+    readonly valtype: ExpType;
     readonly truthval: FlowTypeTruthValue;
 
     readonly expvar: string | undefined;
 
-    constructor(valtype: ValueType, tval: FlowTypeTruthValue, expvar: string | undefined) {
+    constructor(valtype: ExpType, tval: FlowTypeTruthValue, expvar: string | undefined) {
         this.valtype = valtype;
         this.truthval = tval;
 
@@ -95,7 +85,7 @@ class ExpressionReturnResult {
     static join(assembly: Assembly, expvar: string, ...args: ExpressionReturnResult[]): ExpressionReturnResult {
         assert(args.length !== 0);
 
-        const jtype = ValueType.join(assembly, ...args.map((ei) => ei.valtype));
+        const jtype = ExpType.join(assembly, ...args.map((ei) => ei.valtype));
         const jtv = FlowTypeTruthOps.join(...args.map((ei) => ei.truthval));
 
         return new ExpressionReturnResult(jtype, jtv, expvar);
@@ -104,15 +94,16 @@ class ExpressionReturnResult {
 
 class VarInfo {
     readonly declaredType: ResolvedType;
+    readonly flowType: ResolvedType;
+
     readonly isConst: boolean;
     readonly isCaptured: boolean;
     readonly mustDefined: boolean;
 
-    readonly flowType: ResolvedType;
-
-    constructor(dtype: ResolvedType, isConst: boolean, isCaptured: boolean, mustDefined: boolean, ftype: ResolvedType) {
+    constructor(dtype: ResolvedType, ftype: ResolvedType, isConst: boolean, isCaptured: boolean, mustDefined: boolean) {
         this.declaredType = dtype;
         this.flowType = ftype;
+
         this.isConst = isConst;
         this.isCaptured = isCaptured;
         this.mustDefined = mustDefined;
@@ -120,11 +111,11 @@ class VarInfo {
 
     assign(ftype: ResolvedType): VarInfo {
         assert(!this.isConst);
-        return new VarInfo(this.declaredType, this.isConst, this.isCaptured, true, ftype);
+        return new VarInfo(this.declaredType, ftype, this.isConst, this.isCaptured, true);
     }
 
     infer(ftype: ResolvedType): VarInfo {
-        return new VarInfo(this.declaredType, this.isConst, this.isCaptured, true, ftype);
+        return new VarInfo(this.declaredType, ftype, this.isConst, this.isCaptured, true);
     }
 
     static join(assembly: Assembly, ...values: VarInfo[]): VarInfo {
@@ -132,7 +123,7 @@ class VarInfo {
 
         const jdef = values.every((vi) => vi.mustDefined);
         const jtype = assembly.typeUpperBound(values.map((vi) => vi.flowType));
-        return new VarInfo(values[0].declaredType, values[0].isConst, values[0].isCaptured, jdef, jtype);
+        return new VarInfo(values[0].declaredType, jtype, values[0].isConst, values[0].isCaptured, jdef);
     }
 }
 

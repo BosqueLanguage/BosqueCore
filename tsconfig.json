@@ -14,5 +14,5 @@
     },
     "include": [
         "frontend/*.ts"
-    ]
+, "frontend/ast/assembly.ts", "frontend/tree_ir/tir_type.ts"    ]
 }

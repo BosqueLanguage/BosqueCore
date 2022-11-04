@@ -4,9 +4,9 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { SourceInfo } from "./parser";
-import { TypeSignature } from "./type_signature";
+import { TypeSignature } from "./type";
 import { InvokeDecl, BuildLevel } from "./assembly";
-import { BSQRegex } from "./bsqregex";
+import { BSQRegex } from "../bsqregex";
 
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
@@ -558,12 +558,7 @@ enum PostfixOpTag {
 
     PostfixIs = "PostfixIs",
     PostfixAs = "PostfixAs",
-    PostfixHasIndex = "PostfixHasIndex",
-    PostfixHasProperty = "PostfixHasProperty",
-    PostfixGetIndexOrNone = "PostfixGetIndexOrNone",
-    PostfixGetIndexOption = "PostfixGetIndexOption",
-    PostfixGetPropertyOrNone = "PostfixGetPropertyOrNone",
-    PostfixGetPropertyOption = "PostfixGetPropertyOption",
+
     PostfixInvoke = "PostfixInvoke"
 }
 
@@ -621,60 +616,6 @@ class PostfixAs extends PostfixOperation {
     constructor(sinfo: SourceInfo, astype: TypeSignature) {
         super(sinfo, PostfixOpTag.PostfixAs);
         this.astype = astype;
-    }
-}
-
-class PostfixHasIndex extends PostfixOperation {
-    readonly idx: number;
-
-    constructor(sinfo: SourceInfo, idx: number) {
-        super(sinfo, PostfixOpTag.PostfixHasIndex);
-        this.idx = idx;
-    }
-}
-
-class PostfixHasProperty extends PostfixOperation {
-    readonly pname: string;
-
-    constructor(sinfo: SourceInfo, pname: string) {
-        super(sinfo, PostfixOpTag.PostfixHasProperty);
-        this.pname = pname;
-    }
-}
-
-class PostfixGetIndexOrNone extends PostfixOperation {
-    readonly idx: number;
-
-    constructor(sinfo: SourceInfo, idx: number) {
-        super(sinfo, PostfixOpTag.PostfixGetIndexOrNone);
-        this.idx = idx;
-    }
-}
-
-class PostfixGetIndexOption extends PostfixOperation {
-    readonly idx: number;
-
-    constructor(sinfo: SourceInfo, idx: number) {
-        super(sinfo, PostfixOpTag.PostfixGetIndexOption);
-        this.idx = idx;
-    }
-}
-
-class PostfixGetPropertyOrNone extends PostfixOperation {
-    readonly pname: string;
-
-    constructor(sinfo: SourceInfo, pname: string) {
-        super(sinfo, PostfixOpTag.PostfixGetPropertyOrNone);
-        this.pname = pname;
-    }
-}
-
-class PostfixGetPropertyOption extends PostfixOperation {
-    readonly pname: string;
-
-    constructor(sinfo: SourceInfo, pname: string) {
-        super(sinfo, PostfixOpTag.PostfixGetPropertyOption);
-        this.pname = pname;
     }
 }
 
@@ -1542,7 +1483,7 @@ export {
     LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixAccessFromIndex, PostfixAccessFromName,
-    PostfixIs, PostfixAs, PostfixHasIndex, PostfixHasProperty, PostfixGetIndexOrNone, PostfixGetIndexOption, PostfixGetPropertyOrNone, PostfixGetPropertyOption,
+    PostfixIs, PostfixAs,
     PostfixInvoke, PCodeInvokeExpression,
     PrefixNotOp, PrefixNegateOp,
     BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,

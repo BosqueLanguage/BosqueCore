@@ -82,7 +82,7 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity Bool provi
 }
 
 //<summary>Primitive integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity Int provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Int provides Some, KeyType, APIType {
     method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
     method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
@@ -95,7 +95,7 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity Int provid
 }
 
 //<summary>Primitive natural number value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity Nat provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Nat provides Some, KeyType, APIType {
     method toBigNat(): BigNat { return NumericOps::s_natToBigNat(this); }
     method toInt(): Int { return NumericOps::s_natToInt(this); }
     method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(NumericOps::s_natToBigNat(this)); }
@@ -108,7 +108,7 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity Nat provid
 }
 
 //<summary>Primitive big-integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity BigInt provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigInt provides Some, KeyType, APIType {
     method toNat(): Nat { assert(this >= 0I); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(this)); }
     method toBigNat(): BigNat { assert(this >= 0I); return NumericOps::s_bigIntToBigNat(this); }
     method toInt(): Int { return NumericOps::s_bigIntToInt(this); }
@@ -121,7 +121,7 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity BigInt pro
 }
 
 //<summary>Primitive big-integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity BigNat provides Some, KeyType, APIType {
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigNat provides Some, KeyType, APIType {
     method toNat(): Nat { return NumericOps::s_bigNatToNat(this); }
     method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_bigNatToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(this); }
@@ -134,7 +134,7 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity BigNat pro
 }
 
 //<summary>Primitive rational value.</summary>
-__internal __typedeclable __typebase entity Rational provides Some, APIType {
+__internal __typedeclable __typebase __numeric entity Rational provides Some, APIType {
     method toNat(): Nat { assert(this >= Rational::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this))); }
     method toBigNat(): BigNat { assert(this >= Rational::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this)); }
     method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_rationalToBigInt(this)); }
@@ -147,7 +147,7 @@ __internal __typedeclable __typebase entity Rational provides Some, APIType {
 }
 
 //<summary>Primitive float value defaults to 64bit.</summary>
-__internal __typedeclable __typebase entity Float provides Some, APIType {
+__internal __typedeclable __typebase __numeric entity Float provides Some, APIType {
     const pi: Float = 3.1415926535897931f;
     const e: Float = 2.7182818284590451f;
 
@@ -185,7 +185,7 @@ __internal __typedeclable __typebase entity Float provides Some, APIType {
 }
 
 //<summary>Primitive float decimal value.</summary>
-__internal __typedeclable __typebase entity Decimal provides Some, APIType {
+__internal __typedeclable __typebase __numeric entity Decimal provides Some, APIType {
     const pi: Decimal = 3.1415926535897931d;
     const e: Decimal = 2.7182818284590451d;
 
@@ -530,6 +530,14 @@ __internal entity Regex provides Some {
     method accepts(s: String): Bool {
         return Regex::s_accepts(this, s);
     }
+}
+
+//<summary>Static methods for Tuples.</summary>
+__universal concept Tuple provides Some {
+}
+
+//<summary>Static methods for Records.</summary>
+__universal concept Record provides Some {
 }
 
 //<summary>Generic type for all Option<T> to inherit from.</summary>
