@@ -1779,7 +1779,7 @@ class Parser {
         const sinfo = this.getCurrentSrcInfo();
 
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.getCurrentFunctionScope().getBoundTemplates(), this.m_penv.SpecialAutoSignature, true));
+            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), new Set<string>(), this.m_penv.SpecialAutoSignature, true));
             const exp = this.parseMapEntryConstructorExpression();
             const captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
 
@@ -3499,7 +3499,7 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, false));
+            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, true));
             while (this.testToken(KW_ensures)) {
                 this.consumeToken();
 
@@ -4104,7 +4104,6 @@ class Parser {
 
         const ename = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(currentDecl.ns === "Core", [SYM_lbrace]);
 
         try {
             this.setRecover(this.scanCodeParens());
