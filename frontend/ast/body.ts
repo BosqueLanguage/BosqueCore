@@ -4,11 +4,9 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { SourceInfo } from "./parser";
-import { TypeSignature } from "./type";
+import { RecursiveAnnotation, TypeSignature } from "./type";
 import { InvokeDecl, BuildLevel } from "./assembly";
 import { BSQRegex } from "../bsqregex";
-
-type RecursiveAnnotation = "yes" | "no" | "cond";
 
 enum ExpressionTag {
     Clear = "[CLEAR]",

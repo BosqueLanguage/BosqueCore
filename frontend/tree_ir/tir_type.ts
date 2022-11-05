@@ -29,13 +29,21 @@ class ResolvedLiteralAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedEntityAtomType extends ResolvedAtomType {
+abstract class ResolvedEntityAtomType extends ResolvedAtomType {
     readonly object: EntityTypeDecl;
+
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID);
+        this.object = object;
+    }
+}
+
+//Represents types declared as entities in the code
+class ResolvedObjectEntityAtomType extends ResolvedEntityAtomType {
     readonly binds: Map<string, ResolvedType>;
 
     constructor(typeID: string, object: EntityTypeDecl, binds: Map<string, ResolvedType>) {
-        super(typeID);
-        this.object = object;
+        super(typeID, object);
         this.binds = binds;
     }
 
@@ -45,13 +53,266 @@ class ResolvedEntityAtomType extends ResolvedAtomType {
             name += "<" + object.terms.map((arg) => (binds.get(arg.name) as ResolvedType).typeID).join(", ") + ">";
         }
 
-        return new ResolvedEntityAtomType(name, object, binds);
+        return new ResolvedObjectEntityAtomType(name, object, binds);
     }
 }
 
+//Represents enum types declared as entities in the code
+class ResolvedEnumEntityAtomType extends ResolvedEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
 
+    static create(object: EntityTypeDecl): ResolvedEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedEnumEntityAtomType(name, object);
+    }
+}
 
-xxxx;
+//Represents typedecl T = X ... types where the representation is a single primitve typed value
+class ResolvedTypedeclEntityAtomType extends ResolvedEntityAtomType {
+    readonly valuetype: ResolvedEntityAtomType; //result of .value()
+    readonly representation: ResolvedPrimitiveInternalEntityAtomType; //result of getUnderlyingRepresentation opcode 
+
+    constructor(typeID: string, object: EntityTypeDecl, valuetype: ResolvedEntityAtomType, representation: ResolvedPrimitiveInternalEntityAtomType) {
+        super(typeID, object);
+        this.valuetype = valuetype;
+        this.representation = representation;
+    }
+
+    static create(object: EntityTypeDecl, valuetype: ResolvedEntityAtomType, representation: ResolvedPrimitiveInternalEntityAtomType): ResolvedEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedTypedeclEntityAtomType(name, object, valuetype, representation);
+    }
+}
+
+//base class for all the primitive types that are defined
+abstract class ResolvedInternalEntityAtomType extends ResolvedEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+} 
+
+//class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
+class ResolvedPrimitiveInternalEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+
+    static create(object: EntityTypeDecl): ResolvedPrimitiveInternalEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedPrimitiveInternalEntityAtomType(name, object);
+    }
+} 
+
+//class representing Validator regex types
+class ResolvedValidatorEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+
+    static create(object: EntityTypeDecl): ResolvedValidatorEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedValidatorEntityAtomType(name, object);
+    }
+}
+
+//class representing StringOf<T> types
+class ResolvedStringOfEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly validatortype: ResolvedValidatorEntityAtomType;
+
+    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType) {
+        super(typeID, object);
+        this.validatortype = validatortype;
+    }
+
+    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedStringOfEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedStringOfEntityAtomType(name, object, validatortype);
+    }
+}
+
+//class representing ASCIIStringOf<T> types
+class ResolvedASCIIStringOfEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly validatortype: ResolvedValidatorEntityAtomType;
+
+    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType) {
+        super(typeID, object);
+        this.validatortype = validatortype;
+    }
+
+    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedASCIIStringOfEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedASCIIStringOfEntityAtomType(name, object, validatortype);
+    }
+}
+
+//class representing PathValidator types
+class ResolvedPathValidatorEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+
+    static create(object: EntityTypeDecl): ResolvedPathValidatorEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedPathValidatorEntityAtomType(name, object);
+    }
+}
+
+//class representing a Path<T> type
+class ResolvedPathEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly validatortype: ResolvedPathValidatorEntityAtomType;
+
+    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
+        super(typeID, object);
+        this.validatortype = validatortype;
+    }
+
+    static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedPathEntityAtomType(name, object, validatortype);
+    }
+}
+
+//class representing a PathFragment<T> type
+class ResolvedPathFragmentEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly validatortype: ResolvedValidatorEntityAtomType;
+
+    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
+        super(typeID, object);
+        this.validatortype = validatortype;
+    }
+
+    static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathFragmentEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedPathFragmentEntityAtomType(name, object, validatortype);
+    }
+}
+
+class ResolvedPathGlobEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly validatortype: ResolvedPathValidatorEntityAtomType;
+
+    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
+        super(typeID, object);
+        this.validatortype = validatortype;
+    }
+
+    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedPathGlobEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedPathGlobEntityAtomType(name, object, validatortype);
+    }
+}
+
+//class representing Ok, Err, Something types
+class ResolvedConstructableEntityAtomType extends ResolvedInternalEntityAtomType {
+    readonly oftype: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, oftype: ResolvedType) {
+        super(typeID, object);
+        this.oftype = oftype;
+    }
+
+    static create(object: EntityTypeDecl, oftype: ResolvedType): ResolvedConstructableEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + oftype.typeID + ">";
+        return new ResolvedConstructableEntityAtomType(name, object, oftype);
+    }
+}
+
+//class representing special havoc type
+class ResolvedHavocEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+
+    static create(object: EntityTypeDecl): ResolvedHavocEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        return new ResolvedHavocEntityAtomType(name, object);
+    }
+}
+
+//abstract class for all the builtin collection types
+abstract class ResolvedPrimitiveCollectionEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
+        super(typeID, object);
+    }
+}
+
+//class representing List<T>
+class ResolvedListEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
+    readonly typeT: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedListEntityAtomType {
+        let name = "List<" + typeT.typeID + ">";
+        return new ResolvedListEntityAtomType(name, object, typeT);
+    }
+}
+
+//class representing Stack<T>
+class ResolvedStackEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
+    readonly typeT: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedStackEntityAtomType {
+        let name = "Stack<" + typeT.typeID + ">";
+        return new ResolvedStackEntityAtomType(name, object, typeT);
+    }
+}
+
+//class representing Queue<T>
+class ResolvedQueueEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
+    readonly typeT: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedQueueEntityAtomType {
+        let name = "Queue<" + typeT.typeID + ">";
+        return new ResolvedQueueEntityAtomType(name, object, typeT);
+    }
+}
+
+//class representing Set<T>
+class ResolvedSetEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
+    readonly typeT: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedSetEntityAtomType {
+        let name = "Set<" + typeT.typeID + ">";
+        return new ResolvedSetEntityAtomType(name, object, typeT);
+    }
+}
+
+//class representing Map<K, V>
+class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
+    readonly typeK: ResolvedType;
+    readonly typeV: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType) {
+        super(typeID, object);
+        this.typeK = typeK;
+        this.typeV = typeV;
+    }
+
+    static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntityAtomType {
+        let name = "Map<" + typeK.typeID + "," + typeV.typeID + ">";
+        return new ResolvedMapEntityAtomType(name, object, typeK, typeV);
+    }
+}
 
 class ResolvedTaskAtomType extends ResolvedAtomType {
     readonly task: TaskTypeDecl;
@@ -63,17 +324,13 @@ class ResolvedTaskAtomType extends ResolvedAtomType {
         this.binds = binds;
     }
 
-    static create(object: EntityTypeDecl, binds: Map<string, ResolvedType>): ResolvedEntityAtomType {
+    static create(object: TaskTypeDecl, binds: Map<string, ResolvedType>): ResolvedTaskAtomType {
         let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
         if (object.terms.length !== 0) {
             name += "<" + object.terms.map((arg) => (binds.get(arg.name) as ResolvedType).typeID).join(", ") + ">";
         }
 
-        return new ResolvedEntityAtomType(name, object, binds);
-    }
-
-    hasTemplateType(): boolean {
-        return false;
+        return new ResolvedTaskAtomType(name, object, binds);
     }
 }
 
@@ -112,10 +369,6 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
 
         return new ResolvedConceptAtomType(name, sortedConcepts);
     }
-
-    hasTemplateType(): boolean {
-        return false;
-    }
 }
 
 class ResolvedTupleAtomType extends ResolvedAtomType {
@@ -130,10 +383,6 @@ class ResolvedTupleAtomType extends ResolvedAtomType {
         const name = types.map((entry) => entry.typeID).join(", ");
 
         return new ResolvedTupleAtomType("[" + name + "]", types);
-    }
-
-    hasTemplateType(): boolean {
-        return this.types.some((entry) => entry.hasTemplateType());
     }
 }
 
@@ -151,10 +400,6 @@ class ResolvedRecordAtomType extends ResolvedAtomType {
 
         return new ResolvedRecordAtomType("{" + name + "}", simplifiedEntries);
     }
-
-    hasTemplateType(): boolean {
-        return this.entries.some((entry) => entry.ptype.hasTemplateType());
-    }
 }
 
 class ResolvedEphemeralListType extends ResolvedAtomType {
@@ -169,10 +414,6 @@ class ResolvedEphemeralListType extends ResolvedAtomType {
         const name = entries.map((entry) => entry.typeID).join(", ");
 
         return new ResolvedEphemeralListType("(|" + name + "|)", entries);
-    }
-
-    hasTemplateType(): boolean {
-        return this.types.some((type) => type.hasTemplateType());
     }
 }
 
@@ -210,30 +451,38 @@ class ResolvedType {
         });
     }
 
-    private static isUniqueType(options: ResolvedAtomType[]): boolean {
-        if(options.length !== 1) {
-            return false;
-        }
-
-        return !(options[0] instanceof ResolvedConceptAtomType);
+    private static isUniqueType(tt: ResolvedAtomType): boolean {
+        return !(tt instanceof ResolvedConceptAtomType);
     }
 
     private static isNumericType(options: ResolvedAtomType[]): boolean {
         if(options.length !== 1 || !(options[0] instanceof ResolvedEntityAtomType)) {
             return false;
         }
-
         const atom = options[0] as ResolvedEntityAtomType;
-        if(atom.object.attributes.includes)
+
+        if(atom instanceof ResolvedPrimitiveInternalEntityAtomType) {
+            return atom.object.attributes.includes("__numeric");
+        }
+        
+        if(atom instanceof ResolvedTypedeclEntityAtomType) {
+            return atom.representation.object.attributes.includes("__numeric");
+        }
+        
+        return false;
     }
 
     static createSingle(type: ResolvedAtomType, flags: TypePropertyFlags[]): ResolvedType {
-        if(!flags.includes(TypePropertyFlags.Unique, xxxx)) {
+        if(!flags.includes(TypePropertyFlags.Unique) && ResolvedType.isUniqueType(type)) {
             flags = [...flags, TypePropertyFlags.Unique]
         }
 
         if(!flags.includes(TypePropertyFlags.Grounded) && ResolvedType.isGroundedType([type])) {
             flags = [...flags, TypePropertyFlags.Grounded];
+        }
+
+        if(!flags.includes(TypePropertyFlags.Numeric) && ResolvedType.isNumericType([type])) {
+            flags = [...flags, TypePropertyFlags.Numeric];
         }
 
         return new ResolvedType(type.typeID, [type], flags);
@@ -286,17 +535,6 @@ class ResolvedType {
         }
     }
 
-    getCollectionContentsType(): ResolvedType {
-        const oodecl = this.getUniqueCallTargetType().object;
-        const oobinds = this.getUniqueCallTargetType().binds;
-        
-        const etype = oodecl.attributes.includes("__map_type") 
-                ? ResolvedType.createSingle(ResolvedTupleAtomType.create([oobinds.get("K") as ResolvedType, oobinds.get("V") as ResolvedType]))
-                : oobinds.get("T") as ResolvedType;
-
-        return etype;
-    }
-
     isSameType(otype: ResolvedType): boolean {
         return this.typeID === otype.typeID;
     }
@@ -318,12 +556,12 @@ class ResolvedType {
     }
 
     isSomethingType(): boolean {
-        if(!this.isUniqueCallTargetType()) {
+        if(this.options.length !== 1 || !(this.options[0] instanceof ResolvedConstructableEntityAtomType)) {
             return false;
         }
 
-        const oodecl = this.getUniqueCallTargetType().object;
-        return oodecl.attributes.includes("__something_type");
+        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
+        return cct.object.attributes.includes("__something_type");
     }
 
     isOptionType(): boolean {
@@ -336,21 +574,21 @@ class ResolvedType {
     }
 
     isOkType(): boolean {
-        if(!this.isUniqueCallTargetType()) {
+        if(this.options.length !== 1 || !(this.options[0] instanceof ResolvedConstructableEntityAtomType)) {
             return false;
         }
 
-        const oodecl = this.getUniqueCallTargetType().object;
-        return oodecl.attributes.includes("__ok_type");
+        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
+        return cct.object.attributes.includes("__ok_type");
     }
 
     isErrType(): boolean {
-        if(!this.isUniqueCallTargetType()) {
+        if(this.options.length !== 1 || !(this.options[0] instanceof ResolvedConstructableEntityAtomType)) {
             return false;
         }
 
-        const oodecl = this.getUniqueCallTargetType().object;
-        return oodecl.attributes.includes("__err_type");
+        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
+        return cct.object.attributes.includes("__err_type");
     }
 
     isResultType(): boolean {
@@ -365,16 +603,12 @@ class ResolvedType {
 
 class ResolvedFunctionTypeParam {
     readonly name: string;
-    readonly type: ResolvedType | ResolvedFunctionType;
-    readonly refKind: "ref" | "out" | "out?" | undefined;
-    readonly isOptional: boolean;
-    readonly litexp: string | undefined;
+    readonly type: ResolvedType;
+    readonly litexp: TIRLiteralValue | undefined;
 
-    constructor(name: string, type: ResolvedType | ResolvedFunctionType, isOpt: boolean, refKind: "ref" | "out" | "out?" | undefined, litexp: string | undefined) {
+    constructor(name: string, type: ResolvedType, litexp: TIRLiteralValue | undefined) {
         this.name = name;
         this.type = type;
-        this.isOptional = isOpt;
-        this.refKind = refKind;
         this.litexp = litexp;
     }
 }
@@ -383,36 +617,24 @@ class ResolvedFunctionType {
     readonly typeID: string;
     readonly recursive: "yes" | "no" | "cond";
     readonly params: ResolvedFunctionTypeParam[];
-    readonly optRestParamName: string | undefined;
-    readonly optRestParamType: ResolvedType | undefined;
     readonly resultType: ResolvedType;
     readonly isPred: boolean;
 
-    readonly allParamNames: Set<string>;
-
-    constructor(typeID: string, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], optRestParamName: string | undefined, optRestParamType: ResolvedType | undefined, resultType: ResolvedType, isPred: boolean) {
+    constructor(typeID: string, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean) {
         this.typeID = typeID;
         this.recursive = recursive;
         this.params = params;
-        this.optRestParamName = optRestParamName;
-        this.optRestParamType = optRestParamType;
         this.resultType = resultType;
         this.isPred = isPred;
-
-        this.allParamNames = new Set<string>();
     }
 
-    static create(recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], optRestParamName: string | undefined, optRestParamType: ResolvedType | undefined, resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
-        const cvalues = params.map((param) => (param.refKind !== undefined ? param.refKind : "") + param.name + (param.isOptional ? "?: " : ": ") + param.type.typeID + (param.litexp !== undefined ? ("==" + param.litexp) : ""));
+    static create(recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
+        const cvalues = params.map((param) => param.name + param.type.typeID + (param.litexp !== undefined ? ("==" + param.litexp.srepr) : ""));
         let cvalue = cvalues.join(", ");
-
-        if (optRestParamName !== undefined && optRestParamType !== undefined) {
-            cvalue += ((cvalues.length !== 0 ? ", " : "") + ("..." + optRestParamName + ": " + optRestParamType.typeID));
-        }
 
         const lstr = isPred ? "pred" : "fn";
         const name = lstr + "(" + cvalue + ") -> " + resultType.typeID;
-        return new ResolvedFunctionType(name, recursive, params, optRestParamName, optRestParamType, resultType, isPred);
+        return new ResolvedFunctionType(name, recursive, params, resultType, isPred);
     }
 }
 
@@ -476,7 +698,13 @@ class TemplateBindScope {
 export {
     ResolvedAtomType,
     ResolvedLiteralAtomType,
-    ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedEntityAtomType, ResolvedTaskAtomType,
+    ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 
+    ResolvedPrimitiveInternalEntityAtomType,
+    ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
+    ResolvedPathValidatorEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType,
+    ResolvedConstructableEntityAtomType, ResolvedHavocEntityAtomType,
+    ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
+    ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType, 
     ResolvedEphemeralListType,
     TypePropertyFlags, ResolvedType, 

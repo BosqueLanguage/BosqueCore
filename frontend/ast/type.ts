@@ -109,14 +109,16 @@ class EphemeralListTypeSignature extends TypeSignature {
     }
 }
 
+type RecursiveAnnotation = "yes" | "no" | "cond";
+
 class FunctionTypeSignature extends TypeSignature {
-    readonly recursive: "yes" | "no" | "cond";
+    readonly recursive: RecursiveAnnotation;
     readonly isThisRef: boolean;
     readonly params: TypeSignature[];
     readonly resultType: TypeSignature;
     readonly isPred: boolean;
 
-    constructor(isThisRef: boolean, recursive: "yes" | "no" | "cond", params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
+    constructor(isThisRef: boolean, recursive: RecursiveAnnotation, params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
         super();
         this.recursive = recursive;
         this.isThisRef = isThisRef;
@@ -175,5 +177,5 @@ export {
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, LiteralTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EphemeralListTypeSignature,
-    FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };
