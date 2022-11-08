@@ -98,7 +98,7 @@ class TypeChecker {
         if(exp.isCompileTimeInlineValue()) {
             if (exp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = ResolvedType.tryGetUniqueOOTypeInfo(oftype);
+                const ootype = oftype.tryGetUniqueOOTypeInfo();
                 if (ootype instanceof ResolvedValidatorEntityAtomType) {
                     return exp;
                 }
@@ -108,7 +108,7 @@ class TypeChecker {
             }
             if (exp instanceof LiteralASCIITypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = ResolvedType.tryGetUniqueOOTypeInfo(oftype);
+                const ootype = oftype.tryGetUniqueOOTypeInfo();
                 if (ootype instanceof ResolvedValidatorEntityAtomType) {
                     return exp;
                 }
@@ -162,7 +162,7 @@ class TypeChecker {
         if(cexp instanceof AccessStaticFieldExpression) {
             //must be an enum type
             const stype = this.normalizeTypeOnly(cexp.stype, TemplateBindScope.createEmptyBindScope());
-            this.raiseErrorIf(exp.sinfo, stype.options.length !== 1 || !(stype.options[0] instanceof ResolvedEnumEntityAtomType), "Expected an enum type here");
+            this.raiseErrorIf(exp.sinfo, !(stype.tryGetUniqueEntityTypeInfo() instanceof ResolvedEnumEntityAtomType), "Expected an enum type here");
             
             const cmf = this.tryGetConstMemberUniqueDeclFromType(stype, cexp.name);
             this.raiseErrorIf(exp.sinfo, cmf === undefined, `Enum ${cexp.name} no defined on type ${stype.typeID}`);
@@ -202,20 +202,20 @@ class TypeChecker {
             }
             else if (cexp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(cexp.stype, binds);
-                this.raiseErrorIf(exp.sinfo, oftype.options.length !== 1 || !(oftype.options[0] instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
+                this.raiseErrorIf(exp.sinfo, !(oftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
             
                 const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
-                const etype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType), []);
+                const etype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
                 const nexp = new TIRLiteralTypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
 
                 return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralASCIITypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(cexp.stype, binds);
-                this.raiseErrorIf(exp.sinfo, oftype.options.length !== 1 || !(oftype.options[0] instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
+                this.raiseErrorIf(exp.sinfo, !(oftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
             
                 const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
-                const etype = ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType), []);
+                const etype = ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
                 const nexp = new TIRLiteralASCIITypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
 
                 return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
@@ -231,7 +231,7 @@ class TypeChecker {
             }
             else if(cexp instanceof LiteralTypeValueExpression) {
                 const texp = this.normalizeTypeOnly(cexp.vtype, binds);
-                this.raiseErrorIf(exp.sinfo, texp.options.length !== 1 || !(texp.options[0] instanceof ResolvedLiteralAtomType));
+                this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
 
                 const rlt = texp.options[0] as ResolvedLiteralAtomType;
                 return rlt.lexp;
@@ -542,15 +542,33 @@ class TypeChecker {
                     let oftype = this.normalizeTypeOnly(rrtype, binds);
 
                     let basetype = oftype;
-                    let basetypedecl = basetype.getUniqueCallTargetType().object;
-                    while(!basetypedecl.attributes.includes("__typebase")) {
-                        const uutype = (basetypedecl.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
-
-                        basetype = this.normalizeTypeOnly(uutype, basetype.getUniqueCallTargetType().binds);
-                        basetypedecl = basetype.getUniqueCallTargetType().object;
+                    let basetypedecl = basetype.tryGetUniqueEntityTypeInfo();
+                    if(basetypedecl === undefined) {
+                        this.raiseError(sinfo, `Unsupported base type "${oftype.typeID}" for typedef`);
+                        return ResolvedType.createInvalid();
                     }
 
-                    rtypeatom = ResolvedTypedeclEntityAtomType.create(fobject, oftype, basetype);
+                    while(basetypedecl.object.attributes.includes("__typebase")) {
+                        const uutype = (basetypedecl.object.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
+                        const uubinds = basetype.tryGetUniqueEntityBindsInfo();
+                        if(uubinds === undefined) {
+                            this.raiseError(sinfo, `Unsupported base type "${basetypedecl.typeID}" for typedef`);
+                            return ResolvedType.createInvalid();
+                        }
+
+                        basetype = this.normalizeTypeOnly(uutype, TemplateBindScope.createBaseBindScope(uubinds));
+                        basetypedecl = basetype.tryGetUniqueEntityTypeInfo();
+                        if(basetypedecl === undefined) {
+                            this.raiseError(sinfo, `Unsupported base type "${oftype.typeID}" for typedef`);
+                            return ResolvedType.createInvalid();
+                        }
+                    }
+
+                    if() {
+                        xxxx;
+                    }
+
+                    rtypeatom = ResolvedTypedeclEntityAtomType.create(fobject, oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType, basetype);
                 }
                 else if() {
                     ResolvedStringOfEntityAtomType
