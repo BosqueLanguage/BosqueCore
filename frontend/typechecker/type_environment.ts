@@ -59,14 +59,6 @@ class ExpType {
     static createUniform(ttype: ResolvedType): ExpType {
         return new ExpType(ttype, ttype);
     }
-
-    static join(assembly: Assembly, ...args: ExpType[]): ExpType {
-        assert(args.length !== 0);
-
-        const jlayout = assembly.typeUpperBound(args.map((ei) => ei.layout));
-        const jflow = assembly.typeUpperBound(args.map((ei) => ei.flow));
-        return new ExpType(jlayout, jflow);
-    }
 }
 
 class ExpressionReturnResult {
@@ -80,15 +72,6 @@ class ExpressionReturnResult {
         this.truthval = tval;
 
         this.expvar = expvar;
-    }
-
-    static join(assembly: Assembly, expvar: string, ...args: ExpressionReturnResult[]): ExpressionReturnResult {
-        assert(args.length !== 0);
-
-        const jtype = ExpType.join(assembly, ...args.map((ei) => ei.valtype));
-        const jtv = FlowTypeTruthOps.join(...args.map((ei) => ei.truthval));
-
-        return new ExpressionReturnResult(jtype, jtv, expvar);
     }
 }
 
@@ -116,14 +99,6 @@ class VarInfo {
 
     infer(ftype: ResolvedType): VarInfo {
         return new VarInfo(this.declaredType, ftype, this.isConst, this.isCaptured, true);
-    }
-
-    static join(assembly: Assembly, ...values: VarInfo[]): VarInfo {
-        assert(values.length !== 0);
-
-        const jdef = values.every((vi) => vi.mustDefined);
-        const jtype = assembly.typeUpperBound(values.map((vi) => vi.flowType));
-        return new VarInfo(values[0].declaredType, jtype, values[0].isConst, values[0].isCaptured, jdef);
     }
 }
 

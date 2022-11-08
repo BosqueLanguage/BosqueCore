@@ -24,6 +24,7 @@ enum ExpressionTag {
     LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
     
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralASCIITypedStringExpression = "LiteralASCIITypedStringExpression",
     
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
     LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
@@ -256,6 +257,10 @@ class LiteralRegexExpression extends Expression {
         super(ExpressionTag.LiteralRegexExpression, sinfo);
         this.value = value;
     }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
 }
 
 class LiteralASCIIStringExpression extends Expression {
@@ -294,6 +299,25 @@ class LiteralTypedStringExpression extends Expression {
     }
 }
 
+class LiteralASCIITypedStringExpression extends Expression {
+    readonly value: string;
+    readonly stype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, stype: TypeSignature) {
+        super(ExpressionTag.LiteralASCIITypedStringExpression, sinfo);
+        this.value = value;
+        this.stype = stype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
 class LiteralTemplateStringExpression extends Expression {
     readonly value: string;
 
@@ -303,10 +327,6 @@ class LiteralTemplateStringExpression extends Expression {
     }
 
     isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
         return true;
     }
 }
@@ -320,10 +340,6 @@ class LiteralASCIITemplateStringExpression extends Expression {
     }
 
     isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
         return true;
     }
 }
@@ -1472,7 +1488,7 @@ export {
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
-    LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
+    LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression,
     AccessFormatInfo, AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 

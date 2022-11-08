@@ -1,3 +1,6 @@
+import { SourceInfo } from "../ast/parser";
+import { BSQRegex } from "../bsqregex";
+import { ResolvedLiteralAtomType, ResolvedType, ResolvedValidatorEntityAtomType } from "./tir_type";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
@@ -15,13 +18,12 @@ enum TIRExpressionTag {
     LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
     
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralASCIITypedStringExpression = "LiteralASCIITypedStringExpression",
     
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
     LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
     
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
-
-    LiteralTypeValueExpression = "LiteralTypeValueExpression",
 
     AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
@@ -85,3 +87,177 @@ enum TIRExpressionTag {
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
 }
+
+abstract class TIRExpression {
+    readonly tag: TIRExpressionTag;
+    readonly sinfo: SourceInfo;
+
+    readonly etype: ResolvedType;
+    readonly expstr: string;
+
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, etype: ResolvedType, expstr: string) {
+        this.tag = tag;
+        this.sinfo = sinfo;
+
+        this.etype = etype;
+        this.expstr = expstr;
+    }
+
+    isTaskOperation(): boolean {
+        return false;
+    }
+
+    getUsedVars(): string[] {
+        return [];
+    }
+
+    static joinUsedVarInfo(...vars: string[][]): string[] {
+        const vflat = ([] as string[]).concat(...vars);
+        return [...new Set<string>(vflat)];
+    }
+}
+
+class TIRInvalidExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, etype: ResolvedType) {
+        super(TIRExpressionTag.InvalidExpresion, sinfo, etype, "[INVALID]");
+    }
+}
+
+class TIRLiteralNoneExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralNoneExpression, sinfo, etype, "none");
+    }
+}
+
+class TIRLiteralNothingExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralNothingExpression, sinfo, etype, "nothing");
+    }
+}
+
+class TIRLiteralBoolExpression extends TIRExpression {
+    readonly value: boolean;
+
+    constructor(sinfo: SourceInfo, etype: ResolvedType, value: boolean) {
+        super(TIRExpressionTag.LiteralBoolExpression, sinfo, etype, value ? "true" : "false");
+        this.value = value;
+    }
+}
+
+class TIRLiteralIntegralExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, itype: ResolvedType) {
+        super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralRationalExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, rtype: ResolvedType) {
+        super(TIRExpressionTag.LiteralRationalExpression, sinfo, rtype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralFloatPointExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, fptype: ResolvedType) {
+        super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralStringExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralStringExpression, sinfo, etype, value);
+    }
+}
+
+class TIRLiteralRegexExpression extends TIRExpression {
+    readonly value: BSQRegex;
+
+    constructor(sinfo: SourceInfo, value: BSQRegex, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralRegexExpression, sinfo, etype, value.restr);
+        this.value = value;
+    }
+}
+
+class TIRLiteralASCIIStringExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, etype, value);
+    }
+}
+
+class TIRLiteralTypedStringExpression extends TIRExpression {
+    readonly oftype: ResolvedValidatorEntityAtomType;
+
+    constructor(sinfo: SourceInfo, value: string, stype: ResolvedType, oftype: ResolvedValidatorEntityAtomType) {
+        super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stype, `${value}_${oftype.typeID}`);
+        this.oftype = oftype;
+    }
+}
+
+class TIRLiteralASCIITypedStringExpression extends TIRExpression {
+    readonly oftype: ResolvedValidatorEntityAtomType;
+
+    constructor(sinfo: SourceInfo, value: string, stype: ResolvedType, oftype: ResolvedValidatorEntityAtomType) {
+        super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, stype, `${value}_${oftype.typeID}`);
+        this.oftype = oftype;
+    }
+}
+
+class TIRLiteralTemplateStringExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
+    }
+}
+
+class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
+        super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
+    }
+}
+
+class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
+    readonly value: TIRExpression;
+    readonly vtype: ResolvedType;
+
+    readonly constype: ResolvedType;
+    readonly reprtype: ResolvedType;
+
+    constructor(sinfo: SourceInfo, value: TIRExpression, vtype: ResolvedType, constype: ResolvedType, reprtype: ResolvedType) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype.typeID}`);
+        this.value = value;
+        this.vtype = vtype;
+
+        this.constype = constype;
+        this.reprtype = reprtype;
+    }
+}
+
+xxxx;
+
+class TIRLiteralValue {
+    readonly exp: TIRExpression;
+    readonly ltype: ResolvedType;
+    readonly lidstr: string;
+    
+    constructor(exp: TIRExpression, ltype: ResolvedType, lidstr: string) {
+        this.exp = exp
+        this.ltype = ltype;
+        this.lidstr = lidstr;
+    }
+}
+
+export {
+    TIRExpression, TIRInvalidExpression,
+    TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
+    TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
+    TIRLiteralTypedPrimitiveConstructorExpression,
+    xxxx,
+    TIRLiteralValue
+};

@@ -3,14 +3,16 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import { Assembly, BuildApplicationMode, BuildLevel, OOPTypeDecl } from "../ast/assembly";
-
 import * as assert from "assert";
-import { SourceInfo } from "../ast/parser";
-import { ResolvedType } from "../tree_ir/tir_type";
-import { AccessNamespaceConstantExpression } from "../ast/body";
 
-const NAT_MAX = 18446744073709551615n;
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, NamespaceConstDecl, NamespaceTypedef, OOPTypeDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
+import { SourceInfo } from "../ast/parser";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedLiteralAtomType, ResolvedStringOfEntityAtomType, ResolvedType, ResolvedValidatorEntityAtomType, TemplateBindScope } from "../tree_ir/tir_type";
+import { AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
+import { TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
+import { LiteralTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "../ast/type";
+
+const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
 const INT_MAX = 9223372036854775807n;
 const INT_MIN = -INT_MAX; //negation is always safe
@@ -31,9 +33,9 @@ class TypeError extends Error {
 class OOMemberLookupInfo<T> {
     readonly contiainingType: OOPTypeDecl;
     readonly decl: T;
-    readonly binds: Map<string, ResolvedType>;
+    readonly binds: TemplateBindScope;
 
-    constructor(contiainingType: OOPTypeDecl, decl: T, binds: Map<string, ResolvedType>) {
+    constructor(contiainingType: OOPTypeDecl, decl: T, binds: TemplateBindScope) {
         this.contiainingType = contiainingType;
         this.decl = decl;
         this.binds = binds;
@@ -92,41 +94,44 @@ class TypeChecker {
         return `${this.m_sortedSrcFiles[sfpos].shortname}#k${sfpos}${etag !== undefined ? ("_" + etag) : ""}::${sinfo.line}@${sinfo.pos}`;
     }
 
-    compileTimeReduceConstantExpression(exp: Expression, binds: Map<string, ResolvedType>, infertype: ResolvedType | undefined): Expression | undefined {
+    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindScope, infertype: ResolvedType | undefined): Expression | undefined {
         if(exp.isCompileTimeInlineValue()) {
-            if(exp instanceof LiteralNumberinoExpression && infertype !== undefined) {
-                return this.processNumberinoExpressionIntoTypedExpression(exp, infertype);
-            }
-            else {
-                if(exp instanceof LiteralTypedStringExpression) {
-                    const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                    if(oftype.isUniqueCallTargetType() && oftype.getUniqueCallTargetType().object.attributes.includes("__validator_type")) {
-                        return exp;
-                    }
-                    else {
-                        return undefined;
-                    }
-                }
-                else {
+            if (exp instanceof LiteralTypedStringExpression) {
+                const oftype = this.normalizeTypeOnly(exp.stype, binds);
+                const ootype = ResolvedType.tryGetUniqueOOTypeInfo(oftype);
+                if (ootype instanceof ResolvedValidatorEntityAtomType) {
                     return exp;
                 }
+                else {
+                    return undefined;
+                }
+            }
+            if (exp instanceof LiteralASCIITypedStringExpression) {
+                const oftype = this.normalizeTypeOnly(exp.stype, binds);
+                const ootype = ResolvedType.tryGetUniqueOOTypeInfo(oftype);
+                if (ootype instanceof ResolvedValidatorEntityAtomType) {
+                    return exp;
+                }
+                else {
+                    return undefined;
+                }
+            }
+            else {
+                return exp;
             }
         }
-
-        xxxx; //formats variable
-
         else if (exp instanceof AccessNamespaceConstantExpression) {
-            if (!this.hasNamespace(exp.ns)) {
+            if (!this.m_assembly.hasNamespace(exp.ns)) {
                 return undefined;
             }
-            const nsdecl = this.getNamespace(exp.ns);
+            const nsdecl = this.m_assembly.getNamespace(exp.ns);
 
             if (!nsdecl.consts.has(exp.name)) {
                 return undefined;
             }
 
             const cdecl = nsdecl.consts.get(exp.name) as NamespaceConstDecl;
-            return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds, this.normalizeTypeOnly(cdecl.declaredType, new Map<string, ResolvedType>()));
+            return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds, this.normalizeTypeOnly(cdecl.declaredType, TemplateBindScope.createEmptyBindScope()));
         }
         else if (exp instanceof AccessStaticFieldExpression) {
             const oftype = this.normalizeTypeOnly(exp.stype, binds);
@@ -148,47 +153,94 @@ class TypeChecker {
         }
     }
 
-    reduceLiteralValueToCanonicalForm(exp: Expression, binds: Map<string, ResolvedType>, infertype: ResolvedType | undefined): [Expression, ResolvedType, string] | undefined {
+    reduceLiteralValueToCanonicalForm(exp: Expression, binds: TemplateBindScope, infertype: ResolvedType | undefined): TIRLiteralValue | undefined {
         const cexp = this.compileTimeReduceConstantExpression(exp, binds, infertype);
         if(cexp === undefined) {
             return undefined;
         }
 
         if(cexp instanceof AccessStaticFieldExpression) {
-            const stype = this.normalizeTypeOnly(cexp.stype, new Map<string, ResolvedType>());
-            return [cexp, stype, `${stype.typeID}::${cexp.name}`];
+            //must be an enum type
+            const stype = this.normalizeTypeOnly(cexp.stype, TemplateBindScope.createEmptyBindScope());
+            this.raiseErrorIf(exp.sinfo, stype.options.length !== 1 || !(stype.options[0] instanceof ResolvedEnumEntityAtomType), "Expected an enum type here");
+            
+            const cmf = this.tryGetConstMemberUniqueDeclFromType(stype, cexp.name);
+            this.raiseErrorIf(exp.sinfo, cmf === undefined, `Enum ${cexp.name} no defined on type ${stype.typeID}`);
+
+            const cfi = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
+            const nexp = new TIRAccessStaticFieldExpression(exp.sinfo, cfi.decl.declaredType, stype, cexp.name);
+
+            return new TIRLiteralValue(exp, nexp.etype, nexp.expstr);
         }
         else {
             assert(cexp.isLiteralValueExpression());
 
             if (cexp instanceof LiteralNoneExpression) {
-                return [cexp, this.getSpecialNoneType(), "none"];
+                const nexp = new TIRLiteralNoneExpression(exp.sinfo, this.getSpecialNoneType());
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralNothingExpression) {
-                return [cexp, this.getSpecialNothingType(), "nothing"];
+                const nexp = new TIRLiteralNothingExpression(exp.sinfo, this.getSpecialNothingType());
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralBoolExpression) {
-                return [cexp, this.getSpecialBoolType(), `${cexp.value}`];
+                const nexp = new TIRLiteralBoolExpression(exp.sinfo, this.getSpecialBoolType(), cexp.value);
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralIntegralExpression) {
-                const itype = this.normalizeTypeOnly(cexp.itype, new Map<string, ResolvedType>());
-                return [cexp, itype, cexp.value];
+                const itype = this.normalizeTypeOnly(cexp.itype, TemplateBindScope.createEmptyBindScope());
+                const nexp = new TIRLiteralIntegralExpression(exp.sinfo, cexp.value, itype);
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralStringExpression) {
-                return [cexp, this.getSpecialStringType(), cexp.value];
+                const nexp = new TIRLiteralStringExpression(exp.sinfo, cexp.value, this.getSpecialStringType());
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+            }
+            else if(cexp instanceof LiteralASCIIStringExpression) {
+                const nexp = new TIRLiteralASCIIStringExpression(exp.sinfo, cexp.value, this.getSpecialASCIIStringType());
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
             }
             else if (cexp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(cexp.stype, binds);
-                return [cexp, oftype, `${cexp.value}#${oftype.typeID}`];
-            }
-            else {
-                assert(cexp instanceof LiteralTypedPrimitiveConstructorExpression);
-                const lexp = cexp as LiteralTypedPrimitiveConstructorExpression;
+                this.raiseErrorIf(exp.sinfo, oftype.options.length !== 1 || !(oftype.options[0] instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
+            
+                const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
+                const etype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType), []);
+                const nexp = new TIRLiteralTypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
 
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+            }
+            else if (cexp instanceof LiteralASCIITypedStringExpression) {
+                const oftype = this.normalizeTypeOnly(cexp.stype, binds);
+                this.raiseErrorIf(exp.sinfo, oftype.options.length !== 1 || !(oftype.options[0] instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
+            
+                const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
+                const etype = ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType), []);
+                const nexp = new TIRLiteralASCIITypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
+
+                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+            }
+            else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
+                xxxx;
+                const tilexp = this.typeCheck(lexp.value);
                 const vtype = this.normalizeTypeOnly(lexp.vtype, binds);
                 const vv = (/.*[inINfdR]$/.test(lexp.value)) ? lexp.value.slice(0, lexp.value.length - 1) : lexp.value;
 
+                const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, )
                 return [lexp, vtype, `${vv}#${vtype.typeID}`];
+            }
+            else if(cexp instanceof LiteralTypeValueExpression) {
+                const texp = this.normalizeTypeOnly(cexp.vtype, binds);
+                this.raiseErrorIf(exp.sinfo, texp.options.length !== 1 || !(texp.options[0] instanceof ResolvedLiteralAtomType));
+
+                const rlt = texp.options[0] as ResolvedLiteralAtomType;
+                return rlt.lexp;
+            }
+            else {
+                this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
+
+                const iexp = new TIRInvalidExpression(exp.sinfo, infertype || this.getSpecialNoneType());
+                return new TIRLiteralValue(iexp, iexp.etype, iexp.expstr);
             }
         }
     }
@@ -311,6 +363,8 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(ofa), fp: undefined };
         }
 
+        xxx; //literal types here
+
         if(ofa instanceof ResolvedConceptAtomType) {
             if (witha instanceof ResolvedEntityAtomType) {
                 return this.splitConceptEntityTypes(ofa, witha);
@@ -392,49 +446,6 @@ class TypeChecker {
         return {tp: this.typeUpperBound(tp), fp: this.typeUpperBound(fp)};
     }
 
-    splitIndex(oft: ResolvedType, idx: number): { tp: ResolvedType, fp: ResolvedType } {
-        if (oft.isEmptyType()) {
-            return { tp: ResolvedType.createEmpty(), fp: ResolvedType.createEmpty() };
-        }
-
-        let tpp: ResolvedTupleAtomType[] = [];
-        let fpp: ResolvedTupleAtomType[] = [];
-        for(let i = 0; i < oft.options.length; ++i) {
-            const opt = oft.options[i] as ResolvedTupleAtomType;
-
-            if(idx < opt.types.length) {
-                tpp.push(opt);
-            }
-            else {
-                fpp.push(opt);
-            }
-        }
-
-        return {tp: ResolvedType.create(tpp), fp: ResolvedType.create(fpp)};
-    }
-
-    splitProperty(oft: ResolvedType, pname: string): { tp: ResolvedType, fp: ResolvedType } {
-        if (oft.isEmptyType()) {
-            return { tp: ResolvedType.createEmpty(), fp: ResolvedType.createEmpty() };
-        }
-
-        let tpp: ResolvedRecordAtomType[] = [];
-        let fpp: ResolvedRecordAtomType[] = [];
-        for(let i = 0; i < oft.options.length; ++i) {
-            const opt = oft.options[i] as ResolvedRecordAtomType;
-
-            const entry = opt.entries.find((ee) => ee.pname === pname);
-            if(entry !== undefined) {
-                tpp.push(opt);
-            }
-            else {
-                fpp.push(opt);
-            }
-        }
-
-        return {tp: ResolvedType.create(tpp), fp: ResolvedType.create(fpp)};
-    }
-
     getDerivedTypeProjection(fromtype: ResolvedType, oftype: ResolvedType): ResolvedType {
         if(oftype.typeID === "Some") {
             return this.splitTypes(fromtype, this.getSpecialNoneType()).fp;
@@ -444,7 +455,7 @@ class TypeChecker {
                 return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
             }
             else {
-                return ResolvedType.createEmpty();
+                return ResolvedType.createInvalid();
             }
         }
         else if(oftype.typeID === "IResultT") {
@@ -452,7 +463,7 @@ class TypeChecker {
                 return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
             }
             else {
-                return ResolvedType.createEmpty();
+                return ResolvedType.createInvalid();
             }
         }
         else if(oftype.typeID === "IResultE") {
@@ -460,42 +471,67 @@ class TypeChecker {
                 return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("E") as ResolvedType;
             }
             else {
-                return ResolvedType.createEmpty();
+                return ResolvedType.createInvalid();
             }
         }
         else {
-            return ResolvedType.createEmpty();
+            return ResolvedType.createInvalid();
         }
     }
 
-    private normalizeType_Template(t: TemplateTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
-        return binds.has(t.name) ? binds.get(t.name) as ResolvedType : ResolvedType.createEmpty();
-    }
-
-    private normalizeType_Nominal(t: NominalTypeSignature, binds: Map<string, ResolvedType>): ResolvedType | ResolvedFunctionType {
-        const [aliasResolvedType, aliasResolvedBinds, isresolution] = this.lookupTypeDef(t, binds);
-
-        let rtype: ResolvedType | ResolvedFunctionType = ResolvedType.createEmpty(); 
-        if (aliasResolvedType === undefined) {
-            ;
-        }
-        else if (!(aliasResolvedType instanceof NominalTypeSignature)) {
-            rtype = this.normalizeTypeGeneral(aliasResolvedType, aliasResolvedBinds);
+    private normalizeType_Template(sinfo: SourceInfo, t: TemplateTypeSignature, binds: TemplateBindScope): ResolvedType {
+        const rbind = binds.tryTemplateResolveType(t.name);
+        if(rbind !== undefined) {
+            return rbind;
         }
         else {
-            const ttname = (aliasResolvedType.nameSpace !== "Core" ? (aliasResolvedType.nameSpace + "::") : "") + aliasResolvedType.computeResolvedName();
+            this.raiseError(sinfo, `Could not resolve template type name ${t.name}`);
+            return ResolvedType.createInvalid();
+        }
+    }
 
-            const fconcept = this.tryGetConceptTypeForFullyResolvedName(ttname);
+    private normalizeType_Literal(sinfo: SourceInfo, t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
+        const chkexp = this.typeCheck(t.lvalue.exp);
+        if(chkexp instanceof TIRLiteralValue) {
+            const llexp = new TIRLiteralValue(chkexp, chkexp.type, chkexp, xxx);
+            xxxx;
+        }
+        else {
+            this.raiseError(sinfo, `Could not resolve literal type`);
+            return ResolvedType.createInvalid();
+        }
+    }
+
+    private normalizeType_Nominal(sinfo: SourceInfo, t: NominalTypeSignature, binds: TemplateBindScope): ResolvedType | ResolvedFunctionType {
+        let tresolved: TypeSignature = t;
+        let isresolution: boolean = false;
+        if(t.terms.length === 0) {
+            //could be a typedef so go try to resolve that
+            [tresolved, isresolution] = this.resolveTypeDef(t);
+        }
+
+        let rtype: ResolvedType | ResolvedFunctionType = ResolvedType.createInvalid(); 
+        if (!(tresolved instanceof NominalTypeSignature)) {
+            rtype = this.normalizeTypeGeneral(tresolved, binds);
+        }
+        else {
+            const ttname = (tresolved.nameSpace !== "Core" ? (tresolved.nameSpace + "::") : "") + tresolved.computeResolvedName();
+
+            const fconcept = this.m_assembly.tryGetConceptTypeForFullyResolvedName(ttname);
             if (fconcept !== undefined) {
-                const cta = this.createConceptTypeAtom(fconcept, aliasResolvedType, aliasResolvedBinds);
+                const bbinds = this.resolveTemplateBinds(sinfo, fconcept.terms, t.terms, binds);
+                const cta = ResolvedConceptAtomTypeEntry.create(fconcept, tresolved, aliasResolvedBinds);
                 rtype = cta !== undefined ? ResolvedType.createSingle(cta) : ResolvedType.createEmpty();
             }
 
-            const fobject = this.tryGetObjectTypeForFullyResolvedName(ttname);
+            const fobject = this.m_assembly.tryGetObjectTypeForFullyResolvedName(ttname);
             if (fobject !== undefined) {
+                xxxx; //all the nominal possibilities here
                 const ota = this.createObjectTypeAtom(fobject, aliasResolvedType, aliasResolvedBinds);
                 rtype = ota !== undefined ? ResolvedType.createSingle(ota) : ResolvedType.createEmpty();
             }
+
+            xxxx; //task here too 
         }
 
         if(isresolution) {
@@ -512,7 +548,7 @@ class TypeChecker {
     }
 
 
-    private normalizeType_Tuple(t: TupleTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_Tuple(t: TupleTypeSignature, TemplateBindScope): ResolvedType {
         const entries = t.entries.map((entry) => this.normalizeTypeOnly(entry, binds));
         if (entries.some((e) => e.isEmptyType())) {
             return ResolvedType.createEmpty();
@@ -521,7 +557,7 @@ class TypeChecker {
         return ResolvedType.createSingle(ResolvedTupleAtomType.create(entries));
     }
 
-    private normalizeType_Record(t: RecordTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_Record(t: RecordTypeSignature, TemplateBindScope): ResolvedType {
         let seenNames = new Set<string>();
         let entries: {pname: string, ptype: ResolvedType}[] = [];
         for (let i = 0; i < t.entries.length; ++i) {
@@ -538,7 +574,7 @@ class TypeChecker {
         return ResolvedType.createSingle(ResolvedRecordAtomType.create(entries));
     }
 
-    private normalizeType_EphemeralList(t: EphemeralListTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_EphemeralList(t: EphemeralListTypeSignature, TemplateBindScope): ResolvedType {
         const entries = t.entries.map((entry) => this.normalizeTypeOnly(entry, binds));
         if (entries.some((e) => e.isEmptyType())) {
             return ResolvedType.createEmpty();
@@ -547,7 +583,7 @@ class TypeChecker {
         return ResolvedType.createSingle(ResolvedEphemeralListType.create(entries));
     }
 
-    private normalizeType_Projection(t: ProjectTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_Projection(t: ProjectTypeSignature, TemplateBindScope): ResolvedType {
         const fromt = this.normalizeTypeOnly(t.fromtype, binds);
         const oft = this.normalizeTypeOnly(t.oftype, binds);
 
@@ -558,7 +594,7 @@ class TypeChecker {
         return this.getDerivedTypeProjection(fromt, oft);
     }
 
-    private normalizeType_Plus(t: PlusTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_Plus(t: PlusTypeSignature, TemplateBindScope): ResolvedType {
         const ccs = t.types.map((tt) => this.normalizeTypeOnly(tt, binds));
         assert(ccs.length !== 0);
 
@@ -600,7 +636,7 @@ class TypeChecker {
         }
     }
 
-    private normalizeType_And(t: AndTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_And(t: AndTypeSignature, TemplateBindScope): ResolvedType {
         if (t.types.some((opt) => this.normalizeTypeOnly(opt, binds).isEmptyType())) {
             return ResolvedType.createEmpty();
         }
@@ -643,7 +679,7 @@ class TypeChecker {
         return ResolvedType.createSingle(ResolvedConceptAtomType.create(simplifiedTypes));
     }
 
-    private normalizeType_Union(t: UnionTypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private normalizeType_Union(t: UnionTypeSignature, TemplateBindScope): ResolvedType {
         if (t.types.some((opt) => this.normalizeTypeOnly(opt, binds).isEmptyType())) {
             return ResolvedType.createEmpty();
         }
@@ -749,7 +785,7 @@ class TypeChecker {
         return ResolvedType.create(simplifiedTypes);
     }
 
-    private normalizeType_Function(t: FunctionTypeSignature, binds: Map<string, ResolvedType>): ResolvedFunctionType | undefined {
+    private normalizeType_Function(t: FunctionTypeSignature, TemplateBindScope): ResolvedFunctionType | undefined {
         const params = t.params.map((param) => {
             let ttl = this.normalizeTypeGeneral(param.type, binds);
             let llpv: string | undefined = undefined;
@@ -821,70 +857,6 @@ class TypeChecker {
         });
     }
 
-    private unifyResolvedEntityAtomType(witht: ResolvedEntityAtomType, atom: ResolvedEntityAtomType, umap: Map<string, ResolvedType | undefined>) {
-        if(witht.object.ns !== atom.object.ns || witht.object.name !== atom.object.name) {
-            return;
-        }
-
-        if(witht.binds.size !== atom.binds.size) {
-            return;
-        }
-
-        witht.binds.forEach((v, k) => {
-            this.typeUnify(v, atom.binds.get(k) as ResolvedType, umap);
-        });
-    }
-
-    private unifyResolvedConceptAtomType(witht: ResolvedConceptAtomType, atom: ResolvedConceptAtomType, umap: Map<string, ResolvedType | undefined>) {
-        if(witht.conceptTypes.length !== atom.conceptTypes.length) {
-            return;
-        }
-
-        for(let i = 0; i < witht.conceptTypes.length; ++i) {
-            const withcc = witht.conceptTypes[i];
-            const atomcc = atom.conceptTypes[i];
-
-            if(withcc.concept.ns !== atomcc.concept.ns || withcc.concept.name !== atomcc.concept.name) {
-                return;
-            }
-    
-            if(withcc.binds.size !== atomcc.binds.size) {
-                return;
-            }
-    
-            withcc.binds.forEach((v, k) => {
-                this.typeUnify(v, atomcc.binds.get(k) as ResolvedType, umap);
-            });
-        }
-    }
-
-    private unifyResolvedTupleAtomType(witht: ResolvedTupleAtomType, atom: ResolvedTupleAtomType, umap: Map<string, ResolvedType | undefined>) {
-        if(witht.types.length !== atom.types.length) {
-            return;
-        }
-
-        for(let i = 0; i < witht.types.length; ++i) {
-            this.typeUnify(witht.types[i], atom.types[i], umap);
-        }
-    }
-
-    private unifyResolvedRecordAtomType(witht: ResolvedRecordAtomType, atom: ResolvedRecordAtomType, umap: Map<string, ResolvedType | undefined>) {
-        if(witht.entries.length !== atom.entries.length) {
-            return;
-        }
-
-        for(let i = 0; i < witht.entries.length; ++i) {
-            const withe = witht.entries[i];
-            const atome = atom.entries[i];
-
-            if(withe.pname !== atome.pname) {
-                return;
-            }
-
-            this.typeUnify(withe.ptype, atome.ptype, umap);
-        }
-    }
-
     private internSpecialConceptType(names: [string], terms?: TypeSignature[], binds?: Map<string, ResolvedType>): ResolvedType {
         if (this.m_specialTypeMap.has(names.join("::"))) {
             return this.m_specialTypeMap.get(names.join("::")) as ResolvedType;
@@ -921,6 +893,7 @@ class TypeChecker {
     getSpecialFloatType(): ResolvedType { return this.internSpecialObjectType(["Float"]); }
     getSpecialDecimalType(): ResolvedType { return this.internSpecialObjectType(["Decimal"]); }
     getSpecialStringType(): ResolvedType { return this.internSpecialObjectType(["String"]); }
+    getSpecialASCIIStringType(): ResolvedType { xxxx;}
     getSpecialBufferFormatType(): ResolvedType { return this.internSpecialObjectType(["BufferFormat"]); }
     getSpecialBufferCompressionType(): ResolvedType { return this.internSpecialObjectType(["BufferCompression"]); }
     getSpecialByteBufferType(): ResolvedType { return this.internSpecialObjectType(["ByteBuffer"]); }
@@ -980,81 +953,41 @@ class TypeChecker {
 
     ////
     //Type representation, normalization, and operations
-    lookupTypeDef(t: NominalTypeSignature, binds: Map<string, ResolvedType>): [TypeSignature | undefined, Map<string, ResolvedType>, boolean] {
-        if (!this.hasNamespace(t.nameSpace)) {
-            return [undefined, new Map<string, ResolvedType>(), false];
+    resolveTypeDef(t: NominalTypeSignature): [TypeSignature, boolean] {
+        if (!this.m_assembly.hasNamespace(t.nameSpace)) {
+            return [t, false];
         }
 
         const lname = (t.nameSpace !== "Core" ? (t.nameSpace + "::") : "") + t.tnames.join("::");
-        const nsd = this.getNamespace(t.nameSpace);
+        const nsd = this.m_assembly.getNamespace(t.nameSpace);
         if (!nsd.typeDefs.has(lname)) {
-            return [t, new Map<string, ResolvedType>(binds), false];
+            return [t, false];
         }
 
         //compute the bindings to use when resolving the RHS of the typedef alias
-        const typealias = nsd.typeDefs.get(lname) as NamespaceTypedef;
-        const updatedbinds = this.resolveTemplateBinds(typealias.terms, t.terms, binds);
-        if(updatedbinds === undefined) {
-            return [undefined, new Map<string, ResolvedType>(), false];
-        }
-
-        if (typealias.boundType instanceof NominalTypeSignature) {
-            return this.lookupTypeDef(typealias.boundType, updatedbinds);
+        const tresolved = nsd.typeDefs.get(lname) as NamespaceTypedef;
+        if (tresolved.boundType instanceof NominalTypeSignature) {
+            return this.resolveTypeDef(tresolved.boundType);
         }
         else {
-            return [typealias.boundType, updatedbinds, true];
+            return [tresolved.boundType, true];
         }
     }
 
-    createConceptTypeAtom(concept: ConceptTypeDecl, t: NominalTypeSignature, binds: Map<string, ResolvedType>): ResolvedConceptAtomType | undefined {
-        const fullbinds = this.resolveTemplateBinds(concept.terms, t.terms, binds);
-        if(fullbinds === undefined) {
-            return undefined;
+    private resolveTemplateBinds(sinfo: SourceInfo, declterms: TemplateTermDecl[], giventerms: TypeSignature[], binds: TemplateBindScope): Map<string, ResolvedType> {
+        let fullbinds = new Map<string, ResolvedType>();
+
+        for (let i = 0; i < declterms.length; ++i) {
+            const ttype = this.normalizeTypeOnly(giventerms[i], binds);
+            this.raiseErrorIf(sinfo, ttype.isInvalidType(), `Could not resolve template for ${declterms[i].name} given binding as ${giventerms[i].getDiagnosticName()}`)
+
+            fullbinds.set(declterms[i].name, ttype);
         }
 
-        return ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(concept, fullbinds)]);
+        return fullbinds;
     }
 
-    createObjectTypeAtom(object: EntityTypeDecl, t: NominalTypeSignature, binds: Map<string, ResolvedType>): ResolvedEntityAtomType | undefined {
-        const fullbinds = this.resolveTemplateBinds(object.terms, t.terms, binds);
-        if(fullbinds === undefined) {
-            return undefined;
-        }
-
-        return ResolvedEntityAtomType.create(object, fullbinds);
-    }
-
-    getAllOOFieldsConstructors(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: { req: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>, opt: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> }): { req: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>, opt: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> } {
-        assert(!ooptype.isSpecialConstructableEntity(), "Needs to be handled as special case");
-
-        let declfields = fmap || { req: new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>(), opt: new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>() };
-
-        //Important to do traversal in Left->Right Topmost traversal order
-
-        this.resolveProvides(ooptype, binds).forEach((provide) => {
-            const tt = this.normalizeTypeOnly(provide, binds);
-            (tt.options[0] as ResolvedConceptAtomType).conceptTypes.forEach((concept) => {
-                declfields = this.getAllOOFieldsConstructors(concept.concept, concept.binds, declfields);
-            });
-        });
-
-        ooptype.memberFields.forEach((mf) => {
-            if(mf.value === undefined) {
-                if(!declfields.req.has(mf.name)) {
-                    declfields.req.set(mf.name, [ooptype, mf, binds]);
-                }
-            }
-            else {
-                if (!declfields.opt.has(mf.name) && !OOPTypeDecl.attributeSetContains("derived", mf.attributes)) {
-                    declfields.opt.set(mf.name, [ooptype, mf, binds]);
-                }
-            }
-        });
-
-        return declfields;
-    }
-
-    getAllOOFieldsLayout(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
+    getAllOOFields(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
         assert(!ooptype.isSpecialConstructableEntity(), "Needs to be handled as special case");
         
         let declfields = fmap || new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
@@ -1508,7 +1441,7 @@ class TypeChecker {
         return [fullbinds, inferbinds];
     }
 
-    normalizeTypeOnly(t: TypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
         const res = this.normalizeTypeGeneral(t, binds);
         if (res instanceof ResolvedFunctionType) {
             return ResolvedType.createEmpty();
@@ -1527,7 +1460,7 @@ class TypeChecker {
         }
     }
 
-    normalizeTypeGeneral(t: TypeSignature, binds: Map<string, ResolvedType>): ResolvedType | ResolvedFunctionType {
+    normalizeTypeGeneral(t: TypeSignature, TemplateBindScope): ResolvedType | ResolvedFunctionType {
         if (t instanceof ParseErrorTypeSignature || t instanceof AutoTypeSignature) {
             return ResolvedType.createEmpty();
         }
@@ -1602,6 +1535,31 @@ class TypeChecker {
         else {
             return this.normalizeUnionList(types);
         }
+    }
+
+    joinExpTypes(...args: ExpType[]): ExpType {
+        assert(args.length !== 0);
+
+        const jlayout = assembly.typeUpperBound(args.map((ei) => ei.layout));
+        const jflow = assembly.typeUpperBound(args.map((ei) => ei.flow));
+        return new ExpType(jlayout, jflow);
+    }
+
+    joinReturnResults(expvar: string, ...args: ExpressionReturnResult[]): ExpressionReturnResult {
+        assert(args.length !== 0);
+
+        const jtype = ExpType.join(assembly, ...args.map((ei) => ei.valtype));
+        const jtv = FlowTypeTruthOps.join(...args.map((ei) => ei.truthval));
+
+        return new ExpressionReturnResult(jtype, jtv, expvar);
+    }
+
+    joinVarInfos(...values: VarInfo[]): VarInfo {
+        assert(values.length !== 0);
+
+        const jdef = values.every((vi) => vi.mustDefined);
+        const jtype = assembly.typeUpperBound(values.map((vi) => vi.flowType));
+        return new VarInfo(values[0].declaredType, jtype, values[0].isConst, values[0].isCaptured, jdef);
     }
 
     atomSubtypeOf(t1: ResolvedAtomType, t2: ResolvedAtomType): boolean {
@@ -1727,7 +1685,7 @@ class TypeChecker {
         //otherwise we do nothing and will fail subtype check later 
     }
 
-    resolveProvides(tt: OOPTypeDecl, binds: Map<string, ResolvedType>): TypeSignature[] {
+    resolveProvides(tt: OOPTypeDecl, TemplateBindScope): TypeSignature[] {
         let oktypes: TypeSignature[] = [];
         
         for (let i = 0; i < tt.provides.length; ++i) {
@@ -1845,7 +1803,7 @@ class TypeChecker {
         return this.typeUpperBound(opts);
     }
 
-    private resolveAndEnsureTypeOnly(sinfo: SourceInfo, ttype: TypeSignature, binds: Map<string, ResolvedType>): ResolvedType {
+    private resolveAndEnsureTypeOnly(sinfo: SourceInfo, ttype: TypeSignature, TemplateBindScope): ResolvedType {
         const rtype = this.m_assembly.normalizeTypeOnly(ttype, binds);
         this.raiseErrorIf(sinfo, rtype.isEmptyType(), `Bad type signature ${ttype.getDiagnosticName()}`);
 
@@ -1871,18 +1829,6 @@ class TypeChecker {
         else {
             return (ttype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
         }
-    }
-
-    private getTBind(binds: Map<string, ResolvedType>): ResolvedType {
-        return binds.get("T") as ResolvedType;
-    }
-
-    private getTEBinds(binds: Map<string, ResolvedType>): { T: ResolvedType, E: ResolvedType } {
-        return { T: binds.get("T") as ResolvedType, E: binds.get("E") as ResolvedType };
-    }
-
-    private getKVBinds(binds: Map<string, ResolvedType>): { K: ResolvedType, V: ResolvedType } {
-        return { K: binds.get("K") as ResolvedType, V: binds.get("V") as ResolvedType };
     }
 
     private emitInlineConvertIfNeeded<T extends MIRArgument>(sinfo: SourceInfo, src: T, srctype: ValueType, trgttype: ResolvedType): T | MIRRegisterArgument {

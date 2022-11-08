@@ -506,15 +506,13 @@ class NamespaceTypedef {
 
     readonly ns: string;
     readonly name: string;
-    readonly terms: TemplateTermDecl[];
     readonly boundType: TypeSignature;
 
-    constructor(attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], btype: TypeSignature) {
+    constructor(attributes: string[], ns: string, name: string, btype: TypeSignature) {
         this.attributes = attributes;
 
         this.ns = ns;
         this.name = name;
-        this.terms = terms;
         this.boundType = btype;
     }
 }

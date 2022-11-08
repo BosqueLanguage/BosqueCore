@@ -6,7 +6,7 @@
 import * as assert from "assert";
 
 import { ConceptTypeDecl, EntityTypeDecl, TaskTypeDecl } from "../ast/assembly";
-import { LiteralTypeSignature } from "../ast/type";
+import { TIRLiteralValue } from "./tir_body";
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
@@ -17,15 +17,11 @@ abstract class ResolvedAtomType {
 }
 
 class ResolvedLiteralAtomType extends ResolvedAtomType {
-    readonly ltype: LiteralTypeSignature;
     readonly lexp: TIRLiteralValue;
-    readonly ofype: ResolvedAtomType;
 
-    constructor(lvalue: string, ltype: LiteralTypeSignature, lexp: TIRLiteralValue, ofype: ResolvedAtomType) {
-        super(lvalue);
-        this.ltype = ltype;
+    constructor(reprexp: string, lexp: TIRLiteralValue) {
+        super(reprexp);
         this.lexp = lexp;
-        this.ofype = ofype;
     }
 }
 
@@ -472,6 +468,10 @@ class ResolvedType {
         return false;
     }
 
+    static createInvalid(): ResolvedType {
+        return new ResolvedType("[INVALID]", [], []);
+    }
+
     static createSingle(type: ResolvedAtomType, flags: TypePropertyFlags[]): ResolvedType {
         if(!flags.includes(TypePropertyFlags.Unique) && ResolvedType.isUniqueType(type)) {
             flags = [...flags, TypePropertyFlags.Unique]
@@ -599,6 +599,10 @@ class ResolvedType {
         const ccpt = this.options[0] as ResolvedConceptAtomType;
         return ccpt.conceptTypes.length === 1 && ccpt.conceptTypes[0].concept.attributes.includes("__option_type");
     }
+
+    isInvalidType(): boolean {
+        return this.options.length === 0;
+    }
 }
 
 class ResolvedFunctionTypeParam {
@@ -629,7 +633,7 @@ class ResolvedFunctionType {
     }
 
     static create(recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
-        const cvalues = params.map((param) => param.name + param.type.typeID + (param.litexp !== undefined ? ("==" + param.litexp.srepr) : ""));
+        const cvalues = params.map((param) => param.name + param.type.typeID + (param.litexp !== undefined ? ("==" + param.litexp.lidstr) : ""));
         let cvalue = cvalues.join(", ");
 
         const lstr = isPred ? "pred" : "fn";
@@ -639,29 +643,10 @@ class ResolvedFunctionType {
 }
 
 class TemplateBindScope {
-    readonly scopes: Map<string, ResolvedType | string>[] = [];
+    readonly scopes: Map<string, ResolvedType>[] = [];
 
-    constructor(scopes: Map<string, ResolvedType | string>[]) {
+    constructor(scopes: Map<string, ResolvedType>[]) {
         this.scopes = scopes;
-    }
-
-    private tryTemplateResolveType_RecUp(tt: string, idx: number): ResolvedType | undefined {
-        const midx = this.scopes.findIndex((sc) => sc.has(tt), idx);
-        if(midx === -1) {
-            return undefined;
-        }
-
-        const bb = this.scopes[midx].get(tt);
-        if(bb === undefined) {
-            return undefined;
-        }
-
-        if(typeof(bb) !== "string") {
-            return bb;
-        }
-        else {
-            return this.tryTemplateResolveType_RecUp(bb, midx + 1);
-        }
     }
 
     tryTemplateResolveType(tt: string): ResolvedType | undefined {
@@ -670,17 +655,7 @@ class TemplateBindScope {
             return undefined;
         }
 
-        const bb = this.scopes[midx].get(tt);
-        if(bb === undefined) {
-            return undefined;
-        }
-
-        if(typeof(bb) !== "string") {
-            return bb;
-        }
-        else {
-            return this.tryTemplateResolveType_RecUp(bb, midx + 1);
-        }
+        return this.scopes[midx].get(tt);
     }
 
     templateResolveType(tt: string): ResolvedType {
@@ -690,8 +665,16 @@ class TemplateBindScope {
         return bb as ResolvedType;
     }
 
-    pushScope(nscope: Map<string, ResolvedType | string>): TemplateBindScope {
-        return new TemplateBindScope([new Map<string, ResolvedType | string>(nscope), ...this.scopes]);
+    pushScope(nscope: Map<string, ResolvedType>): TemplateBindScope {
+        return new TemplateBindScope([new Map<string, ResolvedType>(nscope), ...this.scopes]);
+    }
+
+    static createEmptyBindScope(): TemplateBindScope {
+        return new TemplateBindScope([]);
+    }
+
+    static createBaseBindScope(binds: Map<string, ResolvedType>): TemplateBindScope {
+        return TemplateBindScope.createEmptyBindScope().pushScope(binds);
     }
 }
 

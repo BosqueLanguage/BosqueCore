@@ -7,7 +7,7 @@ import * as assert from "assert";
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, FunctionParameter, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 
@@ -352,6 +352,7 @@ const TokenStrings = {
     String: "[LITERAL_STRING]",
     ASCIIString: "[LITERAL_ASCII_STRING]",
     TypedString: "[LITERAL_TYPED_STRING]",
+    ASCIITypedString: "[LITERAL_ASCII_TYPED_STRING]",
 
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
     TemplateASCIIString: "[LITERAL_TEMPLATE_ASCII_STRING]",
@@ -671,6 +672,7 @@ class Lexer {
     private static readonly _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
     private static readonly _s_ascii_stringRe = /ascii{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
     private static readonly _s_typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
+    private static readonly _s_ascii_typedStringRe = /ascii{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'}/uy;
 
     private static readonly _s_template_stringRe = /[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
     private static readonly _s_ascii_template_stringRe = /ascii{[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
@@ -708,6 +710,13 @@ class Lexer {
         const mts = Lexer._s_typedStringRe.exec(this.m_input);
         if (mts !== null) {
             this.recordLexTokenWData(this.m_cpos + mts[0].length, TokenStrings.TypedString, mts[0]);
+            return true;
+        }
+
+        Lexer._s_ascii_typedStringRe.lastIndex = this.m_cpos;
+        const mti = Lexer._s_typedStringRe.exec(this.m_input);
+        if (mti !== null) {
+            this.recordLexTokenWData(this.m_cpos + mti[0].length, TokenStrings.ASCIITypedString, mti[0]);
             return true;
         }
 
@@ -1414,7 +1423,11 @@ class Parser {
                 return new NominalTypeSignature("Core", ["DummySig"]);
             }
             case SYM_percent: {
+                this.consumeToken();
+                this.ensureAndConsumeToken(SYM_lparen, "literal type");
                 const lve = this.parseLiteralExpression("literal type");
+                this.ensureAndConsumeToken(SYM_rparen, "literal type");
+
                 return new LiteralTypeSignature(lve);
             }
             default: {
@@ -1856,7 +1869,7 @@ class Parser {
         }
         else if (tk === TokenStrings.ASCIIString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralASCIIStringExpression(sinfo, sstr.slice("ascii{".length, sstr.length - "ascii{}".length));
+            return new LiteralASCIIStringExpression(sinfo, sstr);
         }
         else if (tk === TokenStrings.TypedString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
@@ -1864,13 +1877,19 @@ class Parser {
     
             return new LiteralTypedStringExpression(sinfo, sstr, ttype);
         }
+        else if (tk === TokenStrings.ASCIITypedString) {
+            const sstr = this.consumeTokenAndGetValue(); //keep in original format
+            const ttype = this.parseFollowTypeTag("ascii typed string");
+    
+            return new LiteralASCIITypedStringExpression(sinfo, sstr, ttype);
+        }
         else if (tk === TokenStrings.TemplateString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralTemplateStringExpression(sinfo, sstr.slice(1));
+            return new LiteralTemplateStringExpression(sinfo, sstr);
         }
         else if (tk === TokenStrings.TemplateASCIIString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralASCIITemplateStringExpression(sinfo, sstr.slice("ascii{$".length, sstr.length - "ascii{$}".length));
+            return new LiteralASCIITemplateStringExpression(sinfo, sstr);
         }
         else if (tk === TokenStrings.Regex) {
             const restr = this.consumeTokenAndGetValue(); //keep in escaped format
@@ -1900,7 +1919,10 @@ class Parser {
         }
         else if (tk === SYM_percent) {
             this.consumeToken();
+            this.ensureAndConsumeToken(SYM_lparen, "literal type expression");
             const vtype = this.parseTypeSignature();
+            this.ensureAndConsumeToken(SYM_rparen, "literal type expression");
+
             return new LiteralTypeValueExpression(sinfo, vtype);
         }
         else if (tk === KW_env) {
@@ -3528,7 +3550,7 @@ class Parser {
     }
 
     private parseNamespaceTypedef(currentDecl: NamespaceDeclaration) {
-        //typedef NAME<T...> = TypeConstraint;
+        //typedef NAME = TypeConstraint;
 
         const attributes = this.parseAttributes();
 
@@ -3540,8 +3562,6 @@ class Parser {
             this.raiseError(this.getCurrentLine(), "Collision between typedef and other names");
         }
 
-        const terms = this.parseTermDeclarations();
-
         this.ensureAndConsumeToken(SYM_eq, "typedef");
         const rpos = this.scanToken(SYM_semicolon);
         if (rpos === this.m_epos) {
@@ -3551,7 +3571,7 @@ class Parser {
         const btype = this.parseTypeSignature();
         this.consumeToken();
 
-        currentDecl.typeDefs.set((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + tyname, new NamespaceTypedef(attributes, currentDecl.ns, tyname, terms, btype));
+        currentDecl.typeDefs.set((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + tyname, new NamespaceTypedef(attributes, currentDecl.ns, tyname, btype));
     }
 
     private parseProvides(iscorens: boolean, endtoken: string[]): [TypeSignature, TypeConditionRestriction | undefined][] {
@@ -4445,7 +4465,6 @@ class Parser {
         this.ensureAndConsumeToken(KW_typedecl, "typedecl");
 
         const iname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
         if (currentDecl.checkDeclNameClash(iname)) {
             this.raiseError(line, "Collision between object and other names");
         }
@@ -4460,9 +4479,6 @@ class Parser {
         this.ensureAndConsumeToken(SYM_eq, "typedecl");
         if (this.testToken(TokenStrings.Regex)) {
             //[attr] typedecl NAME = regex;
-            if (terms.length !== 0) {
-                this.raiseError(line, "Cannot have template terms on Validator type");
-            }
 
             const vregex = this.consumeTokenAndGetValue();
             this.ensureAndConsumeToken(SYM_semicolon, "Validator");
@@ -4487,11 +4503,7 @@ class Parser {
         }
         else if(this.testToken(SYM_lbrace)) {
             //[attr] typedecl NAME = pathvalidator;
-
-            if (terms.length !== 0) {
-                this.raiseError(line, "Cannot have template terms on PathValidator type");
-            }
-
+            
             const vv = this.parsePathValidator(currentDecl);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
@@ -4511,9 +4523,6 @@ class Parser {
         else {
             //[attr] typedecl NAME = PRIMITIVE [& {...}];
 
-            if (terms.length !== 0) {
-                this.raiseError(line, "Cannot have template terms on Typed Primitive type");
-            }
             const idval = this.parseNominalType() as NominalTypeSignature;
 
             let provides = [[new NominalTypeSignature("Core", ["Some"]), undefined], [new NominalTypeSignature("Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
