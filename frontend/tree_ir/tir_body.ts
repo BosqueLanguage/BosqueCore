@@ -1,6 +1,6 @@
 import { SourceInfo } from "../ast/parser";
 import { BSQRegex } from "../bsqregex";
-import { ResolvedLiteralAtomType, ResolvedType, ResolvedValidatorEntityAtomType } from "./tir_type";
+import { ResolvedType, ResolvedValidatorEntityAtomType } from "./tir_type";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",

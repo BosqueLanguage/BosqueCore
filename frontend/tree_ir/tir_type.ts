@@ -413,24 +413,16 @@ class ResolvedEphemeralListType extends ResolvedAtomType {
     }
 }
 
-enum TypePropertyFlags {
-    Grounded,
-    Unique,
-    Numeric
-}
-
 class ResolvedType {
     readonly typeID: string;
     readonly options: ResolvedAtomType[];
-    readonly flags: TypePropertyFlags[];
 
-    constructor(typeID: string, options: ResolvedAtomType[], flags: TypePropertyFlags[]) {
+    constructor(typeID: string, options: ResolvedAtomType[]) {
         this.typeID = typeID;
         this.options = options;
-        this.flags = flags;
     }
 
-    private static isGroundedType(options: ResolvedAtomType[]): boolean {
+    static isGroundedType(options: ResolvedAtomType[]): boolean {
         return options.every((opt) => {
             if(opt instanceof ResolvedConceptAtomType) {
                 return opt.conceptTypes.every((cpt) => !cpt.concept.attributes.includes("__universal"));
@@ -447,11 +439,11 @@ class ResolvedType {
         });
     }
 
-    private static isUniqueType(tt: ResolvedAtomType): boolean {
+    static isUniqueType(tt: ResolvedAtomType): boolean {
         return !(tt instanceof ResolvedConceptAtomType);
     }
 
-    private static isNumericType(options: ResolvedAtomType[]): boolean {
+    static isNumericType(options: ResolvedAtomType[]): boolean {
         if(options.length !== 1 || !(options[0] instanceof ResolvedEntityAtomType)) {
             return false;
         }
@@ -469,40 +461,24 @@ class ResolvedType {
     }
 
     static createInvalid(): ResolvedType {
-        return new ResolvedType("[INVALID]", [], []);
+        return new ResolvedType("[INVALID]", []);
     }
 
-    static createSingle(type: ResolvedAtomType, flags: TypePropertyFlags[]): ResolvedType {
-        if(!flags.includes(TypePropertyFlags.Unique) && ResolvedType.isUniqueType(type)) {
-            flags = [...flags, TypePropertyFlags.Unique]
-        }
-
-        if(!flags.includes(TypePropertyFlags.Grounded) && ResolvedType.isGroundedType([type])) {
-            flags = [...flags, TypePropertyFlags.Grounded];
-        }
-
-        if(!flags.includes(TypePropertyFlags.Numeric) && ResolvedType.isNumericType([type])) {
-            flags = [...flags, TypePropertyFlags.Numeric];
-        }
-
-        return new ResolvedType(type.typeID, [type], flags);
+    static createSingle(type: ResolvedAtomType): ResolvedType {
+        return new ResolvedType(type.typeID, [type]);
     }
 
-    static create(types: ResolvedAtomType[], flags: TypePropertyFlags[]): ResolvedType {
+    static create(types: ResolvedAtomType[]): ResolvedType {
         assert(types.length !== 0, "Invalid Type??")
          
         if (types.length === 1) {
-            return ResolvedType.createSingle(types[0], flags);
+            return ResolvedType.createSingle(types[0]);
         }
         else {
             const atoms = types.sort((a, b) => a.typeID.localeCompare(b.typeID));
             const name = atoms.map((arg) => arg.typeID).join(" | ");
 
-            if(!flags.includes(TypePropertyFlags.Grounded) && ResolvedType.isGroundedType(types)) {
-                flags = [...flags, TypePropertyFlags.Grounded];
-            }
-
-            return new ResolvedType(name, atoms, flags);
+            return new ResolvedType(name, atoms);
         }
     }
 
@@ -690,7 +666,7 @@ export {
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType, 
     ResolvedEphemeralListType,
-    TypePropertyFlags, ResolvedType, 
+    ResolvedType, 
     ResolvedFunctionTypeParam, ResolvedFunctionType,
     TemplateBindScope
 };
