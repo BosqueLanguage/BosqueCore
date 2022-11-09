@@ -402,6 +402,10 @@ class SourceInfo {
         this.pos = cpos;
         this.span = span;
     }
+
+    static implicitSourceInfo(): SourceInfo {
+        return new SourceInfo(-1, -1, -1, -1);
+    }
 }
 
 type CodeFileInfo = { 
@@ -1259,7 +1263,7 @@ class Parser {
         }
         else {
             if (ikind === InvokableKind.PCodePred && allTypedParams) {
-                resultInfo = new NominalTypeSignature("Core", ["Bool"]);
+                resultInfo = new NominalTypeSignature(sinfo, "Core", ["Bool"]);
             }
 
             if (ikind !== InvokableKind.PCodeFn && ikind !== InvokableKind.PCodePred) {
@@ -1320,12 +1324,14 @@ class Parser {
     //Type parsing
 
     private parseResultType(ispcode: boolean): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         if(this.testToken(SYM_lparen)) {
             const decls = this.parseListOf("result type", SYM_lparen, SYM_rparen, SYM_coma, () => {
                 return this.parseTypeSignature();
             });
 
-            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
+            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(sinfo, decls);
         }
         else {
             if (ispcode) {
@@ -1336,7 +1342,7 @@ class Parser {
                     return this.parseTypeSignature();
                 });
 
-                return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(decls);
+                return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(sinfo, decls);
             }
         }
     } 
@@ -1352,7 +1358,7 @@ class Parser {
         }
         else {
             this.consumeToken();
-            return Parser.orOfTypeSignatures(ltype, this.parseOrCombinatorType());
+            return Parser.orOfTypeSignatures(ltype.sinfo, ltype, this.parseOrCombinatorType());
         }
     }
 
@@ -1365,7 +1371,7 @@ class Parser {
     }
 
     private parseNoneableType(basetype: TypeSignature): TypeSignature {
-        return Parser.orOfTypeSignatures(basetype, this.m_penv.SpecialNoneSignature);
+        return Parser.orOfTypeSignatures(basetype.sinfo, basetype, this.m_penv.SpecialNoneSignature);
     }
 
     private parseCombineCombinatorType(): TypeSignature {
@@ -1375,11 +1381,13 @@ class Parser {
         }
         else {
             this.consumeToken();
-            return this.andOfTypeSignatures(ltype, this.parseCombineCombinatorType());
+            return this.andOfTypeSignatures(ltype.sinfo, ltype, this.parseCombineCombinatorType());
         }
     }
 
     private parseProjectType(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         const ltype = this.parseBaseTypeReference();
         if (!this.testToken(SYM_bang)) {
             return ltype;
@@ -1388,7 +1396,7 @@ class Parser {
             this.consumeToken();
             const ptype = this.parseNominalType();
             
-            return new ProjectTypeSignature(ltype, ptype);
+            return new ProjectTypeSignature(sinfo, ltype, ptype);
         }
     }
 
@@ -1420,28 +1428,31 @@ class Parser {
                 //TODO: This is a dummy case for the parse provides call in pass1 where we just need to scan and discard the type info -- we should actually write a better pass for this
                 this.consumeToken();
                 this.parseTermList();
-                return new NominalTypeSignature("Core", ["DummySig"]);
+                return new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["DummySig"]);
             }
             case SYM_percent: {
+                const sinfo = this.getCurrentSrcInfo();
                 this.consumeToken();
                 this.ensureAndConsumeToken(SYM_lparen, "literal type");
                 const lve = this.parseLiteralExpression("literal type");
                 this.ensureAndConsumeToken(SYM_rparen, "literal type");
 
-                return new LiteralTypeSignature(lve);
+                return new LiteralTypeSignature(sinfo, lve);
             }
             default: {
                 this.raiseError(this.getCurrentLine(), "Could not parse type");
-                return new ParseErrorTypeSignature();
+                return new ParseErrorTypeSignature(SourceInfo.implicitSourceInfo());
             }
         }
     }
 
     private parseTemplateTypeReference(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         const tname = this.consumeTokenAndGetValue();
         this.m_penv.useTemplateType(tname);
 
-        return new TemplateTypeSignature(tname);
+        return new TemplateTypeSignature(sinfo, tname);
     }
 
     private parseTermList(): TypeSignature[] {
@@ -1463,6 +1474,8 @@ class Parser {
     }
 
     private parseNominalType(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         let ns: string | undefined = undefined;
         if (this.testToken(TokenStrings.Namespace)) {
             ns = this.consumeTokenAndGetValue();
@@ -1489,10 +1502,12 @@ class Parser {
             terms = [...terms, ...sterms];
         }
 
-        return new NominalTypeSignature(ns as string, tnames, terms);
+        return new NominalTypeSignature(sinfo, ns as string, tnames, terms);
     }
 
     private parseTupleType(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         let entries: TypeSignature[] = [];
 
         try {
@@ -1504,15 +1519,17 @@ class Parser {
             });
 
             this.clearRecover();
-            return new TupleTypeSignature(entries);
+            return new TupleTypeSignature(sinfo, entries);
         }
         catch (ex) {
             this.processRecover();
-            return new ParseErrorTypeSignature();
+            return new ParseErrorTypeSignature(sinfo);
         }
     }
 
     private parseRecordType(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         let entries: [string, TypeSignature][] = [];
 
         try {
@@ -1539,15 +1556,17 @@ class Parser {
             });
 
             this.clearRecover();
-            return new RecordTypeSignature(entries);
+            return new RecordTypeSignature(sinfo, entries);
         }
         catch (ex) {
             this.processRecover();
-            return new ParseErrorTypeSignature();
+            return new ParseErrorTypeSignature(sinfo);
         }
     }
 
     private parsePCodeType(): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         let recursive: "yes" | "no" | "cond" = "no";
         if (this.testAndConsumeTokenIf(KW_recursive_q)) {
             recursive = "cond";
@@ -1570,30 +1589,30 @@ class Parser {
             const resultInfo = this.parseResultType(true);
 
             this.clearRecover();
-            return new FunctionTypeSignature(false, recursive, params, resultInfo, ispred);
+            return new FunctionTypeSignature(sinfo, false, recursive, params, resultInfo, ispred);
         }
         catch (ex) {
             this.processRecover();
-            return new ParseErrorTypeSignature();
+            return new ParseErrorTypeSignature(sinfo);
         }
     }
 
-    private static orOfTypeSignatures(t1: TypeSignature, t2: TypeSignature): TypeSignature {
+    private static orOfTypeSignatures(sinfo: SourceInfo, t1: TypeSignature, t2: TypeSignature): TypeSignature {
         const types = [
             ...((t1 instanceof UnionTypeSignature) ? t1.types : [t1]),
             ...((t2 instanceof UnionTypeSignature) ? t2.types : [t2]),
         ];
 
-        return new UnionTypeSignature(types);
+        return new UnionTypeSignature(sinfo, types);
     }
 
-    private andOfTypeSignatures(t1: TypeSignature, t2: TypeSignature): TypeSignature {
+    private andOfTypeSignatures(sinfo: SourceInfo, t1: TypeSignature, t2: TypeSignature): TypeSignature {
         const types = [
             ...((t1 instanceof AndTypeSignature) ? t1.types : [t1]),
             ...((t2 instanceof AndTypeSignature) ? t2.types : [t2]),
         ];
 
-        return new AndTypeSignature(types);
+        return new AndTypeSignature(sinfo, types);
     }
 
     ////
@@ -1742,6 +1761,8 @@ class Parser {
     }
 
     private parseFollowTypeTag(incontext: string): TypeSignature {
+        const sinfo = this.getCurrentSrcInfo();
+
         this.ensureAndConsumeToken(TokenStrings.FollowTypeSep, incontext);
 
         if (this.testToken(TokenStrings.Template)) {
@@ -1763,7 +1784,7 @@ class Parser {
                 this.raiseError(line, `Could not resolve namespace/type${ns !== undefined ? (" " + ons + SYM_coloncolon + tname) : tname}`);
             }
 
-            return new NominalTypeSignature(ns as string, [tname], []);
+            return new NominalTypeSignature(sinfo, ns as string, [tname], []);
         }
     }
 
@@ -3396,6 +3417,8 @@ class Parser {
     }
 
     private parseSingleTermRestriction(): TemplateTypeRestriction {
+        const sinfo = this.getCurrentSrcInfo();
+
         this.ensureToken(TokenStrings.Template, "template restriction");
         const templatename = this.consumeTokenAndGetValue();
 
@@ -3411,7 +3434,7 @@ class Parser {
 
         const tconstraint = this.parseTemplateConstraint(true);
 
-        return new TemplateTypeRestriction(new TemplateTypeSignature(templatename), isunique, isgrounded, tconstraint);
+        return new TemplateTypeRestriction(new TemplateTypeSignature(sinfo, templatename), isunique, isgrounded, tconstraint);
     }
 
     private parseTermRestrictionList(): TemplateTypeRestriction[] {
@@ -3574,7 +3597,7 @@ class Parser {
         currentDecl.typeDefs.set((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + tyname, new NamespaceTypedef(attributes, currentDecl.ns, tyname, btype));
     }
 
-    private parseProvides(iscorens: boolean, endtoken: string[]): [TypeSignature, TypeConditionRestriction | undefined][] {
+    private parseProvides(sinfo: SourceInfo, iscorens: boolean, endtoken: string[]): [TypeSignature, TypeConditionRestriction | undefined][] {
         let provides: [TypeSignature, TypeConditionRestriction | undefined][] = [];
         if (this.testAndConsumeTokenIf(KW_provides)) {
             while (!endtoken.some((tok) => this.testToken(tok))) {
@@ -3590,7 +3613,7 @@ class Parser {
         }
         
         if (!iscorens) {
-            provides.push([new NominalTypeSignature("Core", ["Object"]), undefined]);
+            provides.push([new NominalTypeSignature(sinfo, "Core", ["Object"]), undefined]);
         }
 
         return provides;
@@ -3735,9 +3758,9 @@ class Parser {
         memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["task_action", ...attributes], mname, sig));
     }
 
-    private parseInvariantsInto(invs: InvariantDecl[], vdates: ValidateDecl[], boundtemplates: Set<string>) {
+    private parseInvariantsInto(sinfo: SourceInfo, invs: InvariantDecl[], vdates: ValidateDecl[], boundtemplates: Set<string>) {
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), boundtemplates, new NominalTypeSignature("Core", ["Bool"]), false));
+            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), boundtemplates, new NominalTypeSignature(sinfo, "Core", ["Bool"]), false));
             while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
                 if(this.testToken(KW_validate)) {
                     this.consumeToken();
@@ -3837,7 +3860,7 @@ class Parser {
         return new TaskEnsures(sinfo, level, exp);
     }
 
-    private parseOOPMembersCommon(thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
+    private parseOOPMembersCommon(sinfo: SourceInfo, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
         nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], 
@@ -3855,7 +3878,7 @@ class Parser {
                 this.parseTask(currentNamespace, currentTermNest);
             }
             else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
-                this.parseInvariantsInto(invariants, validates, currentTerms);
+                this.parseInvariantsInto(sinfo, invariants, validates, currentTerms);
             }
             else if (this.testToken(KW_const)) {
                 this.parseConstMember(staticMembers, allMemberNames, attributes);
@@ -3899,13 +3922,13 @@ class Parser {
 
         const cname = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(currentDecl.ns === "Core", [SYM_lbrace]);
+        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
 
         try {
             this.setRecover(this.scanCodeParens());
             this.ensureAndConsumeToken(SYM_lbrace, "concept declaration");
 
-            const thisType = new NominalTypeSignature(currentDecl.ns, [cname], terms.map((term) => new TemplateTypeSignature(term.name)));
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [cname], terms.map((term) => new TemplateTypeSignature(sinfo, term.name)));
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -3914,7 +3937,7 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
 
@@ -3957,13 +3980,13 @@ class Parser {
 
         const ename = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(currentDecl.ns === "Core", [SYM_lbrace]);
+        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
 
         try {
             this.setRecover(this.scanCodeParens());
             this.ensureAndConsumeToken(SYM_lbrace, "entity declaration");
 
-            const thisType = new NominalTypeSignature(currentDecl.ns, [...currentTypeNest, ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(term.name)));
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [...currentTypeNest, ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -3972,7 +3995,7 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "entity declaration");
 
@@ -4072,7 +4095,7 @@ class Parser {
             this.setRecover(this.scanCodeParens());
             this.ensureAndConsumeToken(SYM_lbrace, "task declaration");
 
-            const thisType = new NominalTypeSignature(currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(term.name)));
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -4087,7 +4110,7 @@ class Parser {
             const resourceeffects: TaskResourceEffect[] = [];
             const taskensures: TaskEnsures[] = [];
 
-            this.parseOOPMembersCommon(thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods,  effects, enveffects, resourceeffects, taskensures);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods,  effects, enveffects, resourceeffects, taskensures);
 
             if(invariants.length !== 0) {
                 this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
@@ -4147,7 +4170,7 @@ class Parser {
         this.ensureToken(TokenStrings.Type, "enum declaration");
 
         const ename = this.consumeTokenAndGetValue();
-        const etype = new NominalTypeSignature(currentDecl.ns, [ename]);
+        const etype = new NominalTypeSignature(sinfo, currentDecl.ns, [ename]);
         
         if (currentDecl.checkDeclNameClash(ename)) {
             this.raiseError(line, "Collision between object and other names");
@@ -4170,9 +4193,9 @@ class Parser {
             });
             
             const provides = [
-                [new NominalTypeSignature("Core", ["Some"]), undefined],
-                [new NominalTypeSignature("Core", ["KeyType"]), undefined], 
-                [new NominalTypeSignature("Core", ["APIType"]), undefined]
+                [new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined],
+                [new NominalTypeSignature(sinfo, "Core", ["KeyType"]), undefined], 
+                [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]
             ] as [TypeSignature, TypeConditionRestriction | undefined][];
 
             const invariants: InvariantDecl[] = [];
@@ -4198,10 +4221,10 @@ class Parser {
                 this.setRecover(this.scanCodeParens());
                 this.ensureAndConsumeToken(SYM_lbrace, "enum extension code");
     
-                const thisType = new NominalTypeSignature(currentDecl.ns, [ename], []);
+                const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], []);
     
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
     
                 if(invariants.length !== 0 || validates.length !== 0) {
                     this.raiseError(sinfo.line, "cannot declare invariants on enum");
@@ -4488,13 +4511,13 @@ class Parser {
                 this.raiseError(this.getCurrentLine(), re);
             }
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature("Core", ["String"]), undefined);
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "validator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature("Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
-            const provides = [[new NominalTypeSignature("Core", ["Some"]), undefined], [new NominalTypeSignature("Core", ["Validator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
+            const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["Validator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__validator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
 
             currentDecl.objects.set(iname, validatortype);
@@ -4507,13 +4530,13 @@ class Parser {
             const vv = this.parsePathValidator(currentDecl);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature("Core", ["String"]), undefined);
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "pathvalidator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature("Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
-            const provides = [[new NominalTypeSignature("Core", ["Some"]), undefined], [new NominalTypeSignature("Core", ["PathValidator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
+            const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["PathValidator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__pathvalidator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
 
             currentDecl.objects.set(iname, validatortype);
@@ -4525,8 +4548,8 @@ class Parser {
 
             const idval = this.parseNominalType() as NominalTypeSignature;
 
-            let provides = [[new NominalTypeSignature("Core", ["Some"]), undefined], [new NominalTypeSignature("Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
-            provides.push([new NominalTypeSignature("Core", ["KeyType"]), new TypeConditionRestriction([new TemplateTypeRestriction(idval, false, false, new NominalTypeSignature("Core", ["KeyType"]))])]);
+            let provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
+            provides.push([new NominalTypeSignature(sinfo, "Core", ["KeyType"]), new TypeConditionRestriction([new TemplateTypeRestriction(idval, false, false, new NominalTypeSignature(sinfo, "Core", ["KeyType"]))])]);
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -4539,10 +4562,10 @@ class Parser {
                 this.setRecover(this.scanCodeParens());
                 this.ensureAndConsumeToken(SYM_lbrace, "typedecl");
 
-                const thisType = new NominalTypeSignature(currentDecl.ns, [iname], []);
+                const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
 
                 this.ensureAndConsumeToken(SYM_rbrace, "typedecl");
 
@@ -4594,9 +4617,9 @@ class Parser {
         // | ...
         // [& {...}] | ;
 
-        const concepttype = new NominalTypeSignature(currentDecl.ns, [iname]);
+        const concepttype = new NominalTypeSignature(sinfo, currentDecl.ns, [iname]);
 
-        const provides = this.parseProvides(currentDecl.ns === "Core", [KW_of, KW_using]);
+        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [KW_of, KW_using]);
 
         let complexheader = false;
         const cinvariants: InvariantDecl[] = [];
@@ -4620,10 +4643,10 @@ class Parser {
             }
             else {
                 complexheader = true;
-                const thisType = new NominalTypeSignature(currentDecl.ns, [iname], []);
+                const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], [], [], []);
             }
         }
 
@@ -4662,10 +4685,10 @@ class Parser {
                     });
                 }
                 else {
-                    const thisType = new NominalTypeSignature(currentDecl.ns, [ename], []);
+                    const thisType = new NominalTypeSignature(esinfo, currentDecl.ns, [ename], []);
 
                     const nestedEntities = new Map<string, EntityTypeDecl>();
-                    this.parseOOPMembersCommon(thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
                 }
             }
 
@@ -4685,11 +4708,11 @@ class Parser {
                 this.raiseError(this.getCurrentLine(), "Cannot define complex ADT++ concept in multiple parts");
             }
 
-            const thisType = new NominalTypeSignature(currentDecl.ns, [iname], []);
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
             const nestedEntities = new Map<string, EntityTypeDecl>();
             const memberFields: MemberFieldDecl[] = [];
-            this.parseOOPMembersCommon(thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], [], [], []);
 
             if (cusing.length !== 0 && memberFields.length !== 0) {
                 this.raiseError(this.getCurrentLine(), "Cannot define fields in multiple places in ADT++ decl");
@@ -5122,7 +5145,7 @@ class Parser {
                     // | ...
                     // [& {...}] | ;
 
-                    this.parseProvides(false /*Doesn't matter since we arejust scanning*/, [KW_of, KW_using]);
+                    this.parseProvides(this.getCurrentSrcInfo(), false /*Doesn't matter since we arejust scanning*/, [KW_of, KW_using]);
 
                     if (this.testAndConsumeTokenIf(KW_using)) {
                         this.ensureToken(SYM_lbrace, op); //we should be at the opening left paren 
@@ -5195,7 +5218,7 @@ class Parser {
                     nsdecl.declaredNames.add(tname);
 
                     this.parseTermDeclarations();
-                    this.parseProvides(ns === "Core", [SYM_lbrace]);
+                    this.parseProvides(this.getCurrentSrcInfo(), ns === "Core", [SYM_lbrace]);
             
                     this.ensureToken(SYM_lbrace, op); //we should be at the opening left paren 
                     this.m_cpos = this.scanCodeParens(); //scan to the closing paren

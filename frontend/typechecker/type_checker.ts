@@ -5,13 +5,13 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOPTypeDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
 import { SourceInfo } from "../ast/parser";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam } from "../tree_ir/tir_type";
-import { AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
+import { AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
 import { TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
-import { AndTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
-import { ExpressionReturnResult, FlowTypeTruthOps, ValueType, VarInfo } from "./type_environment";
+import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
+import { ExpressionReturnResult, FlowTypeTruthOps, TypeEnvironment, VarInfo } from "./type_environment";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -32,14 +32,16 @@ class TypeError extends Error {
 }
 
 class OOMemberLookupInfo<T> {
-    readonly contiainingType: OOPTypeDecl;
+    readonly ttype: ResolvedType;
+    readonly ootype: OOPTypeDecl;
+    readonly oobinds: Map<string, ResolvedType>;
     readonly decl: T;
-    readonly binds: TemplateBindScope;
 
-    constructor(contiainingType: OOPTypeDecl, decl: T, binds: TemplateBindScope) {
-        this.contiainingType = contiainingType;
+    constructor(ttype: ResolvedType, ootype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, decl: T) {
+        this.ttype = ttype;
+        this.ootype = ootype;
+        this.oobinds = oobinds;
         this.decl = decl;
-        this.binds = binds;
     }
 }
 
@@ -525,35 +527,35 @@ class TypeChecker {
         }
     }
 
-    private normalizeType_Template(sinfo: SourceInfo, t: TemplateTypeSignature, binds: TemplateBindScope): ResolvedType {
+    private normalizeType_Template(t: TemplateTypeSignature, binds: TemplateBindScope): ResolvedType {
         const rbind = binds.tryTemplateResolveType(t.name);
         if(rbind !== undefined) {
             return rbind;
         }
         else {
-            this.raiseError(sinfo, `Could not resolve template type name ${t.name}`);
+            this.raiseError(t.sinfo, `Could not resolve template type name ${t.name}`);
             return ResolvedType.createInvalid();
         }
     }
 
-    private normalizeType_Literal(sinfo: SourceInfo, t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
+    private normalizeType_Literal(t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
         const chkexp = this.reduceLiteralValueToCanonicalForm(t.lvalue.exp, binds);
         if(chkexp !== undefined) {
             const llexp = new ResolvedLiteralAtomType(chkexp.lidstr, chkexp);
             return ResolvedType.createSingle(llexp);
         }
         else {
-            this.raiseError(sinfo, `Could not resolve literal type`);
+            this.raiseError(t.sinfo, `Could not resolve literal type`);
             return ResolvedType.createInvalid();
         }
     }
 
-    private normalizeType_Nominal(sinfo: SourceInfo, t: NominalTypeSignature, binds: TemplateBindScope, resolvestack: string[]): ResolvedType | ResolvedFunctionType {
+    private normalizeType_Nominal(t: NominalTypeSignature, binds: TemplateBindScope, resolvestack: string[]): ResolvedType | ResolvedFunctionType {
         let tresolved: TypeSignature = t;
         let isresolution: boolean = false;
         if(t.terms.length === 0) {
             //could be a typedef so go try to resolve that
-            [tresolved, isresolution] = this.resolveTypeDef(sinfo, t, resolvestack);
+            [tresolved, isresolution] = this.resolveTypeDef(t.sinfo, t, resolvestack);
         }
 
         let rtype: ResolvedType | ResolvedFunctionType = ResolvedType.createInvalid(); 
@@ -565,14 +567,14 @@ class TypeChecker {
 
             const fconcept = this.m_assembly.tryGetConceptTypeForFullyResolvedName(ttname);
             if (fconcept !== undefined) {
-                const bbinds = this.resolveTemplateBinds(sinfo, fconcept.terms, t.terms, binds);
+                const bbinds = this.resolveTemplateBinds(t.sinfo, fconcept.terms, t.terms, binds);
                 rtype = ResolvedType.createSingle(ResolvedConceptAtomTypeEntry.create(fconcept, bbinds));
             }
 
             const fobject = this.m_assembly.tryGetObjectTypeForFullyResolvedName(ttname);
             if (fobject !== undefined) {
                 let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
-                const bbinds = this.resolveTemplateBinds(sinfo, fobject.terms, t.terms, binds);
+                const bbinds = this.resolveTemplateBinds(t.sinfo, fobject.terms, t.terms, binds);
 
                 if(fobject.attributes.includes("__enum_type")) {
                     rtypeatom = ResolvedEnumEntityAtomType.create(fobject);
@@ -587,13 +589,13 @@ class TypeChecker {
                     const rrtype = (fobject.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
                     const oftype = this.normalizeTypeOnly(rrtype, binds);
                     if(!(oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType)) {
-                        this.raiseError(sinfo, `Type ${oftype.typeID} is not an entity type`);
+                        this.raiseError(t.sinfo, `Type ${oftype.typeID} is not an entity type`);
                         return ResolvedType.createInvalid();
                     }
                     
-                    const basetype = this.computeBaseTypeForTypeDecl(sinfo, oftype, []);
+                    const basetype = this.computeBaseTypeForTypeDecl(t.sinfo, oftype, []);
                     if(basetype === undefined) {
-                        this.raiseError(sinfo, `Type ${oftype.typeID} is not a valid type to use as a typedecl`);
+                        this.raiseError(t.sinfo, `Type ${oftype.typeID} is not a valid type to use as a typedecl`);
                         return ResolvedType.createInvalid();
                     }
 
@@ -602,7 +604,7 @@ class TypeChecker {
                 else if(fobject.attributes.includes("__stringof_type")) {
                     const validator = bbinds.get("T");
                     if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
-                        this.raiseError(sinfo, "Missing Validator for StringOf");
+                        this.raiseError(t.sinfo, "Missing Validator for StringOf");
                         return ResolvedType.createInvalid();
                     }
 
@@ -611,7 +613,7 @@ class TypeChecker {
                 else if(fobject.attributes.includes("__asciistringof_type")) {
                     const validator = bbinds.get("T");
                     if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
-                        this.raiseError(sinfo, "Missing Validator for ASCIIStringOf");
+                        this.raiseError(t.sinfo, "Missing Validator for ASCIIStringOf");
                         return ResolvedType.createInvalid();
                     }
 
@@ -620,7 +622,7 @@ class TypeChecker {
                 else if (fobject.attributes.includes("__path_type")) {
                     const pvalidator = bbinds.get("T");
                     if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(sinfo, "Missing Validator for Path");
+                        this.raiseError(t.sinfo, "Missing Validator for Path");
                         return ResolvedType.createInvalid();
                     }
 
@@ -629,7 +631,7 @@ class TypeChecker {
                 else if (fobject.attributes.includes("__pathfragment_type")) {
                     const pvalidator = bbinds.get("T");
                     if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(sinfo, "Missing Validator for PathFragment");
+                        this.raiseError(t.sinfo, "Missing Validator for PathFragment");
                         return ResolvedType.createInvalid();
                     }
 
@@ -638,7 +640,7 @@ class TypeChecker {
                 else if (fobject.attributes.includes("__pathglob_type")) {
                     const pvalidator = bbinds.get("T");
                     if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(sinfo, "Missing Validator for PathFragment");
+                        this.raiseError(t.sinfo, "Missing Validator for PathFragment");
                         return ResolvedType.createInvalid();
                     }
 
@@ -701,7 +703,7 @@ class TypeChecker {
 
             const ftask = this.m_assembly.tryGetTaskTypeForFullyResolvedName(ttname);
             if (ftask !== undefined) {
-                const bbinds = this.resolveTemplateBinds(sinfo, ftask.terms, t.terms, binds);
+                const bbinds = this.resolveTemplateBinds(t.sinfo, ftask.terms, t.terms, binds);
                 rtype = ResolvedType.createSingle(ResolvedTaskAtomType.create(ftask, bbinds));
             }
         }
@@ -937,10 +939,8 @@ class TypeChecker {
             return true;
         }
         else {
-            return this.resolveProvides(t1.object, TemplateBindScope.createBaseBindScope(t1.getBinds())).some((provide) => {
-                const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(t1.getBinds()));
-                return !tt.isInvalidType() && this.subtypeOf(tt, t2type);
-            });
+            const t1provides = this.resolveProvides(t1.object, TemplateBindScope.createBaseBindScope(t1.getBinds()));
+            return t1provides.some((provide) => this.subtypeOf(provide, t2type));
         }
     }
 
@@ -964,10 +964,9 @@ class TypeChecker {
                 }
 
                 const t2type = ResolvedType.createSingle(ResolvedConceptAtomType.create([c2t]));
-                return this.resolveProvides(c1t.concept, TemplateBindScope.createBaseBindScope(c1t.binds)).some((provide) => {
-                    const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(c1t.binds));
-                    return !tt.isInvalidType() && this.subtypeOf(tt, t2type);
-                });
+                const c1tprovides = this.resolveProvides(c1t.concept, TemplateBindScope.createBaseBindScope(c1t.binds));
+
+                return c1tprovides.some((provide) => this.subtypeOf(provide, t2type));
             });
         });
     }
@@ -1106,442 +1105,124 @@ class TypeChecker {
         return fullbinds;
     }
 
-    getAllOOFields(ttype: ResolvedType, ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
+    getAllOOFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
         assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
         
         let declfields = fmap || new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
 
         //Important to do traversal in Left->Right Topmost traversal order
-
-        this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(binds)).forEach((provide) => {
-            const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(binds));
-            (tt.options[0] as ResolvedConceptAtomType).conceptTypes.forEach((concept) => {
-                declfields = this.getAllOOFields(ResolvedType.createSingle(ResolvedConceptAtomType.create([concept])), concept.concept, concept.binds, declfields);
-            });
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declfields = this.getAllOOFields(provide, concept.concept, concept.binds, declfields);
         });
 
         ooptype.memberFields.forEach((mf) => {
             if (!declfields.has(mf.name)) {
-                declfields.set(mf.name, [ooptype, mf, binds]);
+                declfields.set(mf.name, [ooptype, mf, oobinds]);
             }
         });
 
         return declfields;
     }
 
-    getAllInvariantProvidingTypes(ttype: ResolvedType, ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+    getAllInvariantProvidingTypes(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
         let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
-
-        this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(binds)).forEach((provide) => {
-            const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(binds));
-            (tt.options[0] as ResolvedConceptAtomType).conceptTypes.forEach((concept) => {
-                declinvs = this.getAllInvariantProvidingTypes(ResolvedType.createSingle(ResolvedConceptAtomType.create([concept])), concept.concept, concept.binds, declinvs);
-            });
-        });
 
         if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
             return declinvs;
         }
-        else {
-            if(ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
-                declinvs.push([ttype, ooptype, binds]);
-            }
 
-            return declinvs;
-        }
-    }
-
-    getAbstractPrePostConds(fname: string, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, callbinds: Map<string, ResolvedType>): {pre: [PreConditionDecl[], Map<string, ResolvedType>], post: [PostConditionDecl[], Map<string, ResolvedType>] } | undefined {
-        const rprovides = this.resolveProvides(ooptype, oobinds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const provide = rprovides[i];
-            const tt = this.normalizeTypeOnly(provide, oobinds);
-            for (let j = 0; j < (tt.options[0] as ResolvedConceptAtomType).conceptTypes.length; ++j) {
-                const concept = (tt.options[0] as ResolvedConceptAtomType).conceptTypes[j];
-                const pc = this.getAbstractPrePostConds(fname, concept.concept, concept.binds, callbinds);
-                if (pc !== undefined) {
-                    return pc;
-                }
-            }
-        }
-
-        const mmdecl = ooptype.memberMethods.find((mmd) => mmd.name === fname);
-        if (mmdecl !== undefined && (mmdecl.invoke.attributes.includes("abstract") || mmdecl.invoke.attributes.includes("virtual"))) {
-            let newbinds = new Map<string, ResolvedType>();
-            oobinds.forEach((v, k) => newbinds.set(k, v));
-            mmdecl.invoke.terms.forEach((term) => newbinds.set(term.name, callbinds.get(term.name) as ResolvedType));
-
-            return {pre: [mmdecl.invoke.preconditions, newbinds], post: [mmdecl.invoke.postconditions, newbinds]};
-        }
-
-        const sfdecl = ooptype.staticFunctions.find((sfd) => sfd.name === fname);
-        if (sfdecl !== undefined && !(sfdecl.invoke.attributes.includes("abstract") || sfdecl.invoke.attributes.includes("virtual"))) {
-            let newbinds = new Map<string, ResolvedType>();
-            oobinds.forEach((v, k) => newbinds.set(k, v));
-            sfdecl.invoke.terms.forEach((term) => newbinds.set(term.name, callbinds.get(term.name) as ResolvedType));
-
-            return {pre: [sfdecl.invoke.preconditions, newbinds], post: [sfdecl.invoke.postconditions, newbinds]};
-        }
-
-        return undefined;
-    }
-
-    private tryGetMemberConstDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
-        const sdecl = ooptype.staticMembers.find((sm) => sm.name === name);
-        if(sdecl === undefined) {
-            return undefined;
-        }
-
-        return new OOMemberLookupInfo<StaticMemberDecl>(ooptype, sdecl, binds);
-    }
-
-    private tryGetMemberConstDeclParent(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
-        const rprovides = this.resolveProvides(ooptype, binds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const tt = (this.normalizeTypeOnly(rprovides[i], binds).options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            const res = this.tryGetMemberConstDecl(tt.concept, tt.binds, name) || this.tryGetMemberConstDeclParent(tt.concept, tt.binds, name);
-            if (res !== undefined) {
-                return res;
-            }
-        }
-
-        return undefined;
-    }
-
-    private tryGetMemberFunctionDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
-        const sfdecl = ooptype.staticFunctions.find((sfd) => sfd.name === name);
-        if(sfdecl === undefined) {
-            return undefined;
-        }
-
-        return new OOMemberLookupInfo<StaticFunctionDecl>(ooptype, sfdecl, binds);
-    }
-
-    private tryGetMemberFunctionDeclParent(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
-        const rprovides = this.resolveProvides(ooptype, binds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const tt = (this.normalizeTypeOnly(rprovides[i], binds).options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            const res = this.tryGetMemberFunctionDecl(tt.concept, tt.binds, name,) || this.tryGetMemberFunctionDeclParent(tt.concept, tt.binds, name);
-            if (res !== undefined) {
-                return res;
-            }
-        }
-
-        return undefined;
-    }
-
-    private tryGetMemberOperatorDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticOperatorDecl[]> | undefined {
-        const sodecl = ooptype.staticOperators.filter((so) => so.name === name);
-        if(sodecl.length === 0) {
-            return undefined;
-        }
-
-        return new OOMemberLookupInfo<StaticOperatorDecl[]>(ooptype, sodecl, binds);
-    }
-
-    private tryGetMemberOperatorDeclParent(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<StaticOperatorDecl[]> | undefined {
-        const rprovides = this.resolveProvides(ooptype, binds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const tprovide = this.normalizeTypeOnly(rprovides[i], binds).options[0] as ResolvedConceptAtomType;
-            const tt = tprovide.conceptTypes[0];
-            const res = this.tryGetMemberOperatorDecl(tt.concept, tt.binds, name,) || this.tryGetMemberOperatorDeclParent(tt.concept, tt.binds, name);
-            if (res !== undefined) {
-                return res;
-            }
-        }
-
-        return undefined;
-    }
-
-    private tryGetMemberFieldDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
-        const mfdecl = ooptype.memberFields.find((mf) => mf.name === name);
-        if(mfdecl === undefined) {
-            return undefined;
-        }
-
-        return new OOMemberLookupInfo<MemberFieldDecl>(ooptype, mfdecl, binds);
-    }
-
-    private tryGetMemberFieldDeclParent(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
-        const rprovides = this.resolveProvides(ooptype, binds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const tt = (this.normalizeTypeOnly(rprovides[i], binds).options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            const res = this.tryGetMemberFieldDecl(tt.concept, tt.binds, name) || this.tryGetMemberFieldDeclParent(tt.concept, tt.binds, name);
-            if (res !== undefined) {
-                return res;
-            }
-        }
-
-        return undefined;
-    }
-
-    private tryGetMemberMethodDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string, skipoverride: boolean): OOMemberLookupInfo<MemberMethodDecl[]> | undefined {
-        const mmdecls = ooptype.memberMethods.filter((mm) => {
-            if(skipoverride && OOPTypeDecl.attributeSetContains("override", mm.invoke.attributes)) {
-                return false;
-            }
-
-            return mm.name === name;
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declinvs = this.getAllInvariantProvidingTypes(provide, concept.concept, concept.binds, declinvs);
         });
 
-        if(mmdecls.length === 0) {
-            return undefined;
+        
+        if(ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
+            declinvs.push([ttype, ooptype, oobinds]);
         }
 
-        return new OOMemberLookupInfo<MemberMethodDecl[]>(ooptype, mmdecls, binds);
+        return declinvs;
     }
 
-    private tryGetMemberMethodDeclParent(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string, skipoverride: boolean): OOMemberLookupInfo<MemberMethodDecl[]> | undefined {
-        const rprovides = this.resolveProvides(ooptype, binds);
-        for (let i = 0; i < rprovides.length; ++i) {
-            const tt = (this.normalizeTypeOnly(rprovides[i], binds).options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            const res = this.tryGetMemberMethodDecl(tt.concept, tt.binds, name, skipoverride) || this.tryGetMemberMethodDeclParent(tt.concept, tt.binds, name, skipoverride);
-            if (res !== undefined) {
-                return res;
-            }
-        }
-
-        return undefined;
-    }
-
-    tryGetNestedEntityDecl(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, name: string): OOMemberLookupInfo<EntityTypeDecl> | undefined {
-        if(!ooptype.nestedEntityDecls.has(name)) {
-            return undefined;
-        }
-
-        return new OOMemberLookupInfo<EntityTypeDecl>(ooptype, ooptype.nestedEntityDecls.get(name) as EntityTypeDecl, binds);
-    }
-
-    private ensureSingleDecl_Helper<T>(opts: OOMemberLookupInfo<T>[]): OOMemberLookupInfo<T> | undefined {
-        if (opts.length === 0) {
-            return undefined;
-        }
-        else if (opts.length === 1) {
-            return opts[0];
-        }
-        else {
-            const opt1 = opts[0];
-            const allSame = opts.every((opt) => {
-                if (opt1.contiainingType.ns !== opt.contiainingType.ns || opt1.contiainingType.name !== opt.contiainingType.name) {
-                    return false;
-                }
-
-                if (opt1.binds.size !== opt.binds.size) {
-                    return false;
-                }
-
-                let bindsok = true;
-                opt1.binds.forEach((v, k) => {
-                    bindsok = bindsok && opt.binds.has(k) && v.typeID === (opt.binds.get(k) as ResolvedType).typeID;
-                });
-
-                return bindsok;
-            });
-
-            return allSame ? opt1 : undefined;
-        }
-    }
-
-    tryGetConstMemberUniqueDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                return this.tryGetMemberConstDecl(ttopt.object, ttopt.binds, fname) || this.tryGetMemberConstDeclParent(ttopt.object, ttopt.binds, fname);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberConstDecl(ccopt.concept, ccopt.binds, fname) || this.tryGetMemberConstDeclParent(ccopt.concept, ccopt.binds, fname);
-                });
-                return this.ensureSingleDecl_Helper<StaticMemberDecl>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<StaticMemberDecl>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
-            return undefined;
-        }
-        else {
-            return this.ensureSingleDecl_Helper<StaticMemberDecl>(ttopts as OOMemberLookupInfo<StaticMemberDecl>[]);
-        }
-    }
-
-    tryGetFunctionUniqueDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                return this.tryGetMemberFunctionDecl(ttopt.object, ttopt.binds, fname) || this.tryGetMemberFunctionDeclParent(ttopt.object, ttopt.binds, fname);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberFunctionDecl(ccopt.concept, ccopt.binds, fname) || this.tryGetMemberFunctionDeclParent(ccopt.concept, ccopt.binds, fname);
-                });
-                return this.ensureSingleDecl_Helper<StaticFunctionDecl>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<StaticFunctionDecl>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
-            return undefined;
-        }
-        else {
-            return this.ensureSingleDecl_Helper<StaticFunctionDecl>(ttopts as OOMemberLookupInfo<StaticFunctionDecl>[]);
-        }
-    }
-
-    tryGetOperatorUniqueDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<StaticOperatorDecl[]> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                return this.tryGetMemberOperatorDecl(ttopt.object, ttopt.binds, fname) || this.tryGetMemberOperatorDeclParent(ttopt.object, ttopt.binds, fname);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberOperatorDecl(ccopt.concept, ccopt.binds, fname) || this.tryGetMemberOperatorDeclParent(ccopt.concept, ccopt.binds, fname);
-                });
-                return this.ensureSingleDecl_Helper<StaticOperatorDecl[]>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<StaticOperatorDecl[]>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
-            return undefined;
-        }
-        else {
-            return this.ensureSingleDecl_Helper<StaticOperatorDecl[]>(ttopts as OOMemberLookupInfo<StaticOperatorDecl[]>[]);
-        }
-    }
-
-    tryGetFieldUniqueDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                assert(!ttopt.object.isSpecialConstructableEntity(), "Needs to be handled as special case");
-
-                return this.tryGetMemberFieldDecl(ttopt.object, ttopt.binds, fname) || this.tryGetMemberFieldDeclParent(ttopt.object, ttopt.binds, fname);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberFieldDecl(ccopt.concept, ccopt.binds, fname) || this.tryGetMemberFieldDeclParent(ccopt.concept, ccopt.binds, fname);
-                });
-                return this.ensureSingleDecl_Helper<MemberFieldDecl>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<MemberFieldDecl>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
-            return undefined;
-        }
-        else {
-            return this.ensureSingleDecl_Helper<MemberFieldDecl>(ttopts as OOMemberLookupInfo<MemberFieldDecl>[]);
-        }
-    }
-
-    //Given a type find, if possible, the single static method that every possibility resolves to -- if not then this needs to be a virtual call
-    tryGetMethodUniqueConcreteDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<MemberMethodDecl[]> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                return this.tryGetMemberMethodDecl(ttopt.object, ttopt.binds, fname, false) || this.tryGetMemberMethodDeclParent(ttopt.object, ttopt.binds, fname, false);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberMethodDecl(ccopt.concept, ccopt.binds, fname, false) || this.tryGetMemberMethodDeclParent(ccopt.concept, ccopt.binds, fname, false);
-                });
-                return this.ensureSingleDecl_Helper<MemberMethodDecl[]>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<MemberMethodDecl[]>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
-            return undefined;
-        }
-        else {
-            const sdecl = this.ensureSingleDecl_Helper<MemberMethodDecl[]>(ttopts as OOMemberLookupInfo<MemberMethodDecl[]>[]);
-            if(sdecl === undefined) {
+    private tryGetMemberImpl<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, name: string, fnlookup: (tt: OOPTypeDecl, nn: string) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+        const mdecl = fnlookup(ooptype, name);
+        if(mdecl !== undefined) {
+            if(mdecl.hasAttribute("abstract")) {
                 return undefined;
             }
-
-            if(tt.isUniqueCallTargetType()) {
-                const isundef = sdecl.decl.some((sd) => OOPTypeDecl.attributeSetContains("abstract", sd.invoke.attributes));
-                if (isundef) {
-                    return undefined;
-                }
-                else {
-                    return sdecl;
-                }
-            }
             else {
-                const isoveridable = sdecl.decl.some((sd) => OOPTypeDecl.attributeSetContains("override", sd.invoke.attributes) || OOPTypeDecl.attributeSetContains("virtual", sd.invoke.attributes) || OOPTypeDecl.attributeSetContains("abstract", sd.invoke.attributes));
-                if (isoveridable) {
-                    return undefined;
-                }
-                else {
-                    return sdecl;
-                }
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
             }
         }
-    }
 
-    //Given a type find the single virtual method root decl that every possible resoltions derives from -- should exist or it is an error
-    tryGetMethodUniqueRootDeclFromType(tt: ResolvedType, fname: string): OOMemberLookupInfo<MemberMethodDecl[]> | undefined {
-        const ntype = this.ensureNominalRepresentation(tt);
-        const ttopts = ntype.options.map((ttopt) => {
-            if(ttopt instanceof ResolvedEntityAtomType) {
-                return this.tryGetMemberMethodDecl(ttopt.object, ttopt.binds, fname, true) || this.tryGetMemberMethodDeclParent(ttopt.object, ttopt.binds, fname, true);
-            }
-            else {
-                const copts = (ttopt as ResolvedConceptAtomType).conceptTypes.map((ccopt) => {
-                    return this.tryGetMemberMethodDecl(ccopt.concept, ccopt.binds, fname, true) || this.tryGetMemberMethodDeclParent(ccopt.concept, ccopt.binds, fname, true);
-                });
-                return this.ensureSingleDecl_Helper<MemberMethodDecl[]>(copts.filter((ccopt) => ccopt !== undefined) as OOMemberLookupInfo<MemberMethodDecl[]>[]);
-            }
-        });
-
-        if(ttopts.some((topt) => topt === undefined)) {
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        if(rprovides.length === 0) {
             return undefined;
         }
-        else {
-            return this.ensureSingleDecl_Helper<MemberMethodDecl[]>(ttopts as OOMemberLookupInfo<MemberMethodDecl[]>[]);
-        }
-    }
 
-    resolveBindsForCallComplete(declterms: TemplateTermDecl[], giventerms: TypeSignature[], implicitBinds: Map<string, ResolvedType>, callBinds: Map<string, ResolvedType>, inferBinds: Map<string, ResolvedType>): Map<string, ResolvedType> | undefined {
-        let fullbinds = new Map<string, ResolvedType>();
-        implicitBinds.forEach((v, k) => {
-            fullbinds.set(k, v);
+        const options = rprovides.map((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            return this.tryGetMemberImpl<T>(provide, concept.concept, concept.binds, name, fnlookup);
         });
 
-        for (let i = 0; i < declterms.length; ++i) {
-            if(giventerms.length <= i) {
-                if(declterms[i].defaultType !== undefined) {
-                    fullbinds.set(declterms[i].name, this.normalizeTypeOnly(declterms[i].defaultType as TypeSignature, implicitBinds));
-                }
-                else if (declterms[i].isInfer) {
-                    if(!inferBinds.has(declterms[i].name)) {
-                        return undefined;
-                    }
-                    else {
-                        fullbinds.set(declterms[i].name, inferBinds.get(declterms[i].name) as ResolvedType);
-                    }
-                }
-                else {
-                    return undefined;
-                }
-            }
-            else {
-                fullbinds.set(declterms[i].name, this.normalizeTypeOnly(giventerms[i], callBinds));
+        if(options.includes(undefined)) {
+            return undefined; 
+        }
+
+        let impls: OOMemberLookupInfo<T>[] = [];
+        for(let i = 0; i < options.length; ++i) {
+            const newopts = (options[i] as OOMemberLookupInfo<T>[]).filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            impls.push(...newopts);
+        }
+
+        return impls;
+    }
+
+    private tryGetMemberDecls<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, name: string, fnlookup: (tt: OOPTypeDecl, nn: string) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+        const mdecl = fnlookup(ooptype, name);
+        if(mdecl !== undefined) {
+            if(mdecl.hasAttribute("abstract") || mdecl.hasAttribute("virtual")) {
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
             }
         }
 
-        return fullbinds;
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        if(rprovides.length === 0) {
+            return undefined;
+        }
+
+        const options = rprovides.map((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            return this.tryGetMemberDecls<T>(provide, concept.concept, concept.binds, name, fnlookup);
+        });
+
+        if(options.includes(undefined)) {
+            return undefined; 
+        }
+
+        let decls: OOMemberLookupInfo<T>[] = [];
+        for(let i = 0; i < options.length; ++i) {
+            const newopts = (options[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            decls.push(...newopts);
+        }
+
+        return decls;
     }
 
     normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
         const res = this.normalizeTypeGeneral(t, binds);
         if (res instanceof ResolvedFunctionType) {
-            return ResolvedType.createEmpty();
+            return ResolvedType.createInvalid();
         }
         else {
             return res;
         }
     }
 
-    normalizeTypeFunction(t: TypeSignature, binds: Map<string, ResolvedType>): ResolvedFunctionType | undefined {
+    normalizeTypeFunction(t: TypeSignature, binds: TemplateBindScope): ResolvedFunctionType | undefined {
         if (t instanceof ParseErrorTypeSignature || t instanceof AutoTypeSignature) {
             return undefined;
         }
@@ -1550,18 +1231,21 @@ class TypeChecker {
         }
     }
 
-    normalizeTypeGeneral(t: TypeSignature, TemplateBindScope): ResolvedType | ResolvedFunctionType {
+    normalizeTypeGeneral(t: TypeSignature, binds: TemplateBindScope): ResolvedType | ResolvedFunctionType {
         if (t instanceof ParseErrorTypeSignature || t instanceof AutoTypeSignature) {
-            return ResolvedType.createEmpty();
+            return ResolvedType.createInvalid();
         }
         else if (t instanceof FunctionTypeSignature) {
-            return this.normalizeTypeFunction(t, binds) || ResolvedType.createEmpty();
+            return this.normalizeTypeFunction(t, binds) || ResolvedType.createInvalid();
         }
         else if (t instanceof TemplateTypeSignature) {
             return this.normalizeType_Template(t, binds);
         }
+        else if (t instanceof LiteralTypeSignature) {
+            return this.normalizeType_Literal(t, binds);
+        }
         else if (t instanceof NominalTypeSignature) {
-            return this.normalizeType_Nominal(t, binds);
+            return this.normalizeType_Nominal(t, binds, []);
         }
         else if (t instanceof TupleTypeSignature) {
             return this.normalizeType_Tuple(t, binds);
@@ -1574,9 +1258,6 @@ class TypeChecker {
         }
         else if(t instanceof ProjectTypeSignature) {
             return this.normalizeType_Projection(t, binds);
-        }
-        else if (t instanceof PlusTypeSignature) {
-            return this.normalizeType_Plus(t, binds);
         }
         else if (t instanceof AndTypeSignature) {
             return this.normalizeType_And(t, binds);
@@ -1627,23 +1308,6 @@ class TypeChecker {
         }
     }
 
-    joinExpTypes(...args: ValueType[]): ValueType {
-        assert(args.length !== 0);
-
-        const jlayout = this.typeUpperBound(args.map((ei) => ei.layout));
-        const jflow = this.typeUpperBound(args.map((ei) => ei.flow));
-        return new ValueType(jlayout, jflow);
-    }
-
-    joinReturnResults(expvar: string, ...args: ExpressionReturnResult[]): ExpressionReturnResult {
-        assert(args.length !== 0);
-
-        const jtype = this.joinExpTypes(...args.map((ei) => ei.valtype));
-        const jtv = FlowTypeTruthOps.join(...args.map((ei) => ei.truthval));
-
-        return new ExpressionReturnResult(jtype, jtv, expvar);
-    }
-
     joinVarInfos(...values: VarInfo[]): VarInfo {
         assert(values.length !== 0);
 
@@ -1686,6 +1350,10 @@ class TypeChecker {
                 //fall-through
             }
         }
+        else if (t1 instanceof ResolvedLiteralAtomType) {
+            const t1oft = t1.lexp.ltype;
+            res = this.atomSubtypeOf(t1oft, t2);
+        }
         else {
             //fall-through
         }
@@ -1712,15 +1380,19 @@ class TypeChecker {
         return res;
     }
 
-    resolveProvides(tt: OOPTypeDecl, binds: TemplateBindScope): TypeSignature[] {
-        let oktypes: TypeSignature[] = [];
+    resolveProvides(tt: OOPTypeDecl, binds: TemplateBindScope): ResolvedType[] {
+        let oktypes: ResolvedType[] = [];
         
         for (let i = 0; i < tt.provides.length; ++i) {
-            const psig = tt.provides[i][0];
-            const pcond = tt.provides[i][1];
+            const rsig = this.normalizeTypeOnly(tt.provides[i][0], binds);
+            if(rsig.options.length !== 1 || !(rsig.options[0] instanceof ResolvedConceptAtomType) || rsig.options[0].conceptTypes.length !== 1) {
+                this.raiseError(tt.sourceLocation, `provides types must be single concepts -- got ${rsig.typeID}`);
+                return [];
+            }
             
+            const pcond = tt.provides[i][1];
             if(pcond === undefined) {
-                oktypes.push(psig);
+                oktypes.push(rsig);
             }
             else {
                 const allok = pcond.constraints.every((consinfo) => {
@@ -1729,7 +1401,7 @@ class TypeChecker {
                 });
 
                 if(allok) {
-                    oktypes.push(psig);
+                    oktypes.push(rsig);
                 }
             }
         }
@@ -1738,6 +1410,10 @@ class TypeChecker {
     }
 
     private functionSubtypeOf_helper(t1: ResolvedFunctionType, t2: ResolvedFunctionType): boolean {
+        if (t2.isThisRef !== t1.isThisRef) {
+            return false; //need to have same ref spec
+        }
+
         if (t2.isPred !== t1.isPred) {
             return false; //need to have same pred spec
         }
@@ -1746,22 +1422,11 @@ class TypeChecker {
             return false; //need to have the same number of parameters
         }
 
-        if ((t2.optRestParamType !== undefined) !== (t1.optRestParamType !== undefined)) {
-            return false; //should both have rest or not
-        }
-
-        if (t2.optRestParamType !== undefined && t2.optRestParamType.typeID !== (t1.optRestParamType as ResolvedType).typeID) {
-            return false; //variance
-        }
-
         for (let i = 0; i < t2.params.length; ++i) {
             const t2p = t2.params[i];
             const t1p = t1.params[i];
-            if ((t2p.isOptional !== t1p.isOptional) || (t2p.refKind !== t1p.refKind)) {
-                return false;
-            }
-
-            if(t2p.litexp !== undefined && t2p.litexp !== t1p.litexp) {
+            
+            if(t2p.litexp !== undefined && (t1p.litexp === undefined || t2p.litexp.lidstr !== t1p.litexp.lidstr)) {
                 return false;
             }
 
@@ -1814,43 +1479,7 @@ class TypeChecker {
         return res;
     }
 
-    ensureNominalRepresentation(t: ResolvedType): ResolvedType {
-        const opts = t.options.map((opt) => {
-            if (opt instanceof ResolvedTupleAtomType) {
-                return this.getSpecialTupleConceptType();
-            }
-            else if (opt instanceof ResolvedRecordAtomType) {
-                return this.getSpecialRecordConceptType();
-            }
-            else {
-                return ResolvedType.createSingle(opt);
-            }
-        });
-
-        return this.typeUpperBound(opts);
-    }
-
-    private resolveOOTypeFromDecls(oodecl: OOPTypeDecl, oobinds: Map<string, ResolvedType>): ResolvedType {
-        if(oodecl instanceof EntityTypeDecl) {
-            return ResolvedType.createSingle(ResolvedEntityAtomType.create(oodecl, oobinds));
-        }
-        else {
-            return ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(oodecl as ConceptTypeDecl, oobinds)]));
-        }
-    }
-
-    private getUniqueTypeBinds(ttype: ResolvedType): Map<string, ResolvedType> {
-        assert(ttype.options.length === 1 && ((ttype.options[0] instanceof ResolvedConceptAtomType) || (ttype.options[0] instanceof ResolvedEntityAtomType)));
-
-        if(ttype.options[0] instanceof ResolvedEntityAtomType) {
-            return (ttype.options[0] as ResolvedEntityAtomType).binds;
-        }
-        else {
-            return (ttype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
-        }
-    }
-
-    private emitInlineConvertIfNeeded<T extends MIRArgument>(sinfo: SourceInfo, src: T, srctype: ValueType, trgttype: ResolvedType): T | MIRRegisterArgument {
+    private emitInlineConvertIfNeeded(sinfo: SourceInfo, src: T, srctype: ValueType, trgttype: ResolvedType): T | MIRRegisterArgument {
         if(srctype.layout.isSameType(trgttype)) {
             return src;
         }
@@ -1899,7 +1528,7 @@ class TypeChecker {
         return rr;
     }
 
-    private emitInlineConvertToFlow<T extends MIRArgument>(sinfo: SourceInfo, src: T, srctype: ValueType): T | MIRRegisterArgument {
+    private emitInlineConvertToFlow(sinfo: SourceInfo, src: ValueType, srctype: ValueType): T | MIRRegisterArgument {
         return this.emitInlineConvertIfNeeded<T>(sinfo, src, srctype, srctype.flowtype);
     }
 
@@ -1944,7 +1573,7 @@ class TypeChecker {
             return false;
         }
     }
-
+/*
     private checkInvokeDecl(sinfo: SourceInfo, invoke: InvokeDecl, invokeBinds: Map<string, ResolvedType>, pcodes: PCode[]) {
         this.raiseErrorIf(sinfo, invoke.optRestType !== undefined && invoke.params.some((param) => param.isOptional), "Cannot have optional and rest parameters in an invocation signature");
 
@@ -2572,37 +2201,6 @@ class TypeChecker {
         return eargs;
     }
 
-    private inferAndCheckArguments(sinfo: SourceInfo, env: TypeEnvironment, args: Arguments, invk: InvokeDecl, giventerms: TypeSignature[], implicitBinds: Map<string, ResolvedType>, callBinds: Map<string, ResolvedType>, optSelfValue: [ValueType, string | undefined, MIRRegisterArgument] | undefined, refallowed: boolean): [ResolvedFunctionType, Map<string, ResolvedType>, ExpandedArgument[]] {
-        const oldenable = this.m_emitter.getEmitEnabled();
-        this.m_emitter.setEmitEnabled(false);
-        let rrbinds = new Map<string, ResolvedType>();
-
-        const [ibinds, iterms] = this.m_assembly.resolveBindsForCallWithInfer(invk.terms, giventerms, implicitBinds, callBinds);
-        this.raiseErrorIf(sinfo, ibinds === undefined, "Template instantiation failure");
-
-        //Do checking and infer any template params that we need
-        rrbinds = ibinds as Map<string, ResolvedType>;
-        if (iterms.length !== 0) {
-            const fbinds = this.checkArgumentsEvaluationWSigInfer(sinfo, env, invk.params, args, optSelfValue !== undefined, rrbinds, iterms);
-
-            const binds = this.m_assembly.resolveBindsForCallComplete(invk.terms, giventerms, implicitBinds, callBinds, fbinds);
-            this.raiseErrorIf(sinfo, binds === undefined, "Call bindings could not be resolved");
-
-            rrbinds = binds as Map<string, ResolvedType>;
-        }
-
-        this.m_emitter.setEmitEnabled(oldenable);
-
-        this.checkTemplateTypes(sinfo, invk.terms, rrbinds);
-
-        const fsig = this.m_assembly.normalizeTypeFunction(invk.generateSig(), rrbinds);
-        this.raiseErrorIf(sinfo, fsig === undefined, `Invalid function signature: ${invk.generateSig().getDiagnosticName()}`);
-
-        const eargs = this.checkArgumentsEvaluationWSig(sinfo, env, fsig as ResolvedFunctionType, implicitBinds, args, optSelfValue, refallowed);
-
-        return [fsig as ResolvedFunctionType, rrbinds, eargs];
-    }
-
     private checkArgumentsEvaluationWOperator(sinfo: SourceInfo, env: TypeEnvironment, binds: Map<string, ResolvedType>, args: Arguments, refallowed: boolean): ExpandedArgument[] {
         let eargs: ExpandedArgument[] = [];
         
@@ -2838,13 +2436,6 @@ class TypeChecker {
         return eargs;
     }
 
-    private getExpandoType(sinfo: SourceInfo, eatom: ResolvedEntityAtomType): ResolvedType {
-        const ep = this.m_assembly.getExpandoProvides(eatom.object, eatom.binds);
-        this.raiseErrorIf(sinfo, ep === undefined, "Not an expandoable type");
-
-        return ep as ResolvedType;
-    }
-
     private checkArgumentsEvaluationCollection(env: TypeEnvironment, args: Arguments, contentstype: ResolvedType): [ResolvedType, boolean, MIRRegisterArgument][] {
         let eargs: [ResolvedType, boolean, MIRRegisterArgument][] = [];
 
@@ -2872,22 +2463,6 @@ class TypeChecker {
         }
 
         return eargs;
-    }
-
-    private checkExpandoType(sinfo: SourceInfo, oftype: ResolvedEntityAtomType, argtype: ResolvedType): boolean {
-        const oftexpando = this.getExpandoType(sinfo, oftype);
-        const oftexpandoT = (oftexpando.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
-
-        this.raiseErrorIf(sinfo, argtype.options.length !== 1, "Must be unique type to use in collection expando");
-        const opt = argtype.options[0];
-            
-        this.raiseErrorIf(sinfo, !(opt instanceof ResolvedEntityAtomType), "Can only expand other container types in container constructor");
-        this.raiseErrorIf(sinfo, !(opt as ResolvedEntityAtomType).object.isTypeAnExpandoableCollection(), "Can only expand other container types in container constructor");
-            
-        const texpando = this.getExpandoType(sinfo, opt as ResolvedEntityAtomType);
-        const texpandoT = (texpando.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
-
-        return texpandoT.isSameType(oftexpandoT);
     }
 
     private checkArgumentsCollectionConstructor(sinfo: SourceInfo, env: TypeEnvironment, args: Arguments, cargs: [ResolvedType, boolean, MIRRegisterArgument][] | undefined, oftype: ResolvedEntityAtomType, oodecl: EntityTypeDecl, oobinds: Map<string, ResolvedType>, trgt: MIRRegisterArgument): ResolvedType {
@@ -3816,11 +3391,9 @@ class TypeChecker {
             return [env];
         }
     }
-
-    private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression, trgt: MIRRegisterArgument): TypeEnvironment {
-        this.m_emitter.emitLoadConstNone(exp.sinfo, trgt);
-
-        return env.setUniformResultExpression(this.m_assembly.getSpecialNoneType());
+*/
+    private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralNoneExpression): TypeEnvironment {
+        return env.setResultExpression(this.m_assembly.getSpecialNoneType());
     }
 
     private checkLiteralNothingExpression(env: TypeEnvironment, exp: LiteralNothingExpression, trgt: MIRRegisterArgument): TypeEnvironment {

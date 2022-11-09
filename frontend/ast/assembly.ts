@@ -171,8 +171,8 @@ class InvokeDecl {
         this.body = body;
     }
 
-    generateSig(): TypeSignature {
-        return new FunctionTypeSignature(this.isThisRef, this.recursive, this.params, this.resultType, this.isPCodePred);
+    generateSig(sinfo: SourceInfo): TypeSignature {
+        return new FunctionTypeSignature(sinfo, this.isThisRef, this.recursive, this.params, this.resultType, this.isPCodePred);
     }
 
     static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
@@ -186,6 +186,7 @@ class InvokeDecl {
 
 interface OOMemberDecl {
     getName(): string;
+    hasAttribute(attr: string): boolean;
 }
 
 class StaticMemberDecl implements OOMemberDecl {
@@ -210,6 +211,10 @@ class StaticMemberDecl implements OOMemberDecl {
     getName(): string {
         return this.name;
     }
+
+    hasAttribute(attr: string): boolean {
+        return this.attributes.includes(attr);
+    }
 }
 
 class StaticFunctionDecl implements OOMemberDecl {
@@ -230,6 +235,10 @@ class StaticFunctionDecl implements OOMemberDecl {
 
     getName(): string {
         return this.name;
+    }
+
+    hasAttribute(attr: string): boolean {
+        return this.attributes.includes(attr);
     }
 }
 
@@ -253,6 +262,10 @@ class MemberFieldDecl implements OOMemberDecl {
     getName(): string {
         return this.name;
     }
+
+    hasAttribute(attr: string): boolean {
+        return this.attributes.includes(attr);
+    }
 }
 
 class MemberMethodDecl implements OOMemberDecl {
@@ -273,6 +286,10 @@ class MemberMethodDecl implements OOMemberDecl {
 
     getName(): string {
         return this.name;
+    }
+
+    hasAttribute(attr: string): boolean {
+        return this.attributes.includes(attr);
     }
 }
 
@@ -407,7 +424,7 @@ class TaskTypeDecl extends OOPTypeDecl {
         onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
         effects: TaskEffectFlag[], enveffect: TaskEnvironmentEffect[], resourceeffect: TaskResourceEffect[],
         ensures: TaskEnsures[]) {
-        super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature("Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
+        super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature(sourceLocation, "Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
 
         this.defaults = defaults;
         this.mainfunc = mainfunc;

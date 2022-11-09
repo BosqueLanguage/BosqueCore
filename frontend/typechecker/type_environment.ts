@@ -5,10 +5,10 @@
 
 import { Assembly } from "../ast/assembly";
 import { ResolvedType } from "../tree_ir/tir_type";
-import { MIRInvokeKey } from "../../impl/src/compiler/mir_ops";
-import { PCode } from "../../impl/src/compiler/mir_emitter";
 
 import * as assert from "assert";
+import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
+import { SourceInfo } from "../ast/parser";
 
 enum FlowTypeTruthValue {
     True = "True",
@@ -43,38 +43,6 @@ class FlowTypeTruthOps {
     }
 }
 
-class ValueType {
-    readonly layout: ResolvedType;
-    readonly flow: ResolvedType;
-
-    constructor(layout: ResolvedType, flow: ResolvedType) {
-        this.layout = layout;
-        this.flow = flow;
-    }
-
-    inferFlow(nflow: ResolvedType): ValueType {
-        return new ValueType(this.layout, nflow);
-    }
-
-    static createUniform(ttype: ResolvedType): ValueType {
-        return new ValueType(ttype, ttype);
-    }
-}
-
-class ExpressionReturnResult {
-    readonly valtype: ValueType;
-    readonly truthval: FlowTypeTruthValue;
-
-    readonly expvar: string | undefined;
-
-    constructor(valtype: ValueType, tval: FlowTypeTruthValue, expvar: string | undefined) {
-        this.valtype = valtype;
-        this.truthval = tval;
-
-        this.expvar = expvar;
-    }
-}
-
 class VarInfo {
     readonly declaredType: ResolvedType;
     readonly flowType: ResolvedType;
@@ -103,48 +71,75 @@ class VarInfo {
 }
 
 class TypeEnvironment {
-    readonly ikey: MIRInvokeKey;
     readonly bodyid: string;
     readonly terms: Map<string, ResolvedType>;
-
-    readonly pcodes: Map<string, PCode>;
-
-    readonly args: Map<string, VarInfo> | undefined;
-    readonly locals: Map<string, VarInfo>[] | undefined;
-
-    readonly inferResult: ResolvedType | undefined;
-    readonly inferYield: (ResolvedType | undefined)[];
-
-    readonly expressionResult: ExpressionReturnResult | undefined;
-    readonly returnResult: ResolvedType | undefined;
-    readonly yieldResult: ResolvedType | undefined;
+    readonly pcodes: Map<string, TIRCodePack>;
 
     readonly frozenVars: Set<string>;
+    readonly args: Map<string, VarInfo> | undefined;
+    readonly locals: Map<string, VarInfo>[] | undefined;
+    readonly returnResult: ResolvedType | undefined;
 
-    private constructor(ikey: MIRInvokeKey, bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, PCode>,
-        args: Map<string, VarInfo> | undefined, locals: Map<string, VarInfo>[] | undefined, result: ResolvedType | undefined, inferYield: (ResolvedType | undefined)[],
-        expressionResult: ExpressionReturnResult | undefined, rflow: ResolvedType | undefined, yflow: ResolvedType | undefined,
-        frozenVars: Set<string>) {
+    readonly expressionResult: TIRExpression;
+    readonly expressionTruth: FlowTypeTruthValue;
+    readonly returnFlow: ResolvedType | undefined;
 
-        this.ikey = ikey;
+    readonly expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>;
+
+    private constructor(bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>,
+        frozenVars: Set<string>, args: Map<string, VarInfo> | undefined, locals: Map<string, VarInfo>[] | undefined, returnResult: ResolvedType | undefined,
+        expressionResult: TIRExpression | undefined, expressionTruth: FlowTypeTruthValue, returnFlow: ResolvedType | undefined) {
+
         this.bodyid = bodyid;
         this.terms = terms;
-
         this.pcodes = pcodes;
 
+        this.frozenVars = frozenVars;
         this.args = args;
         this.locals = locals;
+        this.returnResult = returnResult;
 
-        this.inferResult = result;
-        this.inferYield = inferYield;
-
-        this.expressionResult = expressionResult;
-        this.returnResult = rflow;
-        this.yieldResult = yflow;
-
-        this.frozenVars = frozenVars;
+        this.expressionResult = expressionResult || new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), ResolvedType.createInvalid());
+        this.expressionTruth = expressionTruth;
+        this.returnResult = returnFlow;
     }
 
+    getLocalVarInfo(name: string): VarInfo | undefined {
+        const locals = this.locals as Map<string, VarInfo>[];
+        for (let i = locals.length - 1; i >= 0; --i) {
+            if (locals[i].has(name)) {
+                return (locals[i].get(name) as VarInfo);
+            }
+        }
+
+        return undefined;
+    }
+
+    isVarNameDefined(name: string): boolean {
+        return this.getLocalVarInfo(name) !== undefined || (this.args as Map<string, VarInfo>).has(name);
+    }
+
+    lookupVar(name: string): VarInfo | null {
+        return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
+    }
+
+    static createInitialEnvForCall(ikey: MIRInvokeKey, bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, PCode>, args: Map<string, VarInfo>, inferResult: ResolvedType | undefined): TypeEnvironment {
+        return new TypeEnvironment(ikey, bodyid, terms, pcodes, args, [new Map<string, VarInfo>()], inferResult, [], undefined, undefined, undefined, new Set<string>());
+    }
+
+    hasNormalFlow(): boolean {
+        return this.locals !== undefined;
+    }
+
+    setResultExpression(layouttype: ResolvedType, flowtype: ResolvedType, value: FlowTypeTruthValue | undefined, vname: string | undefined): TypeEnvironment {
+        assert(this.hasNormalFlow());
+
+        const einfo = new ExpressionReturnResult(new ValueType(layouttype, flowtype), value || this.getExpressionResult().truthval, vname || this.getExpressionResult().expvar);
+        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, this.locals, this.inferResult, this.inferYield, einfo, this.returnResult, this.yieldResult, this.frozenVars);
+    }
+
+
+/*
     private updateVarInfo(name: string, nv: VarInfo): TypeEnvironment {
         if (this.getLocalVarInfo(name) !== undefined) {
             let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => frame.has(name) ? new Map<string, VarInfo>(frame).set(name, nv) : new Map<string, VarInfo>(frame));
@@ -156,19 +151,7 @@ class TypeEnvironment {
         }
     }
 
-    static createInitialEnvForCall(ikey: MIRInvokeKey, bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, PCode>, args: Map<string, VarInfo>, inferResult: ResolvedType | undefined): TypeEnvironment {
-        return new TypeEnvironment(ikey, bodyid, terms, pcodes, args, [new Map<string, VarInfo>()], inferResult, [], undefined, undefined, undefined, new Set<string>());
-    }
 
-    hasNormalFlow(): boolean {
-        return this.locals !== undefined;
-    }
-
-    getExpressionResult(): ExpressionReturnResult {
-        assert(this.hasNormalFlow() && this.expressionResult !== undefined);
-
-        return this.expressionResult as ExpressionReturnResult;
-    }
 
     inferVarsOfType(ftype: ResolvedType, ...vars: (string | undefined)[]): TypeEnvironment {
         let cenv = this as TypeEnvironment;
@@ -212,13 +195,6 @@ class TypeEnvironment {
         assert(this.hasNormalFlow());
 
         const einfo = new ExpressionReturnResult(new ValueType(layouttype, flowtype), this.getExpressionResult().truthval, this.getExpressionResult().expvar);
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, this.locals, this.inferResult, this.inferYield, einfo, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    setResultExpression(layouttype: ResolvedType, flowtype: ResolvedType, value: FlowTypeTruthValue | undefined, vname: string | undefined): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        const einfo = new ExpressionReturnResult(new ValueType(layouttype, flowtype), value || this.getExpressionResult().truthval, vname || this.getExpressionResult().expvar);
         return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, this.locals, this.inferResult, this.inferYield, einfo, this.returnResult, this.yieldResult, this.frozenVars);
     }
 
@@ -327,29 +303,6 @@ class TypeEnvironment {
     popLocalScope(): TypeEnvironment {
         let localscopy = this.locals !== undefined ? (this.locals as Map<string, VarInfo>[]).slice(0, -1) : undefined;
         return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localscopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    isInYieldBlock(): boolean {
-        return this.inferYield.length !== 0;
-    }
-
-    getLocalVarInfo(name: string): VarInfo | undefined {
-        const locals = this.locals as Map<string, VarInfo>[];
-        for (let i = locals.length - 1; i >= 0; --i) {
-            if (locals[i].has(name)) {
-                return (locals[i].get(name) as VarInfo);
-            }
-        }
-
-        return undefined;
-    }
-
-    isVarNameDefined(name: string): boolean {
-        return this.getLocalVarInfo(name) !== undefined || (this.args as Map<string, VarInfo>).has(name);
-    }
-
-    lookupVar(name: string): VarInfo | null {
-        return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
     lookupPCode(pc: string): PCode | undefined {
@@ -483,10 +436,12 @@ class TypeEnvironment {
             return new TypeEnvironment(opts[0].ikey, opts[0].bodyid, opts[0].terms, opts[0].pcodes, args, locals, opts[0].inferResult, opts[0].inferYield, expres, rflow.length !== 0 ? assembly.typeUpperBound(rflow) : undefined, yflow.length !== 0 ? assembly.typeUpperBound(yflow) : undefined, opts[0].frozenVars);
         }
     }
+
+    */
 }
 
 export {
-    FlowTypeTruthValue, FlowTypeTruthOps, ValueType,
-    VarInfo, ExpressionReturnResult,
+    FlowTypeTruthValue, FlowTypeTruthOps,
+    VarInfo,
     TypeEnvironment
 };

@@ -4,20 +4,35 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { LiteralExpressionValue } from "./body";
+import { SourceInfo } from "./parser";
 
 class TypeSignature {
+    readonly sinfo: SourceInfo;
+
+    constructor(sinfo: SourceInfo) {
+        this.sinfo = sinfo;
+    }
+
     getDiagnosticName(): string {
         return "[Missing Implementation]";
     }
 }
 
 class ParseErrorTypeSignature extends TypeSignature {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo);
+    }
+
     getDiagnosticName(): string {
         return "[Parse Error]";
     }
 }
 
 class AutoTypeSignature extends TypeSignature {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo);
+    }
+
     getDiagnosticName(): string {
         return "[Auto Type]";
     }
@@ -26,8 +41,8 @@ class AutoTypeSignature extends TypeSignature {
 class TemplateTypeSignature extends TypeSignature {
     readonly name: string;
 
-    constructor(name: string) {
-        super();
+    constructor(sinfo: SourceInfo, name: string) {
+        super(sinfo);
         this.name = name;
     }
 
@@ -39,8 +54,8 @@ class TemplateTypeSignature extends TypeSignature {
 class LiteralTypeSignature extends TypeSignature {
     readonly lvalue: LiteralExpressionValue;
 
-    constructor(lvalue: LiteralExpressionValue) {
-        super();
+    constructor(sinfo: SourceInfo, lvalue: LiteralExpressionValue) {
+        super(sinfo);
         this.lvalue = lvalue;
     }
 
@@ -54,8 +69,8 @@ class NominalTypeSignature extends TypeSignature {
     readonly tnames: string[];
     readonly terms: TypeSignature[];
 
-    constructor(ns: string, tnames: string[], terms?: TypeSignature[]) {
-        super();
+    constructor(sinfo: SourceInfo, ns: string, tnames: string[], terms?: TypeSignature[]) {
+        super(sinfo);
         this.nameSpace = ns;
         this.tnames = tnames;
         this.terms = terms || [];
@@ -73,8 +88,8 @@ class NominalTypeSignature extends TypeSignature {
 class TupleTypeSignature extends TypeSignature {
     readonly entries: TypeSignature[];
 
-    constructor(entries: TypeSignature[]) {
-        super();
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo);
         this.entries = entries;
     }
 
@@ -86,8 +101,8 @@ class TupleTypeSignature extends TypeSignature {
 class RecordTypeSignature extends TypeSignature {;
     readonly entries: [string, TypeSignature][];
 
-    constructor(entries: [string, TypeSignature][]) {
-        super();
+    constructor(sinfo: SourceInfo, entries: [string, TypeSignature][]) {
+        super(sinfo);
         this.entries = entries;
     }
 
@@ -99,8 +114,8 @@ class RecordTypeSignature extends TypeSignature {;
 class EphemeralListTypeSignature extends TypeSignature {
     readonly entries: TypeSignature[];
 
-    constructor(entries: TypeSignature[]) {
-        super();
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo);
         this.entries = entries;
     }
 
@@ -130,8 +145,8 @@ class FunctionTypeSignature extends TypeSignature {
     readonly resultType: TypeSignature;
     readonly isPred: boolean;
 
-    constructor(isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature, isPred: boolean) {
-        super();
+    constructor(sinfo: SourceInfo, isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature, isPred: boolean) {
+        super(sinfo);
         this.recursive = recursive;
         this.isThisRef = isThisRef;
         this.params = params;
@@ -148,8 +163,8 @@ class ProjectTypeSignature extends TypeSignature {
     readonly fromtype: TypeSignature;
     readonly oftype: TypeSignature;
 
-    constructor(fromtype: TypeSignature, oftype: TypeSignature) {
-        super();
+    constructor(sinfo: SourceInfo, fromtype: TypeSignature, oftype: TypeSignature) {
+        super(sinfo);
         this.fromtype = fromtype;
         this.oftype = oftype;
     }
@@ -162,8 +177,8 @@ class ProjectTypeSignature extends TypeSignature {
 class AndTypeSignature extends TypeSignature {
     readonly types: TypeSignature[];
 
-    constructor(types: TypeSignature[]) {
-        super();
+    constructor(sinfo: SourceInfo, types: TypeSignature[]) {
+        super(sinfo);
         this.types = types;
     }
 
@@ -175,8 +190,8 @@ class AndTypeSignature extends TypeSignature {
 class UnionTypeSignature extends TypeSignature {
     readonly types: TypeSignature[];
 
-    constructor(types: TypeSignature[]) {
-        super();
+    constructor(sinfo: SourceInfo, types: TypeSignature[]) {
+        super(sinfo);
         this.types = types;
     }
 
