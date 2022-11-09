@@ -43,7 +43,7 @@ class FlowTypeTruthOps {
     }
 }
 
-class ExpType {
+class ValueType {
     readonly layout: ResolvedType;
     readonly flow: ResolvedType;
 
@@ -52,22 +52,22 @@ class ExpType {
         this.flow = flow;
     }
 
-    inferFlow(nflow: ResolvedType): ExpType {
-        return new ExpType(this.layout, nflow);
+    inferFlow(nflow: ResolvedType): ValueType {
+        return new ValueType(this.layout, nflow);
     }
 
-    static createUniform(ttype: ResolvedType): ExpType {
-        return new ExpType(ttype, ttype);
+    static createUniform(ttype: ResolvedType): ValueType {
+        return new ValueType(ttype, ttype);
     }
 }
 
 class ExpressionReturnResult {
-    readonly valtype: ExpType;
+    readonly valtype: ValueType;
     readonly truthval: FlowTypeTruthValue;
 
     readonly expvar: string | undefined;
 
-    constructor(valtype: ExpType, tval: FlowTypeTruthValue, expvar: string | undefined) {
+    constructor(valtype: ValueType, tval: FlowTypeTruthValue, expvar: string | undefined) {
         this.valtype = valtype;
         this.truthval = tval;
 

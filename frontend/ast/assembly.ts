@@ -3,8 +3,8 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import { NominalTypeSignature, TypeSignature, FunctionTypeSignature } from "./type";
-import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body";
+import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
+import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 import { SourceInfo } from "./parser";
 
 import { BSQRegex } from "../bsqregex";
@@ -28,18 +28,6 @@ function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
     }
     else {
         return check === "release";
-    }
-}
-
-class FunctionParameter {
-    readonly name: string;
-    readonly type: TypeSignature;
-    readonly litexp: LiteralExpressionValue | undefined;
-
-    constructor(name: string, type: TypeSignature, litexp: LiteralExpressionValue | undefined) {
-        this.name = name;
-        this.type = type;
-        this.litexp = litexp;
     }
 }
 
@@ -184,7 +172,7 @@ class InvokeDecl {
     }
 
     generateSig(): TypeSignature {
-        return new FunctionTypeSignature(this.isThisRef, this.recursive, this.params.map((p) => p.type), this.resultType, this.isPCodePred);
+        return new FunctionTypeSignature(this.isThisRef, this.recursive, this.params, this.resultType, this.isPCodePred);
     }
 
     static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
@@ -725,7 +713,7 @@ class Assembly {
 
 export {
     BuildApplicationMode, BuildLevel, isBuildLevelEnabled,
-    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, FunctionParameter, InvokeDecl,
+    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,
     PathValidator,

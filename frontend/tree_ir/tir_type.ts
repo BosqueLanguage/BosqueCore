@@ -19,7 +19,7 @@ abstract class ResolvedAtomType {
 class ResolvedLiteralAtomType extends ResolvedAtomType {
     readonly lexp: TIRLiteralValue;
 
-    constructor(reprexp: string, lexp: TIRLiteralValue) {
+    constructor(reprexp: string, lexp: TIRLiteralValue, ) {
         super(reprexp);
         this.lexp = lexp;
     }
@@ -35,6 +35,14 @@ abstract class ResolvedEntityAtomType extends ResolvedAtomType {
 
     getBinds(): Map<string, ResolvedType> {
         return new Map<string, ResolvedType>();
+    }
+
+    isNoneType(): boolean {
+        return this.typeID === "None";
+    }
+
+    isNothingType(): boolean {
+        return this.typeID === "Nothing";
     }
 }
 
@@ -228,21 +236,67 @@ class ResolvedPathGlobEntityAtomType extends ResolvedInternalEntityAtomType {
 }
 
 //class representing Ok, Err, Something types
-class ResolvedConstructableEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly binds: Map<string, ResolvedType>;
-
-    constructor(typeID: string, object: EntityTypeDecl, binds: Map<string, ResolvedType>) {
+abstract class ResolvedConstructableEntityAtomType extends ResolvedInternalEntityAtomType {
+    constructor(typeID: string, object: EntityTypeDecl) {
         super(typeID, object);
-        this.binds = binds;
+    }
+}
+
+class ResolvedOkEntityAtomType extends ResolvedConstructableEntityAtomType {
+    readonly typeT: ResolvedType;
+    readonly typeE: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+        this.typeE = typeE;
     }
 
-    static create(object: EntityTypeDecl, binds: Map<string, ResolvedType>): ResolvedConstructableEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + object.terms.map((arg) => (binds.get(arg.name) as ResolvedType).typeID).join(", ") + ">";
-        return new ResolvedConstructableEntityAtomType(name, object, binds);
+    static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedOkEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
+        return new ResolvedOkEntityAtomType(name, object, typeT, typeE);
     }
 
     getBinds(): Map<string, ResolvedType> {
-        return this.binds
+        return new Map<string, ResolvedType>().set("T", this.typeT).set("E", this.typeE);
+    }
+}
+
+class ResolvedErrEntityAtomType extends ResolvedConstructableEntityAtomType {
+    readonly typeT: ResolvedType;
+    readonly typeE: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+        this.typeE = typeE;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedErrEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
+        return new ResolvedErrEntityAtomType(name, object, typeT, typeE);
+    }
+
+    getBinds(): Map<string, ResolvedType> {
+        return new Map<string, ResolvedType>().set("T", this.typeT).set("E", this.typeE);
+    }
+}
+
+class ResolvedSomethingEntityAtomType extends ResolvedConstructableEntityAtomType {
+    readonly typeT: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
+        super(typeID, object);
+        this.typeT = typeT;
+    }
+
+    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedSomethingEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ">";
+        return new ResolvedSomethingEntityAtomType(name, object, typeT);
+    }
+
+    getBinds(): Map<string, ResolvedType> {
+        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
@@ -416,6 +470,54 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
         const name = sortedConcepts.map((cpt) => cpt.typeID).join("&");
 
         return new ResolvedConceptAtomType(name, sortedConcepts);
+    }
+
+    isAnyConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Any";
+    }
+
+    isSomeConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Some";
+    }
+
+    isTupleConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Tuple";
+    }
+
+    isRecordConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Record";
+    }
+
+    isIOptionConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "IOption";
+    }
+
+    isISomethingConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "ISomething";
+    }
+
+    isOptionConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].concept.attributes.includes("__option_type");
+    }
+
+    isIResultTConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "IResultT";
+    }
+
+    isIResultEConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "IResultE";
+    }
+
+    isResultConcept(): boolean {
+        return this.conceptTypes.length === 1 && this.conceptTypes[0].concept.attributes.includes("__result_type");
+    }
+
+    getTBind(): ResolvedType {
+        return this.conceptTypes[0].binds.get("T") as ResolvedType;
+    }
+
+    getEBind(): ResolvedType {
+        return this.conceptTypes[0].binds.get("E") as ResolvedType;
     }
 }
 
@@ -627,8 +729,7 @@ class ResolvedType {
             return false;
         }
 
-        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
-        return cct.object.attributes.includes("__something_type");
+        return (this.options[0] instanceof ResolvedSomethingEntityAtomType);
     }
 
     isOptionType(): boolean {
@@ -636,8 +737,7 @@ class ResolvedType {
             return false;
         }
 
-        const ccpt = this.options[0] as ResolvedConceptAtomType;
-        return ccpt.conceptTypes.length === 1 && ccpt.conceptTypes[0].concept.attributes.includes("__option_type");
+        return(this.options[0] as ResolvedConceptAtomType).isOptionConcept();
     }
 
     isOkType(): boolean {
@@ -645,8 +745,7 @@ class ResolvedType {
             return false;
         }
 
-        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
-        return cct.object.attributes.includes("__ok_type");
+        return this.options[0] instanceof ResolvedOkEntityAtomType;
     }
 
     isErrType(): boolean {
@@ -654,8 +753,7 @@ class ResolvedType {
             return false;
         }
 
-        const cct = this.options[0] as ResolvedConstructableEntityAtomType;
-        return cct.object.attributes.includes("__err_type");
+        return (this.options[0] instanceof ResolvedErrEntityAtomType);
     }
 
     isResultType(): boolean {
@@ -663,8 +761,7 @@ class ResolvedType {
             return false;
         }
 
-        const ccpt = this.options[0] as ResolvedConceptAtomType;
-        return ccpt.conceptTypes.length === 1 && ccpt.conceptTypes[0].concept.attributes.includes("__option_type");
+        return (this.options[0] as ResolvedConceptAtomType).isResultConcept();
     }
 
     isInvalidType(): boolean {
@@ -674,10 +771,10 @@ class ResolvedType {
 
 class ResolvedFunctionTypeParam {
     readonly name: string;
-    readonly type: ResolvedType;
+    readonly type: ResolvedType | ResolvedFunctionType;
     readonly litexp: TIRLiteralValue | undefined;
 
-    constructor(name: string, type: ResolvedType, litexp: TIRLiteralValue | undefined) {
+    constructor(name: string, type: ResolvedType | ResolvedFunctionType, litexp: TIRLiteralValue | undefined) {
         this.name = name;
         this.type = type;
         this.litexp = litexp;
@@ -686,26 +783,28 @@ class ResolvedFunctionTypeParam {
 
 class ResolvedFunctionType {
     readonly typeID: string;
+    readonly isThisRef: boolean;
     readonly recursive: "yes" | "no" | "cond";
     readonly params: ResolvedFunctionTypeParam[];
     readonly resultType: ResolvedType;
     readonly isPred: boolean;
 
-    constructor(typeID: string, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean) {
+    constructor(typeID: string, isThisRef: boolean, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean) {
         this.typeID = typeID;
+        this.isThisRef = isThisRef;
         this.recursive = recursive;
         this.params = params;
         this.resultType = resultType;
         this.isPred = isPred;
     }
 
-    static create(recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
+    static create(isThisRef: boolean, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
         const cvalues = params.map((param) => param.name + param.type.typeID + (param.litexp !== undefined ? ("==" + param.litexp.lidstr) : ""));
         let cvalue = cvalues.join(", ");
 
         const lstr = isPred ? "pred" : "fn";
-        const name = lstr + "(" + cvalue + ") -> " + resultType.typeID;
-        return new ResolvedFunctionType(name, recursive, params, resultType, isPred);
+        const name = (isThisRef ? "ref" : "") + lstr + "(" + cvalue + ") -> " + resultType.typeID;
+        return new ResolvedFunctionType(name, isThisRef, recursive, params, resultType, isPred);
     }
 }
 
@@ -752,7 +851,8 @@ export {
     ResolvedPrimitiveInternalEntityAtomType,
     ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
     ResolvedPathValidatorEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType,
-    ResolvedConstructableEntityAtomType, ResolvedHavocEntityAtomType,
+    ResolvedConstructableEntityAtomType, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType,
+    ResolvedHavocEntityAtomType,
     ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType, 

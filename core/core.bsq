@@ -567,7 +567,7 @@ __internal __constructable entity Something<T> provides Option<T>, APIType when 
 __universal concept IOptionT provides Some {
 }
 
-concept Option<T> provides ISomething, APIType when T grounded APIType, Testable when T grounded Testable {
+__option_type concept Option<T> provides ISomething, APIType when T grounded APIType, Testable when T grounded Testable {
     method asSomething(): Something<T> {
         return this.as<Something<T>>();
     }

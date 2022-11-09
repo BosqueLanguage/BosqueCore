@@ -111,14 +111,26 @@ class EphemeralListTypeSignature extends TypeSignature {
 
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
+class FunctionParameter {
+    readonly name: string;
+    readonly type: TypeSignature;
+    readonly litexp: LiteralExpressionValue | undefined;
+
+    constructor(name: string, type: TypeSignature, litexp: LiteralExpressionValue | undefined) {
+        this.name = name;
+        this.type = type;
+        this.litexp = litexp;
+    }
+}
+
 class FunctionTypeSignature extends TypeSignature {
     readonly recursive: RecursiveAnnotation;
     readonly isThisRef: boolean;
-    readonly params: TypeSignature[];
+    readonly params: FunctionParameter[];
     readonly resultType: TypeSignature;
     readonly isPred: boolean;
 
-    constructor(isThisRef: boolean, recursive: RecursiveAnnotation, params: TypeSignature[], resultType: TypeSignature, isPred: boolean) {
+    constructor(isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature, isPred: boolean) {
         super();
         this.recursive = recursive;
         this.isThisRef = isThisRef;
@@ -128,7 +140,7 @@ class FunctionTypeSignature extends TypeSignature {
     }
 
     getDiagnosticName(): string {
-        return (this.isPred ? "pred" : "fn") + (this.isThisRef ? "ref(" : " (") + this.params.map((ptype) => ptype.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
+        return (this.isPred ? "pred" : "fn") + (this.isThisRef ? "ref(" : " (") + this.params.map((param) => param.type.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
     }
 }
 
@@ -177,5 +189,5 @@ export {
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, LiteralTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EphemeralListTypeSignature,
-    RecursiveAnnotation, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, FunctionParameter, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };

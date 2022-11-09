@@ -5,12 +5,13 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOPTypeDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOPTypeDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
 import { SourceInfo } from "../ast/parser";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedLiteralAtomType, ResolvedPathEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope } from "../tree_ir/tir_type";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam } from "../tree_ir/tir_type";
 import { AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
 import { TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
-import { LiteralTypeSignature, NominalTypeSignature, TemplateTypeSignature, TypeSignature } from "../ast/type";
+import { AndTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
+import { ExpressionReturnResult, FlowTypeTruthOps, ValueType, VarInfo } from "./type_environment";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -94,7 +95,7 @@ class TypeChecker {
         return `${this.m_sortedSrcFiles[sfpos].shortname}#k${sfpos}${etag !== undefined ? ("_" + etag) : ""}::${sinfo.line}@${sinfo.pos}`;
     }
 
-    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindScope, infertype: ResolvedType | undefined): Expression | undefined {
+    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindScope): Expression | undefined {
         if(exp.isCompileTimeInlineValue()) {
             if (exp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
@@ -131,7 +132,7 @@ class TypeChecker {
             }
 
             const cdecl = nsdecl.consts.get(exp.name) as NamespaceConstDecl;
-            return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds, this.normalizeTypeOnly(cdecl.declaredType, TemplateBindScope.createEmptyBindScope()));
+            return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds);
         }
         else if (exp instanceof AccessStaticFieldExpression) {
             const oftype = this.normalizeTypeOnly(exp.stype, binds);
@@ -145,7 +146,7 @@ class TypeChecker {
                 return exp;
             }
             else {
-                return cdecl.decl.value !== undefined ? this.compileTimeReduceConstantExpression(cdecl.decl.value.exp, cdecl.binds, this.normalizeTypeOnly(cdecl.decl.declaredType, cdecl.binds)) : undefined;
+                return cdecl.decl.value !== undefined ? this.compileTimeReduceConstantExpression(cdecl.decl.value.exp, cdecl.binds) : undefined;
             }
         }
         else {
@@ -153,8 +154,8 @@ class TypeChecker {
         }
     }
 
-    reduceLiteralValueToCanonicalForm(exp: Expression, binds: TemplateBindScope, infertype: ResolvedType | undefined): TIRLiteralValue | undefined {
-        const cexp = this.compileTimeReduceConstantExpression(exp, binds, infertype);
+    reduceLiteralValueToCanonicalForm(exp: Expression, binds: TemplateBindScope): TIRLiteralValue | undefined {
+        const cexp = this.compileTimeReduceConstantExpression(exp, binds);
         if(cexp === undefined) {
             return undefined;
         }
@@ -239,7 +240,7 @@ class TypeChecker {
             else {
                 this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
 
-                const iexp = new TIRInvalidExpression(exp.sinfo, infertype || this.getSpecialNoneType());
+                const iexp = new TIRInvalidExpression(exp.sinfo, this.getSpecialNoneType());
                 return new TIRLiteralValue(iexp, iexp.etype, iexp.expstr);
             }
         }
@@ -479,6 +480,51 @@ class TypeChecker {
         }
     }
 
+    private computeBaseTypeForTypeDecl(sinfo: SourceInfo, oftype: ResolvedType, expandstack: string[]): ResolvedPrimitiveInternalEntityAtomType | undefined{
+        let oftypeatom = oftype.tryGetUniqueEntityTypeInfo();
+        if(oftypeatom === undefined) {
+            return undefined;
+        }
+
+        if (oftypeatom instanceof ResolvedPrimitiveInternalEntityAtomType) {
+            return oftypeatom;
+        }
+        else if (oftypeatom instanceof ResolvedStringOfEntityAtomType) {
+            return this.getSpecialStringType().tryGetUniqueEntityTypeInfo() as ResolvedPrimitiveInternalEntityAtomType;
+        }
+        else if (oftypeatom instanceof ResolvedASCIIStringOfEntityAtomType) {
+            return this.getSpecialASCIIStringType().tryGetUniqueEntityTypeInfo() as ResolvedPrimitiveInternalEntityAtomType;
+        }
+        else if (oftypeatom instanceof ResolvedPathEntityAtomType) {
+            return this.getSpecialStringType().tryGetUniqueEntityTypeInfo() as ResolvedPrimitiveInternalEntityAtomType;
+        }
+        else if (oftypeatom instanceof ResolvedPathFragmentEntityAtomType) {
+            return this.getSpecialStringType().tryGetUniqueEntityTypeInfo() as ResolvedPrimitiveInternalEntityAtomType;
+        }
+        else if (oftypeatom instanceof ResolvedPathGlobEntityAtomType) {
+            return this.getSpecialStringType().tryGetUniqueEntityTypeInfo() as ResolvedPrimitiveInternalEntityAtomType;
+        }
+        else if (oftypeatom instanceof ResolvedTypedeclEntityAtomType) {
+            //recursive expand
+            const uutype = (oftypeatom.object.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
+            const uubinds = oftype.tryGetUniqueEntityBindsInfo();
+            if (uubinds === undefined) {
+                return undefined;
+            }
+
+            const roftype = this.normalizeTypeOnly(uutype, TemplateBindScope.createBaseBindScope(uubinds));
+            if(expandstack.includes(roftype.typeID)) {
+                return undefined;
+            }
+
+            expandstack.push(roftype.typeID);
+            const bpatom = this.computeBaseTypeForTypeDecl(sinfo, roftype, expandstack);
+            expandstack.pop();
+
+            return bpatom;
+        }
+    }
+
     private normalizeType_Template(sinfo: SourceInfo, t: TemplateTypeSignature, binds: TemplateBindScope): ResolvedType {
         const rbind = binds.tryTemplateResolveType(t.name);
         if(rbind !== undefined) {
@@ -491,10 +537,10 @@ class TypeChecker {
     }
 
     private normalizeType_Literal(sinfo: SourceInfo, t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
-        const chkexp = this.typeCheck(t.lvalue.exp);
-        if(chkexp instanceof TIRLiteralValue) {
-            const llexp = new TIRLiteralValue(chkexp, chkexp.type, chkexp, xxx);
-            xxxx;
+        const chkexp = this.reduceLiteralValueToCanonicalForm(t.lvalue.exp, binds);
+        if(chkexp !== undefined) {
+            const llexp = new ResolvedLiteralAtomType(chkexp.lidstr, chkexp);
+            return ResolvedType.createSingle(llexp);
         }
         else {
             this.raiseError(sinfo, `Could not resolve literal type`);
@@ -502,12 +548,12 @@ class TypeChecker {
         }
     }
 
-    private normalizeType_Nominal(sinfo: SourceInfo, t: NominalTypeSignature, binds: TemplateBindScope): ResolvedType | ResolvedFunctionType {
+    private normalizeType_Nominal(sinfo: SourceInfo, t: NominalTypeSignature, binds: TemplateBindScope, resolvestack: string[]): ResolvedType | ResolvedFunctionType {
         let tresolved: TypeSignature = t;
         let isresolution: boolean = false;
         if(t.terms.length === 0) {
             //could be a typedef so go try to resolve that
-            [tresolved, isresolution] = this.resolveTypeDef(t);
+            [tresolved, isresolution] = this.resolveTypeDef(sinfo, t, resolvestack);
         }
 
         let rtype: ResolvedType | ResolvedFunctionType = ResolvedType.createInvalid(); 
@@ -539,184 +585,125 @@ class TypeChecker {
                 }
                 else if (fobject.attributes.includes("__typedprimitive")) {
                     const rrtype = (fobject.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
-                    let oftype = this.normalizeTypeOnly(rrtype, binds);
-
-                    let basetype = oftype;
-                    let basetypedecl = basetype.tryGetUniqueEntityTypeInfo();
-                    if(basetypedecl === undefined) {
-                        this.raiseError(sinfo, `Unsupported base type "${oftype.typeID}" for typedef`);
+                    const oftype = this.normalizeTypeOnly(rrtype, binds);
+                    if(!(oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType)) {
+                        this.raiseError(sinfo, `Type ${oftype.typeID} is not an entity type`);
                         return ResolvedType.createInvalid();
                     }
-
-                    while(basetypedecl.object.attributes.includes("__typebase")) {
-                        const uutype = (basetypedecl.object.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
-                        const uubinds = basetype.tryGetUniqueEntityBindsInfo();
-                        if(uubinds === undefined) {
-                            this.raiseError(sinfo, `Unsupported base type "${basetypedecl.typeID}" for typedef`);
-                            return ResolvedType.createInvalid();
-                        }
-
-                        basetype = this.normalizeTypeOnly(uutype, TemplateBindScope.createBaseBindScope(uubinds));
-                        basetypedecl = basetype.tryGetUniqueEntityTypeInfo();
-                        if(basetypedecl === undefined) {
-                            this.raiseError(sinfo, `Unsupported base type "${oftype.typeID}" for typedef`);
-                            return ResolvedType.createInvalid();
-                        }
-                    }
-
-                    if() {
-                        xxxx;
+                    
+                    const basetype = this.computeBaseTypeForTypeDecl(sinfo, oftype, []);
+                    if(basetype === undefined) {
+                        this.raiseError(sinfo, `Type ${oftype.typeID} is not a valid type to use as a typedecl`);
+                        return ResolvedType.createInvalid();
                     }
 
                     rtypeatom = ResolvedTypedeclEntityAtomType.create(fobject, oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType, basetype);
                 }
-                else if() {
-                    ResolvedStringOfEntityAtomType
+                else if(fobject.attributes.includes("__stringof_type")) {
+                    const validator = bbinds.get("T");
+                    if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
+                        this.raiseError(sinfo, "Missing Validator for StringOf");
+                        return ResolvedType.createInvalid();
+                    }
+
+                    rtypeatom = ResolvedStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
                 }
-                else if() {
-                    ResolvedASCIIStringOfEntityAtomType
+                else if(fobject.attributes.includes("__asciistringof_type")) {
+                    const validator = bbinds.get("T");
+                    if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
+                        this.raiseError(sinfo, "Missing Validator for ASCIIStringOf");
+                        return ResolvedType.createInvalid();
+                    }
+
+                    rtypeatom = ResolvedASCIIStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
                 }
-                else if() {
+                else if (fobject.attributes.includes("__path_type")) {
+                    const pvalidator = bbinds.get("T");
+                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                        this.raiseError(sinfo, "Missing Validator for Path");
+                        return ResolvedType.createInvalid();
+                    }
+
+                    rtypeatom = ResolvedPathEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+                }
+                else if (fobject.attributes.includes("__pathfragment_type")) {
+                    const pvalidator = bbinds.get("T");
+                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                        this.raiseError(sinfo, "Missing Validator for PathFragment");
+                        return ResolvedType.createInvalid();
+                    }
+
+                    rtypeatom = ResolvedPathFragmentEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+                }
+                else if (fobject.attributes.includes("__pathglob_type")) {
+                    const pvalidator = bbinds.get("T");
+                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                        this.raiseError(sinfo, "Missing Validator for PathFragment");
+                        return ResolvedType.createInvalid();
+                    }
+
+                    rtypeatom = ResolvedPathGlobEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+                }
+                else if (fobject.attributes.includes("__ok_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+
+                    rtypeatom = ResolvedOkEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__err_type")) {
+                    assert(bbinds.has("E"), "Missing template binding");
+                    
+                    rtypeatom = ResolvedErrEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__something_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+                    
+                    rtypeatom = ResolvedSomethingEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__havoc_type")) {
+                    rtypeatom = ResolvedHavocEntityAtomType.create(fobject);
+                }
+                else if (fobject.attributes.includes("__list_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+
+                    rtypeatom = ResolvedListEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__stack_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+
+                    rtypeatom = ResolvedStackEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__queue_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+
+                    rtypeatom = ResolvedQueueEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__set_type")) {
+                    assert(bbinds.has("T"), "Missing template binding");
+
+                    rtypeatom = ResolvedSetEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+                }
+                else if (fobject.attributes.includes("__map_type")) {
+                    assert(bbinds.has("K"), "Missing template binding");
+                    assert(bbinds.has("V"), "Missing template binding");
+
+                    rtypeatom = ResolvedMapEntityAtomType.create(fobject, bbinds.get("K") as ResolvedType, bbinds.get("V") as ResolvedType);
+                }
+                else if(fobject.attributes.includes("__typebase")) {
                     //class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
-                ResolvedPrimitiveInternalEntityAtomType
+                    rtypeatom = ResolvedPrimitiveInternalEntityAtomType.create(fobject);
                 }
                 else {
-                     ResolvedObjectEntityAtomType 
+                    rtypeatom = ResolvedObjectEntityAtomType.create(fobject, bbinds);
                 }
 
                 rtype = rtypeatom !== undefined ? ResolvedType.createSingle(rtypeatom) : ResolvedType.createInvalid();
-        
-
-ResolvedPathEntityAtomType
-
-//class representing a PathFragment<T> type
-class ResolvedPathFragmentEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedValidatorEntityAtomType;
-
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
-        super(typeID, object);
-        this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathFragmentEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathFragmentEntityAtomType(name, object, validatortype);
-    }
-}
-
-class ResolvedPathGlobEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedPathValidatorEntityAtomType;
-
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
-        super(typeID, object);
-        this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedPathGlobEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathGlobEntityAtomType(name, object, validatortype);
-    }
-}
-
-//class representing Ok, Err, Something types
-class ResolvedConstructableEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly oftype: ResolvedType;
-
-    constructor(typeID: string, object: EntityTypeDecl, oftype: ResolvedType) {
-        super(typeID, object);
-        this.oftype = oftype;
-    }
-
-    static create(object: EntityTypeDecl, oftype: ResolvedType): ResolvedConstructableEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + oftype.typeID + ">";
-        return new ResolvedConstructableEntityAtomType(name, object, oftype);
-    }
-}
-
-//class representing special havoc type
-class ResolvedHavocEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedHavocEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedHavocEntityAtomType(name, object);
-    }
-}
-
-//abstract class for all the builtin collection types
-abstract class ResolvedPrimitiveCollectionEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-}
-
-//class representing List<T>
-class ResolvedListEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
-
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
-        this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedListEntityAtomType {
-        let name = "List<" + typeT.typeID + ">";
-        return new ResolvedListEntityAtomType(name, object, typeT);
-    }
-}
-
-//class representing Stack<T>
-class ResolvedStackEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
-
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
-        this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedStackEntityAtomType {
-        let name = "Stack<" + typeT.typeID + ">";
-        return new ResolvedStackEntityAtomType(name, object, typeT);
-    }
-}
-
-//class representing Queue<T>
-class ResolvedQueueEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
-
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
-        this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedQueueEntityAtomType {
-        let name = "Queue<" + typeT.typeID + ">";
-        return new ResolvedQueueEntityAtomType(name, object, typeT);
-    }
-}
-
-//class representing Set<T>
-class ResolvedSetEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
-
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
-        this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedSetEntityAtomType {
-        let name = "Set<" + typeT.typeID + ">";
-        return new ResolvedSetEntityAtomType(name, object, typeT);
-    }
-}
-
-//class representing Map<K, V>
-class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
             }
 
-            xxxx; //task here too 
+            const ftask = this.m_assembly.tryGetTaskTypeForFullyResolvedName(ttname);
+            if (ftask !== undefined) {
+                const bbinds = this.resolveTemplateBinds(sinfo, ftask.terms, t.terms, binds);
+                rtype = ResolvedType.createSingle(ResolvedTaskAtomType.create(ftask, bbinds));
+            }
         }
 
         if(isresolution) {
@@ -733,104 +720,54 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
     }
 
 
-    private normalizeType_Tuple(t: TupleTypeSignature, TemplateBindScope): ResolvedType {
+    private normalizeType_Tuple(t: TupleTypeSignature, binds: TemplateBindScope): ResolvedType {
         const entries = t.entries.map((entry) => this.normalizeTypeOnly(entry, binds));
-        if (entries.some((e) => e.isEmptyType())) {
-            return ResolvedType.createEmpty();
-        }
-
         return ResolvedType.createSingle(ResolvedTupleAtomType.create(entries));
     }
 
-    private normalizeType_Record(t: RecordTypeSignature, TemplateBindScope): ResolvedType {
+    private normalizeType_Record(t: RecordTypeSignature, binds: TemplateBindScope): ResolvedType {
         let seenNames = new Set<string>();
         let entries: {pname: string, ptype: ResolvedType}[] = [];
         for (let i = 0; i < t.entries.length; ++i) {
             if (seenNames.has(t.entries[i][0])) {
-                return ResolvedType.createEmpty();
+                //TODO: better error reporting
+                return ResolvedType.createInvalid();
             }
 
             entries.push({pname: t.entries[i][0], ptype: this.normalizeTypeOnly(t.entries[i][1], binds)});
-        }
-        if (entries.some((e) => e.ptype.isEmptyType())) {
-            return ResolvedType.createEmpty();
         }
 
         return ResolvedType.createSingle(ResolvedRecordAtomType.create(entries));
     }
 
-    private normalizeType_EphemeralList(t: EphemeralListTypeSignature, TemplateBindScope): ResolvedType {
+    private normalizeType_EphemeralList(t: EphemeralListTypeSignature, binds: TemplateBindScope): ResolvedType {
         const entries = t.entries.map((entry) => this.normalizeTypeOnly(entry, binds));
-        if (entries.some((e) => e.isEmptyType())) {
-            return ResolvedType.createEmpty();
-        }
-
         return ResolvedType.createSingle(ResolvedEphemeralListType.create(entries));
     }
 
-    private normalizeType_Projection(t: ProjectTypeSignature, TemplateBindScope): ResolvedType {
+    private normalizeType_Projection(t: ProjectTypeSignature, binds: TemplateBindScope): ResolvedType {
         const fromt = this.normalizeTypeOnly(t.fromtype, binds);
         const oft = this.normalizeTypeOnly(t.oftype, binds);
 
-        if(fromt.isEmptyType() || oft.isEmptyType()) {
-            return ResolvedType.createEmpty();
+        if(fromt.isInvalidType() || oft.isInvalidType()) {
+            return ResolvedType.createInvalid();
         }
 
         return this.getDerivedTypeProjection(fromt, oft);
     }
 
-    private normalizeType_Plus(t: PlusTypeSignature, TemplateBindScope): ResolvedType {
-        const ccs = t.types.map((tt) => this.normalizeTypeOnly(tt, binds));
-        assert(ccs.length !== 0);
-
-        if(ccs.some((tt) => tt.isEmptyType)) {
-            return ResolvedType.createEmpty();
+    private normalizeType_And(t: AndTypeSignature, binds: TemplateBindScope): ResolvedType {
+        const andtypes = t.types.map((opt) => this.normalizeTypeOnly(opt, binds));
+        if (andtypes.some((opt) => opt.isInvalidType())) {
+            return ResolvedType.createInvalid();
         }
 
-        if(ccs.every((tt) => tt.isUniqueTupleTargetType())) {
-            let tte: ResolvedType[][] = [];
-            for(let i = 0; i < ccs.length; ++i) {
-                const rte = ccs[i].options[0] as ResolvedTupleAtomType;
-                tte.push(rte.types);
-            }
-
-            const fte = ([] as ResolvedType[]).concat(...tte);
-            return ResolvedType.createSingle(ResolvedTupleAtomType.create(fte));
-        }
-        else if(ccs.every((tt) => tt.isRecordTargetType())) {
-            let tte: {pname: string, ptype: ResolvedType}[][] = [];
-            let names = new Set<string>();
-            for(let i = 0; i < ccs.length; ++i) {
-                const rre = ccs[i].options[0] as ResolvedRecordAtomType;
-
-                const allnamegroups = rre.entries.map((entry) => entry.pname);
-                const allnames = [...new Set<string>(([] as string[]).concat(...allnamegroups))].sort();
-
-                if (allnames.some((pname) => names.has(pname))) {
-                    return ResolvedType.createEmpty();
-                }
-
-                tte.push(rre.entries);
-            }
-
-            const fte = ([] as {pname: string, ptype: ResolvedType}[]).concat(...tte);
-            return ResolvedType.createSingle(ResolvedRecordAtomType.create(fte));
-        }
-        else {
-            return ResolvedType.createEmpty();
-        }
-    }
-
-    private normalizeType_And(t: AndTypeSignature, TemplateBindScope): ResolvedType {
-        if (t.types.some((opt) => this.normalizeTypeOnly(opt, binds).isEmptyType())) {
-            return ResolvedType.createEmpty();
-        }
-
-        const ntypes: ResolvedAtomType[][] = t.types.map((opt) => this.normalizeTypeOnly(opt, binds).options);
+        const ntypes: ResolvedAtomType[][] = andtypes.map((att) => att.options);
         const flattened: ResolvedAtomType[] = ([] as ResolvedAtomType[]).concat(...ntypes);
 
         if (flattened.some((ttype) => !(ttype instanceof ResolvedConceptAtomType))) {
-            return ResolvedType.createEmpty();
+            //TODO: better error reporting
+            return ResolvedType.createInvalid();
         }
 
         const ctypes = flattened.map((arg) => (arg as ResolvedConceptAtomType).conceptTypes);
@@ -857,20 +794,17 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
             }
         }
 
-        if (simplifiedTypes.length === 0) {
-            return ResolvedType.createEmpty();
-        }
-
         return ResolvedType.createSingle(ResolvedConceptAtomType.create(simplifiedTypes));
     }
 
-    private normalizeType_Union(t: UnionTypeSignature, TemplateBindScope): ResolvedType {
-        if (t.types.some((opt) => this.normalizeTypeOnly(opt, binds).isEmptyType())) {
-            return ResolvedType.createEmpty();
+    private normalizeType_Union(t: UnionTypeSignature, binds: TemplateBindScope): ResolvedType {
+        const uniontypes = t.types.map((opt) => this.normalizeTypeOnly(opt, binds));
+
+        if (uniontypes.some((opt) => opt.isInvalidType())) {
+            return ResolvedType.createInvalid();
         }
 
-        const utypes = t.types.map((opt) => this.normalizeTypeOnly(opt, binds));
-        return this.normalizeUnionList(utypes);
+        return this.normalizeUnionList(uniontypes);
     }
 
     private normalizeEphemerals(ephemerals: ResolvedEphemeralListType[]): ResolvedEphemeralListType | undefined {
@@ -905,30 +839,30 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         }
 
         //check for Something<T> | Nothing and add Option<T> if needed
-        if (flattened.some((atom) => atom.typeID === "Nothing") && flattened.some((atom) => atom.typeID.startsWith("Something<"))) {
-            const copt = this.m_conceptMap.get("Option") as ConceptTypeDecl;
+        if (flattened.some((atom) => atom.typeID === "Nothing") && flattened.some((atom) => atom instanceof ResolvedSomethingEntityAtomType)) {
+            const copt = this.m_assembly.tryGetConceptTypeForFullyResolvedName("Option") as ConceptTypeDecl;
 
             const nopts = flattened
-                .filter((atom) => atom.typeID.startsWith("Something<"))
-                .map((atom) => ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(copt, (atom as ResolvedEntityAtomType).binds)]));
+                .filter((atom) => atom instanceof ResolvedSomethingEntityAtomType)
+                .map((atom) => ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(copt, (atom as ResolvedEntityAtomType).getBinds())]));
 
             flattened.push(...nopts);
         }
 
         //check for Ok<T, E> | Err<T, E> and add Result<T> if needed
-        if (flattened.some((atom) => atom.typeID.startsWith("Result::Ok<")) && flattened.some((atom) => atom.typeID.startsWith("Result::Err<"))) {
-            const ropt = this.m_conceptMap.get("Result") as ConceptTypeDecl;
+        if (flattened.some((atom) => atom instanceof ResolvedOkEntityAtomType) && flattened.some((atom) => atom instanceof ResolvedErrEntityAtomType)) {
+            const ropt = this.m_assembly.tryGetConceptTypeForFullyResolvedName("Result") as ConceptTypeDecl;
 
-            const okopts =  flattened.filter((atom) => atom.typeID.startsWith("Result::Ok<"));
-            const erropts =  flattened.filter((atom) => atom.typeID.startsWith("Result::Err<"));
+            const okopts =  flattened.filter((atom) => atom instanceof ResolvedOkEntityAtomType);
+            const erropts =  flattened.filter((atom) => atom instanceof ResolvedErrEntityAtomType);
 
             const bothopts = okopts.filter((okatom) => erropts.some((erratom) => {
-                const okbinds = (okatom as ResolvedEntityAtomType).binds;
-                const errbinds = (erratom as ResolvedEntityAtomType).binds;
+                const okbinds = (okatom as ResolvedEntityAtomType).getBinds();
+                const errbinds = (erratom as ResolvedEntityAtomType).getBinds();
                 return (okbinds.get("T") as ResolvedType).typeID === (errbinds.get("T") as ResolvedType).typeID && (okbinds.get("E") as ResolvedType).typeID === (errbinds.get("E") as ResolvedType).typeID;
             }));
 
-            const nopts = bothopts.map((atom) => ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(ropt, (atom as ResolvedEntityAtomType).binds)]));
+            const nopts = bothopts.map((atom) => ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(ropt, (atom as ResolvedEntityAtomType).getBinds())]));
 
             flattened.push(...nopts);
         }
@@ -939,7 +873,7 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         if (teph.length !== 0) {
             const eet = this.normalizeEphemerals(teph);
             if (eet === undefined || merged.length !== 0) {
-                return ResolvedType.createEmpty();
+                return ResolvedType.createInvalid();
             }
             else {
                 merged.push(eet);
@@ -970,26 +904,22 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         return ResolvedType.create(simplifiedTypes);
     }
 
-    private normalizeType_Function(t: FunctionTypeSignature, TemplateBindScope): ResolvedFunctionType | undefined {
+    private normalizeType_Function(t: FunctionTypeSignature, binds: TemplateBindScope): ResolvedFunctionType | undefined {
         const params = t.params.map((param) => {
             let ttl = this.normalizeTypeGeneral(param.type, binds);
-            let llpv: string | undefined = undefined;
+            let llpv: TIRLiteralValue | undefined = undefined;
             if(param.litexp !== undefined) {
-                const lei = this.reduceLiteralValueToCanonicalForm(param.litexp.exp, binds, ttl as ResolvedType);
-                if(lei === undefined) {
-                    ttl = ResolvedType.createEmpty();
-                }
-                else {
-                    llpv = lei[2];
+                const llpv = this.reduceLiteralValueToCanonicalForm(param.litexp.exp, binds);
+                if(llpv === undefined) {
+                    ttl = ResolvedType.createInvalid();
                 }
             }
 
-            return new ResolvedFunctionTypeParam(param.name, ttl, param.isOptional, param.refKind, llpv);
+            return new ResolvedFunctionTypeParam(param.name, ttl, llpv);
         });
-        const optRestParamType = (t.optRestParamType !== undefined) ? this.normalizeTypeOnly(t.optRestParamType, binds) : undefined;
         const rtype = this.normalizeTypeOnly(t.resultType, binds);
 
-        if (params.some((p) => p.type instanceof ResolvedType && p.type.isEmptyType()) || params.some((p) => p.isOptional && (p.refKind !== undefined)) || (optRestParamType !== undefined && optRestParamType.isEmptyType()) || rtype.isEmptyType()) {
+        if (params.some((p) => p.type instanceof ResolvedType && p.type.isInvalidType()) || rtype.isInvalidType()) {
             return undefined;
         }
 
@@ -997,19 +927,19 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
             return undefined; //pred must have Bool result type
         }
 
-        return ResolvedFunctionType.create(t.recursive, params, t.optRestParamName, optRestParamType, rtype, t.isPred);
+        return ResolvedFunctionType.create(t.isThisRef, t.recursive, params, rtype, t.isPred);
     }
 
     private atomSubtypeOf_EntityConcept(t1: ResolvedEntityAtomType, t2: ResolvedConceptAtomType): boolean {
         const t2type = ResolvedType.createSingle(t2);
 
-        if(t1.object.attributes.includes("__nothing_type") && this.subtypeOf(t2type, this.getSpecialIOptionConceptType())) {
+        if(t1.isNothingType() && this.subtypeOf(t2type, this.getSpecialIOptionConceptType())) {
             return true;
         }
         else {
-            return this.resolveProvides(t1.object, t1.binds).some((provide) => {
-                const tt = this.normalizeTypeOnly(provide, t1.binds);
-                return !tt.isEmptyType() && this.subtypeOf(tt, t2type);
+            return this.resolveProvides(t1.object, TemplateBindScope.createBaseBindScope(t1.getBinds())).some((provide) => {
+                const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(t1.getBinds()));
+                return !tt.isInvalidType() && this.subtypeOf(tt, t2type);
             });
         }
     }
@@ -1034,111 +964,108 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
                 }
 
                 const t2type = ResolvedType.createSingle(ResolvedConceptAtomType.create([c2t]));
-                return this.resolveProvides(c1t.concept, c1t.binds).some((provide) => {
-                    const tt = this.normalizeTypeOnly(provide, c1t.binds);
-                    return !tt.isEmptyType() && this.subtypeOf(tt, t2type);
+                return this.resolveProvides(c1t.concept, TemplateBindScope.createBaseBindScope(c1t.binds)).some((provide) => {
+                    const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(c1t.binds));
+                    return !tt.isInvalidType() && this.subtypeOf(tt, t2type);
                 });
             });
         });
     }
 
-    private internSpecialConceptType(names: [string], terms?: TypeSignature[], binds?: Map<string, ResolvedType>): ResolvedType {
-        if (this.m_specialTypeMap.has(names.join("::"))) {
-            return this.m_specialTypeMap.get(names.join("::")) as ResolvedType;
+    private internSpecialConceptType(name: string, binds?: Map<string, ResolvedType>): ResolvedType {
+        if (this.m_specialTypeMap.has(name)) {
+            return this.m_specialTypeMap.get(name) as ResolvedType;
         }
 
-        const rsig = new NominalTypeSignature("Core", names, terms || [] as TypeSignature[]);
-        const tconcept = this.createConceptTypeAtom(this.tryGetConceptTypeForFullyResolvedName(names.join("::")) as ConceptTypeDecl, rsig, binds || new Map<string, ResolvedType>());
+        const tconcept = ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(this.m_assembly.tryGetConceptTypeForFullyResolvedName(name) as ConceptTypeDecl, binds || new Map<string, ResolvedType>())]);
         const rtype = ResolvedType.createSingle(tconcept as ResolvedAtomType);
-        this.m_specialTypeMap.set(names.join("::"), rtype);
+        this.m_specialTypeMap.set(name, rtype);
 
         return rtype;
     }
 
-    private internSpecialObjectType(names: string[], terms?: TypeSignature[], binds?: Map<string, ResolvedType>): ResolvedType {
-        if (this.m_specialTypeMap.has(names.join("::"))) {
-            return this.m_specialTypeMap.get(names.join("::")) as ResolvedType;
+    private internSpecialPrimitiveObjectType(name: string): ResolvedType {
+        if (this.m_specialTypeMap.has(name)) {
+            return this.m_specialTypeMap.get(name) as ResolvedType;
         }
 
-        const rsig = new NominalTypeSignature("Core", names, terms || [] as TypeSignature[]);
-        const tobject = this.createObjectTypeAtom(this.tryGetObjectTypeForFullyResolvedName(names.join("::")) as EntityTypeDecl, rsig, binds || new Map<string, ResolvedType>());
+        const tobject = ResolvedPrimitiveInternalEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName(name) as EntityTypeDecl);
         const rtype = ResolvedType.createSingle(tobject as ResolvedAtomType);
-        this.m_specialTypeMap.set(names.join("::"), rtype);
+        this.m_specialTypeMap.set(name, rtype);
 
         return rtype;
     }
 
-    getSpecialNoneType(): ResolvedType { return this.internSpecialObjectType(["None"]); }
-    getSpecialBoolType(): ResolvedType { return this.internSpecialObjectType(["Bool"]); }
-    getSpecialIntType(): ResolvedType { return this.internSpecialObjectType(["Int"]); }
-    getSpecialNatType(): ResolvedType { return this.internSpecialObjectType(["Nat"]); }
-    getSpecialBigIntType(): ResolvedType { return this.internSpecialObjectType(["BigInt"]); }
-    getSpecialBigNatType(): ResolvedType { return this.internSpecialObjectType(["BigNat"]); }
-    getSpecialRationalType(): ResolvedType { return this.internSpecialObjectType(["Rational"]); }
-    getSpecialFloatType(): ResolvedType { return this.internSpecialObjectType(["Float"]); }
-    getSpecialDecimalType(): ResolvedType { return this.internSpecialObjectType(["Decimal"]); }
-    getSpecialStringType(): ResolvedType { return this.internSpecialObjectType(["String"]); }
-    getSpecialASCIIStringType(): ResolvedType { xxxx;}
-    getSpecialBufferFormatType(): ResolvedType { return this.internSpecialObjectType(["BufferFormat"]); }
-    getSpecialBufferCompressionType(): ResolvedType { return this.internSpecialObjectType(["BufferCompression"]); }
-    getSpecialByteBufferType(): ResolvedType { return this.internSpecialObjectType(["ByteBuffer"]); }
-    getSpecialDateTimeType(): ResolvedType { return this.internSpecialObjectType(["DateTime"]); }
-    getSpecialUTCDateTimeType(): ResolvedType { return this.internSpecialObjectType(["UTCDateTime"]); }
-    getSpecialCalendarDateType(): ResolvedType { return this.internSpecialObjectType(["CalendarDate"]); }
-    getSpecialTickTimeType(): ResolvedType { return this.internSpecialObjectType(["TickTime"]); }
-    getSpecialLogicalTimeType(): ResolvedType { return this.internSpecialObjectType(["LogicalTime"]); }
-    getSpecialISOTimeStampType(): ResolvedType { return this.internSpecialObjectType(["ISOTimeStamp"]); }
-    getSpecialUUID4Type(): ResolvedType { return this.internSpecialObjectType(["UUID4"]); }
-    getSpecialUUID7Type(): ResolvedType { return this.internSpecialObjectType(["UUID7"]); }
-    getSpecialSHAContentHashType(): ResolvedType { return this.internSpecialObjectType(["SHAContentHash"]); }
-    getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialObjectType(["LatLongCoordinate"]); }
-    getSpecialRegexType(): ResolvedType { return this.internSpecialObjectType(["Regex"]); }
-    getSpecialNothingType(): ResolvedType { return this.internSpecialObjectType(["Nothing"]); }
+    getSpecialNoneType(): ResolvedType { return this.internSpecialPrimitiveObjectType("None"); }
+    getSpecialBoolType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Bool"); }
+    getSpecialIntType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Int"); }
+    getSpecialNatType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Nat"); }
+    getSpecialBigIntType(): ResolvedType { return this.internSpecialPrimitiveObjectType("BigInt"); }
+    getSpecialBigNatType(): ResolvedType { return this.internSpecialPrimitiveObjectType("BigNat"); }
+    getSpecialRationalType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Rational"); }
+    getSpecialFloatType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Float"); }
+    getSpecialDecimalType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Decimal"); }
+    getSpecialStringType(): ResolvedType { return this.internSpecialPrimitiveObjectType("String"); }
+    getSpecialASCIIStringType(): ResolvedType { return this.internSpecialPrimitiveObjectType("ASCIIString"); }
+    getSpecialByteBufferType(): ResolvedType { return this.internSpecialPrimitiveObjectType("ByteBuffer"); }
+    getSpecialDateTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("DateTime"); }
+    getSpecialUTCDateTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("UTCDateTime"); }
+    getSpecialPlainDateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("PlainDate"); }
+    getSpecialPlainTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("PlainTime"); }
 
-    getSpecialHavocType(): ResolvedType { return this.internSpecialObjectType(["HavocSequence"]); }
+    getSpecialTickTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("TickTime"); }
+    getSpecialLogicalTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LogicalTime"); }
+    getSpecialISOTimeStampType(): ResolvedType { return this.internSpecialPrimitiveObjectType("ISOTimeStamp"); }
+    getSpecialUUID4Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUID4"); }
+    getSpecialUUID7Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUID7"); }
+    getSpecialSHAContentHashType(): ResolvedType { return this.internSpecialPrimitiveObjectType("SHAContentHash"); }
+    getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LatLongCoordinate"); }
+    getSpecialRegexType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Regex"); }
+    getSpecialNothingType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Nothing"); }
 
-    getSpecialAnyConceptType(): ResolvedType { return this.internSpecialConceptType(["Any"]); }
-    getSpecialSomeConceptType(): ResolvedType { return this.internSpecialConceptType(["Some"]); }
+    getSpecialAnyConceptType(): ResolvedType { return this.internSpecialConceptType("Any"); }
+    getSpecialSomeConceptType(): ResolvedType { return this.internSpecialConceptType("Some"); }
 
-    getSpecialKeyTypeConceptType(): ResolvedType { return this.internSpecialConceptType(["KeyType"]); }
-    getSpecialValidatorConceptType(): ResolvedType { return this.internSpecialConceptType(["Validator"]); }
-    getSpecialParsableConceptType(): ResolvedType { return this.internSpecialConceptType(["Parsable"]); }
-    getSpecialBufferParsableConceptType(): ResolvedType { return this.internSpecialConceptType(["BufferParsable"]); }
-    getSpecialTestableTypeConceptType(): ResolvedType { return this.internSpecialConceptType(["TestableType"]); }
-    getSpecialAPITypeConceptType(): ResolvedType { return this.internSpecialConceptType(["APIType"]); }
-    getSpecialAlgebraicConceptType(): ResolvedType { return this.internSpecialConceptType(["Algebraic"]); }
-    getSpecialOrderableConceptType(): ResolvedType { return this.internSpecialConceptType(["Orderable"]); }
+    getSpecialKeyTypeConceptType(): ResolvedType { return this.internSpecialConceptType("KeyType"); }
+    getSpecialValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("Validator"); }
+    getSpecialPathValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("PathValidator"); }
 
-    getSpecialTupleConceptType(): ResolvedType { return this.internSpecialConceptType(["Tuple"]); }
-    getSpecialRecordConceptType(): ResolvedType { return this.internSpecialConceptType(["Record"]); }
+    getSpecialTestableTypeConceptType(): ResolvedType { return this.internSpecialConceptType("TestableType"); }
+    getSpecialAPITypeConceptType(): ResolvedType { return this.internSpecialConceptType("APIType"); }
+    getSpecialTupleConceptType(): ResolvedType { return this.internSpecialConceptType("Tuple"); }
+    getSpecialRecordConceptType(): ResolvedType { return this.internSpecialConceptType("Record"); }
 
-    getSpecialISomethingConceptType(): ResolvedType { return this.internSpecialConceptType(["ISomething"]); }
-    getSpecialIOptionConceptType(): ResolvedType { return this.internSpecialConceptType(["IOption"]); }
-    getSpecialIOptionTConceptType(): ResolvedType { return this.internSpecialConceptType(["IOptionT"]); }
+    getSpecialISomethingConceptType(): ResolvedType { return this.internSpecialConceptType("ISomething"); }
+    getSpecialIOptionConceptType(): ResolvedType { return this.internSpecialConceptType("IOption"); }
+    getSpecialIOptionTConceptType(): ResolvedType { return this.internSpecialConceptType("IOptionT"); }
 
-    getSpecialIResultConceptType(): ResolvedType { return this.internSpecialConceptType(["IResult"]); }
-    getSpecialIOkConceptType(): ResolvedType { return this.internSpecialConceptType(["IOk"]); }
-    getSpecialIErrTConceptType(): ResolvedType { return this.internSpecialConceptType(["IErr"]); }
-    getSpecialIResultTConceptType(): ResolvedType { return this.internSpecialConceptType(["IResultT"]); }
-    getSpecialIResultEConceptType(): ResolvedType { return this.internSpecialConceptType(["IResultE"]); }
+    getSpecialIResultConceptType(): ResolvedType { return this.internSpecialConceptType("IResult"); }
+    getSpecialIOkConceptType(): ResolvedType { return this.internSpecialConceptType("IOk"); }
+    getSpecialIErrTConceptType(): ResolvedType { return this.internSpecialConceptType("IErr"); }
+    getSpecialIResultTConceptType(): ResolvedType { return this.internSpecialConceptType("IResultT"); }
+    getSpecialIResultEConceptType(): ResolvedType { return this.internSpecialConceptType("IResultE"); }
 
-    getSpecialObjectConceptType(): ResolvedType { return this.internSpecialConceptType(["Object"]); }
+    getSpecialObjectConceptType(): ResolvedType { return this.internSpecialConceptType("Object"); }
 
-    getStringOfType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("StringOf") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t))); }
-    getDataStringType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("DataString") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t))); }
-    getDataBufferType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("DataBuffer") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t))); }
+    getSpecialHavocType(): ResolvedType { return ResolvedType.createSingle(ResolvedHavocEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("HavocSequence") as EntityTypeDecl)); }
 
-    getSomethingType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("Something") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t))); }
-    getOkType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("Result::Ok") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t).set("E", e))); }
-    getErrType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedEntityAtomType.create(this.m_objectMap.get("Result::Err") as EntityTypeDecl, new Map<string, ResolvedType>().set("T", t).set("E", e))); }
-
-    getOptionConceptType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(this.m_conceptMap.get("Option") as ConceptTypeDecl, new Map<string, ResolvedType>().set("T", t))])); }
-    getResultConceptType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(this.m_conceptMap.get("Result") as ConceptTypeDecl, new Map<string, ResolvedType>().set("T", t).set("E", e))])); }
+    getStringOfType(t: ResolvedValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("StringOf") as EntityTypeDecl, t)); }
+    getASCIIStringOfType(t: ResolvedValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("ASCIIStringOf") as EntityTypeDecl, t)); }
     
+    getSomethingType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedSomethingEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl, t)); }
+    getOkType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedOkEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Ok") as EntityTypeDecl, t, e)); }
+    getErrType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedErrEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Err") as EntityTypeDecl, t, e)); }
+
+    getOptionConceptType(t: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(this.m_assembly.tryGetConceptTypeForFullyResolvedName("Option") as ConceptTypeDecl, new Map<string, ResolvedType>().set("T", t))])); }
+    getResultConceptType(t: ResolvedType, e: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(this.m_assembly.tryGetConceptTypeForFullyResolvedName("Result") as ConceptTypeDecl, new Map<string, ResolvedType>().set("T", t).set("E", e))])); }
+    
+    getPathType(t: ResolvedPathValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedPathEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Path") as EntityTypeDecl, t)); }
+    getPathFragmentType(t: ResolvedPathValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedPathFragmentEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("PathFragment") as EntityTypeDecl, t)); }
+    getPathGlobType(t: ResolvedPathValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedPathGlobEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("PathGlob") as EntityTypeDecl, t)); }
 
     ////
     //Type representation, normalization, and operations
-    resolveTypeDef(t: NominalTypeSignature): [TypeSignature, boolean] {
+    resolveTypeDef(sinfo: SourceInfo, t: NominalTypeSignature, resolvestack: string[]): [TypeSignature, boolean] {
         if (!this.m_assembly.hasNamespace(t.nameSpace)) {
             return [t, false];
         }
@@ -1149,10 +1076,17 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
             return [t, false];
         }
 
+        if(resolvestack.includes(lname)) {
+            //it is a recursive namespace lookup
+            this.raiseError(sinfo, `Recursive typedef on ${lname}`);
+            return [t, false];
+        }
+
         //compute the bindings to use when resolving the RHS of the typedef alias
         const tresolved = nsd.typeDefs.get(lname) as NamespaceTypedef;
         if (tresolved.boundType instanceof NominalTypeSignature) {
-            return this.resolveTypeDef(tresolved.boundType);
+            resolvestack.push(lname);
+            return this.resolveTypeDef(sinfo, tresolved.boundType, resolvestack);
         }
         else {
             return [tresolved.boundType, true];
@@ -1172,17 +1106,17 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         return fullbinds;
     }
 
-    getAllOOFields(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
-        assert(!ooptype.isSpecialConstructableEntity(), "Needs to be handled as special case");
+    getAllOOFields(ttype: ResolvedType, ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
+        assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
         
         let declfields = fmap || new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
 
         //Important to do traversal in Left->Right Topmost traversal order
 
-        this.resolveProvides(ooptype, binds).forEach((provide) => {
-            const tt = this.normalizeTypeOnly(provide, binds);
+        this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(binds)).forEach((provide) => {
+            const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(binds));
             (tt.options[0] as ResolvedConceptAtomType).conceptTypes.forEach((concept) => {
-                declfields = this.getAllOOFieldsLayout(concept.concept, concept.binds, declfields);
+                declfields = this.getAllOOFields(ResolvedType.createSingle(ResolvedConceptAtomType.create([concept])), concept.concept, concept.binds, declfields);
             });
         });
 
@@ -1195,17 +1129,16 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         return declfields;
     }
 
-    getAllInvariantProvidingTypes(ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+    getAllInvariantProvidingTypes(ttype: ResolvedType, ooptype: OOPTypeDecl, binds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
         let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
 
-        this.resolveProvides(ooptype, binds).forEach((provide) => {
-            const tt = this.normalizeTypeOnly(provide, binds);
+        this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(binds)).forEach((provide) => {
+            const tt = this.normalizeTypeOnly(provide, TemplateBindScope.createBaseBindScope(binds));
             (tt.options[0] as ResolvedConceptAtomType).conceptTypes.forEach((concept) => {
-                declinvs = this.getAllInvariantProvidingTypes(concept.concept, concept.binds, declinvs);
+                declinvs = this.getAllInvariantProvidingTypes(ResolvedType.createSingle(ResolvedConceptAtomType.create([concept])), concept.concept, concept.binds, declinvs);
             });
         });
 
-        const ttype = ResolvedType.createSingle(ooptype instanceof EntityTypeDecl ? ResolvedEntityAtomType.create(ooptype, binds) : ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(ooptype as ConceptTypeDecl, binds)]));
         if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
             return declinvs;
         }
@@ -1598,34 +1531,6 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         return fullbinds;
     }
 
-    resolveBindsForCallWithInfer(declterms: TemplateTermDecl[], giventerms: TypeSignature[], implicitBinds: Map<string, ResolvedType>, callBinds: Map<string, ResolvedType>): [Map<string, ResolvedType> | undefined, string[]] {
-        let fullbinds = new Map<string, ResolvedType>();
-        let inferbinds: string[] = [];
-        implicitBinds.forEach((v, k) => {
-            fullbinds.set(k, v);
-        });
-
-        for (let i = 0; i < declterms.length; ++i) {
-            if(giventerms.length <= i) {
-                if(declterms[i].defaultType !== undefined) {
-                    fullbinds.set(declterms[i].name, this.normalizeTypeOnly(declterms[i].defaultType as TypeSignature, implicitBinds));
-                }
-                else if (declterms[i].isInfer) {
-                    inferbinds.push(declterms[i].name);
-                    fullbinds.set(declterms[i].name, ResolvedType.createSingle(ResolvedTemplateUnifyType.create(declterms[i].name)));
-                }
-                else {
-                    return [undefined, inferbinds];
-                }
-            }
-            else {
-                fullbinds.set(declterms[i].name, this.normalizeTypeOnly(giventerms[i], callBinds));
-            }
-        }
-
-        return [fullbinds, inferbinds];
-    }
-
     normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
         const res = this.normalizeTypeGeneral(t, binds);
         if (res instanceof ResolvedFunctionType) {
@@ -1715,25 +1620,25 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
 
     typeUpperBound(types: ResolvedType[]): ResolvedType {
         if(types.length === 0) {
-            return ResolvedType.createEmpty();
+            return ResolvedType.createInvalid();
         }
         else {
             return this.normalizeUnionList(types);
         }
     }
 
-    joinExpTypes(...args: ExpType[]): ExpType {
+    joinExpTypes(...args: ValueType[]): ValueType {
         assert(args.length !== 0);
 
-        const jlayout = assembly.typeUpperBound(args.map((ei) => ei.layout));
-        const jflow = assembly.typeUpperBound(args.map((ei) => ei.flow));
-        return new ExpType(jlayout, jflow);
+        const jlayout = this.typeUpperBound(args.map((ei) => ei.layout));
+        const jflow = this.typeUpperBound(args.map((ei) => ei.flow));
+        return new ValueType(jlayout, jflow);
     }
 
     joinReturnResults(expvar: string, ...args: ExpressionReturnResult[]): ExpressionReturnResult {
         assert(args.length !== 0);
 
-        const jtype = ExpType.join(assembly, ...args.map((ei) => ei.valtype));
+        const jtype = this.joinExpTypes(...args.map((ei) => ei.valtype));
         const jtv = FlowTypeTruthOps.join(...args.map((ei) => ei.truthval));
 
         return new ExpressionReturnResult(jtype, jtv, expvar);
@@ -1743,7 +1648,7 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         assert(values.length !== 0);
 
         const jdef = values.every((vi) => vi.mustDefined);
-        const jtype = assembly.typeUpperBound(values.map((vi) => vi.flowType));
+        const jtype = this.typeUpperBound(values.map((vi) => vi.flowType));
         return new VarInfo(values[0].declaredType, jtype, values[0].isConst, values[0].isCaptured, jdef);
     }
 
@@ -1806,71 +1711,8 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
         memores.set(t2.typeID, res);
         return res;
     }
- 
-    atomUnify(t1: ResolvedAtomType, t2: ResolvedAtomType, umap: Map<string, ResolvedType | undefined>) {
-        if(t1 instanceof ResolvedTemplateUnifyType) {
-            if(umap.has(t1.typeID)) {
-                if(umap.get(t1.typeID) === undefined || (umap.get(t1.typeID) as ResolvedType).typeID === t2.typeID) {
-                    //leave it
-                }
-                else {
-                    umap.set(t1.typeID, undefined);
-                }
-            }
-            else {
-                umap.set(t1.typeID, ResolvedType.createSingle(t2));
-            }
-        }
-        else if(t1 instanceof ResolvedEntityAtomType && t2 instanceof ResolvedEntityAtomType) {
-            this.unifyResolvedEntityAtomType(t1, t2, umap);
-        }
-        else if(t1 instanceof ResolvedConceptAtomType && t2 instanceof ResolvedConceptAtomType) {
-            this.unifyResolvedConceptAtomType(t1, t2, umap);
-        }
-        else if(t1 instanceof ResolvedTupleAtomType && t2 instanceof ResolvedTupleAtomType) {
-            this.unifyResolvedTupleAtomType(t1, t2, umap);
-        }
-        else if(t1 instanceof ResolvedRecordAtomType && t2 instanceof ResolvedRecordAtomType) {
-            this.unifyResolvedRecordAtomType(t1, t2, umap);
-        }
-        else {
-            //nothing -- types might mismatch but we don't care as typecheck will catch this later
-        }
-    }
 
-    typeUnify(t1: ResolvedType, t2: ResolvedType, umap: Map<string, ResolvedType | undefined>) {
-        //TODO: we may want to try and strip matching types in any options -- T | None ~~ Int | None should unify T -> Int
-
-        if (t1.options.length === 1 && t1.options[0] instanceof ResolvedTemplateUnifyType) {
-            if (umap.has(t1.typeID)) {
-                if (umap.get(t1.typeID) === undefined || (umap.get(t1.typeID) as ResolvedType).typeID === t2.typeID) {
-                    //leave it
-                }
-                else {
-                    umap.set(t1.typeID, undefined);
-                }
-            }
-            else {
-                if (t2.options.length !== 1) {
-                    //if multiple options unify with the | 
-                    umap.set(t1.typeID, t2); 
-                }
-                else {
-                    //otherwise expand and try unifying with the individual type
-                    this.atomUnify(t1.options[0], t2.options[0], umap);
-                }
-            }
-        }
-
-        if(t1.options.length === 1 && t1.options[0] instanceof ResolvedEntityAtomType && t1.options[0].object.attributes.includes("__list_type")
-            && t2.options.length === 1 && t2.options[0] instanceof ResolvedEntityAtomType && t2.options[0].object.attributes.includes("__list_type")) {
-                this.typeUnify(t1.options[0].binds.get("T") as ResolvedType, t2.options[0].binds.get("T") as ResolvedType, umap);
-        }
-
-        //otherwise we do nothing and will fail subtype check later 
-    }
-
-    resolveProvides(tt: OOPTypeDecl, TemplateBindScope): TypeSignature[] {
+    resolveProvides(tt: OOPTypeDecl, binds: TemplateBindScope): TypeSignature[] {
         let oktypes: TypeSignature[] = [];
         
         for (let i = 0; i < tt.provides.length; ++i) {
