@@ -2147,17 +2147,20 @@ class Parser {
         if (this.testToken(TokenStrings.FollowTypeSep)) {
             const ttype = this.parseFollowTypeTag("typed primitive");
 
-            if (exp instanceof LiteralIntegralExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.itype, ttype), ops];
+            if (exp instanceof LiteralBoolExpression) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, new NominalTypeSignature(sinfo, "Core", ["Bool"]), ttype), ops];
+            }
+            else if (exp instanceof LiteralIntegralExpression) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.itype, ttype), ops];
             }
             else if (exp instanceof LiteralFloatPointExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.fptype, ttype), ops];
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.fptype, ttype), ops];
             }
             else if (exp instanceof LiteralRationalExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp.value, exp.rtype, ttype), ops];
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.rtype, ttype), ops];
             }
             else {
-                this.raiseError(sinfo.line, "Expected literal value -- int, float, or rational");
+                this.raiseError(sinfo.line, "Expected literal value -- bool, int, float, or rational");
 
                 return [new InvalidExpression(sinfo), ops];
             }

@@ -8,6 +8,8 @@ import * as assert from "assert";
 import { ConceptTypeDecl, EntityTypeDecl, TaskTypeDecl } from "../ast/assembly";
 import { TIRLiteralValue } from "./tir_body";
 
+type TIRInvokeID = string;
+
 abstract class ResolvedAtomType {
     readonly typeID: string;
 
@@ -845,6 +847,7 @@ class TemplateBindScope {
 }
 
 export {
+    TIRInvokeID,
     ResolvedAtomType,
     ResolvedLiteralAtomType,
     ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 

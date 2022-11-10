@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { Assembly } from "../ast/assembly";
-import { ResolvedType } from "../tree_ir/tir_type";
+import { ResolvedType, TemplateBindScope } from "../tree_ir/tir_type";
 
 import * as assert from "assert";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
@@ -70,38 +70,33 @@ class VarInfo {
     }
 }
 
-class TypeEnvironment {
+class ExpressionTypeEnvironment {
     readonly bodyid: string;
-    readonly terms: Map<string, ResolvedType>;
+    readonly binds: TemplateBindScope;
     readonly pcodes: Map<string, TIRCodePack>;
 
     readonly frozenVars: Set<string>;
-    readonly args: Map<string, VarInfo> | undefined;
-    readonly locals: Map<string, VarInfo>[] | undefined;
-    readonly returnResult: ResolvedType | undefined;
+    readonly args: Map<string, VarInfo>;
+    readonly locals: Map<string, VarInfo>[];
 
     readonly expressionResult: TIRExpression;
     readonly expressionTruth: FlowTypeTruthValue;
-    readonly returnFlow: ResolvedType | undefined;
 
-    readonly expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>;
+    readonly expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[];
 
-    private constructor(bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>,
-        frozenVars: Set<string>, args: Map<string, VarInfo> | undefined, locals: Map<string, VarInfo>[] | undefined, returnResult: ResolvedType | undefined,
-        expressionResult: TIRExpression | undefined, expressionTruth: FlowTypeTruthValue, returnFlow: ResolvedType | undefined) {
-
+    private constructor(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, expressionTruth: FlowTypeTruthValue, expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[]) {
         this.bodyid = bodyid;
-        this.terms = terms;
+        this.binds = binds;
         this.pcodes = pcodes;
 
         this.frozenVars = frozenVars;
         this.args = args;
         this.locals = locals;
-        this.returnResult = returnResult;
 
-        this.expressionResult = expressionResult || new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), ResolvedType.createInvalid());
+        this.expressionResult = expressionResult;
         this.expressionTruth = expressionTruth;
-        this.returnResult = returnFlow;
+
+        this.expInferInfo = expInferInfo;
     }
 
     getLocalVarInfo(name: string): VarInfo | undefined {
@@ -123,21 +118,13 @@ class TypeEnvironment {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
-    static createInitialEnvForCall(ikey: MIRInvokeKey, bodyid: string, terms: Map<string, ResolvedType>, pcodes: Map<string, PCode>, args: Map<string, VarInfo>, inferResult: ResolvedType | undefined): TypeEnvironment {
-        return new TypeEnvironment(ikey, bodyid, terms, pcodes, args, [new Map<string, VarInfo>()], inferResult, [], undefined, undefined, undefined, new Set<string>());
+    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[]): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), ResolvedType.createInvalid()), FlowTypeTruthValue.Unknown, expInferInfo);
     }
 
-    hasNormalFlow(): boolean {
-        return this.locals !== undefined;
+    setResultExpression(exp: TIRExpression, value: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, value || FlowTypeTruthValue.Unknown, this.expInferInfo);
     }
-
-    setResultExpression(layouttype: ResolvedType, flowtype: ResolvedType, value: FlowTypeTruthValue | undefined, vname: string | undefined): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        const einfo = new ExpressionReturnResult(new ValueType(layouttype, flowtype), value || this.getExpressionResult().truthval, vname || this.getExpressionResult().expvar);
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, this.locals, this.inferResult, this.inferYield, einfo, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
 
 /*
     private updateVarInfo(name: string, nv: VarInfo): TypeEnvironment {
@@ -443,5 +430,5 @@ class TypeEnvironment {
 export {
     FlowTypeTruthValue, FlowTypeTruthOps,
     VarInfo,
-    TypeEnvironment
+    ExpressionTypeEnvironment
 };

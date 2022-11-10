@@ -1,6 +1,6 @@
 import { SourceInfo } from "../ast/parser";
 import { BSQRegex } from "../bsqregex";
-import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType } from "./tir_type";
+import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID } from "./tir_type";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
@@ -23,6 +23,7 @@ enum TIRExpressionTag {
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
     LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
     
+    LiteralTypedPrimitiveDirectExpression = "LiteralTypedPrimitiveDirectExpression",
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
     AccessFormatInfo = "AccessFormatInfo",
@@ -241,24 +242,41 @@ class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
     }
 }
 
-class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
+class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
     readonly value: TIRExpression;
-    readonly vtype: ResolvedType;
 
     readonly constype: ResolvedType;
     readonly reprtype: ResolvedType;
+    readonly basetype: ResolvedType;
 
-    readonly isSafeConstructor: boolean;
-
-    constructor(sinfo: SourceInfo, value: TIRExpression, vtype: ResolvedType, constype: ResolvedType, reprtype: ResolvedType, isSafeConstructor: boolean) {
-        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
         this.value = value;
-        this.vtype = vtype;
 
         this.constype = constype;
         this.reprtype = reprtype;
+        this.basetype = basetype;
+    }
+}
 
-        this.isSafeConstructor = isSafeConstructor;
+class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
+    readonly value: TIRExpression;
+
+    readonly constype: ResolvedType;
+    readonly reprtype: ResolvedType;
+    readonly basetype: ResolvedType;
+
+    readonly chkinv: TIRInvokeID;
+
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinv: TIRInvokeID) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
+        this.value = value;
+
+        this.constype = constype;
+        this.reprtype = reprtype;
+        this.basetype = basetype;
+
+        this.chkinv = chkinv;
     }
 }
 
@@ -281,7 +299,7 @@ export {
     TIRExpression, TIRInvalidExpression,
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
-    TIRLiteralTypedPrimitiveConstructorExpression,
+    TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     xxxx,
     TIRLiteralValue
 };
