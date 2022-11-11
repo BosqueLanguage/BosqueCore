@@ -48,12 +48,13 @@ class OOMemberLookupInfo<T> {
 
 class OOMemberResolution<T> {
     readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
-    readonly impls: OOMemberLookupInfo<T>[]; //may be multiple candidates for the actual implementation (then this is a virtual call)
-}
+    readonly impl: OOMemberLookupInfo<T>[]; //may be no candidates for the actual implementation (then this is a virtual call)
+    readonly totalimpls: boolean; //true if every option resolved to an implementation (false if some resolutions didn't find a concrete implementation)
 
-class OOMemberResolutionUniqueImpl<T> {
-    readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
-    readonly impls: OOMemberLookupInfo<T>; //has a single statically determined implementation
+    constructor(decl: OOMemberLookupInfo<T>, impl: OOMemberLookupInfo<T>[] | undefined) {
+        this.decl = decl;
+        this.impl = impl;
+    }
 }
 
 enum ResolveResultFlag {
@@ -1273,11 +1274,8 @@ class TypeChecker {
         const options = rprovides.map((provide) => {
             const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
             return this.tryGetMemberImpl_helper<T>(provide, concept.concept, concept.binds, fnlookup);
-        });
-
-        if(options.includes(ResolveResultFlag.failure)) {
-            return ResolveResultFlag.failure; 
-        }
+        })
+        .filter((opt) => Array.isArray(opt));
 
         let impls: OOMemberLookupInfo<T>[] = [];
         for(let i = 0; i < options.length; ++i) {
@@ -1306,13 +1304,22 @@ class TypeChecker {
             return this.tryGetMemberDecls_helper<T>(name, provide, concept.concept, concept.binds, fnlookup);
         });
 
+        if(options.includes(ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
         if(options.includes(ResolveResultFlag.notfound)) {
-            if(mdecl !== undefined && !mdecl.hasAttribute("override")) {
-                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
+            if(mdecl === undefined) {
+                return ResolveResultFlag.notfound;
             }
             else {
-                this.raiseError(ooptype.sourceLocation, `Found override impl but no virtual/abstract declaration for ${name}`)
-                return ResolveResultFlag.failure;
+                if(!mdecl.hasAttribute("override")) {
+                    return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
+                }
+                else {
+                    this.raiseError(ooptype.sourceLocation, `Found override impl but no virtual/abstract declaration for ${name}`)
+                    return ResolveResultFlag.failure;
+                }
             }
         }
 
@@ -1325,7 +1332,60 @@ class TypeChecker {
         return decls;
     }
 
-    resolveMember<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+    //When resolving a member on a concept we must find a unique decl and 0 or more implementations
+    //const/function/field lookups will assert that an implementation was found -- method/operator lookups may be dynamic and just find a declration
+    resolveMemberFromConceptAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedConceptAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const declsopts = atom.conceptTypes
+            .map((cpt) => this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+            .filter((opt) => opt !== ResolveResultFlag.notfound);
+
+        //Lookup failed
+        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
+        //We didn't find any resolution then this fails too
+        if (declsopts.length === 0) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        let decls: OOMemberLookupInfo<T>[] = [];
+        for (let i = 0; i < declsopts.length; ++i) {
+            const newopts = (declsopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            decls.push(...newopts);
+        }
+
+        if (decls.length !== 0) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const implopts = atom.conceptTypes
+            .map((cpt) => this.tryGetMemberImpl_helper(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+            .filter((opt) => opt !== ResolveResultFlag.notfound);
+
+        //Lookup failed
+        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
+        //ok not to find an implementation
+
+
+
+
+        return new OOMemberResolution<T>(decls, impls);
+    }
+
+    //When resolving a member on an entity we must find a unique decl and a unique or more implementation
+    //const/function/field/method lookups will assert that an implementation was found
+    resolveMemberFromEntityAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedEntityAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+    }
+
+    resolveMember<T extends OOMemberDecl>(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
         const declsopts = ttype.options.map((atom) => {
             if (atom instanceof ResolvedEntityAtomType) {
                 const alr = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
@@ -1338,27 +1398,7 @@ class TypeChecker {
                 }
             }
             else if (atom instanceof ResolvedConceptAtomType) {
-                const rcaopts = atom.conceptTypes
-                    .map((cpt) => this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
-                    .filter((opt) => opt !== ResolveResultFlag.notfound);
-
-                if(rcaopts.some((opt) => opt === ResolveResultFlag.failure)) {
-                    return ResolveResultFlag.failure;
-                }
-
-                let decls: OOMemberLookupInfo<T>[] = [];
-                for(let i = 0; i < rcaopts.length; ++i) {
-                    const newopts = (rcaopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
-                    decls.push(...newopts);
-                }
-
-                if(decls.length === 0) {
-                    this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
-                    return ResolveResultFlag.failure;
-                }
-                else {
-                    return decls;
-                }
+                xxxx;
             }
             else {
                 this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
