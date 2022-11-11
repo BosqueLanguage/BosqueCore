@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
 import { SourceInfo, unescapeLiteralString } from "../ast/parser";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "../tree_ir/tir_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
@@ -54,6 +54,11 @@ class OOMemberResolution<T> {
 class OOMemberResolutionUniqueImpl<T> {
     readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
     readonly impls: OOMemberLookupInfo<T>; //has a single statically determined implementation
+}
+
+enum ResolveResultFlag {
+    notfound,
+    failure
 }
 
 class TIRInvokeIDGenerator {
@@ -1249,11 +1254,11 @@ class TypeChecker {
         return invprov.some((tdp) => tdp[1].validates.length !== 0);
     }
 
-    private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+    private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
         const mdecl = fnlookup(ooptype);
         if(mdecl !== undefined) {
             if(mdecl.hasAttribute("abstract")) {
-                return undefined;
+                return ResolveResultFlag.notfound;
             }
             else {
                 return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
@@ -1262,7 +1267,7 @@ class TypeChecker {
 
         const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
         if(rprovides.length === 0) {
-            return undefined;
+            return ResolveResultFlag.notfound;
         }
 
         const options = rprovides.map((provide) => {
@@ -1270,8 +1275,8 @@ class TypeChecker {
             return this.tryGetMemberImpl_helper<T>(provide, concept.concept, concept.binds, fnlookup);
         });
 
-        if(options.includes(undefined)) {
-            return undefined; 
+        if(options.includes(ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure; 
         }
 
         let impls: OOMemberLookupInfo<T>[] = [];
@@ -1283,7 +1288,7 @@ class TypeChecker {
         return impls;
     }
 
-    private tryGetMemberDecls_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+    private tryGetMemberDecls_helper<T extends OOMemberDecl>(name: string, ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
         const mdecl = fnlookup(ooptype);
         if(mdecl !== undefined) {
             if(mdecl.hasAttribute("abstract") || mdecl.hasAttribute("virtual")) {
@@ -1293,16 +1298,22 @@ class TypeChecker {
 
         const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
         if(rprovides.length === 0) {
-            return undefined;
+            return ResolveResultFlag.notfound;
         }
 
         const options = rprovides.map((provide) => {
             const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            return this.tryGetMemberDecls_helper<T>(provide, concept.concept, concept.binds, fnlookup);
+            return this.tryGetMemberDecls_helper<T>(name, provide, concept.concept, concept.binds, fnlookup);
         });
 
-        if(options.includes(undefined)) {
-            return undefined; 
+        if(options.includes(ResolveResultFlag.notfound)) {
+            if(mdecl !== undefined && !mdecl.hasAttribute("override")) {
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
+            }
+            else {
+                this.raiseError(ooptype.sourceLocation, `Found override impl but no virtual/abstract declaration for ${name}`)
+                return ResolveResultFlag.failure;
+            }
         }
 
         let decls: OOMemberLookupInfo<T>[] = [];
@@ -1314,12 +1325,13 @@ class TypeChecker {
         return decls;
     }
 
-    resolveMember<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | string {
+    resolveMember<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
         const declsopts = ttype.options.map((atom) => {
             if (atom instanceof ResolvedEntityAtomType) {
-                const alr = this.tryGetMemberDecls_helper(ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+                const alr = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
                 if(alr === undefined) {
-                    return `Cannot resolve ${name} on type ${atom.typeID}`;    
+                    this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+                    return ResolveResultFlag.failure;
                 }
                 else {
                     return alr;
@@ -1327,8 +1339,12 @@ class TypeChecker {
             }
             else if (atom instanceof ResolvedConceptAtomType) {
                 const rcaopts = atom.conceptTypes
-                    .map((cpt) => this.tryGetMemberDecls_helper(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
-                    .filter((opt) => opt !== undefined) as OOMemberLookupInfo<T>[][];
+                    .map((cpt) => this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+                    .filter((opt) => opt !== ResolveResultFlag.notfound);
+
+                if(rcaopts.some((opt) => opt === ResolveResultFlag.failure)) {
+                    return ResolveResultFlag.failure;
+                }
 
                 let decls: OOMemberLookupInfo<T>[] = [];
                 for(let i = 0; i < rcaopts.length; ++i) {
@@ -1337,28 +1353,74 @@ class TypeChecker {
                 }
 
                 if(decls.length === 0) {
-                    return `Cannot resolve ${name} on type ${atom.typeID}`;    
+                    this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+                    return ResolveResultFlag.failure;
                 }
                 else {
                     return decls;
                 }
             }
             else {
-                return `Cannot resolve ${name} on type ${atom.typeID}`;
+                this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+                return ResolveResultFlag.failure;
             }
         });
 
-        const err = declsopts.find((opt) => typeof(opt) === "string");
-        if(err !== undefined) {
-            return err as string;
+        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
         }
 
+        const implopts = xxxx;
         xxxx;
 
         xxxx;
     }
 
-    resolveMemberUniqueImpl<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolutionUniqueImpl<T> | string {
+    resolveMemberStatic<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolutionUniqueImpl<T> | string {
+        const resl = this.resolveMember(ttype, name, fnlookup);
+
+        if(typeof(resl) === "string") {
+            return resl;
+        }
+        else {
+            if()
+        }
+    }
+
+    resolveMemberConst(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => StaticMemberDecl | undefined): OOMemberResolutionUniqueImpl<StaticMemberDecl> | string {
+        const resl = this.resolveMember(ttype, name, fnlookup);
+
+        if(typeof(resl) === "string") {
+            return resl;
+        }
+        else {
+            if()
+        }
+    }
+
+    resolveMemberFunction(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => StaticFunctionDecl | undefined): OOMemberResolutionUniqueImpl<StaticFunctionDecl> | string {
+        const resl = this.resolveMember(ttype, name, fnlookup);
+
+        if(typeof(resl) === "string") {
+            return resl;
+        }
+        else {
+            if()
+        }
+    }
+
+    resolveMemberField(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberFieldDecl | undefined): OOMemberResolutionUniqueImpl<MemberFieldDecl> | string {
+        const resl = this.resolveMember(ttype, name, fnlookup);
+
+        if(typeof(resl) === "string") {
+            return resl;
+        }
+        else {
+            if()
+        }
+    }
+
+    resolveMemberMethod(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberMethodDecl | undefined): OOMemberResolutionUniqueImpl<MemberMethodDecl> | string {
         const resl = this.resolveMember(ttype, name, fnlookup);
 
         if(typeof(resl) === "string") {
@@ -1538,16 +1600,24 @@ class TypeChecker {
     }
 
     resolveProvides(tt: OOPTypeDecl, binds: TemplateBindScope): ResolvedType[] {
-        let oktypes: ResolvedType[] = [];
-        
+        let scpt: [ResolvedConceptAtomTypeEntry, TypeConditionRestriction | undefined][] = [];
         for (let i = 0; i < tt.provides.length; ++i) {
             const rsig = this.normalizeTypeOnly(tt.provides[i][0], binds);
-            if(rsig.options.length !== 1 || !(rsig.options[0] instanceof ResolvedConceptAtomType) || rsig.options[0].conceptTypes.length !== 1) {
-                this.raiseError(tt.sourceLocation, `provides types must be single concepts -- got ${rsig.typeID}`);
+            if(rsig.options.length !== 1 || !(rsig.options[0] instanceof ResolvedConceptAtomType)) {
+                this.raiseError(tt.sourceLocation, `provides types must a concept -- got ${rsig.typeID}`);
                 return [];
             }
-            
-            const pcond = tt.provides[i][1];
+
+            const flatcpts = rsig.options[0].conceptTypes.map((rcpte) => [rcpte, tt.provides[i][1]] as [ResolvedConceptAtomTypeEntry, TypeConditionRestriction | undefined]);
+            scpt.push(...flatcpts)
+        }
+
+
+        let oktypes: ResolvedType[] = [];
+        
+        for (let i = 0; i < scpt.length; ++i) {
+            const rsig = ResolvedType.createSingle(ResolvedConceptAtomType.create([scpt[i][0]]));
+            const pcond = scpt[i][1];
             if(pcond === undefined) {
                 oktypes.push(rsig);
             }
