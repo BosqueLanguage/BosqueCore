@@ -28,7 +28,6 @@ enum TIRExpressionTag {
 
     AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
-    HasEnvValue = "HasEnvValue",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -266,9 +265,9 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     readonly reprtype: ResolvedType;
     readonly basetype: ResolvedType;
 
-    readonly chkinv: TIRInvokeID;
+    readonly chkinvs: TIRInvokeID[];
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinv: TIRInvokeID) {
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinvs: TIRInvokeID[]) {
         super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
         this.value = value;
 
@@ -276,7 +275,50 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
         this.reprtype = reprtype;
         this.basetype = basetype;
 
-        this.chkinv = chkinv;
+        this.chkinvs = chkinvs;
+    }
+}
+
+class TIRAccessEnvValue extends TIRExpression {
+    readonly keyname: string;
+    readonly orNoneMode: boolean;
+
+    constructor(sinfo: SourceInfo, keyname: string, valtype: ResolvedType, orNoneMode: boolean) {
+        super(TIRExpressionTag.AccessEnvValue, sinfo, valtype, valtype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
+        this.keyname = keyname;
+        this.orNoneMode = orNoneMode;
+    }
+}
+
+
+class TIRAccessNamespaceConstantExpression extends TIRExpression {
+    readonly ns: string;
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, ns: string, name: string, decltype: ResolvedType) {
+        super(TIRExpressionTag.AccessNamespaceConstantExpression, sinfo, decltype, decltype, `${ns}::${name}`);
+        this.ns = ns;
+        this.name = name;
+    }
+}
+
+class TIRAccessStaticFieldExpression extends TIRExpression {
+    readonly stype: ResolvedType;
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, stype: ResolvedType, name: string, decltype: ResolvedType) {
+        super(TIRExpressionTag.AccessStaticFieldExpression, sinfo, decltype, decltype, `${stype.typeID}::${name}`);
+        this.stype = stype;
+        this.name = name;
+    }
+}
+
+class TIRAccessVariableExpression extends TIRExpression {
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, name: string, tlayout: ResolvedType, tinfer: ResolvedType) {
+        super(TIRExpressionTag.AccessVariableExpression, sinfo, tlayout, tinfer, name);
+        this.name = name;
     }
 }
 
@@ -300,6 +342,7 @@ export {
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
+    TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression,
     xxxx,
     TIRLiteralValue
 };

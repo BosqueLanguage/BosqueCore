@@ -35,7 +35,6 @@ enum ExpressionTag {
 
     AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
-    HasEnvValue = "HasEnvValue",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",

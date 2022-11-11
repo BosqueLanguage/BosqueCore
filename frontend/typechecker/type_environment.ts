@@ -82,9 +82,9 @@ class ExpressionTypeEnvironment {
     readonly expressionResult: TIRExpression;
     readonly expressionTruth: FlowTypeTruthValue;
 
-    readonly expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[];
+    readonly expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>;
 
-    private constructor(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, expressionTruth: FlowTypeTruthValue, expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[]) {
+    private constructor(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, expressionTruth: FlowTypeTruthValue, expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>) {
         this.bodyid = bodyid;
         this.binds = binds;
         this.pcodes = pcodes;
@@ -118,7 +118,7 @@ class ExpressionTypeEnvironment {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
-    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[]): ExpressionTypeEnvironment {
+    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>): ExpressionTypeEnvironment {
         return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), ResolvedType.createInvalid()), FlowTypeTruthValue.Unknown, expInferInfo);
     }
 

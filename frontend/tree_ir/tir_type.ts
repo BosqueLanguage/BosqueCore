@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 
-import { ConceptTypeDecl, EntityTypeDecl, TaskTypeDecl } from "../ast/assembly";
+import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
 import { TIRLiteralValue } from "./tir_body";
 
 type TIRInvokeID = string;
@@ -651,19 +651,19 @@ class ResolvedType {
         }
     }
 
-    tryGetUniqueOOTypeInfo(): ResolvedEntityAtomType | ResolvedConceptAtomType | undefined {
+    tryGetUniqueOOTypeInfo(): [OOPTypeDecl | undefined, Map<string, ResolvedType>] {
         if (this.options.length !== 1) {
-            return undefined;
+            return [undefined, new Map<string, ResolvedType>()];
         }
 
         if (this.options[0] instanceof ResolvedEntityAtomType) {
-            return (this.options[0] as ResolvedEntityAtomType);
+            return [this.options[0].object, this.options[0].getBinds()];
         }
-        else if (this.options[0] instanceof ResolvedConceptAtomType) {
-            return this.options[0] as ResolvedConceptAtomType;
+        else if (this.options[0] instanceof ResolvedConceptAtomType && this.options[0].conceptTypes.length === 1) {
+            return [this.options[0].conceptTypes[0].concept, this.options[0].conceptTypes[0].binds];
         }
         else {
-            return undefined;
+            return [undefined, new Map<string, ResolvedType>()];
         }
     }
 

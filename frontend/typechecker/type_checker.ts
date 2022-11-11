@@ -5,11 +5,11 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl } from "../ast/assembly";
 import { SourceInfo, unescapeLiteralString } from "../ast/parser";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam } from "../tree_ir/tir_type";
-import { AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
-import { TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "../tree_ir/tir_type";
+import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
+import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 import { BSQRegex } from "../bsqregex";
@@ -46,11 +46,39 @@ class OOMemberLookupInfo<T> {
     }
 }
 
+class OOMemberResolution<T> {
+    readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
+    readonly impls: OOMemberLookupInfo<T>[]; //may be multiple candidates for the actual implementation (then this is a virtual call)
+}
+
+class OOMemberResolutionUniqueImpl<T> {
+    readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
+    readonly impls: OOMemberLookupInfo<T>; //has a single statically determined implementation
+}
+
+class TIRInvokeIDGenerator {
+    static generateInvokeIDForInvariant(ttype: ResolvedType, invidx: number): TIRInvokeID {
+        return `inv_${ttype.typeID}$${invidx}`;
+    }
+
+    static generateInvokeIDForConstExp(): TIRInvokeID {
+        xxxx;
+    }
+
+    static generateInvokeIDForPreCondition(): TIRInvokeID {
+        xxxx;
+    }
+
+    static generateInvokeIDForPostCondition(): TIRInvokeID {
+        xxxx;
+    }
+}
+
 class TypeChecker {
     private readonly m_assembly: Assembly;
 
     readonly buildmode: BuildApplicationMode;
-    private readonly m_buildLevel: BuildLevel;
+    private m_buildLevel: BuildLevel;
 
     private m_file: string;
     private m_errors: [string, number, string][];
@@ -102,7 +130,7 @@ class TypeChecker {
         if(exp.isCompileTimeInlineValue()) {
             if (exp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = oftype.tryGetUniqueOOTypeInfo();
+                const ootype = oftype.tryGetUniqueEntityTypeInfo();
                 if (ootype instanceof ResolvedValidatorEntityAtomType) {
                     return exp;
                 }
@@ -112,7 +140,7 @@ class TypeChecker {
             }
             if (exp instanceof LiteralASCIITypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = oftype.tryGetUniqueOOTypeInfo();
+                const ootype = oftype.tryGetUniqueEntityTypeInfo();
                 if (ootype instanceof ResolvedValidatorEntityAtomType) {
                     return exp;
                 }
@@ -139,17 +167,22 @@ class TypeChecker {
         }
         else if (exp instanceof AccessStaticFieldExpression) {
             const oftype = this.normalizeTypeOnly(exp.stype, binds);
-            const cdecltry = this.tryGetConstMemberUniqueDeclFromType(oftype, exp.name);
-            if(cdecltry === undefined) {
+
+            const [ootype, oobinds] = oftype.tryGetUniqueOOTypeInfo();
+            if(ootype === undefined) {
+                return undefined;
+            }
+
+            const cdecltry = this.tryGetMemberImpl<StaticMemberDecl>(oftype, ootype, oobinds, exp.name, (tt, nn) => tt.staticMembers.find((sm) => sm.name === nn));
+            if(cdecltry === undefined || cdecltry.length !== 1) {
                 return undefined;
             }
     
-            const cdecl = cdecltry as OOMemberLookupInfo<StaticMemberDecl>;
-            if(cdecl.contiainingType.attributes.includes("__enum_type")) {
+            if(cdecltry[0].decl.attributes.includes("__enum_type")) {
                 return exp;
             }
             else {
-                return cdecl.decl.value !== undefined ? this.compileTimeReduceConstantExpression(cdecl.decl.value.exp, cdecl.binds) : undefined;
+                return cdecltry[0].decl.value !== undefined ? this.compileTimeReduceConstantExpression(cdecltry[0].decl.value.exp, TemplateBindScope.createBaseBindScope(cdecltry[0].oobinds)) : undefined;
             }
         }
         else {
@@ -181,28 +214,28 @@ class TypeChecker {
 
             if (cexp instanceof LiteralNoneExpression) {
                 const nexp = new TIRLiteralNoneExpression(exp.sinfo, this.getSpecialNoneType());
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralNothingExpression) {
                 const nexp = new TIRLiteralNothingExpression(exp.sinfo, this.getSpecialNothingType());
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralBoolExpression) {
                 const nexp = new TIRLiteralBoolExpression(exp.sinfo, this.getSpecialBoolType(), cexp.value);
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralIntegralExpression) {
                 const itype = this.normalizeTypeOnly(cexp.itype, TemplateBindScope.createEmptyBindScope());
                 const nexp = new TIRLiteralIntegralExpression(exp.sinfo, cexp.value, itype);
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralStringExpression) {
                 const nexp = new TIRLiteralStringExpression(exp.sinfo, cexp.value, this.getSpecialStringType());
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if(cexp instanceof LiteralASCIIStringExpression) {
                 const nexp = new TIRLiteralASCIIStringExpression(exp.sinfo, cexp.value, this.getSpecialASCIIStringType());
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralTypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(cexp.stype, binds);
@@ -212,7 +245,7 @@ class TypeChecker {
                 const etype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
                 const nexp = new TIRLiteralTypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
 
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if (cexp instanceof LiteralASCIITypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(cexp.stype, binds);
@@ -222,7 +255,7 @@ class TypeChecker {
                 const etype = ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
                 const nexp = new TIRLiteralASCIITypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
 
-                return new TIRLiteralValue(nexp, nexp.etype, nexp.expstr);
+                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
                 xxxx;
@@ -244,7 +277,22 @@ class TypeChecker {
                 this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
 
                 const iexp = new TIRInvalidExpression(exp.sinfo, this.getSpecialNoneType());
-                return new TIRLiteralValue(iexp, iexp.etype, iexp.expstr);
+                return new TIRLiteralValue(iexp, iexp.tinfer, iexp.expstr);
+            }
+        }
+    }
+
+    private checkVarInfer(env: ExpressionTypeEnvironment, vinfer: ResolvedType, ename: string): ResolvedType {
+        const eii = env.expInferInfo.get(ename);
+        if(eii === undefined) {
+            return vinfer;
+        }
+        else {
+            if(this.subtypeOf(eii.infertype, vinfer)) {
+                return eii.infertype;
+            }
+            else {
+                return vinfer;
             }
         }
     }
@@ -1127,7 +1175,7 @@ class TypeChecker {
         return declfields;
     }
 
-    getAllInvariantProvidingTypes(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+    getAllInvariantProvidingTypesInherit(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
         let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
 
         if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
@@ -1137,7 +1185,7 @@ class TypeChecker {
         const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
         rprovides.forEach((provide) => {
             const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            declinvs = this.getAllInvariantProvidingTypes(provide, concept.concept, concept.binds, declinvs);
+            declinvs = this.getAllInvariantProvidingTypesInherit(provide, concept.concept, concept.binds, declinvs);
         });
 
         
@@ -1148,8 +1196,61 @@ class TypeChecker {
         return declinvs;
     }
 
-    private tryGetMemberImpl<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, name: string, fnlookup: (tt: OOPTypeDecl, nn: string) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
-        const mdecl = fnlookup(ooptype, name);
+    getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+        let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
+
+        if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
+            return declinvs;
+        }
+
+        if (!(ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType)) {
+            const ccdecl = ttype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
+            const oftype = ResolvedType.createSingle(ccdecl.valuetype);
+
+            declinvs = this.getAllInvariantProvidingTypesTypedecl(oftype, ccdecl.valuetype.object, ccdecl.valuetype.getBinds(), declinvs);
+        }
+        
+        if(ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
+            declinvs.push([ttype, ooptype, oobinds]);
+        }
+
+        return declinvs;
+    }
+
+    typeHasInvariantsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
+        const invprov = this.getAllInvariantProvidingTypesInherit(ttype, ooptype, oobinds);
+        return invprov.some((tdp) => tdp[1].invariants.some((inv) => isBuildLevelEnabled(inv.level, this.m_buildLevel)));
+    }
+
+    typeHasValidatorsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
+        if(this.typeHasInvariantsOnConstructor(ttype, ooptype, oobinds)) {
+            return true;
+        }
+
+        const invprov = this.getAllInvariantProvidingTypesInherit(ttype, ooptype, oobinds);
+        return invprov.some((tdp) => tdp[1].validates.length !== 0);
+    }
+
+    typedeclHasInvariantsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
+        assert(ooptype.attributes.includes("__typedprimitive"), "typedeclHasInvariantsOnConstructor only valid on typedecl types");
+
+        const invprov = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
+        return invprov.some((tdp) => tdp[1].invariants.some((inv) => isBuildLevelEnabled(inv.level, this.m_buildLevel)));
+    }
+
+    typedeclHasValidatorsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
+        assert(ooptype.attributes.includes("__typedprimitive"), "typedeclHasValidatorsOnConstructor only valid on typedecl types");
+
+        if(this.typedeclHasInvariantsOnConstructor(ttype, ooptype, oobinds)) {
+            return true;
+        }
+
+        const invprov = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
+        return invprov.some((tdp) => tdp[1].validates.length !== 0);
+    }
+
+    private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+        const mdecl = fnlookup(ooptype);
         if(mdecl !== undefined) {
             if(mdecl.hasAttribute("abstract")) {
                 return undefined;
@@ -1166,7 +1267,7 @@ class TypeChecker {
 
         const options = rprovides.map((provide) => {
             const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            return this.tryGetMemberImpl<T>(provide, concept.concept, concept.binds, name, fnlookup);
+            return this.tryGetMemberImpl_helper<T>(provide, concept.concept, concept.binds, fnlookup);
         });
 
         if(options.includes(undefined)) {
@@ -1182,8 +1283,8 @@ class TypeChecker {
         return impls;
     }
 
-    private tryGetMemberDecls<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, name: string, fnlookup: (tt: OOPTypeDecl, nn: string) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
-        const mdecl = fnlookup(ooptype, name);
+    private tryGetMemberDecls_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | undefined {
+        const mdecl = fnlookup(ooptype);
         if(mdecl !== undefined) {
             if(mdecl.hasAttribute("abstract") || mdecl.hasAttribute("virtual")) {
                 return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
@@ -1197,7 +1298,7 @@ class TypeChecker {
 
         const options = rprovides.map((provide) => {
             const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            return this.tryGetMemberDecls<T>(provide, concept.concept, concept.binds, name, fnlookup);
+            return this.tryGetMemberDecls_helper<T>(provide, concept.concept, concept.binds, fnlookup);
         });
 
         if(options.includes(undefined)) {
@@ -1211,6 +1312,61 @@ class TypeChecker {
         }
 
         return decls;
+    }
+
+    resolveMember<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | string {
+        const declsopts = ttype.options.map((atom) => {
+            if (atom instanceof ResolvedEntityAtomType) {
+                const alr = this.tryGetMemberDecls_helper(ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+                if(alr === undefined) {
+                    return `Cannot resolve ${name} on type ${atom.typeID}`;    
+                }
+                else {
+                    return alr;
+                }
+            }
+            else if (atom instanceof ResolvedConceptAtomType) {
+                const rcaopts = atom.conceptTypes
+                    .map((cpt) => this.tryGetMemberDecls_helper(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+                    .filter((opt) => opt !== undefined) as OOMemberLookupInfo<T>[][];
+
+                let decls: OOMemberLookupInfo<T>[] = [];
+                for(let i = 0; i < rcaopts.length; ++i) {
+                    const newopts = (rcaopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+                    decls.push(...newopts);
+                }
+
+                if(decls.length === 0) {
+                    return `Cannot resolve ${name} on type ${atom.typeID}`;    
+                }
+                else {
+                    return decls;
+                }
+            }
+            else {
+                return `Cannot resolve ${name} on type ${atom.typeID}`;
+            }
+        });
+
+        const err = declsopts.find((opt) => typeof(opt) === "string");
+        if(err !== undefined) {
+            return err as string;
+        }
+
+        xxxx;
+
+        xxxx;
+    }
+
+    resolveMemberUniqueImpl<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolutionUniqueImpl<T> | string {
+        const resl = this.resolveMember(ttype, name, fnlookup);
+
+        if(typeof(resl) === "string") {
+            return resl;
+        }
+        else {
+            if()
+        }
     }
 
     normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
@@ -3452,7 +3608,7 @@ class TypeChecker {
 
     private checkLiteralTypedStringExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedStringExpression): ExpressionTypeEnvironment {
         const toftype = this.normalizeTypeOnly(exp.stype, env.binds);
-        this.raiseErrorIf(exp.sinfo, !(toftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), `Expected Validator for StringOf but got ${oftype.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !(toftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), `Expected Validator for StringOf but got ${toftype.typeID}`);
 
         const vtype = toftype.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType;
         const stype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl, vtype));
@@ -3473,7 +3629,7 @@ class TypeChecker {
 
     private checkLiteralASCIITypedStringExpression(env: ExpressionTypeEnvironment, exp: LiteralASCIITypedStringExpression): ExpressionTypeEnvironment {
         const toftype = this.normalizeTypeOnly(exp.stype, env.binds);
-        this.raiseErrorIf(exp.sinfo, !(toftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), `Expected Validator for StringOf but got ${oftype.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !(toftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), `Expected Validator for StringOf but got ${toftype.typeID}`);
 
         const vtype = toftype.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType;
         const stype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(this.m_assembly.getNamespace("Core").objects.get("ASCIIStringOf") as EntityTypeDecl, vtype));
@@ -3506,113 +3662,41 @@ class TypeChecker {
         return env.setResultExpression(new TIRLiteralASCIITemplateStringExpression(exp.sinfo, exp.value, this.getSpecialASCIIStringType()), undefined);
     }
 
-    private checkLiteralTypedPrimitiveDirectExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
-        const valueenv = this.typeCheckExpression(env, exp.value);
-
-        return env.setResultExpression(new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, basetype), undefined);
-    }
-
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
+        const reprtype = this.normalizeTypeOnly(exp.oftype, env.binds);
+        const valueenv = this.checkExpression(env, exp.value, reprtype);
 
+        const constype = this.normalizeTypeOnly(exp.vtype, env.binds);
+        this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
+        const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
-        return env.setResultExpression(new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, value, vtype, constype, reprtype, isSafe))
+        if(!this.typedeclHasInvariantsOnConstructor(constype, ccdecl.object, ccdecl.getBinds())) {
+            return env.setResultExpression(new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation)), undefined);
+        }
+        else {
+            const invdecls = this.getAllInvariantProvidingTypesTypedecl(constype, ccdecl.object, ccdecl.getBinds());
+            const chkinvsaa = invdecls.map((idp) => { 
+                let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+                return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
+            });
+
+            const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
+            return env.setResultExpression(new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation), chkinvs), undefined);
+        }
     }
 
+    private checkAccessFormatInfo(env: ExpressionTypeEnvironment, exp: AccessFormatInfo): ExpressionTypeEnvironment {
+        assert(false, "TODO: maybe this is ok for string formats but right now this shouldn't happen");
 
-
-    private checkTypedTypedNumericConstructor_helper(sinfo: SourceInfo, env: ExpressionTypeEnvironment, value: string, tntt: ResolvedType, ntype: ResolvedType): ExpressionTypeEnvironment {
-        const oftype = (tntt.options[0] as ResolvedEntityAtomType).object;
-        const ofbinds = (tntt.options[0] as ResolvedEntityAtomType).binds;
-        this.raiseErrorIf(sinfo, !oftype.attributes.includes("__typedprimitive"), `Cannot construct typed primitive ${tntt.typeID}`);
-        this.raiseErrorIf(sinfo, !(ntype.options[0] as ResolvedEntityAtomType).object.attributes.includes("__typedeclable"), `Cannot construct typed primitive using ${ntype.typeID}`);
-
-        let nval: MIRConstantArgument = new MIRConstantNone();
-        if(ntype.isSameType(this.m_assembly.getSpecialIntType())) {
-            const biv = BigInt(value.slice(0, value.length - 1));
-            this.raiseErrorIf(sinfo, biv < INT_MIN || INT_MAX < biv, "Constant Int out of valid range");
-
-            nval = new MIRConstantInt(value);
-        }
-        else if(ntype.isSameType(this.m_assembly.getSpecialNatType())) {
-            this.raiseErrorIf(sinfo, value.startsWith("-"), "Cannot have negative Nat literal");
-            
-            const biv = BigInt(value.slice(0, value.length - 1));
-            this.raiseErrorIf(sinfo, NAT_MAX < biv, "Constant Nat out of valid range");
-
-            nval = new MIRConstantNat(value);
-        }
-        else if(ntype.isSameType(this.m_assembly.getSpecialBigIntType())) {
-            nval = new MIRConstantBigInt(value);
-        }
-        else if(ntype.isSameType(this.m_assembly.getSpecialBigNatType())) {
-            this.raiseErrorIf(sinfo, value.startsWith("-"), "Cannot have negative BigNat literal");
-
-            nval = new MIRConstantBigNat(value);
-        }
-        else if(ntype.isSameType(this.m_assembly.getSpecialRationalType())) {
-            nval = new MIRConstantRational(value);
-        }
-        else if(ntype.isSameType(this.m_assembly.getSpecialFloatType())) {
-            nval = new MIRConstantFloat(value);
-        }
-        else {
-            this.raiseErrorIf(sinfo, !ntype.isSameType(this.m_assembly.getSpecialDecimalType()), "Can only create typed numeric based literal");
-            
-            nval = new MIRConstantDecimal(value);
-        }
-
-        if(oftype.invariants.length === 0) {
-            this.m_emitter.emitLoadTypedNumeric(sinfo, nval, this.m_emitter.registerResolvedTypeReference(tntt).typeID, trgt);
-        }
-        else {
-            const fkey = MIRKeyGenerator.generateFunctionKeyWType(tntt, "@@directconstructor", ofbinds, []);
-            this.m_emitter.emitInvokeFixedFunction(sinfo, fkey.keyid, [nval], undefined, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), trgt);
-        }
-
-        return env.setUniformResultExpression(tntt);
+        return env;
     }
 
-    private checkTypedTypedNumericConstructor(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
-        if(exp.oftype !== undefined) {
-            const ntype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.oftype, new Map<string, ResolvedType>());
-            const tntt = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.vtype, env.terms);
+    private checkAccessEnvValue(env: ExpressionTypeEnvironment, exp: AccessEnvValue): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, xxxx, `Can only access "environment" variables in task actions`);
 
-            return this.checkTypedTypedNumericConstructor_helper(exp.sinfo, env, exp.value, tntt, ntype, trgt);
-        }
-        else {
-            const tntt = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.vtype, new Map<string, ResolvedType>());
-            this.raiseErrorIf(exp.sinfo, !tntt.isUniqueCallTargetType(), "Expected unique typed primitive");
-            
-            const vdecl = tntt.getUniqueCallTargetType().object.memberMethods.find((mm) => mm.name === "value");
-            this.raiseErrorIf(exp.sinfo, vdecl === undefined, "Missing value definition on typed primitive");
+        const valtype = this.normalizeTypeOnly(exp.valtype, env.binds);
 
-            const ntype = this.resolveAndEnsureTypeOnly(exp.sinfo, (vdecl as MemberMethodDecl).invoke.resultType, new Map<string, ResolvedType>());
-
-            let vspec = "[UNDEFINED]";
-            if(ntype.isSameType(this.m_assembly.getSpecialIntType())) {
-                vspec = "i";
-            }
-            else if(ntype.isSameType(this.m_assembly.getSpecialBigIntType())) {
-                vspec = "I";
-            }
-            else if(ntype.isSameType(this.m_assembly.getSpecialNatType())) {
-                vspec = "n";
-            }
-            else if(ntype.isSameType(this.m_assembly.getSpecialBigNatType())) {
-                vspec = "N";
-            }
-            else if(ntype.isSameType(this.m_assembly.getSpecialFloatType())) {
-                vspec = "f";
-            }
-            else if(ntype.isSameType(this.m_assembly.getSpecialDecimalType())) {
-                vspec = "d";
-            }
-            else {
-                vspec = "R";
-            }
-
-            return this.checkTypedTypedNumericConstructor_helper(exp.sinfo, env, exp.value + vspec, tntt, ntype, trgt);
-        }
+        return env.setResultExpression(new TIRAccessEnvValue(exp.sinfo, exp.keyname, valtype, exp.orNoneMode), undefined);
     }
 
     private checkAccessNamespaceConstant(env: ExpressionTypeEnvironment, exp: AccessNamespaceConstantExpression): ExpressionTypeEnvironment {
@@ -3623,46 +3707,35 @@ class TypeChecker {
         const cdecl = nsdecl.consts.get(exp.name) as NamespaceConstDecl;
 
         this.raiseErrorIf(exp.sinfo, cdecl.value.captured.size !== 0, "Expression uses unbound variables");
-        const cexp = this.m_assembly.compileTimeReduceConstantExpression(cdecl.value.exp, env.terms, this.resolveAndEnsureTypeOnly(exp.sinfo, cdecl.declaredType, new Map<string, ResolvedType>()));
-        const rtype = this.resolveAndEnsureTypeOnly(exp.sinfo, cdecl.declaredType, new Map<string, ResolvedType>());
+        const cexp = this.compileTimeReduceConstantExpression(cdecl.value.exp, TemplateBindScope.createEmptyBindScope());
+        const rtype = this.normalizeTypeOnly(cdecl.declaredType, TemplateBindScope.createEmptyBindScope());
 
         if (cexp !== undefined) {
-            const ccreg = this.m_emitter.generateTmpRegister();
-            const vtype = this.checkExpression(env, cexp, ccreg, undefined).getExpressionResult().valtype;
-            this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertIfNeeded(exp.sinfo, ccreg, vtype, rtype), trgt, this.m_emitter.registerResolvedTypeReference(rtype), undefined);
+            return this.checkExpression(env, cexp, undefined);
         }
         else {
-            const gkey = this.m_emitter.registerPendingGlobalProcessing(cdecl, rtype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, new MIRGlobalVariable(gkey.keyid, gkey.shortname), trgt, this.m_emitter.registerResolvedTypeReference(rtype), undefined);
+            return env.setResultExpression(new TIRAccessNamespaceConstantExpression(exp.sinfo, exp.ns, exp.name, rtype), undefined);
         }
-
-        return env.setUniformResultExpression(rtype);
     }
 
     private checkAccessStaticField(env: ExpressionTypeEnvironment, exp: AccessStaticFieldExpression): ExpressionTypeEnvironment {
-        const oftype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.stype, env.terms);
+        const oftype = this.normalizeTypeOnly(exp.stype, env.binds);
 
-        const cdecltry = this.m_assembly.tryGetConstMemberUniqueDeclFromType(oftype, exp.name);
-        this.raiseErrorIf(exp.sinfo, cdecltry === undefined, `Constant value "${exp.name}" not defined (or not uniquely defined) for type ${oftype.typeID}`);
+        const [ootype, oobinds] = oftype.tryGetUniqueOOTypeInfo();
+        this.raiseErrorIf(exp.sinfo, ootype === undefined, `Access type must be a unique type but got ${oftype.typeID}`);
 
+        const cdecltry = this.tryGetMemberImplUnique<StaticMemberDecl>("const member field", exp.sinfo, oftype, ootype as OOPTypeDecl, oobinds, exp.name, (tt, nn) => tt.staticMembers.find((sm) => sm.name === nn));
         const cdecl = cdecltry as OOMemberLookupInfo<StaticMemberDecl>;
         
-        this.raiseErrorIf(exp.sinfo, (cdecl.decl.value as ConstantExpressionValue).captured.size !== 0, "Expression uses unbound variables");
-        const cexp = this.m_assembly.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.terms, this.resolveAndEnsureTypeOnly(exp.sinfo, cdecl.decl.declaredType, cdecl.binds));
-        const rtype = this.resolveAndEnsureTypeOnly(exp.sinfo, cdecl.decl.declaredType, cdecl.binds);
+        const cexp = this.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.binds);
+        const rtype = this.normalizeTypeOnly(cdecl.decl.declaredType, TemplateBindScope.createBaseBindScope(cdecl.oobinds));
         
         if (cexp !== undefined) {
-            const ccreg = this.m_emitter.generateTmpRegister();
-            const vtype = this.checkExpression(env, cexp, ccreg, undefined).getExpressionResult().valtype;
-            this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertIfNeeded(exp.sinfo, ccreg, vtype, rtype), trgt, this.m_emitter.registerResolvedTypeReference(rtype), undefined);
+            return this.checkExpression(env, cexp, undefined);
         }
         else {
-            const rctype = this.resolveOOTypeFromDecls(cdecl.contiainingType, cdecl.binds);
-            const skey = this.m_emitter.registerPendingConstProcessing(rctype, [this.m_emitter.registerResolvedTypeReference(rctype), cdecl.contiainingType, cdecl.binds], cdecl.decl, cdecl.binds, rtype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, new MIRGlobalVariable(skey.keyid, skey.shortname), trgt, this.m_emitter.registerResolvedTypeReference(rtype), undefined);
+            return env.setResultExpression(new TIRAccessStaticFieldExpression(exp.sinfo, oftype, exp.name, rtype), undefined);
         }
-        
-        return env.setUniformResultExpression(rtype);
     }
 
     private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression): ExpressionTypeEnvironment {
@@ -3670,10 +3743,13 @@ class TypeChecker {
 
         const vinfo = env.lookupVar(exp.name) as VarInfo;
         this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
-        this.m_emitter.emitRegisterStore(exp.sinfo, new MIRRegisterArgument(exp.name), trgt, this.m_emitter.registerResolvedTypeReference(vinfo.declaredType), undefined);    
 
-        return env.setVarResultExpression(vinfo.declaredType, vinfo.flowType, exp.name);
+        return env.setResultExpression(new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkVarInfer(env, vinfo.infer, exp.name)), undefined);
     }
+
+
+
+
 
     private checkConstructorPrimary(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryExpression): ExpressionTypeEnvironment {
         const ctype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.ctype, env.terms);
@@ -5992,7 +6068,7 @@ class TypeChecker {
         return ExpressionTypeEnvironment.join(this.m_assembly, ...results.map((eev) => eev.popLocalScope().setUniformResultExpression(etype)));
     }
 
-    private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined, extraok?: { refok: boolean, orok: boolean }): ExpressionTypeEnvironment {
+    private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, infertype: ResolvedType | undefined, refok?: boolean): ExpressionTypeEnvironment {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression:
                 return this.checkLiteralNoneExpression(env, exp as LiteralNoneExpression, trgt);
