@@ -1760,10 +1760,12 @@ class Parser {
         return new ConstructorPCodeExpression(sinfo, allAuto, sig);
     }
 
-    private parseFollowTypeTag(incontext: string): TypeSignature {
+    private parseFollowTypeTag(incontext: string, hassep: boolean): TypeSignature {
         const sinfo = this.getCurrentSrcInfo();
 
-        this.ensureAndConsumeToken(TokenStrings.FollowTypeSep, incontext);
+        if(hassep) {
+            this.ensureAndConsumeToken(TokenStrings.FollowTypeSep, incontext);
+        }
 
         if (this.testToken(TokenStrings.Template)) {
             return this.parseTemplateTypeReference();
@@ -1894,15 +1896,29 @@ class Parser {
         }
         else if (tk === TokenStrings.TypedString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            const ttype = this.parseFollowTypeTag("typed string");
-    
-            return new LiteralTypedStringExpression(sinfo, sstr, ttype);
+            if (this.testToken(TokenStrings.FollowTypeSep)) {
+                const ttype = this.parseFollowTypeTag("typed primitive", true);
+
+                const asstr = "\"" + sstr.slice(1, sstr.length - 1) + "\"";
+                return new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralStringExpression(sinfo, asstr), ttype);
+            }
+            else {
+                const ttype = this.parseFollowTypeTag("typed string", false);
+                return new LiteralTypedStringExpression(sinfo, sstr, ttype);
+            }
         }
         else if (tk === TokenStrings.ASCIITypedString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            const ttype = this.parseFollowTypeTag("ascii typed string");
-    
-            return new LiteralASCIITypedStringExpression(sinfo, sstr, ttype);
+            if (this.testToken(TokenStrings.FollowTypeSep)) {
+                const ttype = this.parseFollowTypeTag("typed primitive", true);
+
+                const asstr = "\"" + sstr.slice("ascii{".length + 1, sstr.length - (1 + "}".length)) + "\"";
+                return new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralASCIIStringExpression(sinfo, asstr), ttype);
+            }
+            else {
+                const ttype = this.parseFollowTypeTag("ascii typed string", false);
+                return new LiteralASCIITypedStringExpression(sinfo, sstr, ttype);
+            }
         }
         else if (tk === TokenStrings.TemplateString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
@@ -2145,24 +2161,18 @@ class Parser {
 
         let exp = this.parsePrimaryExpression();
         if (this.testToken(TokenStrings.FollowTypeSep)) {
-            const ttype = this.parseFollowTypeTag("typed primitive");
+            const ttype = this.parseFollowTypeTag("typed primitive", true);
 
-            if (exp instanceof LiteralBoolExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, new NominalTypeSignature(sinfo, "Core", ["Bool"]), ttype), ops];
-            }
-            else if (exp instanceof LiteralIntegralExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.itype, ttype), ops];
-            }
-            else if (exp instanceof LiteralFloatPointExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.fptype, ttype), ops];
-            }
-            else if (exp instanceof LiteralRationalExpression) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, exp.rtype, ttype), ops];
+            const okexp = (exp instanceof LiteralBoolExpression) || (exp instanceof LiteralIntegralExpression) || (exp instanceof LiteralFloatPointExpression) ||
+                (exp instanceof LiteralRationalExpression) || (exp instanceof LiteralStringExpression) || (exp instanceof LiteralASCIIStringExpression);
+                //Typed strings handled in parse primary
+
+            if(okexp) {
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, ttype), ops];
             }
             else {
-                this.raiseError(sinfo.line, "Expected literal value -- bool, int, float, or rational");
-
-                return [new InvalidExpression(sinfo), ops];
+                this.raiseError(sinfo.line, `Only literal values can be used in typed initializers`);
+                return [new InvalidExpression(sinfo), []];
             }
         }
         else {

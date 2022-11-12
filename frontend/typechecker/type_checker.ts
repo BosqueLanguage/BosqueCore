@@ -9,7 +9,7 @@ import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityType
 import { SourceInfo, unescapeLiteralString } from "../ast/parser";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "../tree_ir/tir_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
-import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, xxxx } from "../tree_ir/tir_body";
+import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 import { BSQRegex } from "../bsqregex";
@@ -51,9 +51,10 @@ class OOMemberResolution<T> {
     readonly impl: OOMemberLookupInfo<T>[]; //may be no candidates for the actual implementation (then this is a virtual call)
     readonly totalimpls: boolean; //true if every option resolved to an implementation (false if some resolutions didn't find a concrete implementation)
 
-    constructor(decl: OOMemberLookupInfo<T>, impl: OOMemberLookupInfo<T>[] | undefined) {
+    constructor(decl: OOMemberLookupInfo<T>, impl: OOMemberLookupInfo<T>[], istotal: boolean) {
         this.decl = decl;
         this.impl = impl;
+        this.totalimpls = istotal;
     }
 }
 
@@ -144,7 +145,7 @@ class TypeChecker {
                     return undefined;
                 }
             }
-            if (exp instanceof LiteralASCIITypedStringExpression) {
+            else if (exp instanceof LiteralASCIITypedStringExpression) {
                 const oftype = this.normalizeTypeOnly(exp.stype, binds);
                 const ootype = oftype.tryGetUniqueEntityTypeInfo();
                 if (ootype instanceof ResolvedValidatorEntityAtomType) {
@@ -172,23 +173,16 @@ class TypeChecker {
             return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds);
         }
         else if (exp instanceof AccessStaticFieldExpression) {
-            const oftype = this.normalizeTypeOnly(exp.stype, binds);
-
-            const [ootype, oobinds] = oftype.tryGetUniqueOOTypeInfo();
-            if(ootype === undefined) {
-                return undefined;
-            }
-
-            const cdecltry = this.tryGetMemberImpl<StaticMemberDecl>(oftype, ootype, oobinds, exp.name, (tt, nn) => tt.staticMembers.find((sm) => sm.name === nn));
-            if(cdecltry === undefined || cdecltry.length !== 1) {
+            const sfimpl = this.resolveMemberConst(exp.sinfo, this.normalizeTypeOnly(exp.stype, binds), exp.name);
+            if(sfimpl === undefined) {
                 return undefined;
             }
     
-            if(cdecltry[0].decl.attributes.includes("__enum_type")) {
+            if(sfimpl[0].decl.attributes.includes("__enum_type")) {
                 return exp;
             }
             else {
-                return cdecltry[0].decl.value !== undefined ? this.compileTimeReduceConstantExpression(cdecltry[0].decl.value.exp, TemplateBindScope.createBaseBindScope(cdecltry[0].oobinds)) : undefined;
+                return sfimpl[0].decl.value !== undefined ? this.compileTimeReduceConstantExpression(sfimpl[0].decl.value.exp, TemplateBindScope.createBaseBindScope(sfimpl[0].oobinds)) : undefined;
             }
         }
         else {
@@ -204,16 +198,14 @@ class TypeChecker {
 
         if(cexp instanceof AccessStaticFieldExpression) {
             //must be an enum type
-            const stype = this.normalizeTypeOnly(cexp.stype, TemplateBindScope.createEmptyBindScope());
-            this.raiseErrorIf(exp.sinfo, !(stype.tryGetUniqueEntityTypeInfo() instanceof ResolvedEnumEntityAtomType), "Expected an enum type here");
-            
-            const cmf = this.tryGetConstMemberUniqueDeclFromType(stype, cexp.name);
-            this.raiseErrorIf(exp.sinfo, cmf === undefined, `Enum ${cexp.name} no defined on type ${stype.typeID}`);
+            const stype = this.normalizeTypeOnly(cexp.stype, binds);
+            const cmf = this.resolveMemberConst(exp.sinfo, stype, cexp.name);
+            this.raiseErrorIf(exp.sinfo, cmf === undefined, `Enum ${cexp.name} not defined on type ${stype.typeID}`);
 
             const cfi = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
-            const nexp = new TIRAccessStaticFieldExpression(exp.sinfo, cfi.decl.declaredType, stype, cexp.name);
+            const nexp = new TIRAccessStaticFieldExpression(exp.sinfo, stype, cexp.name, this.normalizeTypeOnly(cfi.decl.declaredType, TemplateBindScope.createBaseBindScope(cfi.oobinds)));
 
-            return new TIRLiteralValue(exp, nexp.etype, nexp.expstr);
+            return new TIRLiteralValue(nexp, nexp.tlayout, nexp.expstr);
         }
         else {
             assert(cexp.isLiteralValueExpression());
@@ -264,13 +256,27 @@ class TypeChecker {
                 return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
             }
             else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
-                xxxx;
-                const tilexp = this.typeCheck(lexp.value);
-                const vtype = this.normalizeTypeOnly(lexp.vtype, binds);
-                const vv = (/.*[inINfdR]$/.test(lexp.value)) ? lexp.value.slice(0, lexp.value.length - 1) : lexp.value;
+                const constype = this.normalizeTypeOnly(cexp.constype, binds);
+                const lexp = this.reduceLiteralValueToCanonicalForm(cexp.value, binds);
 
-                const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, )
-                return [lexp, vtype, `${vv}#${vtype.typeID}`];
+                this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
+                const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
+
+                if (!this.typedeclHasInvariantsOnConstructor(constype, ccdecl.object, ccdecl.getBinds())) {
+                    const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation));
+                    return new TIRLiteralValue(nexp, nexp.constype, nexp.expstr);
+                }
+                else {
+                    const invdecls = this.getAllInvariantProvidingTypesTypedecl(constype, ccdecl.object, ccdecl.getBinds());
+                    const chkinvsaa = invdecls.map((idp) => {
+                        let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+                        return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
+                    });
+
+                    const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
+                    const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation), chkinvs);
+                    return new TIRLiteralValue(nexp, nexp.constype, nexp.expstr);
+                }
             }
             else if(cexp instanceof LiteralTypeValueExpression) {
                 const texp = this.normalizeTypeOnly(cexp.vtype, binds);
@@ -288,17 +294,18 @@ class TypeChecker {
         }
     }
 
-    private checkVarInfer(env: ExpressionTypeEnvironment, vinfer: ResolvedType, ename: string): ResolvedType {
+    private checkExpInfer(env: ExpressionTypeEnvironment, einfer: ResolvedType, ename: string): ResolvedType {
         const eii = env.expInferInfo.get(ename);
         if(eii === undefined) {
-            return vinfer;
+            return einfer;
         }
         else {
-            if(this.subtypeOf(eii.infertype, vinfer)) {
-                return eii.infertype;
+            //Note we prefer the infer type unless the subtype is strictly better -- think of it like for variables and their declared type vs infer type
+            if(this.subtypeOf(einfer, eii.infertype)) {
+                return einfer;
             }
             else {
-                return vinfer;
+                return eii.infertype;
             }
         }
     }
@@ -1205,6 +1212,8 @@ class TypeChecker {
     getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
         let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
 
+        xxxx; //also need to get any validating regex from validator strings or paths
+
         if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
             return declinvs;
         }
@@ -1345,12 +1354,6 @@ class TypeChecker {
             return ResolveResultFlag.failure;
         }
 
-        //We didn't find any resolution then this fails too
-        if (declsopts.length === 0) {
-            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
-            return ResolveResultFlag.failure;
-        }
-
         let decls: OOMemberLookupInfo<T>[] = [];
         for (let i = 0; i < declsopts.length; ++i) {
             const newopts = (declsopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
@@ -1362,43 +1365,71 @@ class TypeChecker {
             return ResolveResultFlag.failure;
         }
 
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
         //impls
         const implopts = atom.conceptTypes
             .map((cpt) => this.tryGetMemberImpl_helper(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
             .filter((opt) => opt !== ResolveResultFlag.notfound);
 
         //Lookup failed
-        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+        if(implopts.some((opt) => opt === ResolveResultFlag.failure)) {
             return ResolveResultFlag.failure;
         }
 
         //ok not to find an implementation
 
+        let impls: OOMemberLookupInfo<T>[] = [];
+        for (let i = 0; i < implopts.length; ++i) {
+            const newopts = (implopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            impls.push(...newopts);
+        }
 
-
-
-        return new OOMemberResolution<T>(decls, impls);
+        return new OOMemberResolution<T>(decls[0], impls, impls.length > 0);
     }
 
     //When resolving a member on an entity we must find a unique decl and a unique or more implementation
     //const/function/field/method lookups will assert that an implementation was found
     resolveMemberFromEntityAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedEntityAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const decls = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+        
+        //Lookup failed
+        if(decls === ResolveResultFlag.notfound) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if(decls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const impls = this.tryGetMemberImpl_helper(ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+
+        //Lookup failed
+        if(impls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls !== ResolveResultFlag.notfound ? impls : [], impls !== ResolveResultFlag.notfound);
     }
 
     resolveMember<T extends OOMemberDecl>(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
-        const declsopts = ttype.options.map((atom) => {
+        const sopts = ttype.options.map((atom) => {
             if (atom instanceof ResolvedEntityAtomType) {
-                const alr = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
-                if(alr === undefined) {
-                    this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
-                    return ResolveResultFlag.failure;
-                }
-                else {
-                    return alr;
-                }
+                return this.resolveMemberFromEntityAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
             }
             else if (atom instanceof ResolvedConceptAtomType) {
-                xxxx;
+                return this.resolveMemberFromConceptAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
             }
             else {
                 this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
@@ -1406,69 +1437,140 @@ class TypeChecker {
             }
         });
 
-        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+        if(sopts.some((opt) => opt === ResolveResultFlag.failure)) {
             return ResolveResultFlag.failure;
         }
 
-        const implopts = xxxx;
-        xxxx;
+        let decls: OOMemberLookupInfo<T>[] = [];
+        let impls: OOMemberLookupInfo<T>[] = [];
+        let totalresolve = true;
+        for (let i = 0; i < sopts.length; ++i) {
+            const declopt = (sopts[i] as OOMemberResolution<T>).decl;
+            const implopts = (sopts[i] as OOMemberResolution<T>).impl;
 
-        xxxx;
+            if(!decls.some((info) => info.ttype.typeID === declopt.ttype.typeID)) {
+                decls.push(declopt);
+            }
+
+            const newimpls = implopts.filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));;
+            impls.push(...newimpls);
+
+            totalresolve = totalresolve && (sopts[i] as OOMemberResolution<T>).totalimpls;
+        }
+
+        if(decls.length !== 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${ttype.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[1], impls, totalresolve);
     }
 
-    resolveMemberStatic<T extends OOMemberDecl> (ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolutionUniqueImpl<T> | string {
-        const resl = this.resolveMember(ttype, name, fnlookup);
+    resolveMemberConst(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
+        const resl = this.resolveMember<StaticMemberDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticMembers.find((sm) => sm.name === name));
+        if(!(resl instanceof OOMemberResolution<StaticMemberDecl>)) {
+            return undefined;
+        }
 
-        if(typeof(resl) === "string") {
-            return resl;
+        if(!resl.totalimpls) {
+            return undefined;
         }
-        else {
-            if()
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple constant values found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
         }
+
+        return resl.impl[0];
     }
 
-    resolveMemberConst(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => StaticMemberDecl | undefined): OOMemberResolutionUniqueImpl<StaticMemberDecl> | string {
-        const resl = this.resolveMember(ttype, name, fnlookup);
+    resolveMemberFunction(sinfo: SourceInfo, ttype: ResolvedType, name: string, argc: number[]): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
+        const resl = this.resolveMember<StaticFunctionDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => {
+            return tt.staticFunctions.find((sf) => {
+                if(sf.name !== name || sf.invoke.params.length !== argc.length) {
+                    return false;
+                }
 
-        if(typeof(resl) === "string") {
-            return resl;
+                for(let i = 0; i < argc.length; ++i) {
+                    if(!(sf.invoke.params[i].type instanceof FunctionTypeSignature)) {
+                        if(argc[i] !== 0) {
+                            return false;
+                        }
+                    }
+                    else {
+                        const llc = (sf.invoke.params[i].type as FunctionTypeSignature).params.length;
+                        if (argc[i] !== llc) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            });
+        });
+
+        if(!(resl instanceof OOMemberResolution<StaticFunctionDecl>)) {
+            return undefined;
         }
-        else {
-            if()
+
+        if(!resl.totalimpls) {
+            return undefined;
         }
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple member function implementations found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
+        }
+
+        return resl.impl[0];
     }
 
-    resolveMemberFunction(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => StaticFunctionDecl | undefined): OOMemberResolutionUniqueImpl<StaticFunctionDecl> | string {
-        const resl = this.resolveMember(ttype, name, fnlookup);
+    resolveMemberField(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberFieldDecl | undefined): OOMemberLookupInfo<MemberFieldDecl> | undefined {
+        const resl = this.resolveMember<MemberFieldDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberFields.find((sm) => sm.name === name));
+        if(!(resl instanceof OOMemberResolution<MemberFieldDecl>)) {
+            return undefined;
+        }
 
-        if(typeof(resl) === "string") {
-            return resl;
+        if(!resl.totalimpls) {
+            return undefined;
         }
-        else {
-            if()
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple member field versions found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
         }
+
+        return resl.impl[0];
     }
 
-    resolveMemberField(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberFieldDecl | undefined): OOMemberResolutionUniqueImpl<MemberFieldDecl> | string {
-        const resl = this.resolveMember(ttype, name, fnlookup);
+    resolveMemberMethod(sinfo: SourceInfo, ttype: ResolvedType, name: string, argc: number[]): OOMemberResolution<MemberMethodDecl> | undefined {
+        const resl = this.resolveMember<MemberMethodDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => {
+            return tt.memberMethods.find((mf) => {
+                if(mf.name !== name || mf.invoke.params.length !== argc.length) {
+                    return false;
+                }
 
-        if(typeof(resl) === "string") {
-            return resl;
-        }
-        else {
-            if()
-        }
-    }
+                for(let i = 0; i < argc.length; ++i) {
+                    if(!(mf.invoke.params[i].type instanceof FunctionTypeSignature)) {
+                        if(argc[i] !== 0) {
+                            return false;
+                        }
+                    }
+                    else {
+                        const llc = (mf.invoke.params[i].type as FunctionTypeSignature).params.length;
+                        if (argc[i] !== llc) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            });
+        });
 
-    resolveMemberMethod(ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberMethodDecl | undefined): OOMemberResolutionUniqueImpl<MemberMethodDecl> | string {
-        const resl = this.resolveMember(ttype, name, fnlookup);
+        if(!(resl instanceof OOMemberResolution<MemberMethodDecl>)) {
+            return undefined;
+        }
 
-        if(typeof(resl) === "string") {
-            return resl;
-        }
-        else {
-            if()
-        }
+        return resl;
     }
 
     normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
@@ -3773,10 +3875,12 @@ class TypeChecker {
     }
 
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
-        const reprtype = this.normalizeTypeOnly(exp.oftype, env.binds);
-        const valueenv = this.checkExpression(env, exp.value, reprtype);
+        const valueenv = this.checkExpression(env, exp.value, undefined);
+        assert(valueenv.expressionResult.tinfer.isSameType(valueenv.expressionResult.tlayout), "Expression should always be a literal value so what happened here???");
 
-        const constype = this.normalizeTypeOnly(exp.vtype, env.binds);
+        const reprtype = valueenv.expressionResult.tlayout;
+        
+        const constype = this.normalizeTypeOnly(exp.constype, env.binds);
         this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
         const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
@@ -3830,13 +3934,11 @@ class TypeChecker {
 
     private checkAccessStaticField(env: ExpressionTypeEnvironment, exp: AccessStaticFieldExpression): ExpressionTypeEnvironment {
         const oftype = this.normalizeTypeOnly(exp.stype, env.binds);
+        const cmf = this.resolveMemberConst(exp.sinfo, oftype, exp.name);
+        this.raiseErrorIf(exp.sinfo, cmf === undefined, `const ${exp.name} not defined on type ${oftype.typeID}`);
 
-        const [ootype, oobinds] = oftype.tryGetUniqueOOTypeInfo();
-        this.raiseErrorIf(exp.sinfo, ootype === undefined, `Access type must be a unique type but got ${oftype.typeID}`);
-
-        const cdecltry = this.tryGetMemberImplUnique<StaticMemberDecl>("const member field", exp.sinfo, oftype, ootype as OOPTypeDecl, oobinds, exp.name, (tt, nn) => tt.staticMembers.find((sm) => sm.name === nn));
-        const cdecl = cdecltry as OOMemberLookupInfo<StaticMemberDecl>;
-        
+        const cdecl = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
+        this.raiseErrorIf(exp.sinfo, (cdecl.decl.value as ConstantExpressionValue).captured.size !== 0, "Expression uses unbound variables");
         const cexp = this.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.binds);
         const rtype = this.normalizeTypeOnly(cdecl.decl.declaredType, TemplateBindScope.createBaseBindScope(cdecl.oobinds));
         
@@ -3854,7 +3956,7 @@ class TypeChecker {
         const vinfo = env.lookupVar(exp.name) as VarInfo;
         this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
 
-        return env.setResultExpression(new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkVarInfer(env, vinfo.infer, exp.name)), undefined);
+        return env.setResultExpression(new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkExpInfer(env, vinfo.flowType, exp.name)), undefined);
     }
 
 

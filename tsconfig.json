@@ -13,6 +13,10 @@
         "outDir": "bin"
     },
     "include": [
-        "frontend/*.ts"
-, "frontend/ast/assembly.ts", "frontend/tree_ir/tir_type.ts"    ]
+        "frontend/*.ts", 
+        "frontend/ast/*.ts", 
+        "frontend/tree_ir/*.ts",
+        "frontend/typechecker/*.ts",
+        "frontend/tsinterp/*.ts"
+    ]
 }

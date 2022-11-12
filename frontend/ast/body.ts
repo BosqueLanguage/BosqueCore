@@ -345,14 +345,12 @@ class LiteralASCIITemplateStringExpression extends Expression {
 
 class LiteralTypedPrimitiveConstructorExpression extends Expression {
     readonly value: Expression;
-    readonly oftype: TypeSignature;
-    readonly vtype: TypeSignature;
+    readonly constype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: Expression, oftype: TypeSignature, vtype: TypeSignature) {
+    constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
         super(ExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo);
         this.value = value;
-        this.oftype = oftype;
-        this.vtype = vtype;
+        this.constype = constype;
     }
 
     isCompileTimeInlineValue(): boolean {

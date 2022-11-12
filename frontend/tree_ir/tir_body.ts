@@ -277,6 +277,10 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
 
         this.chkinvs = chkinvs;
     }
+
+    //
+    //TODO: compiler may want to treat this like a constant and precompute with a reference for any uses
+    //
 }
 
 class TIRAccessEnvValue extends TIRExpression {
