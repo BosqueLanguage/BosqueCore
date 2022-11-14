@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { JS, NFA, Words } from "refa";
 
 class RegexParser {
     readonly currentns: string;
@@ -265,12 +266,14 @@ class BSQRegex {
         this.re = re;
     }
 
-    compileToJS(): string {
-        //
-        //TODO: we actually have NFA semantics for our regex -- JS matching is a subset so we need to replace this!!!
-        //      e.g. see https://dannysu.com/2015/10/31/regex-nfa/
-        //
-        return "^" + this.re.compileToJS() + "$";
+    acceptsString(str: string): boolean {
+        //Do I need to add the "^" and "$" anchors or does test do that?
+        const jsre = RegExp(this.re.compileToJS());
+
+        const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
+	    const nfa = NFA.fromRegex(expression, { maxCharacter });
+
+        return nfa.test(Words.fromStringToUnicode(str));
     }
 
     compileToPatternToSMT(ascii: boolean): string {

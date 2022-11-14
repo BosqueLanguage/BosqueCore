@@ -26,8 +26,19 @@ class PathValidator {
             this.query = query;
             this.fragment = fragment;
     }
-}
 
+    acceptsPath(pth: string): boolean {
+        xxxx;
+    }
+
+    acceptsPathFragment(pth: string): boolean {
+        xxxx;
+    }
+
+    acceptsPathGlob(pth: string): boolean {
+        xxxx;
+    }
+}
 
 export {
     PathValidator

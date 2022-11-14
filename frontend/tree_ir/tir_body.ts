@@ -347,6 +347,6 @@ export {
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression,
-    xxxx,
+    qqqq;
     TIRLiteralValue
 };

@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
+import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { SourceInfo, unescapeLiteralString } from "../ast/parser";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "../tree_ir/tir_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
@@ -65,7 +65,11 @@ enum ResolveResultFlag {
 
 class TIRInvokeIDGenerator {
     static generateInvokeIDForInvariant(ttype: ResolvedType, invidx: number): TIRInvokeID {
-        return `inv_${ttype.typeID}$${invidx}`;
+        return `invariant_${ttype.typeID}$${invidx}`;
+    }
+
+    static generateInvokeIDForValidate(ttype: ResolvedType, invidx: number): TIRInvokeID {
+        return `validate_${ttype.typeID}$${invidx}`;
     }
 
     static generateInvokeIDForConstExp(): TIRInvokeID {
@@ -178,11 +182,11 @@ class TypeChecker {
                 return undefined;
             }
     
-            if(sfimpl[0].decl.attributes.includes("__enum_type")) {
+            if(sfimpl.decl.attributes.includes("__enum_type")) {
                 return exp;
             }
             else {
-                return sfimpl[0].decl.value !== undefined ? this.compileTimeReduceConstantExpression(sfimpl[0].decl.value.exp, TemplateBindScope.createBaseBindScope(sfimpl[0].oobinds)) : undefined;
+                return sfimpl.decl.value !== undefined ? this.compileTimeReduceConstantExpression(sfimpl.decl.value.exp, TemplateBindScope.createBaseBindScope(sfimpl.oobinds)) : undefined;
             }
         }
         else {
@@ -258,11 +262,17 @@ class TypeChecker {
             else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
                 const constype = this.normalizeTypeOnly(cexp.constype, binds);
                 const lexp = this.reduceLiteralValueToCanonicalForm(cexp.value, binds);
+                this.raiseErrorIf(exp.sinfo, lexp !== undefined, "Not a literal expression");
 
                 this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
                 const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
-                if (!this.typedeclHasInvariantsOnConstructor(constype, ccdecl.object, ccdecl.getBinds())) {
+                this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== (lexp as TIRLiteralValue).ltype.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
+
+                const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
+                xxxx;
+
+                if (typdeclchks.inv.length === 0) {
                     const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation));
                     return new TIRLiteralValue(nexp, nexp.constype, nexp.expstr);
                 }
@@ -1212,8 +1222,6 @@ class TypeChecker {
     getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
         let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
 
-        xxxx; //also need to get any validating regex from validator strings or paths
-
         if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
             return declinvs;
         }
@@ -1225,7 +1233,10 @@ class TypeChecker {
             declinvs = this.getAllInvariantProvidingTypesTypedecl(oftype, ccdecl.valuetype.object, ccdecl.valuetype.getBinds(), declinvs);
         }
         
-        if(ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
+        if((ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) 
+            || (ooptype.attributes.includes("__stringof_type") || ooptype.attributes.includes("__asciistringof_type"))
+            || (ooptype.attributes.includes("__path_type") || ooptype.attributes.includes("__pathfragment_type") || ooptype.attributes.includes("__pathglob_type"))
+        ) {
             declinvs.push([ttype, ooptype, oobinds]);
         }
 
@@ -1246,22 +1257,54 @@ class TypeChecker {
         return invprov.some((tdp) => tdp[1].validates.length !== 0);
     }
 
-    typedeclHasInvariantsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
-        assert(ooptype.attributes.includes("__typedprimitive"), "typedeclHasInvariantsOnConstructor only valid on typedecl types");
+    typedeclGenerateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: PathValidator | undefined} {
+        const invdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
 
-        const invprov = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
-        return invprov.some((tdp) => tdp[1].invariants.some((inv) => isBuildLevelEnabled(inv.level, this.m_buildLevel)));
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
+        });
+        const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
+
+        const chkvalidxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
+        });
+        const chkvalid = (chkvalidxx !== undefined) ? this.m_assembly.tryGetValidatorForFullyResolvedName((chkvalidxx[2].get("T") as ResolvedType).typeID) : undefined;
+
+        const chkpathxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
+        });
+        const chkpath = (chkpathxx !== undefined) ? this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID) : undefined;
+
+        return {inv: chkinvs, strof: chkvalid, pthof: chkpath};
     }
 
-    typedeclHasValidatorsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
-        assert(ooptype.attributes.includes("__typedprimitive"), "typedeclHasValidatorsOnConstructor only valid on typedecl types");
+    typedeclValidateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: PathValidator | undefined} {
+        const invdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
 
-        if(this.typedeclHasInvariantsOnConstructor(ttype, ooptype, oobinds)) {
-            return true;
-        }
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx] as [InvariantDecl, number])).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
+        });
 
-        const invprov = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
-        return invprov.some((tdp) => tdp[1].validates.length !== 0);
+        const chkvalidsaa = invdecls.map((idp) => {
+            let valids = idp[1].validates.map((vv, iidx) => [vv, iidx] as [ValidateDecl, number]);
+            return valids.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0], inv[1]));
+        });
+
+        const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa, ...chkvalidsaa);
+
+        const chkvalidxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
+        });
+        const chkvalid = (chkvalidxx !== undefined) ? this.m_assembly.tryGetValidatorForFullyResolvedName((chkvalidxx[2].get("T") as ResolvedType).typeID) : undefined;
+
+        const chkpathxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
+        });
+        const chkpath = (chkpathxx !== undefined) ? this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID) : undefined;
+
+        return {inv: chkinvs, strof: chkvalid, pthof: chkpath};
     }
 
     private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
@@ -3884,6 +3927,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
         const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
+        xxxx;
         if(!this.typedeclHasInvariantsOnConstructor(constype, ccdecl.object, ccdecl.getBinds())) {
             return env.setResultExpression(new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation)), undefined);
         }
