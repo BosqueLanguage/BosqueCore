@@ -1,5 +1,6 @@
 import { SourceInfo } from "../ast/parser";
 import { BSQRegex } from "../bsqregex";
+import { PathValidator } from "../path_validator";
 import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID } from "./tir_type";
 
 enum TIRExpressionTag {
@@ -265,9 +266,9 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     readonly reprtype: ResolvedType;
     readonly basetype: ResolvedType;
 
-    readonly chkinvs: TIRInvokeID[];
+    readonly chkinvs: {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: [PathValidator, "path" | "fragment" | "glob"] | undefined};
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinvs: TIRInvokeID[]) {
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinvs: {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: [PathValidator, "path" | "fragment" | "glob"] | undefined}) {
         super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
         this.value = value;
 

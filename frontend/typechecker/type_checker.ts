@@ -6,7 +6,7 @@
 import * as assert from "assert";
 
 import { Assembly, BuildApplicationMode, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
-import { SourceInfo, unescapeLiteralString } from "../ast/parser";
+import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../ast/parser";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "../tree_ir/tir_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
 import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
@@ -270,7 +270,33 @@ class TypeChecker {
                 this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== (lexp as TIRLiteralValue).ltype.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
 
                 const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
-                xxxx;
+
+                if(typdeclchks.strof !== undefined) {
+                    const litval = (lexp as TIRLiteralValue).exp;
+                    let accepts = false;
+                    if(litval instanceof TIRLiteralStringExpression) {
+                        accepts = typdeclchks.strof.acceptsString(extractLiteralStringValue(litval.expstr));
+                    }
+                    else {
+                        accepts = typdeclchks.strof.acceptsString(extractLiteralASCIIStringValue(litval.expstr));
+                    }
+                    this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy validator constraint");
+                }
+
+                if(typdeclchks.pthof !== undefined) {
+                    const litval = (lexp as TIRLiteralValue).exp;
+                    let accepts = false;
+                    if(typdeclchks.pthof[1].attributes.includes("__path_type")) {
+                        accepts = typdeclchks.pthof[0].acceptsPath(extractLiteralStringValue(litval.expstr));
+                    }
+                    else if(typdeclchks.pthof[1].attributes.includes("__pathfragment_type")) {
+                        accepts = typdeclchks.pthof[0].acceptsPathFragment(extractLiteralStringValue(litval.expstr));
+                    }
+                    else {
+                        accepts = typdeclchks.pthof[0].acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
+                    }
+                    this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
+                }
 
                 if (typdeclchks.inv.length === 0) {
                     const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation));
@@ -1257,7 +1283,7 @@ class TypeChecker {
         return invprov.some((tdp) => tdp[1].validates.length !== 0);
     }
 
-    typedeclGenerateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: PathValidator | undefined} {
+    typedeclGenerateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: [PathValidator, OOPTypeDecl] | undefined} {
         const invdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
 
         const chkinvsaa = invdecls.map((idp) => {
@@ -1274,7 +1300,7 @@ class TypeChecker {
         const chkpathxx = invdecls.find((idp) => {
             return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
         });
-        const chkpath = (chkpathxx !== undefined) ? this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID) : undefined;
+        const chkpath = (chkpathxx !== undefined) ? [this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID), chkpathxx[1]] as [PathValidator, OOPTypeDecl] : undefined;
 
         return {inv: chkinvs, strof: chkvalid, pthof: chkpath};
     }
@@ -3871,13 +3897,10 @@ class TypeChecker {
         const vv = this.m_assembly.tryGetValidatorForFullyResolvedName(toftype.typeID);
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
-        const argstr = unescapeLiteralString(exp.value.substring(1, exp.value.length - 1));
-        const mtchre = (vv as BSQRegex).compileToJS();
-        //
-        //TODO: we actually have NFA semantics for our regex -- JS matching is a subset so we need to replace this!!!
-        //
-        const mtch = new RegExp(mtchre, "u").exec(argstr);
-        this.raiseErrorIf(exp.sinfo, mtch === null || mtch[0].length !== argstr.length, "Literal string failed Validator regex");
+        const argstr = extractLiteralStringValue(exp.value);
+        const accepts = vv?.acceptsString(argstr);
+        
+        this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
         return env.setResultExpression(new TIRLiteralTypedStringExpression(exp.sinfo, exp.value, stype, vtype), undefined);
     }
@@ -3892,13 +3915,10 @@ class TypeChecker {
         const vv = this.m_assembly.tryGetValidatorForFullyResolvedName(toftype.typeID);
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
-        const argstr = unescapeLiteralString(exp.value.substring("ascii{".length + 1, exp.value.length - (1 + "}".length)));
-        const mtchre = (vv as BSQRegex).compileToJS();
-        //
-        //TODO: we actually have NFA semantics for our regex -- JS matching is a subset so we need to replace this!!!
-        //
-        const mtch = new RegExp(mtchre, "u").exec(argstr);
-        this.raiseErrorIf(exp.sinfo, mtch === null || mtch[0].length !== argstr.length, "Literal string failed Validator regex");
+        const argstr = extractLiteralASCIIStringValue(exp.value);
+        const accepts = vv?.acceptsString(argstr);
+        
+        this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
         return env.setResultExpression(new TIRLiteralASCIITypedStringExpression(exp.sinfo, exp.value, stype, vtype), undefined);
     }
@@ -3928,7 +3948,12 @@ class TypeChecker {
         const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
         xxxx;
-        if(!this.typedeclHasInvariantsOnConstructor(constype, ccdecl.object, ccdecl.getBinds())) {
+        this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== valueenv.expressionResult.tinfer.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
+
+                const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
+
+        xxxx;
+        if(typdeclchks.inv.length === 0 && typdeclchks.strof === undefined && typdeclchks.pthof === undefined) {
             return env.setResultExpression(new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation)), undefined);
         }
         else {
