@@ -9,6 +9,9 @@ import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../a
 import { TIRLiteralValue } from "./tir_body";
 
 type TIRInvokeID = string;
+type TIRTupleIndex = number;
+type TIRPropertyID = string;
+type TIRFieldID = string;
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
@@ -19,6 +22,7 @@ abstract class ResolvedAtomType {
 }
 
 class ResolvedLiteralAtomType extends ResolvedAtomType {
+    xxxx;
     readonly lexp: TIRLiteralValue;
 
     constructor(reprexp: string, lexp: TIRLiteralValue, ) {
@@ -847,7 +851,7 @@ class TemplateBindScope {
 }
 
 export {
-    TIRInvokeID,
+    TIRInvokeID, TIRTupleIndex, TIRPropertyID, TIRFieldID,
     ResolvedAtomType,
     ResolvedLiteralAtomType,
     ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 

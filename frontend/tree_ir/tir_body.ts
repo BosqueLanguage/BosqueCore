@@ -1,7 +1,7 @@
 import { SourceInfo } from "../ast/parser";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID } from "./tir_type";
+import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID, TIRPropertyID, TIRTupleIndex } from "./tir_type";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
@@ -34,6 +34,10 @@ enum TIRExpressionTag {
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
 
+    LoadIndexExpression = "LoadIndexExpression",
+    LoadPropertyExpression = "LoadPropertyExpression",
+    LoadFieldExpression = "LoadFieldExpression",
+
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
@@ -48,14 +52,8 @@ enum TIRExpressionTag {
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
 
-    IsTypeExpression = "IsTypeExpression",
-    AsTypeExpression = "AsTypeExpression",
-
-    PostfixOpExpression = "PostfixOpExpression",
-
     PrefixNotOpExpression = "PrefixNotOpExpression",
     PrefixNegateOpExpression = "PrefixNegateOpExpression",
-    xxxx,
 
     BinAddExpression = "BinAddExpression",
     BinSubExpression = "BinSubExpression",
@@ -64,6 +62,7 @@ enum TIRExpressionTag {
 
     BinKeyEqExpression = "BinKeyEqExpression",
     BinKeyNeqExpression = "BinKeyNeqExpression",
+    BinKeyLessExpression = "BinKeyLessExpression",
 
     NumericEqExpression = "NumericEqExpression",
     NumericNeqExpression = "NumericNeqExpression",
@@ -90,9 +89,22 @@ enum TIRExpressionTag {
     AbortExpression = "AbortExpression",
     CoerceTypeWidenExpression = "CoerceTypeWidenExpression",
     CoerceTypeNarrowExpression = "CoerceTypeNarrowExpression",
+    CoerceSafeTypeNarrowExpression = "CoerceSafeTypeNarrowExpression",
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
-    CreateCodePackExpression = "CreateCodePackExpression"
+    CreateCodePackExpression = "CreateCodePackExpression",
+
+    IsNoneExpression = "IsNoneExpression",
+    IsNotNoneExpresson = "IsNotNoneExpression",
+    IsNothingExpression = "IsNothingExpression",
+    IsNotNothingExpression = "IsNotNothingExpression",
+    IsTypeExpression = "IsTypeExpression",
+    IsSubTypeExpression = "IsSubTypeExpression",
+
+    CallMemberFunctionExpression = "CallMemberFunctionExpression",
+    CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
+    CallMemberFunctionSelfRefExpression = "CallMemberFunctionSelfRefExpression",
+    CallMemberFunctionDynamicSelfRefExpression = "CallMemberFunctionDynamicSelfRefExpression"
 }
 
 class TIRCodePack {
@@ -339,6 +351,32 @@ class TIRAccessVariableExpression extends TIRExpression {
     }
 }
 
+class TIRLoadIndexExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly index: TIRTupleIndex;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, index: TIRTupleIndex, resultType: ResolvedType) {
+        super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, resultType, `${exp.expstr}.${index}`);
+        this.exp = exp;
+        this.index = index;
+    }
+} 
+
+class TIRLoadPropertyExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly property: TIRPropertyID;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyID, resultType: ResolvedType) {
+        super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, resultType, `${exp.expstr}.${property}`);
+        this.exp = exp;
+        this.property = property;
+    }
+}
+
+class TIRLoadFieldExpression extends TIRExpression {
+
+}
+
 /*
 ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
@@ -353,18 +391,6 @@ ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
 
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
-
-    IsTypeExpression = "IsTypeExpression",
-    AsTypeExpression = "AsTypeExpression",
-
-    PostfixOpExpression = "PostfixOpExpression",
-        PostfixAccessFromIndex = "PostfixAccessFromIndex",
-        PostfixAccessFromName = "PostfixAccessFromName",
-
-        PostfixIs = "PostfixIs",
-        PostfixAs = "PostfixAs",
-
-        PostfixInvoke = "PostfixInvoke"
 */
 
 
@@ -460,7 +486,7 @@ class TIRBinDivExpression extends TIRExpression {
     }
 }
 
-class BinKeyEqExpression extends Expression {
+class TIRBinKeyEqExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
@@ -471,7 +497,7 @@ class BinKeyEqExpression extends Expression {
     }
 }
 
-class BinKeyNeqExpression extends Expression {
+class TIRBinKeyNeqExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
@@ -481,103 +507,6 @@ class BinKeyNeqExpression extends Expression {
         this.rhs = rhs;
     }
 }
-
-
-
-
-class BinKeyEqNoneExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyNeqNoneExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyNeqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyEqNothingExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyNeqNothingExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyNeqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyEqUniqueOneExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyNeqUniqueOneExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyNeqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyEqUniqueBothExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-class BinKeyNeqUniqueBothExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyNeqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
-    }
-}
-
-
-
-
-
-
 
 class TIRNumericEqExpression extends TIRExpression {
     readonly lhs: TIRExpression;

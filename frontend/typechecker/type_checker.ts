@@ -557,7 +557,7 @@ class TypeChecker {
     }
 
     private normalizeType_Literal(t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
-        const chkexp = this.reduceLiteralValueToCanonicalForm(t.lvalue.exp, binds);
+        const chkexp = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
         if(chkexp !== undefined) {
             const llexp = new ResolvedLiteralAtomType(chkexp.lidstr, chkexp);
             return ResolvedType.createSingle(llexp);
@@ -1701,6 +1701,7 @@ class TypeChecker {
             }
         }
         else if (t1 instanceof ResolvedLiteralAtomType) {
+            xxxx;
             const t1oft = t1.lexp.ltype;
             res = this.atomSubtypeOf(t1oft, t2);
         }
@@ -3909,9 +3910,10 @@ class TypeChecker {
         const texp = this.normalizeTypeOnly(exp.vtype, env.binds);
         this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
 
+        xxxx;
         const rlt = texp.options[0] as ResolvedLiteralAtomType;
         let ftv: FlowTypeTruthValue | undefined = undefined;
-        if(rlt.lexp instanceof LiteralBoolExpression) {
+        if(rlt.lexp instanceof TIRLiteralBoolExpression) {
             ftv = rlt.lexp.value ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
         }
 
