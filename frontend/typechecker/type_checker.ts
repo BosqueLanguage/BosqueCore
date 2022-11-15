@@ -194,140 +194,60 @@ class TypeChecker {
         }
     }
 
-    reduceLiteralValueToCanonicalForm(exp: Expression, binds: TemplateBindScope): TIRLiteralValue | undefined {
+    reduceLiteralValueToCanonicalForm(bodyid: string, exp: Expression, binds: TemplateBindScope): TIRLiteralValue | undefined {
         const cexp = this.compileTimeReduceConstantExpression(exp, binds);
         if(cexp === undefined) {
             return undefined;
         }
 
+        const literalenv = ExpressionTypeEnvironment.createInitialEnvForLiteralEval(bodyid, binds);
+        let nexp: ExpressionTypeEnvironment | undefined = undefined;
+
         if(cexp instanceof AccessStaticFieldExpression) {
-            //must be an enum type
-            const stype = this.normalizeTypeOnly(cexp.stype, binds);
-            const cmf = this.resolveMemberConst(exp.sinfo, stype, cexp.name);
-            this.raiseErrorIf(exp.sinfo, cmf === undefined, `Enum ${cexp.name} not defined on type ${stype.typeID}`);
-
-            const cfi = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
-            const nexp = new TIRAccessStaticFieldExpression(exp.sinfo, stype, cexp.name, this.normalizeTypeOnly(cfi.decl.declaredType, TemplateBindScope.createBaseBindScope(cfi.oobinds)));
-
-            return new TIRLiteralValue(nexp, nexp.tlayout, nexp.expstr);
+            nexp = this.checkAccessStaticField(literalenv, cexp);
         }
         else {
             assert(cexp.isLiteralValueExpression());
 
             if (cexp instanceof LiteralNoneExpression) {
-                const nexp = new TIRLiteralNoneExpression(exp.sinfo, this.getSpecialNoneType());
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralNoneExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralNothingExpression) {
-                const nexp = new TIRLiteralNothingExpression(exp.sinfo, this.getSpecialNothingType());
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralNothingExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralBoolExpression) {
-                const nexp = new TIRLiteralBoolExpression(exp.sinfo, this.getSpecialBoolType(), cexp.value);
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralBoolExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralIntegralExpression) {
-                const itype = this.normalizeTypeOnly(cexp.itype, TemplateBindScope.createEmptyBindScope());
-                const nexp = new TIRLiteralIntegralExpression(exp.sinfo, cexp.value, itype);
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralIntegralExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralStringExpression) {
-                const nexp = new TIRLiteralStringExpression(exp.sinfo, cexp.value, this.getSpecialStringType());
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralStringExpression(literalenv, cexp);
             }
             else if(cexp instanceof LiteralASCIIStringExpression) {
-                const nexp = new TIRLiteralASCIIStringExpression(exp.sinfo, cexp.value, this.getSpecialASCIIStringType());
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralASCIIStringExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralTypedStringExpression) {
-                const oftype = this.normalizeTypeOnly(cexp.stype, binds);
-                this.raiseErrorIf(exp.sinfo, !(oftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
-            
-                const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
-                const etype = ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
-                const nexp = new TIRLiteralTypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
-
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralTypedStringExpression(literalenv, cexp);
             }
             else if (cexp instanceof LiteralASCIITypedStringExpression) {
-                const oftype = this.normalizeTypeOnly(cexp.stype, binds);
-                this.raiseErrorIf(exp.sinfo, !(oftype.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType), "Literal type string must have validator type");
-            
-                const sofobj = this.m_assembly.getNamespace("Core").objects.get("StringOf") as EntityTypeDecl;
-                const etype = ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(sofobj, oftype.options[0] as ResolvedValidatorEntityAtomType));
-                const nexp = new TIRLiteralASCIITypedStringExpression(exp.sinfo, cexp.value, etype, oftype.options[0] as ResolvedValidatorEntityAtomType);
-
-                return new TIRLiteralValue(nexp, nexp.tinfer, nexp.expstr);
+                nexp = this.checkLiteralASCIITypedStringExpression(literalenv, cexp);
             }
             else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
-                const constype = this.normalizeTypeOnly(cexp.constype, binds);
-                const lexp = this.reduceLiteralValueToCanonicalForm(cexp.value, binds);
-                this.raiseErrorIf(exp.sinfo, lexp !== undefined, "Not a literal expression");
-
-                this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
-                const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
-
-                this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== (lexp as TIRLiteralValue).ltype.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
-
-                const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
-
-                if(typdeclchks.strof !== undefined) {
-                    const litval = (lexp as TIRLiteralValue).exp;
-                    let accepts = false;
-                    if(litval instanceof TIRLiteralStringExpression) {
-                        accepts = typdeclchks.strof.acceptsString(extractLiteralStringValue(litval.expstr));
-                    }
-                    else {
-                        accepts = typdeclchks.strof.acceptsString(extractLiteralASCIIStringValue(litval.expstr));
-                    }
-                    this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy validator constraint");
-                }
-
-                if(typdeclchks.pthof !== undefined) {
-                    const litval = (lexp as TIRLiteralValue).exp;
-                    let accepts = false;
-                    if(typdeclchks.pthof[1].attributes.includes("__path_type")) {
-                        accepts = typdeclchks.pthof[0].acceptsPath(extractLiteralStringValue(litval.expstr));
-                    }
-                    else if(typdeclchks.pthof[1].attributes.includes("__pathfragment_type")) {
-                        accepts = typdeclchks.pthof[0].acceptsPathFragment(extractLiteralStringValue(litval.expstr));
-                    }
-                    else {
-                        accepts = typdeclchks.pthof[0].acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
-                    }
-                    this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
-                }
-
-                if (typdeclchks.inv.length === 0) {
-                    const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation));
-                    return new TIRLiteralValue(nexp, nexp.constype, nexp.expstr);
-                }
-                else {
-                    const invdecls = this.getAllInvariantProvidingTypesTypedecl(constype, ccdecl.object, ccdecl.getBinds());
-                    const chkinvsaa = invdecls.map((idp) => {
-                        let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-                        return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
-                    });
-
-                    const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
-                    const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation), chkinvs);
-                    return new TIRLiteralValue(nexp, nexp.constype, nexp.expstr);
-                }
+                nexp = this.checkLiteralTypedPrimitiveConstructorExpression(literalenv, cexp);
             }
             else if(cexp instanceof LiteralTypeValueExpression) {
-                const texp = this.normalizeTypeOnly(cexp.vtype, binds);
-                this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
-
-                const rlt = texp.options[0] as ResolvedLiteralAtomType;
-                return rlt.lexp;
+                nexp = this.checkLiteralTypeValueExpression(literalenv, cexp);
             }
             else {
                 this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
 
                 const iexp = new TIRInvalidExpression(exp.sinfo, this.getSpecialNoneType());
-                return new TIRLiteralValue(iexp, iexp.tinfer, iexp.expstr);
+                return new TIRLiteralValue(iexp, iexp.tlayout, iexp.expstr);
             }
         }
+
+        return new TIRLiteralValue(nexp.expressionResult, nexp.expressionResult.tlayout, nexp.expressionResult.expstr);
     }
 
     private checkExpInfer(env: ExpressionTypeEnvironment, einfer: ResolvedType, ename: string): ResolvedType {
@@ -1917,21 +1837,13 @@ class TypeChecker {
         return res;
     }
 
-    private emitInlineConvertIfNeeded(sinfo: SourceInfo, src: T, srctype: ValueType, trgttype: ResolvedType): T | MIRRegisterArgument {
-        if(srctype.layout.isSameType(trgttype)) {
+    private emitInlineConvertIfNeeded(sinfo: SourceInfo, src: TIRExpression, trgttype: ResolvedType): TIRExpression {
+        if(src.tlayout.isSameType(trgttype)) {
             return src;
         }
 
-        this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(srctype.flowtype, trgttype), `Cannot convert type ${srctype.flowtype.typeID} into ${trgttype.typeID}`);
-
-        const mirsrclayouttype = this.m_emitter.registerResolvedTypeReference(srctype.layout);
-        const mirsrcflowtype = this.m_emitter.registerResolvedTypeReference(srctype.flowtype);
-        const mirintotype = this.m_emitter.registerResolvedTypeReference(trgttype);
-
-        const rr = this.m_emitter.generateTmpRegister();
-        this.m_emitter.emitConvert(sinfo, mirsrclayouttype, mirsrcflowtype, mirintotype, src, rr, undefined);
-
-        return rr;
+        this.raiseErrorIf(sinfo, !this.subtypeOf(src.tflow, trgttype), `Cannot convert type ${src.tflow.typeID} into ${trgttype.typeID}`);
+        return new xxx;
     }
 
     private emitCheckedInlineConvertIfNeeded<T extends MIRArgument>(sinfo: SourceInfo, src: T, srctype: ValueType, trgttype: ResolvedType, guard: MIRStatmentGuard): T | MIRRegisterArgument {
@@ -3898,7 +3810,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
         const argstr = extractLiteralStringValue(exp.value);
-        const accepts = vv?.acceptsString(argstr);
+        const accepts = (vv as BSQRegex).acceptsString(argstr);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
@@ -3916,7 +3828,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
         const argstr = extractLiteralASCIIStringValue(exp.value);
-        const accepts = vv?.acceptsString(argstr);
+        const accepts = (vv as BSQRegex).acceptsString(argstr);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
@@ -3938,34 +3850,72 @@ class TypeChecker {
     }
 
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
-        const valueenv = this.checkExpression(env, exp.value, undefined);
-        assert(valueenv.expressionResult.tinfer.isSameType(valueenv.expressionResult.tlayout), "Expression should always be a literal value so what happened here???");
-
-        const reprtype = valueenv.expressionResult.tlayout;
-        
         const constype = this.normalizeTypeOnly(exp.constype, env.binds);
+        const lexp = this.reduceLiteralValueToCanonicalForm(env.bodyid, exp.value, env.binds);
+        this.raiseErrorIf(exp.sinfo, lexp !== undefined, "Not a literal expression");
+
         this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
         const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
 
-        xxxx;
-        this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== valueenv.expressionResult.tinfer.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
+        this.raiseErrorIf(exp.sinfo, ccdecl.representation.typeID !== (lexp as TIRLiteralValue).ltype.typeID, `Expected type of ${ccdecl.representation.typeID} (representation type) but got ${(lexp as TIRLiteralValue).ltype.typeID}`);
 
-                const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
+        const typdeclchks = this.typedeclGenerateConstructorCallList(constype, ccdecl.object, ccdecl.getBinds());
 
-        xxxx;
-        if(typdeclchks.inv.length === 0 && typdeclchks.strof === undefined && typdeclchks.pthof === undefined) {
-            return env.setResultExpression(new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation)), undefined);
+        if (typdeclchks.strof !== undefined) {
+            const litval = (lexp as TIRLiteralValue).exp;
+            let accepts = false;
+            if (litval instanceof TIRLiteralStringExpression) {
+                accepts = typdeclchks.strof.acceptsString(extractLiteralStringValue(litval.expstr));
+            }
+            else {
+                accepts = typdeclchks.strof.acceptsString(extractLiteralASCIIStringValue(litval.expstr));
+            }
+            this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy validator constraint");
+        }
+
+        if (typdeclchks.pthof !== undefined) {
+            const litval = (lexp as TIRLiteralValue).exp;
+            let accepts = false;
+            if (typdeclchks.pthof[1].attributes.includes("__path_type")) {
+                accepts = typdeclchks.pthof[0].acceptsPath(extractLiteralStringValue(litval.expstr));
+            }
+            else if (typdeclchks.pthof[1].attributes.includes("__pathfragment_type")) {
+                accepts = typdeclchks.pthof[0].acceptsPathFragment(extractLiteralStringValue(litval.expstr));
+            }
+            else {
+                accepts = typdeclchks.pthof[0].acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
+            }
+            this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
+        }
+
+        if (typdeclchks.inv.length === 0) {
+            const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation));
+            return env.setResultExpression(nexp, undefined);
         }
         else {
             const invdecls = this.getAllInvariantProvidingTypesTypedecl(constype, ccdecl.object, ccdecl.getBinds());
-            const chkinvsaa = invdecls.map((idp) => { 
+            const chkinvsaa = invdecls.map((idp) => {
                 let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
                 return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
             });
 
             const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
-            return env.setResultExpression(new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, valueenv.expressionResult, constype, reprtype, ResolvedType.createSingle(ccdecl.representation), chkinvs), undefined);
+            const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, (lexp as TIRLiteralValue).exp, constype, (lexp as TIRLiteralValue).ltype, ResolvedType.createSingle(ccdecl.representation), chkinvs);
+            return env.setResultExpression(nexp, undefined);
         }
+    }
+
+    private checkLiteralTypeValueExpression(env: ExpressionTypeEnvironment, exp: LiteralTypeValueExpression): ExpressionTypeEnvironment {
+        const texp = this.normalizeTypeOnly(exp.vtype, env.binds);
+        this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
+
+        const rlt = texp.options[0] as ResolvedLiteralAtomType;
+        let ftv: FlowTypeTruthValue | undefined = undefined;
+        if(rlt.lexp instanceof LiteralBoolExpression) {
+            ftv = rlt.lexp.value ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
+        }
+
+        return env.setResultExpression(rlt.lexp, ftv);
     }
 
     private checkAccessFormatInfo(env: ExpressionTypeEnvironment, exp: AccessFormatInfo): ExpressionTypeEnvironment {
@@ -4019,13 +3969,22 @@ class TypeChecker {
         }
     }
 
-    private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression): ExpressionTypeEnvironment {
+    private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
         this.raiseErrorIf(exp.sinfo, !env.isVarNameDefined(exp.name), `Variable name '${exp.name}' is not defined`);
 
         const vinfo = env.lookupVar(exp.name) as VarInfo;
         this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
 
-        return env.setResultExpression(new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkExpInfer(env, vinfo.flowType, exp.name)), undefined);
+        const vflow = this.checkExpInfer(env, vinfo.flowType, exp.name);
+        const varaccess = new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkExpInfer(env, vinfo.flowType, exp.name));
+
+        if(infertype === undefined) {
+            return env.setResultExpression(varaccess, undefined);
+        }
+        else {
+            const vc = this.emitInlineConvertIfNeeded(exp.sinfo, varaccess, infertype);
+            return env.setResultExpression(varaccess, undefined);
+        }
     }
 
 

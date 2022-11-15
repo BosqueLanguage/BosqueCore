@@ -4,7 +4,7 @@ import Decimal from "decimal.js";
 import {ResolvedType} from "../frontend/tree_ir/tir_type"
 
 class InterpreterType {
-    readonly tritype: ResolvedType;
+    readonly tirtype: ResolvedType;
     readonly xxx -;
 }
 

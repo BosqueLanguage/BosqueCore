@@ -54,6 +54,9 @@ enum ExpressionTag {
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
 
+    IsTypeExpression = "IsTypeExpression",
+    AsTypeExpression = "AsTypeExpression",
+
     PostfixOpExpression = "PostfixOpExpression",
 
     PrefixNotOpExpression = "PrefixNotOpExpression",
@@ -560,6 +563,28 @@ class LogicActionOrExpression extends Expression {
     constructor(sinfo: SourceInfo, args: Expression[]) {
         super(ExpressionTag.LogicActionOrExpression, sinfo);
         this.args = args;
+    }
+}
+
+class IsTypeExpression extends Expression {
+    readonly arg: Expression;
+    readonly oftype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, arg: Expression, oftype: TypeSignature) {
+        super(ExpressionTag.IsTypeExpression, sinfo);
+        this.arg = arg;
+        this.oftype = oftype;
+    }
+}
+
+class AsTypeExpression extends Expression {
+    readonly arg: Expression;
+    readonly oftype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, arg: Expression, oftype: TypeSignature) {
+        super(ExpressionTag.AsTypeExpression, sinfo);
+        this.arg = arg;
+        this.oftype = oftype;
     }
 }
 
@@ -1492,6 +1517,7 @@ export {
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
+    IsTypeExpression, AsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixAccessFromIndex, PostfixAccessFromName,
     PostfixIs, PostfixAs,
