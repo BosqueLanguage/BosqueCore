@@ -1,11 +1,5 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
-import { ResolvedType, TemplateBindScope } from "../tree_ir/tir_type";
-
 import * as assert from "assert";
+import { ResolvedType, TemplateBindScope } from "./resolved_type";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
 import { SourceInfo } from "../ast/parser";
 

@@ -1,175 +1,406 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
+import { SourceInfo } from "../ast/parser";
+import { TIRExpression, TIRLiteralValue } from "./tir_body";
 
-import * as assert from "assert";
+class TIRTypeName {
+    readonly ns: string;
+    readonly names: string[];
+    readonly templates: string[] | undefined;
 
-import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
-import { TIRLiteralValue } from "./tir_body";
-
-type TIRInvokeID = string;
-type TIRTupleIndex = number;
-type TIRPropertyID = string;
-type TIRFieldID = string;
-
-abstract class ResolvedAtomType {
-    readonly typeID: string;
-
-    constructor(typeID: string) {
-        this.typeID = typeID;
+    constructor(ns: string, names: string[], templates?: string[] | undefined) {
+        this.ns = ns;
+        this.names = names;
+        this.templates = templates || [];
     }
 }
 
-class ResolvedLiteralAtomType extends ResolvedAtomType {
-    xxxx;
+class TIRNamespaceMemberName {
+    readonly ns: string;
+    readonly name: string;
+
+    constructor(ns: string, name: string) {
+        this.ns = ns;
+        this.name = name;
+    }
+}
+
+class TIRTypeMemberName {
+    readonly tname: TIRTypeName;
+    readonly name: string;
+    readonly templates: string[] | undefined;
+
+    constructor(tname: TIRTypeName, name: string, templates?: string[] | undefined) {
+        this.tname = tname;
+        this.name = name;
+        this.templates = templates || [];
+    }
+}
+
+type TIRTypeKey = string;
+
+type TIRNameSpaceConstKey = string;
+type TIRMemberConstKey = string;
+type TIRLitKey = string;
+
+type TIRInvokeKey = string;
+type TIRPropertyKey = string;
+type TIRFieldKey = string;
+
+type TIRTupleIndex = number;
+
+
+class TIRFunctionParameter {
+    readonly name: string;
+    readonly type: TIRTypeKey;
+    readonly litexp: {val: TIRLiteralValue, vkey: TIRLitKey | undefined} | undefined;
+
+    constructor(name: string, type: TIRTypeKey, litexp: TIRLiteralValue | undefined) {
+        this.name = name;
+        this.type = type;
+        this.litexp = litexp;
+    }
+}
+
+class TIRPreConditionDecl {
+    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
+    readonly exp: TIRExpression;
+    readonly args: TIRFunctionParameter[];
+
+    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
+        this.invkey = invkey;
+        this.exp = exp;
+        this.args = args;
+    }
+}
+
+class TIRPostConditionDecl {
+    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
+    readonly exp: TIRExpression;
+    readonly args: TIRFunctionParameter[];
+    readonly origargs: TIRFunctionParameter[];
+
+    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[], origargs: TIRFunctionParameter[]) {
+        this.invkey = invkey;
+        this.exp = exp;
+        this.args = args;
+        this.origargs = origargs;
+    }
+}
+
+class TIRInvariantDecl {
+    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
+    readonly exp: TIRExpression;
+    readonly args: TIRFunctionParameter[];
+
+    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
+        this.invkey = invkey;
+        this.exp = exp;
+        this.args = args;
+    }
+}
+
+class TIRValidateDecl {
+    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
+    readonly exp: TIRExpression;
+    readonly args: TIRFunctionParameter[];
+
+    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
+        this.invkey = invkey;
+        this.exp = exp;
+        this.args = args;
+    }
+}
+
+class TIRInvokeDecl {
+    readonly invkey: TIRInvokeKey;
+    readonly iname: TIRNamespaceMemberName | TIRTypeMemberName;
+    readonly name: string;
+
+    readonly startSourceLocation: SourceInfo;
+    readonly endSourceLocation: SourceInfo;
+    readonly srcFile: string;
+    readonly bodyID: string;
+
+    readonly attributes: string[];
+    readonly recursive: boolean;
+
+    readonly isMemberMethod: boolean;
+    readonly isVirtual: boolean;
+    readonly isDynamicOperator: boolean;
+    readonly isLambda: boolean;
+
+    readonly isThisRef: boolean;
+    readonly params: TIRFunctionParameter[];
+    
+    readonly resultType: TIRTypeKey;
+
+    readonly preconditions: TIRPreConditionDecl[];
+    readonly postconditions: TIRPostConditionDecl[];
+
+    readonly body: TIRBodyImplementation;
+
+    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRBodyImplementation) {
+        this.invkey = invkey;
+        this.iname = iname;
+        this.name = name;
+
+        this.startSourceLocation = sinfoStart;
+        this.endSourceLocation = sinfoEnd;
+        this.srcFile = srcFile;
+        this.bodyID = bodyID;
+
+        this.attributes = attributes;
+        this.recursive = recursive;
+
+        this.isMemberMethod = isMemberMethod;
+        this.isVirtual = isVirtual;
+        this.isDynamicOperator = isDynamicOperator;
+        this.isLambda = isLambda;
+
+        this.isThisRef = isThisRef;
+        this.params = params;
+
+        this.resultType = resultType;
+
+        this.preconditions = preconds;
+        this.postconditions = postconds;
+
+        this.body = body;
+    }
+}
+
+class TIRConstMemberDecl {
+    readonly ckey: TIRMemberConstKey;
+    readonly cname: TIRTypeMemberName;
+    readonly name: string;
+    readonly defin: TIRTypeKey;
+
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+
+    readonly declaredType: TIRTypeKey;
+    readonly value: TIRExpression;
+
+    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
+    readonly cmkey: TIRMemberConstKey; //The special storage name for the value
+
+    constructor(ckey: TIRMemberConstKey, cname: TIRTypeMemberName, name: string, defin: TIRTypeKey, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression, invkey: TIRInvokeKey, cmkey: TIRMemberConstKey) {
+        this.ckey = ckey;
+        this.cname = cname;
+        this.name = name;
+        this.defin = defin;
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+        this.declaredType = declaredtype;
+        this.value = value;
+        this.invkey = invkey;
+        this.cmkey = cmkey;
+    }
+}
+
+class TIRStaticFunctionDecl {
+    readonly ikey: TIRInvokeKey;
+    readonly fname: TIRTypeMemberName;
+    readonly name: string;
+    readonly defin: TIRTypeKey;
+
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+    readonly invoke: TIRInvokeDecl;
+
+    constructor(defin: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvokeDecl) {
+        this.ikey = invoke.invkey;
+        this.fname = invoke.iname as TIRTypeMemberName;
+        this.name = invoke.name;
+        this.defin = defin;
+        this.sourceLocation = sinfo;
+        this.srcFile = srcFile;
+        this.attributes = invoke.attributes;
+        this.invoke = invoke;
+    }
+}
+
+class TIRMemberFieldDecl {
+    readonly fkey: TIRFieldKey;
+    readonly fname: TIRTypeMemberName;
+    readonly name: string;
+    readonly defin: TIRTypeKey;
+
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+
+    readonly declaredType: TIRTypeKey;
+
+    constructor(fkey: TIRFieldKey, fname: TIRTypeMemberName, name: string, defin: TIRTypeKey, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey) {
+        this.fkey = fkey;
+        this.fname = fname;
+        this.name = name;
+        this.defin = defin;
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+        this.declaredType = declaredtype;
+    }
+}
+
+class TIRMemberMethodDecl {
+    readonly ikey: TIRInvokeKey;
+    readonly mname: TIRTypeMemberName;
+    readonly name: string;
+    readonly defin: TIRTypeKey;
+
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+    readonly invoke: TIRInvokeDecl;
+
+    constructor(defin: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvokeDecl) {
+        this.ikey = invoke.invkey;
+        this.mname = invoke.iname as TIRTypeMemberName;
+        this.name = invoke.name;
+        this.defin = defin;
+        this.sourceLocation = sinfo;
+        this.srcFile = srcFile;
+        this.attributes = invoke.attributes;
+        this.invoke = invoke;
+    }
+}
+
+abstract class TIRType {
+    readonly tid: TIRTypeKey;
+    readonly tname: TIRTypeName;
+
+    constructor(tid: TIRTypeKey, tname: TIRTypeName) {
+        this.tid = tid;
+        this.tname = tname;
+    }
+}
+
+class TIRLiteralType extends TIRType {
     readonly lexp: TIRLiteralValue;
 
-    constructor(reprexp: string, lexp: TIRLiteralValue, ) {
-        super(reprexp);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, lexp: TIRLiteralValue) {
+        super(tid, tname);
         this.lexp = lexp;
     }
 }
 
-abstract class ResolvedEntityAtomType extends ResolvedAtomType {
-    readonly object: EntityTypeDecl;
+abstract class TIREntityType extends TIRType {
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
 
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID);
-        this.object = object;
-    }
+    readonly attributes: string[];
 
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>();
-    }
+    //declared provides -- not saturated set
+    readonly provides: TIRTypeKey[];
 
-    isNoneType(): boolean {
-        return this.typeID === "None";
-    }
+    //Members that are declared on this
+    readonly constMembers: TIRConstMemberDecl[];
+    readonly staticFunctions: TIRStaticFunctionDecl[];
+    readonly memberFields: TIRMemberFieldDecl[];
+    readonly memberMethods: TIRMemberMethodDecl[];
 
-    isNothingType(): boolean {
-        return this.typeID === "Nothing";
+    //saturated lookup info -- includes super types as well
+    readonly invariants: TIRInvariantDecl[]; 
+    readonly validates: TIRValidateDecl[];
+
+    readonly vtable: Map<string, TIRInvokeKey>; 
+    readonly allfields: TIRFieldKey[];
+
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], vtable: Map<string, TIRInvokeKey>, allfields: TIRFieldKey[]) {
+        super(tid, tname);
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+        this.provides = provides;
+        this.constMembers = constMembers;
+        this.staticFunctions = staticFunctions;
+        this.memberFields = memberFields;
+        this.memberMethods = memberMethods;
+        this.invariants = invariants;
+        this.validates = validates;
+        this.vtable = vtable;
+        this.allfields = allfields;
     }
 }
 
 //Represents types declared as entities in the code
-class ResolvedObjectEntityAtomType extends ResolvedEntityAtomType {
-    readonly binds: Map<string, ResolvedType>;
+class TIRObjectEntityType extends TIREntityType {
+    readonly binds: Map<string, TIRTypeKey>;
 
-    constructor(typeID: string, object: EntityTypeDecl, binds: Map<string, ResolvedType>) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], vtable: Map<string, TIRInvokeKey>, allfields: TIRFieldKey[], binds: Map<string, TIRTypeKey>) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberFields, memberMethods, invariants, validates, vtable, allfields);
         this.binds = binds;
-    }
-
-    static create(object: EntityTypeDecl, binds: Map<string, ResolvedType>): ResolvedEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        if (object.terms.length !== 0) {
-            name += "<" + object.terms.map((arg) => (binds.get(arg.name) as ResolvedType).typeID).join(", ") + ">";
-        }
-
-        return new ResolvedObjectEntityAtomType(name, object, binds);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return this.binds;
     }
 }
 
 //Represents enum types declared as entities in the code
-class ResolvedEnumEntityAtomType extends ResolvedEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
+class TIREnumEntityType extends TIREntityType {
+    readonly enumtype: TIRTypeKey;
 
-    static create(object: EntityTypeDecl): ResolvedEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedEnumEntityAtomType(name, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], vtable: Map<string, TIRInvokeKey>, enumtype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], vtable, []);
+        this.enumtype = enumtype;
     }
 }
 
 //Represents typedecl T = X ... types where the representation is a single primitve typed value
-class ResolvedTypedeclEntityAtomType extends ResolvedEntityAtomType {
-    readonly valuetype: ResolvedEntityAtomType; //result of .value()
-    readonly representation: ResolvedPrimitiveInternalEntityAtomType; //result of getUnderlyingRepresentation opcode 
+class TIRTypedeclEntityType extends TIREntityType {
+    readonly valuetype: TIRTypeKey; //result of .value()
+    readonly representation: TIRTypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
 
-    constructor(typeID: string, object: EntityTypeDecl, valuetype: ResolvedEntityAtomType, representation: ResolvedPrimitiveInternalEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], vtable: Map<string, TIRInvokeKey>, valuetype: TIRTypeKey, representation: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, invariants, validates, vtable, []);
         this.valuetype = valuetype;
         this.representation = representation;
-    }
-
-    static create(object: EntityTypeDecl, valuetype: ResolvedEntityAtomType, representation: ResolvedPrimitiveInternalEntityAtomType): ResolvedEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedTypedeclEntityAtomType(name, object, valuetype, representation);
     }
 }
 
 //base class for all the primitive types that are defined
-abstract class ResolvedInternalEntityAtomType extends ResolvedEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
+abstract class TIRInternalEntityType extends TIREntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], vtable: Map<string, TIRInvokeKey>, allfields: TIRFieldKey[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberFields, memberMethods, invariants, validates, vtable, allfields);
     }
 } 
 
 //class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
-class ResolvedPrimitiveInternalEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedPrimitiveInternalEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPrimitiveInternalEntityAtomType(name, object);
+class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
     }
 } 
 
 //class representing Validator regex types
-class ResolvedValidatorEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedValidatorEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedValidatorEntityAtomType(name, object);
+class TIRValidatorEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], staticFunctions: TIRStaticFunctionDecl[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, [], staticFunctions, [], [], [], [], new Map<string, TIRInvokeKey>(), []);
     }
 }
 
 //class representing StringOf<T> types
-class ResolvedStringOfEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedValidatorEntityAtomType;
+class TIRStringOfEntityType extends TIRInternalEntityType {
+    readonly validatortype: TIRTypeKey; //TIRValidatorEntityType;
 
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], validatortype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
         this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedStringOfEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedStringOfEntityAtomType(name, object, validatortype);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", ResolvedType.createSingle(this.validatortype));
     }
 }
 
 //class representing ASCIIStringOf<T> types
-class ResolvedASCIIStringOfEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedValidatorEntityAtomType;
+class TIRASCIIStringOfEntityTIRType extends TIRInternalEntityType {
+    readonly validatortype: TIRTypeKey; //TIRValidatorEntityType;
 
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], validatortype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
         this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedASCIIStringOfEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedASCIIStringOfEntityAtomType(name, object, validatortype);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", ResolvedType.createSingle(this.validatortype));
     }
 }
 
@@ -814,57 +1045,15 @@ class ResolvedFunctionType {
     }
 }
 
-class TemplateBindScope {
-    readonly scopes: Map<string, ResolvedType>[] = [];
-
-    constructor(scopes: Map<string, ResolvedType>[]) {
-        this.scopes = scopes;
-    }
-
-    tryTemplateResolveType(tt: string): ResolvedType | undefined {
-        const midx = this.scopes.findIndex((sc) => sc.has(tt));
-        if(midx === -1) {
-            return undefined;
-        }
-
-        return this.scopes[midx].get(tt);
-    }
-
-    templateResolveType(tt: string): ResolvedType {
-        const bb = this.tryTemplateResolveType(tt);
-        assert(bb !== undefined, "Template name expected to have binding -- would \"tryTemplateResolveType\" be the right choice?");
-
-        return bb as ResolvedType;
-    }
-
-    pushScope(nscope: Map<string, ResolvedType>): TemplateBindScope {
-        return new TemplateBindScope([new Map<string, ResolvedType>(nscope), ...this.scopes]);
-    }
-
-    static createEmptyBindScope(): TemplateBindScope {
-        return new TemplateBindScope([]);
-    }
-
-    static createBaseBindScope(binds: Map<string, ResolvedType>): TemplateBindScope {
-        return TemplateBindScope.createEmptyBindScope().pushScope(binds);
-    }
-}
-
 export {
-    TIRInvokeID, TIRTupleIndex, TIRPropertyID, TIRFieldID,
-    ResolvedAtomType,
-    ResolvedLiteralAtomType,
-    ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 
-    ResolvedPrimitiveInternalEntityAtomType,
-    ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
-    ResolvedPathValidatorEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType,
-    ResolvedConstructableEntityAtomType, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType,
-    ResolvedHavocEntityAtomType,
-    ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
-    ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
-    ResolvedTupleAtomType, ResolvedRecordAtomType, 
-    ResolvedEphemeralListType,
-    ResolvedType, 
-    ResolvedFunctionTypeParam, ResolvedFunctionType,
-    TemplateBindScope
+    TIRTypeName, TIRNamespaceMemberName, TIRTypeMemberName, TIRNameSpaceConstKey, TIRMemberConstKey,
+    TIRTypeKey, TIRInvokeKey, TIRPropertyKey, TIRFieldKey, TIRTupleIndex,
+    TIRFunctionParameter,
+    TIRInvariantDecl, TIRValidateDecl,
+    TIRInvokeDecl,
+    TIRConstMemberDecl, TIRStaticFunctionDecl, TIRMemberFieldDecl, TIRMemberMethodDecl,
+    TIRType,
+    TIRLiteralType,
+    TIREntityType, TIRObjectEntityType, TIREnumEntityType, TIRTypedeclEntityType, TIRInternalEntityType, TIRPrimitiveInternalEntityType,
+    TIRValidatorEntityType, TIRStringOfEntityType, TIRASCIIStringOfEntityTIRType,
 };

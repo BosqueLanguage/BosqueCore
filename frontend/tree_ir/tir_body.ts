@@ -1,6 +1,7 @@
 import { SourceInfo } from "../ast/parser";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
+import { TIRTypeKey } from "./tir_assembly";
 import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID, TIRPropertyID, TIRTupleIndex } from "./tir_type";
 
 enum TIRExpressionTag {
@@ -632,7 +633,7 @@ class BinLogicImpliesExpression extends Expression {
 
 class TIRLiteralValue {
     readonly exp: TIRExpression;
-    readonly ltype: ResolvedType;
+    readonly ltype: TIRTypeKey;
     readonly lidstr: string;
     
     constructor(exp: TIRExpression, ltype: ResolvedType, lidstr: string) {
