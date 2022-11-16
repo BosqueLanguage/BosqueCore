@@ -3,9 +3,10 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import { SourceInfo } from "./parser";
 import { RecursiveAnnotation, TypeSignature } from "./type";
 import { InvokeDecl, BuildLevel } from "./assembly";
+
+import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 enum ExpressionTag {

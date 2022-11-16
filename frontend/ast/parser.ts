@@ -8,6 +8,7 @@ import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, Functi
 import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
+import { SourceInfo } from "../build_decls";
 
 const KW_recursive_q = "recursive?";
 const KW_recursive = "recursive";
@@ -386,44 +387,6 @@ class Token {
         this.kind = kind;
         this.data = data;
     }
-}
-
-class SourceInfo {
-    readonly line: number;
-    readonly column: number;
-    readonly pos: number;
-    readonly span: number;
-
-    constructor(line: number, column: number, cpos: number, span: number) {
-        this.line = line;
-        this.column = column;
-        this.pos = cpos;
-        this.span = span;
-    }
-
-    static implicitSourceInfo(): SourceInfo {
-        return new SourceInfo(-1, -1, -1, -1);
-    }
-}
-
-type CodeFileInfo = { 
-    srcpath: string, 
-    filename: string, 
-    contents: string
-};
-
-function extractLiteralStringValue(str: string): string {
-    //
-    //TODO: right now we assume there are not escaped values in the string
-    //
-    return str.substring(1, str.length - 1);
-}
-
-function extractLiteralASCIIStringValue(str: string): string {
-    //
-    //TODO: right now we assume there are not escaped values in the string
-    //
-    return str.substring("ascii{".length + 1, str.length - (1 + "}".length));
 }
 
 class Lexer {
@@ -5349,19 +5312,6 @@ class Parser {
     }
 }
 
-function cleanCommentsStringsFromFileContents(str: string): string {
-    const commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/ug;
-    const stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/ug;
-    const typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/ug;
-
-    return str
-        .replace(commentRe, "")
-        .replace(stringRe, "\"\"")
-        .replace(typedStringRe, "''");
-}
-
 export { 
-    CodeFileInfo, SourceInfo, ParseError, Parser,
-    extractLiteralStringValue, extractLiteralASCIIStringValue,
-    cleanCommentsStringsFromFileContents
+    ParseError, Parser
 };

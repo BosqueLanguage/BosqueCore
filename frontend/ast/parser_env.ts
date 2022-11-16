@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+import { SourceInfo } from "../build_decls";
 import { Assembly } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
@@ -100,21 +101,21 @@ class ParserEnvironment {
 
         this.m_functionScopes = [];
 
-        this.SpecialAnySignature = new NominalTypeSignature("Core", ["Any"], []);
-        this.SpecialSomeSignature = new NominalTypeSignature("Core", ["Some"], []);
-        this.SpecialNoneSignature = new NominalTypeSignature("Core", ["None"], []);
-        this.SpecialBoolSignature = new NominalTypeSignature("Core", ["Bool"], []);
+        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Any"], undefined);
+        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Some"], undefined);
+        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["None"], undefined);
+        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Bool"], undefined);
 
-        this.SpecialIntSignature = new NominalTypeSignature("Core", ["Int"], []);
-        this.SpecialNatSignature = new NominalTypeSignature("Core", ["Nat"], []);
-        this.SpecialFloatSignature = new NominalTypeSignature("Core", ["Float"], []);
-        this.SpecialDecimalSignature = new NominalTypeSignature("Core", ["Decimal"], []);
-        this.SpecialBigIntSignature = new NominalTypeSignature("Core", ["BigInt"], []);
-        this.SpecialBigNatSignature = new NominalTypeSignature("Core", ["BigNat"], []);
-        this.SpecialRationalSignature = new NominalTypeSignature("Core", ["Rational"], []);
-        this.SpecialStringSignature = new NominalTypeSignature("Core", ["String"], []);
+        this.SpecialIntSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Int"], undefined);
+        this.SpecialNatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Nat"], undefined);
+        this.SpecialFloatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Float"], undefined);
+        this.SpecialDecimalSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Decimal"], undefined);
+        this.SpecialBigIntSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["BigInt"], undefined);
+        this.SpecialBigNatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["BigNat"], undefined);
+        this.SpecialRationalSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Rational"], undefined);
+        this.SpecialStringSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["String"], undefined);
         
-        this.SpecialAutoSignature = new AutoTypeSignature();
+        this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
     }
 
     getCurrentFunctionScope(): FunctionScope {

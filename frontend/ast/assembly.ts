@@ -5,17 +5,10 @@
 
 import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
-import { SourceInfo } from "./parser";
 
+import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-
-enum BuildApplicationMode {
-    Executable,
-    FunctionalizedExecutable,
-    ModelChecker,
-    TypeChecker
-}
 
 type BuildLevel = "debug" | "test" | "release";
 
@@ -729,7 +722,7 @@ class Assembly {
 }
 
 export {
-    BuildApplicationMode, BuildLevel, isBuildLevelEnabled,
+    BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,

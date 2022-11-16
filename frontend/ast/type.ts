@@ -4,7 +4,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { LiteralExpressionValue } from "./body";
-import { SourceInfo } from "./parser";
+
+import { SourceInfo } from "../build_decls";
 
 class TypeSignature {
     readonly sinfo: SourceInfo;

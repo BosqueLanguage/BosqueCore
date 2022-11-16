@@ -1,7 +1,8 @@
 import * as assert from "assert";
 import { ResolvedType, TemplateBindScope } from "./resolved_type";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
-import { SourceInfo } from "../ast/parser";
+
+import { SourceInfo } from "../build_decls";
 
 enum FlowTypeTruthValue {
     True = "True",

@@ -1,5 +1,5 @@
-import { SourceInfo } from "../ast/parser";
 import { TIRExpression, TIRLiteralValue } from "./tir_body";
+import { SourceInfo } from "../build_decls";
 
 class TIRTypeName {
     readonly ns: string;
@@ -405,255 +405,146 @@ class TIRASCIIStringOfEntityTIRType extends TIRInternalEntityType {
 }
 
 //class representing PathValidator types
-class ResolvedPathValidatorEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedPathValidatorEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathValidatorEntityAtomType(name, object);
+class TIRPathValidatorEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], staticFunctions: TIRStaticFunctionDecl[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, [], staticFunctions, [], [], [], [], new Map<string, TIRInvokeKey>(), []);
     }
 }
 
 //class representing a Path<T> type
-class ResolvedPathEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedPathValidatorEntityAtomType;
+class TIRPathEntityType extends TIRInternalEntityType {
+    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
 
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], validatortype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
         this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathEntityAtomType(name, object, validatortype);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", ResolvedType.createSingle(this.validatortype));
     }
 }
 
 //class representing a PathFragment<T> type
-class ResolvedPathFragmentEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedValidatorEntityAtomType;
+class TIRPathFragmentEntityType extends TIRInternalEntityType {
+    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
 
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], validatortype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
         this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathFragmentEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathFragmentEntityAtomType(name, object, validatortype);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", ResolvedType.createSingle(this.validatortype));
     }
 }
 
-class ResolvedPathGlobEntityAtomType extends ResolvedInternalEntityAtomType {
-    readonly validatortype: ResolvedPathValidatorEntityAtomType;
+class TIRPathGlobEntityType extends TIRInternalEntityType {
+    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
 
-    constructor(typeID: string, object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], validatortype: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
         this.validatortype = validatortype;
-    }
-
-    static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedPathGlobEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedPathGlobEntityAtomType(name, object, validatortype);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", ResolvedType.createSingle(this.validatortype));
     }
 }
 
 //class representing Ok, Err, Something types
-abstract class ResolvedConstructableEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
+abstract class TIRConstructableEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
     }
 }
 
-class ResolvedOkEntityAtomType extends ResolvedConstructableEntityAtomType {
-    readonly typeT: ResolvedType;
-    readonly typeE: ResolvedType;
+class TIROkEntityType extends TIRConstructableEntityType {
+    readonly typeT: TIRTypeKey;
+    readonly typeE: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
         this.typeE = typeE;
     }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedOkEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
-        return new ResolvedOkEntityAtomType(name, object, typeT, typeE);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT).set("E", this.typeE);
-    }
 }
 
-class ResolvedErrEntityAtomType extends ResolvedConstructableEntityAtomType {
-    readonly typeT: ResolvedType;
-    readonly typeE: ResolvedType;
+class TIRErrEntityType extends TIRConstructableEntityType {
+    readonly typeT: TIRTypeKey;
+    readonly typeE: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
         this.typeE = typeE;
     }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedErrEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
-        return new ResolvedErrEntityAtomType(name, object, typeT, typeE);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT).set("E", this.typeE);
-    }
 }
 
-class ResolvedSomethingEntityAtomType extends ResolvedConstructableEntityAtomType {
-    readonly typeT: ResolvedType;
+class TIRSomethingEntityType extends TIRConstructableEntityType {
+    readonly typeT: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedSomethingEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ">";
-        return new ResolvedSomethingEntityAtomType(name, object, typeT);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
 //class representing special havoc type
-class ResolvedHavocEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedHavocEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedHavocEntityAtomType(name, object);
+class TIRHavocEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, [], [], [], [], [], [], new Map<string, TIRInvokeKey>(), []);
     }
 }
 
 //abstract class for all the builtin collection types
-abstract class ResolvedPrimitiveCollectionEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
+abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[]) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], new Map<string, TIRInvokeKey>(), []);
     }
 }
 
 //class representing List<T>
-class ResolvedListEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
+class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
+    readonly typeT: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedListEntityAtomType {
-        let name = "List<" + typeT.typeID + ">";
-        return new ResolvedListEntityAtomType(name, object, typeT);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
 //class representing Stack<T>
-class ResolvedStackEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
+class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
+    readonly typeT: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedStackEntityAtomType {
-        let name = "Stack<" + typeT.typeID + ">";
-        return new ResolvedStackEntityAtomType(name, object, typeT);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
 //class representing Queue<T>
-class ResolvedQueueEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
+class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
+    readonly typeT: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedQueueEntityAtomType {
-        let name = "Queue<" + typeT.typeID + ">";
-        return new ResolvedQueueEntityAtomType(name, object, typeT);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
 //class representing Set<T>
-class ResolvedSetEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeT: ResolvedType;
+class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
+    readonly typeT: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeT: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeT: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeT = typeT;
-    }
-
-    static create(object: EntityTypeDecl, typeT: ResolvedType): ResolvedSetEntityAtomType {
-        let name = "Set<" + typeT.typeID + ">";
-        return new ResolvedSetEntityAtomType(name, object, typeT);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("T", this.typeT);
     }
 }
 
 //class representing Map<K, V>
-class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomType {
-    readonly typeK: ResolvedType;
-    readonly typeV: ResolvedType;
+class TIRMapEntityTIRType extends TIRPrimitiveCollectionEntityType {
+    readonly typeK: TIRTypeKey;
+    readonly typeV: TIRTypeKey;
 
-    constructor(typeID: string, object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType) {
-        super(typeID, object);
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], typeK: TIRTypeKey, typeV: TIRTypeKey) {
+        super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberMethods);
         this.typeK = typeK;
         this.typeV = typeV;
     }
-
-    static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntityAtomType {
-        let name = "Map<" + typeK.typeID + "," + typeV.typeID + ">";
-        return new ResolvedMapEntityAtomType(name, object, typeK, typeV);
-    }
-
-    getBinds(): Map<string, ResolvedType> {
-        return new Map<string, ResolvedType>().set("K", this.typeK).set("V", this.typeV);
-    }
 }
 
-class ResolvedTaskAtomType extends ResolvedAtomType {
+class TIRTaskType extends TIRType {
     readonly task: TaskTypeDecl;
     readonly binds: Map<string, ResolvedType>;
 
@@ -673,7 +564,7 @@ class ResolvedTaskAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedConceptAtomTypeEntry {
+class TIRConceptType extends TIRType {
     readonly typeID: string;
     readonly concept: ConceptTypeDecl;
     readonly binds: Map<string, ResolvedType>;
@@ -694,7 +585,7 @@ class ResolvedConceptAtomTypeEntry {
     }
 }
 
-class ResolvedConceptAtomType extends ResolvedAtomType {
+class TIRConcepSetType extends TIRType {
     readonly conceptTypes: ResolvedConceptAtomTypeEntry[];
 
     constructor(typeID: string, concepts: ResolvedConceptAtomTypeEntry[]) {
@@ -758,7 +649,7 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedTupleAtomType extends ResolvedAtomType {
+class TIRTupleType extends TIRType {
     readonly types: ResolvedType[];
 
     constructor(typeID: string, types: ResolvedType[]) {
@@ -773,7 +664,7 @@ class ResolvedTupleAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedRecordAtomType extends ResolvedAtomType {
+class TIRRecordType extends TIRType {
     readonly entries: {pname: string, ptype: ResolvedType}[];
 
     constructor(typeID: string, entries: {pname: string, ptype: ResolvedType}[]) {
@@ -789,7 +680,7 @@ class ResolvedRecordAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedEphemeralListType extends ResolvedAtomType {
+class TIREphemeralListType extends TIRType {
     readonly types: ResolvedType[];
 
     constructor(typeID: string, types: ResolvedType[]) {
@@ -804,7 +695,7 @@ class ResolvedEphemeralListType extends ResolvedAtomType {
     }
 }
 
-class ResolvedType {
+class TIRUnionType extends TIRType {
     readonly typeID: string;
     readonly options: ResolvedAtomType[];
 
@@ -1056,4 +947,14 @@ export {
     TIRLiteralType,
     TIREntityType, TIRObjectEntityType, TIREnumEntityType, TIRTypedeclEntityType, TIRInternalEntityType, TIRPrimitiveInternalEntityType,
     TIRValidatorEntityType, TIRStringOfEntityType, TIRASCIIStringOfEntityTIRType,
+    TIRPathValidatorEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType,
+    TIRConstructableEntityType, TIROkEntityType, TIRErrEntityType, TIRSomethingEntityType,
+    TIRHavocEntityType,
+    TIRPrimitiveCollectionEntityType, TIRListEntityType, TIRStackEntityType, TIRQueueEntityType, TIRSetEntityType, TIRMapEntityTIRType,
+    TIRTaskType,
+    TIRConceptType, TIRConcepSetType,
+    TIRTupleType, TIRRecordType,
+    TIREphemeralListType,
+    TIRCodePackType,
+    TIRUnionType
 };
