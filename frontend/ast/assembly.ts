@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
-import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
+import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -589,11 +589,11 @@ class InfoTemplateTuple extends InfoTemplate {
 }
 
 class InfoTemplateConst extends InfoTemplate {
-    readonly cexp: ConstantExpressionValue;
+    readonly lexp: LiteralExpressionValue;
 
-    constructor(cexp: ConstantExpressionValue) {
+    constructor(lexp: LiteralExpressionValue) {
         super();
-        this.cexp = cexp;
+        this.lexp = lexp;
     }
 }
 

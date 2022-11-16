@@ -4814,8 +4814,8 @@ class Parser {
     }
 
     private parseInfoTemplateConst(currentDecl: NamespaceDeclaration): InfoTemplateConst {
-        const cexp = this.parseConstExpression(false);
-        return new InfoTemplateConst(cexp);
+        const lexp = this.parseLiteralExpression("Info Template");
+        return new InfoTemplateConst(lexp);
     }
 
     private parseInfoTemplateMacro(currentDecl: NamespaceDeclaration): InfoTemplateMacro {

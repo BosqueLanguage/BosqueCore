@@ -17,6 +17,5 @@
         "frontend/ast/*.ts", 
         "frontend/tree_ir/*.ts",
         "frontend/typechecker/*.ts",
-        "frontend/tsinterp/*.ts"
     ]
 }
