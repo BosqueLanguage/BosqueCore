@@ -1,8 +1,9 @@
-import { SourceInfo } from "../ast/parser";
+
+import { TIRCodePackType, TIRInvokeDecl, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
+
+import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-import { TIRTypeKey } from "./tir_assembly";
-import { ResolvedFunctionType, ResolvedType, ResolvedValidatorEntityAtomType, TIRInvokeID, TIRPropertyID, TIRTupleIndex } from "./tir_type";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
@@ -32,7 +33,7 @@ enum TIRExpressionTag {
     AccessEnvValue = "AccessEnvValue",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
-    AccessStaticFieldExpression = " AccessStaticFieldExpression",
+    TIRAccessConstMemberFieldExpression = " TIRAccessConstMemberFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
 
     LoadIndexExpression = "LoadIndexExpression",
@@ -110,7 +111,7 @@ enum TIRExpressionTag {
 
 class TIRCodePack {
     readonly code: TIRInvokeDecl;
-    readonly ftype: ResolvedFunctionType;
+    readonly ftype: TIRCodePackType;
 
     readonly capturedValues: {cname: string, ctype: ResolvedType}[];
     readonly capturedCodePacks: {cpname: string, cpval: TIRCodePack}[];
@@ -127,16 +128,14 @@ abstract class TIRExpression {
     readonly tag: TIRExpressionTag;
     readonly sinfo: SourceInfo;
 
-    readonly tlayout: ResolvedType;
-    readonly tflow: ResolvedType;
+    readonly etype: TIRTypeKey;
     readonly expstr: string;
 
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, tlayout: ResolvedType, tflow: ResolvedType, expstr: string) {
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, etype: TIRTypeKey, expstr: string) {
         this.tag = tag;
         this.sinfo = sinfo;
 
-        this.tlayout = tlayout;
-        this.tflow = tflow;
+        this.etype = etype;
         this.expstr = expstr;
     }
 
@@ -144,8 +143,12 @@ abstract class TIRExpression {
         return false;
     }
 
-    isSafeOperation(): boolean {
-        return true;
+    isFailableOperation(): boolean {
+        return false;
+    }
+
+    isOverflowableOperation(): boolean {
+        return false;
     }
 
     getUsedVars(): string[] {
@@ -159,28 +162,28 @@ abstract class TIRExpression {
 }
 
 class TIRInvalidExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, etype: ResolvedType) {
-        super(TIRExpressionTag.InvalidExpresion, sinfo, etype, etype, "[INVALID]");
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey) {
+        super(TIRExpressionTag.InvalidExpresion, sinfo, etype, "[INVALID]");
     }
 }
 
 class TIRLiteralNoneExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralNoneExpression, sinfo, etype, etype, "none");
+    constructor(sinfo: SourceInfo) {
+        super(TIRExpressionTag.LiteralNoneExpression, sinfo, "None", "none");
     }
 }
 
 class TIRLiteralNothingExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralNothingExpression, sinfo, etype, etype, "nothing");
+    constructor(sinfo: SourceInfo) {
+        super(TIRExpressionTag.LiteralNothingExpression, sinfo, "Nothing", "nothing");
     }
 }
 
 class TIRLiteralBoolExpression extends TIRExpression {
     readonly value: boolean;
 
-    constructor(sinfo: SourceInfo, etype: ResolvedType, value: boolean) {
-        super(TIRExpressionTag.LiteralBoolExpression, sinfo, etype, etype, value ? "true" : "false");
+    constructor(sinfo: SourceInfo, value: boolean) {
+        super(TIRExpressionTag.LiteralBoolExpression, sinfo, "Bool", value ? "true" : "false");
         this.value = value;
     }
 }
@@ -188,8 +191,8 @@ class TIRLiteralBoolExpression extends TIRExpression {
 class TIRLiteralIntegralExpression extends TIRExpression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string, itype: ResolvedType) {
-        super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, itype, value);
+    constructor(sinfo: SourceInfo, value: string, itype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, value);
         this.value = value;
     }
 }
@@ -197,8 +200,8 @@ class TIRLiteralIntegralExpression extends TIRExpression {
 class TIRLiteralRationalExpression extends TIRExpression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string, rtype: ResolvedType) {
-        super(TIRExpressionTag.LiteralRationalExpression, sinfo, rtype, rtype, value);
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralRationalExpression, sinfo, "Rational", value);
         this.value = value;
     }
 }
@@ -206,72 +209,72 @@ class TIRLiteralRationalExpression extends TIRExpression {
 class TIRLiteralFloatPointExpression extends TIRExpression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string, fptype: ResolvedType) {
-        super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, fptype, value);
+    constructor(sinfo: SourceInfo, value: string, fptype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, value);
         this.value = value;
     }
 }
 
 class TIRLiteralStringExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralStringExpression, sinfo, etype, etype, value);
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralStringExpression, sinfo, "String", value);
     }
 }
 
 class TIRLiteralRegexExpression extends TIRExpression {
     readonly value: BSQRegex;
 
-    constructor(sinfo: SourceInfo, value: BSQRegex, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralRegexExpression, sinfo, etype, etype, value.restr);
+    constructor(sinfo: SourceInfo, value: BSQRegex) {
+        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.restr);
         this.value = value;
     }
 }
 
 class TIRLiteralASCIIStringExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, etype, etype, value);
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, "ASCIIString", value);
     }
 }
 
 class TIRLiteralTypedStringExpression extends TIRExpression {
-    readonly oftype: ResolvedValidatorEntityAtomType;
+    readonly oftype: TIRTypeKey;
 
-    constructor(sinfo: SourceInfo, value: string, stype: ResolvedType, oftype: ResolvedValidatorEntityAtomType) {
-        super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stype, stype, `${value}_${oftype.typeID}`);
+    constructor(sinfo: SourceInfo, value: string, stringoftype: TIRTypeKey, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stringoftype, `${value}_${oftype}`);
         this.oftype = oftype;
     }
 }
 
 class TIRLiteralASCIITypedStringExpression extends TIRExpression {
-    readonly oftype: ResolvedValidatorEntityAtomType;
+    readonly oftype: TIRTypeKey;
 
-    constructor(sinfo: SourceInfo, value: string, stype: ResolvedType, oftype: ResolvedValidatorEntityAtomType) {
-        super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, stype, stype, `${value}_${oftype.typeID}`);
+    constructor(sinfo: SourceInfo, value: string, astringoftype: TIRTypeKey, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, astringoftype, `${value}_${oftype}`);
         this.oftype = oftype;
     }
 }
 
 class TIRLiteralTemplateStringExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, etype, value);
+    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
     }
 }
 
 class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, value: string, etype: ResolvedType) {
-        super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, etype, value);
+    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
     }
 }
 
 class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
     readonly value: TIRExpression;
 
-    readonly constype: ResolvedType;
-    readonly reprtype: ResolvedType;
-    readonly basetype: ResolvedType;
+    readonly constype: TIRTypeKey; //The type that is constructed
+    readonly reprtype: TIRTypeKey; //The repr type that this is declared to be isomorphic to
+    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType) {
-        super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, `${value.expstr}_${constype}`);
         this.value = value;
 
         this.constype = constype;
@@ -283,14 +286,14 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
 class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     readonly value: TIRExpression;
 
-    readonly constype: ResolvedType;
-    readonly reprtype: ResolvedType;
-    readonly basetype: ResolvedType;
+    readonly constype: TIRTypeKey; //The type that is constructed
+    readonly reprtype: TIRTypeKey; //The repr type that this is declared to be isomorphic to
+    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
 
-    readonly chkinvs: TIRInvokeID[];
+    readonly chkinvs: TIRInvokeKey[];
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: ResolvedType, reprtype: ResolvedType, basetype: ResolvedType, chkinvs: TIRInvokeID[]) {
-        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, constype, `${value.expstr}_${constype.typeID}`);
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey, chkinvs: TIRInvokeKey[]) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype}`);
         this.value = value;
 
         this.constype = constype;
@@ -300,8 +303,8 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
         this.chkinvs = chkinvs;
     }
 
-    isSafeOperation(): boolean {
-        return false;
+    isFailableOperation(): boolean {
+        return true;
     }
 
     //
@@ -311,43 +314,44 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
 
 class TIRAccessEnvValue extends TIRExpression {
     readonly keyname: string;
+    readonly valtype: TIRTypeKey;
     readonly orNoneMode: boolean;
 
-    constructor(sinfo: SourceInfo, keyname: string, valtype: ResolvedType, orNoneMode: boolean) {
-        super(TIRExpressionTag.AccessEnvValue, sinfo, valtype, valtype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
+    constructor(sinfo: SourceInfo, keyname: string, valtype: TIRTypeKey, etype: TIRTypeKey, orNoneMode: boolean) {
+        super(TIRExpressionTag.AccessEnvValue, sinfo, etype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
         this.keyname = keyname;
+        this.valtype = valtype;
         this.orNoneMode = orNoneMode;
     }
 }
 
-
 class TIRAccessNamespaceConstantExpression extends TIRExpression {
-    readonly ns: string;
-    readonly name: string;
+    readonly ckey: TIRNamespaceConstKey;
+    readonly cname: TIRNamespaceMemberName;
 
-    constructor(sinfo: SourceInfo, ns: string, name: string, decltype: ResolvedType) {
-        super(TIRExpressionTag.AccessNamespaceConstantExpression, sinfo, decltype, decltype, `${ns}::${name}`);
-        this.ns = ns;
-        this.name = name;
+    constructor(sinfo: SourceInfo, ckey: TIRNamespaceConstKey, cname: TIRNamespaceMemberName, decltype: TIRTypeKey) {
+        super(TIRExpressionTag.AccessNamespaceConstantExpression, sinfo, decltype, ckey);
+        this.ckey = ckey;
+        this.cname = cname;
     }
 }
 
-class TIRAccessStaticFieldExpression extends TIRExpression {
-    readonly stype: ResolvedType;
-    readonly name: string;
+class TIRAccessConstMemberFieldExpression extends TIRExpression {
+    readonly ckey: TIRMemberConstKey;
+    readonly cname: TIRTypeMemberName;
 
-    constructor(sinfo: SourceInfo, stype: ResolvedType, name: string, decltype: ResolvedType) {
-        super(TIRExpressionTag.AccessStaticFieldExpression, sinfo, decltype, decltype, `${stype.typeID}::${name}`);
-        this.stype = stype;
-        this.name = name;
+    constructor(sinfo: SourceInfo, ckey: TIRMemberConstKey, cname: TIRTypeMemberName, decltype: TIRTypeKey) {
+        super(TIRExpressionTag.TIRAccessConstMemberFieldExpression, sinfo, decltype, ckey);
+        this.ckey = ckey;
+        this.cname = cname;
     }
 }
 
 class TIRAccessVariableExpression extends TIRExpression {
     readonly name: string;
 
-    constructor(sinfo: SourceInfo, name: string, tlayout: ResolvedType, tinfer: ResolvedType) {
-        super(TIRExpressionTag.AccessVariableExpression, sinfo, tlayout, tinfer, name);
+    constructor(sinfo: SourceInfo, name: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.AccessVariableExpression, sinfo, etype, name);
         this.name = name;
     }
 }
@@ -636,7 +640,7 @@ class TIRLiteralValue {
     readonly ltype: TIRTypeKey;
     readonly lidstr: string;
     
-    constructor(exp: TIRExpression, ltype: ResolvedType, lidstr: string) {
+    constructor(exp: TIRExpression, ltype: TIRTypeKey, lidstr: string) {
         this.exp = exp
         this.ltype = ltype;
         this.lidstr = lidstr;
@@ -649,7 +653,7 @@ export {
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
-    TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression,
+    TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     qqqq,
     TIRPrefixNotOp, TIRPrefixNegateOp,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,

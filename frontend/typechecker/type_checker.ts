@@ -6,14 +6,15 @@
 import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, TIRInvokeID } from "./resolved_type";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam } from "./resolved_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
-import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessStaticFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
+import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, BuildApplicationMode, SourceInfo } from "../build_decls";
+import { TIRConceptType, TIRInvokeKey, TIRLiteralType, TIRType, TIRTypeKey, TIRTypeName } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -65,23 +66,23 @@ enum ResolveResultFlag {
 }
 
 class TIRInvokeIDGenerator {
-    static generateInvokeIDForInvariant(ttype: ResolvedType, invidx: number): TIRInvokeID {
+    static generateInvokeIDForInvariant(ttype: ResolvedType, invidx: number): TIRInvokeKey {
         return `invariant_${ttype.typeID}$${invidx}`;
     }
 
-    static generateInvokeIDForValidate(ttype: ResolvedType, invidx: number): TIRInvokeID {
+    static generateInvokeIDForValidate(ttype: ResolvedType, invidx: number): TIRInvokeKey {
         return `validate_${ttype.typeID}$${invidx}`;
     }
 
-    static generateInvokeIDForConstExp(): TIRInvokeID {
+    static generateInvokeIDForConstExp(): TIRInvokeKey {
         xxxx;
     }
 
-    static generateInvokeIDForPreCondition(): TIRInvokeID {
+    static generateInvokeIDForPreCondition(): TIRInvokeKey {
         xxxx;
     }
 
-    static generateInvokeIDForPostCondition(): TIRInvokeID {
+    static generateInvokeIDForPostCondition(): TIRInvokeKey {
         xxxx;
     }
 }
@@ -103,6 +104,8 @@ class TypeChecker {
     private m_atomSubtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
 
     private m_typedeclResolutions: Map<string, ResolvedType> = new Map<string, ResolvedType>();
+
+    private m_tirTypeMap: Map<string, TIRType> = new Map<string, TIRType>();
 
     constructor(buildmode: BuildApplicationMode, assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
@@ -195,10 +198,10 @@ class TypeChecker {
         }
     }
 
-    reduceLiteralValueToCanonicalForm(bodyid: string, exp: Expression, binds: TemplateBindScope): TIRLiteralValue | undefined {
+    reduceLiteralValueToCanonicalForm(bodyid: string, exp: Expression, binds: TemplateBindScope): [TIRLiteralValue | undefined, ResolvedType] {
         const cexp = this.compileTimeReduceConstantExpression(exp, binds);
         if(cexp === undefined) {
-            return undefined;
+            return [undefined, ResolvedType.createInvalid()];
         }
 
         const literalenv = ExpressionTypeEnvironment.createInitialEnvForLiteralEval(bodyid, binds);
@@ -243,28 +246,28 @@ class TypeChecker {
             else {
                 this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
 
-                const iexp = new TIRInvalidExpression(exp.sinfo, this.getSpecialNoneType());
-                return new TIRLiteralValue(iexp, iexp.tlayout, iexp.expstr);
+                const iexp = new TIRInvalidExpression(exp.sinfo, "None");
+                return new TIRLiteralValue(iexp, "None", iexp.expstr);
             }
         }
 
-        return new TIRLiteralValue(nexp.expressionResult, nexp.expressionResult.tlayout, nexp.expressionResult.expstr);
+        return [new TIRLiteralValue(nexp.expressionResult, nexp.expressionResult.etype, nexp.expressionResult.expstr), nexp.trepr];
     }
 
-    private checkExpInfer(env: ExpressionTypeEnvironment, einfer: ResolvedType, ename: string): ResolvedType {
-        const eii = env.expInferInfo.get(ename);
-        if(eii === undefined) {
-            return einfer;
+    private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tinfer: ResolvedType, value: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
+        assert(this.subtypeOf(tinfer, trepr), `That should be impossible -- ${tinfer.typeID} not subtype of ${trepr.typeID}`);
+
+        let iinfo = env.expInferInfo;
+        if(!env.expInferInfo.has(exp.expstr)) {
+            iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(env.expInferInfo).set(exp.expstr, { depvars: new Set<string>(exp.getUsedVars()), infertype: tinfer, infertruth: value || FlowTypeTruthValue.Unknown})
         }
         else {
-            //Note we prefer the infer type unless the subtype is strictly better -- think of it like for variables and their declared type vs infer type
-            if(this.subtypeOf(einfer, eii.infertype)) {
-                return einfer;
-            }
-            else {
-                return eii.infertype;
-            }
+            const einfo = env.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
+            tinfer = einfo.infertype;
+            value = einfo.infertruth;
         }
+
+        return env.setResultExpressionInfo(exp, trepr, tinfer, value || FlowTypeTruthValue.Unknown, iinfo);
     }
 
     private splitConceptTypes(ofc: ResolvedConceptAtomType, withc: ResolvedConceptAtomType): {tp: ResolvedType | undefined, fp: ResolvedType | undefined} {
@@ -279,6 +282,7 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNothingType() };
         }
         else {
+            xxx; //can we create a new type ofc & withc
             return { tp: ResolvedType.createSingle(withc), fp: ResolvedType.createSingle(ofc) };
         }
     }
@@ -558,9 +562,9 @@ class TypeChecker {
     }
 
     private normalizeType_Literal(t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
-        const chkexp = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
+        const [chkexp, chktype] = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
         if(chkexp !== undefined) {
-            const llexp = new ResolvedLiteralAtomType(chkexp.lidstr, chkexp);
+            const llexp = new ResolvedLiteralAtomType(chkexp.lidstr, chktype, chkexp);
             return ResolvedType.createSingle(llexp);
         }
         else {
@@ -926,11 +930,11 @@ class TypeChecker {
     }
 
     private normalizeType_Function(t: FunctionTypeSignature, binds: TemplateBindScope): ResolvedFunctionType | undefined {
-        const params = t.params.map((param) => {
+        const params = t.params.map((param, idx) => {
             let ttl = this.normalizeTypeGeneral(param.type, binds);
             let llpv: TIRLiteralValue | undefined = undefined;
             if(param.litexp !== undefined) {
-                const llpv = this.reduceLiteralValueToCanonicalForm(param.litexp.exp, binds);
+                const llpv = this.reduceLiteralValueToCanonicalForm(`[TypeFunctionParemeter_${idx}]`, param.litexp.exp, binds);
                 if(llpv === undefined) {
                     ttl = ResolvedType.createInvalid();
                 }
@@ -950,6 +954,16 @@ class TypeChecker {
 
         return ResolvedFunctionType.create(t.isThisRef, t.recursive, params, rtype, t.isPred);
     }
+
+
+///////////////////////////////////////////////////////////////////////
+
+    private toTIRTypeKey(rtype: ResolvedType): TIRTypeKey {
+        xxxx;
+    }
+
+
+////////////////////////////////////////////////////////////////////////
 
     private atomSubtypeOf_EntityConcept(t1: ResolvedEntityAtomType, t2: ResolvedConceptAtomType): boolean {
         const t2type = ResolvedType.createSingle(t2);

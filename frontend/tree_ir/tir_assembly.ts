@@ -4,7 +4,7 @@ import { TIRExpression, TIRLiteralValue } from "./tir_body";
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-import assert = require("assert");
+import * as assert from "assert";
 
 class TIRTypeName {
     readonly ns: string;
@@ -15,6 +15,10 @@ class TIRTypeName {
         this.ns = ns;
         this.names = names;
         this.templates = templates || [];
+    }
+
+    static createSelfDescribingTypeName(kind: string, name: string): TIRTypeName {
+        return new TIRTypeName(kind, [name], undefined);
     }
 }
 
@@ -640,10 +644,12 @@ class TIRTaskType extends TIROOType {
 
 class TIRConceptType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
+    readonly subtypes: Set<TIRTypeKey>;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], binds: Map<string, TIRTypeKey>) {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], binds: Map<string, TIRTypeKey>, subtypes: Set<TIRTypeKey>) {
         super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberFields, memberMethods);
         this.binds = binds;
+        this.subtypes = subtypes;
     }
 
     isAnyConcept(): boolean {
@@ -893,7 +899,6 @@ class TIRNamespaceDeclaration {
 class TIRAssembly {
     readonly namespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
     readonly typeMap: Map<TIRTypeKey, TIRType> = new Map<TIRTypeKey, TIRType>();
-
 
     readonly literalRegexs: BSQRegex[] = [];
     readonly validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
