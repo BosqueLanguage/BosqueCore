@@ -6,7 +6,7 @@
 import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam } from "./resolved_type";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType } from "./resolved_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
 import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
@@ -14,7 +14,7 @@ import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValu
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, BuildApplicationMode, SourceInfo } from "../build_decls";
-import { TIRConceptType, TIRInvokeKey, TIRLiteralType, TIRType, TIRTypeKey, TIRTypeName } from "../tree_ir/tir_assembly";
+import { TIRConceptType, TIRInvokeKey, TIRLiteralType, TIRType, TIRTypeKey, TIRTypeName, TIRUnionType } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -958,8 +958,110 @@ class TypeChecker {
 
 ///////////////////////////////////////////////////////////////////////
 
+    private toTIRTypeKey_Atom(rtype: ResolvedAtomType): TIRTypeKey {
+        if(this.m_tirTypeMap.has(rtype.typeID)) {
+            return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tid;
+        }
+
+        let tirtype: TIRType | undefined =  undefined;
+        if(rtype instanceof ResolvedLiteralAtomType) {
+            tirtype = new TIRLiteralType(rtype.typeID, rtype.litexp);
+        }
+        else if(rtype instanceof ResolvedObjectEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedEnumEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedTypedeclEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedValidatorEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedStringOfEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedASCIIStringOfEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedPathValidatorEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedPathEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedPathFragmentEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedPathGlobEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedOkEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedErrEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedSomethingEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedHavocEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedListEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedStackEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedQueueEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedSetEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedMapEntityAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedConceptAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedTaskAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedTupleAtomType) {
+            xxxx;
+        }
+        else if(rtype instanceof ResolvedRecordAtomType) {
+            xxxx;
+        }
+        else {
+            xxx; //ResolvedEphemeralListType;
+        }
+
+        this.m_tirTypeMap.set(rtype.typeID, tt);
+        return tt.tid;
+    }
+
     private toTIRTypeKey(rtype: ResolvedType): TIRTypeKey {
-        xxxx;
+        if(this.m_tirTypeMap.has(rtype.typeID)) {
+            return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tid;
+        }
+
+        if(rtype.options.length === 1) {
+            return this.toTIRTypeKey_Atom(rtype.options[0]);
+        }
+        else {
+            const opts = rtype.options.map((opt) => this.toTIRTypeKey_Atom(opt));
+            const tt = new TIRUnionType(rtype.typeID, opts);
+            
+            this.m_tirTypeMap.set(rtype.typeID, tt);
+            return tt.tid;
+        }
     }
 
 

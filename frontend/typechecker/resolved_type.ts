@@ -1,6 +1,7 @@
 import * as assert from "assert";
 
 import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
+import { TIRLiteralValue } from "../tree_ir/tir_body";
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
@@ -12,12 +13,12 @@ abstract class ResolvedAtomType {
 
 class ResolvedLiteralAtomType extends ResolvedAtomType {
     readonly litexptype: ResolvedType;
-    readonly litexpstr: string;
+    readonly litexp: TIRLiteralValue;
 
-    constructor(reprexp: string, litexptype: ResolvedType, litexpstr: string) {
+    constructor(reprexp: string, litexptype: ResolvedType, litexp: TIRLiteralValue) {
         super(reprexp);
         this.litexptype = litexptype;
-        this.litexpstr = litexpstr;
+        this.litexp = litexp;
     }
 }
 

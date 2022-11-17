@@ -637,13 +637,13 @@ class BinLogicImpliesExpression extends Expression {
 
 class TIRLiteralValue {
     readonly exp: TIRExpression;
-    readonly ltype: TIRTypeKey;
-    readonly lidstr: string;
+    readonly ltype: TIRTypeKey; //type of the expression -- e.g. "ok" is type String
+    readonly litstr: string;
     
-    constructor(exp: TIRExpression, ltype: TIRTypeKey, lidstr: string) {
+    constructor(exp: TIRExpression, ltype: TIRTypeKey, litstr: string) {
         this.exp = exp
         this.ltype = ltype;
-        this.lidstr = lidstr;
+        this.litstr = litstr;
     }
 }
 

@@ -16,10 +16,6 @@ class TIRTypeName {
         this.names = names;
         this.templates = templates || [];
     }
-
-    static createSelfDescribingTypeName(kind: string, name: string): TIRTypeName {
-        return new TIRTypeName(kind, [name], undefined);
-    }
 }
 
 class TIRNamespaceMemberName {
@@ -335,24 +331,24 @@ class TIRMemberMethodDecl {
 
 abstract class TIRType {
     readonly tid: TIRTypeKey;
-    readonly tname: TIRTypeName;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName) {
+    constructor(tid: TIRTypeKey) {
         this.tid = tid;
-        this.tname = tname;
     }
 }
 
 class TIRLiteralType extends TIRType {
     readonly lexp: TIRLiteralValue;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, lexp: TIRLiteralValue) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, lexp: TIRLiteralValue) {
+        super(tid);
         this.lexp = lexp;
     }
 }
 
 abstract class TIROOType extends TIRType {
+    readonly tname: TIRTypeName;
+
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
@@ -368,7 +364,8 @@ abstract class TIROOType extends TIRType {
     readonly memberMethods: TIRMemberMethodDecl[];
 
     constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[]) {
-        super(tid, tname);
+        super(tid);
+        this.tname = tname;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
@@ -672,8 +669,8 @@ class TIRConceptType extends TIROOType {
 class TIRConcepSetType extends TIRType {
     readonly conceptTypes: TIRTypeKey[]; //each is a TIRConceptType
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, concepts: TIRTypeKey[]) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, concepts: TIRTypeKey[]) {
+        super(tid);
         this.conceptTypes = concepts;
     }
 }
@@ -681,8 +678,8 @@ class TIRConcepSetType extends TIRType {
 class TIRTupleType extends TIRType {
     readonly types: TIRTypeKey[];
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, types: TIRTypeKey[]) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, types: TIRTypeKey[]) {
+        super(tid);
         this.types = types;
     }
 }
@@ -690,8 +687,8 @@ class TIRTupleType extends TIRType {
 class TIRRecordType extends TIRType {
     readonly entries: {pname: TIRPropertyKey, ptype: TIRTypeKey}[];
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, entries: {pname: TIRPropertyKey, ptype: TIRTypeKey}[]) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, entries: {pname: TIRPropertyKey, ptype: TIRTypeKey}[]) {
+        super(tid);
         this.entries = entries;
     }
 }
@@ -699,8 +696,8 @@ class TIRRecordType extends TIRType {
 class TIREphemeralListType extends TIRType {
     readonly types: TIRTypeKey[];
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, types: TIRTypeKey[]) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, types: TIRTypeKey[]) {
+        super(tid);
         this.types = types;
     }
 }
@@ -708,8 +705,8 @@ class TIREphemeralListType extends TIRType {
 class TIRUnionType extends TIRType {
     readonly options: TIRTypeKey[];
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, options: TIRTypeKey[]) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, options: TIRTypeKey[]) {
+        super(tid);
         this.options = options;
     }
 }
@@ -720,8 +717,8 @@ class TIRCodePackType extends TIRType {
     readonly capturedargs: {argname: string, argtype: TIRTypeKey}[];
     readonly resulttype: TIRTypeKey;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, invtarget: TIRInvokeKey, callargs: TIRTypeKey[], capturedargs: {argname: string, argtype: TIRTypeKey}[], resulttype: TIRTypeKey) {
-        super(tid, tname);
+    constructor(tid: TIRTypeKey, invtarget: TIRInvokeKey, callargs: TIRTypeKey[], capturedargs: {argname: string, argtype: TIRTypeKey}[], resulttype: TIRTypeKey) {
+        super(tid);
         this.invtarget = invtarget;
         this.callargs = callargs;
         this.capturedargs = capturedargs;
