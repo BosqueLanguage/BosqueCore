@@ -4162,13 +4162,13 @@ class Parser {
         try {
             this.setRecover(this.scanCodeParens());
 
-            const enums = this.parseListOf<{ename: string, evalue: ConstantExpressionValue | undefined}>("enum declaration", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            const enums = this.parseListOf<{ename: string, evalue: LiteralExpressionValue | undefined}>("enum declaration", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 this.ensureToken(TokenStrings.Identifier, "enum member");
                 const ename = this.consumeTokenAndGetValue();
 
-                let evalue: ConstantExpressionValue | undefined = undefined;
+                let evalue: LiteralExpressionValue | undefined = undefined;
                 if(this.testAndConsumeTokenIf(SYM_eq)) {
-                    evalue = this.parseConstExpression(false);
+                    evalue = this.parseLiteralExpression("enum member");
                 }
 
                 this.ensureAndConsumeToken(SYM_coma, "enum member");
@@ -4188,15 +4188,18 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
     
+            xxxx;
             for(let i = 0; i < enums.length; ++i) {
                 if (enums[i].evalue !== undefined) {
-                    const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i].ename, etype, enums[i].evalue);
+                    const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i].ename, etype, new ConstantExpressionValue((enums[i].evalue as LiteralExpressionValue).exp, new Set<string>()));
                     staticMembers.push(enm);
+                    staticFunctions.push(xxx);
                 }
                 else {
                     const exp = new LiteralIntegralExpression(sinfo, i.toString() + "n", this.m_penv.SpecialNatSignature);
                     const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i].ename, etype, new ConstantExpressionValue(exp, new Set<string>()));
                     staticMembers.push(enm);
+                    staticFunctions.push(xxx);
                 }
             }
 

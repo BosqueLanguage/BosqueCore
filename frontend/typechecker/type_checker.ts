@@ -14,7 +14,7 @@ import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValu
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, BuildApplicationMode, SourceInfo } from "../build_decls";
-import { TIRConceptType, TIRInvokeKey, TIRLiteralType, TIRType, TIRTypeKey, TIRTypeName, TIRUnionType } from "../tree_ir/tir_assembly";
+import { TIRConceptType, TIREnumEntityType, TIRFieldKey, TIRInvariantDecl, TIRInvokeKey, TIRLiteralType, TIRMemberFieldDecl, TIRObjectEntityType, TIROOType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -84,6 +84,12 @@ class TIRInvokeIDGenerator {
 
     static generateInvokeIDForPostCondition(): TIRInvokeKey {
         xxxx;
+    }
+}
+
+class TIRMemberIDGenerator {
+    static generateMemberFieldID(typeid: string, fname: string): TIRFieldKey {
+        return `${typeid}$${fname}`;
     }
 }
 
@@ -958,20 +964,219 @@ class TypeChecker {
 
 ///////////////////////////////////////////////////////////////////////
 
-    private toTIRTypeKey_Atom(rtype: ResolvedAtomType): TIRTypeKey {
+    private getAllOOFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fmap?: Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
+        assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
+
+        let declfields = fmap || new Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
+
+        //Important to do traversal in Left->Right Topmost traversal order
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declfields = this.getAllOOFields(provide, concept.concept, concept.binds, declfields);
+        });
+
+        ooptype.memberFields.forEach((mf) => {
+            if (!declfields.has(mf.name)) {
+                declfields.set(mf.name, [ttype, ooptype, mf, oobinds]);
+            }
+        });
+
+        return declfields;
+    }
+
+    private getAllInvariantProvidingTypesInherit(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+        let declinvs: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
+
+        if (declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
+            return declinvs;
+        }
+
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declinvs = this.getAllInvariantProvidingTypesInherit(provide, concept.concept, concept.binds, declinvs);
+        });
+
+
+        if (ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
+            declinvs.push([ttype, ooptype, oobinds]);
+        }
+
+        return declinvs;
+    }
+
+    private getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+        let declinvs: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
+
+        if (declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
+            return declinvs;
+        }
+
+        if (!(ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType)) {
+            const ccdecl = ttype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
+            const oftype = ResolvedType.createSingle(ccdecl.valuetype);
+
+            declinvs = this.getAllInvariantProvidingTypesTypedecl(oftype, ccdecl.valuetype.object, ccdecl.valuetype.getBinds(), declinvs);
+        }
+
+        if ((ooptype.invariants.length !== 0 || ooptype.validates.length !== 0)
+            || (ooptype.attributes.includes("__stringof_type") || ooptype.attributes.includes("__asciistringof_type"))
+            || (ooptype.attributes.includes("__path_type") || ooptype.attributes.includes("__pathfragment_type") || ooptype.attributes.includes("__pathglob_type"))
+        ) {
+            declinvs.push([ttype, ooptype, oobinds]);
+        }
+
+        return declinvs;
+    }
+
+    private toTIRProvides(ootype: OOPTypeDecl, binds: TemplateBindScope): TIRTypeKey[] {
+        return this.resolveProvides(ootype, binds).map((rr) => this.toTIRTypeKey(rr));
+    }
+
+    private toTIRInvariantConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
+        const fargs = allfields.map((ff, idx) => {
+            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
+        });
+
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
+
+                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
+                return {invk: invk, args: args};
+            });
+        });
+        
+        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRValidateConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
+        const fargs = allfields.map((ff, idx) => {
+            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
+        });
+
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [ValidateDecl, number][]);
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0], inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
+
+                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
+                return {invk: invk, args: args};
+            });
+        });
+        
+        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRInvariantConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], vtype: TIRMemberFieldDecl[]): [{invk: TIRInvokeKey, vtype: TIRTypeKey}[], {invk: TIRInvokeKey, vtype: TIRTypeKey}[]] {
+       const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
+
+                return {invk: invk, vtype: invtype.valuetype};
+            });
+        });
+
+        const tinv = ((invdecls.find((idp) => idp[0].typeID === ttype.typeID) as [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>])[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+        const dinvs = tinv.map((inv) => {
+            const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(ttype, inv[1]);
+            const invtype = this.m_tirTypeMap.get(ttype.typeID) as TIRTypedeclEntityType;
+
+            return {invk: invk, vtype: invtype.valuetype};
+        });
+
+        return [([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa), dinvs];
+    }
+
+    private toTIRValidateConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): {invk: TIRInvokeKey, vtype: TIRTypeKey}[] {
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]);
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0], inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
+
+                return {invk: invk, vtype: invtype.valuetype};
+            });
+        });
+
+        return ([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRTypedeclChecks(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): { strof: ResolvedType | undefined, pthof: ResolvedType | undefined } {
+        const chkvalidxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
+        });
+        const chkvalid = (chkvalidxx !== undefined) ? (chkvalidxx[2].get("T") as ResolvedType) : undefined;
+
+        const chkpathxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
+        });
+        const chkpath = (chkpathxx !== undefined) ? (chkpathxx[2].get("T") as ResolvedType) : undefined;
+
+        return { strof: chkvalid, pthof: chkpath };
+    }
+
+    private toTIRMemberFields(encltypeid: string, enclname: TIRTypeName, fields: MemberFieldDecl[], binds: TemplateBindScope): TIRMemberFieldDecl[] {
+        return fields.map((mf) => {
+            const fkey = TIRMemberIDGenerator.generateMemberFieldID(encltypeid, mf.name);
+            const fname = new TIRTypeMemberName(enclname, mf.name, undefined);
+            const declaredtype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, binds));
+
+            return new TIRMemberFieldDecl(fkey, fname, mf.name, encltypeid, mf.sourceLocation, mf.srcFile, mf.attributes, declaredtype);
+        });
+    }
+
+    private toTIRAllFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): TIRMemberFieldDecl[] {
+        const alldecls = this.getAllOOFields(ttype, ooptype, oobinds);
+        return [...alldecls].map((entry) => (this.m_tirTypeMap.get(entry[1][0].typeID) as TIROOType).memberFields.find((mf) => mf.name === entry[0]) as TIRMemberFieldDecl);
+    }
+
+    private toTIRTypeKey_Atom(rtype: ResolvedAtomType, processingstack: ResolvedAtomType[]): TIRTypeKey {
         if(this.m_tirTypeMap.has(rtype.typeID)) {
             return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tid;
         }
+
+        if(processingstack.some((se) => se.typeID === rtype.typeID)) {
+            return rtype.typeID;
+        }
+        processingstack.push(rtype);
 
         let tirtype: TIRType | undefined =  undefined;
         if(rtype instanceof ResolvedLiteralAtomType) {
             tirtype = new TIRLiteralType(rtype.typeID, rtype.litexp);
         }
         else if(rtype instanceof ResolvedObjectEntityAtomType) {
-            xxxx;
+            const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, rtype.object.terms.map((term) => this.toTIRTypeKey(rtype.binds.get(term.name) as ResolvedType)));
+            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createBaseBindScope(rtype.binds));
+            const memberfields = this.toTIRMemberFields(rtype.typeID, tname, rtype.object.memberFields, TemplateBindScope.createBaseBindScope(rtype.binds));
+            const allfdecls = this.toTIRAllFields(ResolvedType.createSingle(rtype), rtype.object, rtype.binds);
+            const allfields = allfdecls.map((fd) => {
+                return {fkey: fd.fkey, ftype: fd.declaredType};
+            });
+
+            const invdecls = this.getAllInvariantProvidingTypesInherit(ResolvedType.createSingle(rtype), rtype.object, rtype.binds);
+            const consinvariants = this.toTIRInvariantConsEntity(ResolvedType.createSingle(rtype), invdecls, allfdecls);
+            const apivalidates = this.toTIRValidateConsEntity(ResolvedType.createSingle(rtype), invdecls, allfdecls);
+
+            const binds = new Map<string, TIRTypeKey>();
+            rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
+
+            tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], memberfields, [], [], [], consinvariants, apivalidates, new Map<string, TIRInvokeKey>(), allfields, binds);
+
+            this.pendingEntityDecls.push(tirtype);
         }
         else if(rtype instanceof ResolvedEnumEntityAtomType) {
-            xxxx;
+            const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
+            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const enumtype = ;
+
+            tirtype = new TIREnumEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], enumtype);
         }
         else if(rtype instanceof ResolvedTypedeclEntityAtomType) {
             xxxx;
@@ -1042,6 +1247,8 @@ class TypeChecker {
         else {
             xxx; //ResolvedEphemeralListType;
         }
+
+        processingstack.pop();
 
         this.m_tirTypeMap.set(rtype.typeID, tt);
         return tt.tid;
@@ -1238,136 +1445,6 @@ class TypeChecker {
         }
 
         return fullbinds;
-    }
-
-    getAllOOFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fmap?: Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
-        assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
-        
-        let declfields = fmap || new Map<string, [OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
-
-        //Important to do traversal in Left->Right Topmost traversal order
-        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
-        rprovides.forEach((provide) => {
-            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            declfields = this.getAllOOFields(provide, concept.concept, concept.binds, declfields);
-        });
-
-        ooptype.memberFields.forEach((mf) => {
-            if (!declfields.has(mf.name)) {
-                declfields.set(mf.name, [ooptype, mf, oobinds]);
-            }
-        });
-
-        return declfields;
-    }
-
-    getAllInvariantProvidingTypesInherit(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
-        let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
-
-        if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
-            return declinvs;
-        }
-
-        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
-        rprovides.forEach((provide) => {
-            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
-            declinvs = this.getAllInvariantProvidingTypesInherit(provide, concept.concept, concept.binds, declinvs);
-        });
-
-        
-        if(ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
-            declinvs.push([ttype, ooptype, oobinds]);
-        }
-
-        return declinvs;
-    }
-
-    getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
-        let declinvs:  [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
-
-        if(declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
-            return declinvs;
-        }
-
-        if (!(ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType)) {
-            const ccdecl = ttype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
-            const oftype = ResolvedType.createSingle(ccdecl.valuetype);
-
-            declinvs = this.getAllInvariantProvidingTypesTypedecl(oftype, ccdecl.valuetype.object, ccdecl.valuetype.getBinds(), declinvs);
-        }
-        
-        if((ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) 
-            || (ooptype.attributes.includes("__stringof_type") || ooptype.attributes.includes("__asciistringof_type"))
-            || (ooptype.attributes.includes("__path_type") || ooptype.attributes.includes("__pathfragment_type") || ooptype.attributes.includes("__pathglob_type"))
-        ) {
-            declinvs.push([ttype, ooptype, oobinds]);
-        }
-
-        return declinvs;
-    }
-
-    typeHasInvariantsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
-        const invprov = this.getAllInvariantProvidingTypesInherit(ttype, ooptype, oobinds);
-        return invprov.some((tdp) => tdp[1].invariants.some((inv) => isBuildLevelEnabled(inv.level, this.m_buildLevel)));
-    }
-
-    typeHasValidatorsOnConstructor(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
-        if(this.typeHasInvariantsOnConstructor(ttype, ooptype, oobinds)) {
-            return true;
-        }
-
-        const invprov = this.getAllInvariantProvidingTypesInherit(ttype, ooptype, oobinds);
-        return invprov.some((tdp) => tdp[1].validates.length !== 0);
-    }
-
-    typedeclGenerateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: [PathValidator, OOPTypeDecl] | undefined} {
-        const invdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
-
-        const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-            return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
-        });
-        const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa);
-
-        const chkvalidxx = invdecls.find((idp) => {
-            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
-        });
-        const chkvalid = (chkvalidxx !== undefined) ? this.m_assembly.tryGetValidatorForFullyResolvedName((chkvalidxx[2].get("T") as ResolvedType).typeID) : undefined;
-
-        const chkpathxx = invdecls.find((idp) => {
-            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
-        });
-        const chkpath = (chkpathxx !== undefined) ? [this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID), chkpathxx[1]] as [PathValidator, OOPTypeDecl] : undefined;
-
-        return {inv: chkinvs, strof: chkvalid, pthof: chkpath};
-    }
-
-    typedeclValidateConstructorCallList(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): {inv: TIRInvokeID[], strof: BSQRegex | undefined, pthof: PathValidator | undefined} {
-        const invdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, oobinds);
-
-        const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx] as [InvariantDecl, number])).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-            return invs.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0], inv[1]));
-        });
-
-        const chkvalidsaa = invdecls.map((idp) => {
-            let valids = idp[1].validates.map((vv, iidx) => [vv, iidx] as [ValidateDecl, number]);
-            return valids.map((inv) => TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0], inv[1]));
-        });
-
-        const chkinvs = ([] as TIRInvokeID[]).concat(...chkinvsaa, ...chkvalidsaa);
-
-        const chkvalidxx = invdecls.find((idp) => {
-            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
-        });
-        const chkvalid = (chkvalidxx !== undefined) ? this.m_assembly.tryGetValidatorForFullyResolvedName((chkvalidxx[2].get("T") as ResolvedType).typeID) : undefined;
-
-        const chkpathxx = invdecls.find((idp) => {
-            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
-        });
-        const chkpath = (chkpathxx !== undefined) ? this.m_assembly.tryGetPathValidatorForFullyResolvedName((chkpathxx[2].get("T") as ResolvedType).typeID) : undefined;
-
-        return {inv: chkinvs, strof: chkvalid, pthof: chkpath};
     }
 
     private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
