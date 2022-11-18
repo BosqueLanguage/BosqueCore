@@ -409,11 +409,11 @@ class TIRObjectEntityType extends TIREntityType {
 
 //Represents enum types declared as entities in the code
 class TIREnumEntityType extends TIREntityType {
-    readonly enumtype: TIRTypeKey; //the representation type of the enum values ()
+    readonly enums: {ename: string, value: TIRLiteralValue, reprtype: TIRTypeKey}[];
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], enumtype: TIRTypeKey) {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], enums: {ename: string, value: TIRLiteralValue, reprtype: TIRTypeKey}[]) {
         super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, [], [], []);
-        this.enumtype = enumtype;
+        this.enums = enums;
     }
 }
 
@@ -422,14 +422,14 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly valuetype: TIRTypeKey; //result of .value()
     readonly representation: TIRTypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
 
-    readonly consinvariantsall: {invk: TIRInvokeKey, arg: TIRTypeKey}[]; 
-    readonly consinvariantsexplicit: {invk: TIRInvokeKey, arg: TIRTypeKey}[]; 
-    readonly apivalidates: {invk: TIRInvokeKey, arg: TIRTypeKey}[];
+    readonly consinvariantsall: {invk: TIRInvokeKey, vtype: TIRTypeKey}[]; 
+    readonly consinvariantsexplicit: {invk: TIRInvokeKey, vtype: TIRTypeKey}[]; 
+    readonly apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[];
 
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
     readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator} | undefined; //TIRPathValidatorEntityType;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], consinvariantsall: {invk: TIRInvokeKey, arg: TIRTypeKey}[], consinvariantsexplicit: {invk: TIRInvokeKey, arg: TIRTypeKey}[], apivalidates: {invk: TIRInvokeKey, arg: TIRTypeKey}[], vtable: Map<string, TIRInvokeKey>, valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator} | undefined) {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], consinvariantsall: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], consinvariantsexplicit: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator} | undefined) {
         super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, invariants, validates, []);
         this.valuetype = valuetype;
         this.representation = representation;
