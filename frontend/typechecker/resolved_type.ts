@@ -839,6 +839,14 @@ class TemplateBindScope {
     static createBaseBindScope(binds: Map<string, ResolvedType>): TemplateBindScope {
         return TemplateBindScope.createEmptyBindScope().pushScope(binds);
     }
+
+    static createSingleBindScope(t: string, v: ResolvedType): TemplateBindScope {
+        return TemplateBindScope.createEmptyBindScope().pushScope(new Map<string, ResolvedType>().set(t, v));
+    }
+
+    static createDoubleBindScope(t1: string, v1: ResolvedType, t2: string, v2: ResolvedType): TemplateBindScope {
+        return TemplateBindScope.createEmptyBindScope().pushScope(new Map<string, ResolvedType>().set(t1, v1).set(t2, v2));
+    }
 }
 
 export {

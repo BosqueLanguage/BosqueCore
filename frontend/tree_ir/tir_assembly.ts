@@ -478,7 +478,7 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
 }
 
 //class representing ASCIIStringOf<T> types
-class TIRASCIIStringOfEntityTIRType extends TIRInternalEntityType {
+class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     readonly validatortype: TIRTypeKey; //TIRValidatorEntityType;
     readonly revalidator: BSQRegex;
 
@@ -952,7 +952,7 @@ export {
     TIRType,
     TIRLiteralType,
     TIROOType, TIREntityType, TIRObjectEntityType, TIREnumEntityType, TIRTypedeclEntityType, TIRInternalEntityType, TIRPrimitiveInternalEntityType,
-    TIRValidatorEntityType, TIRStringOfEntityType, TIRASCIIStringOfEntityTIRType,
+    TIRValidatorEntityType, TIRStringOfEntityType, TIRASCIIStringOfEntityType,
     TIRPathValidatorEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType,
     TIRConstructableEntityType, TIROkEntityType, TIRErrEntityType, TIRSomethingEntityType,
     TIRHavocEntityType,

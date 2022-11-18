@@ -4527,12 +4527,17 @@ class Parser {
             this.m_penv.assembly.addValidatorPath((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, vv);
         }
         else {
-            //[attr] typedecl NAME = PRIMITIVE [& {...}];
+            //[attr] typedecl NAME = PRIMITIVE [provides ] [& {...}];
 
             const idval = this.parseNominalType() as NominalTypeSignature;
 
             let provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             provides.push([new NominalTypeSignature(sinfo, "Core", ["KeyType"]), new TypeConditionRestriction([new TemplateTypeRestriction(idval, false, false, new NominalTypeSignature(sinfo, "Core", ["KeyType"]))])]);
+
+            if(this.testAndConsumeTokenIf(KW_provides)) {
+                const eprovides = this.parseProvides(sinfo, true, [SYM_amp, SYM_semicolon]);
+                provides.push(...eprovides);
+            }
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -4560,6 +4565,10 @@ class Parser {
             }
             else {
                 this.ensureAndConsumeToken(SYM_semicolon, "typedecl");
+            }
+
+            if(memberFields.length !== 0) {
+                this.raiseError(sinfo.line, "Cannot declare additional member fields on typedecl");
             }
 
             const vparam = new FunctionParameter("v", idval, undefined);
