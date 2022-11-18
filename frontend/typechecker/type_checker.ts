@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
+import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType } from "./resolved_type";
 import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression } from "../ast/body";
 import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue } from "../tree_ir/tir_body";
@@ -14,7 +14,7 @@ import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValu
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, BuildApplicationMode, SourceInfo } from "../build_decls";
-import { TIRASCIIStringOfEntityType, TIRConceptType, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMemberFieldDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMemberConstKey, TIRMemberFieldDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -66,12 +66,12 @@ enum ResolveResultFlag {
 }
 
 class TIRInvokeIDGenerator {
-    static generateInvokeIDForInvariant(ttype: ResolvedType, invidx: number): TIRInvokeKey {
-        return `invariant_${ttype.typeID}$${invidx}`;
+    static generateInvokeIDForInvariant(ttype: TIRTypeKey, invidx: number): TIRInvokeKey {
+        return `invariant_${ttype}$${invidx}`;
     }
 
-    static generateInvokeIDForValidate(ttype: ResolvedType, invidx: number): TIRInvokeKey {
-        return `validate_${ttype.typeID}$${invidx}`;
+    static generateInvokeIDForValidate(ttype: TIRTypeKey, invidx: number): TIRInvokeKey {
+        return `validate_${ttype}$${invidx}`;
     }
 
     static generateInvokeIDForConstExp(): TIRInvokeKey {
@@ -85,9 +85,21 @@ class TIRInvokeIDGenerator {
     static generateInvokeIDForPostCondition(): TIRInvokeKey {
         xxxx;
     }
+
+    static generateInvokeIDForMethodMember(ttype: TIRTypeKey, name: string, templates: TIRTypeKey[], declline: number, declcol: number): TIRInvokeKey {
+        return `method_${ttype}$${name}${templates.length !== 0 ? ("<" + templates.join(", ") + ">") : ""}_${declline}$${declcol}_`;
+    }
+
+    static generateInvokeIDForStaticMember(ttype: TIRTypeKey, name: string, templates: TIRTypeKey[], declline: number, declcol: number): TIRInvokeKey {
+        return `function_${ttype}$${name}${templates.length !== 0 ? ("<" + templates.join(", ") + ">") : ""}_${declline}$${declcol}_`;
+    }
 }
 
 class TIRMemberIDGenerator {
+    static generateDefaultMemberID(typeid: string, dname: string): TIRMemberConstKey {
+        return `${typeid}$${dname}`;
+    }
+
     static generateMemberFieldID(typeid: string, fname: string): TIRFieldKey {
         return `${typeid}$${fname}`;
     }
@@ -1339,35 +1351,75 @@ class TypeChecker {
                     return {fkey: fd.fkey, ftype: fd.declaredType};
                 });
 
-                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, provides, [], [], memberfields, [], [], [], new Set<string>(), allfields);
+                const binds = new Map<string, TIRTypeKey>();
+                rconcept.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
+
+                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, provides, [], [], memberfields, [], [], [], binds, new Set<string>(), allfields);
+                this.pendingConceptDecls.push(tirtype);
             }
             else {
                 const tirconjuncts = rtype.conceptTypes.map((cpt) => {
-                    xxxx;
+                    return this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])));
                 });
-                xxxx;
+
+                tirtype = new TIRConceptSetType(rtype.typeID, tirconjuncts);
             }
         }
         else if(rtype instanceof ResolvedTaskAtomType) {
-            xxxx;
+            const tname = new TIRTypeName(rtype.task.ns, rtype.task.name, rtype.task.terms.map((term) => this.toTIRTypeKey(rtype.binds.get(term.name) as ResolvedType)));
+            const provides = this.toTIRProvides(rtype.task, TemplateBindScope.createBaseBindScope(rtype.binds));
+            const memberfields = this.toTIRMemberFields(rtype.typeID, tname, rtype.task.memberFields, TemplateBindScope.createBaseBindScope(rtype.binds));
+
+            const binds = new Map<string, TIRTypeKey>();
+            rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
+
+            const defaults = rtype.task.defaults.map((sm) => {
+                return {dkey: TIRMemberIDGenerator.generateDefaultMemberID(rtype.typeID, sm.name), dname: sm.name};
+            });
+
+            const mainfunc = {mkey: TIRInvokeIDGenerator.generateInvokeIDForStaticMember(rtype.typeID, rtype.task.mainfunc.name, [], rtype.task.mainfunc.sourceLocation.line, rtype.task.mainfunc.sourceLocation.column), mname: rtype.task.mainfunc.name};
+            const onfuncs = {
+                onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForMethodMember(rtype.typeID, rtype.task.onfuncs.onCanel.name, [], rtype.task.onfuncs.onCanel.sourceLocation.line, rtype.task.onfuncs.onCanel.sourceLocation.column)) : undefined, 
+                onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForMethodMember(rtype.typeID, rtype.task.onfuncs.onFailure.name, [], rtype.task.onfuncs.onFailure.sourceLocation.line, rtype.task.onfuncs.onFailure.sourceLocation.column)) : undefined, 
+                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForMethodMember(rtype.typeID, rtype.task.onfuncs.onTimeout.name, [], rtype.task.onfuncs.onTimeout.sourceLocation.line, rtype.task.onfuncs.onTimeout.sourceLocation.column)) : undefined, 
+            };
+
+            tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, provides, [], [], memberfields, [], binds, defaults, [], mainfunc, onfuncs, [], [], [], []);
+            this.pendingTaskDecls.push(tirtype);
         }
         else if(rtype instanceof ResolvedTupleAtomType) {
-            xxxx;
+            tirtype = new TIRTupleType(rtype.typeID, rtype.types.map((tt) => this.toTIRTypeKey(tt)));
         }
         else if(rtype instanceof ResolvedRecordAtomType) {
-            xxxx;
+            tirtype = new TIRRecordType(rtype.typeID, rtype.entries.map((entrey) => {
+                return {pname: entrey.pname, ptype: this.toTIRTypeKey(entrey.ptype)};
+            }));
         }
         else {
-            xxx; //ResolvedEphemeralListType;
+            tirtype = new TIREphemeralListType(rtype.typeID, (rtype as ResolvedEphemeralListType).types.map((tt) => this.toTIRTypeKey(tt)));
         }
 
         this.toTIRprocessingstack.pop();
 
-        this.m_tirTypeMap.set(rtype.typeID, tt);
+        this.m_tirTypeMap.set(rtype.typeID, tirtype);
 
-        xxxx; //update all subtypes here
+        if(tirtype instanceof TIRTaskType) {
+            xxxx;
+        }
+        else if(tirtype instanceof TIROOType) {
+            xxxx;
+        }
+        else if(tirtype instanceof TIRTupleType) {
+            xxxx;
+        }
+        else if(tirtype instanceof TIRRecordType) {
+            xxxx;
+        }
+        else {
+            ;
+        }
 
-        return tt.tid;
+        return rtype.typeID;
     }
 
     private toTIRTypeKey(rtype: ResolvedType): TIRTypeKey {

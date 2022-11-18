@@ -641,10 +641,10 @@ class TIRMapEntityTIRType extends TIRPrimitiveCollectionEntityType {
 class TIRTaskType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
 
-    readonly defaults: TIRTypeMemberName[]; //const members
-    readonly actions: TIRTypeMemberName[]; //methods
-    readonly mainfunc: TIRTypeMemberName; //a static function
-    readonly onfuncs: { onCanel: TIRTypeMemberName | undefined, onFailure: TIRTypeMemberName | undefined, onTimeout: TIRTypeMemberName | undefined };
+    readonly defaults: {dkey: TIRMemberConstKey, dname: string}[]; //const members
+    readonly actions: {akey: TIRInvokeKey, aname: string}[]; //methods
+    readonly mainfunc: {mkey: TIRInvokeKey, mname: string}; //a static function
+    readonly onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined };
 
     readonly effects: TIRTaskEffectFlag[];
     readonly enveffect: TIRTaskEnvironmentEffect[];
@@ -653,8 +653,8 @@ class TIRTaskType extends TIROOType {
     readonly ensures: TIRTaskEnsures[];
 
     constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], 
-        binds: Map<string, TIRTypeKey>, defaults: TIRTypeMemberName[], actions: TIRTypeMemberName[], mainfunc: TIRTypeMemberName, 
-        onfuncs: { onCanel: TIRTypeMemberName | undefined, onFailure: TIRTypeMemberName | undefined, onTimeout: TIRTypeMemberName | undefined },
+        binds: Map<string, TIRTypeKey>, defaults: {dkey: TIRMemberConstKey, dname: string}[], actions: {akey: TIRInvokeKey, aname: string}[], mainfunc: {mkey: TIRInvokeKey, mname: string}, 
+        onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined },
         effects: TIRTaskEffectFlag[], enveffect: TIRTaskEnvironmentEffect[], resourceeffect: TIRTaskResourceEffect[], ensures: TIRTaskEnsures[]
     ) {
         super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberFields, memberMethods, [], [], []);
@@ -671,10 +671,13 @@ class TIRTaskType extends TIROOType {
 }
 
 class TIRConceptType extends TIROOType {
+    readonly binds: Map<string, TIRTypeKey>;
+
     readonly subtypes: Set<TIRTypeKey>;
 
-    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], subtypes: Set<TIRTypeKey>, allfields: {fkey: TIRFieldKey, ftype: TIRTypeKey}[]) {
+    constructor(tid: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberFields: TIRMemberFieldDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], binds: Map<string, TIRTypeKey>, subtypes: Set<TIRTypeKey>, allfields: {fkey: TIRFieldKey, ftype: TIRTypeKey}[]) {
         super(tid, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, memberFields, memberMethods, invariants, validates, allfields);
+        this.binds = binds;
         this.subtypes = subtypes;
     }
 
@@ -695,7 +698,7 @@ class TIRConceptType extends TIROOType {
     }
 }
 
-class TIRConcepSetType extends TIRType {
+class TIRConceptSetType extends TIRType {
     readonly conceptTypes: TIRTypeKey[]; //each is a TIRConceptType
 
     constructor(tid: TIRTypeKey, concepts: TIRTypeKey[]) {
@@ -958,7 +961,7 @@ export {
     TIRHavocEntityType,
     TIRPrimitiveCollectionEntityType, TIRListEntityType, TIRStackEntityType, TIRQueueEntityType, TIRSetEntityType, TIRMapEntityTIRType,
     TIRTaskType,
-    TIRConceptType, TIRConcepSetType,
+    TIRConceptType, TIRConceptSetType,
     TIRTupleType, TIRRecordType,
     TIREphemeralListType,
     TIRCodePackType,
