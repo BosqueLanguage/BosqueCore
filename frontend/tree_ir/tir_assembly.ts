@@ -435,9 +435,9 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[];
 
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
-    readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator} | undefined; //TIRPathValidatorEntityType;
+    readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], consinvariantsall: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], consinvariantsexplicit: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator} | undefined) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], provides: TIRTypeKey[], constMembers: TIRConstMemberDecl[], staticFunctions: TIRStaticFunctionDecl[], memberMethods: TIRMemberMethodDecl[], invariants: TIRInvariantDecl[], validates: TIRValidateDecl[], consinvariantsall: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], consinvariantsexplicit: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined) {
         super(tkey, tname, srcInfo, srcFile, attributes, provides, constMembers, staticFunctions, [], memberMethods, invariants, validates, []);
         this.valuetype = valuetype;
         this.representation = representation;

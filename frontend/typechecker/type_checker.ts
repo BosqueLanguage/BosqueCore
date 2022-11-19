@@ -86,12 +86,12 @@ class TIRInvokeIDGenerator {
         xxxx;
     }
 
-    static generateInvokeIDForExportableMethodMember(ttype: TIRTypeKey, name: string, declline: number, declcol: number): TIRInvokeKey {
-        return `method_${ttype}$${name}_${declline}$${declcol}_`;
+    static generateInvokeIDForExportableMethodMember(ttype: TIRTypeKey, name: string): TIRInvokeKey {
+        return `method_${ttype}$${name}`;
     }
 
-    static generateInvokeIDForExportableStaticMember(ttype: TIRTypeKey, name: string, declline: number, declcol: number): TIRInvokeKey {
-        return `function_${ttype}$${name}_${declline}$${declcol}_`;
+    static generateInvokeIDForExportableStaticMember(ttype: TIRTypeKey, name: string): TIRInvokeKey {
+        return `function_${ttype}$${name}`;
     }
 }
 
@@ -1136,7 +1136,7 @@ class TypeChecker {
         return ([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa);
     }
 
-    private toTIRTypedeclChecks(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): { strof: ResolvedType | undefined, pthof: ResolvedType | undefined } {
+    private toTIRTypedeclChecks(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): { strof: ResolvedType | undefined, pthof: {validator: ResolvedType, kind: "path" | "pathfragment" | "pathglob"} | undefined } {
         const chkvalidxx = invdecls.find((idp) => {
             return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
         });
@@ -1145,7 +1145,7 @@ class TypeChecker {
         const chkpathxx = invdecls.find((idp) => {
             return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
         });
-        const chkpath = (chkpathxx !== undefined) ? (chkpathxx[2].get("T") as ResolvedType) : undefined;
+        const chkpath = (chkpathxx !== undefined) ? {validator: (chkpathxx[2].get("T") as ResolvedType), kind: (chkpathxx[1].attributes.includes("__path_type") ? "path" : (chkpathxx[1].attributes.includes("__pathfragment_type") ? "pathfragment" : "pathglob")) as "path" | "pathfragment" | "pathglob"} : undefined;
 
         return { strof: chkvalid, pthof: chkpath };
     }
@@ -1215,6 +1215,9 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
             const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
 
+            const valuetype = this.toTIRTypeKey(ResolvedType.createSingle(rtype.valuetype));
+            const representation = this.toTIRTypeKey(ResolvedType.createSingle(rtype.representation));
+
             //already know this doesn't have any member fields
             const allfdecls = this.toTIRAllFields(ResolvedType.createSingle(rtype), rtype.object, new Map<string, ResolvedType>());
             this.raiseErrorIf(rtype.object.sourceLocation, allfdecls.length !== 0, `Cannot inherit additional member fields on typedecl -- ${rtype.typeID}`);
@@ -1223,12 +1226,9 @@ class TypeChecker {
             const [consinvariantsall, consinvariantsexplicit] = this.toTIRInvariantConsTypedecl(ResolvedType.createSingle(rtype), invdecls);
             const apivalidates = this.toTIRValidateConsTypedecl(ResolvedType.createSingle(rtype), invdecls);
 
-            const valuetype = this.toTIRTypeKey(ResolvedType.createSingle(rtype.valuetype));
-            const representation = this.toTIRTypeKey(ResolvedType.createSingle(rtype.representation));
-
             const validators = this.toTIRTypedeclChecks(ResolvedType.createSingle(rtype), invdecls);
             const strof = validators.strof !== undefined ? ({vtype: validators.strof.typeID, vre: this.m_assembly.tryGetValidatorForFullyResolvedName(validators.strof.typeID) as BSQRegex}) : undefined;
-            const pthof = validators.pthof !== undefined ? ({vtype: validators.pthof.typeID, vpth: this.m_assembly.tryGetPathValidatorForFullyResolvedName(validators.pthof.typeID) as PathValidator}) : undefined;
+            const pthof = validators.pthof !== undefined ? ({vtype: validators.pthof.validator.typeID, vpth: this.m_assembly.tryGetPathValidatorForFullyResolvedName(validators.pthof.validator.typeID) as PathValidator, kind: validators.pthof.kind}) : undefined;
 
             tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], [], [], consinvariantsall, consinvariantsexplicit, apivalidates, valuetype, representation, strof, pthof);
             this.m_pendingTypedeclDecls.push(tirtype as TIRTypedeclEntityType);
@@ -1393,11 +1393,11 @@ class TypeChecker {
                 return {dkey: TIRMemberIDGenerator.generateDefaultMemberID(rtype.typeID, sm.name), dname: sm.name};
             });
 
-            const mainfunc = {mkey: TIRInvokeIDGenerator.generateInvokeIDForExportableStaticMember(rtype.typeID, rtype.task.mainfunc.name, rtype.task.mainfunc.sourceLocation.line, rtype.task.mainfunc.sourceLocation.column), mname: rtype.task.mainfunc.name};
+            const mainfunc = {mkey: TIRInvokeIDGenerator.generateInvokeIDForExportableStaticMember(rtype.typeID, rtype.task.mainfunc.name), mname: rtype.task.mainfunc.name};
             const onfuncs = {
-                onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onCanel.name, rtype.task.onfuncs.onCanel.sourceLocation.line, rtype.task.onfuncs.onCanel.sourceLocation.column)) : undefined, 
-                onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onFailure.name, rtype.task.onfuncs.onFailure.sourceLocation.line, rtype.task.onfuncs.onFailure.sourceLocation.column)) : undefined, 
-                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onTimeout.name, rtype.task.onfuncs.onTimeout.sourceLocation.line, rtype.task.onfuncs.onTimeout.sourceLocation.column)) : undefined, 
+                onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onCanel.name)) : undefined, 
+                onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onFailure.name)) : undefined, 
+                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onTimeout.name)) : undefined, 
             };
 
             tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, provides, [], [], memberfields, [], binds, defaults, [], mainfunc, onfuncs, [], [], [], []);
@@ -1853,30 +1853,8 @@ class TypeChecker {
         return resl.impl[0];
     }
 
-    resolveMemberFunction(sinfo: SourceInfo, ttype: ResolvedType, name: string, argc: number[]): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
-        const resl = this.resolveMember<StaticFunctionDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => {
-            return tt.staticFunctions.find((sf) => {
-                if(sf.name !== name || sf.invoke.params.length !== argc.length) {
-                    return false;
-                }
-
-                for(let i = 0; i < argc.length; ++i) {
-                    if(!(sf.invoke.params[i].type instanceof FunctionTypeSignature)) {
-                        if(argc[i] !== 0) {
-                            return false;
-                        }
-                    }
-                    else {
-                        const llc = (sf.invoke.params[i].type as FunctionTypeSignature).params.length;
-                        if (argc[i] !== llc) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            });
-        });
-
+    resolveMemberFunction(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
+        const resl = this.resolveMember<StaticFunctionDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticFunctions.find((sf) => sf.name === name));
         if(!(resl instanceof OOMemberResolution<StaticFunctionDecl>)) {
             return undefined;
         }
@@ -1912,29 +1890,7 @@ class TypeChecker {
     }
 
     resolveMemberMethod(sinfo: SourceInfo, ttype: ResolvedType, name: string, argc: number[]): OOMemberResolution<MemberMethodDecl> | undefined {
-        const resl = this.resolveMember<MemberMethodDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => {
-            return tt.memberMethods.find((mf) => {
-                if(mf.name !== name || mf.invoke.params.length !== argc.length) {
-                    return false;
-                }
-
-                for(let i = 0; i < argc.length; ++i) {
-                    if(!(mf.invoke.params[i].type instanceof FunctionTypeSignature)) {
-                        if(argc[i] !== 0) {
-                            return false;
-                        }
-                    }
-                    else {
-                        const llc = (mf.invoke.params[i].type as FunctionTypeSignature).params.length;
-                        if (argc[i] !== llc) {
-                            return false;
-                        }
-                    }
-                }
-                return true;
-            });
-        });
-
+        const resl = this.resolveMember<MemberMethodDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberMethods.find((mf) => mf.name === name));
         if(!(resl instanceof OOMemberResolution<MemberMethodDecl>)) {
             return undefined;
         }
@@ -3971,14 +3927,14 @@ class TypeChecker {
         //
         //TODO: maybe generate special TemplateString<T, K> ... types for these later -- right now we just expect them to be compile inlined
         //
-        return this.setResultExpression(env, new TIRLiteralTemplateStringExpression(exp.sinfo, exp.value), this.getSpecialStringType(), this.getSpecialStringType(), undefined);
+        return this.setResultExpression(env, new TIRLiteralTemplateStringExpression(exp.sinfo, exp.value, this.toTIRTypeKey(this.getSpecialStringType())), this.getSpecialStringType(), this.getSpecialStringType(), undefined);
     }
 
     private checkLiteralASCIITemplateStringExpression(env: ExpressionTypeEnvironment, exp: LiteralASCIITemplateStringExpression): ExpressionTypeEnvironment {
         //
         //TODO: maybe generate special TemplateString<T, K> ... types for these later -- right now we just expect them to be compile inlined
         //
-        return this.setResultExpression(env, new TIRLiteralASCIITemplateStringExpression(exp.sinfo, exp.value), this.getSpecialASCIIStringType(), this.getSpecialASCIIStringType() undefined);
+        return this.setResultExpression(env, new TIRLiteralASCIITemplateStringExpression(exp.sinfo, exp.value, this.toTIRTypeKey(this.getSpecialASCIIStringType())), this.getSpecialASCIIStringType(), this.getSpecialASCIIStringType(), undefined);
     }
 
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
@@ -4009,14 +3965,14 @@ class TypeChecker {
         if (tirtypedecl.pthvalidator !== undefined) {
             const litval = (lexp as TIRLiteralValue).exp;
             let accepts = false;
-            if (typdeclchks.pthof[1].attributes.includes("__path_type")) {
-                accepts = typdeclchks.pthof[0].acceptsPath(extractLiteralStringValue(litval.expstr));
+            if (tirtypedecl.pthvalidator.kind === "path") {
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPath(extractLiteralStringValue(litval.expstr));
             }
-            else if (typdeclchks.pthof[1].attributes.includes("__pathfragment_type")) {
-                accepts = typdeclchks.pthof[0].acceptsPathFragment(extractLiteralStringValue(litval.expstr));
+            else if (tirtypedecl.pthvalidator.kind === "pathfragment") {
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathFragment(extractLiteralStringValue(litval.expstr));
             }
             else {
-                accepts = typdeclchks.pthof[0].acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
             }
             this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
         }
@@ -4035,14 +3991,13 @@ class TypeChecker {
         const texp = this.normalizeTypeOnly(exp.vtype, env.binds);
         this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
 
-        xxxx;
         const rlt = texp.options[0] as ResolvedLiteralAtomType;
         let ftv: FlowTypeTruthValue | undefined = undefined;
-        if(rlt.lexp instanceof TIRLiteralBoolExpression) {
-            ftv = rlt.lexp.value ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
+        if(rlt.litexptype.isSameType(this.getSpecialBoolType())) {
+            ftv = rlt.litexp.litstr === "true" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
         }
 
-        return env.setResultExpression(rlt.lexp, ftv);
+        return this.setResultExpression(env, rlt.litexp, rlt.litexptype, rlt.litexptype, ftv);
     }
 
     private checkAccessFormatInfo(env: ExpressionTypeEnvironment, exp: AccessFormatInfo): ExpressionTypeEnvironment {
