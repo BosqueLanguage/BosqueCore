@@ -6,6 +6,50 @@
 //The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
+function rangeInt(start: Int, end: Int): List<Int>
+    requires start <= end;
+{
+    if(start == end) {
+        return List<Int>{};
+    }
+    else {
+        return ListOps::s_list_index_int(start, end, end - start);
+    }
+}
+
+function rangeNat(start: Nat, end: Nat): List<Nat>
+    requires start <= end;
+{
+    if(start == end) {
+        return List<Nat>{};
+    }
+    else {
+        return ListOps::s_list_index_nat(start, end, end - start);
+    }
+}
+
+function ziplist<T< U>(lt: List<T>, lu: List<U>): List<[T, U]>
+    requires ListOps::s_list_size<T>(lt) == ListOps::s_list_size<U>(lu);
+{
+    if(ListOps::s_list_empty<T>(lt)) {
+        return List<[T, U]>{};
+    }
+    else {
+        return ListOps::s_list_map_fn_sync<T, U, [T, U]>(lt, lu, fn(v1: T, v2: U): [T, U] => [v1, v2]);
+    }
+}
+
+function ziplist<T, U, V>(lt: List<T>, lu: List<U>, f: recursive? fn(_: T, _: U) -> V): List<V>
+    requires ListOps::s_list_size<T>(lt) == ListOps::s_list_size<U>(lu);
+{
+    if(ListOps::s_list_empty<T>(lt)) {
+        return List<V>{};
+    }
+    else {
+        return ListOps::s_list_map_fn_sync<T, U, V>[recursive?](lt, lu, f);
+    }
+}
+
 __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded APIType, TestableType when T grounded TestableType {
     internal function s_append_helper(l1: List<T>, l2: List<T>): List<T> {
         if(/\(ListOps::s_list_empty<T>(l1), ListOps::s_list_empty<T>(l2))) {
@@ -22,56 +66,12 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    function rangeInt(start: Int, end: Int): List<Int>
-        requires start <= end;
-    {
-        if(start == end) {
-            return List<Int>{};
-        }
-        else {
-            return ListOps::s_list_index_int(start, end, end - start);
-        }
-    }
-
-    function rangeNat(start: Nat, end: Nat): List<Nat>
-        requires start <= end;
-    {
-        if(start == end) {
-            return List<Nat>{};
-        }
-        else {
-            return ListOps::s_list_index_nat(start, end, end - start);
-        }
-    }
-
     method index(): List<[Nat, T]> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<[Nat, T]>{};
         }
         else {
             return ListOps::s_list_map_fn_idx<T, [Nat, T]>(this, fn(v: T, idx: Nat): [Nat, T] => [idx, v]);
-        }
-    }
-
-    method zip<U=?>(l: List<U>): List<[T, U]>
-        requires ListOps::s_list_size<T>(this) == ListOps::s_list_size<U>(l);
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<[T, U]>{};
-        }
-        else {
-            return ListOps::s_list_map_fn_sync<T, U, [T, U]>(this, l, fn(v1: T, v2: U): [T, U] => [v1, v2]);
-        }
-    }
-
-    method zipMap<U=?, V=?>(l: List<U>, f: recursive? fn(_: T, _: U) -> V): List<V>
-        requires ListOps::s_list_size<T>(this) == ListOps::s_list_size<U>(l);
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<V>{};
-        }
-        else {
-            return ListOps::s_list_map_fn_sync<T, U, V>[recursive?](this, l, f);
         }
     }
 

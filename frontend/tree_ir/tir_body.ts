@@ -290,17 +290,13 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     readonly reprtype: TIRTypeKey; //The repr type that this is declared to be isomorphic to
     readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
 
-    readonly chkinvs: TIRInvokeKey[];
-
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey, chkinvs: TIRInvokeKey[]) {
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype}`);
         this.value = value;
 
         this.constype = constype;
         this.reprtype = reprtype;
         this.basetype = basetype;
-
-        this.chkinvs = chkinvs;
     }
 
     isFailableOperation(): boolean {
