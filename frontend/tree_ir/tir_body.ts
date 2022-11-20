@@ -1,5 +1,5 @@
 
-import { TIRCodePackType, TIRInvokeDecl, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
+import { TIRCodePackType, TIRFieldKey, TIRInvokeDecl, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -37,15 +37,21 @@ enum TIRExpressionTag {
     AccessVariableExpression = "AccessVariableExpression",
 
     LoadIndexExpression = "LoadIndexExpression",
+    LoadIndexVirtualExpression = "LoadIndexVirtualExpression",
     LoadPropertyExpression = "LoadPropertyExpression",
+    LoadPropertyVirtualExpression = "LoadPropertyVirtualExpression",
     LoadFieldExpression = "LoadFieldExpression",
+    LoadFieldVirtualExpression = "LoadFieldVirtualExpression",
 
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
     ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
 
-    PCodeInvokeExpression = "PCodeInvokeExpression",
+    ConstructorListExpression = "ConstructorListExpression",
+    ConstructorMapExpression = "ConstructorMapExpression",
+
+    CodePackInvokeExpression = "CodePackInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallNamespaceOperatorExpression = "CallNamespaceOperatorExpression",
@@ -92,6 +98,7 @@ enum TIRExpressionTag {
     CoerceTypeWidenExpression = "CoerceTypeWidenExpression",
     CoerceTypeNarrowExpression = "CoerceTypeNarrowExpression",
     CoerceSafeTypeNarrowExpression = "CoerceSafeTypeNarrowExpression",
+    CoerceNarrowLiteralType = "CoerceNarrowLiteralType",
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
     CreateCodePackExpression = "CreateCodePackExpression",
@@ -101,6 +108,7 @@ enum TIRExpressionTag {
     IsNothingExpression = "IsNothingExpression",
     IsNotNothingExpression = "IsNotNothingExpression",
     IsTypeExpression = "IsTypeExpression",
+    IsLiteralTypeExpression = "IsLiteralTypeExpression",
     IsSubTypeExpression = "IsSubTypeExpression",
 
     CallMemberFunctionExpression = "CallMemberFunctionExpression",
@@ -311,12 +319,14 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
 class TIRAccessEnvValue extends TIRExpression {
     readonly keyname: string;
     readonly valtype: TIRTypeKey;
+    readonly restype: TIRTypeKey;
     readonly orNoneMode: boolean;
 
-    constructor(sinfo: SourceInfo, keyname: string, valtype: TIRTypeKey, etype: TIRTypeKey, orNoneMode: boolean) {
-        super(TIRExpressionTag.AccessEnvValue, sinfo, etype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
+    constructor(sinfo: SourceInfo, keyname: string, valtype: TIRTypeKey, restype: TIRTypeKey, orNoneMode: boolean) {
+        super(TIRExpressionTag.AccessEnvValue, sinfo, restype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
         this.keyname = keyname;
         this.valtype = valtype;
+        this.restype = restype;
         this.orNoneMode = orNoneMode;
     }
 }
@@ -356,8 +366,19 @@ class TIRLoadIndexExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly index: TIRTupleIndex;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, index: TIRTupleIndex, resultType: ResolvedType) {
-        super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, resultType, `${exp.expstr}.${index}`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, index: TIRTupleIndex, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, `${exp.expstr}.${index}`);
+        this.exp = exp;
+        this.index = index;
+    }
+} 
+
+class TIRLoadIndexVirtualExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly index: TIRTupleIndex;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, index: TIRTupleIndex, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadIndexVirtualExpression, sinfo, resultType, `${exp.expstr}.${index}`);
         this.exp = exp;
         this.index = index;
     }
@@ -365,17 +386,46 @@ class TIRLoadIndexExpression extends TIRExpression {
 
 class TIRLoadPropertyExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly property: TIRPropertyID;
+    readonly property: TIRPropertyKey;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyID, resultType: ResolvedType) {
-        super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, resultType, `${exp.expstr}.${property}`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadPropertyExpression, sinfo, resultType, `${exp.expstr}.${property}`);
+        this.exp = exp;
+        this.property = property;
+    }
+}
+
+class TIRLoadPropertyVirtualExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly property: TIRPropertyKey;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadPropertyVirtualExpression, sinfo, resultType, `${exp.expstr}.${property}`);
         this.exp = exp;
         this.property = property;
     }
 }
 
 class TIRLoadFieldExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly field: TIRFieldKey;
 
+    constructor(sinfo: SourceInfo, exp: TIRExpression, field: TIRFieldKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadFieldExpression, sinfo, resultType, `${exp.expstr}.${field}`);
+        this.exp = exp;
+        this.field = field;
+    }
+}
+
+class TIRLoadFieldVirtualExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly field: TIRFieldKey;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, field: TIRFieldKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadFieldVirtualExpression, sinfo, resultType, `${exp.expstr}.${field}`);
+        this.exp = exp;
+        this.field = field;
+    }
 }
 
 /*
@@ -384,7 +434,10 @@ ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
     ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
 
-    PCodeInvokeExpression = "PCodeInvokeExpression",
+    ConstructorListExpression = "ConstructorListExpression",
+    ConstructorMapExpression = "ConstructorMapExpression",
+
+    CodePackInvokeExpression = "CodePackInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallNamespaceOperatorExpression = "CallNamespaceOperatorExpression",
@@ -621,11 +674,27 @@ class BinLogicImpliesExpression extends Expression {
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
 */
 
-    AbortExpression = "AbortExpression",
-    CoerceTypeWidenExpression = "CoerceTypeWidenExpression",
-    CoerceTypeNarrowExpression = "CoerceTypeNarrowExpression",
-    InjectExpression = "InjectExpression",
-    ExtractExpression = "ExtractExpression",
+AbortExpression = "AbortExpression",
+CoerceTypeWidenExpression = "CoerceTypeWidenExpression",
+CoerceTypeNarrowExpression = "CoerceTypeNarrowExpression",
+CoerceSafeTypeNarrowExpression = "CoerceSafeTypeNarrowExpression",
+CoerceNarrowLiteralType = "CoerceNarrowLiteralType",
+InjectExpression = "InjectExpression",
+ExtractExpression = "ExtractExpression",
+CreateCodePackExpression = "CreateCodePackExpression",
+
+IsNoneExpression = "IsNoneExpression",
+IsNotNoneExpresson = "IsNotNoneExpression",
+IsNothingExpression = "IsNothingExpression",
+IsNotNothingExpression = "IsNotNothingExpression",
+IsLiteralTypeExpression = "IsLiteralTypeExpression",
+IsTypeExpression = "IsTypeExpression",
+IsSubTypeExpression = "IsSubTypeExpression",
+
+CallMemberFunctionExpression = "CallMemberFunctionExpression",
+CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
+CallMemberFunctionSelfRefExpression = "CallMemberFunctionSelfRefExpression",
+CallMemberFunctionDynamicSelfRefExpression = "CallMemberFunctionDynamicSelfRefExpression"
 
 /*
     CreateCodePackExpression = "CreateCodePackExpression"
@@ -650,6 +719,7 @@ export {
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
+    TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     qqqq,
     TIRPrefixNotOp, TIRPrefixNegateOp,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,

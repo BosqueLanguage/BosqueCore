@@ -13,7 +13,7 @@ import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, Functi
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 
 import { BSQRegex } from "../bsqregex";
-import { extractLiteralStringValue, extractLiteralASCIIStringValue, BuildApplicationMode, SourceInfo } from "../build_decls";
+import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
 import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMemberConstKey, TIRMemberFieldDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
@@ -107,11 +107,10 @@ class TIRMemberIDGenerator {
 
 class TypeChecker {
     private readonly m_assembly: Assembly;
-
-    readonly buildmode: BuildApplicationMode;
     private m_buildLevel: BuildLevel;
 
     private m_file: string;
+    private m_isTaskFile: boolean;
     private m_errors: [string, number, string][];
 
     private readonly m_sortedSrcFiles: {fullname: string, shortname: string}[]; 
@@ -131,13 +130,13 @@ class TypeChecker {
     private m_pendingConceptDecls: TIRConceptType[] = [];
     private m_pendingTaskDecls: TIRTaskType[] = [];
 
-    constructor(buildmode: BuildApplicationMode, assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
 
-        this.buildmode = buildmode;
         this.m_buildLevel = buildlevel;
 
         this.m_file = "[No File]";
+        this.m_isTaskFile = false;
         this.m_errors = [];
         
         this.m_sortedSrcFiles = sortedSrcFiles;
@@ -4007,11 +4006,12 @@ class TypeChecker {
     }
 
     private checkAccessEnvValue(env: ExpressionTypeEnvironment, exp: AccessEnvValue): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, xxxx, `Can only access "environment" variables in task actions`);
+        this.raiseErrorIf(exp.sinfo, !this.m_isTaskFile, `Can only access "environment" variables in task actions`);
 
         const valtype = this.normalizeTypeOnly(exp.valtype, env.binds);
+        const restype = this.normalizeTypeOnly(new UnionTypeSignature(exp.sinfo, [exp.valtype, new NominalTypeSignature(exp.sinfo, "Core", ["None"])]), env.binds);
 
-        return env.setResultExpression(new TIRAccessEnvValue(exp.sinfo, exp.keyname, valtype, exp.orNoneMode), undefined);
+        return this.setResultExpression(env, new TIRAccessEnvValue(exp.sinfo, exp.keyname, this.toTIRTypeKey(valtype), this.toTIRTypeKey(restype), exp.orNoneMode), restype, restype, undefined);
     }
 
     private checkAccessNamespaceConstant(env: ExpressionTypeEnvironment, exp: AccessNamespaceConstantExpression): ExpressionTypeEnvironment {

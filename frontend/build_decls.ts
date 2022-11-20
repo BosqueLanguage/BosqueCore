@@ -24,14 +24,6 @@ type CodeFileInfo = {
     contents: string
 };
 
-enum BuildApplicationMode {
-    Executable,
-    FunctionalizedExecutable,
-    ModelChecker,
-    TypeChecker
-}
-
-
 function extractLiteralStringValue(str: string): string {
     //
     //TODO: right now we assume there are not escaped values in the string
@@ -59,7 +51,6 @@ function cleanCommentsStringsFromFileContents(str: string): string {
 }
 
 export {
-    BuildApplicationMode,
     SourceInfo, CodeFileInfo,
     extractLiteralStringValue, extractLiteralASCIIStringValue,
     cleanCommentsStringsFromFileContents
