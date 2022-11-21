@@ -414,60 +414,63 @@ typedecl TimeZoneCode = StringOf<ValidTimeZoneName>;
 
 //<summary>Primitive DateTime value.</summary>
 __internal __typedeclable __typebase entity DateTime provides Some, APIType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, tzdata: TimeZoneCode): DateTime = datetime_create;
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime = datetime_create;
 
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, tzdata: TimeZoneCode): DateTime
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime
         requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
         requires min < 60n;
+        requires sec < 61n
     {
-        return DateTime::s_create(year, month, day, hour, min, tzdata);
+        return DateTime::s_create(year, month, day, hour, min, sec, tzdata);
     }
 }
 
 __internal __typedeclable __typebase entity UTCDateTime provides Some, APIType, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat): UTCDateTime = utcdatetime_create;
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, ): UTCDateTime = utcdatetime_create;
 
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat): UTCDateTime
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime
         requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
         requires min < 60n;
+        requires sec < 61n;
     {
-        return UTCDateTime::s_create(year, month, day, hour, min);
+        return UTCDateTime::s_create(year, month, day, hour, min, sec);
     }
 }
 
 __internal __typedeclable __typebase entity PlainDate provides Some, APIType, KeyType {
     __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): PlainDate = plaindate_create;
 
-    function create(year: Nat, month: Nat, day: Nat): CalendarDate
+    function create(year: Nat, month: Nat, day: Nat): PlainDate
         requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
     {
-        return CalendarDate::s_create(year, month, day);
+        return PlainDate::s_create(year, month, day);
     }
 }
 
 __internal __typedeclable __typebase entity PlainTime provides Some, APIType, KeyType {
-    __assume_safe internal function s_create(hour: Nat, min: Nat): PlainTime = plaintime_create;
+    __assume_safe internal function s_create(hour: Nat, min: Nat, sec: Nat): PlainTime = plaintime_create;
 
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat): UTCDateTime
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): PlainTime
         requires 1900n <= year && year <= 2200n;
         requires month < 12n;
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
         requires min < 60n;
+        requires sec < 61n;
     {
-        return UTCDateTime::s_create(year, month, day, hour, min);
+        return PlainTime::s_create(day, hour, min, sec);
     }
 }
 
-//<summary>Primitive TickTime value.</summary>
+//<summary>Primitive TickTime value (TIA time).</summary>
 __internal __typedeclable __typebase entity TickTime provides Some, KeyType APIType {
 }
 
