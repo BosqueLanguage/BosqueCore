@@ -43,7 +43,8 @@ enum TIRExpressionTag {
     LoadFieldExpression = "LoadFieldExpression",
     LoadFieldVirtualExpression = "LoadFieldVirtualExpression",
 
-    ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
+    ConstructorPrimaryDirectExpression = "ConstructorPrimaryDirectExpression",
+    ConstructorPrimaryCheckExpression = "ConstructorPrimaryCheckExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
     ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
@@ -289,6 +290,10 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
         this.reprtype = reprtype;
         this.basetype = basetype;
     }
+
+    getUsedVars(): string[] {
+        return this.value.getUsedVars();
+    }
 }
 
 class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
@@ -309,6 +314,10 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
 
     isFailableOperation(): boolean {
         return true;
+    }
+
+    getUsedVars(): string[] {
+        return this.value.getUsedVars();
     }
 
     //
@@ -360,6 +369,10 @@ class TIRAccessVariableExpression extends TIRExpression {
         super(TIRExpressionTag.AccessVariableExpression, sinfo, etype, name);
         this.name = name;
     }
+
+    getUsedVars(): string[] {
+        return [this.name];
+    }
 }
 
 class TIRLoadIndexExpression extends TIRExpression {
@@ -370,6 +383,10 @@ class TIRLoadIndexExpression extends TIRExpression {
         super(TIRExpressionTag.LoadIndexExpression, sinfo, resultType, `${exp.expstr}.${index}`);
         this.exp = exp;
         this.index = index;
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
     }
 } 
 
@@ -382,6 +399,10 @@ class TIRLoadIndexVirtualExpression extends TIRExpression {
         this.exp = exp;
         this.index = index;
     }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
 } 
 
 class TIRLoadPropertyExpression extends TIRExpression {
@@ -392,6 +413,10 @@ class TIRLoadPropertyExpression extends TIRExpression {
         super(TIRExpressionTag.LoadPropertyExpression, sinfo, resultType, `${exp.expstr}.${property}`);
         this.exp = exp;
         this.property = property;
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
     }
 }
 
@@ -404,6 +429,10 @@ class TIRLoadPropertyVirtualExpression extends TIRExpression {
         this.exp = exp;
         this.property = property;
     }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
 }
 
 class TIRLoadFieldExpression extends TIRExpression {
@@ -414,6 +443,10 @@ class TIRLoadFieldExpression extends TIRExpression {
         super(TIRExpressionTag.LoadFieldExpression, sinfo, resultType, `${exp.expstr}.${field}`);
         this.exp = exp;
         this.field = field;
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
     }
 }
 
@@ -426,17 +459,126 @@ class TIRLoadFieldVirtualExpression extends TIRExpression {
         this.exp = exp;
         this.field = field;
     }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class ConstructorPrimaryDirectExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorPrimaryDirectExpression, sinfo, oftype, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class ConstructorPrimaryCheckExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorPrimaryCheckExpression, sinfo, oftype, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return true;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class ConstructorTupleExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorTupleExpression, sinfo, oftype, `[${args.map((arg) => arg.expstr).join(", ")}]`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class ConstructorRecordExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorRecordExpression, sinfo, oftype, `{${args.map((arg) => arg.expstr).join(", ")}}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class ConstructorEphemeralValueList extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorTupleExpression, sinfo, oftype, `elist -- ${args.map((arg) => arg.expstr).join(", ")}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class ConstructorListExpression  extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, `List{${args.map((arg) => arg.expstr).join(", ")}}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+    
+class ConstructorMapExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, `Map{${args.map((arg) => arg.expstr).join(", ")}}`);
+        this.oftype = oftype;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return true;
+    }
+
+    getUsedVars(): string[] {
+        return ([] as string[]).concat(...this.args.map((arg) => arg.getUsedVars()));
+    }
 }
 
 /*
-ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
-    ConstructorTupleExpression = "ConstructorTupleExpression",
-    ConstructorRecordExpression = "ConstructorRecordExpression",
-    ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
-
-    ConstructorListExpression = "ConstructorListExpression",
-    ConstructorMapExpression = "ConstructorMapExpression",
-
     CodePackInvokeExpression = "CodePackInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
@@ -466,14 +608,10 @@ class TIRPrefixNegateOp extends TIRExpression {
         this.optype = ntype;
         this.exp = exp;
     }
-
-    isSafeOperation(): boolean {
-        return this.optype.typeID !== "Nat" && this.optype.typeID !== "BigNat";
-    }
 }
 
 class TIRBinAddExpression extends TIRExpression {
-    readonly optype: ResolvedType;
+    readonly optype: TIRTypeKey;
     readonly lhs: TIRExpression;
     readonly rhs: TIRExpression;
 
@@ -483,9 +621,9 @@ class TIRBinAddExpression extends TIRExpression {
         this.lhs = lhs;
         this.rhs = rhs;
     }
-
-    isSafeOperation(): boolean {
-        return false;
+    
+    isOverflowableOperation(): boolean {
+        return this.optype === "Nat" || this.optype === "Int";
     }
 }
 
@@ -720,6 +858,7 @@ export {
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
+    ConstructorPrimaryDirectExpression, ConstructorPrimaryCheckExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, ConstructorListExpression, ConstructorMapExpression,
     qqqq,
     TIRPrefixNotOp, TIRPrefixNegateOp,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,
