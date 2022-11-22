@@ -6,9 +6,9 @@
 import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType } from "./resolved_type";
-import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LiteralValueValueExpression } from "../ast/body";
-import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceTypeWidenExpression, TIRCoerceTypeNarrowExpression, TIRCoerceSafeTypeNarrowExpression } from "../tree_ir/tir_body";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
+import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LiteralValueValueExpression } from "../ast/body";
+import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRSpecialConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 
@@ -137,6 +137,9 @@ class TypeChecker {
     private m_pendingTypedeclDecls: TIRTypedeclEntityType[] = [];
     private m_pendingConceptDecls: TIRConceptType[] = [];
     private m_pendingTaskDecls: TIRTaskType[] = [];
+
+    private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
+    private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
 
     constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
@@ -627,13 +630,17 @@ class TypeChecker {
 
             const fconcept = this.m_assembly.tryGetConceptTypeForFullyResolvedName(ttname);
             if (fconcept !== undefined) {
+                this.checkTemplateTypesOnType(t.sinfo, fconcept.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fconcept.terms, t.terms, binds);
+
                 rtype = ResolvedType.createSingle(ResolvedConceptAtomTypeEntry.create(fconcept, bbinds));
             }
 
             const fobject = this.m_assembly.tryGetObjectTypeForFullyResolvedName(ttname);
             if (fobject !== undefined) {
                 let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
+
+                this.checkTemplateTypesOnType(t.sinfo, fobject.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fobject.terms, t.terms, binds);
 
                 if(fobject.attributes.includes("__enum_type")) {
@@ -769,7 +776,9 @@ class TypeChecker {
 
             const ftask = this.m_assembly.tryGetTaskTypeForFullyResolvedName(ttname);
             if (ftask !== undefined) {
+                this.checkTemplateTypesOnType(t.sinfo, ftask.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, ftask.terms, t.terms, binds);
+
                 rtype = ResolvedType.createSingle(ResolvedTaskAtomType.create(ftask, bbinds));
             }
         }
@@ -2192,56 +2201,67 @@ class TypeChecker {
         return res;
     }
 
-    private emitWidenIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
+    private emitCoerceIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
         if(env.trepr.isSameType(trgttype)) {
             return env;
         }
 
         this.raiseErrorIf(sinfo, !this.subtypeOf(env.tinfer, trgttype), `Cannot convert type ${env.tinfer.typeID} into ${trgttype.typeID}`);
-        return this.setResultExpression(env, new TIRCoerceTypeWidenExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.tinfer, env.etruth);
+        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.tinfer, env.etruth);
     }
 
-    private emitCheckedNarrowIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
+    private emitSafeCoerceIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
         if(env.trepr.isSameType(trgttype)) {
             return env;
         }
 
-        return this.setResultExpression(env, new TIRCoerceTypeNarrowExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, trgttype, env.etruth);
+        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, trgttype, env.etruth);
     }
 
-    private emitSafeNarrowIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
-        if(env.trepr.isSameType(trgttype)) {
-            return env;
+    private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], typescope: TemplateBindScope) {
+        for(let i = 0; i < terms.length; ++i) {
+            const terminfo = terms[i];
+            const termtype = typescope.templateResolveType(terminfo.name);
+
+            const termconstraint = this.normalizeTypeOnly(terminfo.tconstraint, TemplateBindScope.createEmptyBindScope());
+            const boundsok = this.subtypeOf(termtype, termconstraint);
+            this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified bounds -- not subtype of ${termconstraint.typeID}`);
+
+            if (terminfo.isunique) {
+                this.raiseErrorIf(sinfo, termtype.options.length !== 0 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
+            }
+
+            if(terminfo.isgrounded) {
+                this.raiseErrorIf(sinfo, !ResolvedType.isGroundedType(termtype.options), `Template type ${termtype.typeID} is not grounded`);
+            }
         }
-
-        return this.setResultExpression(env, new TIRCoerceSafeTypeNarrowExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, trgttype, env.etruth);
     }
 
-    private checkTemplateTypes(sinfo: SourceInfo, terms: TemplateTermDecl[], binds: Map<string, ResolvedType>, optTypeRestrict?: TypeConditionRestriction) {
+    private checkTemplateTypesOnInvoke(sinfo: SourceInfo, terms: TemplateTermDecl[], enclosingscope: TemplateBindScope, binds: Map<string, ResolvedType>, optTypeRestrict?: TypeConditionRestriction) {
         for(let i = 0; i < terms.length; ++i) {
             const terminfo = terms[i];
             const termtype = binds.get(terminfo.name) as ResolvedType;
 
-            const termconstraint = this.resolveAndEnsureTypeOnly(sinfo, terminfo.tconstraint, new Map<string, ResolvedType>());
-            const boundsok = this.m_assembly.subtypeOf(termtype, termconstraint);
+            const termconstraint = this.normalizeTypeOnly(terminfo.tconstraint, enclosingscope);
+            const boundsok = this.subtypeOf(termtype, termconstraint);
             this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified bounds -- not subtype of ${termconstraint.typeID}`);
 
             if (terminfo.isunique) {
-                this.raiseErrorIf(sinfo, !termtype.isUniqueType(), `Template type ${termtype.typeID} is not unique`);
+                this.raiseErrorIf(sinfo, termtype.options.length !== 0 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
             }
 
             if(terminfo.isgrounded) {
-                this.raiseErrorIf(sinfo, !termtype.isGroundedType(), `Template type ${termtype.typeID} is not grounded`);
+                this.raiseErrorIf(sinfo, !ResolvedType.isGroundedType(termtype.options), `Template type ${termtype.typeID} is not grounded`);
             }
         }
 
         if (optTypeRestrict !== undefined) {
             for (let i = 0; i < optTypeRestrict.constraints.length; ++i) {
                 const consinfo = optTypeRestrict.constraints[i];
-                const constype = this.resolveAndEnsureTypeOnly(sinfo, consinfo.t, binds)
+                const constype = this.normalizeTypeOnly(consinfo.t, enclosingscope);
 
-                const constrainttype = this.resolveAndEnsureTypeOnly(sinfo, consinfo.tconstraint, binds);
-                const boundsok = this.m_assembly.subtypeOf(constype, constrainttype);
+                const constrainttype = this.normalizeTypeOnly(consinfo.tconstraint, enclosingscope);
+                const boundsok = this.subtypeOf(constype, constrainttype);
                 this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified restriction -- not subtype of ${constrainttype.typeID}`);
             }
         }
@@ -2818,93 +2838,6 @@ class TypeChecker {
         }
 
         return eargs;
-    }
-
-    private checkArgumentsEvaluationTuple(env: TypeEnvironment, args: Arguments, itype: ResolvedTupleAtomType | undefined): [ResolvedType, MIRRegisterArgument][] {
-        let eargs: [ResolvedType, MIRRegisterArgument][] = [];
-
-        for (let i = 0; i < args.argList.length; ++i) {
-            const arg = args.argList[i];
-            this.raiseErrorIf(arg.value.sinfo, arg.ref !== undefined, "Cannot use ref params in this call position");
-            this.raiseErrorIf(arg.value.sinfo, this.isPCodeTypedExpression(arg.value, env), "Cannot use function in this call position");
-
-            this.raiseErrorIf(arg.value.sinfo, !(arg instanceof PositionalArgument), "Only positional arguments allowed in tuple constructor");
-            this.raiseErrorIf(arg.value.sinfo, (arg as PositionalArgument).isSpread, "Expando parameters are not allowed in Tuple constructor");
-
-            const treg = this.m_emitter.generateTmpRegister();
-            let etype: ResolvedType | undefined = undefined;
-            if(itype !== undefined && i < itype.types.length) {
-                etype = itype.types[i];
-            }
-
-            const earg = this.checkExpression(env, arg.value, treg, etype).getExpressionResult();
-            const ttype = etype || earg.valtype.flowtype;
-            this.raiseErrorIf(arg.value.sinfo, ttype.options.some((opt) => opt instanceof ResolvedEphemeralListType), "Cannot store ephemeral lists");
-            this.raiseErrorIf(arg.value.sinfo, !this.m_assembly.subtypeOf(earg.valtype.flowtype, ttype), "Argument not of expected type");
-
-            eargs.push([ttype, this.emitInlineConvertIfNeeded(arg.value.sinfo, treg, earg.valtype, ttype)]);
-        }
-
-        return eargs;
-    }
-
-    private checkArgumentsTupleConstructor(sinfo: SourceInfo, args: [ResolvedType, MIRRegisterArgument][]): ResolvedType {
-        const tupleatom = ResolvedTupleAtomType.create(args.map((targ) => targ[0]));
-        const rtuple = ResolvedType.createSingle(tupleatom);
-
-        const regs = args.map((e) => e[1]);
-        const tupkey = this.m_emitter.registerResolvedTypeReference(rtuple);
-        this.m_emitter.emitConstructorTuple(sinfo, tupkey, regs, trgt);
-
-        return rtuple;
-    }
-
-    private checkArgumentsEvaluationRecord(env: TypeEnvironment, args: Arguments, itype: ResolvedRecordAtomType | undefined): [string, ResolvedType, MIRRegisterArgument][] {
-        let eargs: [string, ResolvedType, MIRRegisterArgument][] = [];
-
-        for (let i = 0; i < args.argList.length; ++i) {
-            const arg = args.argList[i];
-            this.raiseErrorIf(arg.value.sinfo, arg.ref !== undefined, "Cannot use ref params in this call position");
-            this.raiseErrorIf(arg.value.sinfo, this.isPCodeTypedExpression(arg.value, env), "Cannot use function in this call position");
-
-            this.raiseErrorIf(arg.value.sinfo, !(arg instanceof NamedArgument), "Only named arguments allowed in record constructor");
-
-            const treg = this.m_emitter.generateTmpRegister();
-            let etype: ResolvedType | undefined = undefined;
-            if(itype !== undefined && itype.entries.findIndex((entry) => entry.pname === (arg as NamedArgument).name) !== -1) {
-                etype = (itype.entries.find((entry) => entry.pname === (arg as NamedArgument).name) as {pname: string, ptype: ResolvedType}).ptype;
-            }
-            
-            const earg = this.checkExpression(env, arg.value, treg, etype).getExpressionResult();
-            const ttype = etype || earg.valtype.flowtype;
-            this.raiseErrorIf(arg.value.sinfo, ttype.options.some((opt) => opt instanceof ResolvedEphemeralListType), "Cannot store ephemeral lists");
-            this.raiseErrorIf(arg.value.sinfo, !this.m_assembly.subtypeOf(earg.valtype.flowtype, ttype), "Argument not of expected type");
-
-            eargs.push([(arg as NamedArgument).name, ttype, this.emitInlineConvertIfNeeded(arg.value.sinfo, treg, earg.valtype, ttype)]);
-        }
-
-        return eargs;
-    }
-
-    private checkArgumentsRecordConstructor(sinfo: SourceInfo, args: [string, ResolvedType, MIRRegisterArgument][]): ResolvedType {
-        let rargs: [string, ResolvedType][] = [];
-
-        const seenNames = new Set<string>();
-        for (let i = 0; i < args.length; ++i) {
-            this.raiseErrorIf(sinfo, seenNames.has(args[i][0] as string), "Duplicate argument name in Record constructor");
-
-            rargs.push([args[i][0] as string, args[i][1] as ResolvedType]);
-        }
-
-        const rentries = rargs.map((targ) => { return {pname: targ[0], ptype: targ[1]}; });
-        const recordatom = ResolvedRecordAtomType.create(rentries);
-        const rrecord = ResolvedType.createSingle(recordatom);
-
-        const regs = args.map<[string, MIRRegisterArgument]>((e) => [e[0] as string, e[2]]).sort((a, b) => a[0].localeCompare(b[0]));
-        const regkey = this.m_emitter.registerResolvedTypeReference(rrecord);
-        this.m_emitter.emitConstructorRecord(sinfo, regkey, regs, trgt);
-
-        return rrecord;
     }
 
     private checkArgumentsEvaluationValueList(env: TypeEnvironment, args: Arguments, itype: ResolvedEphemeralListType | undefined): [ResolvedType, MIRRegisterArgument][] {
@@ -4041,8 +3974,7 @@ class TypeChecker {
             const nname = new TIRNamespaceMemberName(exp.ns, exp.name);
             const tirrtype = this.toTIRTypeKey(rtype);
 
-            xxx; //Register const
-
+            this.m_pendingNamespaceConsts.push(cdecl);
             return this.setResultExpression(env, new TIRAccessNamespaceConstantExpression(exp.sinfo, nskey, nname, tirrtype), rtype, rtype, undefined);
         }
     }
@@ -4062,69 +3994,169 @@ class TypeChecker {
         }
         else {
             const sfkey = TIRMemberIDGenerator.generateMemberConstID(cdecl.ttype.typeID, exp.name);
-            const sfname = new TIRTypeMemberName(cdecl.ttype.typeID, exp.name, xxxx);
+            const etname = new TIRTypeName(cdecl.ootype.ns, cdecl.ootype.name, cdecl.ootype.terms.map((tt) => this.toTIRTypeKey(cdecl.oobinds.get(tt.name) as ResolvedType)));
+            const sfname = new TIRTypeMemberName(etname, exp.name, undefined);
             const tirrtype = this.toTIRTypeKey(rtype);
 
-            xxx; //Register const
-
+            this.m_pendingConstMemberDecls.push(cdecl);
             return this.setResultExpression(env, new TIRAccessConstMemberFieldExpression(exp.sinfo, sfkey, sfname, tirrtype), rtype, rtype, undefined);
         }
     }
 
-    private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
+    private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression): ExpressionTypeEnvironment {
         this.raiseErrorIf(exp.sinfo, !env.isVarNameDefined(exp.name), `Variable name '${exp.name}' is not defined`);
 
         const vinfo = env.lookupVar(exp.name) as VarInfo;
         this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
 
-        const varaccess = new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType));
-
-        if(infertype === undefined) {
-            return env.setResultExpression(varaccess, undefined);
-        }
-        else {
-            const vc = this.emitInlineConvertIfNeeded(exp.sinfo, varaccess, infertype);
-            return env.setResultExpression(varaccess, undefined);
-        }
+        return this.setResultExpression(env, new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType)), vinfo.declaredType, vinfo.flowType, undefined);
     }
 
     private checkConstructorPrimary(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryExpression): ExpressionTypeEnvironment {
-        const ctype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.ctype, env.terms);
-        this.m_emitter.registerResolvedTypeReference(ctype);
+        const oftype = this.normalizeTypeOnly(exp.ctype, env.binds).tryGetUniqueEntityTypeInfo();
+        this.raiseErrorIf(exp.sinfo, oftype === undefined, "Invalid constructor type");
 
-        const objtype = ResolvedType.tryGetOOTypeInfo(ctype);
-        this.raiseErrorIf(exp.sinfo, objtype === undefined || !(objtype instanceof ResolvedEntityAtomType), "Invalid constructor type");
+        if(oftype instanceof ResolvedObjectEntityAtomType) {
+            const roftype = ResolvedType.createSingle(oftype);
+            const tiroftype = this.toTIRTypeKey(roftype);
+            const tirobj = this.m_tirTypeMap.get(tiroftype) as TIRObjectEntityType;
 
-        const oodecl = (objtype as ResolvedEntityAtomType).object;
-        const oobinds = (objtype as ResolvedEntityAtomType).binds;
-        this.checkTemplateTypes(exp.sinfo, oodecl.terms, oobinds);
+            const allf = [...this.getAllOOFields(roftype, oftype.object, oftype.binds)];
+            this.raiseErrorIf(exp.sinfo, allf.length !== exp.args.length, `got ${exp.args.length} args for constructor but expected ${allf.length}`);
+            const eargs = exp.args.map((arg, i) => {
+                const itype = this.normalizeTypeOnly(allf[i][1][2].declaredType, TemplateBindScope.createBaseBindScope(allf[i][1][3]));
+                const ee = this.checkExpression(env, arg, itype, undefined);
 
-        const oftype = ResolvedEntityAtomType.create(oodecl, oobinds);
-        if (oodecl.isListType() || oodecl.isStackType() || oodecl.isQueueType() || oodecl.isSetType() || oodecl.isMapType()) {
-            const atype = this.checkArgumentsCollectionConstructor(exp.sinfo, env, exp.args, undefined, oftype, oodecl, oobinds, trgt);
-            return env.setUniformResultExpression(atype);
+                return this.emitCoerceIfNeeded(ee, exp.sinfo, itype);
+            });
+
+            if(tirobj.consinvariants.length === 0) {
+                const econs = new TIRConstructorPrimaryDirectExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
+                return this.setResultExpression(env, econs, roftype, roftype, undefined);
+            }
+            else {
+                const econs = new TIRConstructorPrimaryCheckExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
+                return this.setResultExpression(env, econs, roftype, roftype, undefined);
+            }
+        }
+        else if(oftype instanceof ResolvedConstructableEntityAtomType) {
+            const roftype = ResolvedType.createSingle(oftype);
+            const tiroftype = this.toTIRTypeKey(roftype);
+
+            if(oftype instanceof ResolvedOkEntityAtomType) {
+                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Result<T, E>::Ok constructor expects a single arg of type T");
+                const cexp = this.checkExpression(env, exp.args[0], oftype.typeT, undefined);
+                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
+
+                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedErrEntityAtomType) {
+                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Result<T, E>::Ok constructor expects a single arg of type E");
+                const cexp = this.checkExpression(env, exp.args[0], oftype.typeE, undefined);
+                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeE);
+
+                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedSomethingEntityAtomType) {
+                this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Something<T> constructor expects a single arg of type T");
+                const cexp = this.checkExpression(env, exp.args[0], oftype.typeT, undefined);
+                const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
+
+                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedMapEntityAtomType) {
+                const tirktype = this.toTIRTypeKey(oftype.typeK);
+                const tirvtype = this.toTIRTypeKey(oftype.typeV);
+
+                this.raiseErrorIf(exp.sinfo, exp.args.length !== 2, "MapEntry<K, V> constructor expects two args of type K, V");
+                const kexp = this.checkExpression(env, exp.args[0], oftype.typeK, undefined);
+                const vexp = this.checkExpression(env, exp.args[1], oftype.typeV, undefined);
+
+                const kcast = this.emitCoerceIfNeeded(kexp, exp.args[0].sinfo, oftype.typeK);
+                const vcast = this.emitCoerceIfNeeded(vexp, exp.args[1].sinfo, oftype.typeV);
+
+                return this.setResultExpression(env, new TIRMapEntryConstructorExpression(exp.sinfo, kcast.expressionResult, vcast.expressionResult, tirktype, tirvtype, tiroftype), ResolvedType.createSingle(oftype), ResolvedType.createSingle(oftype), undefined);
+            }
+            else {
+                this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${oftype.typeID}`);
+                return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tiroftype), roftype, roftype, undefined);
+            }
+        }
+        else if (oftype instanceof ResolvedPrimitiveCollectionEntityAtomType) {
+            const roftype = ResolvedType.createSingle(oftype);
+            const tiroftype = this.toTIRTypeKey(roftype);
+
+            if(oftype instanceof ResolvedListEntityAtomType) {
+                const eargs = exp.args.map((arg) => {
+                    const texp = this.checkExpression(env, arg, oftype.typeT, undefined);
+                    return this.emitCoerceIfNeeded(texp, exp.sinfo, oftype.typeT);
+                });
+
+                return this.setResultExpression(env, new TIRConstructorListExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedStackEntityAtomType) {
+                this.raiseError(exp.sinfo, "Stack<T> not fully supported yet");
+                return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tiroftype), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedQueueEntityAtomType) {
+                this.raiseError(exp.sinfo, "Queue<T> not fully supported yet");
+                return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tiroftype), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedSetEntityAtomType) {
+                this.raiseError(exp.sinfo, "Set<T> not fully supported yet");
+                return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tiroftype), roftype, roftype, undefined);
+            }
+            else if(oftype instanceof ResolvedMapEntityAtomType) {
+                const metype = this.normalizeTypeOnly(new NominalTypeSignature(exp.sinfo, "Core", ["MapEntry"], [new TemplateTypeSignature(exp.sinfo, "K"), new TemplateTypeSignature(exp.sinfo, "V")]), TemplateBindScope.createDoubleBindScope("K", oftype.typeK, "V", oftype.typeV));
+                
+                const eargs = exp.args.map((arg) => {
+                    const texp = this.checkExpression(env, arg, metype, undefined);
+                    return this.emitCoerceIfNeeded(texp, exp.sinfo, metype);
+                });
+
+                return this.setResultExpression(env, new TIRConstructorMapExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype, roftype, undefined);
+            }
+            else {
+                this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${oftype.typeID}`);
+                return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tiroftype), roftype, roftype, undefined);
+            }
         }
         else {
-            const eargs = this.checkArgumentsEvaluationEntity(exp.sinfo, env, oftype, exp.args);
-            const atype = this.checkArgumentsEntityConstructor(exp.sinfo, oftype, eargs, trgt);
-
-            return env.setUniformResultExpression(atype);
+            this.raiseError(exp.sinfo, `Cannot use explicit constructor on type of ${exp.ctype.getDiagnosticName()}`);
+            return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, "None"), ResolvedType.createInvalid(), ResolvedType.createInvalid(), undefined);
         }
     }
 
-    private checkTupleConstructor(env: ExpressionTypeEnvironment, exp: ConstructorTupleExpression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
+    private checkTupleConstructor(env: ExpressionTypeEnvironment, exp: ConstructorTupleExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
         let itype: ResolvedTupleAtomType | undefined = undefined;
-        if(infertype !== undefined) {
-            itype = infertype.tryGetInferrableTupleConstructorType();
+        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedTupleAtomType && desiredtype.options[0].types.length === exp.args.length) {
+            itype = desiredtype.options[0]
         }
 
-        const eargs = this.checkArgumentsEvaluationTuple(env, exp.args, itype);
-        const rtype = this.checkArgumentsTupleConstructor(exp.sinfo, eargs, trgt);
+        if(itype === undefined) {
+            const eargs = exp.args.map((arg) => this.checkExpression(env, arg, undefined, undefined));
 
-        return env.setUniformResultExpression(rtype);
+            const roftype = ResolvedType.createSingle(ResolvedTupleAtomType.create(eargs.map((ee) => ee.tinfer)));
+            const tiroftype = this.toTIRTypeKey(roftype);
+
+            const cargs = eargs.map((arg) => this.emitCoerceIfNeeded(arg, exp.sinfo, arg.tinfer));
+            return this.setResultExpression(env, new TIRConstructorTupleExpression(exp.sinfo, tiroftype, cargs.map((arg) => arg.expressionResult)), roftype, roftype, undefined);
+        }
+        else {
+            const topts = itype.types;
+            const eargs = exp.args.map((arg, i) => {
+                const texp = this.checkExpression(env, arg, topts[i], undefined);
+                return this.emitCoerceIfNeeded(texp, exp.sinfo, topts[i]);
+            });
+        
+            const roftype = ResolvedType.createSingle(itype);
+            const tiroftype = this.toTIRTypeKey(roftype);
+
+            return this.setResultExpression(env, new TIRConstructorTupleExpression(exp.sinfo, tiroftype, eargs.map((arg) => arg.expressionResult)), roftype, roftype, undefined);
+        }
     }
 
-    private checkRecordConstructor(env: ExpressionTypeEnvironment, exp: ConstructorRecordExpression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
+    private checkRecordConstructor(env: ExpressionTypeEnvironment, exp: ConstructorRecordExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
         let itype: ResolvedRecordAtomType | undefined = undefined;
         if(infertype !== undefined) {
             itype = infertype.tryGetInferrableRecordConstructorType();

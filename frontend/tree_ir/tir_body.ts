@@ -1,5 +1,5 @@
 
-import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
+import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName } from "./tir_assembly";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -97,9 +97,8 @@ enum TIRExpressionTag {
     TaskGetIDExpression = "TaskGetIDExpression",
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
 
-    CoerceTypeWidenExpression = "CoerceTypeWidenExpression",
-    CoerceTypeNarrowExpression = "CoerceTypeNarrowExpression",
-    CoerceSafeTypeNarrowExpression = "CoerceSafeTypeNarrowExpression",
+    CoerceExpression = "CoerceExpression",
+    CoerceSafeExpression = "CoerceSafeExpression",
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
     CreateCodePackExpression = "CreateCodePackExpression",
@@ -591,7 +590,7 @@ class TIRSpecialConstructorExpression extends TIRExpression {
     readonly arg: TIRExpression;
 
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
-        super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, `cons<${oftype}>{${arg.expstr}}`);
+        super(TIRExpressionTag.SpecialConstructorExpression, sinfo, oftype, `cons<${oftype}>{${arg.expstr}}`);
         this.oftype = oftype;
         this.arg = arg;
     }
@@ -1044,11 +1043,19 @@ class TIRBinLogicImpliesExpression extends TIRExpression {
 }
 
 class TIRMapEntryConstructorExpression extends TIRExpression {
+    readonly ktype: TIRTypeKey;
+    readonly vtype: TIRTypeKey;
+    readonly oftype: TIRTypeKey;
+
     readonly kexp: TIRExpression;
     readonly vexp: TIRExpression;
     
-    constructor(sinfo: SourceInfo, kexp: TIRExpression, vexp: TIRExpression, etype: TIRTypeKey) {
-        super(TIRExpressionTag.MapEntryConstructorExpression, sinfo, etype, `(${kexp.expstr} => ${vexp.expstr})`);
+    constructor(sinfo: SourceInfo, kexp: TIRExpression, vexp: TIRExpression, ktype: TIRTypeKey, vtype: TIRTypeKey, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.MapEntryConstructorExpression, sinfo, oftype, `(${kexp.expstr} => ${vexp.expstr})`);
+        this.ktype = ktype;
+        this.vtype = vtype;
+        this.oftype = oftype;
+
         this.kexp = kexp;
         this.vexp = vexp;
     }
@@ -1128,12 +1135,12 @@ class TIRMatchExpression extends TIRExpression {
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
 */
 
-class TIRCoerceTypeWidenExpression extends TIRExpression {
+class TIRCoerceTypeExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly totype: TIRTypeKey;
 
     constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceTypeWidenExpression, sinfo, totype, `widen<${totype}>(${exp.expstr})`);
+        super(TIRExpressionTag.CoerceExpression, sinfo, totype, `coerce<${totype}>(${exp.expstr})`);
         this.exp = exp;
         this.totype = totype;
     }
@@ -1143,32 +1150,12 @@ class TIRCoerceTypeWidenExpression extends TIRExpression {
     }
 }
 
-class TIRCoerceTypeNarrowExpression extends TIRExpression {
+class TIRCoerceSafeTypeExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly totype: TIRTypeKey;
     
     constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceTypeNarrowExpression, sinfo, totype, `narrow<${totype}>(${exp.expstr})`);
-        this.exp = exp;
-        this.totype = totype;
-    }
-    
-    isFailableOperation(): boolean {
-        return true;
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-}
-
-
-class TIRCoerceSafeTypeNarrowExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly totype: TIRTypeKey;
-    
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceSafeTypeNarrowExpression, sinfo, totype, `narrow_safe<${totype}>(${exp.expstr})`);
+        super(TIRExpressionTag.CoerceSafeExpression, sinfo, totype, `coerce_safe<${totype}>(${exp.expstr})`);
         this.exp = exp;
         this.totype = totype;
     }
@@ -1494,7 +1481,7 @@ export {
     TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
     yyyy,
-    TIRCoerceTypeWidenExpression, TIRCoerceTypeNarrowExpression, TIRCoerceSafeTypeNarrowExpression, TIRInjectExpression, TIRExtractExpression,
+    TIRCoerceExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
     jjjj,
     TIRIsNoneExpression, TIRIsNotNoneExpresson, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
