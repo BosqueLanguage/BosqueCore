@@ -56,12 +56,10 @@ type TIRTupleIndex = number;
 class TIRFunctionParameter {
     readonly name: string;
     readonly type: TIRTypeKey;
-    readonly litexp: {val: TIRLiteralValue, vkey: TIRLitKey} | undefined;
 
-    constructor(name: string, type: TIRTypeKey, litexp: TIRLiteralValue | undefined) {
+    constructor(name: string, type: TIRTypeKey) {
         this.name = name;
         this.type = type;
-        this.litexp = litexp !== undefined ? {val: litexp, vkey: litexp.litstr} : undefined;
     }
 }
 

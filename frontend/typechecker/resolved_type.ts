@@ -12,7 +12,7 @@ abstract class ResolvedAtomType {
 }
 
 class ResolvedLiteralAtomType extends ResolvedAtomType {
-    readonly litexptype: ResolvedType;
+    readonly litexptype: ResolvedType; //1n as a type -- not Nat
     readonly litexp: TIRLiteralValue;
 
     constructor(reprexp: string, litexptype: ResolvedType, litexp: TIRLiteralValue) {
@@ -789,12 +789,10 @@ class ResolvedType {
 class ResolvedFunctionTypeParam {
     readonly name: string;
     readonly type: ResolvedType | ResolvedFunctionType;
-    readonly litexprepr: string | undefined;
 
-    constructor(name: string, type: ResolvedType | ResolvedFunctionType, litexprepr: string | undefined) {
+    constructor(name: string, type: ResolvedType | ResolvedFunctionType) {
         this.name = name;
         this.type = type;
-        this.litexprepr = litexprepr;
     }
 }
 
@@ -816,7 +814,7 @@ class ResolvedFunctionType {
     }
 
     static create(isThisRef: boolean, recursive: "yes" | "no" | "cond", params: ResolvedFunctionTypeParam[], resultType: ResolvedType, isPred: boolean): ResolvedFunctionType {
-        const cvalues = params.map((param) => param.name + param.type.typeID + (param.litexprepr !== undefined ? ("==" + param.litexprepr) : ""));
+        const cvalues = params.map((param) => `${param.name}: ${param.type.typeID}`);
         let cvalue = cvalues.join(", ");
 
         const lstr = isPred ? "pred" : "fn";

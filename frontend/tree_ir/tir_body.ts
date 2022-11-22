@@ -1,9 +1,8 @@
 
-import { TIRCodePackType, TIRFieldKey, TIRInvokeDecl, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRSetEntityType, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
+import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName, TIRTypeName } from "./tir_assembly";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
-import { PathValidator } from "../path_validator";
 
 enum TIRExpressionTag {
     Clear = "[CLEAR]",

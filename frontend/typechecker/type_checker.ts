@@ -14,7 +14,7 @@ import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValu
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
-import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -100,8 +100,16 @@ class TIRMemberIDGenerator {
         return `${typeid}$${dname}`;
     }
 
+    static generateMemberConstID(typeid: string, fname: string): TIRFieldKey {
+        return `${typeid}$${fname}`;
+    }
+
     static generateMemberFieldID(typeid: string, fname: string): TIRFieldKey {
         return `${typeid}$${fname}`;
+    }
+
+    static generateNamespaceConstID(ns: string, cname: string): TIRFieldKey {
+        return `${ns}$${cname}`;
     }
 }
 
@@ -591,7 +599,7 @@ class TypeChecker {
     }
 
     private normalizeType_Literal(t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
-        const [chkexp, chktype] = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
+        const [chkexp, chktype, _] = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
         if(chkexp !== undefined) {
             const llexp = new ResolvedLiteralAtomType(chkexp.litstr, chktype, chkexp);
             return ResolvedType.createSingle(llexp);
@@ -967,15 +975,7 @@ class TypeChecker {
     private normalizeType_Function(t: FunctionTypeSignature, binds: TemplateBindScope): ResolvedFunctionType | undefined {
         const params = t.params.map((param, idx) => {
             let ttl = this.normalizeTypeGeneral(param.type, binds);
-            let llpv: TIRLiteralValue | undefined = undefined;
-            if(param.litexp !== undefined) {
-                const llpv = this.reduceLiteralValueToCanonicalForm(`[TypeFunctionParemeter_${idx}]`, param.litexp.exp, binds);
-                if(llpv === undefined) {
-                    ttl = ResolvedType.createInvalid();
-                }
-            }
-
-            return new ResolvedFunctionTypeParam(param.name, ttl, llpv);
+            return new ResolvedFunctionTypeParam(param.name, ttl);
         });
         const rtype = this.normalizeTypeOnly(t.resultType, binds);
 
@@ -2143,10 +2143,6 @@ class TypeChecker {
             const t2p = t2.params[i];
             const t1p = t1.params[i];
             
-            if(t2p.litexprepr !== undefined && (t1p.litexprepr === undefined || t2p.litexprepr !== t1p.litexprepr)) {
-                return false;
-            }
-
             //We want the argument types to be the same for all cases -- no clear reason to overload to more general types
             if (t2p.type instanceof ResolvedFunctionType && t1p.type instanceof ResolvedFunctionType) {
                 if (t2p.type.typeID !== t1p.type.typeID) {
@@ -4041,7 +4037,13 @@ class TypeChecker {
             return this.checkExpression(env, cexp, undefined);
         }
         else {
-            return env.setResultExpression(new TIRAccessNamespaceConstantExpression(exp.sinfo, exp.ns, exp.name, rtype), undefined);
+            const nskey = TIRMemberIDGenerator.generateNamespaceConstID(exp.ns, exp.name);
+            const nname = new TIRNamespaceMemberName(exp.ns, exp.name);
+            const tirrtype = this.toTIRTypeKey(rtype);
+
+            xxx; //Register const
+
+            return this.setResultExpression(env, new TIRAccessNamespaceConstantExpression(exp.sinfo, nskey, nname, tirrtype), rtype, rtype, undefined);
         }
     }
 
@@ -4059,7 +4061,13 @@ class TypeChecker {
             return this.checkExpression(env, cexp, undefined);
         }
         else {
-            return env.setResultExpression(new TIRAccessStaticFieldExpression(exp.sinfo, oftype, exp.name, rtype), undefined);
+            const sfkey = TIRMemberIDGenerator.generateMemberConstID(cdecl.ttype.typeID, exp.name);
+            const sfname = new TIRTypeMemberName(cdecl.ttype.typeID, exp.name, xxxx);
+            const tirrtype = this.toTIRTypeKey(rtype);
+
+            xxx; //Register const
+
+            return this.setResultExpression(env, new TIRAccessConstMemberFieldExpression(exp.sinfo, sfkey, sfname, tirrtype), rtype, rtype, undefined);
         }
     }
 
@@ -4069,8 +4077,7 @@ class TypeChecker {
         const vinfo = env.lookupVar(exp.name) as VarInfo;
         this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
 
-        const vflow = this.checkExpInfer(env, vinfo.flowType, exp.name);
-        const varaccess = new TIRAccessVariableExpression(exp.sinfo, exp.name, vinfo.declaredType, this.checkExpInfer(env, vinfo.flowType, exp.name));
+        const varaccess = new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType));
 
         if(infertype === undefined) {
             return env.setResultExpression(varaccess, undefined);
@@ -4080,10 +4087,6 @@ class TypeChecker {
             return env.setResultExpression(varaccess, undefined);
         }
     }
-
-
-
-
 
     private checkConstructorPrimary(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryExpression): ExpressionTypeEnvironment {
         const ctype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.ctype, env.terms);
@@ -4107,38 +4110,6 @@ class TypeChecker {
 
             return env.setUniformResultExpression(atype);
         }
-    }
-
-    private checkConstructorPrimaryWithFactory(env: ExpressionTypeEnvironment, exp: ConstructorPrimaryWithFactoryExpression): ExpressionTypeEnvironment {
-        const ctype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.ctype, env.terms);
-        const objtype = ResolvedType.tryGetOOTypeInfo(ctype);
-        this.raiseErrorIf(exp.sinfo, objtype === undefined || !(objtype instanceof ResolvedEntityAtomType), "Invalid constructor type");
-
-        const oodecl = (objtype as ResolvedEntityAtomType).object;
-        const oobinds = (objtype as ResolvedEntityAtomType).binds;
-        this.raiseErrorIf(exp.sinfo, !(oodecl instanceof EntityTypeDecl), "Can only construct concrete entities");
-        this.checkTemplateTypes(exp.sinfo, oodecl.terms, oobinds);
-
-        const fdecl = oodecl.staticFunctions.find((sf) => sf.name === exp.factoryName);
-        this.raiseErrorIf(exp.sinfo, fdecl === undefined || !OOPTypeDecl.attributeSetContains("factory", fdecl.invoke.attributes), `Function is not a factory function for type ${ctype.typeID}`);
-
-        const [fsig, callbinds, eargs] = this.inferAndCheckArguments(exp.sinfo, env, exp.args, (fdecl as StaticFunctionDecl).invoke, exp.terms.targs, oobinds, env.terms, undefined, false);
-        const rargs = this.checkArgumentsSignature(exp.sinfo, env, exp.factoryName, fsig, eargs);
-
-        this.checkRecursion(exp.sinfo, fsig, rargs.pcodes, exp.rec);
-
-        const etreg = this.m_emitter.generateTmpRegister();
-        const ootype = this.m_emitter.registerResolvedTypeReference(this.resolveOOTypeFromDecls(oodecl, oobinds));
-        const skey = this.m_emitter.registerStaticCall(this.resolveOOTypeFromDecls(oodecl, oobinds), [ootype, oodecl, oobinds], fdecl as StaticFunctionDecl, exp.factoryName, callbinds, rargs.pcodes, rargs.cinfo);
-
-        const refinfo = this.generateRefInfoForCallEmit(fsig as ResolvedFunctionType, rargs.refs);
-        this.m_emitter.emitInvokeFixedFunction(exp.sinfo, skey, rargs.args, rargs.fflag, refinfo, etreg);
-
-        const oftype = ResolvedEntityAtomType.create(oodecl, oobinds);
-        const returntype = (fsig as ResolvedFunctionType).resultType;
-        const atype = this.checkArgumentsEntityConstructor(exp.sinfo, oftype, [{ name: undefined, argtype: ValueType.createUniform(returntype), expando: true, ref: undefined, pcode: undefined, treg: etreg }], trgt);
-
-        return env.setUniformResultExpression(atype);
     }
 
     private checkTupleConstructor(env: ExpressionTypeEnvironment, exp: ConstructorTupleExpression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
