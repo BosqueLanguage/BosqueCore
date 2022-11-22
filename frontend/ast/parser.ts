@@ -4005,6 +4005,9 @@ class Parser {
                 else if(ename === "Something") {
                     attributes.push("__something_type");
                 }
+                else if(ename === "MapEntry") {
+                    attributes.push("__mapentry_type");
+                }
                 else if(ename === "HavocSequence") {
                     attributes.push("__havoc_type");
                 }

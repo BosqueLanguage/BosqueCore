@@ -6,6 +6,9 @@
 //The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
+__internal entity MapEntry<K grounded KeyType, V> provides Some, APIType when K grounded APIType && V grounded APIType, TestableType when K grounded TestableType && V grounded TestableType {
+}
+
 __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>, APIType when K grounded APIType && V grounded APIType, TestableType when K grounded TestableType && V grounded TestableType {
     method empty(): Bool {
         return MapOps::s_map_empty<K, V>(this);

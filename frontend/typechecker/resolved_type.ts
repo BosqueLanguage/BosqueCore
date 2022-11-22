@@ -297,6 +297,26 @@ class ResolvedSomethingEntityAtomType extends ResolvedConstructableEntityAtomTyp
     }
 }
 
+class ResolvedMapEntryEntityAtomType extends ResolvedConstructableEntityAtomType {
+    readonly typeK: ResolvedType;
+    readonly typeV: ResolvedType;
+
+    constructor(typeID: string, object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType) {
+        super(typeID, object);
+        this.typeK = typeK;
+        this.typeV = typeV;
+    }
+
+    static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntryEntityAtomType {
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeK.typeID + "," + typeV.typeID + ">";
+        return new ResolvedMapEntryEntityAtomType(name, object, typeT, typeE);
+    }
+
+    getBinds(): Map<string, ResolvedType> {
+        return new Map<string, ResolvedType>().set("K", this.typeK).set("V", this.typeV);
+    }
+}
+
 //class representing special havoc type
 class ResolvedHavocEntityAtomType extends ResolvedInternalEntityAtomType {
     constructor(typeID: string, object: EntityTypeDecl) {
@@ -856,7 +876,7 @@ export {
     ResolvedPrimitiveInternalEntityAtomType,
     ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
     ResolvedPathValidatorEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType,
-    ResolvedConstructableEntityAtomType, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType,
+    ResolvedConstructableEntityAtomType, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType,
     ResolvedHavocEntityAtomType,
     ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
