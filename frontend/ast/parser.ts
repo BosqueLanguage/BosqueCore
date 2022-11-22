@@ -5,7 +5,7 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionParameter, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LiteralValueValueExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { SourceInfo } from "../build_decls";
@@ -1196,7 +1196,7 @@ class Parser {
 
         let fparams: FunctionParameter[] = [];
         if (ikind === InvokableKind.Member) {
-            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, undefined));
+            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature));
         }
 
         let resultInfo = this.m_penv.SpecialAutoSignature;
@@ -1215,16 +1215,7 @@ class Parser {
                 }
             }
 
-            let litexp: LiteralExpressionValue | undefined = undefined;
-            if(this.testAndConsumeTokenIf(SYM_eqeq)) {
-                if(ikind !== InvokableKind.DynamicOperator) {
-                    this.raiseError(line, "Literal match parameters are only allowed on dynamic operator definitions");
-                }
-
-                litexp = this.parseLiteralExpression(undefined);
-            }
-
-            return new FunctionParameter(pname, argtype, litexp);
+            return new FunctionParameter(pname, argtype);
         });
 
         const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
@@ -1552,7 +1543,7 @@ class Parser {
             this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
 
             const params = this.parseListOf<FunctionParameter>("lambda function parameters", SYM_lparen, SYM_rparen, SYM_coma, () => {
-                return new FunctionParameter("_", this.parseTypeSignature(), undefined);
+                return new FunctionParameter("_", this.parseTypeSignature());
             });
 
             this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
@@ -1926,11 +1917,18 @@ class Parser {
         }
         else if (tk === SYM_percent) {
             this.consumeToken();
-            this.ensureAndConsumeToken(SYM_lparen, "literal type expression");
-            const vtype = this.parseTypeSignature();
-            this.ensureAndConsumeToken(SYM_rparen, "literal type expression");
-
-            return new LiteralTypeValueExpression(sinfo, vtype);
+            if(this.testToken(SYM_lparen)) {
+                this.ensureAndConsumeToken(SYM_lparen, "literal type expression");
+                const vtype = this.parseTypeSignature();
+                this.ensureAndConsumeToken(SYM_rparen, "literal type expression");
+                return new LiteralTypeValueExpression(sinfo, vtype);
+            }
+            else {
+                this.ensureAndConsumeToken(SYM_lbrace, "literal value expression");
+                const exp = this.parseLiteralExpression("literal value expression");
+                this.ensureAndConsumeToken(SYM_rbrace, "literal value expression");
+                return new LiteralValueValueExpression(sinfo, exp);
+            }
         }
         else if (tk === KW_env) {
             this.ensureTaskOpOk();
@@ -4497,7 +4495,7 @@ class Parser {
                 this.raiseError(this.getCurrentLine(), re);
             }
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]));
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "validator_accepts");
@@ -4516,7 +4514,7 @@ class Parser {
             const vv = this.parsePathValidator(currentDecl);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]));
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "pathvalidator_accepts");
@@ -4574,7 +4572,7 @@ class Parser {
                 this.raiseError(sinfo.line, "Cannot declare additional member fields on typedecl");
             }
 
-            const vparam = new FunctionParameter("v", idval, undefined);
+            const vparam = new FunctionParameter("v", idval);
 
             const valueid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "value");
             const valuebody = new BodyImplementation(`${bodyid}_value`, this.m_penv.getCurrentFile(), "special_extract");

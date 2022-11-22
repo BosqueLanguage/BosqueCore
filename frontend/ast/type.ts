@@ -130,12 +130,10 @@ type RecursiveAnnotation = "yes" | "no" | "cond";
 class FunctionParameter {
     readonly name: string;
     readonly type: TypeSignature;
-    readonly litexp: LiteralExpressionValue | undefined;
 
-    constructor(name: string, type: TypeSignature, litexp: LiteralExpressionValue | undefined) {
+    constructor(name: string, type: TypeSignature) {
         this.name = name;
         this.type = type;
-        this.litexp = litexp;
     }
 }
 

@@ -33,6 +33,7 @@ enum ExpressionTag {
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
     LiteralTypeValueExpression = "LiteralTypeValueExpression",
+    LiteralValueValueExpression = "LiteralValueValueExpression",
 
     AccessFormatInfo = "AccessFormatInfo",
     AccessEnvValue = "AccessEnvValue",
@@ -369,6 +370,23 @@ class LiteralTypeValueExpression extends Expression {
     constructor(sinfo: SourceInfo, vtype: TypeSignature) {
         super(ExpressionTag.LiteralTypeValueExpression, sinfo);
         this.vtype = vtype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return true;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return true;
+    }
+}
+
+class LiteralValueValueExpression extends Expression {
+    readonly lexp: LiteralExpressionValue;
+
+    constructor(sinfo: SourceInfo, lexp: LiteralExpressionValue) {
+        super(ExpressionTag.LiteralValueValueExpression, sinfo);
+        this.lexp = lexp;
     }
 
     isCompileTimeInlineValue(): boolean {
@@ -1487,7 +1505,7 @@ export {
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
     LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
-    LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression,
+    LiteralTypedPrimitiveConstructorExpression, LiteralTypeValueExpression, LiteralValueValueExpression,
     AccessFormatInfo, AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,

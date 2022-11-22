@@ -309,7 +309,7 @@ class ResolvedMapEntryEntityAtomType extends ResolvedConstructableEntityAtomType
 
     static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntryEntityAtomType {
         let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeK.typeID + "," + typeV.typeID + ">";
-        return new ResolvedMapEntryEntityAtomType(name, object, typeT, typeE);
+        return new ResolvedMapEntryEntityAtomType(name, object, typeK, typeV);
     }
 
     getBinds(): Map<string, ResolvedType> {
