@@ -17,5 +17,6 @@
         "frontend/ast/*.ts", 
         "frontend/tree_ir/*.ts",
         "frontend/typechecker/*.ts",
+        "runtimes/javascript/compiler/*.ts"
     ]
 }
