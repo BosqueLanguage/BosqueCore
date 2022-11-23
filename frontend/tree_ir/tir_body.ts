@@ -1135,7 +1135,7 @@ class TIRMatchExpression extends TIRExpression {
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
 */
 
-class TIRCoerceTypeExpression extends TIRExpression {
+class TIRCoerceExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly totype: TIRTypeKey;
 
@@ -1150,7 +1150,7 @@ class TIRCoerceTypeExpression extends TIRExpression {
     }
 }
 
-class TIRCoerceSafeTypeExpression extends TIRExpression {
+class TIRCoerceSafeExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly totype: TIRTypeKey;
     

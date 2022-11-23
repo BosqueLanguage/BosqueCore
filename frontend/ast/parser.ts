@@ -2026,7 +2026,7 @@ class Parser {
             return new ConstructorTupleExpression(sinfo, args);
         }
         else if  (this.testToken(SYM_lbrace)) {
-            const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace);
+            const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).sort((a, b) => a.name.localeCompare(b.name));
             return new ConstructorRecordExpression(sinfo, args.map((nn) => {
                 return {property: nn.name, value: nn.value};
             }));
