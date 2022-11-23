@@ -305,13 +305,7 @@ const UnsafeFieldNames = [
     "is", 
     "as", 
     "isNone", 
-    "isSome", 
-    "asOrNone", 
-    "asOptional", 
-    "asResult", 
-    "hasProperty", 
-    "getPropertyOrNone", 
-    "getPropertyOption"
+    "isSome"
 ];
 
 const LoggerActions = [
@@ -2240,9 +2234,7 @@ class Parser {
                     this.ensureToken(TokenStrings.Identifier, "postfix \".\" access");
                     const name = this.consumeTokenAndGetValue();
 
-                    if (name === "as" || name === "is" || name === "isSome" || name === "isNone"
-                        || name === "hasIndex" || name === "getIndexOrNone" || name === "getIndexOption" 
-                        || name === "hasProperty" || name === "getPropertyOrNone" || name === "getPropertyOption") {
+                    if (name === "as" || name === "is" || name === "isSome" || name === "isNone") {
                         if(refpfx) {
                             this.raiseError(sinfo.line, "cannot use \"ref on Any type method call\"");
                         }

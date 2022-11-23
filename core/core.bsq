@@ -11,42 +11,6 @@ __universal concept Any {
     method is<T>(): Bool = special_method;
     method as<T>(): T = special_method;
 
-    method asOrNone<T>(): T? {
-        if (this.is<T>()) {
-            return this.as<T>();
-        }
-        else {
-            return none;
-        }
-    }
-
-    method asOption<T>(): Option<T> {
-        if (this.is<T>()) {
-            return something(this.as<T>());
-        }
-        else {
-            return nothing;
-        }
-    }
-
-    method asResult<T>(): Result<T, None> {
-        if (this.is<T>()) {
-            return ok(this.as<T>());
-        } else {
-            return err(none);
-        }
-    }
-
-    method asTry<T>(out? v: T): Bool {
-        if(!this.is<T>()) {
-            return false;
-        }
-        else {
-            v = this.as<T>();
-            return true;
-        }
-    }
-
     method isSome(): Bool = special_method;
     method isNone(): Bool = special_method;
 }
