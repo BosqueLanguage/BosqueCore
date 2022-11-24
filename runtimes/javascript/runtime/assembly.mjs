@@ -18,9 +18,13 @@ const BTypeInt = new BType("Int", new Map(), (v) => `${v}`, (v1, v2) => v1 === v
 const BTypeBigNat = new BType("BigNat", new Map(), (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
 const BTypeBigInt = new BType("BigInt", new Map(), (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
 
+const TIRRegexMap = new Map(); //string -> NFA
+/*TIR_REGEX_MAP_INIT*/
+
 export {
     BType,
     BTypeNone, BTypeNothing,
     BTypeBool,
     BTypeNat, BTypeInt, BTypeBigNat, BTypeBigInt,
+    TIRRegexMap
 };

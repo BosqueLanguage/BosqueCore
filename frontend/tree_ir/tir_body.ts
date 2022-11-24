@@ -1090,12 +1090,14 @@ class TIRSwitchExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly clauses: {match: TIRLiteralValue, value: TIRExpression}[];
     readonly edefault: TIRExpression | undefined;
+    readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRLiteralValue, value: TIRExpression}[], edefault: TIRExpression | undefined) {
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRLiteralValue, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
         super(TIRExpressionTag.SwitchExpression, sinfo, etype, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.litstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
         this.edefault = edefault;
+        this.isexhaustive = isexhaustive;
     }
 
     getUsedVars(): string[] {
@@ -1111,12 +1113,14 @@ class TIRMatchExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly clauses: {match: TIRTypeKey, value: TIRExpression}[];
     readonly edefault: TIRExpression | undefined;
+    readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined) {
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean;) {
         super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
         this.edefault = edefault;
+        this.isexhaustive = isexhaustive;
     }
 
     getUsedVars(): string[] {
@@ -1449,7 +1453,6 @@ class TIRCallMemberFunctionDynamicSelfRefWithChecksExpression extends TIRExpress
     }
 }
 
-
 class TIRLiteralValue {
     readonly exp: TIRExpression;
     readonly ltype: TIRTypeKey; //type of the expression -- e.g. "ok" is type String
@@ -1464,7 +1467,7 @@ class TIRLiteralValue {
 
 export {
     TIRCodePack,
-    TIRExpression, TIRInvalidExpression,
+    TIRExpressionTag, TIRExpression, TIRInvalidExpression,
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,

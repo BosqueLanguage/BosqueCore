@@ -3,8 +3,6 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import { LiteralExpressionValue } from "./body";
-
 import { SourceInfo } from "../build_decls";
 
 class TypeSignature {
@@ -49,19 +47,6 @@ class TemplateTypeSignature extends TypeSignature {
 
     getDiagnosticName(): string {
         return this.name;
-    }
-}
-
-class LiteralTypeSignature extends TypeSignature {
-    readonly lvalue: LiteralExpressionValue;
-
-    constructor(sinfo: SourceInfo, lvalue: LiteralExpressionValue) {
-        super(sinfo);
-        this.lvalue = lvalue;
-    }
-
-    getDiagnosticName(): string {
-        return "[Literal Type]";
     }
 }
 
@@ -201,7 +186,7 @@ class UnionTypeSignature extends TypeSignature {
 
 export { 
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
-    TemplateTypeSignature, LiteralTypeSignature, NominalTypeSignature, 
+    TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EphemeralListTypeSignature,
     RecursiveAnnotation, FunctionParameter, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };

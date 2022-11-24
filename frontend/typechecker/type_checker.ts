@@ -6,15 +6,15 @@
 import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedLiteralAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LiteralTypeValueExpression, LiteralValueValueExpression, PCodeInvokeExpression, SpecialConstructorExpression } from "../ast/body";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
+import { AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, PCodeInvokeExpression, SpecialConstructorExpression } from "../ast/body";
 import { TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRSpecialConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack } from "../tree_ir/tir_body";
-import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, LiteralTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
+import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
-import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRLiteralType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
 
@@ -274,12 +274,6 @@ class TypeChecker {
             else if(cexp instanceof LiteralTypedPrimitiveConstructorExpression) {
                 nexp = this.checkLiteralTypedPrimitiveConstructorExpression(literalenv, cexp);
             }
-            else if(cexp instanceof LiteralTypeValueExpression) {
-                nexp = this.checkLiteralTypeValueExpression(literalenv, cexp);
-            }
-            else if(cexp instanceof LiteralValueValueExpression) {
-                nexp = this.checkLiteralValueValueExpression(literalenv, cexp);
-            }
             else {
                 this.raiseError(exp.sinfo, `Unknown expression kind ${exp.tag} in reduceLiteralValueToCanonicalForm`);
 
@@ -434,8 +428,6 @@ class TypeChecker {
         if (this.atomSubtypeOf(ofa, witha)) {
             return { tp: ResolvedType.createSingle(ofa), fp: undefined };
         }
-
-        xxx; //literal types here
 
         if(ofa instanceof ResolvedConceptAtomType) {
             if (witha instanceof ResolvedEntityAtomType) {
@@ -603,18 +595,6 @@ class TypeChecker {
         }
         else {
             this.raiseError(t.sinfo, `Could not resolve template type name ${t.name}`);
-            return ResolvedType.createInvalid();
-        }
-    }
-
-    private normalizeType_Literal(t: LiteralTypeSignature, binds: TemplateBindScope): ResolvedType {
-        const [chkexp, chktype, _] = this.reduceLiteralValueToCanonicalForm("[LITERAL TYPE]", t.lvalue.exp, binds);
-        if(chkexp !== undefined) {
-            const llexp = new ResolvedLiteralAtomType(chkexp.litstr, chktype, chkexp);
-            return ResolvedType.createSingle(llexp);
-        }
-        else {
-            this.raiseError(t.sinfo, `Could not resolve literal type`);
             return ResolvedType.createInvalid();
         }
     }
@@ -1071,97 +1051,6 @@ class TypeChecker {
         return declinvs;
     }
 
-    private toTIRSetSubtypesFor(ttype: TIRTypeKey, ontype: TIRTypeKey) {
-        const ot = this.m_tirTypeMap.get(ontype) as TIRType;
-        if(ot instanceof TIREntityType) {
-            ot.provides.forEach((pp) => this.toTIRSetSubtypesFor(ttype, pp));
-        }
-        else {
-            const ct = ot as TIRConceptType;
-
-            ct.subtypes.add(ttype);
-            ct.provides.forEach((pp) => this.toTIRSetSubtypesFor(ttype, pp));
-        }
-    }
-
-    private toTIRProvides(ootype: OOPTypeDecl, binds: TemplateBindScope): TIRTypeKey[] {
-        return this.resolveProvides(ootype, binds).map((rr) => this.toTIRTypeKey(rr));
-    }
-
-    private toTIRInvariantConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
-        const fargs = allfields.map((ff, idx) => {
-            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
-        });
-
-        const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-            return invs.map((inv) => {
-                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0].typeID, inv[1]);
-                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
-
-                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
-                return {invk: invk, args: args};
-            });
-        });
-        
-        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
-    }
-
-    private toTIRValidateConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
-        const fargs = allfields.map((ff, idx) => {
-            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
-        });
-
-        const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [ValidateDecl, number][]);
-            return invs.map((inv) => {
-                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0].typeID, inv[1]);
-                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
-
-                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
-                return {invk: invk, args: args};
-            });
-        });
-        
-        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
-    }
-
-    private toTIRInvariantConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [{invk: TIRInvokeKey, vtype: TIRTypeKey}[], {invk: TIRInvokeKey, vtype: TIRTypeKey}[]] {
-       const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-            return invs.map((inv) => {
-                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0].typeID, inv[1]);
-                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
-
-                return {invk: invk, vtype: invtype.valuetype};
-            });
-        });
-
-        const tinv = ((invdecls.find((idp) => idp[0].typeID === ttype.typeID) as [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>])[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
-        const dinvs = tinv.map((inv) => {
-            const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(ttype.typeID, inv[1]);
-            const invtype = this.m_tirTypeMap.get(ttype.typeID) as TIRTypedeclEntityType;
-
-            return {invk: invk, vtype: invtype.valuetype};
-        });
-
-        return [([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa), dinvs];
-    }
-
-    private toTIRValidateConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): {invk: TIRInvokeKey, vtype: TIRTypeKey}[] {
-        const chkinvsaa = invdecls.map((idp) => {
-            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]);
-            return invs.map((inv) => {
-                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0].typeID, inv[1]);
-                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
-
-                return {invk: invk, vtype: invtype.valuetype};
-            });
-        });
-
-        return ([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa);
-    }
-
     private toTIRTypedeclChecks(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): { strof: ResolvedType | undefined, pthof: {validator: ResolvedType, kind: "path" | "pathfragment" | "pathglob"} | undefined } {
         const chkvalidxx = invdecls.find((idp) => {
             return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
@@ -1176,21 +1065,6 @@ class TypeChecker {
         return { strof: chkvalid, pthof: chkpath };
     }
 
-    private toTIRMemberFields(encltypeid: string, enclname: TIRTypeName, fields: MemberFieldDecl[], binds: TemplateBindScope): TIRMemberFieldDecl[] {
-        return fields.map((mf) => {
-            const fkey = TIRMemberIDGenerator.generateMemberFieldID(encltypeid, mf.name);
-            const fname = new TIRTypeMemberName(enclname, mf.name, undefined);
-            const declaredtype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, binds));
-
-            return new TIRMemberFieldDecl(fkey, fname, mf.name, encltypeid, mf.sourceLocation, mf.srcFile, mf.attributes, declaredtype);
-        });
-    }
-
-    private toTIRAllFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): TIRMemberFieldDecl[] {
-        const alldecls = this.getAllOOFields(ttype, ooptype, oobinds);
-        return [...alldecls].map((entry) => (this.m_tirTypeMap.get(entry[1][0].typeID) as TIROOType).memberFields.find((mf) => mf.name === entry[0]) as TIRMemberFieldDecl);
-    }
-
     private toTIRTypeKey_Atom(rtype: ResolvedAtomType): TIRTypeKey {
         if(this.m_tirTypeMap.has(rtype.typeID)) {
             return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tkey;
@@ -1202,31 +1076,19 @@ class TypeChecker {
         this.m_toTIRprocessingstack.push(rtype);
 
         let tirtype: TIRType | undefined =  undefined;
-        if(rtype instanceof ResolvedLiteralAtomType) {
-            tirtype = new TIRLiteralType(rtype.typeID, rtype.litexp);
-        }
-        else if(rtype instanceof ResolvedObjectEntityAtomType) {
+        if(rtype instanceof ResolvedObjectEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, rtype.object.terms.map((term) => this.toTIRTypeKey(rtype.binds.get(term.name) as ResolvedType)));
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createBaseBindScope(rtype.binds));
-            const memberfields = this.toTIRMemberFields(rtype.typeID, tname, rtype.object.memberFields, TemplateBindScope.createBaseBindScope(rtype.binds));
-            const allfdecls = this.toTIRAllFields(ResolvedType.createSingle(rtype), rtype.object, rtype.binds);
-            const allfields = allfdecls.map((fd) => {
-                return {fkey: fd.fkey, ftype: fd.declaredType};
-            });
-
-            const invdecls = this.getAllInvariantProvidingTypesInherit(ResolvedType.createSingle(rtype), rtype.object, rtype.binds);
-            const consinvariants = this.toTIRInvariantConsEntity(ResolvedType.createSingle(rtype), invdecls, allfdecls);
-            const apivalidates = this.toTIRValidateConsEntity(ResolvedType.createSingle(rtype), invdecls, allfdecls);
-
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createBaseBindScope(rtype.binds)).map((rr) => this.toTIRTypeKey(rr));
+           
             const binds = new Map<string, TIRTypeKey>();
             rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
-            tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], memberfields, [], [], [], consinvariants, apivalidates, new Map<string, TIRInvokeKey>(), allfields, binds);
+            tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, binds);
             this.m_pendingEntityDecls.push(tirtype as TIRObjectEntityType);
         }
         else if(rtype instanceof ResolvedEnumEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
             const enums = rtype.object.staticMembers.map((sm) => {
                 const lrepr = this.reduceLiteralValueToCanonicalForm("[ENUM EVAL]", (sm.value as ConstantExpressionValue).exp, TemplateBindScope.createEmptyBindScope());
                 const ltype = this.toTIRTypeKey(lrepr[1]);
@@ -1235,176 +1097,163 @@ class TypeChecker {
                 return {ename: sm.name, value: (lrepr[0] as TIRLiteralValue), reprtype: ltype};
             });
 
-            tirtype = new TIREnumEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], enums);
+            tirtype = new TIREnumEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, enums);
         }
         else if(rtype instanceof ResolvedTypedeclEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
 
             const valuetype = this.toTIRTypeKey(ResolvedType.createSingle(rtype.valuetype));
             const representation = this.toTIRTypeKey(ResolvedType.createSingle(rtype.representation));
 
-            //already know this doesn't have any member fields
-            const allfdecls = this.toTIRAllFields(ResolvedType.createSingle(rtype), rtype.object, new Map<string, ResolvedType>());
-            this.raiseErrorIf(rtype.object.sourceLocation, allfdecls.length !== 0, `Cannot inherit additional member fields on typedecl -- ${rtype.typeID}`);
-
             const invdecls = this.getAllInvariantProvidingTypesTypedecl(ResolvedType.createSingle(rtype), rtype.object, new Map<string, ResolvedType>());
-            const [consinvariantsall, consinvariantsexplicit] = this.toTIRInvariantConsTypedecl(ResolvedType.createSingle(rtype), invdecls);
-            const apivalidates = this.toTIRValidateConsTypedecl(ResolvedType.createSingle(rtype), invdecls);
-
             const validators = this.toTIRTypedeclChecks(ResolvedType.createSingle(rtype), invdecls);
+
             const strof = validators.strof !== undefined ? ({vtype: validators.strof.typeID, vre: this.m_assembly.tryGetValidatorForFullyResolvedName(validators.strof.typeID) as BSQRegex}) : undefined;
             const pthof = validators.pthof !== undefined ? ({vtype: validators.pthof.validator.typeID, vpth: this.m_assembly.tryGetPathValidatorForFullyResolvedName(validators.pthof.validator.typeID) as PathValidator, kind: validators.pthof.kind}) : undefined;
 
-            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], [], [], consinvariantsall, consinvariantsexplicit, apivalidates, valuetype, representation, strof, pthof);
+            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof);
             this.m_pendingTypedeclDecls.push(tirtype as TIRTypedeclEntityType);
         }
         else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
 
-            tirtype = new TIRPrimitiveInternalEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], []);
+            tirtype = new TIRPrimitiveInternalEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes);
         }
         else if(rtype instanceof ResolvedValidatorEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
 
-            tirtype = new TIRValidatorEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], this.m_assembly.tryGetValidatorForFullyResolvedName(rtype.typeID) as BSQRegex);
+            tirtype = new TIRValidatorEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, this.m_assembly.tryGetValidatorForFullyResolvedName(rtype.typeID) as BSQRegex);
         }
         else if(rtype instanceof ResolvedStringOfEntityAtomType) {
             const validator = this.toTIRTypeKey(ResolvedType.createSingle(rtype.validatortype));            
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype)));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
             const revalidator = this.m_assembly.tryGetValidatorForFullyResolvedName(rtype.typeID) as BSQRegex;
             
-            tirtype = new TIRStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], validator, revalidator);
+            tirtype = new TIRStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, revalidator);
         }
         else if(rtype instanceof ResolvedASCIIStringOfEntityAtomType) {
             const validator = this.toTIRTypeKey(ResolvedType.createSingle(rtype.validatortype));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype)));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
             const revalidator = this.m_assembly.tryGetValidatorForFullyResolvedName(rtype.typeID) as BSQRegex;
             
-            tirtype = new TIRASCIIStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], validator, revalidator);
+            tirtype = new TIRASCIIStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, revalidator);
         }
         else if(rtype instanceof ResolvedPathValidatorEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
 
-            tirtype = new TIRPathValidatorEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], this.m_assembly.tryGetPathValidatorForFullyResolvedName(rtype.typeID) as PathValidator);
+            tirtype = new TIRPathValidatorEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, this.m_assembly.tryGetPathValidatorForFullyResolvedName(rtype.typeID) as PathValidator);
         }
         else if(rtype instanceof ResolvedPathEntityAtomType) {
             const validator = this.toTIRTypeKey(ResolvedType.createSingle(rtype.validatortype));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype)));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
             const pthvalidator = this.m_assembly.tryGetPathValidatorForFullyResolvedName(rtype.typeID) as PathValidator;
             
-            tirtype = new TIRPathEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], validator, pthvalidator);
+            tirtype = new TIRPathEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, pthvalidator);
         }
         else if(rtype instanceof ResolvedPathFragmentEntityAtomType) {
             const validator = this.toTIRTypeKey(ResolvedType.createSingle(rtype.validatortype));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype)));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
             const pthvalidator = this.m_assembly.tryGetPathValidatorForFullyResolvedName(rtype.typeID) as PathValidator;
             
-            tirtype = new TIRPathFragmentEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], validator, pthvalidator);
+            tirtype = new TIRPathFragmentEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, pthvalidator);
         }
         else if(rtype instanceof ResolvedPathGlobEntityAtomType) {
             const validator = this.toTIRTypeKey(ResolvedType.createSingle(rtype.validatortype));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype)));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
             const pthvalidator = this.m_assembly.tryGetPathValidatorForFullyResolvedName(rtype.typeID) as PathValidator;
             
-            tirtype = new TIRPathGlobEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], validator, pthvalidator);
+            tirtype = new TIRPathGlobEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, pthvalidator);
         }
         else if(rtype instanceof ResolvedOkEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIROkEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet, typee);
+            tirtype = new TIROkEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedErrEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE));
-            
-            tirtype = new TIRErrEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet, typee);
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
+
+            tirtype = new TIRErrEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedSomethingEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRSomethingEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet);
+            tirtype = new TIRSomethingEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedMapEntryEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeK));
             const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeV));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRMapEntryEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet, typee);
+            tirtype = new TIRMapEntryEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedHavocEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createEmptyBindScope());
-            
-            tirtype = new TIRHavocEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides);
+            tirtype = new TIRHavocEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes);
         }
         else if(rtype instanceof ResolvedListEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRListEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet);
+            tirtype = new TIRListEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedStackEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRStackEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet);
+            tirtype = new TIRStackEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedQueueEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRQueueEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet);
+            tirtype = new TIRQueueEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedSetEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRSetEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typet);
+            tirtype = new TIRSetEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedMapEntityAtomType) {
             const typek = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeK));
             const typev = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeV));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typek, typev]);
-            const provides = this.toTIRProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV));
+            const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRMapEntityTIRType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, provides, [], [], [], typek, typev);
+            tirtype = new TIRMapEntityTIRType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typek, typev);
         }
         else if(rtype instanceof ResolvedConceptAtomType) {
             if(rtype.conceptTypes.length === 1) {
                 const rconcept = rtype.conceptTypes[0];
                 const tname = new TIRTypeName(rconcept.concept.ns, rconcept.concept.name, rconcept.concept.terms.map((term) => this.toTIRTypeKey(rconcept.binds.get(term.name) as ResolvedType)));
-                const provides = this.toTIRProvides(rconcept.concept, TemplateBindScope.createBaseBindScope(rconcept.binds));
-                const memberfields = this.toTIRMemberFields(rtype.typeID, tname, rconcept.concept.memberFields, TemplateBindScope.createBaseBindScope(rconcept.binds));
-                const allfdecls = this.toTIRAllFields(ResolvedType.createSingle(ResolvedConceptAtomType.create([rconcept])), rconcept.concept, rconcept.binds);
-                const allfields = allfdecls.map((fd) => {
-                    return {fkey: fd.fkey, ftype: fd.declaredType};
-                });
-
+                const supertypes = this.resolveProvides(rconcept.concept, TemplateBindScope.createBaseBindScope(rconcept.binds)).map((rr) => this.toTIRTypeKey(rr));
+                
                 const binds = new Map<string, TIRTypeKey>();
                 rconcept.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
-                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, provides, [], [], memberfields, [], [], [], binds, new Set<string>(), allfields);
+                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, supertypes, binds);
                 this.m_pendingConceptDecls.push(tirtype as TIRConceptType);
             }
             else {
@@ -1417,15 +1266,10 @@ class TypeChecker {
         }
         else if(rtype instanceof ResolvedTaskAtomType) {
             const tname = new TIRTypeName(rtype.task.ns, rtype.task.name, rtype.task.terms.map((term) => this.toTIRTypeKey(rtype.binds.get(term.name) as ResolvedType)));
-            const provides = this.toTIRProvides(rtype.task, TemplateBindScope.createBaseBindScope(rtype.binds));
-            const memberfields = this.toTIRMemberFields(rtype.typeID, tname, rtype.task.memberFields, TemplateBindScope.createBaseBindScope(rtype.binds));
+            const supertypes = this.resolveProvides(rtype.task, TemplateBindScope.createBaseBindScope(rtype.binds)).map((rr) => this.toTIRTypeKey(rr));
 
             const binds = new Map<string, TIRTypeKey>();
             rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
-
-            const defaults = rtype.task.defaults.map((sm) => {
-                return {dkey: TIRMemberIDGenerator.generateDefaultMemberID(rtype.typeID, sm.name), dname: sm.name};
-            });
 
             const mainfunc = {mkey: TIRInvokeIDGenerator.generateInvokeIDForExportableStaticMember(rtype.typeID, rtype.task.mainfunc.name), mname: rtype.task.mainfunc.name};
             const onfuncs = {
@@ -1434,45 +1278,25 @@ class TypeChecker {
                 onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onTimeout.name)) : undefined, 
             };
 
-            tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, provides, [], [], memberfields, [], binds, defaults, [], mainfunc, onfuncs, [], [], [], []);
+            tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, supertypes, binds, mainfunc, onfuncs);
             this.m_pendingTaskDecls.push(tirtype as TIRTaskType);
         }
         else if(rtype instanceof ResolvedTupleAtomType) {
-            tirtype = new TIRTupleType(rtype.typeID, rtype.types.map((tt) => this.toTIRTypeKey(tt)));
+            const supertypes = this.getConceptsProvidedByTuple(rtype).conceptTypes.map((cc) => this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cc]))));
+            tirtype = new TIRTupleType(rtype.typeID, rtype.types.map((tt) => this.toTIRTypeKey(tt)), supertypes);
         }
         else if(rtype instanceof ResolvedRecordAtomType) {
+            const supertypes = this.getConceptsProvidedByRecord(rtype).conceptTypes.map((cc) => this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cc]))));
             tirtype = new TIRRecordType(rtype.typeID, rtype.entries.map((entrey) => {
                 return {pname: entrey.pname, ptype: this.toTIRTypeKey(entrey.ptype)};
-            }));
+            }), supertypes);
         }
         else {
             tirtype = new TIREphemeralListType(rtype.typeID, (rtype as ResolvedEphemeralListType).types.map((tt) => this.toTIRTypeKey(tt)));
         }
 
         this.m_toTIRprocessingstack.pop();
-
         this.m_tirTypeMap.set(rtype.typeID, tirtype);
-
-        if(tirtype instanceof TIRLiteralType) {
-            this.toTIRSetSubtypesFor(tirtype.tkey, tirtype.lexp.ltype);
-        }
-        else if(tirtype instanceof TIREntityType) {
-            const tee = tirtype;
-            tirtype.provides.forEach((pp) => this.toTIRSetSubtypesFor(tee.tkey, pp));
-        }
-        else if(tirtype instanceof TIRTupleType) {
-            const ttup = tirtype;
-            const tc = this.getConceptsProvidedByTuple(rtype as ResolvedTupleAtomType);
-            tc.conceptTypes.forEach((cc) => this.toTIRSetSubtypesFor(ttup.tkey, cc.typeID));
-        }
-        else if(tirtype instanceof TIRRecordType) {
-            const trec = tirtype;
-            const rc = this.getConceptsProvidedByRecord(rtype as ResolvedRecordAtomType);
-            rc.conceptTypes.forEach((rc) => this.toTIRSetSubtypesFor(trec.tkey, rc.typeID));
-        }
-        else {
-            ;
-        }
 
         return rtype.typeID;
     }
@@ -1961,9 +1785,6 @@ class TypeChecker {
         else if (t instanceof TemplateTypeSignature) {
             return this.normalizeType_Template(t, binds);
         }
-        else if (t instanceof LiteralTypeSignature) {
-            return this.normalizeType_Literal(t, binds);
-        }
         else if (t instanceof NominalTypeSignature) {
             return this.normalizeType_Nominal(t, binds, []);
         }
@@ -2068,14 +1889,6 @@ class TypeChecker {
             }
             else {
                 //fall-through
-            }
-        }
-        else if (t1 instanceof ResolvedLiteralAtomType) {
-            if(t2 instanceof ResolvedLiteralAtomType) {
-                res = t1.litexp.litstr === t2.litexp.litstr;
-            }
-            else {
-                res = this.subtypeOf(t1.litexptype, ResolvedType.createSingle(t2));
             }
         }
         else {
@@ -3848,6 +3661,7 @@ class TypeChecker {
             this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
         }
 
+        xxxx;
         if (tirtypedecl.consinvariantsall.length === 0) {
             const nexp = new TIRLiteralTypedPrimitiveDirectExpression(exp.sinfo, (lexp[0] as TIRLiteralValue).exp, this.toTIRTypeKey(constype), (lexp[0] as TIRLiteralValue).ltype, this.toTIRTypeKey(ResolvedType.createSingle(ccdecl.representation)));
             return this.setResultExpression(env, nexp, constype, constype, undefined);
@@ -3856,31 +3670,6 @@ class TypeChecker {
             const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, (lexp[0] as TIRLiteralValue).exp, this.toTIRTypeKey(constype), (lexp[0] as TIRLiteralValue).ltype, this.toTIRTypeKey(ResolvedType.createSingle(ccdecl.representation)));
             return this.setResultExpression(env, nexp, constype, constype, undefined);
         }
-    }
-
-    private checkLiteralTypeValueExpression(env: ExpressionTypeEnvironment, exp: LiteralTypeValueExpression): ExpressionTypeEnvironment {
-        const texp = this.normalizeTypeOnly(exp.vtype, env.binds);
-        this.raiseErrorIf(exp.sinfo, texp.tryGetUniqueLiteralTypeInfo() !== undefined, "Expected literal type");
-
-        const rlt = texp.options[0] as ResolvedLiteralAtomType;
-        let ftv: FlowTypeTruthValue | undefined = undefined;
-        if(rlt.litexptype.isSameType(this.getSpecialBoolType())) {
-            ftv = rlt.litexp.litstr === "true" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
-        }
-
-        return this.setResultExpression(env, rlt.litexp.exp, rlt.litexptype, rlt.litexptype, ftv);
-    }
-
-    private checkLiteralValueValueExpression(env: ExpressionTypeEnvironment, exp: LiteralValueValueExpression): ExpressionTypeEnvironment {
-        const lexp = this.reduceLiteralValueToCanonicalForm(env.bodyid, exp.lexp.exp, env.binds);
-        this.raiseErrorIf(exp.sinfo, lexp[0] !== undefined, "Not a literal expression");
-
-        let ftv: FlowTypeTruthValue | undefined = undefined;
-        if(lexp[1].isSameType(this.getSpecialBoolType())) {
-            ftv = (lexp[0] as TIRLiteralValue).litstr === "true" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False;
-        }
-
-        return this.setResultExpression(env, (lexp[0] as TIRLiteralValue).exp, lexp[1], lexp[2], ftv);
     }
 
     private checkAccessFormatInfo(env: ExpressionTypeEnvironment, exp: AccessFormatInfo): ExpressionTypeEnvironment {
@@ -3973,6 +3762,7 @@ class TypeChecker {
                 return this.emitCoerceIfNeeded(ee, exp.sinfo, itype);
             });
 
+            xxxx;
             if(tirobj.consinvariants.length === 0) {
                 const econs = new TIRConstructorPrimaryDirectExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
                 return this.setResultExpression(env, econs, roftype, roftype, undefined);
@@ -3981,6 +3771,9 @@ class TypeChecker {
                 const econs = new TIRConstructorPrimaryCheckExpression(exp.sinfo, tiroftype, eargs.map((earg) => earg.expressionResult));
                 return this.setResultExpression(env, econs, roftype, roftype, undefined);
             }
+        }
+        else if(oftype instanceof ResolvedTypedeclEntityAtomType) {
+            xxxx; //typedecl???
         }
         else if(oftype instanceof ResolvedConstructableEntityAtomType) {
             const roftype = ResolvedType.createSingle(oftype);
@@ -7649,6 +7442,112 @@ class TypeChecker {
             return [];
         }
     }
+
+/*
+
+    private toTIRInvariantConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
+        const fargs = allfields.map((ff, idx) => {
+            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
+        });
+
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0].typeID, inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
+
+                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
+                return {invk: invk, args: args};
+            });
+        });
+        
+        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRValidateConsEntity(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][], allfields: TIRMemberFieldDecl[]): {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] {
+        const fargs = allfields.map((ff, idx) => {
+            return {fkey: ff.fkey, argidx: idx, ftype: ff.declaredType};
+        });
+
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [ValidateDecl, number][]);
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0].typeID, inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIROOType;
+
+                const args = fargs.filter((farg) => invtype.allfields.some((mf) => mf.fkey === farg.fkey));
+                return {invk: invk, args: args};
+            });
+        });
+        
+        return ([] as {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRInvariantConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [{invk: TIRInvokeKey, vtype: TIRTypeKey}[], {invk: TIRInvokeKey, vtype: TIRTypeKey}[]] {
+       const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(idp[0].typeID, inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
+
+                return {invk: invk, vtype: invtype.valuetype};
+            });
+        });
+
+        const tinv = ((invdecls.find((idp) => idp[0].typeID === ttype.typeID) as [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>])[1].invariants.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]).filter((ie) => isBuildLevelEnabled(ie[0].level, this.m_buildLevel));
+        const dinvs = tinv.map((inv) => {
+            const invk = TIRInvokeIDGenerator.generateInvokeIDForInvariant(ttype.typeID, inv[1]);
+            const invtype = this.m_tirTypeMap.get(ttype.typeID) as TIRTypedeclEntityType;
+
+            return {invk: invk, vtype: invtype.valuetype};
+        });
+
+        return [([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa), dinvs];
+    }
+
+    private toTIRValidateConsTypedecl(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): {invk: TIRInvokeKey, vtype: TIRTypeKey}[] {
+        const chkinvsaa = invdecls.map((idp) => {
+            let invs = (idp[1].validates.map((ii, iidx) => [ii, iidx]) as [InvariantDecl, number][]);
+            return invs.map((inv) => {
+                const invk = TIRInvokeIDGenerator.generateInvokeIDForValidate(idp[0].typeID, inv[1]);
+                const invtype = this.m_tirTypeMap.get(idp[0].typeID) as TIRTypedeclEntityType;
+
+                return {invk: invk, vtype: invtype.valuetype};
+            });
+        });
+
+        return ([] as {invk: TIRInvokeKey, vtype: TIRTypeKey}[]).concat(...chkinvsaa);
+    }
+
+    private toTIRTypedeclChecks(ttype: ResolvedType, invdecls: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): { strof: ResolvedType | undefined, pthof: {validator: ResolvedType, kind: "path" | "pathfragment" | "pathglob"} | undefined } {
+        const chkvalidxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__stringof_type") || idp[1].attributes.includes("__asciistringof_type");
+        });
+        const chkvalid = (chkvalidxx !== undefined) ? (chkvalidxx[2].get("T") as ResolvedType) : undefined;
+
+        const chkpathxx = invdecls.find((idp) => {
+            return idp[1].attributes.includes("__path_type") || idp[1].attributes.includes("__pathfragment_type") || idp[1].attributes.includes("__pathglob_type");
+        });
+        const chkpath = (chkpathxx !== undefined) ? {validator: (chkpathxx[2].get("T") as ResolvedType), kind: (chkpathxx[1].attributes.includes("__path_type") ? "path" : (chkpathxx[1].attributes.includes("__pathfragment_type") ? "pathfragment" : "pathglob")) as "path" | "pathfragment" | "pathglob"} : undefined;
+
+        return { strof: chkvalid, pthof: chkpath };
+    }
+
+    private toTIRMemberFields(encltypeid: string, enclname: TIRTypeName, fields: MemberFieldDecl[], binds: TemplateBindScope): TIRMemberFieldDecl[] {
+        return fields.map((mf) => {
+            const fkey = TIRMemberIDGenerator.generateMemberFieldID(encltypeid, mf.name);
+            const fname = new TIRTypeMemberName(enclname, mf.name, undefined);
+            const declaredtype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, binds));
+
+            return new TIRMemberFieldDecl(fkey, fname, mf.name, encltypeid, mf.sourceLocation, mf.srcFile, mf.attributes, declaredtype);
+        });
+    }
+
+    private toTIRAllFields(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): TIRMemberFieldDecl[] {
+        const alldecls = this.getAllOOFields(ttype, ooptype, oobinds);
+        return [...alldecls].map((entry) => (this.m_tirTypeMap.get(entry[1][0].typeID) as TIROOType).memberFields.find((mf) => mf.name === entry[0]) as TIRMemberFieldDecl);
+    }
+*/
 
     processOOType(tkey: MIRResolvedTypeKey, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
         try {

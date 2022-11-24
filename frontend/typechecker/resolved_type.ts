@@ -1,24 +1,12 @@
 import * as assert from "assert";
 
 import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
-import { TIRLiteralValue } from "../tree_ir/tir_body";
 
 abstract class ResolvedAtomType {
     readonly typeID: string;
 
     constructor(typeID: string) {
         this.typeID = typeID;
-    }
-}
-
-class ResolvedLiteralAtomType extends ResolvedAtomType {
-    readonly litexptype: ResolvedType; //1n as a type -- not Nat
-    readonly litexp: TIRLiteralValue;
-
-    constructor(reprexp: string, litexptype: ResolvedType, litexp: TIRLiteralValue) {
-        super(reprexp);
-        this.litexptype = litexptype;
-        this.litexp = litexp;
     }
 }
 
@@ -653,19 +641,6 @@ class ResolvedType {
         }
     }
 
-    tryGetUniqueLiteralTypeInfo(): ResolvedLiteralAtomType | undefined {
-        if (this.options.length !== 1) {
-            return undefined;
-        }
-
-        if (this.options[0] instanceof ResolvedLiteralAtomType) {
-            return (this.options[0] as ResolvedLiteralAtomType);
-        }
-        else {
-            return undefined;
-        }
-    }
-
     tryGetUniqueOOTypeInfo(): [OOPTypeDecl | undefined, Map<string, ResolvedType>] {
         if (this.options.length !== 1) {
             return [undefined, new Map<string, ResolvedType>()];
@@ -869,7 +844,6 @@ class TemplateBindScope {
 
 export {
     ResolvedAtomType,
-    ResolvedLiteralAtomType,
     ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 
     ResolvedPrimitiveInternalEntityAtomType,
     ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
