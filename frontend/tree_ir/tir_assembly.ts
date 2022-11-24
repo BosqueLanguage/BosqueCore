@@ -56,6 +56,7 @@ type TIRTupleIndex = number;
 class TIRFunctionParameter {
     readonly name: string;
     readonly type: TIRTypeKey;
+    readonly ddlit: TIRLiteralValue | undefined;
 
     constructor(name: string, type: TIRTypeKey) {
         this.name = name;
@@ -413,9 +414,9 @@ class TIRObjectEntityType extends TIREntityType {
 
 //Represents enum types declared as entities in the code
 class TIREnumEntityType extends TIREntityType {
-    readonly enums: {ename: string, value: TIRLiteralValue, reprtype: TIRTypeKey}[];
+    readonly enums: string[];
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: {ename: string, value: TIRLiteralValue, reprtype: TIRTypeKey}[]) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: string[]) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.enums = enums;
     }
@@ -587,7 +588,7 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
 //class representing special havoc type
 class TIRHavocEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, undefined);
+        super(tkey, tname, srcInfo, srcFile, attributes, []);
     }
 }
 

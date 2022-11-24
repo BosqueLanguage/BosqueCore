@@ -1188,7 +1188,7 @@ class Parser {
 
         let fparams: FunctionParameter[] = [];
         if (ikind === InvokableKind.Member) {
-            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature));
+            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, undefined));
         }
 
         let resultInfo = this.m_penv.SpecialAutoSignature;
@@ -1207,7 +1207,16 @@ class Parser {
                 }
             }
 
-            return new FunctionParameter(pname, argtype);
+            let litexp: LiteralExpressionValue | undefined = undefined;
+            if(this.testAndConsumeTokenIf("===")) {
+                if(ikind !== InvokableKind.DynamicOperator) {
+                    this.raiseError(line, "Literal match parameters are only allowed on dynamic operator definitions");
+                }
+
+                litexp = this.parseLiteralExpression("dynamic dispatch literal value");
+            }
+
+            return new FunctionParameter(pname, argtype, litexp);
         });
 
         const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
@@ -1526,7 +1535,7 @@ class Parser {
             this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
 
             const params = this.parseListOf<FunctionParameter>("lambda function parameters", SYM_lparen, SYM_rparen, SYM_coma, () => {
-                return new FunctionParameter("_", this.parseTypeSignature());
+                return new FunctionParameter("_", this.parseTypeSignature(), undefined);
             });
 
             this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
@@ -4121,7 +4130,7 @@ class Parser {
 
         const ename = this.consumeTokenAndGetValue();
         const etype = new NominalTypeSignature(sinfo, currentDecl.ns, [ename]);
-        
+
         if (currentDecl.checkDeclNameClash(ename)) {
             this.raiseError(line, "Collision between object and other names");
         }
@@ -4129,17 +4138,9 @@ class Parser {
         try {
             this.setRecover(this.scanCodeParens());
 
-            const enums = this.parseListOf<{ename: string, evalue: ConstantExpressionValue | undefined}>("enum declaration", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            const enums = this.parseListOf<string>("enum declaration", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 this.ensureToken(TokenStrings.Identifier, "enum member");
-                const ename = this.consumeTokenAndGetValue();
-
-                let evalue: ConstantExpressionValue | undefined = undefined;
-                if(this.testAndConsumeTokenIf(SYM_eq)) {
-                    evalue = this.parseConstExpression(false);
-                }
-
-                this.ensureAndConsumeToken(SYM_coma, "enum member");
-                return {ename: ename, evalue: evalue};
+                return this.consumeTokenAndGetValue();
             });
             
             const provides = [
@@ -4156,15 +4157,9 @@ class Parser {
             const memberMethods: MemberMethodDecl[] = [];
     
             for(let i = 0; i < enums.length; ++i) {
-                if (enums[i].evalue !== undefined) {
-                    const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i].ename, etype, (enums[i].evalue));
-                    staticMembers.push(enm);
-                }
-                else {
-                    const exp = new LiteralIntegralExpression(sinfo, i.toString() + "n", this.m_penv.SpecialNatSignature);
-                    const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i].ename, etype, new ConstantExpressionValue(exp, new Set<string>()));
-                    staticMembers.push(enm);
-                }
+                const exp = new LiteralIntegralExpression(sinfo, i.toString() + "n", this.m_penv.SpecialNatSignature);
+                const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i], etype, new ConstantExpressionValue(exp, new Set<string>()));
+                staticMembers.push(enm);
             }
 
             if(this.testAndConsumeTokenIf(SYM_amp)) {
@@ -4461,7 +4456,7 @@ class Parser {
                 this.raiseError(this.getCurrentLine(), re);
             }
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]));
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "validator_accepts");
@@ -4480,7 +4475,7 @@ class Parser {
             const vv = this.parsePathValidator(currentDecl);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
-            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]));
+            const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
             const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "pathvalidator_accepts");
@@ -4538,7 +4533,7 @@ class Parser {
                 this.raiseError(sinfo.line, "Cannot declare additional member fields on typedecl");
             }
 
-            const vparam = new FunctionParameter("v", idval);
+            const vparam = new FunctionParameter("v", idval, undefined);
 
             const valueid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "value");
             const valuebody = new BodyImplementation(`${bodyid}_value`, this.m_penv.getCurrentFile(), "special_extract");

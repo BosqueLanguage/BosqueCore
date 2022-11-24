@@ -285,15 +285,13 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
     readonly value: TIRExpression;
 
     readonly constype: TIRTypeKey; //The type that is constructed
-    readonly reprtype: TIRTypeKey; //The repr type that this is declared to be isomorphic to
     readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey) {
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, `${value.expstr}_${constype}`);
         this.value = value;
 
         this.constype = constype;
-        this.reprtype = reprtype;
         this.basetype = basetype;
     }
 
@@ -306,15 +304,13 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     readonly value: TIRExpression;
 
     readonly constype: TIRTypeKey; //The type that is constructed
-    readonly reprtype: TIRTypeKey; //The repr type that this is declared to be isomorphic to
     readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
 
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, reprtype: TIRTypeKey, basetype: TIRTypeKey) {
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype}`);
         this.value = value;
 
         this.constype = constype;
-        this.reprtype = reprtype;
         this.basetype = basetype;
     }
 
@@ -1487,12 +1483,10 @@ class TIRCallMemberFunctionDynamicSelfRefWithChecksExpression extends TIRExpress
 
 class TIRLiteralValue {
     readonly exp: TIRExpression;
-    readonly ltype: TIRTypeKey; //type of the expression -- e.g. "ok" is type String
     readonly litstr: string;
     
-    constructor(exp: TIRExpression, ltype: TIRTypeKey, litstr: string) {
+    constructor(exp: TIRExpression, litstr: string) {
         this.exp = exp
-        this.ltype = ltype;
         this.litstr = litstr;
     }
 }

@@ -3,6 +3,8 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+import { LiteralExpressionValue } from "./body";
+
 import { SourceInfo } from "../build_decls";
 
 class TypeSignature {
@@ -115,10 +117,12 @@ type RecursiveAnnotation = "yes" | "no" | "cond";
 class FunctionParameter {
     readonly name: string;
     readonly type: TypeSignature;
+    readonly ddlit: LiteralExpressionValue | undefined;
 
-    constructor(name: string, type: TypeSignature) {
+    constructor(name: string, type: TypeSignature, ddlit: LiteralExpressionValue | undefined) {
         this.name = name;
         this.type = type;
+        this.ddlit = ddlit;
     }
 }
 
