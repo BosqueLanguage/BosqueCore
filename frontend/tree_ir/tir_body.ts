@@ -53,6 +53,9 @@ enum TIRExpressionTag {
 
     CodePackInvokeExpression = "CodePackInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
+    TypedeclDirectExpression = "TypedeclDirectExpression",
+    TypedeclConstructorExpression = "TypedeclConstructorExpression",
+
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallNamespaceOperatorExpression = "CallNamespaceOperatorExpression",
     CallStaticFunctionExpression = "CallStaticFunctionExpression",
@@ -590,7 +593,36 @@ class TIRSpecialConstructorExpression extends TIRExpression {
     readonly arg: TIRExpression;
 
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
-        super(TIRExpressionTag.SpecialConstructorExpression, sinfo, oftype, `cons<${oftype}>{${arg.expstr}}`);
+        super(TIRExpressionTag.SpecialConstructorExpression, sinfo, oftype, `cons_special<${oftype}>{${arg.expstr}}`);
+        this.oftype = oftype;
+        this.arg = arg;
+    }
+
+    getUsedVars(): string[] {
+        return this.arg.getUsedVars();
+    }
+}
+
+class TIRTypedeclDirectExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly arg: TIRExpression;
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
+        super(TIRExpressionTag.TypedeclDirectExpression, sinfo, oftype, `cons_typedecl<${oftype}>{${arg.expstr}}`);
+        this.oftype = oftype;
+        this.arg = arg;
+    }
+
+    getUsedVars(): string[] {
+        return this.arg.getUsedVars();
+    }
+}
+class TIRTypedeclConstructorExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly arg: TIRExpression;
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
+        super(TIRExpressionTag.TypedeclConstructorExpression, sinfo, oftype, `cons_typedecl<${oftype}>{${arg.expstr}}`);
         this.oftype = oftype;
         this.arg = arg;
     }
@@ -1115,7 +1147,7 @@ class TIRMatchExpression extends TIRExpression {
     readonly edefault: TIRExpression | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean;) {
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
         super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
@@ -1474,7 +1506,7 @@ export {
     TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression, 
-    qqqq, TIRSpecialConstructorExpression,
+    qqqq, TIRSpecialConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRCallStaticFunctionWithChecksExpression,
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
     TIRPrefixNotOp, TIRPrefixNegateOp,
