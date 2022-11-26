@@ -231,8 +231,11 @@ class TIRLiteralFloatPointExpression extends TIRExpression {
 }
 
 class TIRLiteralStringExpression extends TIRExpression {
+    readonly value: string;
+
     constructor(sinfo: SourceInfo, value: string) {
         super(TIRExpressionTag.LiteralStringExpression, sinfo, "String", value);
+        this.value = value;
     }
 }
 
@@ -246,38 +249,51 @@ class TIRLiteralRegexExpression extends TIRExpression {
 }
 
 class TIRLiteralASCIIStringExpression extends TIRExpression {
+    readonly value: string;
+
     constructor(sinfo: SourceInfo, value: string) {
         super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, "ASCIIString", value);
+        this.value = value;
     }
 }
 
 class TIRLiteralTypedStringExpression extends TIRExpression {
     readonly oftype: TIRTypeKey;
+    readonly value: string;
 
     constructor(sinfo: SourceInfo, value: string, stringoftype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stringoftype, `${value}_${oftype}`);
         this.oftype = oftype;
+        this.value = value;
     }
 }
 
 class TIRLiteralASCIITypedStringExpression extends TIRExpression {
     readonly oftype: TIRTypeKey;
+    readonly value: string;
 
     constructor(sinfo: SourceInfo, value: string, astringoftype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, astringoftype, `${value}_${oftype}`);
         this.oftype = oftype;
+        this.value = value;
     }
 }
 
 class TIRLiteralTemplateStringExpression extends TIRExpression {
+    readonly value: string;
+
     constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
+        this.value = value;
     }
 }
 
 class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
+    readonly value: string;
+
     constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
+        this.value = value;
     }
 }
 

@@ -1,9 +1,25 @@
 import * as assert from "assert";
 
-import { TIRExpression, TIRExpressionTag, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression } from "../../../frontend/tree_ir/tir_body";
+import { extractLiteralStringValue } from "../../../frontend/build_decls";
+import { TIRAssembly, TIRTypedeclEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression } from "../../../frontend/tree_ir/tir_body";
+
+import { TypeEmitter } from "./type_emitter";
 
 class BodyEmitter {
-    constructor() {
+    private readonly m_assembly: TIRAssembly;
+    private readonly m_temitter: TypeEmitter;
+
+    constructor(assembly: TIRAssembly, temitter: TypeEmitter) {
+        this.m_assembly = assembly;
+        this.m_temitter = temitter;
+    }
+
+    private jsEncodeString(str: string): string {
+        //
+        //TODO: right now we assume there are not escaped values in the string
+        //
+        return `"${str}"`;
     }
 
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
@@ -51,6 +67,64 @@ class BodyEmitter {
         return exp.value.restr;
     }
 
+    private emitLiteralStringExpression(exp: TIRLiteralStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+
+    private emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+    
+    private emitLiteralTypedStringExpression(exp: TIRLiteralTypedStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+
+    private emitLiteralASCIITypedStringExpression(exp: TIRLiteralASCIITypedStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+    
+    private emitLiteralTemplateStringExpression(exp: TIRLiteralTemplateStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+
+    private emitLiteralASCIITemplateStringExpression(exp: TIRLiteralASCIITemplateStringExpression): string {
+        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+    }
+    
+    private emitLiteralTypedPrimitiveDirectExpression(exp: TIRLiteralTypedPrimitiveDirectExpression): string {
+        return this.emitExpression(exp.value);
+    }
+
+    private emitLiteralTypedPrimitiveConstructorExpression(exp: TIRLiteralTypedPrimitiveConstructorExpression): string {
+        const ttype = this.m_assembly.getTypeAs<TIRTypedeclEntityType>(exp.constype);
+
+        ttype.consinvariantsall.map((iv) => {
+            xxxx;
+        });
+
+        return this.emitExpression(exp.value);
+    }
+
+    private emitAccessFormatInfo = "AccessFormatInfo",
+    private emitAccessEnvValue = "AccessEnvValue",
+
+    private emitAccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
+    private emitTIRAccessConstMemberFieldExpression = " TIRAccessConstMemberFieldExpression",
+    private emitAccessVariableExpression = "AccessVariableExpression",
+
+    private emitLoadIndexExpression = "LoadIndexExpression",
+    private emitLoadIndexVirtualExpression = "LoadIndexVirtualExpression",
+    private emitLoadPropertyExpression = "LoadPropertyExpression",
+    private emitLoadPropertyVirtualExpression = "LoadPropertyVirtualExpression",
+    private emitLoadFieldExpression = "LoadFieldExpression",
+    private emitLoadFieldVirtualExpression = "LoadFieldVirtualExpression",
+
+    private emitConstructorPrimaryDirectExpression = "ConstructorPrimaryDirectExpression",
+    private emitConstructorPrimaryCheckExpression = "ConstructorPrimaryCheckExpression",
+    private emitConstructorTupleExpression = "ConstructorTupleExpression",
+    private emitConstructorRecordExpression = "ConstructorRecordExpression",
+    private emitConstructorEphemeralValueList = "ConstructorEphemeralValueList",
+
     public emitExpression(exp: TIRExpression, toplevel?: boolean): string {
         switch (exp.tag) {
             case TIRExpressionTag.LiteralNoneExpression: {
@@ -74,6 +148,38 @@ class BodyEmitter {
             case TIRExpressionTag.LiteralRegexExpression: {
                 return this.emitLiteralRegexExpression(exp as TIRLiteralRegexExpression);
             }
+
+            LiteralStringExpression = "LiteralStringExpression",
+    LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
+    
+    LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralASCIITypedStringExpression = "LiteralASCIITypedStringExpression",
+    
+    LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
+    LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
+    
+    LiteralTypedPrimitiveDirectExpression = "LiteralTypedPrimitiveDirectExpression",
+    LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
+
+    AccessFormatInfo = "AccessFormatInfo",
+    AccessEnvValue = "AccessEnvValue",
+
+    AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
+    TIRAccessConstMemberFieldExpression = " TIRAccessConstMemberFieldExpression",
+    AccessVariableExpression = "AccessVariableExpression",
+
+    LoadIndexExpression = "LoadIndexExpression",
+    LoadIndexVirtualExpression = "LoadIndexVirtualExpression",
+    LoadPropertyExpression = "LoadPropertyExpression",
+    LoadPropertyVirtualExpression = "LoadPropertyVirtualExpression",
+    LoadFieldExpression = "LoadFieldExpression",
+    LoadFieldVirtualExpression = "LoadFieldVirtualExpression",
+
+    ConstructorPrimaryDirectExpression = "ConstructorPrimaryDirectExpression",
+    ConstructorPrimaryCheckExpression = "ConstructorPrimaryCheckExpression",
+    ConstructorTupleExpression = "ConstructorTupleExpression",
+    ConstructorRecordExpression = "ConstructorRecordExpression",
+    ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
 
             default: {
                 assert(false, `Unknown expression kind ${exp.tag}`);
