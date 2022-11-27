@@ -5,7 +5,7 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValue, AccessFormatInfo, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfElseStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { SourceInfo } from "../build_decls";
@@ -1925,7 +1925,7 @@ class Parser {
             const keyname = this.consumeTokenAndGetValue();
             this.ensureToken(SYM_rbrack, "environment access");
 
-            return new AccessEnvValue(sinfo, keyname, opttype, isNoneMode);
+            return new AccessEnvValueExpression(sinfo, keyname, opttype, isNoneMode);
         }
         else if (tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
             this.ensureTaskOpOk();
@@ -2060,7 +2060,7 @@ class Parser {
             this.consumeToken();
             const name = this.consumeTokenAndGetValue();
 
-            return new AccessFormatInfo(sinfo, ns, name);
+            return new AccessFormatInfoExpression(sinfo, ns, name);
         }
         else if (this.testFollows(TokenStrings.Namespace, SYM_hash, TokenStrings.Type)) {
             //it is a namespace access of some formatter info
@@ -2073,7 +2073,7 @@ class Parser {
                 ns = "[Unresolved Error]";
             }
 
-            return new AccessFormatInfo(sinfo, ns, name);
+            return new AccessFormatInfoExpression(sinfo, ns, name);
         }
         else {
             const ttype = this.parseTypeSignature();
@@ -3092,32 +3092,32 @@ class Parser {
             else if(op === "prefix") {
                 const pfxargs = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                if(pfxargs.length === 0 || !(pfxargs[0] instanceof AccessFormatInfo)) {
+                if(pfxargs.length === 0 || !(pfxargs[0] instanceof AccessFormatInfoExpression)) {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
                 this.ensureAndConsumeToken(KW_in, "prefix");
                 const block = this.parseBlockStatement("prefix");
 
-                return new LoggerPrefixStatement(sinfo, pfxargs[0] as AccessFormatInfo, pfxargs.slice(1), block);
+                return new LoggerPrefixStatement(sinfo, pfxargs[0] as AccessFormatInfoExpression, pfxargs.slice(1), block);
             }
             else if(LoggerConditionalActions.includes(op)) {
                 const pfxargs = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                if(pfxargs.length === 0 || !(pfxargs[0] instanceof AccessFormatInfo)) {
+                if(pfxargs.length === 0 || !(pfxargs[0] instanceof AccessFormatInfoExpression)) {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
-                return new LoggerEmitStatement(sinfo, op.slice(0, op.length - 2) as LoggerLevel, pfxargs[0] as AccessFormatInfo, pfxargs.slice(1));
+                return new LoggerEmitStatement(sinfo, op.slice(0, op.length - 2) as LoggerLevel, pfxargs[0] as AccessFormatInfoExpression, pfxargs.slice(1));
             }
             else if(LoggerActions.includes(op)) {
                 const pfxargs = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                if(pfxargs.length < 2 || !(pfxargs[1] instanceof AccessFormatInfo)) {
+                if(pfxargs.length < 2 || !(pfxargs[1] instanceof AccessFormatInfoExpression)) {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
-                return new LoggerEmitConditionalStatement(sinfo, op as LoggerLevel, pfxargs[0], pfxargs[1] as AccessFormatInfo, pfxargs.slice(2));
+                return new LoggerEmitConditionalStatement(sinfo, op as LoggerLevel, pfxargs[0], pfxargs[1] as AccessFormatInfoExpression, pfxargs.slice(2));
             }
             else {
                 this.raiseError(sinfo.line, `Unknown logger operation ${op}`);
@@ -3640,7 +3640,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false, undefined);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false, undefined);
 
         if (allMemberNames.has(fname)) {
             this.raiseError(this.getCurrentLine(), "Collision between static and other names");
@@ -4889,7 +4889,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, false, attributes, recursive, terms, [], undefined, false, undefined);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, [], undefined, false, undefined);
 
         currentDecl.functions.set(fname, new NamespaceFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, fname, sig));
     }

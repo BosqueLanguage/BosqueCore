@@ -28,8 +28,8 @@ enum TIRExpressionTag {
     LiteralTypedPrimitiveDirectExpression = "LiteralTypedPrimitiveDirectExpression",
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
-    AccessFormatInfo = "AccessFormatInfo",
-    AccessEnvValue = "AccessEnvValue",
+    AccessFormatInfoExpression = "AccessFormatInfoExpression",
+    AccessEnvValueExpression = "AccessEnvValueExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     TIRAccessConstMemberFieldExpression = " TIRAccessConstMemberFieldExpression",
@@ -343,14 +343,14 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     //
 }
 
-class TIRAccessEnvValue extends TIRExpression {
+class TIRAccessEnvValueExpression extends TIRExpression {
     readonly keyname: string;
     readonly valtype: TIRTypeKey;
     readonly restype: TIRTypeKey;
     readonly orNoneMode: boolean;
 
     constructor(sinfo: SourceInfo, keyname: string, valtype: TIRTypeKey, restype: TIRTypeKey, orNoneMode: boolean) {
-        super(TIRExpressionTag.AccessEnvValue, sinfo, restype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
+        super(TIRExpressionTag.AccessEnvValueExpression, sinfo, restype, `environment${orNoneMode ? "?" : ""}["${keyname}"]`);
         this.keyname = keyname;
         this.valtype = valtype;
         this.restype = restype;
@@ -1513,7 +1513,7 @@ export {
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
-    TIRAccessEnvValue, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
+    TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression, 
     qqqq, TIRSpecialConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,

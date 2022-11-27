@@ -32,8 +32,8 @@ enum ExpressionTag {
     
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
-    AccessFormatInfo = "AccessFormatInfo",
-    AccessEnvValue = "AccessEnvValue",
+    AccessFormatInfoExpression = "AccessFormatInfoExpression",
+    AccessEnvValueExpression = "AccessEnvValueExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
@@ -361,24 +361,24 @@ class LiteralTypedPrimitiveConstructorExpression extends Expression {
     }
 }
 
-class AccessFormatInfo extends Expression {
+class AccessFormatInfoExpression extends Expression {
     readonly namespace: string;
     readonly keyname: string;
 
     constructor(sinfo: SourceInfo, namespace: string, keyname: string) {
-        super(ExpressionTag.AccessFormatInfo, sinfo);
+        super(ExpressionTag.AccessFormatInfoExpression, sinfo);
         this.namespace = namespace;
         this.keyname = keyname;
     }
 }
 
-class AccessEnvValue extends Expression {
+class AccessEnvValueExpression extends Expression {
     readonly keyname: string;
     readonly valtype: TypeSignature;
     readonly orNoneMode: boolean;
 
     constructor(sinfo: SourceInfo, keyname: string, valtype: TypeSignature, orNoneMode: boolean) {
-        super(ExpressionTag.AccessEnvValue, sinfo);
+        super(ExpressionTag.AccessEnvValueExpression, sinfo);
         this.keyname = keyname;
         this.valtype = valtype;
         this.orNoneMode = orNoneMode;
@@ -1469,7 +1469,7 @@ export {
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
     LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression,
-    AccessFormatInfo, AccessEnvValue, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    AccessFormatInfoExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,

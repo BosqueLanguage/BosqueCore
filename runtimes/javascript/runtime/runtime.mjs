@@ -10,10 +10,13 @@ function Unwind(kind, msg) {
     this.msg = msg;
 }
 
-function checkOkAll(condarray, value) {
-    const failc = cond.find((ce) => !ce[0]);
-    if(failc !== undefined) {
-        throw failc[1];
+function createRuntimeError(msg) {
+    return Unwind("error", msg);
+}
+
+function checkOk(cond, err, value) {
+    if(!cond) {
+        throw err;
     }
 
     return value;
@@ -40,7 +43,7 @@ const BTypeInt = new BType("Int", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === 
 const BTypeBigNat = new BType("BigNat", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
 const BTypeBigInt = new BType("BigInt", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
 
-const TIRRegexMap = {
+const tirRegexMap = {
     /*TIR_REGEX_MAP_INIT*/
 }; //string -> NFA
 
@@ -55,12 +58,37 @@ const tirTypeMap = {
     /*TypeMap setup*/
 };
 
+const bsq_nonevalue = null;
+const bsq_nothingvalue = undefined;
+
+const bsq_environment = new Map(); //string -> {evtype: type, evvalue: value}
+function bsq_envget(key, typekey, err) {
+    if(!bsq_environment.has(key) || bsq_environment.get(key).evtype !== typekey) {
+        throw err;
+    }
+
+    return bsq_environment.get(key).envvalue;
+}
+
+function bsq_envgetornone(key, typekey, err) {
+    if(!bsq_environment.has(key)) {
+        return bsq_nonevalue;
+    }
+
+    return bsq_envget(key, typekey, err);
+}
+
+
 export {
     BoxedValue,
-    Unwind, checkOk, checkOkAll,
+    Unwind, createRuntimeError, checkOk,
     BType,
     BTypeNone, BTypeNothing,
     BTypeBool,
     BTypeNat, BTypeInt, BTypeBigNat, BTypeBigInt,
-    TIRRegexMap
+    tirRegexMap,
+    tirTypeMap,
+
+    bsq_nonevalue, bsq_nothingvalue,
+    bsq_environment, bsq_envget, bsq_envgetornone
 };
