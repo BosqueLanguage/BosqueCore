@@ -52,7 +52,9 @@ enum TIRExpressionTag {
     ConstructorMapExpression = "ConstructorMapExpression",
 
     CodePackInvokeExpression = "CodePackInvokeExpression",
-    SpecialConstructorExpression = "SpecialConstructorExpression",
+    ResultOkConstructorExpression = "ResultOkConstructorExpression",
+    ResultErrConstructorExpression = "ResultErrConstructorExpression",
+    SomethingConstructorExpression = "SomethingConstructorExpression",
     TypedeclDirectExpression = "TypedeclDirectExpression",
     TypedeclConstructorExpression = "TypedeclConstructorExpression",
 
@@ -600,12 +602,44 @@ class TIRConstructorMapExpression extends TIRExpression {
     CodePackInvokeExpression = "CodePackInvokeExpression",
 */
 
-class TIRSpecialConstructorExpression extends TIRExpression {
+class TIRResultOkConstructorExpression extends TIRExpression {
     readonly oftype: TIRTypeKey;
     readonly arg: TIRExpression;
 
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
-        super(TIRExpressionTag.SpecialConstructorExpression, sinfo, oftype, `cons_special<${oftype}>{${arg.expstr}}`);
+        super(TIRExpressionTag.ResultOkConstructorExpression, sinfo, oftype, `cons_ok<${oftype}>{${arg.expstr}}`);
+        this.oftype = oftype;
+        this.arg = arg;
+    }
+
+    getUsedVars(): string[] {
+        return this.arg.getUsedVars();
+    }
+}
+
+
+class TIRResultErrConstructorExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly arg: TIRExpression;
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
+        super(TIRExpressionTag.ResultErrConstructorExpression, sinfo, oftype, `cons_err<${oftype}>{${arg.expstr}}`);
+        this.oftype = oftype;
+        this.arg = arg;
+    }
+
+    getUsedVars(): string[] {
+        return this.arg.getUsedVars();
+    }
+}
+
+
+class TIRSomethingConstructorExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly arg: TIRExpression;
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
+        super(TIRExpressionTag.SomethingConstructorExpression, sinfo, oftype, `cons_something<${oftype}>{${arg.expstr}}`);
         this.oftype = oftype;
         this.arg = arg;
     }
@@ -1516,7 +1550,7 @@ export {
     TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression, 
-    qqqq, TIRSpecialConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
+    qqqq, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRCallStaticFunctionWithChecksExpression,
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
     TIRPrefixNotOp, TIRPrefixNegateOp,

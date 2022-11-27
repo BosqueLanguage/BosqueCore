@@ -8,7 +8,7 @@ import * as assert from "assert";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
 import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, PCodeInvokeExpression, SpecialConstructorExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRSpecialConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
 
@@ -143,6 +143,9 @@ class TypeChecker {
     private m_pendingTaskDecls: TIRTaskType[] = [];
 
     private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
+    private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[], binds: Map<string, ResolvedType>}[] = [];
+
     private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
 
     constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
@@ -2672,21 +2675,21 @@ class TypeChecker {
                 const cexp = this.checkExpression(env, exp.args[0], oftype.typeT, undefined);
                 const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
 
-                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+                return this.setResultExpression(env, new TIRResultOkConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
             }
             else if(oftype instanceof ResolvedErrEntityAtomType) {
                 this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Result<T, E>::Ok constructor expects a single arg of type E");
                 const cexp = this.checkExpression(env, exp.args[0], oftype.typeE, undefined);
                 const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeE);
 
-                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+                return this.setResultExpression(env, new TIRResultErrConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
             }
             else if(oftype instanceof ResolvedSomethingEntityAtomType) {
                 this.raiseErrorIf(exp.sinfo, exp.args.length !== 1, "Something<T> constructor expects a single arg of type T");
                 const cexp = this.checkExpression(env, exp.args[0], oftype.typeT, undefined);
                 const ecast = this.emitCoerceIfNeeded(cexp, exp.sinfo, oftype.typeT);
 
-                return this.setResultExpression(env, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+                return this.setResultExpression(env, new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
             }
             else if(oftype instanceof ResolvedMapEntityAtomType) {
                 const tirktype = this.toTIRTypeKey(oftype.typeK);
@@ -2861,7 +2864,7 @@ class TypeChecker {
             const roftype = this.getSomethingType(T || cexp.tinfer);
             const tiroftype = this.toTIRTypeKey(roftype);
 
-            const consenv = this.setResultExpression(ecast, new TIRSpecialConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+            const consenv = this.setResultExpression(ecast, new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
             if(desiredtype === undefined) {
                 return consenv; 
             }
@@ -2881,7 +2884,7 @@ class TypeChecker {
                 const rokconstype = this.getOkType(T, E);
                 const tirokconstype = this.toTIRTypeKey(rokconstype);
 
-                const consenv = this.setResultExpression(tcast, new TIRSpecialConstructorExpression(exp.sinfo, tirokconstype, tcast.expressionResult), rokconstype, rokconstype, undefined);
+                const consenv = this.setResultExpression(tcast, new TIRResultOkConstructorExpression(exp.sinfo, tirokconstype, tcast.expressionResult), rokconstype, rokconstype, undefined);
                 return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
             }
             else {
@@ -2891,7 +2894,7 @@ class TypeChecker {
                 const rerrconstype = this.getOkType(T, E);
                 const tirerrconstype = this.toTIRTypeKey(rerrconstype);
 
-                const consenv = this.setResultExpression(tcast, new TIRSpecialConstructorExpression(exp.sinfo, tirerrconstype, tcast.expressionResult), rerrconstype, rerrconstype, undefined);
+                const consenv = this.setResultExpression(tcast, new TIRResultErrConstructorExpression(exp.sinfo, tirerrconstype, tcast.expressionResult), rerrconstype, rerrconstype, undefined);
                 return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
             }
         }
@@ -2961,7 +2964,7 @@ class TypeChecker {
                 }
                 this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.invoke.terms, TemplateBindScope.createEmptyBindScope(), binds, fdecl.invoke.termRestrictions);
 
-                this.m_pendingNamespaceFunctions.push([fdecl, binds]);
+                this.m_pendingNamespaceFunctions.push({decl: fdecl, binds: binds});
 
                 const fkey = TIRInvokeIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 const rtype = this.normalizeTypeOnly(fdecl.invoke.resultType, TemplateBindScope.createBaseBindScope(binds));

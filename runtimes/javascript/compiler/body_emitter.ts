@@ -2,7 +2,7 @@ import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
 import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRRecordType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorEphemeralValueList, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression } from "../../../frontend/tree_ir/tir_body";
+import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorEphemeralValueList, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 class BodyEmitter {
     private readonly m_assembly: TIRAssembly;
@@ -150,7 +150,7 @@ class BodyEmitter {
     }
 
     private emitLiteralTypedPrimitiveConstructorExpression(exp: TIRLiteralTypedPrimitiveConstructorExpression): string {
-        return `${this.getNameOfType(exp.constype)}.$constructorWithChecks(${this.emitExpression(exp.value)})`;
+        return `${this.getNameOfType(exp.constype)}.$constructorWithChecks_basetype(${this.emitExpression(exp.value)})`;
     }
 
     private emitAccessEnvValueExpression(exp: TIRAccessEnvValueExpression): string {
@@ -200,11 +200,17 @@ class BodyEmitter {
     }
 
     private emitConstructorPrimaryDirectExpression(exp: TIRConstructorPrimaryDirectExpression): string {
-        xxx;
+        const tname = this.getNameOfType(exp.oftype);
+        const args = exp.args.map((arg) => this.emitExpression(arg));
+
+        return `new ${tname}(${args.join(", ")})`;
     }
 
     private emitConstructorPrimaryCheckExpression(exp: TIRConstructorPrimaryCheckExpression): string {
-        xxx;
+        const tname = this.getNameOfType(exp.oftype);
+        const args = exp.args.map((arg) => this.emitExpression(arg));
+        
+        return `${tname}.$constructorWithChecks(${args.join(", ")})`;
     }
 
     private emitConstructorTupleExpression(exp: TIRConstructorTupleExpression): string {
@@ -221,10 +227,29 @@ class BodyEmitter {
         return `[${exp.args.map((arg) => this.emitExpression(arg)).join(", ")}]`;
     }
 
-    CodePackInvokeExpression = "CodePackInvokeExpression",
-    SpecialConstructorExpression = "SpecialConstructorExpression",
-    TypedeclDirectExpression = "TypedeclDirectExpression",
-    TypedeclConstructorExpression = "TypedeclConstructorExpression",
+    private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
+        xxxx;
+    }
+
+    private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression): string {
+        return this.emitExpression(exp.arg);
+    }
+
+    private emitResultErrConstructorExpression(exp: TIRResultErrConstructorExpression): string {
+        return this.emitExpression(exp.arg);
+    }
+
+    private emitSomethingConstructorExpression(exp: TIRSomethingConstructorExpression): string {
+        return this.emitExpression(exp.arg);
+    }
+
+    private emitTypedeclDirectExpression(exp: TIRTypedeclDirectExpression): string {
+        return this.emitExpression(exp.arg);
+    }
+
+    private emitTypedeclConstructorExpression(exp: TIRSomethingConstructorExpression): string {
+        return `${this.getNameOfType(exp.oftype)}.$constructorWithChecks_reprtype(${this.emitExpression(exp.arg)})`;
+    }
 
     public emitExpression(exp: TIRExpression, toplevel?: boolean): string {
         switch (exp.tag) {
@@ -318,11 +343,26 @@ class BodyEmitter {
             case TIRExpressionTag.ConstructorEphemeralValueList: {
                 return this.emitConstructorEphemeralValueList(exp as TIRConstructorEphemeralValueList);
             }
+            case TIRExpressionTag.CodePackInvokeExpression: {
+                return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);
+            }
+            case TIRExpressionTag.ResultOkConstructorExpression: {
+                return this.emitResultOkConstructorExpression(exp as TIRResultOkConstructorExpression);
+            }
+            case TIRExpressionTag.ResultErrConstructorExpression: {
+                return this.emitResultErrConstructorExpression(exp as TIRResultErrConstructorExpression);
+            }
+            case TIRExpressionTag.SomethingConstructorExpression: {
+                return this.emitSomethingConstructorExpression(exp as TIRSomethingConstructorExpression);
+            }
+            case TIRExpressionTag.TypedeclDirectExpression: {
+                return this.emitTypedeclDirectExpression(exp as TIRTypedeclDirectExpression);
+            }
+            case TIRExpressionTag.TypedeclConstructorExpression: {
+                return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
+            }
 
-            CodePackInvokeExpression = "CodePackInvokeExpression",
-    SpecialConstructorExpression = "SpecialConstructorExpression",
-    TypedeclDirectExpression = "TypedeclDirectExpression",
-    TypedeclConstructorExpression = "TypedeclConstructorExpression",
+            xxxx;
 
             default: {
                 assert(false, `Unknown expression kind ${exp.tag}`);
