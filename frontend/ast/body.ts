@@ -1351,10 +1351,10 @@ type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "t
 
 class LoggerEmitStatement extends Statement {
     readonly level: LoggerLevel;
-    readonly msg: AccessFormatInfo;
+    readonly msg: AccessFormatInfoExpression;
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, level: LoggerLevel, msg: AccessFormatInfo, args: Expression[]) {
+    constructor(sinfo: SourceInfo, level: LoggerLevel, msg: AccessFormatInfoExpression, args: Expression[]) {
         super(StatementTag.LoggerEmitStatement, sinfo);
         this.level = level;
         this.msg = msg;
@@ -1369,10 +1369,10 @@ class LoggerEmitStatement extends Statement {
 class LoggerEmitConditionalStatement extends Statement {
     readonly level: LoggerLevel;
     readonly cond: Expression;
-    readonly msg: AccessFormatInfo;
+    readonly msg: AccessFormatInfoExpression;
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: Expression, msg: AccessFormatInfo, args: Expression[]) {
+    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: Expression, msg: AccessFormatInfoExpression, args: Expression[]) {
         super(StatementTag.LoggerEmitConditionalStatement, sinfo);
         this.level = level;
         this.cond = cond;
@@ -1416,11 +1416,11 @@ class LoggerCategoryStatement extends Statement {
 }
 
 class LoggerPrefixStatement extends Statement {
-    readonly msg: AccessFormatInfo;
+    readonly msg: AccessFormatInfoExpression;
     readonly args: Expression[];
     readonly block: UnscopedBlockStatement | ScopedBlockStatement;
 
-    constructor(sinfo: SourceInfo, msg: AccessFormatInfo, args: Expression[], block: UnscopedBlockStatement | ScopedBlockStatement) {
+    constructor(sinfo: SourceInfo, msg: AccessFormatInfoExpression, args: Expression[], block: UnscopedBlockStatement | ScopedBlockStatement) {
         super(StatementTag.LoggerPrefixStatement, sinfo);
         this.msg = msg;
         this.args = args;

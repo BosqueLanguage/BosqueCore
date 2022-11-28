@@ -44,8 +44,6 @@ validator ThingInfo = {
 __internal __constructable __enumable __litvaluetype __typedeclable entity Path<T unique PathValidator> provides Some, KeyType, APIType {
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
-
-    function interpolate(): Path<T> = special_method;
 }
 
 /*
@@ -54,19 +52,26 @@ May be any contigious substring of the that is a contained in the Validator (mus
 */
 //<summary>Primitive path fragment value.</summary>
 __internal __constructable __litvaluetype __typedeclable entity PathFragment<T unique PathValidator> provides Some, KeyType, APIType {
-    private function s_into(s: String): Path<T> = special_inject;
+    private function s_into(s: String): PathFragment<T> = special_inject;
     method value(): String = special_extract;
 
-    function interpolate(): PathFragment<T> = special_method;
+    private function s_isPrefix(): boolean = pathfragment_isprefix;
+    private function s_isSuffix(): boolean = pathfragment_issuffix;
+
+    method isPrefix(): boolean {
+        return PathFragment<T>::s_isPrefix(this);
+    }
+
+    method isPrefix(): boolean {
+        return PathFragment<T>::s_isSuffix(this);
+    }
 }
 
 //<summary>Primitive safe string value.</summary>
 __internal __constructable __litvaluetype  __typedeclable entity PathGlob<T unique PathValidator> provides Some, KeyType, APIType {
-    private function s_into(s: String): Path<T> = special_inject;
+    private function s_into(s: String): PathGlob<T> = special_inject;
     method value(): String = special_extract;
 
     //can have *, **, ? (a dot), [a-b]*+{x-y}, (A | B) in each component otherwise must match PathValidator path components
     //any parameters must be in a top-level position (i.e. not nested in a repitition contruct or range)
-
-    function interpolate(): PathGlob<T> = special_method;
 }
