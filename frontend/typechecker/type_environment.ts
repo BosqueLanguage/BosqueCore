@@ -39,28 +39,17 @@ class FlowTypeTruthOps {
 
 class VarInfo {
     readonly declaredType: ResolvedType;
-    readonly flowType: ResolvedType;
 
     readonly isConst: boolean;
     readonly isCaptured: boolean;
     readonly mustDefined: boolean;
 
-    constructor(dtype: ResolvedType, ftype: ResolvedType, isConst: boolean, isCaptured: boolean, mustDefined: boolean) {
+    constructor(dtype: ResolvedType,isConst: boolean, isCaptured: boolean, mustDefined: boolean) {
         this.declaredType = dtype;
-        this.flowType = ftype;
 
         this.isConst = isConst;
         this.isCaptured = isCaptured;
         this.mustDefined = mustDefined;
-    }
-
-    assign(ftype: ResolvedType): VarInfo {
-        assert(!this.isConst);
-        return new VarInfo(this.declaredType, ftype, this.isConst, this.isCaptured, true);
-    }
-
-    infer(ftype: ResolvedType): VarInfo {
-        return new VarInfo(this.declaredType, ftype, this.isConst, this.isCaptured, true);
     }
 }
 
@@ -100,8 +89,8 @@ class FlowTypeInfoOption {
         return allok;
     }
 
-    inferFlowInfo(expr: string, depvars: Set<string>, tinfer: ResolvedType, etruth: FlowTypeTruthValue): FlowTypeInfoOption {
-        const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(this.expInferInfo).set(expr, { depvars: new Set<string>(depvars), infertype: tinfer, infertruth: etruth});
+    inferFlowInfo(expr: TIRExpression, tinfer: ResolvedType, etruth: FlowTypeTruthValue): FlowTypeInfoOption {
+        const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(this.expInferInfo).set(expr.expstr, { depvars: new Set<string>(expr.getUsedVars()), infertype: tinfer, infertruth: etruth});
         return new FlowTypeInfoOption(tinfer, this.etruth, iinfo);
     }
 }

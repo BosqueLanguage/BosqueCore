@@ -106,10 +106,16 @@ enum TIRExpressionTag {
     CreateCodePackExpression = "CreateCodePackExpression",
 
     IsNoneExpression = "IsNoneExpression",
-    IsNotNoneExpresson = "IsNotNoneExpression",
+    IsNotNoneExpression = "IsNotNoneExpression",
     IsNothingExpression = "IsNothingExpression",
     IsTypeExpression = "IsTypeExpression",
     IsSubTypeExpression = "IsSubTypeExpression",
+
+    AsNoneExpression = "AsNoneExpression",
+    AsNotNoneExpression = "AsNotNoneExpression",
+    AsNothingExpression = "AsNothingExpression",
+    AsTypeExpression = "AsTypeExpression",
+    AsSubTypeExpression = "AsSubTypeExpression",
 
     CallMemberFunctionExpression = "CallMemberFunctionExpression",
     CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
@@ -1289,11 +1295,11 @@ class TIRIsNoneExpression extends TIRExpression {
     }
 }
 
-class TIRIsNotNoneExpresson extends TIRExpression {
+class TIRIsNotNoneExpression extends TIRExpression {
     readonly exp: TIRExpression;
     
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNotNoneExpresson, sinfo, "Bool", `!isnone(${exp.expstr})`);
+        super(TIRExpressionTag.IsNotNoneExpression, sinfo, "Bool", `!isnone(${exp.expstr})`);
         this.exp = exp;
     }
     
@@ -1336,6 +1342,75 @@ class TIRIsSubTypeExpression extends TIRExpression {
     
     constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
         super(TIRExpressionTag.IsSubTypeExpression, sinfo, "Bool", `issubtype<${oftype}>(${exp.expstr})`);
+        this.exp = exp;
+        this.oftype = oftype;
+    }
+    
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRAsNoneExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+        super(TIRExpressionTag.AsNoneExpression, sinfo, "None", `asnone(${exp.expstr})`);
+        this.exp = exp;
+    }
+    
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRAsNotNoneExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+        super(TIRExpressionTag.AsNotNoneExpression, sinfo, "Some", `assome(${exp.expstr})`);
+        this.exp = exp;
+    }
+    
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRAsNothingExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+        super(TIRExpressionTag.AsNothingExpression, sinfo, "Nothing", `asnothing(${exp.expstr})`);
+        this.exp = exp;
+    }
+    
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRAsTypeExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.AsTypeExpression, sinfo, oftype, `astype<${oftype}>(${exp.expstr})`);
+        this.exp = exp;
+        this.oftype = oftype;
+    }
+    
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRAsSubTypeExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.AsSubTypeExpression, sinfo, oftype, `assubtype<${oftype}>(${exp.expstr})`);
         this.exp = exp;
         this.oftype = oftype;
     }
@@ -1545,7 +1620,8 @@ export {
     TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
     TIRAbortExpression, TIRCoerceExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
     jjjj,
-    TIRIsNoneExpression, TIRIsNotNoneExpresson, TIRIsNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
+    TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
+    TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,
     TIRLiteralValue
