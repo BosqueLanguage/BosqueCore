@@ -36,9 +36,7 @@ enum TIRExpressionTag {
     AccessVariableExpression = "AccessVariableExpression",
 
     LoadIndexExpression = "LoadIndexExpression",
-    LoadIndexVirtualExpression = "LoadIndexVirtualExpression",
     LoadPropertyExpression = "LoadPropertyExpression",
-    LoadPropertyVirtualExpression = "LoadPropertyVirtualExpression",
     LoadFieldExpression = "LoadFieldExpression",
     LoadFieldVirtualExpression = "LoadFieldVirtualExpression",
 
@@ -98,10 +96,9 @@ enum TIRExpressionTag {
     MatchExpression = "MatchExpression",
 
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
-    TaskSelfActionExpression = "TaskSelfActionExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
-    TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
 
+    AbortExpression = "AbortExpression",
     CoerceExpression = "CoerceExpression",
     CoerceSafeExpression = "CoerceSafeExpression",
     InjectExpression = "InjectExpression",
@@ -111,7 +108,6 @@ enum TIRExpressionTag {
     IsNoneExpression = "IsNoneExpression",
     IsNotNoneExpresson = "IsNotNoneExpression",
     IsNothingExpression = "IsNothingExpression",
-    IsNotNothingExpression = "IsNotNothingExpression",
     IsTypeExpression = "IsTypeExpression",
     IsSubTypeExpression = "IsSubTypeExpression",
 
@@ -410,42 +406,12 @@ class TIRLoadIndexExpression extends TIRExpression {
     }
 } 
 
-class TIRLoadIndexVirtualExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly index: TIRTupleIndex;
-
-    constructor(sinfo: SourceInfo, exp: TIRExpression, index: TIRTupleIndex, resultType: TIRTypeKey) {
-        super(TIRExpressionTag.LoadIndexVirtualExpression, sinfo, resultType, `${exp.expstr}.${index}`);
-        this.exp = exp;
-        this.index = index;
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-} 
-
 class TIRLoadPropertyExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly property: TIRPropertyKey;
 
     constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyKey, resultType: TIRTypeKey) {
         super(TIRExpressionTag.LoadPropertyExpression, sinfo, resultType, `${exp.expstr}.${property}`);
-        this.exp = exp;
-        this.property = property;
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-}
-
-class TIRLoadPropertyVirtualExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly property: TIRPropertyKey;
-
-    constructor(sinfo: SourceInfo, exp: TIRExpression, property: TIRPropertyKey, resultType: TIRTypeKey) {
-        super(TIRExpressionTag.LoadPropertyVirtualExpression, sinfo, resultType, `${exp.expstr}.${property}`);
         this.exp = exp;
         this.property = property;
     }
@@ -1210,12 +1176,41 @@ class TIRMatchExpression extends TIRExpression {
     }
 }
 
-/*
-    TaskSelfFieldExpression = "TaskSelfFieldExpression",
-    TaskSelfActionExpression = "TaskSelfActionExpression",
-    TaskGetIDExpression = "TaskGetIDExpression",
-    TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression",
-*/
+class TIRTaskSelfFieldExpression extends TIRExpression {
+    readonly field: string;
+
+    constructor(sinfo: SourceInfo, field: string, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.TaskSelfFieldExpression, sinfo, resultType, `self.${field}`);
+        this.field = field;
+    }
+
+    getUsedVars(): string[] {
+        return [`self.${this.field}`];
+    }
+}
+
+class TIRTaskGetIDExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.TaskGetIDExpression, sinfo, resultType, `getTaskID`);
+    }
+
+    getUsedVars(): string[] {
+        return [];
+    }
+}
+
+class TIRAbortExpression extends TIRExpression {
+    readonly msg: string;
+
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, msg: string) {
+        super(TIRExpressionTag.AbortExpression, sinfo, etype, `abort<${etype}>("${msg}")`);
+        this.msg = msg;
+    }
+
+    getUsedVars(): string[] {
+        return [];
+    }
+}
 
 class TIRCoerceExpression extends TIRExpression {
     readonly exp: TIRExpression;
@@ -1312,19 +1307,6 @@ class TIRIsNothingExpression extends TIRExpression {
     
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsNothingExpression, sinfo, "Bool", `isnothing(${exp.expstr})`);
-        this.exp = exp;
-    }
-    
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-}
-
-class TIRIsNotNothingExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNotNothingExpression, sinfo, "Bool", `!isnothing(${exp.expstr})`);
         this.exp = exp;
     }
     
@@ -1548,9 +1530,10 @@ export {
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
-    TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
+    TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression, 
-    qqqq, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
+    qqq,
+    TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRCallStaticFunctionWithChecksExpression,
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
     TIRPrefixNotOp, TIRPrefixNegateOp,
@@ -1559,10 +1542,10 @@ export {
     TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression,
     TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
-    yyyy,
-    TIRCoerceExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
+    TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
+    TIRAbortExpression, TIRCoerceExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
     jjjj,
-    TIRIsNoneExpression, TIRIsNotNoneExpresson, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
+    TIRIsNoneExpression, TIRIsNotNoneExpresson, TIRIsNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,
     TIRLiteralValue

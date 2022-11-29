@@ -7,10 +7,10 @@ import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, PCodeInvokeExpression, SpecialConstructorExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqExpression, TIRBinKeyLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression } from "../tree_ir/tir_body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixIs, SpecialConstructorExpression } from "../ast/body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqExpression, TIRBinKeyLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpresson, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAbortExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
-import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue } from "./type_environment";
+import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption } from "./type_environment";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -78,11 +78,11 @@ class TIRInvokeIDGenerator {
         xxxx;
     }
 
-    static generateInvokeIDForPreCondition(): TIRInvokeKey {
+    static generateInvokeIDForPreCondition(tinv: TIRInvokeKey, pcidx: number): TIRInvokeKey {
         xxxx;
     }
 
-    static generateInvokeIDForPostCondition(): TIRInvokeKey {
+    static generateInvokeIDForPostCondition(tinv: TIRInvokeKey, pcidx: number): TIRInvokeKey {
         xxxx;
     }
 
@@ -104,6 +104,10 @@ class TIRInvokeIDGenerator {
 
     static generateInvokeIDForNamespaceOperatorImpl(ns: string, name: string, idx: number): TIRInvokeKey {
         return `operator_impl_${idx}_${ns}$${name}`;
+    }
+
+    static generateInvokeForMemberFunction(ttype: TIRTypeKey, name: string, terms: string[]): TIRInvokeKey {
+        return xxxx;
     }
 }
 
@@ -131,6 +135,7 @@ class TypeChecker {
 
     private m_file: string;
     private m_isTaskFile: boolean;
+    private m_doExhaustiveCheck: boolean;
     private m_errors: [string, number, string][];
 
     private readonly m_sortedSrcFiles: {fullname: string, shortname: string}[]; 
@@ -155,6 +160,7 @@ class TypeChecker {
     private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
 
     private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
+    private m_pendingFunctionMemberDecls: OOMemberLookupInfo<StaticFunctionDecl>[] = [];
 
     constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
@@ -163,6 +169,7 @@ class TypeChecker {
 
         this.m_file = "[No File]";
         this.m_isTaskFile = false;
+        this.m_doExhaustiveCheck = true;
         this.m_errors = [];
         
         this.m_sortedSrcFiles = sortedSrcFiles;
@@ -307,9 +314,6 @@ class TypeChecker {
 
         let iinfo = env.expInferInfo;
         if(env.expInferInfo.has(exp.expstr)) {
-            iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(env.expInferInfo).set(exp.expstr, { depvars: new Set<string>(exp.getUsedVars()), infertype: tinfer, infertruth: value || FlowTypeTruthValue.Unknown})
-        }
-        else {
             const einfo = env.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
             tinfer = einfo.infertype;
             value = einfo.infertruth;
@@ -318,10 +322,164 @@ class TypeChecker {
         return env.setResultExpressionInfo(exp, trepr, tinfer, value || FlowTypeTruthValue.Unknown, iinfo);
     }
 
-    private inferExpressionType(env: ExpressionTypeEnvironment, tinfer: ResolvedType, value: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
-        const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(env.expInferInfo).set(env.expressionResult.expstr, { depvars: new Set<string>(exp.getUsedVars()), infertype: tinfer, infertruth: value || env.etruth});
+    private convertToBoolFlowsOnResult(env: ExpressionTypeEnvironment): {tenv: FlowTypeInfoOption | undefined, fenv: FlowTypeInfoOption | undefined} {
+        assert(env.tinfer.typeID === "Bool");
 
-        return env.setResultExpressionInfo(env.expressionResult, env.trepr, tinfer, value || env.etruth, iinfo);
+        let tenv: FlowTypeInfoOption | undefined = undefined;
+        if(FlowTypeTruthOps.maybeTrueValue(env.etruth)) {
+            tenv = env.inferFlowTypeInfoFromBool(FlowTypeTruthValue.True);
+        }
+
+        let fenv: FlowTypeInfoOption | undefined = undefined;
+        if(FlowTypeTruthOps.maybeFalseValue(env.etruth)) {
+            fenv = env.inferFlowTypeInfoFromBool(FlowTypeTruthValue.False);
+        }
+
+        return {tenv: tenv, fenv: fenv};
+    }
+
+    private convertToTypeNotTypeFlowsOnResult(withtype: ResolvedType, env: ExpressionTypeEnvironment): {tenv: FlowTypeInfoOption | undefined, fenv: FlowTypeInfoOption | undefined} {
+        const pccs = this.splitTypes(env.tinfer, withtype);
+
+        let tenv: FlowTypeInfoOption | undefined = undefined;
+        if(pccs.tp !== undefined) {
+            tenv = env.inferFlowTypeInfoFromType(pccs.tp);
+        }
+
+        let fenv: FlowTypeInfoOption | undefined = undefined;
+        if(pccs.fp !== undefined) {
+            fenv = env.inferFlowTypeInfoFromType(pccs.fp);
+        }
+
+        return {tenv: tenv, fenv: fenv};
+    }
+
+    private splitOnTypeCheck(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): {env: ExpressionTypeEnvironment, tenv: FlowTypeInfoOption | undefined, fenv: FlowTypeInfoOption | undefined} {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const renvs = this.convertToTypeNotTypeFlowsOnResult(oftype, env);
+        this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenv !== undefined || renvs.fenv !== undefined), `typecheck is always ${renvs.fenv !== undefined ? "true" : "false"}`);
+
+        if(renvs.tenvs.length === 0) {
+            return renvs.fenvs.map((ee) => this.setResultExpression(ee, new TIRLiteralBoolExpression(sinfo, false), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+        }
+        else if(renvs.fenvs.length === 0) {
+            return renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRLiteralBoolExpression(sinfo, true), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+        }
+        else {
+            if (oftype.isNoneType()) {
+                const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNoneExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+                const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNoneExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+                return [...tt, ...ff];
+            }
+            else if (oftype.isSomeType()) {
+                const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNotNoneExpresson(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+                const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNotNoneExpresson(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+                return [...tt, ...ff];
+            }
+            else if (oftype.isNothingType()) {
+                const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNothingExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+                const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNothingExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+                return [...tt, ...ff];
+            }
+            else if (oftype.options.length === 1 && ResolvedType.isUniqueType(oftype)) {
+                const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+                const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+                return [...tt, ...ff];
+            }
+            else {
+                const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsSubTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+                const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsSubTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+                return [...tt, ...ff];
+            }
+        }
+    }
+
+    private splitOnTypeAs(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment[] {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const renvs = this.convertToTypeNotTypeFlowsOnResult(oftype, [env]);
+        this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0), `typecheck convert always fails`);
+        
+        if(renvs.tenvs.length === 0) {
+            return [this.setResultExpression(env, new TIRAbortExpression(sinfo, tiroftype, "Unsatisfiable type conversion"), oftype, oftype, undefined)];
+        }
+        else {
+            const trepr = this.normalizeUnionList(renvs.tenvs.map((ee) => ee.trepr));
+            const tinfer = this.normalizeUnionList(renvs.tenvs.map((ee) => ee.tinfer));
+
+            if(renvs.fenvs.length === 0) {
+                if (trepr.isSameType(oftype)) {
+                    return renvs.tenvs;
+                }
+                else {
+                    return renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRCoerceSafeExpression(sinfo, ee.expressionResult, tiroftype), oftype, oftype, undefined));
+                }
+            }
+            else {
+
+            if(this.subtypeOf())
+
+            return renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRCoerceExpression())
+            this.raiseErrorIf(sinfo, !this.subtypeOf(env.tinfer, trgttype), `Cannot convert type ${env.tinfer.typeID} into ${trgttype.typeID}`);
+            return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.tinfer, env.etruth);
+
+            return renvs;
+            }
+        }
+    }
+
+    private processTypeCheck(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const renvs = this.convertToTypeNotTypeFlowsOnResult(oftype, [env]);
+        this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0 || renvs.fenvs.length === 0), `typecheck is always ${renvs.fenvs.length === 0 ? "true" : "false"}`);
+
+        if(oftype.isNoneType()) {
+            const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNoneExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNoneExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return [...tt, ...ff];
+        }
+        else if(oftype.isSomeType()) {
+            const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNotNoneExpresson(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNotNoneExpresson(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return [...tt, ...ff];
+        }
+        else if(oftype.isNothingType()) {
+            const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNothingExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsNothingExpression(sinfo, ee.expressionResult), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return [...tt, ...ff];
+        }
+        else if(oftype.options.length === 1 && ResolvedType.isUniqueType(oftype)) {
+            const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return [...tt, ...ff];
+        }
+        else {
+            const tt = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsSubTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const ff = renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsSubTypeExpression(sinfo, ee.expressionResult, tiroftype), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return [...tt, ...ff];
+        }
+    }
+
+    private processTypeAs(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const renvs = this.convertToTypeNotTypeFlowsOnResult(oftype, [env]);
+        this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0), `typecheck convert always fails`);
+
+        xxxx;
+        return renvs;
     }
 
     private splitConceptTypes(ofc: ResolvedConceptAtomType, withc: ResolvedConceptAtomType): {tp: ResolvedType | undefined, fp: ResolvedType | undefined} {
@@ -508,7 +666,7 @@ class TypeChecker {
         return { tp: tp, fp: fp };
     }
 
-    splitTypes(oft: ResolvedType, witht: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    splitTypes(oft: ResolvedType, witht: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         if (oft.isEmptyType() || witht.isEmptyType()) {
             return { tp: ResolvedType.createEmpty(), fp: ResolvedType.createEmpty() };
         }
@@ -1764,7 +1922,7 @@ class TypeChecker {
         return resl.impl[0];
     }
 
-    resolveMemberField(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => MemberFieldDecl | undefined): OOMemberLookupInfo<MemberFieldDecl> | undefined {
+    resolveMemberField(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
         const resl = this.resolveMember<MemberFieldDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberFields.find((sm) => sm.name === name));
         if(!(resl instanceof OOMemberResolution<MemberFieldDecl>)) {
             return undefined;
@@ -3046,9 +3204,9 @@ class TypeChecker {
                 return [this.setResultExpression(env, new TIRInjectExpression(exp.sinfo, argexps[0], tirrtype), rtype, rtype, undefined)];
             }
             else {
-                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberFunction(tirrtype, exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
             
-                this.m_pendingFunctionMemberDecls.push({ decl: fdecl, binds: binds });
+                this.m_pendingFunctionMemberDecls.push(fdecl);
 
                 if (this.hasPreconditions(fdecl.decl.invoke) || this.hasPostconditions(fdecl.decl.invoke)) {
                     const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
@@ -3062,16 +3220,56 @@ class TypeChecker {
         }
     }
 
-    private checkLogicActionExpression(env: ExpressionTypeEnvironment, exp: LogicActionExpression): ExpressionTypeEnvironment {
-        let bargs = this.checkArgumentsEvaluationLogicAction(env, exp.args);
-        this.m_emitter.emitLogicAction(exp.sinfo, trgt, exp.opkind, bargs);
+    private checkLogicActionAndExpression(env: ExpressionTypeEnvironment, exp: LogicActionAndExpression): ExpressionTypeEnvironment {
+        const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
         
-        return env.setUniformResultExpression(this.m_assembly.getSpecialBoolType());
+        if(bargs.some((ee) => ee.etruth === FlowTypeTruthValue.False)) {
+            this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to false");
+
+            return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, false), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False);
+        }
+        else {
+            const margs = bargs.filter((ee) => ee.etruth === FlowTypeTruthValue.Unknown);
+
+            if(margs.length === 0) {
+                this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to true");
+
+                return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, true), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True);
+            }
+            else {
+                return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType(), this.getSpecialBoolType(), undefined);
+            }
+        }
     }
 
-    private checkIsTypeExpression_commondirect(sinfo: SourceInfo, env: ExpressionTypeEnvironment, arg: MIRRegisterArgument, oftype: ResolvedType): ExpressionTypeEnvironment[] {
-        const tsplits = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, oftype, [env]);
-        this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(oftype), arg, this.m_emitter.registerResolvedTypeReference(env.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(env.getExpressionResult().valtype.flowtype), undefined);
+    private checkLogicActionOrExpression(env: ExpressionTypeEnvironment, exp: LogicActionOrExpression): ExpressionTypeEnvironment {
+        const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
+        
+        if(bargs.some((ee) => ee.etruth === FlowTypeTruthValue.True)) {
+            this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to true");
+
+            return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, true), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.True);
+        }
+        else {
+            const margs = bargs.filter((ee) => ee.etruth === FlowTypeTruthValue.Unknown);
+
+            if(margs.length === 0) {
+                this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to false");
+
+                return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, false), this.getSpecialBoolType(), this.getSpecialBoolType(), FlowTypeTruthValue.False);
+            }
+            else {
+                return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType(), this.getSpecialBoolType(), undefined);
+            }
+        }
+    }
+
+/*
+    private checkIsTypeExpression_commondirect(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment[] {
+        const tsplits = this.convertToTypeNotTypeFlowsOnResult(oftype, [env]);
+
+        const istypetrue = tsplits.tenvs.map((ee) => this.setResultExpression(ee, new TIRIsTypeExpression))
+
         return [
             ...(tsplits.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))), 
             ...(tsplits.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
@@ -3127,61 +3325,62 @@ class TypeChecker {
         const oftype = this.resolveAndEnsureTypeOnly(exp.sinfo, exp.oftype, env.terms);
         return this.checkAsTypeExpression_common(exp.sinfo, env, exp.arg, oftype, trgt, refok);
     }
+*/
 
-    private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
-
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isTupleTargetType(), "Base of index expression must be of Tuple type");
+    private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex): ExpressionTypeEnvironment {
+        this.raiseErrorIf(op.sinfo, !env.tinfer.options.some((atom) => !(atom instanceof ResolvedTupleAtomType)), "Base of index expression must be of Tuple type");
         this.raiseErrorIf(op.sinfo, op.index < 0, "Index cannot be negative");
-        this.raiseErrorIf(op.sinfo, this.getInfoForHasIndex(op.sinfo, texp.flowtype, op.index) !== "yes", "Index may not be defined for tuple");
+        this.raiseErrorIf(op.sinfo, env.tinfer.options.some((atom) => (atom as ResolvedTupleAtomType).types.length <= op.index), "Index may not be defined for tuple");
 
-        const idxtype = this.getInfoForLoadFromSafeIndex(op.sinfo, texp.flowtype, op.index);
-        this.m_emitter.emitLoadTupleIndex(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.index, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(idxtype), trgt);
+        this.raiseErrorIf(op.sinfo, env.tinfer.options.length !== 1, "only a single tuple is permitted -- todo: later want to generalize this")
 
-        return env.setUniformResultExpression(idxtype);
+        const idxtype = (env.tinfer.options[0] as ResolvedTupleAtomType).types[op.index];
+        const tiridxtype = this.toTIRTypeKey(idxtype);
+
+        return this.setResultExpression(env, new TIRLoadIndexExpression(op.sinfo, env.expressionResult, op.index, tiridxtype), idxtype, idxtype, undefined);
     }
 
-    private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
+    private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName): ExpressionTypeEnvironment {
+        const isrecord = env.tinfer.options.every((atom) => atom instanceof TIRRecordType);
+        const isobj = env.tinfer.options.every((atom) => atom instanceof ResolvedEntityAtomType);
 
-        if (texp.flowtype.isRecordTargetType()) {
-            this.raiseErrorIf(op.sinfo, !texp.flowtype.isRecordTargetType(), "Base of property access expression must be of Record type");
-            this.raiseErrorIf(op.sinfo, this.getInfoForHasProperty(op.sinfo, texp.flowtype, op.name) !== "yes", `Property "${op.name}" may not be defined for record`);
+        this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${env.tinfer}`);
 
-            const rtype = this.getInfoForLoadFromSafeProperty(op.sinfo, texp.flowtype, op.name);
-            this.m_emitter.emitLoadProperty(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.name, !texp.flowtype.isUniqueRecordTargetType(), this.m_emitter.registerResolvedTypeReference(rtype), trgt);
+        if (isrecord) {
+            this.raiseErrorIf(op.sinfo, env.tinfer.options.some((atom) => (atom as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) === undefined), `Property "${op.name}" not be defined for record`);
 
-            return env.setUniformResultExpression(rtype);
+            const rtype = ((env.tinfer.options[0] as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) as {pname: string, ptype: ResolvedType}).ptype;
+            const tirrtype = this.toTIRTypeKey(rtype);
+
+            return this.setResultExpression(env, new TIRLoadPropertyExpression(op.sinfo, env.expressionResult, op.name, tirrtype), rtype, rtype, undefined);
         }
         else {
-            const tryfinfo = this.m_assembly.tryGetFieldUniqueDeclFromType(texp.flowtype, op.name);
-            this.raiseErrorIf(op.sinfo, tryfinfo === undefined, `Field name "${op.name}" is not defined (or is multiply) defined`);
+            const fftry = this.resolveMemberField(op.sinfo, env.tinfer, op.name);
+            this.raiseErrorIf(op.sinfo, fftry === undefined, `Could not resolve field "${op.name}" on type ${env.tinfer.typeID}`);
+            const ff = fftry as OOMemberLookupInfo<MemberFieldDecl>;
 
-            const finfo = tryfinfo as OOMemberLookupInfo<MemberFieldDecl>;
-            const ftype = this.resolveAndEnsureTypeOnly(op.sinfo, finfo.decl.declaredType, finfo.binds);
-            
-            const fkey = MIRKeyGenerator.generateFieldKey(this.resolveOOTypeFromDecls(finfo.contiainingType, finfo.binds), op.name);
-            this.m_emitter.emitLoadField(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), fkey, !texp.flowtype.isUniqueCallTargetType(), this.m_emitter.registerResolvedTypeReference(ftype), trgt);
-            
-            return env.setUniformResultExpression(ftype);
+            const fftype = this.normalizeTypeOnly(ff.decl.declaredType, TemplateBindScope.createBaseBindScope(ff.oobinds));
+            const tirfftype = this.toTIRTypeKey(fftype);
+
+            const fkey = TIRMemberIDGenerator.generateMemberFieldID(this.toTIRTypeKey(ff.ttype), op.name);
+
+            if(ff.ootype instanceof EntityTypeDecl) {
+                return this.setResultExpression(env, new TIRLoadFieldExpression(op.sinfo, env.expressionResult, fkey, tirfftype), fftype, fftype, undefined);
+            }
+            else {
+                return this.setResultExpression(env, new TIRLoadFieldVirtualExpression(op.sinfo, env.expressionResult, fkey, tirfftype), fftype, fftype, undefined);
+            }
         }
     }
 
-    private checkPostfixIsMulti(env: ExpressionTypeEnvironment, op: PostfixIs, arg: MIRRegisterArgument): ExpressionTypeEnvironment[] {
-        const texp = env.getExpressionResult().valtype;
-        const oftype = this.resolveAndEnsureTypeOnly(op.sinfo, op.istype, env.terms);
-
-        this.m_emitter.emitTypeOf(op.sinfo, trgt, this.m_emitter.registerResolvedTypeReference(oftype), arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), undefined);
-        
-        const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, oftype, [env]);
-        return [
-            ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))), 
-            ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-        ];
+    private checkPostfixIsMulti(env: ExpressionTypeEnvironment, op: PostfixIs): ExpressionTypeEnvironment[] {
+        const oftype = this.normalizeTypeOnly(op.istype, env.binds);
+        return this.splitOnTypeCheck(op.sinfo, env, oftype);
     }
 
-    private checkPostfixIsMono(env: ExpressionTypeEnvironment, op: PostfixIs, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...this.checkPostfixIsMulti(env, op, arg, trgt));
+    private checkPostfixIsMono(env: ExpressionTypeEnvironment, op: PostfixIs): ExpressionTypeEnvironment {
+        const oftype = this.normalizeTypeOnly(op.istype, env.binds);
+        return this.processTypeCheck(op.sinfo, env, oftype);
     }
 
     private checkPostfixAs(env: ExpressionTypeEnvironment, op: PostfixAs, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
@@ -3212,286 +3411,6 @@ class TypeChecker {
             this.m_emitter.emitRegisterStore(op.sinfo, this.emitInlineConvertIfNeeded(op.sinfo, arg, new ValueType(texp.layout, astype), astype), trgt, this.m_emitter.registerResolvedTypeReference(astype), undefined);
             return tsplits.tenvs[0].setResultExpression(astype, astype, undefined, undefined);
         }
-    }
-
-    private checkPostfixHasIndexMulti(env: ExpressionTypeEnvironment, op: PostfixHasIndex, arg: MIRRegisterArgument): ExpressionTypeEnvironment[] {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isTupleTargetType(), "Can only check for indecies on tuple types");
-
-        const hpi = this.getInfoForHasIndex(op.sinfo, texp.flowtype, op.idx);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, false, trgt);
-            return [env.setUniformResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)];
-        }
-        else if(hpi === "yes") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, true, trgt);
-            return [env.setUniformResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)];
-        }
-        else {
-            assert(!texp.flowtype.isUniqueTupleTargetType(), "If this is unique then we should have been in one of the cases above");
-
-            this.m_emitter.emitTupleHasIndex(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, trgt);
-            
-            const renvs = ExpressionTypeEnvironment.convertToHasIndexNotHasIndexFlowsOnResult(this.m_assembly, op.idx, [env]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
-        }
-    }
-
-    private checkPostfixHasIndexMono(env: ExpressionTypeEnvironment, op: PostfixHasIndex, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...this.checkPostfixHasIndexMulti(env, op, arg, trgt));
-    }
-
-    private checkPostfixGetIndexOrNone(env: ExpressionTypeEnvironment, op: PostfixGetIndexOrNone, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isTupleTargetType(), "Can only load indecies from tuple types");
-
-        const hpi = this.getInfoForHasIndex(op.sinfo, texp.flowtype, op.idx);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstNone(op.sinfo, trgt);
-            return env.setUniformResultExpression(this.m_assembly.getSpecialNoneType());
-        }
-        else if(hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafeIndex(op.sinfo, texp.flowtype, op.idx);
-
-            this.m_emitter.emitLoadTupleIndex(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), trgt);
-            return env.setUniformResultExpression(linfo);
-        }
-        else {
-            const ttype = this.getInfoForLoadFromSafeIndexOnly(op.sinfo, texp.flowtype, op.idx);
-            const linfo = this.m_assembly.typeUpperBound([this.m_assembly.getSpecialNoneType(), ttype]);
-
-            this.m_emitter.emitRegisterStore(op.sinfo, this.emitInlineConvertIfNeeded(op.sinfo, new MIRConstantNone(), ValueType.createUniform(this.m_assembly.getSpecialNoneType()), linfo), trgt, this.m_emitter.registerResolvedTypeReference(linfo), undefined);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            const hasreg = this.m_emitter.generateTmpRegister();
-            const guard = new MIRArgGuard(hasreg);
-            this.m_emitter.emitLoadTupleIndexSetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(ttype), loadreg, guard);
-            if(ttype.isSameType(linfo)) {
-                this.m_emitter.emitRegisterStore(op.sinfo, loadreg, trgt, this.m_emitter.registerResolvedTypeReference(linfo), new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            }
-            else {
-                this.m_emitter.emitConvert(op.sinfo, this.m_emitter.registerResolvedTypeReference(ttype), this.m_emitter.registerResolvedTypeReference(ttype), this.m_emitter.registerResolvedTypeReference(linfo), loadreg, trgt, new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            }
-
-            return env.setUniformResultExpression(linfo);
-        }
-    }
-
-    private checkPostfixGetIndexOption(env: ExpressionTypeEnvironment, op: PostfixGetIndexOption, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isTupleTargetType(), "Can only load indecies from tuple types");
-
-        const hpi = this.getInfoForHasIndex(op.sinfo, texp.flowtype, op.idx);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstNothing(op.sinfo, trgt);
-            return env.setUniformResultExpression(this.m_assembly.getSpecialNothingType());
-        }
-        else if(hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafeIndex(op.sinfo, texp.flowtype, op.idx);
-            const somethingtype = this.m_assembly.getSomethingType(linfo);
-            const mirsomethingtype = this.m_emitter.registerResolvedTypeReference(somethingtype);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitLoadTupleIndex(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), loadreg);
-            this.m_emitter.emitInject(op.sinfo, this.m_emitter.registerResolvedTypeReference(linfo), mirsomethingtype, loadreg, trgt);
-
-            return env.setUniformResultExpression(somethingtype);
-        }
-        else {
-            const linfo = this.getInfoForLoadFromSafeIndexOnly(op.sinfo, texp.flowtype, op.idx);
-            const somethingtype = this.m_assembly.getSomethingType(linfo);
-            const mirsomethingtype = this.m_emitter.registerResolvedTypeReference(somethingtype);
-            const opttype = this.m_assembly.getOptionConceptType(linfo);
-            const miropttype = this.m_emitter.registerResolvedTypeReference(opttype);
-
-            this.m_emitter.emitRegisterStore(op.sinfo, this.emitInlineConvertIfNeeded(op.sinfo, new MIRConstantNothing(), ValueType.createUniform(this.m_assembly.getSpecialNothingType()), opttype), trgt, this.m_emitter.registerResolvedTypeReference(linfo), undefined);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            const hasreg = this.m_emitter.generateTmpRegister();
-            const guard = new MIRArgGuard(hasreg);
-            this.m_emitter.emitLoadTupleIndexSetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), loadreg, guard);
-            
-            this.m_emitter.emitGuardedOptionInject(op.sinfo, this.m_emitter.registerResolvedTypeReference(linfo), mirsomethingtype, miropttype, loadreg, trgt, new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            
-            return env.setUniformResultExpression(opttype);
-        }
-    }
-
-    private checkPostfixGetIndexTryMulti(env: ExpressionTypeEnvironment, op: PostfixGetIndexTry, arg: MIRRegisterArgument): ExpressionTypeEnvironment[] {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isTupleTargetType(), "Can only load indecies from tuple types");
-
-        const hpi = this.getInfoForHasIndex(op.sinfo, texp.flowtype, op.idx);
-        if (hpi === "no") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, false, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)];
-        }
-        else if (hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafeIndex(op.sinfo, texp.flowtype, op.idx);
-
-            const lreg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitLoadTupleIndex(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), lreg);
-            const aenv = this.checkAssignSingleVariable(op.sinfo, env, op.vname, ValueType.createUniform(linfo), lreg);
-
-            this.m_emitter.emitLoadConstBool(op.sinfo, true, trgt);
-            return [aenv.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)];
-        }
-        else {
-            const linfo = this.getInfoForLoadFromSafeIndex(op.sinfo, texp.flowtype, op.idx);
-
-            this.m_emitter.emitLoadTupleIndexSetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.idx, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), new MIRRegisterArgument(op.vname), new MIRArgGuard(trgt));
-            return [
-                env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False),
-                env.setVar(op.vname, linfo).setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)
-            ];
-        }
-    }
-
-    private checkPostfixGetIndexTryMono(env: ExpressionTypeEnvironment, op: PostfixGetIndexTry, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...this.checkPostfixGetIndexTryMulti(env, op, arg, trgt));
-    }
-
-    private checkPostfixHasPropertyMulti(env: ExpressionTypeEnvironment, op: PostfixHasProperty, arg: MIRRegisterArgument): ExpressionTypeEnvironment[] {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isRecordTargetType(), "Can only check for properties on record types");
-
-        const hpi = this.getInfoForHasProperty(op.sinfo, texp.flowtype, op.pname);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, false, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)];
-        }
-        else if(hpi === "yes") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, true, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)];
-        }
-        else {
-            assert(!texp.flowtype.isUniqueRecordTargetType(), "If this is unique then we should have been in one of the cases above");
-
-            this.m_emitter.emitRecordHasProperty(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, trgt);
-
-            const renvs = ExpressionTypeEnvironment.convertToHasIndexNotHasPropertyFlowsOnResult(this.m_assembly, op.pname, [env]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
-        }
-    }
-
-    private checkPostfixHasPropertyMono(env: ExpressionTypeEnvironment, op: PostfixHasProperty, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...this.checkPostfixHasPropertyMulti(env, op, arg, trgt));
-    }
-
-    private checkPostfixGetPropertyOrNone(env: ExpressionTypeEnvironment, op: PostfixGetPropertyOrNone, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isRecordTargetType(), "Can only load properties from record types");
-
-        const hpi = this.getInfoForHasProperty(op.sinfo, texp.flowtype, op.pname);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstNone(op.sinfo, trgt);
-            return env.setUniformResultExpression(this.m_assembly.getSpecialNoneType());
-        }
-        else if(hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafeProperty(op.sinfo, texp.flowtype, op.pname);
-
-            this.m_emitter.emitLoadProperty(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueRecordTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), trgt);
-            return env.setUniformResultExpression(linfo);
-        }
-        else {
-            const rtype = this.getInfoForLoadFromSafePropertyOnly(op.sinfo, texp.flowtype, op.pname);
-            const linfo = this.m_assembly.typeUpperBound([this.m_assembly.getSpecialNoneType(), rtype]);
-
-            this.m_emitter.emitRegisterStore(op.sinfo, this.emitInlineConvertIfNeeded(op.sinfo, new MIRConstantNone(), ValueType.createUniform(this.m_assembly.getSpecialNoneType()), linfo), trgt, this.m_emitter.registerResolvedTypeReference(linfo), undefined);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            const hasreg = this.m_emitter.generateTmpRegister();
-            const guard = new MIRArgGuard(hasreg);
-            this.m_emitter.emitLoadRecordPropertySetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(rtype), loadreg, guard);
-            if(rtype.isSameType(linfo)) {
-                this.m_emitter.emitRegisterStore(op.sinfo, loadreg, trgt, this.m_emitter.registerResolvedTypeReference(linfo), new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            }
-            else {
-                this.m_emitter.emitConvert(op.sinfo, this.m_emitter.registerResolvedTypeReference(rtype), this.m_emitter.registerResolvedTypeReference(rtype), this.m_emitter.registerResolvedTypeReference(linfo), loadreg, trgt, new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            }
-
-            return env.setUniformResultExpression(linfo);
-        }
-    }
-
-    private checkPostfixGetPropertyOption(env: ExpressionTypeEnvironment, op: PostfixGetPropertyOption, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isRecordTargetType(), "Can only load indecies from tuple types");
-
-        const hpi = this.getInfoForHasProperty(op.sinfo, texp.flowtype, op.pname);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstNothing(op.sinfo, trgt);
-            return env.setUniformResultExpression(this.m_assembly.getSpecialNothingType());
-        }
-        else if(hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafePropertyOnly(op.sinfo, texp.flowtype, op.pname);
-            const somethingtype = this.m_assembly.getSomethingType(linfo);
-            const mirsomethingtype = this.m_emitter.registerResolvedTypeReference(somethingtype);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitLoadProperty(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueRecordTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), loadreg);
-            this.m_emitter.emitInject(op.sinfo, this.m_emitter.registerResolvedTypeReference(linfo), mirsomethingtype, loadreg, trgt);
-
-            return env.setUniformResultExpression(somethingtype);
-        }
-        else {
-            const linfo = this.getInfoForLoadFromSafePropertyOnly(op.sinfo, texp.flowtype, op.pname);
-            const somethingtype = this.m_assembly.getSomethingType(linfo);
-            const mirsomethingtype = this.m_emitter.registerResolvedTypeReference(somethingtype);
-            const opttype = this.m_assembly.getOptionConceptType(linfo);
-            const miropttype = this.m_emitter.registerResolvedTypeReference(opttype);
-
-            this.m_emitter.emitRegisterStore(op.sinfo, this.emitInlineConvertIfNeeded(op.sinfo, new MIRConstantNothing(), ValueType.createUniform(this.m_assembly.getSpecialNothingType()), opttype), trgt, this.m_emitter.registerResolvedTypeReference(linfo), undefined);
-
-            const loadreg = this.m_emitter.generateTmpRegister();
-            const hasreg = this.m_emitter.generateTmpRegister();
-            const guard = new MIRArgGuard(hasreg);
-            this.m_emitter.emitLoadRecordPropertySetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueRecordTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), loadreg, guard);
-            
-            this.m_emitter.emitGuardedOptionInject(op.sinfo, this.m_emitter.registerResolvedTypeReference(linfo), mirsomethingtype, miropttype, loadreg, trgt, new MIRStatmentGuard(guard, "defaultonfalse", trgt));
-            
-            return env.setUniformResultExpression(opttype);
-        }
-    }
-
-    private checkPostfixGetPropertyTryMulti(env: ExpressionTypeEnvironment, op: PostfixGetPropertyTry, arg: MIRRegisterArgument): ExpressionTypeEnvironment[] {
-        const texp = env.getExpressionResult().valtype;
-        this.raiseErrorIf(op.sinfo, !texp.flowtype.isRecordTargetType(), "Can only load properties from record types");
-
-        const hpi = this.getInfoForHasProperty(op.sinfo, texp.flowtype, op.pname);
-        if(hpi === "no") {
-            this.m_emitter.emitLoadConstBool(op.sinfo, false, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)];
-        }
-        else if(hpi === "yes") {
-            const linfo = this.getInfoForLoadFromSafeProperty(op.sinfo, texp.flowtype, op.pname);
-
-            const lreg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitLoadProperty(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueRecordTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), lreg);
-            const aenv = this.checkAssignSingleVariable(op.sinfo, env, op.vname, ValueType.createUniform(linfo), lreg);
-
-            this.m_emitter.emitLoadConstBool(op.sinfo, true, trgt);
-            return [aenv.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)];
-        }
-        else {
-            const linfo = this.getInfoForLoadFromSafePropertyOnly(op.sinfo, texp.flowtype, op.pname);
-            
-            this.m_emitter.emitLoadRecordPropertySetGuard(op.sinfo, arg, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), op.pname, !texp.flowtype.isUniqueTupleTargetType(), this.m_emitter.registerResolvedTypeReference(linfo), new MIRRegisterArgument(op.vname), new MIRArgGuard(trgt));
-            return [
-                env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False),
-                env.setVar(op.vname, linfo).setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True)
-            ];
-        }
-    }
-
-    private checkPostfixGetPropertyTryMono(env: ExpressionTypeEnvironment, op: PostfixGetPropertyTry, arg: MIRRegisterArgument): ExpressionTypeEnvironment {
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...this.checkPostfixGetPropertyTryMulti(env, op, arg, trgt));
     }
 
     private checkInvokeMulti(env: ExpressionTypeEnvironment, op: PostfixInvoke, arg: MIRRegisterArgument, trgt: MIRRegisterArgument, refok: boolean): ExpressionTypeEnvironment[] {
