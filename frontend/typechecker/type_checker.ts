@@ -309,17 +309,82 @@ class TypeChecker {
         return [tlit, nexp.trepr];
     }
 
-    private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tinfer: ResolvedType, value: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
-        assert(this.subtypeOf(tinfer, trepr), `That should be impossible -- ${tinfer.typeID} not subtype of ${trepr.typeID}`);
+    private envExpressionGetInferType(env: ExpressionTypeEnvironment): ResolvedType {
+        if(env.flowinfo.length === 0) {
+            return ResolvedType.createInvalid();
+        }
+        else if(env.flowinfo.length === 1) {
+            return env.flowinfo[0].tinfer;
+        }
+        else {
+            return this.normalizeUnionList(env.flowinfo.map((fi) => fi.tinfer));
+        }
+    }
 
-        let iinfo = env.expInferInfo;
-        if(env.expInferInfo.has(exp.expstr)) {
-            const einfo = env.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
-            tinfer = einfo.infertype;
-            value = einfo.infertruth;
+    private envExpressionSimplifyFlowInfos(infos: FlowTypeInfoOption[]): FlowTypeInfoOption[] {
+        let ninfos: FlowTypeInfoOption[] = [];
+        for(let i = 0; i < infos.length; ++i) {
+            const ii = infos[i];
+            const fe = ninfos.find((fi) => fi.etruth === ii.etruth && fi.tinfer.isSameType(ii.tinfer) && FlowTypeInfoOption.equivInferMaps(fi.expInferInfo, ii.expInferInfo));
+            if(fe === undefined) {
+                ninfos.push(ii);
+            }
         }
 
-        return env.setResultExpressionInfo(exp, trepr, tinfer, value || FlowTypeTruthValue.Unknown, iinfo);
+        return ninfos;
+    }
+
+    private envExpressionJoinFlowInfos(infos: FlowTypeInfoOption[]): FlowTypeInfoOption {
+        assert(infos.length !== 0, "then a join doesn't make sense");
+
+        const itype = this.normalizeUnionList(infos.map((fi) => fi.tinfer));
+        let ibv = FlowTypeTruthValue.Unknown;
+        if(infos.every((ii) => ii.etruth === FlowTypeTruthValue.True)) {
+            ibv = FlowTypeTruthValue.True;
+        }
+        if(infos.every((ii) => ii.etruth === FlowTypeTruthValue.False)) {
+            ibv = FlowTypeTruthValue.False;
+        }
+
+        let eset = new Set<string>(infos[0].expInferInfo.keys());
+        const ninfos = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>();
+        
+        [...eset]
+            .filter((expr) => infos.every((ii) => ii.expInferInfo.has(expr)))
+            .forEach((expr) => {
+                const eitype = this.normalizeUnionList(infos.map((fi) => (fi.expInferInfo.get(expr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}).infertype));
+
+                let eibv = FlowTypeTruthValue.Unknown;
+                if(infos.every((ii) => (ii.expInferInfo.get(expr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}).infertruth === FlowTypeTruthValue.True)) {
+                    eibv = FlowTypeTruthValue.True;
+                }
+                if(infos.every((ii) => (ii.expInferInfo.get(expr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}).infertruth === FlowTypeTruthValue.False)) {
+                    eibv = FlowTypeTruthValue.False;
+                }
+
+                const dvars = (infos[0].expInferInfo.get(expr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}).depvars;
+
+                ninfos.set(expr, {depvars: dvars, infertype: eitype, infertruth: eibv});
+            });
+
+        return new FlowTypeInfoOption(itype, ibv, ninfos);
+    }
+
+    private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tv?: FlowTypeTruthValue): ExpressionTypeEnvironment {
+        const finfo = env.flowinfo.map((fti) => {
+            let tinfer = trepr;
+            let value = tv || FlowTypeTruthValue.Unknown;
+            if(fti.expInferInfo.has(exp.expstr)) {
+                const einfo = fti.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
+                tinfer = einfo.infertype;
+                value = einfo.infertruth;
+            }
+
+            assert(this.subtypeOf(tinfer, trepr), `That should be impossible -- ${tinfer.typeID} not subtype of ${trepr.typeID}`);
+            return new FlowTypeInfoOption(tinfer, value, fti.expInferInfo);
+        });
+
+        return env.setResultExpressionInfo(exp, trepr, finfo);
     }
 
     private convertToBoolFlowsOnResult(env: ExpressionTypeEnvironment): {tenv: FlowTypeInfoOption | undefined, fenv: FlowTypeInfoOption | undefined} {
@@ -423,9 +488,8 @@ class TypeChecker {
             }
             else {
 
-            if(this.subtypeOf())
 
-            return renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRCoerceExpression())
+            return renvs.tenvs.map((ee) => this.setResultExpression(ee, new TIRCoerceExpression()));
             this.raiseErrorIf(sinfo, !this.subtypeOf(env.tinfer, trgttype), `Cannot convert type ${env.tinfer.typeID} into ${trgttype.typeID}`);
             return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.tinfer, env.etruth);
 
@@ -2219,7 +2283,7 @@ class TypeChecker {
         }
 
         this.raiseErrorIf(sinfo, !this.subtypeOf(env.tinfer, trgttype), `Cannot convert type ${env.tinfer.typeID} into ${trgttype.typeID}`);
-        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.tinfer, env.etruth);
+        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, );
     }
 
     private emitSafeCoerceIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
@@ -2227,7 +2291,7 @@ class TypeChecker {
             return env;
         }
 
-        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, trgttype, env.etruth);
+        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype, env.etruth);
     }
 
     private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], typescope: TemplateBindScope) {
