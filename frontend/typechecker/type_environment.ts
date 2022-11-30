@@ -1,4 +1,5 @@
 import * as assert from "assert";
+
 import { ResolvedType, TemplateBindScope } from "./resolved_type";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
 
@@ -156,16 +157,6 @@ class ExpressionTypeEnvironment {
 
     setResultExpressionInfo(exp: TIRExpression, trepr: ResolvedType, finfo: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, trepr, finfo);
-    }
-
-    inferFlowTypeInfoFromBool(bv: FlowTypeTruthValue): FlowTypeInfoOption {
-        const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(this.expInferInfo).set(this.expressionResult.expstr, { depvars: new Set<string>(this.expressionResult.getUsedVars()), infertype: this.tinfer, infertruth: bv});
-        return new FlowTypeInfoOption(this.tinfer, bv, iinfo);
-    }
-
-    inferFlowTypeInfoFromType(tinfer: ResolvedType): FlowTypeInfoOption {
-        const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(this.expInferInfo).set(this.expressionResult.expstr, { depvars: new Set<string>(this.expressionResult.getUsedVars()), infertype: tinfer, infertruth: this.etruth});
-        return new FlowTypeInfoOption(tinfer, this.etruth, iinfo);
     }
 
     updateFlowInfoOnPath(info: FlowTypeInfoOption): ExpressionTypeEnvironment {

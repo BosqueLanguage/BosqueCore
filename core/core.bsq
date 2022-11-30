@@ -515,6 +515,10 @@ __universal concept IOption provides Some {
     method asNothing(): Nothing {
         return this.as<Nothing>();
     }
+
+    method asSomething<T>(): Something<T> {
+        return this.as<Something<T>>();
+    }
 }
 
 //<summary>Generic type for all Option<T> to inherit from.</summary>

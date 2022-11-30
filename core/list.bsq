@@ -419,8 +419,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    //TODO: not quite right since we also want to make sure this is Option<T> *not* IOption
-    method {when T unique IOption} containsNothing(): Bool {
+    method {when T IOption} containsNothing(): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return false;
         }
@@ -429,8 +428,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    //TODO: not quite right since we also want to make sure this is Result<T, E> *not* IResult
-    method {when T unique IResult} containsError(): Bool {
+    method {when T IResult} containsError(): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return false;
         }
@@ -439,8 +437,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    //TODO: not quite right since we also want to make sure this is Result<T, E> *not* IResult
-    method {when T unique IResult} allOk(): Bool {
+    method {when T IResult} allOk(): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return false;
         }
@@ -481,7 +478,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    method countNothing(): Nat {
+    method {when T IOption} countNothing(): Nat {
         if(ListOps::s_list_empty<T>(this)) {
             return 0n;
         }
