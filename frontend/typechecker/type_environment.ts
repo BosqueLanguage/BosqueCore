@@ -36,6 +36,18 @@ class FlowTypeTruthOps {
     static maybeFalseValue(e: FlowTypeTruthValue): boolean {
         return (e === FlowTypeTruthValue.False || e === FlowTypeTruthValue.Unknown);
     }
+
+    static logicalNot(e: FlowTypeTruthValue): FlowTypeTruthValue {
+        if(e === FlowTypeTruthValue.True) {
+            return FlowTypeTruthValue.False;
+        }
+        else if(e === FlowTypeTruthValue.False) {
+            return FlowTypeTruthValue.True;
+        }
+        else {
+            return FlowTypeTruthValue.Unknown;
+        }
+    }
 }
 
 class VarInfo {
@@ -67,8 +79,12 @@ class FlowTypeInfoOption {
         this.expInferInfo = expInferInfo;
     }
 
-    static createInitial(expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>): FlowTypeInfoOption[] {
-        return [new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, expInferInfo)]; 
+    static createInitial(): FlowTypeInfoOption[] {
+        return [new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>())]; 
+    }
+
+    static createFrom(fti: FlowTypeInfoOption[]): FlowTypeInfoOption[] {
+        return fti.map((fi) => new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, fi.expInferInfo));
     }
 
     static equivInferMaps(mi1: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>, mi2: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>): boolean {
@@ -143,24 +159,24 @@ class ExpressionTypeEnvironment {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
-    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expInferInfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial(expInferInfo));
+    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
     static createInitialEnvForConstEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial(new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>()));
+        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
     static createInitialEnvForLiteralEval(bodyid: string, binds: TemplateBindScope): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(bodyid, binds, new Map<string, TIRCodePack>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial(new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>()));
+        return new ExpressionTypeEnvironment(bodyid, binds, new Map<string, TIRCodePack>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+    }
+
+    createFreshEnvExpressionFrom(): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createFrom(this.flowinfo));
     }
 
     setResultExpressionInfo(exp: TIRExpression, trepr: ResolvedType, finfo: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, trepr, finfo);
-    }
-
-    updateFlowInfoOnPath(info: FlowTypeInfoOption): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, this.expressionResult, this.trepr, info.tinfer, info.etruth, info.expInferInfo);
     }
 
 /*

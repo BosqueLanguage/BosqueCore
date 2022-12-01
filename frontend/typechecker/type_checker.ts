@@ -7,8 +7,8 @@ import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, SpecialConstructorExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqExpression, TIRBinKeyLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAbortExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression } from "../tree_ir/tir_body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNotOp, SpecialConstructorExpression } from "../ast/body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqExpression, TIRBinKeyLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAbortExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption } from "./type_environment";
 
@@ -167,6 +167,8 @@ class TypeChecker {
     private m_pendingFunctionMemberDecls: OOMemberLookupInfo<StaticFunctionDecl>[] = [];
     private m_pendingMethodMemberDecls: OOMemberLookupInfo<MemberMethodDecl>[] = [];
 
+    private m_tempvarctr = 0;
+
     constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
 
@@ -314,6 +316,10 @@ class TypeChecker {
         return [tlit, nexp.trepr];
     }
 
+    private generateTempVar(): string {
+        return `$tmp_var_${this.m_tempvarctr++}`;
+    }
+
     private envExpressionGetInferType(env: ExpressionTypeEnvironment): ResolvedType {
         if(env.flowinfo.length === 0) {
             return ResolvedType.createInvalid();
@@ -400,10 +406,44 @@ class TypeChecker {
         }
     }
 
-    private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tv?: FlowTypeTruthValue): ExpressionTypeEnvironment {
+    private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tv?: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
         const finfo = env.flowinfo.map((fti) => {
             let tinfer = trepr;
             let value = tv || FlowTypeTruthValue.Unknown;
+            if(fti.expInferInfo.has(exp.expstr)) {
+                const einfo = fti.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
+                tinfer = einfo.infertype;
+                value = einfo.infertruth;
+            }
+
+            assert(this.subtypeOf(tinfer, trepr), `That should be impossible -- ${tinfer.typeID} not subtype of ${trepr.typeID}`);
+            return new FlowTypeInfoOption(tinfer, value, fti.expInferInfo);
+        });
+
+        return env.setResultExpressionInfo(exp, trepr, finfo);
+    }
+
+    private setResultExpressionBoolPassThrough(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType): ExpressionTypeEnvironment {
+        const finfo = env.flowinfo.map((fti) => {
+            let tinfer = trepr;
+            let value = fti.etruth;
+            if(fti.expInferInfo.has(exp.expstr)) {
+                const einfo = fti.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
+                tinfer = einfo.infertype;
+                value = einfo.infertruth;
+            }
+
+            assert(this.subtypeOf(tinfer, trepr), `That should be impossible -- ${tinfer.typeID} not subtype of ${trepr.typeID}`);
+            return new FlowTypeInfoOption(tinfer, value, fti.expInferInfo);
+        });
+
+        return env.setResultExpressionInfo(exp, trepr, finfo);
+    }
+
+    private setResultExpressionBoolNegate(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType): ExpressionTypeEnvironment {
+        const finfo = env.flowinfo.map((fti) => {
+            let tinfer = trepr;
+            let value = FlowTypeTruthOps.logicalNot(fti.etruth);
             if(fti.expInferInfo.has(exp.expstr)) {
                 const einfo = fti.expInferInfo.get(exp.expstr) as {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue};
                 tinfer = einfo.infertype;
@@ -2271,7 +2311,7 @@ class TypeChecker {
         }
 
         this.raiseErrorIf(sinfo, !this.subtypeOf(this.envExpressionGetInferType(env), trgttype), `Cannot convert type ${this.envExpressionGetInferType(env)} into ${trgttype.typeID}`);
-        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype);
+        return this.setResultExpressionBoolPassThrough(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype);
     }
 
     private emitSafeCoerceIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo, trgttype: ResolvedType): ExpressionTypeEnvironment {
@@ -2279,7 +2319,7 @@ class TypeChecker {
             return env;
         }
 
-        return this.setResultExpression(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype);
+        return this.setResultExpressionBoolPassThrough(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype);
     }
 
     private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], typescope: TemplateBindScope) {
@@ -2342,72 +2382,8 @@ class TypeChecker {
             return false;
         }
     }
-/*
-    private checkInvokeDecl(sinfo: SourceInfo, invoke: InvokeDecl, invokeBinds: Map<string, ResolvedType>, pcodes: PCode[]) {
-        this.raiseErrorIf(sinfo, invoke.optRestType !== undefined && invoke.params.some((param) => param.isOptional), "Cannot have optional and rest parameters in an invocation signature");
 
-        this.raiseErrorIf(sinfo, invoke.recursive === "no" && pcodes.some((pc) => pc.code.recursive === "yes"), "Recursive decl does not match use");
-
-        const allNames = new Set<string>();
-        if (invoke.optRestName !== undefined && invoke.optRestName !== "_") {
-            allNames.add(invoke.optRestName);
-        }
-        for (let i = 0; i < invoke.params.length; ++i) {
-            if (invoke.params[i].name !== "_") {
-                this.raiseErrorIf(sinfo, allNames.has(invoke.params[i].name), `Duplicate name in invocation signature paramaters "${invoke.params[i].name}"`);
-                allNames.add(invoke.params[i].name);
-            }
-            const rtype = this.m_assembly.normalizeTypeGeneral(invoke.params[i].type, invokeBinds);
-            this.raiseErrorIf(sinfo, rtype instanceof ResolvedType && rtype.isEmptyType(), "Bad type signature");
-        }
-
-        const firstOptIndex = invoke.params.findIndex((param) => param.isOptional);
-        if (firstOptIndex === -1) {
-            return;
-        }
-
-        for (let i = firstOptIndex; i < invoke.params.length; ++i) {
-            this.raiseErrorIf(sinfo, !invoke.params[i].isOptional, "Cannot have required paramaters following optional parameters");
-        }
-
-        if (invoke.optRestType !== undefined) {
-            this.resolveAndEnsureTypeOnly(sinfo, invoke.optRestType, invokeBinds);
-        }
-
-        const rtype = this.resolveAndEnsureTypeOnly(sinfo, invoke.resultType, invokeBinds);
-        this.raiseErrorIf(sinfo, rtype.isEmptyType(), "Bad type signature");
-    }
-
-    private checkPCodeDecl(sinfo: SourceInfo, fsig: ResolvedFunctionType, rec: "yes" | "no" | "cond", capturedpcodes: PCode[]) {
-        this.raiseErrorIf(sinfo, fsig.optRestParamType !== undefined && fsig.params.some((param) => param.isOptional), "Cannot have optional and rest parameters in an invocation signature");
-        this.raiseErrorIf(sinfo, rec === "no" && fsig.recursive === "yes", "Recursive decl does not match use");
-        this.raiseErrorIf(sinfo, fsig.recursive === "no" && capturedpcodes.some((pc) => pc.code.recursive === "yes"), "Recursive decl does not match use");
-
-        const allNames = new Set<string>();
-        if (fsig.optRestParamName !== undefined && fsig.optRestParamName !== "_") {
-            allNames.add(fsig.optRestParamName);
-        }
-        for (let i = 0; i < fsig.params.length; ++i) {
-            if (fsig.params[i].name !== "_") {
-                this.raiseErrorIf(sinfo, allNames.has(fsig.params[i].name), `Duplicate name in invocation signature paramaters "${fsig.params[i].name}"`);
-                allNames.add(fsig.params[i].name);
-            }
-        
-            const rtype = fsig.params[i].type;
-            this.raiseErrorIf(sinfo, rtype instanceof ResolvedFunctionType, "Cannot have nested function type param");
-        }
-
-        const firstOptIndex = fsig.params.findIndex((param) => param.isOptional);
-        if (firstOptIndex === -1) {
-            return;
-        }
-
-        for (let i = firstOptIndex; i < fsig.params.length; ++i) {
-            this.raiseErrorIf(sinfo, !fsig.params[i].isOptional, "Cannot have required paramaters following optional parameters");
-        }
-    }
-
-    private checkValueEq(lhsexp: Expression, lhs: ResolvedType, rhsexp: Expression, rhs: ResolvedType): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "stdkey" {
+    private checkValueEq(lhsexp: Expression, lhs: ResolvedType, rhsexp: Expression, rhs: ResolvedType): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
         if (lhsexp instanceof LiteralNoneExpression && rhsexp instanceof LiteralNoneExpression) {
             return "truealways";
         }
@@ -2417,34 +2393,55 @@ class TypeChecker {
         }
 
         if (lhsexp instanceof LiteralNoneExpression) {
-            return this.m_assembly.subtypeOf(this.m_assembly.getSpecialNoneType(), rhs) ? "lhsnone" : "falsealways";
+            return this.subtypeOf(this.getSpecialNoneType(), rhs) ? "lhsnone" : "falsealways";
         }
 
         if (rhsexp instanceof LiteralNoneExpression) {
-            return this.m_assembly.subtypeOf(this.m_assembly.getSpecialNoneType(), lhs) ? "rhsnone" : "falsealways";
+            return this.subtypeOf(this.getSpecialNoneType(), lhs) ? "rhsnone" : "falsealways";
         }
 
         if (lhsexp instanceof LiteralNothingExpression) {
-            return this.m_assembly.subtypeOf(this.m_assembly.getSpecialNothingType(), rhs) ? "lhsnothing" : "falsealways";
+            return this.subtypeOf(this.getSpecialNothingType(), rhs) ? "lhsnothing" : "falsealways";
         }
 
         if (rhsexp instanceof LiteralNothingExpression) {
-            return this.m_assembly.subtypeOf(this.m_assembly.getSpecialNothingType(), lhs) ? "rhsnothing" : "falsealways";
+            return this.subtypeOf(this.getSpecialNothingType(), lhs) ? "rhsnothing" : "falsealways";
         }
 
         //should be a subtype on one of the sides
-        if (!this.m_assembly.subtypeOf(lhs, rhs) && !this.m_assembly.subtypeOf(rhs, lhs)) {
+        if (!this.subtypeOf(lhs, rhs) && !this.subtypeOf(rhs, lhs)) {
             return "err";
         }
 
         if (lhs.typeID === rhs.typeID) {
-            return "stdkey";
+            if(ResolvedType.isUniqueType(lhs) && ResolvedType.isUniqueType(rhs)) { 
+                return "stdkeywithunique";
+            }
+            else {
+                return "stdkey"
+            }
         }
         else {
-            return this.m_assembly.subtypeOf(lhs, rhs) ? "lhssomekey" : "rhssomekey";
+            if(this.subtypeOf(lhs, rhs)) {
+                if(ResolvedType.isUniqueType(lhs)) {
+                    return "lhssomekeywithunique";
+                }
+                else {
+                    return "lhssomekey";
+                }
+            }
+            else {
+                if(ResolvedType.isUniqueType(rhs)) {
+                    return "rhssomekeywithunique";
+                }
+                else {
+                    return "rhssomekey";
+                }
+            }
         }
     }
 
+    /*
     private checkPCodeExpression(env: TypeEnvironment, exp: ConstructorPCodeExpression, cbinds: Map<string, ResolvedType>, expectedFunction: ResolvedFunctionType | undefined): PCode {
         this.raiseErrorIf(exp.sinfo, exp.isAuto && expectedFunction === undefined, "Could not infer auto function type");
 
@@ -3210,6 +3207,9 @@ class TypeChecker {
                 return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, true), this.getSpecialBoolType(), FlowTypeTruthValue.True);
             }
             else {
+                //
+                //TODO: we can split args here on truth value to make this flow sensitive too -- 1 option where they are all true + k options here each is individually false
+                //
                 return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
             }
         }
@@ -3232,6 +3232,9 @@ class TypeChecker {
                 return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, false), this.getSpecialBoolType(), FlowTypeTruthValue.False);
             }
             else {
+                //
+                //TODO: we can split args here on truth value to make this flow sensitive too
+                //
                 return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
             }
         }
@@ -3293,11 +3296,11 @@ class TypeChecker {
         return this.processTypeAs(op.sinfo, env, oftype);
     }
 
-    private checkInvokeMulti(env: ExpressionTypeEnvironment, op: PostfixInvoke, refok: boolean): ExpressionTypeEnvironment {
+    private checkInvoke(env: ExpressionTypeEnvironment, op: PostfixInvoke, refvar: string | undefined): ExpressionTypeEnvironment {
         const resolvefrom = op.specificResolve !== undefined ? this.normalizeTypeOnly(op.specificResolve, env.binds) : this.envExpressionGetInferType(env);
         const mresolvetry = this.resolveMemberMethod(op.sinfo, resolvefrom, op.name);
 
-        this.raiseErrorIf(op.sinfo, op.isRefThis && !refok, "Cannot call a ref function in this expression position (top-level only)");
+        this.raiseErrorIf(op.sinfo, op.isRefThis && refvar === undefined, "Cannot call a ref function in this expression position (top-level only)");
 
         this.raiseErrorIf(op.sinfo, mresolvetry === undefined, `Could not resolve method name "${op.name}" from type ${resolvefrom.typeID}`);
         const mresolve = mresolvetry as OOMemberResolution<MemberMethodDecl>;
@@ -3313,9 +3316,12 @@ class TypeChecker {
         const rtype = this.normalizeTypeOnly(mresolve.decl.decl.invoke.resultType, fdeclscope);
         const tirrtype = this.toTIRTypeKey(rtype);
 
-        const argexps = this.checkArgumentList(op.sinfo, env, op.args, mresolve.decl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
+        const tirdecltype = this.toTIRTypeKey(mresolve.decl.ttype);
 
-        if(mresolve.impl !== undefined && mresolve.impl.length === 1) {
+        const argexps = this.checkArgumentList(op.sinfo, env.createFreshEnvExpressionFrom(), op.args, mresolve.decl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
+
+        if((!mresolve.decl.decl.attributes.includes("abstract") && !mresolve.decl.decl.attributes.includes("virtual"))) {
+            this.raiseErrorIf(op.sinfo, mresolve.impl.length !== 1, `Could not resolve implementation for non-virtual method ${op.name} from ${resolvefrom.typeID}`);
             const knownimpl = mresolve.impl[0];
 
             if (knownimpl.decl.invoke.body !== undefined && (typeof (knownimpl.decl.invoke.body.body) === "string") && ["special_nothing", "special_something", "special_extract"].includes(knownimpl.decl.invoke.body.body as string)) {
@@ -3333,220 +3339,135 @@ class TypeChecker {
                 }
             }
             else {
-                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirrtype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 this.m_pendingMethodMemberDecls.push(knownimpl, mresolve.decl);
 
+                const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
                 if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
                     if (mresolve.decl.decl.invoke.isThisRef) {
-                        xxxx;
+                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefWithChecksExpression(op.sinfo, fkey, tirrtype, refvar as string, argexps), rtype);
                     }
                     else {
-                        const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
-                        return this.setResultExpression(env, tircall, rtype);
+                        return this.setResultExpression(env, new TIRCallMemberFunctionWithChecksExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
                     }
                 }
                 else {
                     if (mresolve.decl.decl.invoke.isThisRef) {
-                        xxxx;
+                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, fkey, tirrtype, refvar as string, argexps), rtype);
                     }
                     else {
-                        const tircall = new TIRCallStaticFunctionWithChecksExpression(exp.sinfo, fkey, tirrtype, argexps);
-                        return this.setResultExpression(env, tircall, rtype);
+                        return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
                     }
                 }
             }
         }
         else {
-            this.raiseErrorIf(op.sinfo, vinfo_multi === undefined, `Missing (or multiple possible) declarations of "${op.name}" method on receiver type "${texp.flowtype.typeID}"`);
+            const declkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+            this.m_pendingMethodMemberDecls.push(mresolve.decl);
 
-            let eev = env;
-            if (op.isBinder) {
-                eev = this.checkDeclareSingleVariableBinder(op.sinfo, env, `$this_@${op.sinfo.pos}`, texp, arg);
+            const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
+            let inferfkey: TIRInvokeKey | undefined = undefined;
+            if(mresolve.impl.length === 1) {
+                const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
+                inferfkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                this.m_pendingMethodMemberDecls.push(mresolve.impl[0]);
             }
 
-            const vinfo = vinfo_multi as OOMemberLookupInfo<MemberMethodDecl[]>;
-            const minfo = new OOMemberLookupInfo<MemberMethodDecl>(vinfo.contiainingType, vinfo.decl[0], vinfo.binds);
-
-            const selfvar = [texp, minfo.decl.refRcvr ? env.getExpressionResult().expvar : undefined, arg] as [ValueType, string | undefined, MIRRegisterArgument];
-            const [fsig, callbinds, eargs] = this.inferAndCheckArguments(op.sinfo, eev, op.args, minfo.decl.invoke, op.terms.targs, minfo.binds, env.terms, selfvar, refok);
-            this.checkTemplateTypes(op.sinfo, minfo.decl.invoke.terms, callbinds, minfo.decl.invoke.termRestrictions);
-
-            const rargs = this.checkArgumentsSignature(op.sinfo, eev, op.name, fsig, eargs);
-            this.checkRecursion(op.sinfo, fsig, rargs.pcodes, op.rec);
-
-            const ootype = this.resolveOOTypeFromDecls(minfo.contiainingType, minfo.binds);
-            const ckey = this.m_emitter.registerVirtualMethodCall(ootype, op.name, callbinds, rargs.pcodes, rargs.cinfo);
-            const refinfo = this.generateRefInfoForCallEmit(fsig as ResolvedFunctionType, rargs.refs);
-            this.m_emitter.emitInvokeVirtualFunction(op.sinfo, ckey.keyid, ckey.shortname, this.m_emitter.registerResolvedTypeReference(texp.layout), this.m_emitter.registerResolvedTypeReference(texp.flowtype), rargs.args, rargs.fflag, refinfo, trgt);
-
-            if (op.isBinder) {
-                this.m_emitter.localLifetimeEnd(op.sinfo, `$this_@${op.sinfo.pos}`)
+            const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
+            if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
+                if (mresolve.decl.decl.invoke.isThisRef) {
+                    return this.setResultExpression(env, new TIRCallMemberFunctionDynamicSelfRefWithChecksExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, refvar as string, argexps), rtype);
+                }
+                else {
+                    return this.setResultExpression(env, new TIRCallMemberFunctionDynamicWithChecksExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+                }
             }
-
-            return this.updateEnvForOutParams(env.setUniformResultExpression(fsig.resultType), rargs.refs);
+            else {
+                if (mresolve.decl.decl.invoke.isThisRef) {
+                    return this.setResultExpression(env, new TIRCallMemberFunctionDynamicSelfRefExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, refvar as string, argexps), rtype);
+                }
+                else {
+                    return this.setResultExpression(env, new TIRCallMemberFunctionDynamicExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+                }
+            }
         }
     }
 
-    private checkPostfixExpression(env: ExpressionTypeEnvironment, exp: PostfixOp, refok: boolean, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let etgrt = this.m_emitter.generateTmpRegister();
-        let itype = (exp.ops.length !== 0 && exp.ops[0] instanceof PostfixAs) ? this.resolveAndEnsureTypeOnly((exp.ops[0] as PostfixAs).sinfo, (exp.ops[0] as PostfixAs).astype, env.terms) : undefined;
-        let cenv = this.checkExpression(env, exp.rootExp, etgrt, itype, {refok: refok, orok: false});
+    private checkPostfixExpression(env: ExpressionTypeEnvironment, exp: PostfixOp, desiredtype: ResolvedType | undefined, refok: boolean): ExpressionTypeEnvironment {
+        let cenv = this.checkExpression(env, exp.rootExp, undefined);
 
-        let lenv: ExpressionTypeEnvironment[] = [];
+        let refvar: string | undefined = undefined;
+        if(refok && (exp.rootExp instanceof AccessVariableExpression)) {
+            refvar = exp.rootExp.name;
+        }
+
         for (let i = 0; i < exp.ops.length; ++i) {
             const lastop = (i + 1 === exp.ops.length);
-            const itype = lastop ? infertype : ((exp.ops[i + 1] instanceof PostfixAs) ? this.resolveAndEnsureTypeOnly((exp.ops[i + 1] as PostfixAs).sinfo, (exp.ops[i + 1] as PostfixAs).astype, cenv.terms) : undefined);
+            const itype = lastop ? desiredtype : ((exp.ops[i + 1] instanceof PostfixAs) ? this.normalizeTypeOnly((exp.ops[i + 1] as PostfixAs).astype, cenv.binds) : undefined);
 
-            const ntgrt = this.m_emitter.generateTmpRegister();
             switch (exp.ops[i].op) {
-                case PostfixOpTag.PostfixAccessFromIndex:
-                    cenv = this.checkAccessFromIndex(cenv, exp.ops[i] as PostfixAccessFromIndex, etgrt, ntgrt);
-                    lenv = [cenv];
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    cenv = this.checkAccessFromIndex(cenv, exp.ops[i] as PostfixAccessFromIndex);
                     break;
-                case PostfixOpTag.PostfixProjectFromIndecies:
-                    cenv = this.checkProjectFromIndecies(cenv, exp.ops[i] as PostfixProjectFromIndecies, etgrt, ntgrt, itype);
-                    lenv = [cenv];
+                }
+                case PostfixOpTag.PostfixAccessFromName: {
+                    cenv = this.checkAccessFromName(cenv, exp.ops[i] as PostfixAccessFromName);
                     break;
-                case PostfixOpTag.PostfixAccessFromName:
-                    cenv = this.checkAccessFromName(cenv, exp.ops[i] as PostfixAccessFromName, etgrt, ntgrt);
-                    lenv = [cenv];
+                }
+                case PostfixOpTag.PostfixIs: {
+                    cenv = this.checkPostfixIs(cenv, exp.ops[i] as PostfixIs);
                     break;
-                case PostfixOpTag.PostfixProjectFromNames:
-                    cenv = this.checkProjectFromNames(cenv, exp.ops[i] as PostfixProjectFromNames, etgrt, ntgrt, itype);
-                    lenv = [cenv];
+                }
+                case PostfixOpTag.PostfixAs: {
+                    cenv = this.checkPostfixAs(cenv, exp.ops[i] as PostfixAs);
                     break;
-                case PostfixOpTag.PostfixModifyWithIndecies:
-                    cenv = this.checkModifyWithIndecies(cenv, exp.ops[i] as PostfixModifyWithIndecies, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixModifyWithNames:
-                    cenv = this.checkModifyWithNames(cenv, exp.ops[i] as PostfixModifyWithNames, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixIs:
-                    if (!lastop) {
-                        cenv = this.checkPostfixIsMono(cenv, exp.ops[i] as PostfixIs, etgrt, ntgrt);
-                    }
-                    else {
-                        lenv = this.checkPostfixIsMulti(cenv, exp.ops[i] as PostfixIs, etgrt, ntgrt);
-                    }
-                    break;
-                case PostfixOpTag.PostfixAs:
-                    cenv = this.checkPostfixAs(cenv, exp.ops[i] as PostfixAs, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixHasIndex:
-                    if (!lastop) {
-                        cenv = this.checkPostfixHasIndexMono(cenv, exp.ops[i] as PostfixHasIndex, etgrt, ntgrt);
-                    }
-                    else {
-                        lenv = this.checkPostfixHasIndexMulti(cenv, exp.ops[i] as PostfixHasIndex, etgrt, ntgrt);
-                    }
-                    break;
-                case PostfixOpTag.PostfixHasProperty:
-                    if (!lastop) {
-                        cenv = this.checkPostfixHasPropertyMono(cenv, exp.ops[i] as PostfixHasProperty, etgrt, ntgrt);
-                    }
-                    else {
-                        lenv = this.checkPostfixHasPropertyMulti(cenv, exp.ops[i] as PostfixHasProperty, etgrt, ntgrt);
-                    }
-                    break;
-                case PostfixOpTag.PostfixGetIndexOrNone:
-                    cenv = this.checkPostfixGetIndexOrNone(cenv, exp.ops[i] as PostfixGetIndexOrNone, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixGetIndexOption:
-                    cenv = this.checkPostfixGetIndexOption(cenv, exp.ops[i] as PostfixGetIndexOrNone, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixGetIndexTry:
-                    if (!lastop) {
-                        cenv = this.checkPostfixGetIndexTryMono(cenv, exp.ops[i] as PostfixGetIndexTry, etgrt, ntgrt);
-                    }
-                    else {
-                        lenv = this.checkPostfixGetIndexTryMulti(cenv, exp.ops[i] as PostfixGetIndexTry, etgrt, ntgrt);
-                    }
-                    break;
-                case PostfixOpTag.PostfixGetPropertyOrNone:
-                    cenv = this.checkPostfixGetPropertyOrNone(cenv, exp.ops[i] as PostfixGetPropertyOrNone, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixGetPropertyOption:
-                    cenv = this.checkPostfixGetPropertyOption(cenv, exp.ops[i] as PostfixGetPropertyOrNone, etgrt, ntgrt);
-                    lenv = [cenv];
-                    break;
-                case PostfixOpTag.PostfixHasProperty:
-                    if (!lastop) {
-                        cenv = this.checkPostfixGetPropertyTryMono(cenv, exp.ops[i] as PostfixGetPropertyTry, etgrt, ntgrt);
-                    }
-                    else {
-                        lenv = this.checkPostfixGetPropertyTryMulti(cenv, exp.ops[i] as PostfixGetPropertyTry, etgrt, ntgrt);
-                    }
-                    break;
-                default:
+                }
+                default: {
                     this.raiseErrorIf(exp.sinfo, exp.ops[i].op !== PostfixOpTag.PostfixInvoke, "Unknown postfix op");
-                    if (!lastop) {
-                        cenv = this.checkInvokeMono(cenv, exp.ops[i] as PostfixInvoke, etgrt, ntgrt, refok);
-                    }
-                    else {
-                        lenv = this.checkInvokeMulti(cenv, exp.ops[i] as PostfixInvoke, etgrt, ntgrt, refok);
-                    }
+
+                    cenv = this.checkInvoke(cenv, exp.ops[i] as PostfixInvoke, refvar);
                     break;
+                }
             }
 
-            //if it is abort then we are done!!!!
+            //only want ref on first access
+            refvar = undefined;
 
-            etgrt = ntgrt;
+            //if it is abort then we are done and the whole thing is abort!!!!
+            if(cenv.expressionResult instanceof TIRAbortExpression) {
+                const tirres = this.toTIRTypeKey(desiredtype || this.getSpecialAnyConceptType());
+                return this.setResultExpression(env, new TIRAbortExpression(exp.sinfo, tirres, "Expression always fails"), desiredtype || this.getSpecialAnyConceptType())
+            }
         }
 
-        if (lenv.length === 0) {
-            return [];
-        }
-        else {
-            const lasttype = ValueType.join(this.m_assembly, ...lenv.map((ee) => ee.getExpressionResult().valtype));
-            this.m_emitter.emitRegisterStore(exp.sinfo, etgrt, trgt, this.m_emitter.registerResolvedTypeReference(lasttype.layout), undefined);
-
-            return lenv;
-        }
+        return cenv;
     }
 
-    private checkPrefixNotOp(env: ExpressionTypeEnvironment, exp: PrefixNotOp, trgt: MIRRegisterArgument, refok: boolean): ExpressionTypeEnvironment[] {
-        const etreg = this.m_emitter.generateTmpRegister();
-        const estates = this.checkExpressionMultiFlow(env, exp.exp, etreg, this.m_assembly.getSpecialBoolType(), {refok: refok, orok: false});
-
-        this.m_emitter.emitPrefixNotOp(exp.sinfo, etreg, trgt);
-
-        const bstates = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, estates);
-        const ntstates = bstates.fenvs.map((state) => state.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False));
-        const nfstates = bstates.tenvs.map((state) => state.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True));
-
-        return [...ntstates, ...nfstates];
+    private checkPrefixNotOp(env: ExpressionTypeEnvironment, exp: PrefixNotOp): ExpressionTypeEnvironment {
+        const benv = this.emitCoerceIfNeeded(this.checkExpression(env, exp.exp, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+        return this.setResultExpressionBoolNegate(benv, new TIRPrefixNotOp(exp.sinfo, benv.expressionResult), this.getSpecialBoolType());
     }
 
-    private strongEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment[] {
-        const lhsreg = this.m_emitter.generateTmpRegister();
-        const lhs = this.checkExpression(env, lhsarg, lhsreg, undefined);
-        let olhs = lhs.getExpressionResult().valtype;
+    private checkPrefixNotOpWithRef(env: ExpressionTypeEnvironment, exp: PrefixNotOp): {pfxstmts: TIRStatement[], exp: ExpressionTypeEnvironment} {
+        const eenv = this.checkExpressionRefOk(env, exp.exp, this.getSpecialBoolType());
+        return {
+            pfxstmts: eenv.pfxstmts,
+            exp: this.setResultExpressionBoolNegate(eenv.exp, new TIRPrefixNotOp(exp.sinfo, eenv.exp.expressionResult), this.getSpecialBoolType());
+        };
+    }
 
-        const rhsreg = this.m_emitter.generateTmpRegister();
-        const rhs = this.checkExpression(env, rhsarg, rhsreg, undefined);
-        let orhs = rhs.getExpressionResult().valtype;
+    private strongEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment {
+        const lhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), lhsarg, undefined);
+        const rhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), rhsarg, undefined);
 
-        const action = this.checkValueEq(lhsarg, lhs.getExpressionResult().valtype.flowtype, rhsarg, rhs.getExpressionResult().valtype.flowtype);
+        const action = this.checkValueEq(lhsarg, this.envExpressionGetInferType(lhsenv), rhsarg, this.envExpressionGetInferType(rhsenv));
         this.raiseErrorIf(sinfo, action === "err", "Compared types are not equivalent (or not unique modulo none)");
 
         if(action === "truealways" || action === "falsealways") {
-            this.m_emitter.emitLoadConstBool(sinfo, action === "truealways" ? true : false, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), action === "truealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False)];
+            return this.setResultExpression(env, new TIRLiteralBoolExpression(sinfo, action === "truealways"), this.getSpecialBoolType(), action === "truealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False);
         }
         else if (action === "lhsnone") {
-            this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNoneType()), rhsreg, this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.flowtype), undefined);
-            
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [rhs]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIs(sinfo, rhsenv, this.getSpecialNoneType());
         }
         else if (action === "rhsnone") {
             this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNoneType()), lhsreg, this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.flowtype), undefined);
@@ -3574,6 +3495,15 @@ class TypeChecker {
                 ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
                 ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
             ];
+        }
+        if (action === "lhssomekeywithunique") {
+            xxxx;
+        }
+        else if (action === "rhssomekeywithunique") {
+            xxxx;
+        }
+        else if (action === "stdkeywithunique") {
+
         }
         else {
             if (action === "lhssomekey") {
@@ -4283,6 +4213,10 @@ class TypeChecker {
                 return ExpressionTypeEnvironment.join(this.m_assembly, ...res);
             }
         }
+    }
+
+    private checkExpressionRefOk(env: ExpressionTypeEnvironment, exp: Expression, infertype: ResolvedType | undefined): {pfxstmts: TIRStatement[], exp: ExpressionTypeEnvironment} {
+        xxxxx;
     }
 
     private checkExpressionMultiFlow(env: TypeEnvironment, exp: Expression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined, extraok?: { refok: boolean, orok: boolean }): TypeEnvironment[] {

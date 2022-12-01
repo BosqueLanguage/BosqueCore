@@ -315,6 +315,10 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
         this.basetype = basetype;
     }
 
+    isFailableOperation(): boolean {
+        return this.value.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.value.getUsedVars();
     }
@@ -407,6 +411,10 @@ class TIRLoadIndexExpression extends TIRExpression {
         this.index = index;
     }
 
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -420,6 +428,10 @@ class TIRLoadPropertyExpression extends TIRExpression {
         super(TIRExpressionTag.LoadPropertyExpression, sinfo, resultType, `${exp.expstr}.${property}`);
         this.exp = exp;
         this.property = property;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -437,6 +449,10 @@ class TIRLoadFieldExpression extends TIRExpression {
         this.field = field;
     }
 
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -452,6 +468,10 @@ class TIRLoadFieldVirtualExpression extends TIRExpression {
         this.field = field;
     }
 
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -465,6 +485,10 @@ class TIRConstructorPrimaryDirectExpression extends TIRExpression {
         super(TIRExpressionTag.ConstructorPrimaryDirectExpression, sinfo, oftype, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
         this.oftype = oftype;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -501,6 +525,10 @@ class TIRConstructorTupleExpression extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -514,6 +542,10 @@ class TIRConstructorRecordExpression extends TIRExpression {
         super(TIRExpressionTag.ConstructorRecordExpression, sinfo, oftype, `{${args.map((arg) => arg.expstr).join(", ")}}`);
         this.oftype = oftype;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -531,6 +563,10 @@ class TIRConstructorEphemeralValueList extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -544,6 +580,10 @@ class TIRConstructorListExpression  extends TIRExpression {
         super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, `List{${args.map((arg) => arg.expstr).join(", ")}}`);
         this.oftype = oftype;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -584,6 +624,10 @@ class TIRResultOkConstructorExpression extends TIRExpression {
         this.arg = arg;
     }
 
+    isFailableOperation(): boolean {
+        return this.arg.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.arg.getUsedVars();
     }
@@ -598,6 +642,10 @@ class TIRResultErrConstructorExpression extends TIRExpression {
         super(TIRExpressionTag.ResultErrConstructorExpression, sinfo, oftype, `cons_err<${oftype}>{${arg.expstr}}`);
         this.oftype = oftype;
         this.arg = arg;
+    }
+
+    isFailableOperation(): boolean {
+        return this.arg.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -616,6 +664,10 @@ class TIRSomethingConstructorExpression extends TIRExpression {
         this.arg = arg;
     }
 
+    isFailableOperation(): boolean {
+        return this.arg.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.arg.getUsedVars();
     }
@@ -631,6 +683,10 @@ class TIRTypedeclDirectExpression extends TIRExpression {
         this.arg = arg;
     }
 
+    isFailableOperation(): boolean {
+        return this.arg.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.arg.getUsedVars();
     }
@@ -643,6 +699,10 @@ class TIRTypedeclConstructorExpression extends TIRExpression {
         super(TIRExpressionTag.TypedeclConstructorExpression, sinfo, oftype, `cons_typedecl<${oftype}>{${arg.expstr}}`);
         this.oftype = oftype;
         this.arg = arg;
+    }
+
+    isFailableOperation(): boolean {
+        return true;
     }
 
     getUsedVars(): string[] {
@@ -660,6 +720,10 @@ class TIRCallNamespaceFunctionExpression extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -675,6 +739,10 @@ class TIRCallNamespaceOperatorExpression extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -688,6 +756,10 @@ class TIRCallStaticFunctionExpression extends TIRExpression {
         super(TIRExpressionTag.CallStaticFunctionExpression, sinfo, rtype, `${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
         this.fkey = fkey;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -760,6 +832,10 @@ class TIRLogicActionAndExpression extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -771,6 +847,10 @@ class TIRLogicActionOrExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, args: TIRExpression[]) {
         super(TIRExpressionTag.CallStaticFunctionWithChecksExpression, sinfo, "Bool", `\\/(${args.map((arg) => arg.expstr).join(", ")})`);
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -786,6 +866,10 @@ class TIRPrefixNotOp extends TIRExpression {
         this.exp = exp;
     }
 
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -799,6 +883,10 @@ class TIRPrefixNegateOp extends TIRExpression {
         super(TIRExpressionTag.PrefixNegateOpExpression, sinfo, ntype, `-(${exp.expstr})`);
         this.optype = ntype;
         this.exp = exp;
+    }
+
+    isFailableOperation(): boolean {
+        return this.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -818,6 +906,10 @@ class TIRBinAddExpression extends TIRExpression {
         this.rhs = rhs;
     }
     
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     isOverflowableOperation(): boolean {
         return this.optype === "Nat" || this.optype === "Int";
     }
@@ -839,8 +931,9 @@ class TIRBinSubExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isSafeOperation(): boolean {
-        return !(this.optype === "Nat" || this.optype === "BigNat"); //unsigned underflow is a more dangerous issue that just overflows
+    isFailableOperation(): boolean {
+        //unsigned underflow is a more dangerous issue that just overflows
+        return (this.optype === "Nat" || this.optype === "BigNat") || (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
     }
 
     isOverflowableOperation(): boolean {
@@ -864,6 +957,10 @@ class TIRBinMultExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     isOverflowableOperation(): boolean {
         return this.optype === "Nat" || this.optype === "Int";
     }
@@ -885,8 +982,8 @@ class TIRBinDivExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isSafeOperation(): boolean {
-        return false; //div by zero 
+    isFailableOperation(): boolean {
+        return true; //div 0
     }
 
     getUsedVars(): string[] {
@@ -906,6 +1003,10 @@ class TIRBinKeyEqExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -921,6 +1022,10 @@ class TIRBinKeyNeqExpression extends TIRExpression {
         this.optype = optype;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -940,6 +1045,10 @@ class TIRBinKeyLessExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -955,6 +1064,10 @@ class TIRNumericEqExpression extends TIRExpression {
         this.optype = ntype;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -974,6 +1087,10 @@ class TIRNumericNeqExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -989,6 +1106,10 @@ class TIRNumericLessExpression extends TIRExpression {
         this.optype = ntype;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1008,6 +1129,10 @@ class TIRNumericLessEqExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -1023,6 +1148,10 @@ class TIRNumericGreaterExpression extends TIRExpression {
         this.optype = ntype;
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1042,6 +1171,10 @@ class TIRNumericGreaterEqExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -1055,6 +1188,10 @@ class TIRBinLogicAndxpression extends TIRExpression {
         super(TIRExpressionTag.BinLogicAndExpression, sinfo, "Bool", `(${lhs.expstr} && ${rhs.expstr})`);
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1072,6 +1209,10 @@ class TIRBinLogicOrExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
     }
@@ -1085,6 +1226,10 @@ class TIRBinLogicImpliesExpression extends TIRExpression {
         super(TIRExpressionTag.BinLogicImpliesExpression, sinfo, "Bool", `(${lhs.expstr} ==> ${rhs.expstr})`);
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1110,6 +1255,10 @@ class TIRMapEntryConstructorExpression extends TIRExpression {
         this.vexp = vexp;
     }
 
+    isFailableOperation(): boolean {
+        return this.kexp.isFailableOperation() || this.vexp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.kexp.getUsedVars(), this.vexp.getUsedVars());
     }
@@ -1125,6 +1274,12 @@ class TIRIfExpression extends TIRExpression {
         this.ifentry = ifentry;
         this.elifentries = elifentries;
         this.elseentry = elseentry;
+    }
+
+    isFailableOperation(): boolean {
+        return this.ifentry.test.isFailableOperation() || this.ifentry.value.isFailableOperation() ||
+            this.elifentries.some((ee) => ee.test.isFailableOperation() || ee.value.isFailableOperation()) ||
+            this.elseentry.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1150,6 +1305,13 @@ class TIRSwitchExpression extends TIRExpression {
         this.isexhaustive = isexhaustive;
     }
 
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation() || 
+            this.clauses.some((cc) => cc.match.exp.isFailableOperation() || cc.value.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            !this.isexhaustive;
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(
             this.exp.getUsedVars(),
@@ -1171,6 +1333,13 @@ class TIRMatchExpression extends TIRExpression {
         this.clauses = clauses;
         this.edefault = edefault;
         this.isexhaustive = isexhaustive;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation() || 
+            this.clauses.some((cc) => cc.value.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            !this.isexhaustive;
     }
 
     getUsedVars(): string[] {
@@ -1213,6 +1382,10 @@ class TIRAbortExpression extends TIRExpression {
         this.msg = msg;
     }
 
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return [];
     }
@@ -1228,6 +1401,10 @@ class TIRCoerceExpression extends TIRExpression {
         this.totype = totype;
     }
 
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1241,6 +1418,10 @@ class TIRCoerceSafeExpression extends TIRExpression {
         super(TIRExpressionTag.CoerceSafeExpression, sinfo, totype, `coerce_safe<${totype}>(${exp.expstr})`);
         this.exp = exp;
         this.totype = totype;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
     }
     
     getUsedVars(): string[] {
@@ -1258,6 +1439,10 @@ class TIRInjectExpression extends TIRExpression {
         this.totype = totype;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1273,6 +1458,10 @@ class TIRExtractExpression extends TIRExpression {
         this.totype = totype;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1290,6 +1479,10 @@ class TIRIsNoneExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1303,6 +1496,10 @@ class TIRIsNotNoneExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1316,6 +1513,10 @@ class TIRIsNothingExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1331,6 +1532,10 @@ class TIRIsTypeExpression extends TIRExpression {
         this.oftype = oftype;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1346,6 +1551,10 @@ class TIRIsSubTypeExpression extends TIRExpression {
         this.oftype = oftype;
     }
     
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1359,6 +1568,10 @@ class TIRAsNoneExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1372,6 +1585,10 @@ class TIRAsNotNoneExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1385,6 +1602,10 @@ class TIRAsNothingExpression extends TIRExpression {
         this.exp = exp;
     }
     
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1400,6 +1621,10 @@ class TIRAsTypeExpression extends TIRExpression {
         this.oftype = oftype;
     }
     
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1415,6 +1640,10 @@ class TIRAsSubTypeExpression extends TIRExpression {
         this.oftype = oftype;
     }
     
+    isFailableOperation(): boolean {
+        return true;
+    }
+
     getUsedVars(): string[] {
         return this.exp.getUsedVars();
     }
@@ -1426,10 +1655,14 @@ class TIRCallMemberFunctionExpression extends TIRExpression {
     readonly args: TIRExpression[]; 
 
     constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
-        super(TIRExpressionTag.CallMemberFunctionDynamicExpression, sinfo, rtype, `${thisarg.expstr}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        super(TIRExpressionTag.CallMemberFunctionExpression, sinfo, rtype, `${thisarg.expstr}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
         this.fkey = fkey;
         this.thisarg = thisarg;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.thisarg.isFailableOperation() || this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -1453,6 +1686,10 @@ class TIRCallMemberFunctionDynamicExpression extends TIRExpression {
         this.args = args;
     }
 
+    isFailableOperation(): boolean {
+        return this.thisarg.isFailableOperation() || this.args.some((arg) => arg.isFailableOperation());
+    }
+
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(this.thisarg.getUsedVars(), ...this.args.map((arg) => arg.getUsedVars()));
     }
@@ -1468,6 +1705,10 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRExpression {
         this.fkey = fkey;
         this.thisref = thisref;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -1489,6 +1730,10 @@ class TIRCallMemberFunctionDynamicSelfRefExpression extends TIRExpression {
         this.inferfkey = inferfkey;
         this.thisref = thisref;
         this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
     }
 
     getUsedVars(): string[] {
@@ -1548,7 +1793,7 @@ class TIRCallMemberFunctionSelfRefWithChecksExpression extends TIRExpression {
     readonly args: TIRExpression[]; 
 
     constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisref: string, args: TIRExpression[]) {
-        super(TIRExpressionTag.CallMemberFunctionDynamicSelfRefWithChecksExpression, sinfo, rtype, `ref ${thisref}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        super(TIRExpressionTag.CallMemberFunctionSelfRefWithChecksExpression, sinfo, rtype, `ref ${thisref}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
         this.fkey = fkey;
         this.thisref = thisref;
         this.args = args;
@@ -1598,6 +1843,161 @@ class TIRLiteralValue {
     }
 }
 
+enum TIRStatementTag {
+    NopStatement = "NopStatement",
+    AbortStatement = "AbortStatement",
+    AssertCheckStatement = "AssertCheckStatement",
+    DebugStatement = "DebugStatement",
+
+    VarDeclareStatement = "VarDeclareStatement",
+    VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
+    VarAssignStatement = "VarAssignStatement"
+}
+
+abstract class TIRStatement {
+    readonly tag: TIRStatementTag;
+    readonly sinfo: SourceInfo;
+    readonly stmtstr: string;
+
+    constructor(tag: TIRStatementTag, sinfo: SourceInfo, stmtstr: string) {
+        this.tag = tag;
+        this.sinfo = sinfo;
+        this.stmtstr = stmtstr;
+    }
+
+    isTaskOperation(): boolean {
+        return false;
+    }
+
+    isFailableOperation(): boolean {
+        return false;
+    }
+
+    isOverflowableOperation(): boolean {
+        return false;
+    }
+
+    getUsedVars(): string[] {
+        return [];
+    }
+
+    getModVars(): string[] {
+        return [];
+    }
+}
+
+class TIRNopStatement extends TIRStatement {
+    constructor(sinfo: SourceInfo) {
+        super(TIRStatementTag.NopStatement, sinfo, "nop;");
+    }
+}
+
+class TIRAbortStatement extends TIRStatement {
+    readonly msg: string;
+
+    constructor(sinfo: SourceInfo, msg: string) {
+        super(TIRStatementTag.AbortStatement, sinfo, `abort("${msg}");`);
+        this.msg = msg;
+    }
+
+    isFailableOperation(): boolean {
+        return true;
+    }
+}
+
+class TIRAssertCheckStatement extends TIRStatement {
+    readonly cond: TIRExpression;
+    readonly msg: string;
+
+    constructor(sinfo: SourceInfo, cond: TIRExpression, msg: string) {
+        super(TIRStatementTag.AssertCheckStatement, sinfo, `assert(${cond.expstr}, "${msg}");`);
+        this.cond = cond;
+        this.msg = msg;
+    }
+
+    isFailableOperation(): boolean {
+        return false;
+    }
+
+    getUsedVars(): string[] {
+        return this.cond.getUsedVars();
+    }
+}
+
+class TIRDebugStatement extends TIRStatement {
+    readonly value: TIRExpression;
+
+    constructor(sinfo: SourceInfo, value: TIRExpression) {
+        super(TIRStatementTag.DebugStatement, sinfo, `__debug(${value.expstr});`);
+        this.value = value;
+    }
+
+    getUsedVars(): string[] {
+        return this.value.getUsedVars();
+    }
+}
+
+class TIRVarDeclareStatement extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey) {
+        super(TIRStatementTag.VarDeclareStatement, sinfo, `let ${vname}: ${vtype};`);
+        this.vname = vname;
+        this.vtype = vtype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRVarDeclareAndAssignStatement extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly vexp: TIRExpression;
+    readonly isConst: boolean;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
+        super(TIRStatementTag.VarDeclareAndAssignStatement, sinfo, `${isConst ? "const" : "let"} ${vname}: ${vtype} = ${vexp.expstr};`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.vexp = vexp;
+        this.isConst = isConst;
+    }
+
+    getUsedVars(): string[] {
+        return this.vexp.getUsedVars();
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRVarAssignStatement extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly vexp: TIRExpression;
+    readonly isConst: boolean;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
+        super(TIRStatementTag.VarAssignStatement, sinfo, `${vname} = ${vexp.expstr};`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.vexp = vexp;
+        this.isConst = isConst;
+    }
+
+    getUsedVars(): string[] {
+        return this.vexp.getUsedVars();
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
 export {
     TIRCodePack,
     TIRExpressionTag, TIRExpression, TIRInvalidExpression,
@@ -1624,5 +2024,9 @@ export {
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,
-    TIRLiteralValue
+    TIRLiteralValue,
+    TIRStatementTag,
+    TIRStatement,
+    TIRNopStatement, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement,
+    TIRVarDeclareStatement, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement
 };
