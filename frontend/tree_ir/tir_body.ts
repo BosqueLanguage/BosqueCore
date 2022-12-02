@@ -74,9 +74,16 @@ enum TIRExpressionTag {
     BinMultExpression = "BinMultExpression",
     BinDivExpression = "BinDivExpression",
 
-    BinKeyEqExpression = "BinKeyEqExpression",
-    BinKeyNeqExpression = "BinKeyNeqExpression",
-    BinKeyLessExpression = "BinKeyLessExpression",
+    BinKeyEqBothUniqueExpression = "BinKeyEqBothUniqueExpression",
+    BinKeyEqOneUniqueExpression = "BinKeyEqOneUniqueExpression",
+    BinKeyEqGeneralExpression = "BinKeyEqGeneralExpression",
+
+    BinKeyNeqBothUniqueExpression = "BinKeyNeqBothUniqueExpression",
+    BinKeyNeqOneUniqueExpression = "BinKeyNeqOneUniqueExpression",
+    BinKeyNeqGeneralExpression = "BinKeyNeqGeneralExpression",
+
+    BinKeyUniqueLessExpression = "BinKeyUniqueLessExpression",
+    BinKeyGeneralLessExpression = "BinKeyGeneralLessExpression",
 
     NumericEqExpression = "NumericEqExpression",
     NumericNeqExpression = "NumericNeqExpression",
@@ -105,11 +112,16 @@ enum TIRExpressionTag {
     ExtractExpression = "ExtractExpression",
     CreateCodePackExpression = "CreateCodePackExpression",
 
+    IsTypeCheckAlwaysExpression = "IsTypeCheckAlwaysExpression",
+    IsNotTypeCheckAlwaysExpression = "IsNotTypeCheckAlwaysExpression",
     IsNoneExpression = "IsNoneExpression",
     IsNotNoneExpression = "IsNotNoneExpression",
     IsNothingExpression = "IsNothingExpression",
+    IsNotNothingExpression = "IsNotNothingExpression",
     IsTypeExpression = "IsTypeExpression",
+    IsNotTypeExpression = "IsNotTypeExpression",
     IsSubTypeExpression = "IsSubTypeExpression",
+    IsNotSubTypeExpression = "IsNotSubTypeExpression",
 
     AsNoneExpression = "AsNoneExpression",
     AsNotNoneExpression = "AsNotNoneExpression",
@@ -991,13 +1003,56 @@ class TIRBinDivExpression extends TIRExpression {
     }
 }
 
-class TIRBinKeyEqExpression extends TIRExpression {
-    readonly optype: TIRTypeKey;
+class TIRBinKeyEqAlwaysExpression extends TIRExpression {
+    readonly lhs: TIRExpression;
+    readonly rhs: TIRExpression;
+    readonly bv: boolean;
+
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, bv: boolean) {
+        super(TIRExpressionTag.BinKeyEqBothUniqueExpression, sinfo, "Bool", `KeyType::aeq(${lhs.expstr}, ${rhs.expstr})===${bv}`);
+        this.lhs = lhs;
+        this.rhs = rhs;
+        this.bv = bv;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    }
+}
+
+
+class TIRBinKeyNeqAlwaysExpression extends TIRExpression {
+    readonly lhs: TIRExpression;
+    readonly rhs: TIRExpression;
+    readonly bv: boolean;
+
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, bv: boolean) {
+        super(TIRExpressionTag.BinKeyEqBothUniqueExpression, sinfo, "Bool", `KeyType::aneq(${lhs.expstr}, ${rhs.expstr})===${bv}`);
+        this.lhs = lhs;
+        this.rhs = rhs;
+        this.bv = bv;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    }
+}
+
+class TIRBinKeyEqBothUniqueExpression extends TIRExpression {
+    readonly optype: TIRTypeKey; //both must be the same unique key type
     readonly lhs: TIRExpression;
     readonly rhs: TIRExpression;
 
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, optype: TIRTypeKey) {
-        super(TIRExpressionTag.BinKeyEqExpression, sinfo, "Bool", `KeyType::eq<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
+        super(TIRExpressionTag.BinKeyEqBothUniqueExpression, sinfo, "Bool", `KeyType::ueq<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
         this.optype = optype;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -1012,13 +1067,63 @@ class TIRBinKeyEqExpression extends TIRExpression {
     }
 }
 
-class TIRBinKeyNeqExpression extends TIRExpression {
-    readonly optype: TIRTypeKey;
+class TIRBinKeyEqOneUniqueExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey; //the unique key type
+    readonly uarg: TIRExpression; //the value that has the unique type
+
+    readonly gtype: TIRTypeKey; //The type of the non-unique value
+    readonly garg: TIRExpression; //The arg that has the non-unique type
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, uarg: TIRExpression, gtype: TIRTypeKey, garg: TIRExpression) {
+        super(TIRExpressionTag.BinKeyEqOneUniqueExpression, sinfo, "Bool", `KeyType::seq<${oftype}, ${gtype}>(${uarg.expstr}, ${garg.expstr})`);
+        this.oftype = oftype;
+        this.uarg = uarg;
+
+        this.gtype = gtype;
+        this.garg = garg;
+    }
+
+    isFailableOperation(): boolean {
+        return this.uarg.isFailableOperation() || this.garg.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.uarg.getUsedVars(), this.garg.getUsedVars());
+    }
+}
+
+class TIRBinKeyEqGeneralExpression extends TIRExpression {
+    readonly lhstype: TIRTypeKey;
+    readonly lhs: TIRExpression;
+
+    readonly rhstype: TIRTypeKey;
+    readonly rhs: TIRExpression;
+
+    constructor(sinfo: SourceInfo, lhstype: TIRTypeKey, lhs: TIRExpression, rhstype: TIRTypeKey, rhs: TIRExpression) {
+        super(TIRExpressionTag.BinKeyEqGeneralExpression, sinfo, "Bool", `KeyType::geq<${lhstype}, ${rhstype}>(${lhs.expstr}, ${rhs.expstr})`);
+        this.lhstype = lhstype;
+        this.lhs = lhs;
+
+        this.rhstype = rhstype;
+        this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    }
+}
+
+class TIRBinKeyNeqBothUniqueExpression extends TIRExpression {
+    readonly optype: TIRTypeKey; //both must be the same unique key type
     readonly lhs: TIRExpression;
     readonly rhs: TIRExpression;
 
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, optype: TIRTypeKey) {
-        super(TIRExpressionTag.BinKeyNeqExpression, sinfo, "Bool", `KeyType::neq<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
+        super(TIRExpressionTag.BinKeyNeqBothUniqueExpression, sinfo, "Bool", `KeyType::uneq<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
         this.optype = optype;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -1033,13 +1138,84 @@ class TIRBinKeyNeqExpression extends TIRExpression {
     }
 }
 
-class TIRBinKeyLessExpression extends TIRExpression {
+class TIRBinKeyNeqOneUniqueExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey; //the unique key type
+    readonly uarg: TIRExpression; //the value that has the unique type
+
+    readonly gtype: TIRTypeKey; //The type of the non-unique value
+    readonly garg: TIRExpression; //The arg that has the non-unique type
+
+    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, uarg: TIRExpression, gtype: TIRTypeKey, garg: TIRExpression) {
+        super(TIRExpressionTag.BinKeyNeqOneUniqueExpression, sinfo, "Bool", `KeyType::sneq<${oftype}, ${gtype}>(${uarg.expstr}, ${garg.expstr})`);
+        this.oftype = oftype;
+        this.uarg = uarg;
+
+        this.gtype = gtype;
+        this.garg = garg;
+    }
+
+    isFailableOperation(): boolean {
+        return this.uarg.isFailableOperation() || this.garg.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.uarg.getUsedVars(), this.garg.getUsedVars());
+    }
+}
+
+class TIRBinKeyNeqGeneralExpression extends TIRExpression {
+    readonly lhstype: TIRTypeKey;
+    readonly lhs: TIRExpression;
+
+    readonly rhstype: TIRTypeKey;
+    readonly rhs: TIRExpression;
+
+    constructor(sinfo: SourceInfo, lhstype: TIRTypeKey, lhs: TIRExpression, rhstype: TIRTypeKey, rhs: TIRExpression) {
+        super(TIRExpressionTag.BinKeyNeqGeneralExpression, sinfo, "Bool", `KeyType::gneq<${lhstype}, ${rhstype}>(${lhs.expstr}, ${rhs.expstr})`);
+        this.lhstype = lhstype;
+        this.lhs = lhs;
+
+        this.rhstype = rhstype;
+        this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    }
+}
+
+class TIRBinKeyUniqueLessExpression extends TIRExpression {
     readonly optype: TIRTypeKey;
     readonly lhs: TIRExpression;
     readonly rhs: TIRExpression;
 
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, optype: TIRTypeKey) {
-        super(TIRExpressionTag.BinKeyLessExpression, sinfo, "Bool", `KeyType::less<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
+        super(TIRExpressionTag.BinKeyUniqueLessExpression, sinfo, "Bool", `KeyType::uless<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
+        this.optype = optype;
+        this.lhs = lhs;
+        this.rhs = rhs;
+    }
+
+    isFailableOperation(): boolean {
+        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    }
+}
+
+class TIRBinKeyGeneralLessExpression extends TIRExpression {
+    readonly optype: TIRTypeKey;
+    readonly lhs: TIRExpression;
+    readonly rhs: TIRExpression;
+
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, optype: TIRTypeKey) {
+        super(TIRExpressionTag.BinKeyGeneralLessExpression, sinfo, "Bool", `KeyType::gless<${optype}>(${lhs.expstr}, ${rhs.expstr})`);
         this.optype = optype;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -1375,10 +1551,12 @@ class TIRTaskGetIDExpression extends TIRExpression {
 }
 
 class TIRAbortExpression extends TIRExpression {
+    readonly afterexp: TIRExpression;
     readonly msg: string;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, msg: string) {
-        super(TIRExpressionTag.AbortExpression, sinfo, etype, `abort<${etype}>("${msg}")`);
+    constructor(sinfo: SourceInfo, afterexp: TIRExpression, etype: TIRTypeKey, msg: string) {
+        super(TIRExpressionTag.AbortExpression, sinfo, etype, `abort<${etype}>(${afterexp.expstr}, "${msg}")`);
+        this.afterexp = afterexp;
         this.msg = msg;
     }
 
@@ -1387,26 +1565,7 @@ class TIRAbortExpression extends TIRExpression {
     }
 
     getUsedVars(): string[] {
-        return [];
-    }
-}
-
-class TIRCoerceExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly totype: TIRTypeKey;
-
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceExpression, sinfo, totype, `coerce<${totype}>(${exp.expstr})`);
-        this.exp = exp;
-        this.totype = totype;
-    }
-
-    isFailableOperation(): boolean {
-        return true;
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
+        return this.afterexp.getUsedVars();
     }
 }
 
@@ -1471,6 +1630,49 @@ class TIRExtractExpression extends TIRExpression {
 class TIRCreateCodePackExpression = "CreateCodePackExpression",
 */
 
+class TIRIsTypeCheckAlwaysExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    readonly bv: boolean;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, bv: boolean) {
+        super(TIRExpressionTag.IsTypeCheckAlwaysExpression, sinfo, "Bool", `istypealways<${oftype}>(${exp.expstr})===${bv}`);
+        this.exp = exp;
+        this.oftype = oftype;
+        this.bv = bv;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+
+class TIRIsNotTypeCheckAlwaysExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    readonly bv: boolean;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, bv: boolean) {
+        super(TIRExpressionTag.IsNotTypeCheckAlwaysExpression, sinfo, "Bool", `isnottypealways<${oftype}>(${exp.expstr})===${bv}`);
+        this.exp = exp;
+        this.oftype = oftype;
+        this.bv = bv;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
 class TIRIsNoneExpression extends TIRExpression {
     readonly exp: TIRExpression;
     
@@ -1492,7 +1694,7 @@ class TIRIsNotNoneExpression extends TIRExpression {
     readonly exp: TIRExpression;
     
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNotNoneExpression, sinfo, "Bool", `!isnone(${exp.expstr})`);
+        super(TIRExpressionTag.IsNotNoneExpression, sinfo, "Bool", `isnotnone(${exp.expstr})`);
         this.exp = exp;
     }
     
@@ -1510,6 +1712,24 @@ class TIRIsNothingExpression extends TIRExpression {
     
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsNothingExpression, sinfo, "Bool", `isnothing(${exp.expstr})`);
+        this.exp = exp;
+    }
+    
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+
+class TIRIsNotNothingExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+        super(TIRExpressionTag.IsNotNothingExpression, sinfo, "Bool", `isnotnothing(${exp.expstr})`);
         this.exp = exp;
     }
     
@@ -1541,12 +1761,50 @@ class TIRIsTypeExpression extends TIRExpression {
     }
 }
 
+class TIRIsNotTypeExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.IsNotTypeExpression, sinfo, "Bool", `isnottype<${oftype}>(${exp.expstr})`);
+        this.exp = exp;
+        this.oftype = oftype;
+    }
+    
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
 class TIRIsSubTypeExpression extends TIRExpression {
     readonly exp: TIRExpression;
     readonly oftype: TIRTypeKey;
     
     constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
         super(TIRExpressionTag.IsSubTypeExpression, sinfo, "Bool", `issubtype<${oftype}>(${exp.expstr})`);
+        this.exp = exp;
+        this.oftype = oftype;
+    }
+    
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.exp.getUsedVars();
+    }
+}
+
+class TIRIsNotSubTypeExpression extends TIRExpression {
+    readonly exp: TIRExpression;
+    readonly oftype: TIRTypeKey;
+    
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.IsNotSubTypeExpression, sinfo, "Bool", `isnotsubtype<${oftype}>(${exp.expstr})`);
         this.exp = exp;
         this.oftype = oftype;
     }
@@ -2013,14 +2271,16 @@ export {
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
     TIRPrefixNotOp, TIRPrefixNegateOp,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,
-    TIRBinKeyEqExpression, TIRBinKeyNeqExpression, TIRBinKeyLessExpression,
+    TIRBinKeyEqAlwaysExpression, TIRBinKeyNeqAlwaysExpression,
+    TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression,
     TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression,
     TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
     TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
-    TIRAbortExpression, TIRCoerceExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
+    TIRAbortExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
     jjjj,
-    TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsTypeExpression, TIRIsSubTypeExpression,
+    TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression,
+    TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,

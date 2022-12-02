@@ -7,8 +7,8 @@ import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNotOp, SpecialConstructorExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqExpression, TIRBinKeyLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAbortExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp } from "../tree_ir/tir_body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNotOp, SpecialConstructorExpression } from "../ast/body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceExpression, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAbortExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinKeyEqAlwaysExpression, TIRBinKeyNeqAlwaysExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption } from "./type_environment";
 
@@ -497,10 +497,10 @@ class TypeChecker {
         this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0 || renvs.fenvs.length !== 0), `typecheck is always ${renvs.fenvs.length === 0 ? "true" : "false"}`);
 
         if(renvs.tenvs.length === 0) {
-            return {chkexp: new TIRLiteralBoolExpression(sinfo, false), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
+            return {chkexp: new TIRIsTypeCheckAlwaysExpression(sinfo, env.expressionResult, tiroftype, false), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
         }
         else if(renvs.fenvs.length === 0) {
-            return {chkexp: new TIRLiteralBoolExpression(sinfo, true), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
+            return {chkexp: new TIRIsTypeCheckAlwaysExpression(sinfo, env.expressionResult, tiroftype, true), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
         }
         else {
             if (oftype.isNoneType()) {
@@ -531,6 +531,71 @@ class TypeChecker {
         return env.setResultExpressionInfo(splits.chkexp, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
     }
 
+    private processTypeIsFromEquality(sinfo: SourceInfo, eqop: TIRExpression, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const splits = this.convertToTypeNotTypeFlowsOnResult(oftype, env);
+        assert((splits.tenvs.length === 0 || splits.fenvs.length !== 0), "This should never fail since we check for type compatibility on eq before this");
+
+        const tflows = splits.tenvs.map((tf) => tf.inferFlowInfo(eqop, this.getSpecialBoolType(), FlowTypeTruthValue.Unknown)); //could still be false on value equality
+        const fflows = splits.tenvs.map((tf) => tf.inferFlowInfo(eqop, this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+        return env.setResultExpressionInfo(eqop, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
+    }
+
+    private splitOnTypeCheckIsNot(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): {chkexp: TIRExpression, tenvs: FlowTypeInfoOption[], fenvs: FlowTypeInfoOption[]} {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const renvs = this.convertToTypeNotTypeFlowsOnResult(oftype, env);
+        this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0 || renvs.fenvs.length !== 0), `typecheck is always ${renvs.fenvs.length === 0 ? "true" : "false"}`);
+
+        if(renvs.tenvs.length === 0) {
+            return {chkexp: new TIRIsNotTypeCheckAlwaysExpression(sinfo, env.expressionResult, tiroftype, true), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+        }
+        else if(renvs.fenvs.length === 0) {
+            return {chkexp: new TIRIsNotTypeCheckAlwaysExpression(sinfo, env.expressionResult, tiroftype, false), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+        }
+        else {
+            if (oftype.isNoneType()) {
+                return {chkexp: new TIRIsNotNoneExpression(sinfo, env.expressionResult), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+            }
+            else if (oftype.isSomeType()) {
+                return {chkexp: new TIRIsNoneExpression(sinfo, env.expressionResult), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+            }
+            else if (oftype.isNothingType()) {
+                return {chkexp: new TIRIsNotNothingExpression(sinfo, env.expressionResult), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+            }
+            else if (oftype.options.length === 1 && ResolvedType.isUniqueType(oftype)) {
+                return {chkexp: new TIRIsNotTypeExpression(sinfo, env.expressionResult, tiroftype), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+            }
+            else {
+                return {chkexp: new TIRIsNotSubTypeExpression(sinfo, env.expressionResult, tiroftype), tenvs: renvs.fenvs, fenvs: renvs.tenvs};
+            }
+        }
+    }
+
+    private processTypeIsNot(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment {
+        const tiroftype = this.toTIRTypeKey(oftype);
+        const splits = this.splitOnTypeCheckIsNot(sinfo, env, oftype);
+
+        const tflows = splits.tenvs.map((tf) => tf.inferFlowInfo(splits.chkexp, this.getSpecialBoolType(), FlowTypeTruthValue.True));
+        const fflows = splits.tenvs.map((tf) => tf.inferFlowInfo(splits.chkexp, this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+        return env.setResultExpressionInfo(splits.chkexp, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
+    }
+
+    private processTypeIsNotFromEquality(sinfo: SourceInfo, eqop: TIRExpression, env: ExpressionTypeEnvironment, oftype: ResolvedType): ExpressionTypeEnvironment {
+        const tiroftype = this.toTIRTypeKey(oftype);
+
+        const splits = this.convertToTypeNotTypeFlowsOnResult(oftype, env);
+        assert((splits.tenvs.length === 0 || splits.fenvs.length !== 0), "This should never fail since we check for type compatibility on eq before this");
+
+        const tflows = splits.tenvs.map((tf) => tf.inferFlowInfo(eqop, this.getSpecialBoolType(), FlowTypeTruthValue.False)); 
+        const fflows = splits.tenvs.map((tf) => tf.inferFlowInfo(eqop, this.getSpecialBoolType(), FlowTypeTruthValue.Unknown)); //could still be false on value equality
+
+        return env.setResultExpressionInfo(eqop, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
+    }
+
     private splitOnTypeCheckAs(sinfo: SourceInfo, env: ExpressionTypeEnvironment, oftype: ResolvedType): {chkexp: TIRExpression, tenvs: FlowTypeInfoOption[], fenvs: FlowTypeInfoOption[]} {
         const tiroftype = this.toTIRTypeKey(oftype);
 
@@ -538,7 +603,7 @@ class TypeChecker {
         this.raiseErrorIf(sinfo, this.m_doExhaustiveCheck && (renvs.tenvs.length === 0 || renvs.fenvs.length !== 0), `typecheck is always ${renvs.fenvs.length === 0 ? "true" : "false"}`);
 
         if(renvs.tenvs.length === 0) {
-            return {chkexp: new TIRAbortExpression(sinfo, tiroftype, "Infeasible flow"), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
+            return {chkexp: new TIRAbortExpression(sinfo, env.expressionResult, tiroftype, "Infeasible flow"), tenvs: renvs.tenvs, fenvs: renvs.fenvs};
         }
         else if(renvs.fenvs.length === 0) {
             return {chkexp: this.emitSafeCoerceIfNeeded(env, sinfo, oftype).expressionResult, tenvs: renvs.tenvs, fenvs: renvs.fenvs};
@@ -2322,6 +2387,19 @@ class TypeChecker {
         return this.setResultExpressionBoolPassThrough(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(trgttype)), trgttype);
     }
 
+    private emitCoerceToInferTypeIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo): ExpressionTypeEnvironment {
+        const trgttype = this.envExpressionGetInferType(env);
+        return this.emitSafeCoerceIfNeeded(env, sinfo, trgttype);
+    }
+
+    private emitSafeCoerceToKeyTypeIfNeeded(env: ExpressionTypeEnvironment, sinfo: SourceInfo): ExpressionTypeEnvironment {
+        if(this.subtypeOf(env.trepr, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(env.trepr.options)) {
+            return env;
+        } 
+
+        return this.emitCoerceToInferTypeIfNeeded(env, sinfo);
+    }
+
     private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], typescope: TemplateBindScope) {
         for(let i = 0; i < terms.length; ++i) {
             const terminfo = terms[i];
@@ -2905,7 +2983,7 @@ class TypeChecker {
             const roftype = ResolvedType.createSingle(ResolvedTupleAtomType.create(eargs.map((ee) => this.envExpressionGetInferType(ee))));
             const tiroftype = this.toTIRTypeKey(roftype);
 
-            const cargs = eargs.map((arg) => this.emitCoerceIfNeeded(arg, exp.sinfo, this.envExpressionGetInferType(arg)));
+            const cargs = eargs.map((arg) => this.emitCoerceToInferTypeIfNeeded(arg, exp.sinfo));
             return this.setResultExpression(env, new TIRConstructorTupleExpression(exp.sinfo, tiroftype, cargs.map((arg) => arg.expressionResult)), roftype);
         }
         else {
@@ -2939,7 +3017,7 @@ class TypeChecker {
             })));
             const tiroftype = this.toTIRTypeKey(roftype);
 
-            const cargs = eargs.map((arg) => this.emitCoerceIfNeeded(arg.penv, exp.sinfo, this.envExpressionGetInferType(arg.penv)));
+            const cargs = eargs.map((arg) => this.emitCoerceToInferTypeIfNeeded(arg.penv, exp.sinfo));
             return this.setResultExpression(env, new TIRConstructorRecordExpression(exp.sinfo, tiroftype, cargs.map((arg) => arg.expressionResult)), roftype);
         }
         else {
@@ -2975,7 +3053,7 @@ class TypeChecker {
             const roftype = ResolvedType.createSingle(ResolvedEphemeralListType.create(eargs.map((ee) => this.envExpressionGetInferType(ee))));
             const tiroftype = this.toTIRTypeKey(roftype);
 
-            const cargs = eargs.map((arg) => this.emitCoerceIfNeeded(arg, exp.sinfo, this.envExpressionGetInferType(arg)));
+            const cargs = eargs.map((arg) => this.emitCoerceToInferTypeIfNeeded(arg, exp.sinfo));
             return this.setResultExpression(env, new TIRConstructorEphemeralValueList(exp.sinfo, tiroftype, cargs.map((arg) => arg.expressionResult)), roftype);
         }
         else {
@@ -3003,7 +3081,7 @@ class TypeChecker {
             const roftype = this.getSomethingType(T);
             const tiroftype = this.toTIRTypeKey(roftype);
 
-            const consenv = this.setResultExpression(ecast, new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, roftype, undefined);
+            const consenv = this.setResultExpression(ecast, new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype, undefined);
             if(desiredtype === undefined) {
                 return consenv; 
             }
@@ -3153,14 +3231,29 @@ class TypeChecker {
             this.raiseErrorIf(exp.sinfo, !this.subtypeOf(ktype, this.getSpecialKeyTypeConceptType()) || !ResolvedType.isGroundedType(ktype.options), "Invalid Key type argument");
 
             this.raiseErrorIf(exp.sinfo, exp.args.length !== 2, "expected 2 arguments");
-            const tlhs = this.emitCoerceIfNeeded(this.checkExpression(env, exp.args[0], ktype), exp.sinfo, ktype);
-            const trhs = this.emitCoerceIfNeeded(this.checkExpression(env, exp.args[1], ktype), exp.sinfo, ktype);
+            const lhsenv = this.checkExpression(env, exp.args[0], ktype);
+            this.raiseErrorIf(exp.sinfo, !this.subtypeOf(this.envExpressionGetInferType(lhsenv), ktype), `expected arg of type ${ktype.typeID} but got ${this.envExpressionGetInferType(lhsenv).typeID}`);
+            const rhsenv = this.checkExpression(env, exp.args[1], ktype);
+            this.raiseErrorIf(exp.sinfo, !this.subtypeOf(this.envExpressionGetInferType(rhsenv), ktype), `expected arg of type ${ktype.typeID} but got ${this.envExpressionGetInferType(rhsenv).typeID}`);
+
+            const tlhs = this.emitSafeCoerceIfNeeded(lhsenv, exp.sinfo, ktype);
+            const trhs = this.emitSafeCoerceIfNeeded(rhsenv, exp.sinfo, ktype);
 
             if (exp.name === "equal") {
-                return this.setResultExpression(env, new TIRBinKeyEqExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
+                if(ResolvedType.isUniqueType(ktype)) {
+                    return this.setResultExpression(env, new TIRBinKeyEqBothUniqueExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
+                }
+                else {
+                    return this.setResultExpression(env, new TIRBinKeyEqGeneralExpression(exp.sinfo, this.toTIRTypeKey(ktype), tlhs.expressionResult, this.toTIRTypeKey(ktype), trhs.expressionResult), this.getSpecialBoolType());
+                }
             }
             else {
-                return this.setResultExpression(env, new TIRBinKeyLessExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
+                if(ResolvedType.isUniqueType(ktype)) {
+                    return this.setResultExpression(env, new TIRBinKeyUniqueLessExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
+                }
+                else {
+                    return this.setResultExpression(env, new TIRBinKeyGeneralLessExpression(exp.sinfo, tlhs.expressionResult, trhs.expressionResult, this.toTIRTypeKey(ktype)), this.getSpecialBoolType());
+                }
             }
         }
         else if ((oftype.typeID === "String" || oftype.typeID === "ASCIIString") && exp.name === "interpolate") {
@@ -3192,52 +3285,40 @@ class TypeChecker {
 
     private checkLogicActionAndExpression(env: ExpressionTypeEnvironment, exp: LogicActionAndExpression): ExpressionTypeEnvironment {
         const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
-        
+        this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck && bargs.some((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.False), "Expression always evaluates to false");
+        this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck && bargs.every((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.True), "Expression always evaluates to true");
+
+        let tv = FlowTypeTruthValue.Unknown;
         if(bargs.some((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.False)) {
-            this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to false");
-
-            return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, false), this.getSpecialBoolType(), FlowTypeTruthValue.False);
+            tv = FlowTypeTruthValue.False;
         }
-        else {
-            const margs = bargs.filter((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.Unknown);
-
-            if(margs.length === 0) {
-                this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to true");
-
-                return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, true), this.getSpecialBoolType(), FlowTypeTruthValue.True);
-            }
-            else {
-                //
-                //TODO: we can split args here on truth value to make this flow sensitive too -- 1 option where they are all true + k options here each is individually false
-                //
-                return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
-            }
+        if(bargs.every((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.True)) {
+            tv = FlowTypeTruthValue.True;
         }
+
+        //
+        //TODO: we can split args here on truth value to make this flow sensitive too -- 1 option where they are all true + k options here each is individually false
+        //
+        return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType(), tv);
     }
 
     private checkLogicActionOrExpression(env: ExpressionTypeEnvironment, exp: LogicActionOrExpression): ExpressionTypeEnvironment {
         const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
-        
+        this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck && bargs.some((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.True), "Expression always evaluates to true");
+        this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck && bargs.every((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.False), "Expression always evaluates to false");
+
+        let tv = FlowTypeTruthValue.Unknown;
+        if(bargs.every((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.False)) {
+            tv = FlowTypeTruthValue.False;
+        }
         if(bargs.some((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.True)) {
-            this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to true");
-
-            return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, true), this.getSpecialBoolType(), FlowTypeTruthValue.False);
+            tv = FlowTypeTruthValue.True;
         }
-        else {
-            const margs = bargs.filter((ee) => this.envExpressionGetInferTruth(ee) === FlowTypeTruthValue.Unknown);
 
-            if(margs.length === 0) {
-                this.raiseErrorIf(exp.sinfo, this.m_doExhaustiveCheck, "Expression always evaluates to false");
-
-                return this.setResultExpression(env, new TIRLiteralBoolExpression(exp.sinfo, false), this.getSpecialBoolType(), FlowTypeTruthValue.False);
-            }
-            else {
-                //
-                //TODO: we can split args here on truth value to make this flow sensitive too
-                //
-                return this.setResultExpression(env, new TIRLogicActionAndExpression(exp.sinfo, margs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
-            }
-        }
+        //
+        //TODO: we can split args here on truth value to make this flow sensitive too -- 1 option where they are all true + k options here each is individually false
+        //
+        return this.setResultExpression(env, new TIRLogicActionOrExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType(), tv);
     }
 
     private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex): ExpressionTypeEnvironment {
@@ -3458,310 +3539,236 @@ class TypeChecker {
 
     private strongEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment {
         const lhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), lhsarg, undefined);
+        const lhsinfertype = this.envExpressionGetInferType(lhsenv);
+        const tirlhsinfertype = this.toTIRTypeKey(lhsinfertype);
+        
         const rhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), rhsarg, undefined);
+        const rhsinfertype = this.envExpressionGetInferType(rhsenv);
+        const tirrhsinfertype = this.toTIRTypeKey(rhsinfertype);
+        
+        if (this.m_doExhaustiveCheck && !this.subtypeOf(lhsinfertype, rhsinfertype) && !this.subtypeOf(rhsinfertype, lhsinfertype)) {
+            this.raiseError(sinfo, `Types ${lhsinfertype.typeID} and ${rhsinfertype.typeID} are not comparable or comparision is always true/false`);
+        }
 
-        const action = this.checkValueEq(lhsarg, this.envExpressionGetInferType(lhsenv), rhsarg, this.envExpressionGetInferType(rhsenv));
-        this.raiseErrorIf(sinfo, action === "err", "Compared types are not equivalent (or not unique modulo none)");
+        const action = this.checkValueEq(lhsarg, lhsinfertype, rhsarg, rhsinfertype);
+        this.raiseErrorIf(sinfo, action === "err", "Types are not sufficiently overlapping");
 
         if(action === "truealways" || action === "falsealways") {
-            return this.setResultExpression(env, new TIRLiteralBoolExpression(sinfo, action === "truealways"), this.getSpecialBoolType(), action === "truealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False);
+            return this.setResultExpression(env, new TIRBinKeyEqAlwaysExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, action === "truealways"), this.getSpecialBoolType(), action === "truealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False);
         }
         else if (action === "lhsnone") {
             return this.processTypeIs(sinfo, rhsenv, this.getSpecialNoneType());
         }
         else if (action === "rhsnone") {
-            this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNoneType()), lhsreg, this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.flowtype), undefined);
-            
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [lhs]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIs(sinfo, lhsenv, this.getSpecialNoneType());
         }
         else if (action === "lhsnothing") {
-            this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNothingType()), rhsreg, this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.flowtype), undefined);
-            
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNothingType(), [rhs]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIs(sinfo, rhsenv, this.getSpecialNothingType());
         }
         else if (action === "rhsnothing") {
-            this.m_emitter.emitTypeOf(sinfo, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNothingType()), lhsreg, this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.flowtype), undefined);
-            
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNothingType(), [lhs]);
-            return [
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
-        }
-        if (action === "lhssomekeywithunique") {
-            xxxx;
-        }
-        else if (action === "rhssomekeywithunique") {
-            xxxx;
-        }
-        else if (action === "stdkeywithunique") {
-
+            return this.processTypeIs(sinfo, lhsenv, this.getSpecialNothingType());
         }
         else {
-            if (action === "lhssomekey") {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(olhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !olhs.flowtype.isGroundedType(), "Type must be grounded");
+            if (action === "stdkeywithunique") {
+                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
 
-                const oftypereg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), rhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), this.m_emitter.registerResolvedTypeReference(orhs.flowtype), undefined);
-                
-                const sguard = new MIRStatmentGuard(new MIRArgGuard(oftypereg), "defaultonfalse", new MIRConstantFalse());
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), trgt, sguard, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
-                
-                const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [rhs]);
-                return [
-                    ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False))),
-                    ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)))
-                ];
+                const lhsunique = this.emitCoerceToInferTypeIfNeeded(lhsenv, lhsarg.sinfo);
+                const rhsunique = this.emitCoerceToInferTypeIfNeeded(rhsenv, rhsarg.sinfo);
+                const eqop = new TIRBinKeyEqBothUniqueExpression(sinfo, lhsunique.expressionResult, rhsunique.expressionResult, tirlhsinfertype);
+
+                return this.setResultExpression(env, eqop, this.getSpecialBoolType());
             }
-            else if (action === "rhssomekey") {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(orhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !orhs.flowtype.isGroundedType(), "Type must be grounded");
+            else if (action === "lhssomekeywithunique") {
+                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
 
-                const oftypereg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(orhs.flowtype), lhsreg, this.m_emitter.registerResolvedTypeReference(olhs.layout), this.m_emitter.registerResolvedTypeReference(olhs.flowtype), undefined);
-                
-                const sguard = new MIRStatmentGuard(new MIRArgGuard(oftypereg), "defaultonfalse", new MIRConstantFalse());
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(orhs.flowtype), trgt, sguard, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
+                const eeunique = this.emitCoerceToInferTypeIfNeeded(lhsenv, lhsarg.sinfo);
+                const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirlhsinfertype, eeunique.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
-                const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [lhs]);
-                return [
-                    ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False))),
-                    ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)))
-                ];
+                return this.processTypeIsFromEquality(sinfo, eqop, env, lhsinfertype);
+            }
+            else if (action === "rhssomekeywithunique") {
+                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
+
+                const eeunique = this.emitCoerceToInferTypeIfNeeded(rhsenv, rhsarg.sinfo);
+                const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirrhsinfertype, eeunique.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
+
+                return this.processTypeIsFromEquality(sinfo, eqop, env, rhsinfertype);
             }
             else {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(olhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !olhs.flowtype.isGroundedType(), "Type must be grounded");
+                const eqop = new TIRBinKeyEqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(orhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !orhs.flowtype.isGroundedType(), "Type must be grounded");
+                if (action === "lhssomekey") {
+                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
 
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), trgt, undefined, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
+                    return this.processTypeIsFromEquality(sinfo, eqop, env, lhsinfertype);
+                }
+                else if (action === "rhssomekey") {
+                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
 
-                return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)];
+                    return this.processTypeIsFromEquality(sinfo, eqop, env, rhsinfertype);
+                }
+                else {
+                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
+
+                    return this.setResultExpression(env, eqop, this.getSpecialBoolType());
+                }
             }
         }
     }
 
-    private strongNEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment[] {
-        const lhsreg = this.m_emitter.generateTmpRegister();
-        const lhs = this.checkExpression(env, lhsarg, lhsreg, undefined);
-        let olhs = lhs.getExpressionResult().valtype;
+    private strongNEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment {
+        const lhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), lhsarg, undefined);
+        const lhsinfertype = this.envExpressionGetInferType(lhsenv);
+        const tirlhsinfertype = this.toTIRTypeKey(lhsinfertype);
+        
+        const rhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), rhsarg, undefined);
+        const rhsinfertype = this.envExpressionGetInferType(rhsenv);
+        const tirrhsinfertype = this.toTIRTypeKey(rhsinfertype);
+        
+        if (this.m_doExhaustiveCheck && !this.subtypeOf(lhsinfertype, rhsinfertype) && !this.subtypeOf(rhsinfertype, lhsinfertype)) {
+            this.raiseError(sinfo, `Types ${lhsinfertype.typeID} and ${rhsinfertype.typeID} are not comparable or comparision is always true/false`);
+        }
 
-        const rhsreg = this.m_emitter.generateTmpRegister();
-        const rhs = this.checkExpression(env, rhsarg, rhsreg, undefined);
-        let orhs = rhs.getExpressionResult().valtype;
-
-        const action = this.checkValueEq(lhsarg, lhs.getExpressionResult().valtype.flowtype, rhsarg, rhs.getExpressionResult().valtype.flowtype);
-        this.raiseErrorIf(sinfo, action === "err", "Compared types are not equivalent (or not unique modulo none)");
+        const action = this.checkValueEq(lhsarg, lhsinfertype, rhsarg, rhsinfertype);
+        this.raiseErrorIf(sinfo, action === "err", "Types are not sufficiently overlapping");
 
         if(action === "truealways" || action === "falsealways") {
-            this.m_emitter.emitLoadConstBool(sinfo, action === "falsealways" ? true : false, trgt);
-            return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), action === "falsealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False)];
+            return this.setResultExpression(env, new TIRBinKeyNeqAlwaysExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, action === "falsealways"), this.getSpecialBoolType(), action === "falsealways" ? FlowTypeTruthValue.True : FlowTypeTruthValue.False);
         }
         else if (action === "lhsnone") {
-            //note use of negation here
-            const oftypereg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNoneType()), rhsreg, this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.flowtype), undefined);
-            this.m_emitter.emitPrefixNotOp(sinfo, oftypereg, trgt);
-
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [rhs]);
-            return [
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIsNot(sinfo, rhsenv, this.getSpecialSomeConceptType());
         }
         else if (action === "rhsnone") {
-            //note use of negation here
-            const oftypereg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNoneType()), lhsreg, this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.flowtype), undefined);
-            this.m_emitter.emitPrefixNotOp(sinfo, oftypereg, trgt);
-
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [lhs]);
-            return [
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIsNot(sinfo, lhsenv, this.getSpecialNoneType());
         }
         else if (action === "lhsnothing") {
-            //note use of negation here
-            const oftypereg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNothingType()), rhsreg, this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(rhs.getExpressionResult().valtype.flowtype), undefined);
-            this.m_emitter.emitPrefixNotOp(sinfo, oftypereg, trgt);
-
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNothingType(), [rhs]);
-            return [
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIsNot(sinfo, rhsenv, this.getSpecialNothingType());
         }
         else if (action === "rhsnothing") {
-            //note use of negation here
-            const oftypereg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialNothingType()), lhsreg, this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.layout), this.m_emitter.registerResolvedTypeReference(lhs.getExpressionResult().valtype.flowtype), undefined);
-            this.m_emitter.emitPrefixNotOp(sinfo, oftypereg, trgt);
-
-            const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNothingType(), [lhs]);
-            return [
-                ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True))),
-                ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False)))
-            ];
+            return this.processTypeIsNot(sinfo, lhsenv, this.getSpecialNothingType());
         }
         else {
-            if (action === "lhssomekey") {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(olhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !olhs.flowtype.isGroundedType(), "Type must be grounded");
+            if (action === "stdkeywithunique") {
+                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
 
-                const oftypereg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), rhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), this.m_emitter.registerResolvedTypeReference(orhs.flowtype), undefined);
-    
-                const sguard = new MIRStatmentGuard(new MIRArgGuard(oftypereg), "defaultonfalse", new MIRConstantFalse());
-                const treg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), treg, sguard, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
-                this.m_emitter.emitPrefixNotOp(sinfo, treg, trgt);
+                const lhsunique = this.emitCoerceToInferTypeIfNeeded(lhsenv, lhsarg.sinfo);
+                const rhsunique = this.emitCoerceToInferTypeIfNeeded(rhsenv, rhsarg.sinfo);
+                const eqop = new TIRBinKeyNeqBothUniqueExpression(sinfo, lhsunique.expressionResult, rhsunique.expressionResult, tirlhsinfertype);
 
-                const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [rhs]);
-                return [
-                    ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False))),
-                    ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)))
-                ];
+                return this.setResultExpression(env, eqop, this.getSpecialBoolType());
             }
-            else if (action === "rhssomekey") {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(orhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !orhs.flowtype.isGroundedType(), "Type must be grounded");
+            else if (action === "lhssomekeywithunique") {
+                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
 
-                const oftypereg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitTypeOf(sinfo, oftypereg, this.m_emitter.registerResolvedTypeReference(orhs.flowtype), lhsreg, this.m_emitter.registerResolvedTypeReference(olhs.layout), this.m_emitter.registerResolvedTypeReference(olhs.flowtype), undefined);
-                
-                const sguard = new MIRStatmentGuard(new MIRArgGuard(oftypereg), "defaultonfalse", new MIRConstantFalse());
-                const treg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(orhs.flowtype), treg, sguard, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
-                this.m_emitter.emitPrefixNotOp(sinfo, treg, trgt);
+                const eeunique = this.emitCoerceToInferTypeIfNeeded(lhsenv, lhsarg.sinfo);
+                const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirlhsinfertype, eeunique.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
-                const renvs = ExpressionTypeEnvironment.convertToTypeNotTypeFlowsOnResult(this.m_assembly, this.m_assembly.getSpecialNoneType(), [lhs]);
-                return [
-                    ...(renvs.fenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False))),
-                    ...(renvs.tenvs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)))
-                ];
+                return this.processTypeIsNotFromEquality(sinfo, eqop, env, lhsinfertype);
+            }
+            else if (action === "rhssomekeywithunique") {
+                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
+
+                const eeunique = this.emitCoerceToInferTypeIfNeeded(rhsenv, rhsarg.sinfo);
+                const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirrhsinfertype, eeunique.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
+
+                return this.processTypeIsNotFromEquality(sinfo, eqop, env, rhsinfertype);
             }
             else {
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(olhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !olhs.flowtype.isGroundedType(), "Type must be grounded");
+                const eqop = new TIRBinKeyNeqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
-                this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(orhs.flowtype, this.m_assembly.getSpecialKeyTypeConceptType()), "Type must be KeyType");
-                this.raiseErrorIf(sinfo, !orhs.flowtype.isGroundedType(), "Type must be grounded");
+                if (action === "lhssomekey") {
+                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
 
-                const treg = this.m_emitter.generateTmpRegister();
-                this.m_emitter.emitBinKeyEq(sinfo, this.m_emitter.registerResolvedTypeReference(olhs.layout), lhsreg, this.m_emitter.registerResolvedTypeReference(orhs.layout), rhsreg, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), treg, undefined, this.m_emitter.registerResolvedTypeReference(olhs.flowtype), this.m_emitter.registerResolvedTypeReference(orhs.flowtype));
-                this.m_emitter.emitPrefixNotOp(sinfo, treg, trgt);
+                    return this.processTypeIsNotFromEquality(sinfo, eqop, env, lhsinfertype);
+                }
+                else if (action === "rhssomekey") {
+                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
 
-                return [env.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.Unknown)];
+                    return this.processTypeIsNotFromEquality(sinfo, eqop, env, rhsinfertype);
+                }
+                else {
+                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhsinfertype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhsinfertype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhsinfertype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhsinfertype.typeID}`);
+
+                    return this.setResultExpression(env, eqop, this.getSpecialBoolType());
+                }
             }
         }
     }
 
-    private checkBinLogic(env: ExpressionTypeEnvironment, exp: BinLogicExpression, trgt: MIRRegisterArgument, refok: boolean): ExpressionTypeEnvironment[] {
-        const lhsreg = this.m_emitter.generateTmpRegister();
-        const lhs = this.checkExpressionMultiFlow(env, exp.lhs, lhsreg, undefined, { refok: refok, orok: false });
+    private checkBinLogicAnd(env: ExpressionTypeEnvironment, exp: BinLogicAndxpression): ExpressionTypeEnvironment {
+        const lhs = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.lhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+        this.raiseErrorIf(exp.lhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(lhs) !== FlowTypeTruthValue.Unknown, "Condition is always true/false");
 
-        this.raiseErrorIf(exp.sinfo, lhs.some((opt) => !this.m_assembly.subtypeOf(opt.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "Type of logic op must be Bool");
-        const blhsreg = this.emitInlineConvertToFlow(exp.sinfo, lhsreg, ValueType.join(this.m_assembly, ...lhs.map((eev) => eev.getExpressionResult().valtype)));
-
-        if (exp.op === "||") {
-            if (lhs.every((ee) => ee.getExpressionResult().truthval === FlowTypeTruthValue.True)) {
-                this.m_emitter.emitLoadConstBool(exp.sinfo, true, trgt);
-                return lhs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True));
-            }
-            else {
-                const doneblck = this.m_emitter.createNewBlock("Llogic_or_done");
-                const restblck = this.m_emitter.createNewBlock("Llogic_or_rest");
-
-                const fflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, lhs);
-
-                this.m_emitter.emitRegisterStore(exp.sinfo, blhsreg, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), undefined);
-                this.m_emitter.emitBoolJump(exp.sinfo, blhsreg, doneblck, restblck);
-                this.m_emitter.setActiveBlock(restblck);
-
-                const rhsreg = this.m_emitter.generateTmpRegister();
-                const rhs = this.checkExpressionMultiFlow(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.fenvs), exp.rhs, rhsreg, undefined, { refok: refok, orok: false });
-
-                this.raiseErrorIf(exp.sinfo, rhs.some((opt) => !this.m_assembly.subtypeOf(opt.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "Type of logic op must be Bool");
-                this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertToFlow(exp.sinfo, rhsreg, ValueType.join(this.m_assembly, ...rhs.map((eev) => eev.getExpressionResult().valtype))), trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), undefined);
-
-                this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-                this.m_emitter.setActiveBlock(doneblck);
-
-                const oflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, rhs);
-                return [...fflows.tenvs, ...oflows.tenvs, ...oflows.fenvs].map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), eev.getExpressionResult().truthval));
-            }
-        }
-        else if (exp.op === "&&") {
-            if (lhs.every((ee) => ee.getExpressionResult().truthval === FlowTypeTruthValue.False)) {
-                this.m_emitter.emitLoadConstBool(exp.sinfo, false, trgt);
-                return lhs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.False));
-            }
-            else {
-                const doneblck = this.m_emitter.createNewBlock("Llogic_and_done");
-                const restblck = this.m_emitter.createNewBlock("Llogic_and_rest");
-
-                const fflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, lhs);
-
-                this.m_emitter.emitRegisterStore(exp.sinfo, blhsreg, trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), undefined);
-                this.m_emitter.emitBoolJump(exp.sinfo, blhsreg, restblck, doneblck);
-                this.m_emitter.setActiveBlock(restblck);
-
-                const rhsreg = this.m_emitter.generateTmpRegister();
-                const rhs = this.checkExpressionMultiFlow(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.tenvs), exp.rhs, rhsreg, undefined, { refok: refok, orok: false });
-
-                this.raiseErrorIf(exp.sinfo, rhs.some((opt) => !this.m_assembly.subtypeOf(opt.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "Type of logic op must be Bool");
-                this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertToFlow(exp.sinfo, rhsreg, ValueType.join(this.m_assembly, ...rhs.map((eev) => eev.getExpressionResult().valtype))), trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), undefined);
-
-                this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-                this.m_emitter.setActiveBlock(doneblck);
-                const oflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, rhs);
-                return [...fflows.fenvs, ...oflows.tenvs, ...oflows.fenvs].map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), eev.getExpressionResult().truthval));
-            }
+        const lhsplits = this.convertToBoolFlowsOnResult(lhs);
+        if(lhsplits.tenvs.length === 0) {
+            return lhs;
         }
         else {
-            if (lhs.every((ee) => ee.getExpressionResult().truthval === FlowTypeTruthValue.False)) {
-                this.m_emitter.emitLoadConstBool(exp.sinfo, true, trgt);
-                return lhs.map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), FlowTypeTruthValue.True));
-            }
-            else {
-                const doneblck = this.m_emitter.createNewBlock("Llogic_imply_done");
-                const restblck = this.m_emitter.createNewBlock("Llogic_imply_rest");
+            const ee = lhs.setResultExpressionInfo(new TIRInvalidExpression(exp.rhs.sinfo, this.toTIRTypeKey(this.getSpecialAnyConceptType())), ResolvedType.createInvalid(), lhsplits.tenvs);
+            const rhs = this.emitCoerceIfNeeded(this.checkExpression(ee, exp.rhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+            this.raiseErrorIf(exp.rhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(rhs) === FlowTypeTruthValue.Unknown, "Condition is always true/false");
+            
+            const rhsplits = this.convertToBoolFlowsOnResult(rhs);
 
-                const fflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, lhs);
+            const andexp = new TIRBinLogicAndxpression(exp.sinfo, lhs.expressionResult, rhs.expressionResult);
+            const tflows = rhsplits.tenvs.map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const fflows = [...lhsplits.fenvs, ...rhsplits.fenvs].map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.False));
 
-                this.m_emitter.emitPrefixNotOp(exp.sinfo, blhsreg, trgt);
-                this.m_emitter.emitBoolJump(exp.sinfo, blhsreg, restblck, doneblck);
-                this.m_emitter.setActiveBlock(restblck);
-
-                const rhsreg = this.m_emitter.generateTmpRegister();
-                const rhs = this.checkExpressionMultiFlow(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.tenvs), exp.rhs, rhsreg, undefined, { refok: refok, orok: false });
-
-                this.raiseErrorIf(exp.sinfo, rhs.some((opt) => !this.m_assembly.subtypeOf(opt.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "Type of logic op must be Bool");
-                this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertToFlow(exp.sinfo, rhsreg, ValueType.join(this.m_assembly, ...rhs.map((eev) => eev.getExpressionResult().valtype))), trgt, this.m_emitter.registerResolvedTypeReference(this.m_assembly.getSpecialBoolType()), undefined);
-
-                this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-                this.m_emitter.setActiveBlock(doneblck);
-
-                const oflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, rhs);
-                return [...fflows.fenvs, ...oflows.tenvs, ...oflows.fenvs].map((eev) => eev.setBoolResultExpression(this.m_assembly.getSpecialBoolType(), eev.getExpressionResult().truthval));
-            }
+            return env.setResultExpressionInfo(andexp, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
         }
     }
 
-    private checkMapEntryConstructorExpression(env: ExpressionTypeEnvironment, exp: MapEntryConstructorExpression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
+    private checkBinLogicOr(env: ExpressionTypeEnvironment, exp: BinLogicOrExpression): ExpressionTypeEnvironment {
+        const lhs = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.lhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+        this.raiseErrorIf(exp.lhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(lhs) !== FlowTypeTruthValue.Unknown, "Condition is always true/false");
+
+        const lhsplits = this.convertToBoolFlowsOnResult(lhs);
+        if(lhsplits.fenvs.length === 0) {
+            return lhs;
+        }
+        else {
+            const ee = lhs.setResultExpressionInfo(new TIRInvalidExpression(exp.rhs.sinfo, this.toTIRTypeKey(this.getSpecialAnyConceptType())), ResolvedType.createInvalid(), lhsplits.fenvs);
+            const rhs = this.emitCoerceIfNeeded(this.checkExpression(ee, exp.rhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+            this.raiseErrorIf(exp.rhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(rhs) === FlowTypeTruthValue.Unknown, "Condition is always true/false");
+            
+            const rhsplits = this.convertToBoolFlowsOnResult(rhs);
+
+            const andexp = new TIRBinLogicOrExpression(exp.sinfo, lhs.expressionResult, rhs.expressionResult);
+            const tflows = [...lhsplits.tenvs, ...rhsplits.tenvs].map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const fflows = [...rhsplits.fenvs].map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return env.setResultExpressionInfo(andexp, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
+        }
+    }
+
+    private checkBinLogicImplies(env: ExpressionTypeEnvironment, exp: BinLogicImpliesExpression): ExpressionTypeEnvironment {
+        const lhs = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.lhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+        this.raiseErrorIf(exp.lhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(lhs) !== FlowTypeTruthValue.Unknown, "Condition is always true/false");
+
+        const lhsplits = this.convertToBoolFlowsOnResult(lhs);
+        if(lhsplits.fenvs.length === 0) {
+            return lhs;
+        }
+        else {
+            const ee = lhs.setResultExpressionInfo(new TIRInvalidExpression(exp.rhs.sinfo, this.toTIRTypeKey(this.getSpecialAnyConceptType())), ResolvedType.createInvalid(), lhsplits.tenvs);
+            const rhs = this.emitCoerceIfNeeded(this.checkExpression(ee, exp.rhs, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType());
+            this.raiseErrorIf(exp.rhs.sinfo, this.m_doExhaustiveCheck && this.envExpressionGetInferTruth(rhs) === FlowTypeTruthValue.Unknown, "Condition is always true/false");
+            
+            const rhsplits = this.convertToBoolFlowsOnResult(rhs);
+
+            const andexp = new TIRBinLogicOrExpression(exp.sinfo, lhs.expressionResult, rhs.expressionResult);
+            const tflows = [...lhsplits.fenvs, ...rhsplits.tenvs].map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.True));
+            const fflows = [...rhsplits.tenvs].map((tf) => tf.inferFlowInfo(andexp, this.getSpecialBoolType(), FlowTypeTruthValue.False));
+
+            return env.setResultExpressionInfo(andexp, this.getSpecialBoolType(), this.envExpressionSimplifyFlowInfos([...tflows, ...fflows]));
+        }
+    }
+
+    private checkMapEntryConstructorExpression(env: ExpressionTypeEnvironment, exp: MapEntryConstructorExpression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
         const itype = infertype !== undefined ? infertype.tryGetInferrableTupleConstructorType() : undefined;
         const metype = (itype !== undefined && itype.types.length === 2) ? itype : undefined;
 
@@ -3781,102 +3788,6 @@ class TypeChecker {
         this.m_emitter.emitConstructorTuple(exp.sinfo, this.m_emitter.registerResolvedTypeReference(mtype), targs, trgt);
 
         return env.setUniformResultExpression(mtype);
-    }
-
-    private checkSelect(env: ExpressionTypeEnvironment, exp: SelectExpression, trgt: MIRRegisterArgument, refok: boolean, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        const testreg = this.m_emitter.generateTmpRegister();
-        const test = this.checkExpressionMultiFlow(env, exp.test, testreg, undefined, { refok: refok, orok: false });
-
-        this.raiseErrorIf(exp.sinfo, test.some((opt) => !this.m_assembly.subtypeOf(opt.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "Type of logic op must be Bool");
-        const btestreg = this.emitInlineConvertToFlow(exp.sinfo, testreg, ValueType.createUniform(this.m_assembly.getSpecialBoolType()));
-
-        const fflows = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, test);
-
-        if(fflows.tenvs.length === 0) {
-            return this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.fenvs), exp.option2, trgt, infertype);
-        }
-        else if (fflows.fenvs.length === 0) {
-            return this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.tenvs), exp.option1, trgt, infertype);
-        }
-        else {
-            const doneblck = this.m_emitter.createNewBlock("Lselect_done");
-            const trueblck = this.m_emitter.createNewBlock("Lselect_true");
-            const falseblck = this.m_emitter.createNewBlock("Lselect_false");
-
-            this.m_emitter.emitBoolJump(exp.sinfo, btestreg, trueblck, falseblck);
-
-            this.m_emitter.setActiveBlock(trueblck);
-            const truereg = this.m_emitter.generateTmpRegister();
-            const truestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.tenvs), exp.option1, truereg, infertype);
-            //note jump isn't set yet
-
-            this.m_emitter.setActiveBlock(falseblck);
-            const falsereg = this.m_emitter.generateTmpRegister();
-            const falsestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...fflows.fenvs), exp.option2, falsereg, infertype);
-            //note jump isn't set yet
-
-            const fulltype = this.m_assembly.typeUpperBound([truestate.getExpressionResult().valtype.flowtype, falsestate.getExpressionResult().valtype.flowtype]);
-
-            //set the assigns and jumps
-            this.m_emitter.setActiveBlock(trueblck);
-            this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertIfNeeded(exp.sinfo, truereg, truestate.getExpressionResult().valtype, fulltype), trgt, this.m_emitter.registerResolvedTypeReference(fulltype), undefined);
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-
-            this.m_emitter.setActiveBlock(falseblck);
-            this.m_emitter.emitRegisterStore(exp.sinfo, this.emitInlineConvertIfNeeded(exp.sinfo, falsereg, falsestate.getExpressionResult().valtype, fulltype), trgt, this.m_emitter.registerResolvedTypeReference(fulltype), undefined);
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-
-            this.m_emitter.setActiveBlock(doneblck);
-
-            return ExpressionTypeEnvironment.join(this.m_assembly, ...[truestate, falsestate].map((eev) => eev.updateResultExpression(fulltype, eev.getExpressionResult().valtype.flowtype)));
-        }
-    }
-
-    private checkBlockExpression(env: ExpressionTypeEnvironment, exp: BlockStatementExpression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        try {
-            this.m_emitter.processEnterYield();
-            let cenv = env.freezeVars(infertype).pushLocalScope();
-
-            for (let i = 0; i < exp.ops.length; ++i) {
-                if (!cenv.hasNormalFlow()) {
-                    break;
-                }
-
-                cenv = this.checkStatement(cenv, exp.ops[i]);
-            }
-
-            const yblck = this.m_emitter.createNewBlock("Lyield");
-            if (cenv.hasNormalFlow()) {
-                this.m_emitter.setActiveBlock(yblck);
-
-                const deadvars = cenv.getCurrentFrameNames();
-                for (let i = 0; i < deadvars.length; ++i) {
-                    this.m_emitter.localLifetimeEnd(exp.sinfo, deadvars[i]);
-                }
-            }
-
-            this.raiseErrorIf(exp.sinfo, cenv.hasNormalFlow(), "Not all flow paths yield a value!");
-            this.raiseErrorIf(exp.sinfo, cenv.yieldResult === undefined, "No valid flow through expresssion block");
-
-            const ytype = cenv.yieldResult as ResolvedType;
-            const yeildcleanup = this.m_emitter.getActiveYieldSet();
-            if (cenv.hasNormalFlow()) {
-                for (let i = 0; i < yeildcleanup.length; ++i) {
-                    const yci = yeildcleanup[i];
-                    this.m_emitter.setActiveBlock(yci[0]);
-
-                    const convreg = this.emitInlineConvertIfNeeded(exp.sinfo, yci[1], yci[2], ytype);
-                    this.m_emitter.emitRegisterStore(exp.sinfo, convreg, trgt, this.m_emitter.registerResolvedTypeReference(ytype), undefined);
-
-                    this.m_emitter.emitDirectJump(exp.sinfo, yblck);
-                }
-            }
-
-            return env.setUniformResultExpression(ytype);
-        }
-        finally {
-            this.m_emitter.processExitYield();
-        }
     }
 
     private checkIfExpression(env: ExpressionTypeEnvironment, exp: IfExpression, trgt: MIRRegisterArgument, refok: boolean, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
