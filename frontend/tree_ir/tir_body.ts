@@ -105,7 +105,6 @@ enum TIRExpressionTag {
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
 
-    AbortExpression = "AbortExpression",
     CoerceExpression = "CoerceExpression",
     CoerceSafeExpression = "CoerceSafeExpression",
     InjectExpression = "InjectExpression",
@@ -898,7 +897,7 @@ class TIRPrefixNegateOp extends TIRExpression {
     }
 
     isFailableOperation(): boolean {
-        return this.isFailableOperation();
+        return this.exp.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -996,49 +995,6 @@ class TIRBinDivExpression extends TIRExpression {
 
     isFailableOperation(): boolean {
         return true; //div 0
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
-    }
-}
-
-class TIRBinKeyEqAlwaysExpression extends TIRExpression {
-    readonly lhs: TIRExpression;
-    readonly rhs: TIRExpression;
-    readonly bv: boolean;
-
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, bv: boolean) {
-        super(TIRExpressionTag.BinKeyEqBothUniqueExpression, sinfo, "Bool", `KeyType::aeq(${lhs.expstr}, ${rhs.expstr})===${bv}`);
-        this.lhs = lhs;
-        this.rhs = rhs;
-        this.bv = bv;
-    }
-
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
-    }
-}
-
-
-class TIRBinKeyNeqAlwaysExpression extends TIRExpression {
-    readonly lhs: TIRExpression;
-    readonly rhs: TIRExpression;
-    readonly bv: boolean;
-
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, bv: boolean) {
-        super(TIRExpressionTag.BinKeyEqBothUniqueExpression, sinfo, "Bool", `KeyType::aneq(${lhs.expstr}, ${rhs.expstr})===${bv}`);
-        this.lhs = lhs;
-        this.rhs = rhs;
-        this.bv = bv;
-    }
-
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
     }
 
     getUsedVars(): string[] {
@@ -1547,25 +1503,6 @@ class TIRTaskGetIDExpression extends TIRExpression {
 
     getUsedVars(): string[] {
         return [];
-    }
-}
-
-class TIRAbortExpression extends TIRExpression {
-    readonly afterexp: TIRExpression;
-    readonly msg: string;
-
-    constructor(sinfo: SourceInfo, afterexp: TIRExpression, etype: TIRTypeKey, msg: string) {
-        super(TIRExpressionTag.AbortExpression, sinfo, etype, `abort<${etype}>(${afterexp.expstr}, "${msg}")`);
-        this.afterexp = afterexp;
-        this.msg = msg;
-    }
-
-    isFailableOperation(): boolean {
-        return true;
-    }
-
-    getUsedVars(): string[] {
-        return this.afterexp.getUsedVars();
     }
 }
 
@@ -2271,13 +2208,12 @@ export {
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
     TIRPrefixNotOp, TIRPrefixNegateOp,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,
-    TIRBinKeyEqAlwaysExpression, TIRBinKeyNeqAlwaysExpression,
     TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression,
     TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression,
     TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
     TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
-    TIRAbortExpression, TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
+    TIRCoerceSafeExpression, TIRInjectExpression, TIRExtractExpression,
     jjjj,
     TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression,
     TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,

@@ -619,6 +619,26 @@ class ResolvedType {
         return false;
     }
 
+    static getNumericType(options: ResolvedAtomType[]): ResolvedPrimitiveInternalEntityAtomType | ResolvedTypedeclEntityAtomType {
+        assert(ResolvedType.isNumericType(options), "need to check first");
+
+        return options[0] as ResolvedPrimitiveInternalEntityAtomType | ResolvedTypedeclEntityAtomType;
+    }
+
+    static getNumericBaseRepresentation(options: ResolvedAtomType[]): ResolvedPrimitiveInternalEntityAtomType {
+        assert(ResolvedType.isNumericType(options), "need to check first");
+
+        const atom = options[0] as ResolvedEntityAtomType;
+
+        if(atom instanceof ResolvedPrimitiveInternalEntityAtomType) {
+            return atom;
+        }
+        else {
+            const tdatom = atom as ResolvedTypedeclEntityAtomType;
+            return tdatom.representation;
+        }
+    }
+
     static createInvalid(): ResolvedType {
         return new ResolvedType("[INVALID]", []);
     }
