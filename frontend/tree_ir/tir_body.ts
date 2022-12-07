@@ -1455,12 +1455,12 @@ class TIRSwitchExpression extends TIRExpression {
 
 class TIRMatchExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRTypeKey, value: TIRExpression}[];
+    readonly clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRExpression}[];
     readonly edefault: TIRExpression | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
-        super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
+        super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.mtype} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
         this.edefault = edefault;
@@ -1469,6 +1469,7 @@ class TIRMatchExpression extends TIRExpression {
 
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
+            this.clauses.some((cc) => cc.match.isFailableOperation()) ||
             this.clauses.some((cc) => cc.value.isFailableOperation()) ||
             (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
             !this.isexhaustive;

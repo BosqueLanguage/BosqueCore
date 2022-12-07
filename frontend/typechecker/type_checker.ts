@@ -7,8 +7,8 @@ import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression } from "../tree_ir/tir_body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression } from "../ast/body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption } from "./type_environment";
 
@@ -361,47 +361,6 @@ class TypeChecker {
         }
 
         return ninfos;
-    }
-
-    private envExpressionJoinFlowInfos(infos: FlowTypeInfoOption[]): FlowTypeInfoOption {
-        assert(infos.length !== 0, "then a join doesn't make sense");
-
-        if(infos.length === 1) {
-            return infos[0];
-        }
-        else {
-            const itype = this.normalizeUnionList(infos.map((fi) => fi.tinfer));
-            let ibv = FlowTypeTruthValue.Unknown;
-            if (infos.every((ii) => ii.etruth === FlowTypeTruthValue.True)) {
-                ibv = FlowTypeTruthValue.True;
-            }
-            if (infos.every((ii) => ii.etruth === FlowTypeTruthValue.False)) {
-                ibv = FlowTypeTruthValue.False;
-            }
-
-            let eset = new Set<string>(infos[0].expInferInfo.keys());
-            const ninfos = new Map<string, { depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue }>();
-
-            [...eset]
-                .filter((expr) => infos.every((ii) => ii.expInferInfo.has(expr)))
-                .forEach((expr) => {
-                    const eitype = this.normalizeUnionList(infos.map((fi) => (fi.expInferInfo.get(expr) as { depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue }).infertype));
-
-                    let eibv = FlowTypeTruthValue.Unknown;
-                    if (infos.every((ii) => (ii.expInferInfo.get(expr) as { depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue }).infertruth === FlowTypeTruthValue.True)) {
-                        eibv = FlowTypeTruthValue.True;
-                    }
-                    if (infos.every((ii) => (ii.expInferInfo.get(expr) as { depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue }).infertruth === FlowTypeTruthValue.False)) {
-                        eibv = FlowTypeTruthValue.False;
-                    }
-
-                    const dvars = (infos[0].expInferInfo.get(expr) as { depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue }).depvars;
-
-                    ninfos.set(expr, { depvars: dvars, infertype: eitype, infertruth: eibv });
-                });
-
-            return new FlowTypeInfoOption(itype, ibv, ninfos);
-        }
     }
 
     private setResultExpression(env: ExpressionTypeEnvironment, exp: TIRExpression, trepr: ResolvedType, tv?: FlowTypeTruthValue | undefined): ExpressionTypeEnvironment {
@@ -2161,23 +2120,6 @@ class TypeChecker {
         return this.splitTypes(from, t);
     }
 
-    typeUpperBound(types: ResolvedType[]): ResolvedType {
-        if(types.length === 0) {
-            return ResolvedType.createInvalid();
-        }
-        else {
-            return this.normalizeUnionList(types);
-        }
-    }
-
-    joinVarInfos(...values: VarInfo[]): VarInfo {
-        assert(values.length !== 0);
-
-        const jdef = values.every((vi) => vi.mustDefined);
-        const jtype = this.typeUpperBound(values.map((vi) => vi.flowType));
-        return new VarInfo(values[0].declaredType, jtype, values[0].isConst, values[0].isCaptured, jdef);
-    }
-
     atomSubtypeOf(t1: ResolvedAtomType, t2: ResolvedAtomType): boolean {
         let memores = this.m_atomSubtypeRelationMemo.get(t1.typeID);
         if (memores === undefined) {
@@ -3494,14 +3436,6 @@ class TypeChecker {
         return this.setResultExpressionBoolNegate(benv, new TIRPrefixNotOp(exp.sinfo, benv.expressionResult), this.getSpecialBoolType());
     }
 
-    private checkPrefixNotOpWithRefOrSelf(env: ExpressionTypeEnvironment, exp: PrefixNotOp): {pfxstmts: TIRStatement[], exp: ExpressionTypeEnvironment} {
-        const eenv = this.checkExpressionRefSelfOk(env, exp.exp, this.getSpecialBoolType());
-        return {
-            pfxstmts: eenv.pfxstmts,
-            exp: this.setResultExpressionBoolNegate(eenv.exp, new TIRPrefixNotOp(exp.sinfo, eenv.exp.expressionResult), this.getSpecialBoolType());
-        };
-    }
-
     private checkPrefixNegateOpExpression(env: ExpressionTypeEnvironment, exp: PrefixNegateOp): ExpressionTypeEnvironment {
         const nenv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env, exp.exp, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(nenv.trepr.options), `expected a numeric type but got ${nenv.trepr.typeID}`);
@@ -3510,20 +3444,6 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, ntype.typeID === "Nat" || ntype.typeID === "BigNat", `cannot negage unsigned type ${nenv.trepr.typeID}`);
         
         return this.setResultExpression(nenv, new TIRPrefixNegateOp(exp.sinfo, nenv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(ntype))), nenv.trepr)
-    }
-
-    private checkPrefixNegateOpExpressionWithRefOrSelf(env: ExpressionTypeEnvironment, exp: PrefixNegateOp): {pfxstmts: TIRStatement[], exp: ExpressionTypeEnvironment} {
-        const eenv = this.checkExpressionRefSelfOk(env, exp.exp, undefined);
-
-        this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(eenv.exp.trepr.options), `expected a numeric type but got ${eenv.exp.trepr.typeID}`);
-
-        const ntype = ResolvedType.getNumericBaseRepresentation(eenv.exp.trepr.options);
-        this.raiseErrorIf(exp.sinfo, ntype.typeID === "Nat" || ntype.typeID === "BigNat", `cannot negage unsigned type ${eenv.exp.trepr.typeID}`);
-
-        return {
-            pfxstmts: eenv.pfxstmts,
-            exp: this.setResultExpression(eenv.exp, new TIRPrefixNegateOp(exp.sinfo, eenv.exp.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(ntype))), eenv.exp.trepr);
-        };
     }
 
     private checkBinAddExpression(env: ExpressionTypeEnvironment, exp: BinAddExpression): ExpressionTypeEnvironment {
@@ -3944,332 +3864,212 @@ class TypeChecker {
         }
     }
 
-    private checkIfExpressionTail(cenv: ExpressionTypeEnvironment, exp: IfExpression, hasfalseflow: boolean, iftest: TIRExpression, ifresult: ExpressionTypeEnvironment, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let results: {test: TIRExpression, value: ExpressionTypeEnvironment}[] = [{test: iftest, value: ifresult}];
+    private checkIfExpression(env: ExpressionTypeEnvironment, exp: IfExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
+        let cenv = env;
+        let results: {test: ExpressionTypeEnvironment, value: ExpressionTypeEnvironment}[] = [];
 
-        for (let i = 1; i < exp.condflow.length && hasfalseflow; ++i) {
-            const testenv = this.emitCoerceIfNeeded(this.checkExpression(cenv, exp.condflow[i].cond, desiredtype), exp.condflow[i].cond.sinfo, this.getSpecialBoolType());
-            this.raiseErrorIf(exp.sinfo, this.envExpressionGetInferTruth(testenv) !== FlowTypeTruthValue.Unknown, "If test expression is always true/false");
+        for (let i = 0; i < exp.condflow.length; ++i) {
+            const testenv = this.emitCoerceIfNeeded(this.checkExpression(cenv, exp.condflow[i].cond, undefined), exp.condflow[i].cond.sinfo, this.getSpecialBoolType());
+            this.raiseErrorIf(exp.sinfo, this.envExpressionGetInferTruth(testenv) !== FlowTypeTruthValue.Unknown, "Test is always true/false");
 
             const cflow = this.convertToBoolFlowsOnResult(testenv);
-            const valueenv = cflow.tenvs.length !== 0 ? testenv.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, "None"), ResolvedType.createInvalid(), cflow.tenvs) : cenv.createFreshEnvExpressionFrom();
-            const nextenv = cflow.fenvs.length !== 0
-
-            if (cflow.tenvs.length === 0) {
-                //skip the result expression stuff
-                cenv = ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.fenvs);
-            }
-            else if (cflow.fenvs.length === 0) {
-                //go though true block (without jump) and then skip else
-                const trueblck = this.m_emitter.createNewBlock(`Lifexp_${i}true`);
-                this.m_emitter.emitDirectJump(exp.sinfo, trueblck);
-                this.m_emitter.setActiveBlock(trueblck);
-
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.tenvs), exp.flow.conds[i].action, ttreg, infertype);
-                
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
-                hasfalseflow = false;
-            }
-            else {
-                const trueblck = this.m_emitter.createNewBlock(`Lifexp_${i}true`);
-                const falseblck = this.m_emitter.createNewBlock(`Lifexp_${i}false`);
-                
-                this.m_emitter.emitBoolJump(exp.sinfo, testreg, trueblck, falseblck);
-                this.m_emitter.setActiveBlock(trueblck);
-                
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.tenvs), exp.flow.conds[i].action, ttreg, infertype);
-                
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
-
-                this.m_emitter.setActiveBlock(falseblck);
-                cenv = ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.fenvs);
-            }
-        }
-
-        if(hasfalseflow) {
-            const ttreg = this.m_emitter.generateTmpRegister();
-            const aenv = this.checkExpression(cenv, exp.flow.elseAction as Expression, ttreg, infertype);
-
-            results.push(aenv);
-            rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, aenv.getExpressionResult().valtype]);
-        }
-
-        this.raiseErrorIf(exp.sinfo, !results.some((eev) => eev.hasNormalFlow()), "No feasible path in this conditional expression");
-
-        const fulltype = this.m_assembly.typeUpperBound(results.map((eev) => eev.getExpressionResult().valtype.flowtype));
-        for (let i = 0; i < rblocks.length; ++i) {
-            const rcb = rblocks[i];
-            this.m_emitter.setActiveBlock(rcb[0]);
-
-            const convreg = this.emitInlineConvertIfNeeded(exp.sinfo, rcb[1], rcb[2], fulltype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, convreg, trgt, this.m_emitter.registerResolvedTypeReference(fulltype), undefined);
-
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-        }
-
-        this.m_emitter.setActiveBlock(doneblck);
-        
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...results.map((eev) => eev.updateResultExpression(fulltype, eev.getExpressionResult().valtype.flowtype)));
-    }
-
-    private checkIfExpression(env: ExpressionTypeEnvironment, exp: IfExpression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let cenv = env;
-        let hasfalseflow = true;
-        let results: ExpressionTypeEnvironment[] = [];
-
-        for (let i = 0; i < exp.condflow.length && hasfalseflow; ++i) {
-            const testreg = this.m_emitter.generateTmpRegister();
-            const test = this.checkExpressionMultiFlow(cenv, exp.flow.conds[i].cond, testreg, infertype, i === 0 ? { refok: refok, orok: false } : undefined);
-            this.raiseErrorIf(exp.sinfo, !test.every((eev) => this.m_assembly.subtypeOf(eev.getExpressionResult().valtype.flowtype, this.m_assembly.getSpecialBoolType())), "If test expression must return a Bool");
-
-            const cflow = ExpressionTypeEnvironment.convertToBoolFlowsOnResult(this.m_assembly, test);
             
-            if (cflow.tenvs.length === 0) {
-                //can just keep generating tests in striaght line
-                cenv = ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.fenvs);
-            }
-            else if (cflow.fenvs.length === 0) {
-                //go though true block (without jump) and then skip else
-                const trueblck = this.m_emitter.createNewBlock(`Lifexp_${i}true`);
-                this.m_emitter.emitDirectJump(exp.sinfo, trueblck);
-                this.m_emitter.setActiveBlock(trueblck);
-
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.tenvs), exp.flow.conds[i].action, ttreg, infertype);
+            const trueenv = this.checkExpression(testenv.createFreshFlowEnvExpressionFrom(cflow.tenvs), exp.condflow[i].value, desiredtype);
+            results.push({test: testenv, value: trueenv});
                 
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
-                hasfalseflow = false;
-            }
-            else {
-                const trueblck = this.m_emitter.createNewBlock(`Lifexp_${i}true`);
-                const falseblck = this.m_emitter.createNewBlock(`Lifexp_${i}false`);
-                
-                this.m_emitter.emitBoolJump(exp.sinfo, testreg, trueblck, falseblck);
-                this.m_emitter.setActiveBlock(trueblck);
-                
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.tenvs), exp.flow.conds[i].action, ttreg, infertype);
-                
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
-
-                this.m_emitter.setActiveBlock(falseblck);
-                cenv = ExpressionTypeEnvironment.join(this.m_assembly, ...cflow.fenvs);
-            }
+            cenv = testenv.createFreshFlowEnvExpressionFrom(cflow.fenvs);
         }
+        const aenv = this.checkExpression(cenv, exp.elseflow, desiredtype);
 
-        if(hasfalseflow) {
-            const ttreg = this.m_emitter.generateTmpRegister();
-            const aenv = this.checkExpression(cenv, exp.flow.elseAction as Expression, ttreg, infertype);
-
-            results.push(aenv);
-            rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, aenv.getExpressionResult().valtype]);
-        }
-
-        this.raiseErrorIf(exp.sinfo, !results.some((eev) => eev.hasNormalFlow()), "No feasible path in this conditional expression");
-
-        const fulltype = this.m_assembly.typeUpperBound(results.map((eev) => eev.getExpressionResult().valtype.flowtype));
-        for (let i = 0; i < rblocks.length; ++i) {
-            const rcb = rblocks[i];
-            this.m_emitter.setActiveBlock(rcb[0]);
-
-            const convreg = this.emitInlineConvertIfNeeded(exp.sinfo, rcb[1], rcb[2], fulltype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, convreg, trgt, this.m_emitter.registerResolvedTypeReference(fulltype), undefined);
-
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-        }
-
-        this.m_emitter.setActiveBlock(doneblck);
+        const iftype = this.normalizeUnionList(results.map((eev) => this.envExpressionGetInferType(eev.value)));
         
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...results.map((eev) => eev.updateResultExpression(fulltype, eev.getExpressionResult().valtype.flowtype)));
+        const renv = env.createFreshFlowEnvExpressionFrom(this.envExpressionSimplifyFlowInfos(([] as FlowTypeInfoOption[]).concat(...results.map((ff) => ff.value.flowinfo))));
+        const rexp = new TIRIfExpression(exp.sinfo, this.toTIRTypeKey(iftype), {test: results[0].test.expressionResult, value: this.emitSafeCoerceIfNeeded(results[0].value, results[0].value.expressionResult.sinfo, iftype).expressionResult}, results.slice(1).map((ffp) => {return {test: ffp.test.expressionResult, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, iftype).expressionResult };}), this.emitSafeCoerceIfNeeded(aenv, exp.elseflow.sinfo, iftype).expressionResult);
+
+        return this.setResultExpression(renv, rexp, iftype, FlowTypeTruthOps.join(...results.map((ff) => this.envExpressionGetInferTruth(ff.value))));
     }
 
-    private checkSwitchExpression(env: ExpressionTypeEnvironment, exp: SwitchExpression, trgt: MIRRegisterArgument, refok: boolean, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        const vreg = this.m_emitter.generateTmpRegister();
-        const venv = this.checkExpression(env, exp.sval, vreg, undefined, { refok: refok, orok: false });
+    private checkSwitchExpression(env: ExpressionTypeEnvironment, exp: SwitchExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
+        const venv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env, exp.sval, undefined), exp.sval.sinfo);
+        
+        let cenv: ExpressionTypeEnvironment = venv;
+        let exhaustive = false;
+        let results: {test: TIRLiteralValue | undefined, value: ExpressionTypeEnvironment}[] = [];
+        for (let i = 0; i < exp.switchflow.length; ++i) {
+            //it is a wildcard match
+            if(exp.switchflow[i].condlit === undefined) {
+                this.raiseErrorIf(exp.sinfo, i == exp.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
 
-        const doneblck = this.m_emitter.createNewBlock("Lswitchexp_done");
-        const matchvar = `$switch_@${exp.sinfo.pos}`;
-        let cenv = this.checkDeclareSingleVariableBinder(exp.sinfo, venv.pushLocalScope(), matchvar, ValueType.createUniform(venv.getExpressionResult().valtype.flowtype), vreg);
+                const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
 
-        let hasfalseflow = true;
-        let results: ExpressionTypeEnvironment[] = [];
-        let rblocks: [string, MIRRegisterArgument, ValueType][] = [];
-        for (let i = 0; i < exp.flow.length && hasfalseflow; ++i) {
-            const nextlabel = this.m_emitter.createNewBlock(`Lswitchexp_${i}next`);
-            const actionlabel = this.m_emitter.createNewBlock(`Lswitchexp_${i}action`);
-
-            const test = this.checkSwitchGuard(exp.sinfo, cenv, matchvar, exp.flow[i].check, nextlabel, actionlabel);
-
-            if(test.tenv === undefined) {
-                this.m_emitter.setActiveBlock(actionlabel);
-                this.m_emitter.emitDeadBlock(exp.sinfo);
-
-                this.m_emitter.setActiveBlock(nextlabel);
-                cenv = test.fenv as ExpressionTypeEnvironment;
-            }
-            else if(test.fenv === undefined) {
-                //go though action block and skip rest of generation
-                this.m_emitter.setActiveBlock(actionlabel);
-
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(test.tenv, exp.flow[i].action, ttreg, infertype);
-
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
-
-                this.m_emitter.setActiveBlock(nextlabel);
-                this.m_emitter.emitDeadBlock(exp.sinfo);
-
-                hasfalseflow = false;
+                results.push({test: undefined, value: trueenv});
+                exhaustive = true;
+                break;
             }
             else {
-                this.m_emitter.setActiveBlock(actionlabel);
+                const tvaltry = this.reduceLiteralValueToCanonicalForm("[SWITCH ENV]", (exp.switchflow[i].condlit as LiteralExpressionValue).exp, env.binds);
+                this.raiseErrorIf((exp.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo, tvaltry[0] === undefined, `could not resolve literal value`);
+                const tval = tvaltry[0] as TIRLiteralValue;
 
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(test.tenv, exp.flow[i].action, ttreg, infertype);
+                let fexp: ExpressionTypeEnvironment | undefined = undefined;
+                if(tval.exp instanceof TIRLiteralNoneExpression) {
+                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(this.getSpecialNoneType(), this.envExpressionGetInferType(cenv)), `switch argument is never "none" so this case is never possible`);
 
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype]);
+                    if(this.envExpressionGetInferType(cenv).isNoneType()) {
+                        this.raiseErrorIf(exp.sinfo, i == exp.switchflow.length - 1, `exhaustive none check should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
 
-                this.m_emitter.setActiveBlock(nextlabel);
-                cenv = test.fenv as ExpressionTypeEnvironment;
+                        const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
+                        results.push({test: undefined, value: trueenv});
+                        exhaustive = true;
+                        break;
+                    }
+
+                    fexp = this.processTypeIs(tval.exp.sinfo, cenv, this.getSpecialNoneType());
+                }
+                else if(tval.exp instanceof TIRLiteralNothingExpression) {
+                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(this.getSpecialNothingType(), this.envExpressionGetInferType(cenv)), `switch argument is never "nothing" so this case is never possible`);
+
+                    if(this.envExpressionGetInferType(cenv).isNothingType()) {
+                        this.raiseErrorIf(exp.sinfo, i == exp.switchflow.length - 1, `exhaustive nothing check should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
+
+                        const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
+                        results.push({test: undefined, value: trueenv});
+                        exhaustive = true;
+                        break;
+                    }
+
+                    fexp = this.processTypeIs(tval.exp.sinfo, cenv, this.getSpecialNothingType());
+                }
+                else {
+                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(tvaltry[1], this.envExpressionGetInferType(cenv)), `switch argument is never "${tvaltry[1].typeID}" so this case is never possible`);
+                    
+                    const eqop = new TIRBinKeyEqOneUniqueExpression(tval.exp.sinfo, tval.exp.etype, tval.exp, venv.expressionResult.etype, venv.expressionResult);
+                    fexp = this.processTypeIsFromEquality(tval.exp.sinfo, eqop, cenv, tvaltry[1]);
+                }
+                const cflow = this.convertToBoolFlowsOnResult(fexp);
+
+                const trueenv = this.checkExpression(fexp.createFreshFlowEnvExpressionFrom(cflow.tenvs), exp.switchflow[i].value, desiredtype);
+                results.push({test: tval, value: trueenv});
+                
+                cenv = fexp.createFreshFlowEnvExpressionFrom(cflow.fenvs);
             }
         }
 
-        if (hasfalseflow) {
-            this.m_emitter.emitAbort(exp.sinfo, "exhaustive");
-        }
-        this.raiseErrorIf(exp.sinfo, !results.some((eev) => eev.hasNormalFlow()), "No feasible path in this conditional expression");
+        const stype = this.normalizeUnionList(results.map((eev) => this.envExpressionGetInferType(eev.value)));
+        const renv = venv.createFreshFlowEnvExpressionFrom(this.envExpressionSimplifyFlowInfos(([] as FlowTypeInfoOption[]).concat(...results.map((ff) => ff.value.flowinfo))));
 
-        const etype = this.m_assembly.typeUpperBound(results.map((eev) => eev.getExpressionResult().valtype.flowtype));
-        for (let i = 0; i < rblocks.length; ++i) {
-            const rcb = rblocks[i];
-            this.m_emitter.setActiveBlock(rcb[0]);
+        const clauses = results
+            .filter((ffp) => ffp.test !== undefined)
+            .map((ffp) => {
+                return { match: ffp.test as TIRLiteralValue, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult };
+            });
+        const edefault = results.find((ffp) => ffp.test === undefined) ? this.emitSafeCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult : undefined;
 
-            const convreg = this.emitInlineConvertIfNeeded(exp.sinfo, rcb[1], rcb[2], etype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, convreg, trgt, this.m_emitter.registerResolvedTypeReference(etype), undefined);
-
-            this.m_emitter.localLifetimeEnd(exp.sinfo, matchvar);
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-        }
-
-        this.m_emitter.setActiveBlock(doneblck);
-        
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...results.map((eev) => eev.popLocalScope().setUniformResultExpression(etype)));
+        const rexp = new TIRSwitchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, clauses, edefault, exhaustive);
+        return this.setResultExpression(renv, rexp, stype, FlowTypeTruthOps.join(...results.map((ff) => this.envExpressionGetInferTruth(ff.value))));
     }
 
-    private checkMatchExpression(env: ExpressionTypeEnvironment, exp: MatchExpression, trgt: MIRRegisterArgument, refok: boolean, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        const vreg = this.m_emitter.generateTmpRegister();
-        const venv = this.checkExpression(env, exp.sval, vreg, undefined, { refok: refok, orok: false });
-        const cvname = venv.getExpressionResult().expvar;
+    private checkMatchExpression(env: ExpressionTypeEnvironment, exp: MatchExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
+        const venv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env, exp.sval, undefined), exp.sval.sinfo);
+        
+        let cenv: ExpressionTypeEnvironment = venv;
+        let exhaustive = false;
+        let results: {test: TIRExpression | undefined, ttype: TIRTypeKey | undefined, value: ExpressionTypeEnvironment}[] = [];
+        for (let i = 0; i < exp.matchflow.length; ++i) {
+            //it is a wildcard match
+            if(exp.matchflow[i].mtype === undefined) {
+                this.raiseErrorIf(exp.sinfo, i == exp.matchflow.length - 1, `wildcard should be last option in match expression but there were ${exp.matchflow.length - (i + 1)} more that are unreachable`);
 
-        const doneblck = this.m_emitter.createNewBlock("Lswitchexp_done");
-        const matchvar = `$match_@${exp.sinfo.pos}`;
-        let cenv = this.checkDeclareSingleVariableBinder(exp.sinfo, venv.pushLocalScope(), matchvar, ValueType.createUniform(venv.getExpressionResult().valtype.flowtype), vreg);
+                const trueenv = this.checkExpression(cenv, exp.matchflow[i].value, desiredtype);
 
-        let hasfalseflow = true;
-        let results: ExpressionTypeEnvironment[] = [];
-        let rblocks: [string, MIRRegisterArgument, ValueType, string[]][] = [];
-        for (let i = 0; i < exp.flow.length && hasfalseflow; ++i) {
-            const nextlabel = this.m_emitter.createNewBlock(`Lswitchexp_${i}next`);
-            const actionlabel = this.m_emitter.createNewBlock(`Lswitchexp_${i}action`);
-
-            const test = this.checkMatchGuard(exp.sinfo, i, cenv, matchvar, cvname, exp.flow[i].check, nextlabel, actionlabel);
-
-            if(test.tenv === undefined) {
-                this.m_emitter.setActiveBlock(actionlabel);
-                this.m_emitter.emitDeadBlock(exp.sinfo);
-
-                this.m_emitter.setActiveBlock(nextlabel);
-                cenv = test.fenv as ExpressionTypeEnvironment;
-            }
-            else if(test.fenv === undefined) {
-                //go though action block and skip rest of generation
-                this.m_emitter.setActiveBlock(actionlabel);
-
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(test.tenv, exp.flow[i].action, ttreg, infertype);
-
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype, test.newlive]);
-
-                this.m_emitter.setActiveBlock(nextlabel);
-                this.m_emitter.emitDeadBlock(exp.sinfo);
-
-                hasfalseflow = false;
+                results.push({test: undefined, ttype: undefined, value: trueenv});
+                exhaustive = true;
+                break;
             }
             else {
-                this.m_emitter.setActiveBlock(actionlabel);
+                const testtype = this.normalizeTypeOnly(exp.matchflow[i].mtype as TypeSignature, env.binds);
 
-                const ttreg = this.m_emitter.generateTmpRegister();
-                const truestate = this.checkExpression(test.tenv, exp.flow[i].action, ttreg, infertype);
+                if(this.subtypeOf(this.envExpressionGetInferType(cenv), testtype)) {
+                    this.raiseErrorIf(exp.sinfo, i == exp.matchflow.length - 1, `exhaustive none check should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
 
-                results.push(truestate);
-                rblocks.push([this.m_emitter.getActiveBlockName(), ttreg, truestate.getExpressionResult().valtype, test.newlive]);
+                    const trueenv = this.checkExpression(cenv, exp.matchflow[i].value, desiredtype);
+                    results.push({test: undefined, ttype: undefined, value: trueenv});
+                    exhaustive = true;
+                    break;
+                }
+                else {
+                    const fexp = this.processTypeIs((exp.matchflow[i].mtype as TypeSignature).sinfo, cenv, testtype);
+                    const cflow = this.convertToBoolFlowsOnResult(fexp);
 
-                this.m_emitter.setActiveBlock(nextlabel);
-                cenv = test.fenv as ExpressionTypeEnvironment;
+                    const trueenv = this.checkExpression(fexp.createFreshFlowEnvExpressionFrom(cflow.tenvs), exp.matchflow[i].value, desiredtype);
+                    results.push({test: fexp.expressionResult, ttype: this.toTIRTypeKey(testtype), value: trueenv});
+                
+                    cenv = fexp.createFreshFlowEnvExpressionFrom(cflow.fenvs);
+                }
             }
         }
 
-        if (hasfalseflow) {
-            this.m_emitter.emitAbort(exp.sinfo, "exhaustive");
-        }
-        this.raiseErrorIf(exp.sinfo, !results.some((eev) => eev.hasNormalFlow()), "No feasible path in this conditional expression");
+        const stype = this.normalizeUnionList(results.map((eev) => this.envExpressionGetInferType(eev.value)));
+        const renv = venv.createFreshFlowEnvExpressionFrom(this.envExpressionSimplifyFlowInfos(([] as FlowTypeInfoOption[]).concat(...results.map((ff) => ff.value.flowinfo))));
 
-        const etype = this.m_assembly.typeUpperBound(results.map((eev) => eev.getExpressionResult().valtype.flowtype));
-        for (let i = 0; i < rblocks.length; ++i) {
-            const rcb = rblocks[i];
-            this.m_emitter.setActiveBlock(rcb[0]);
+        const clauses = results
+            .filter((ffp) => ffp.test !== undefined)
+            .map((ffp) => {
+                return { match: ffp.test as TIRExpression, mtype: ffp.ttype as TIRTypeKey, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult };
+            });
+        const edefault = results.find((ffp) => ffp.test === undefined) ? this.emitSafeCoerceIfNeeded(results[results.length - 1].value, exp.matchflow[exp.matchflow.length - 1].value.sinfo, stype).expressionResult : undefined;
 
-            const convreg = this.emitInlineConvertIfNeeded(exp.sinfo, rcb[1], rcb[2], etype);
-            this.m_emitter.emitRegisterStore(exp.sinfo, convreg, trgt, this.m_emitter.registerResolvedTypeReference(etype), undefined);
-
-            this.m_emitter.localLifetimeEnd(exp.sinfo, matchvar);
-            for (let i = 0; i < rcb[3].length; ++i) {
-                this.m_emitter.localLifetimeEnd(exp.sinfo, rcb[3][i]);
-            }
-
-            this.m_emitter.emitDirectJump(exp.sinfo, doneblck);
-        }
-
-        this.m_emitter.setActiveBlock(doneblck);
-        
-        return ExpressionTypeEnvironment.join(this.m_assembly, ...results.map((eev) => eev.popLocalScope().setUniformResultExpression(etype)));
+        const rexp = new TIRMatchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, clauses, edefault, exhaustive);
+        return this.setResultExpression(renv, rexp, stype, FlowTypeTruthOps.join(...results.map((ff) => this.envExpressionGetInferTruth(ff.value))));
     }
 
-    private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, infertype: ResolvedType | undefined): ExpressionTypeEnvironment {
+    private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
         switch (exp.tag) {
-            case ExpressionTag.LiteralNoneExpression:
-                return this.checkLiteralNoneExpression(env, exp as LiteralNoneExpression, trgt);
-            case ExpressionTag.LiteralNothingExpression:
-                return this.checkLiteralNothingExpression(env, exp as LiteralNothingExpression, trgt);
-            case ExpressionTag.LiteralBoolExpression:
-                return this.checkLiteralBoolExpression(env, exp as LiteralBoolExpression, trgt);
-            case ExpressionTag.LiteralNumberinoExpression:
-                return this.checkLiteralNumberinoExpression(env, exp as LiteralNumberinoExpression, trgt, infertype);
-            case ExpressionTag.LiteralIntegralExpression:
-                return this.checkLiteralIntegralExpression(env, exp as LiteralIntegralExpression, trgt);
-            case ExpressionTag.LiteralFloatPointExpression:
-                return this.checkLiteralFloatExpression(env, exp as LiteralFloatPointExpression, trgt);
-            case ExpressionTag.LiteralRationalExpression:
-                return this.checkLiteralRationalExpression(env, exp as LiteralRationalExpression, trgt);
-            case ExpressionTag.LiteralStringExpression:
-                return this.checkLiteralStringExpression(env, exp as LiteralStringExpression, trgt);
-            case ExpressionTag.LiteralRegexExpression:
-                return this.checkLiteralRegexExpression(env, exp as LiteralRegexExpression, trgt);
-            case ExpressionTag.LiteralTypedStringExpression:
-                return this.checkCreateTypedString(env, exp as LiteralTypedStringExpression, trgt);
-            case ExpressionTag.LiteralTypedPrimitiveConstructorExpression:
-                return this.checkTypedTypedNumericConstructor(env, exp as LiteralTypedPrimitiveConstructorExpression, trgt);
-            case ExpressionTag.LiteralTypedStringConstructorExpression:
-                return this.checkDataStringConstructor(env, exp as LiteralTypedStringConstructorExpression, trgt);
+            case ExpressionTag.LiteralNoneExpression: {
+                return this.checkLiteralNoneExpression(env, exp as LiteralNoneExpression);
+            }
+            case ExpressionTag.LiteralNothingExpression: {
+                return this.checkLiteralNothingExpression(env, exp as LiteralNothingExpression);
+            }
+            case ExpressionTag.LiteralBoolExpression: { 
+                return this.checkLiteralBoolExpression(env, exp as LiteralBoolExpression);
+            }
+            case ExpressionTag.LiteralIntegralExpression: {
+                return this.checkLiteralIntegralExpression(env, exp as LiteralIntegralExpression);
+            }
+            case ExpressionTag.LiteralRationalExpression: {
+                return this.checkLiteralRationalExpression(env, exp as LiteralRationalExpression);
+            }
+            case ExpressionTag.LiteralFloatPointExpression: {
+                return this.checkLiteralFloatExpression(env, exp as LiteralFloatPointExpression);
+            }
+            case ExpressionTag.LiteralRegexExpression: {
+                return this.checkLiteralRegexExpression(env, exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralStringExpression: { 
+                return this.checkLiteralStringExpression(env, exp as LiteralStringExpression);
+            }
+            case ExpressionTag.LiteralASCIIStringExpression: { 
+                return this.checkLiteralASCIIStringExpression(env, exp as LiteralStringExpression);
+            }
+            case ExpressionTag.LiteralTypedStringExpression: {
+                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
+            }
+            case ExpressionTag.LiteralASCIITypedStringExpression: {
+                return this.checkLiteralASCIITypedStringExpression(env, exp as LiteralTypedStringExpression);
+            }
+            case ExpressionTag.LiteralTemplateStringExpression: {
+                return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            }
+            case ExpressionTag.LiteralASCIITemplateStringExpression: {
+                return this.checkLiteralASCIITemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            }
+            case ExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
+                return this.checkLiteralTypedPrimitiveConstructorExpression(env, exp as LiteralTypedPrimitiveConstructorExpression);
+            }
+
+
+           
             case ExpressionTag.AccessNamespaceConstantExpression:
                 return this.checkAccessNamespaceConstant(env, exp as AccessNamespaceConstantExpression, trgt);
             case ExpressionTag.AccessStaticFieldExpression:
@@ -4306,89 +4106,68 @@ class TypeChecker {
                 return this.checkIfExpression(env, exp as IfExpression, trgt, (extraok && extraok.refok) || false, infertype);
             case ExpressionTag.MatchExpression:
                 return this.checkMatchExpression(env, exp as MatchExpression, trgt, (extraok && extraok.refok) || false, infertype);
+
+                
+            
+                AccessFormatInfoExpression = "AccessFormatInfoExpression",
+                AccessEnvValueExpression = "AccessEnvValueExpression",
+            
+                AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
+                AccessStaticFieldExpression = " AccessStaticFieldExpression",
+                AccessVariableExpression = "AccessVariableExpression",
+            
+                ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
+                ConstructorTupleExpression = "ConstructorTupleExpression",
+                ConstructorRecordExpression = "ConstructorRecordExpression",
+                ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
+                ConstructorPCodeExpression = "ConstructorPCodeExpression",
+            
+                PCodeInvokeExpression = "PCodeInvokeExpression",
+                SpecialConstructorExpression = "SpecialConstructorExpression",
+                CallNamespaceFunctionOrOperatorExpression = "CallNamespaceFunctionOrOperatorExpression",
+                CallStaticFunctionExpression = "CallStaticFunctionExpression",
+            
+                LogicActionAndExpression = "LogicActionAndExpression",
+                LogicActionOrExpression = "LogicActionOrExpression",
+            
+                PostfixOpExpression = "PostfixOpExpression",
+            
+                PrefixNotOpExpression = "PrefixNotOpExpression",
+                PrefixNegateOpExpression = "PrefixNegateOpExpression",
+            
+                BinAddExpression = "BinAddExpression",
+                BinSubExpression = "BinSubExpression",
+                BinMultExpression = "BinMultExpression",
+                BinDivExpression = "BinDivExpression",
+            
+                BinKeyEqExpression = "BinKeyEqExpression",
+                BinKeyNeqExpression = "BinKeyNeqExpression",
+            
+                NumericEqExpression = "NumericEqExpression",
+                NumericNeqExpression = "NumericNeqExpression",
+                NumericLessExpression = "NumericLessExpression",
+                NumericLessEqExpression = "NumericLessEqExpression",
+                NumericGreaterExpression = "NumericGreaterExpression",
+                NumericGreaterEqExpression = "NumericGreaterEqExpression",
+            
+                BinLogicAndExpression = "BinLogicAndExpression",
+                BinLogicOrExpression = "BinLogicOrExpression",
+                BinLogicImpliesExpression = "BinLogicImpliesExpression",
+            
+                MapEntryConstructorExpression = "MapEntryConstructorExpression",
+            
+                IfExpression = "IfExpression",
+                SwitchExpression = "SwitchExpression",
+                MatchExpression = "MatchExpression",
+            
+                TaskSelfFieldExpression = "TaskSelfFieldExpression",
+                TaskSelfActionExpression = "TaskSelfActionExpression",
+                TaskGetIDExpression = "TaskGetIDExpression",
+                TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
+
             default: {
-                let res: ExpressionTypeEnvironment[] = [];
-
-                if (exp.tag === ExpressionTag.PCodeInvokeExpression) {
-                    res = this.checkPCodeInvokeExpression(env, exp as PCodeInvokeExpression, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.CallNamespaceFunctionOrOperatorExpression) {
-                    res = this.checkCallNamespaceFunctionOrOperatorExpression(env, exp as CallNamespaceFunctionOrOperatorExpression, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.CallStaticFunctionOrOperatorExpression) {
-                    res = this.checkCallStaticFunctionOrOperatorExpression(env, exp as CallStaticFunctionOrOperatorExpression, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.IsTypeExpression) {
-                    res = this.checkIsTypeExpressionMulti(env, exp as IsTypeExpression, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.AsTypeExpression) {
-                    res = this.checkAsTypeExpressionMulti(env, exp as AsTypeExpression, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.PostfixOpExpression) {
-                    res = this.checkPostfixExpression(env, exp as PostfixOp, trgt, (extraok && extraok.refok) || false, infertype);
-                }
-                else if (exp.tag === ExpressionTag.PrefixNotOpExpression) {
-                    res = this.checkPrefixNotOp(env, exp as PrefixNotOp, trgt, (extraok && extraok.refok) || false);
-                }
-                else if (exp.tag === ExpressionTag.BinKeyExpression) {
-                    const bke = exp as BinKeyExpression;
-                    if(bke.op === "===") {
-                        res = this.strongEQ(bke.sinfo, env, bke.lhs, bke.rhs, trgt);
-                    }
-                    else {
-                        res = this.strongNEQ(bke.sinfo, env, bke.lhs, bke.rhs, trgt);
-                    }
-                }
-                else {
-                    assert(exp.tag === ExpressionTag.BinLogicExpression);
-                    res = this.checkBinLogic(env, exp as BinLogicExpression, trgt, (extraok && extraok.refok) || false);
-                }
-
-                return ExpressionTypeEnvironment.join(this.m_assembly, ...res);
+                xxxx;
             }
-        }
-    }
-
-    private checkExpressionRefSelfOk(env: ExpressionTypeEnvironment, exp: Expression, infertype: ResolvedType | undefined): {pfxstmts: TIRStatement[], exp: ExpressionTypeEnvironment} {
-        xxxxx;
-    }
-
-    private checkExpressionMultiFlow(env: TypeEnvironment, exp: Expression, trgt: MIRRegisterArgument, infertype: ResolvedType | undefined, extraok?: { refok: boolean, orok: boolean }): TypeEnvironment[] {
-        if (exp.tag === ExpressionTag.PCodeInvokeExpression) {
-            return this.checkPCodeInvokeExpression(env, exp as PCodeInvokeExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.CallNamespaceFunctionOrOperatorExpression) {
-            return this.checkCallNamespaceFunctionOrOperatorExpression(env, exp as CallNamespaceFunctionOrOperatorExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.CallStaticFunctionOrOperatorExpression) {
-            return this.checkCallStaticFunctionOrOperatorExpression(env, exp as CallStaticFunctionOrOperatorExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.IsTypeExpression) {
-            return this.checkIsTypeExpressionMulti(env, exp as IsTypeExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.AsTypeExpression) {
-            return this.checkAsTypeExpressionMulti(env, exp as AsTypeExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.PostfixOpExpression) {
-            return this.checkPostfixExpression(env, exp as PostfixOp, trgt, (extraok && extraok.refok) || false, infertype);
-        }
-        else if (exp.tag === ExpressionTag.PrefixNotOpExpression) {
-            return this.checkPrefixNotOp(env, exp as PrefixNotOp, trgt, (extraok && extraok.refok) || false);
-        }
-        else if (exp.tag === ExpressionTag.BinKeyExpression) {
-            const bke = exp as BinKeyExpression;
-            if (bke.op === "===") {
-                return this.strongEQ(bke.sinfo, env, bke.lhs, bke.rhs, trgt);
-            }
-            else {
-                return this.strongNEQ(bke.sinfo, env, bke.lhs, bke.rhs, trgt);
-            }
-        }
-        else if (exp.tag  === ExpressionTag.BinLogicExpression) {
-            return this.checkBinLogic(env, exp as BinLogicExpression, trgt, (extraok && extraok.refok) || false);
-        }
-        else {
-            return [this.checkExpression(env, exp, trgt, infertype, extraok)];
         }
     }
 
