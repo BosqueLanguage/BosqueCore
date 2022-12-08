@@ -1,19 +1,15 @@
 # Bosque Programming Language
 
-[![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Microsoft/BosqueLanguage/blob/master/LICENSE.txt)
+[![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/BosqueLanguage/BosqueCore/blob/master/LICENSE.txt)
 [![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)](#contribute)
-[![Build Health](https://img.shields.io/github/workflow/status/microsoft/BosqueLanguage/nodeci)](https://github.com/microsoft/BosqueLanguage/actions) 
+[![Build Health](https://img.shields.io/github/workflow/status/BosqueLanguage/BosqueCore/nodeci)](https://github.com/BosqueLanguage/BosqueCore/actions) 
 
 
 # The Bosque Project
 
-The Bosque Programming Language project is a ground up language & tooling co-design effort focused on is investigating the theoretical and the practical implications of:
+Bosque is an open-source project developing a new Programming Language and Development Stack. This foundation of this project is the view that automation and reasoning, along with human and AI agents that can leverage them, are the two features that will define software development for the next 50 years. Thus, the core of the language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this code the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to support writing high reliability code.
 
-1. Explicitly designing a code intermediate representation language (bytecode) that enables deep automated code reasoning and the deployment of next-generation development tools, compilers, and runtime systems.
-2. Leveraging the power of the intermediate representation to provide a programming language that is both easily accessible to modern developers and that provides a rich set of useful language features for developing high reliability & high performance applications.
-3. Taking a cloud-development first perspective on programming to address emerging challenges as we move into a distributed cloud development model based around serverless and microservice architectures.
-
-The **_Bosque Language_** is a novel hybrid of functional programming language semantics and an ergonomic block & assignment-based syntax. This allows developers to organize code into familiar/natural blocks and compositions while, simultaneously, benefiting from the correctness and simplicity of a functional programming model (see code examples below). The language also provides a range of ergonomic features for writing high reliability code, such as Typed Strings, unit typedecls for primitives, and first-class assertions/pre-post conditions/invariants.
+In addition to being a powerful and pleasant language to develop with, more info below, including typed strings, block-syntax, functor-libs, typedecls & datatypes, and task-flows (TODO ADD SECTION LINK), this design philosophy opens up a range of opportunities for unique developer tools and runtime features. Based on previous proof-of-concept implementations we are planning to add these features (and more) to the system as time is available -- see our github issues:
 
 The **_Bosque Testing Framework_** provides a built-in unit testing system, a powerful new SMT powered property-based testing system, and the ability to symbolically search for errors that can be triggered by user inputs in the entrypoints to the program (see the `bosque` command section below). These tests and checks can find compact debuggable inputs that trigger and error or failing test and, in many cases, can also prove that there will never be a case with a “small repro” that triggers the error! 
 

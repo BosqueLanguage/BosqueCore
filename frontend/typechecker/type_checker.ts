@@ -5,12 +5,12 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
+import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression } from "../ast/body";
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression } from "../tree_ir/tir_body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, EmptyStatement } from "../ast/body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicSelfRefExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression } from "../tree_ir/tir_body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
-import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption } from "./type_environment";
+import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -138,7 +138,9 @@ class TypeChecker {
     private m_buildLevel: BuildLevel;
 
     private m_file: string;
-    private m_isTaskFile: boolean;
+    private m_taskOpsOk: boolean;
+    private m_taskSelfOk: "no" | "read" | "write";
+    private m_taskType: {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>} | undefined;
     private m_errors: [string, number, string][];
 
     private readonly m_sortedSrcFiles: {fullname: string, shortname: string}[]; 
@@ -163,8 +165,8 @@ class TypeChecker {
     private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
 
     private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-    private m_pendingFunctionMemberDecls: OOMemberLookupInfo<StaticFunctionDecl>[] = [];
-    private m_pendingMethodMemberDecls: OOMemberLookupInfo<MemberMethodDecl>[] = [];
+    private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>}[] = [];
 
     private m_tempvarctr = 0;
 
@@ -174,7 +176,8 @@ class TypeChecker {
         this.m_buildLevel = buildlevel;
 
         this.m_file = "[No File]";
-        this.m_isTaskFile = false;
+        this.m_taskOpsOk = false;
+        this.m_taskSelfOk = "no";
         this.m_errors = [];
         
         this.m_sortedSrcFiles = sortedSrcFiles;
@@ -1687,6 +1690,7 @@ class TypeChecker {
     getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LatLongCoordinate"); }
     getSpecialRegexType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Regex"); }
     getSpecialNothingType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Nothing"); }
+    getSpecialTaskIDType(): ResolvedType { return this.internSpecialPrimitiveObjectType("TaskID"); }
 
     getSpecialAnyConceptType(): ResolvedType { return this.internSpecialConceptType("Any"); }
     getSpecialSomeConceptType(): ResolvedType { return this.internSpecialConceptType("Some"); }
@@ -1930,10 +1934,45 @@ class TypeChecker {
         return new OOMemberResolution<T>(decls[0], impls !== ResolveResultFlag.notfound ? impls : [], impls !== ResolveResultFlag.notfound);
     }
 
+    //When resolving a member on an task we must find a unique decl and implementation
+    //const/function lookups will assert that an implementation was found
+    resolveMemberFromTaskAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedTaskAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const decls = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.task, atom.binds, fnlookup);
+        
+        //Lookup failed
+        if(decls === ResolveResultFlag.notfound) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if(decls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const impls = this.tryGetMemberImpl_helper(ResolvedType.createSingle(atom), atom.task, atom.binds, fnlookup);
+
+        //Lookup failed
+        if(impls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls !== ResolveResultFlag.notfound ? impls : [], impls !== ResolveResultFlag.notfound);
+    }
+
     resolveMember<T extends OOMemberDecl>(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
         const sopts = ttype.options.map((atom) => {
             if (atom instanceof ResolvedEntityAtomType) {
                 return this.resolveMemberFromEntityAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
+            }
+            else if(atom instanceof ResolvedTaskAtomType) {
+                return this.resolveMemberFromTaskAtom(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
             }
             else if (atom instanceof ResolvedConceptAtomType) {
                 return this.resolveMemberFromConceptAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
@@ -2688,7 +2727,7 @@ class TypeChecker {
     }
 
     private checkAccessEnvValue(env: ExpressionTypeEnvironment, exp: AccessEnvValueExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_isTaskFile, `Can only access "environment" variables in task actions`);
+        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk, `Can only access "environment" variables in task actions`);
 
         const valtype = this.normalizeTypeOnly(exp.valtype, env.binds);
         const restype = this.normalizeTypeOnly(new UnionTypeSignature(exp.sinfo, [exp.valtype, new NominalTypeSignature(exp.sinfo, "Core", ["None"])]), env.binds);
@@ -3030,7 +3069,7 @@ class TypeChecker {
         }
     }
 
-    private checkPCodeInvokeExpression(env: ExpressionTypeEnvironment, exp: PCodeInvokeExpression): ExpressionTypeEnvironment[] {
+    private checkPCodeInvokeExpression(env: ExpressionTypeEnvironment, exp: PCodeInvokeExpression): ExpressionTypeEnvironment {
         const pco = env.lookupPCode(exp.pcode);
         this.raiseErrorIf(exp.sinfo, pco === undefined, "Code name not defined");
         const pcode = pco as PCode;
@@ -3182,7 +3221,7 @@ class TypeChecker {
             else {
                 const fkey = TIRInvokeIDGenerator.generateInvokeForMemberFunction(tirrtype, exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
             
-                this.m_pendingFunctionMemberDecls.push(fdecl);
+                this.m_pendingFunctionMemberDecls.push({decl: fdecl, binds: binds});
 
                 if (this.hasPreconditions(fdecl.decl.invoke) || this.hasPostconditions(fdecl.decl.invoke)) {
                     const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
@@ -3334,7 +3373,7 @@ class TypeChecker {
             }
             else {
                 const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
-                this.m_pendingMethodMemberDecls.push(knownimpl, mresolve.decl);
+                this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds}, {decl: mresolve.decl, binds: binds});
 
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
                 if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
@@ -3357,14 +3396,14 @@ class TypeChecker {
         }
         else {
             const declkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
-            this.m_pendingMethodMemberDecls.push(mresolve.decl);
+            this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds});
 
             const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
             let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
                 const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
                 inferfkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
-                this.m_pendingMethodMemberDecls.push(mresolve.impl[0]);
+                this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds});
             }
 
             const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
@@ -4023,6 +4062,71 @@ class TypeChecker {
         return this.setResultExpression(renv, rexp, stype, FlowTypeTruthOps.join(...results.map((ff) => this.envExpressionGetInferTruth(ff.value))));
     }
 
+    private checkTaskAccessField(env: ExpressionTypeEnvironment, exp: TaskSelfFieldExpression): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations (not a task method/action)");
+        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
+        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
+
+        const fftry = tsk.taskdecl.memberFields.find((f) => f.name === exp.sfield);
+        this.raiseErrorIf(exp.sinfo, fftry === undefined, `field ${exp.sfield} is not defined on task ${tsk.taskdecl.name}`);
+        const ff = fftry as MemberFieldDecl;
+
+        const fftype = this.normalizeTypeOnly(ff.declaredType, TemplateBindScope.createBaseBindScope(tsk.taskbinds));
+        const tirfftype = this.toTIRTypeKey(fftype);
+
+        const fkey = TIRMemberIDGenerator.generateMemberFieldID(this.toTIRTypeKey(tasktype), exp.sfield);
+        return this.setResultExpression(env, new TIRTaskSelfFieldExpression(exp.sinfo, this.toTIRTypeKey(tasktype), fkey, exp.sfield, tirfftype), fftype);
+    }
+
+    private checkTaskSelfAction(env: ExpressionTypeEnvironment, exp: TaskSelfActionExpression, refop: boolean): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations (not a task method/action)");
+        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
+        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
+
+        const mresolvetry = tsk.taskdecl.memberMethods.find((mm) => mm.name === exp.name);
+        this.raiseErrorIf(exp.sinfo, mresolvetry === undefined, `Could not resolve method name "${exp.name}" from type ${tasktype.typeID}`);
+        const mresolve = mresolvetry as MemberMethodDecl;
+
+        this.raiseErrorIf(exp.sinfo, refop !== mresolve.invoke.isThisRef, "Cannot call a action/ref function in this expression position");
+
+        this.raiseErrorIf(exp.sinfo, mresolve.invoke.terms.length !== exp.terms.length, "missing template types");
+        let binds = new Map<string, ResolvedType>();
+        for (let i = 0; i < mresolve.invoke.terms.length; ++i) {
+            binds.set(mresolve.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], TemplateBindScope.createBaseBindScope(tsk.taskbinds)));
+        }
+        this.checkTemplateTypesOnInvoke(exp.sinfo, mresolve.invoke.terms, TemplateBindScope.createBaseBindScope(tsk.taskbinds), binds, mresolve.invoke.termRestrictions);
+
+        const fdeclscope = TemplateBindScope.createBaseBindScope(tsk.taskbinds).pushScope(binds);
+        const rtype = this.normalizeTypeOnly(mresolve.invoke.resultType, fdeclscope);
+        const tirrtype = this.toTIRTypeKey(rtype);
+
+        const tirdecltype = this.toTIRTypeKey(tasktype);
+
+        const argexps = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params.map((pp) => pp.type), fdeclscope);
+
+        const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+        this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds});
+
+        const rcvrexp = this.emitCoerceIfNeeded(env, exp.sinfo, rtype);
+        if(mresolve.invoke.attributes.includes("task_action")) {
+            return this.setResultExpression(env, new TIRCallMemberActionExpression(exp.sinfo, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
+        }
+        else if (mresolve.invoke.isThisRef) {
+            return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(exp.sinfo, fkey, tirrtype, "self", argexps), rtype);
+        }
+        else {
+            return this.setResultExpression(env, new TIRCallMemberFunctionExpression(exp.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+        }
+    }
+
+    private checkTaskGetIDExpression(env: ExpressionTypeEnvironment, exp: TaskGetIDExpression): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations");
+        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
+        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
+
+        return this.setResultExpression(env, new TIRTaskGetIDExpression(exp.sinfo, this.toTIRTypeKey(tasktype),  this.toTIRTypeKey(this.getSpecialTaskIDType())), this.getSpecialTaskIDType());
+    }
+
     private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
@@ -4067,121 +4171,144 @@ class TypeChecker {
             case ExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
                 return this.checkLiteralTypedPrimitiveConstructorExpression(env, exp as LiteralTypedPrimitiveConstructorExpression);
             }
-
-
-           
-            case ExpressionTag.AccessNamespaceConstantExpression:
-                return this.checkAccessNamespaceConstant(env, exp as AccessNamespaceConstantExpression, trgt);
-            case ExpressionTag.AccessStaticFieldExpression:
-                return this.checkAccessStaticField(env, exp as AccessStaticFieldExpression, trgt);
-            case ExpressionTag.AccessVariableExpression:
-                return this.checkAccessVariable(env, exp as AccessVariableExpression, trgt);
-            case ExpressionTag.ConstructorPrimaryExpression:
-                return this.checkConstructorPrimary(env, exp as ConstructorPrimaryExpression, trgt);
-            case ExpressionTag.ConstructorPrimaryWithFactoryExpression:
-                return this.checkConstructorPrimaryWithFactory(env, exp as ConstructorPrimaryWithFactoryExpression, trgt);
-            case ExpressionTag.ConstructorTupleExpression:
-                return this.checkTupleConstructor(env, exp as ConstructorTupleExpression, trgt, infertype);
-            case ExpressionTag.ConstructorRecordExpression:
-                return this.checkRecordConstructor(env, exp as ConstructorRecordExpression, trgt, infertype);
-            case ExpressionTag.ConstructorEphemeralValueList:
-                return this.checkConstructorEphemeralValueList(env, exp as ConstructorEphemeralValueList, trgt, infertype);
-            case ExpressionTag.SpecialConstructorExpression:
-                return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression, trgt, infertype);
-            case ExpressionTag.LogicActionExpression:
-                return this.checkLogicActionExpression(env, exp as LogicActionExpression, trgt);
-            case ExpressionTag.MapEntryConstructorExpression:
-                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, trgt, infertype);
-            case ExpressionTag.SelectExpression:
-                return this.checkSelect(env, exp as SelectExpression, trgt, (extraok && extraok.refok) || false, infertype);
-            case ExpressionTag.SwitchExpression:
-                return this.checkSwitchExpression(env, exp as SwitchExpression, trgt, (extraok && extraok.refok) || false, infertype);
-            case ExpressionTag.MatchExpression:
-                return this.checkMatchExpression(env, exp as MatchExpression, trgt, (extraok && extraok.refok) || false, infertype);
-            case ExpressionTag.ExpOrExpression:
-                return this.checkOrExpression(env, exp as ExpOrExpression, trgt, infertype, extraok || { refok: false, orok: false });
-            case ExpressionTag.BlockStatementExpression:
-                return this.checkBlockExpression(env, exp as BlockStatementExpression, infertype, trgt);
-            case ExpressionTag.IfExpression:
-                return this.checkIfExpression(env, exp as IfExpression, trgt, (extraok && extraok.refok) || false, infertype);
-            case ExpressionTag.MatchExpression:
-                return this.checkMatchExpression(env, exp as MatchExpression, trgt, (extraok && extraok.refok) || false, infertype);
-
-                
-            
-                AccessFormatInfoExpression = "AccessFormatInfoExpression",
-                AccessEnvValueExpression = "AccessEnvValueExpression",
-            
-                AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
-                AccessStaticFieldExpression = " AccessStaticFieldExpression",
-                AccessVariableExpression = "AccessVariableExpression",
-            
-                ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
-                ConstructorTupleExpression = "ConstructorTupleExpression",
-                ConstructorRecordExpression = "ConstructorRecordExpression",
-                ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
-                ConstructorPCodeExpression = "ConstructorPCodeExpression",
-            
-                PCodeInvokeExpression = "PCodeInvokeExpression",
-                SpecialConstructorExpression = "SpecialConstructorExpression",
-                CallNamespaceFunctionOrOperatorExpression = "CallNamespaceFunctionOrOperatorExpression",
-                CallStaticFunctionExpression = "CallStaticFunctionExpression",
-            
-                LogicActionAndExpression = "LogicActionAndExpression",
-                LogicActionOrExpression = "LogicActionOrExpression",
-            
-                PostfixOpExpression = "PostfixOpExpression",
-            
-                PrefixNotOpExpression = "PrefixNotOpExpression",
-                PrefixNegateOpExpression = "PrefixNegateOpExpression",
-            
-                BinAddExpression = "BinAddExpression",
-                BinSubExpression = "BinSubExpression",
-                BinMultExpression = "BinMultExpression",
-                BinDivExpression = "BinDivExpression",
-            
-                BinKeyEqExpression = "BinKeyEqExpression",
-                BinKeyNeqExpression = "BinKeyNeqExpression",
-            
-                NumericEqExpression = "NumericEqExpression",
-                NumericNeqExpression = "NumericNeqExpression",
-                NumericLessExpression = "NumericLessExpression",
-                NumericLessEqExpression = "NumericLessEqExpression",
-                NumericGreaterExpression = "NumericGreaterExpression",
-                NumericGreaterEqExpression = "NumericGreaterEqExpression",
-            
-                BinLogicAndExpression = "BinLogicAndExpression",
-                BinLogicOrExpression = "BinLogicOrExpression",
-                BinLogicImpliesExpression = "BinLogicImpliesExpression",
-            
-                MapEntryConstructorExpression = "MapEntryConstructorExpression",
-            
-                IfExpression = "IfExpression",
-                SwitchExpression = "SwitchExpression",
-                MatchExpression = "MatchExpression",
-            
-                TaskSelfFieldExpression = "TaskSelfFieldExpression",
-                TaskSelfActionExpression = "TaskSelfActionExpression",
-                TaskGetIDExpression = "TaskGetIDExpression",
-                TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
-
+            case ExpressionTag.AccessFormatInfoExpression: {
+                return this.checkAccessFormatInfo(env, exp as AccessFormatInfoExpression);
+            }
+            case ExpressionTag.AccessEnvValueExpression: {
+                return this.checkAccessEnvValue(env, exp as AccessEnvValueExpression);
+            }
+            case ExpressionTag.AccessNamespaceConstantExpression: {
+                return this.checkAccessNamespaceConstant(env, exp as AccessNamespaceConstantExpression);
+            }
+            case ExpressionTag.AccessStaticFieldExpression: {
+                return this.checkAccessStaticField(env, exp as AccessStaticFieldExpression);
+            }
+            case ExpressionTag.AccessVariableExpression: {
+                return this.checkAccessVariable(env, exp as AccessVariableExpression);
+            }
+            case ExpressionTag.ConstructorPrimaryExpression: {
+                return this.checkConstructorPrimary(env, exp as ConstructorPrimaryExpression);
+            }
+            case ExpressionTag.ConstructorTupleExpression: {
+                return this.checkTupleConstructor(env, exp as ConstructorTupleExpression, desiredtype);
+            }
+            case ExpressionTag.ConstructorRecordExpression: {
+                return this.checkRecordConstructor(env, exp as ConstructorRecordExpression, desiredtype);
+            }
+            case ExpressionTag.ConstructorEphemeralValueList: {
+                return this.checkConstructorEphemeralValueList(env, exp as ConstructorEphemeralValueList, desiredtype);
+            }
+            //PCode constructor always handled in agrument processing -- can't just create them randomly
+            case ExpressionTag.PCodeInvokeExpression: {
+                return this.checkPCodeInvokeExpression(env, exp as PCodeInvokeExpression);
+            }
+            case ExpressionTag.SpecialConstructorExpression: {
+                return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression, desiredtype);
+            }
+            case ExpressionTag.CallNamespaceFunctionOrOperatorExpression: {
+                return this.checkCallNamespaceFunctionOrOperatorExpression(env, exp as CallNamespaceFunctionOrOperatorExpression);
+            }
+            case ExpressionTag.CallStaticFunctionExpression: {
+                return this.checkCallStaticFunctionExpression(env, exp as CallStaticFunctionExpression);
+            }
+            case ExpressionTag.LogicActionAndExpression: {
+                return this.checkLogicActionAndExpression(env, exp as LogicActionAndExpression);
+            }
+            case ExpressionTag.LogicActionOrExpression: {
+                return this.checkLogicActionOrExpression(env, exp as LogicActionOrExpression);
+            }
+            case ExpressionTag.PostfixOpExpression: {
+                return this.checkPostfixExpression(env, exp as PostfixOp, desiredtype, false)
+            }
+            case ExpressionTag.PrefixNotOpExpression: {
+                return this.checkPrefixNotOp(env, exp as PrefixNotOp);
+            }
+            case ExpressionTag.PrefixNegateOpExpression: {
+                return this.checkPrefixNegateOpExpression(env, exp as PrefixNegateOp);
+            }
+            case ExpressionTag.BinAddExpression: {
+                return this.checkBinAddExpression(env, exp as BinAddExpression);
+            }
+            case ExpressionTag.BinSubExpression: {
+                return this.checkBinSubExpression(env, exp as BinSubExpression);
+            }
+            case ExpressionTag.BinMultExpression: {
+                return this.checkBinMultExpression(env, exp as BinMultExpression);
+            }
+            case ExpressionTag.BinDivExpression: {
+                return this.checkBinDivExpression(env, exp as BinDivExpression);
+            }
+            case ExpressionTag.BinKeyEqExpression: {
+                const bke = exp as BinKeyEqExpression;
+                return this.strongEQ(exp.sinfo, env, bke.lhs, bke.rhs);
+            }
+            case ExpressionTag.BinKeyNeqExpression: {
+                const bkne = exp as BinKeyNeqExpression;
+                return this.strongNEQ(exp.sinfo, env, bkne.lhs, bkne.rhs);
+            }
+            case ExpressionTag.NumericEqExpression: {
+                return this.checkNumericEqExpression(env, exp as NumericEqExpression);
+            }
+            case ExpressionTag.NumericNeqExpression: {
+                return this.checkNumericNeqExpression(env, exp as NumericNeqExpression);
+            }
+            case ExpressionTag.NumericLessExpression: {
+                return this.checkNumericLessExpression(env, exp as NumericLessExpression);
+            }
+            case ExpressionTag.NumericLessEqExpression: {
+                return this.checkNumericLessEqExpression(env, exp as NumericLessEqExpression);
+            }
+            case ExpressionTag.NumericGreaterExpression: {
+                return this.checkNumericGreaterExpression(env, exp as NumericGreaterExpression);
+            }
+            case ExpressionTag.NumericGreaterEqExpression: {
+                return this.checkNumericGreaterEqExpression(env, exp as NumericGreaterEqExpression);
+            }
+            case ExpressionTag.BinLogicAndExpression: {
+                return this.checkBinLogicAnd(env, exp as BinLogicAndxpression);
+            }
+            case ExpressionTag.BinLogicOrExpression: {
+                return this.checkBinLogicOr(env, exp as BinLogicOrExpression);
+            }
+            case ExpressionTag.BinLogicImpliesExpression: {
+                return this.checkBinLogicImplies(env, exp as BinLogicImpliesExpression);
+            }
+            case ExpressionTag.MapEntryConstructorExpression: {
+                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, desiredtype);
+            }
+            case ExpressionTag.IfExpression: {
+                return this.checkIfExpression(env, exp as IfExpression, desiredtype);
+            }
+            case ExpressionTag.SwitchExpression: {
+                return this.checkSwitchExpression(env, exp as SwitchExpression, desiredtype);
+            }
+            case ExpressionTag.MatchExpression: {
+                return this.checkMatchExpression(env, exp as MatchExpression, desiredtype);
+            }
+            case ExpressionTag.TaskSelfFieldExpression: {
+                return this.checkTaskAccessField(env, exp as TaskSelfFieldExpression);
+            }
+            case ExpressionTag.TaskSelfActionExpression: {
+                return this.checkTaskSelfAction(env, exp as TaskSelfActionExpression, false);
+            }
+            case ExpressionTag.TaskGetIDExpression: {
+                return this.checkTaskGetIDExpression(env, exp as TaskGetIDExpression);
+            }
             default: {
-                xxxx;
+                this.raiseError(exp.sinfo, `Unknown expression kind -- ${exp.tag}`);
+                return env;
             }
         }
     }
 
-    private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: TypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, venv: { etype: ValueType, etreg: MIRRegisterArgument } | undefined): TypeEnvironment {
+    private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, infertype: ResolvedType | undefined): StatementTypeEnvironment {
         this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), "Cannot shadow previous definition");
 
-        this.raiseErrorIf(sinfo, venv === undefined && isConst, "Must define const var at declaration site");
-        this.raiseErrorIf(sinfo, venv === undefined && decltype instanceof AutoTypeSignature, "Must define auto typed var at declaration site");
+        this.raiseErrorIf(sinfo, infertype === undefined && isConst, "Must define const var at declaration site");
+        this.raiseErrorIf(sinfo, infertype === undefined && decltype instanceof AutoTypeSignature, "Must define auto typed var at declaration site");
 
-        const vtype = (decltype instanceof AutoTypeSignature) ? (venv as { etype: ValueType, etreg: MIRRegisterArgument }).etype : ValueType.createUniform(this.resolveAndEnsureTypeOnly(sinfo, decltype, env.terms));
-        this.raiseErrorIf(sinfo, venv !== undefined && !this.m_assembly.subtypeOf(venv.etype.flowtype, vtype.layout), "Expression is not of declared type");
-
-        const mirvtype = this.m_emitter.registerResolvedTypeReference(vtype.layout);
-        this.m_emitter.localLifetimeStart(sinfo, vname, mirvtype);
+        const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
+        this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, decltype), "Expression is not of declared type");
 
         if (venv !== undefined) {
             const convreg = this.emitInlineConvertIfNeeded(sinfo, venv.etreg, venv.etype, vtype.layout);
@@ -4191,17 +4318,59 @@ class TypeChecker {
         return env.addVar(vname, isConst, vtype.layout, venv !== undefined, venv !== undefined ? venv.etype.flowtype : vtype.flowtype);
     }
 
-    private checkDeclareSingleVariableBinder(sinfo: SourceInfo, env: TypeEnvironment, vname: string, vtype: ValueType, etreg: MIRRegisterArgument): TypeEnvironment {
-        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), "Cannot shadow previous definition");
-
-        const mirvtype = this.m_emitter.registerResolvedTypeReference(vtype.flowtype);
-        this.m_emitter.localLifetimeStart(sinfo, vname, mirvtype);
-
-        const convreg = this.emitInlineConvertIfNeeded(sinfo, etreg, vtype, vtype.flowtype);
-        this.m_emitter.emitRegisterStore(sinfo, convreg, new MIRRegisterArgument(vname), mirvtype, undefined);
-
-        return env.addVar(vname, true, vtype.flowtype, true, vtype.flowtype);
+    
+    private checkEmptyStatement(env: StatementTypeEnvironment, stmt: EmptyStatement): StatementTypeEnvironment {
+        return env;
     }
+
+    /*
+    VariableDeclarationStatement = "VariableDeclarationStatement",
+    MultiReturnWithDeclarationStatement = "MultiReturnWithDeclarationStatement",
+    VariableAssignmentStatement = "VariableAssignmentStatement",
+    MultiReturnWithAssignmentStatement = "MultiReturnWithAssignmentStatement",
+
+    ReturnStatement = "ReturnStatement",
+
+    IfElseStatement = "IfElseStatement",
+    SwitchStatement = "SwitchStatement",
+    MatchStatement = "MatchStatement",
+
+    AbortStatement = "AbortStatement",
+    AssertStatement = "AssertStatement", //assert(x > 0)
+
+    DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
+    RefCallStatement = "RefCallStatement",
+
+    EnvironmentFreshStatement = "EnvironmentFreshStatement",
+    EnvironmentSetStatement = "EnvironmentSetStatement",
+    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+
+    TaskRunStatement = "TaskRunStatement", //run single task
+    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
+    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
+
+    TaskCallWithStatement = "TaskCallWithStatement",
+    TaskResultWithStatement = "TaskResultWithStatement",
+
+    TaskSetStatusStatement = "TaskSetStatusStatement",
+
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
+
+    TaskEventEmitStatement = "TaskEventEmitStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+
+    LoggerLevelStatement = "LoggerLevelStatement",
+    LoggerCategoryStatement = "LoggerCategoryStatement",
+    LoggerPrefixStatement = "LoggerPrefixStatement",
+
+    UnscopedBlockStatement = "UnscopedBlockStatement",
+    ScopedBlockStatement = "ScopedBlockStatement"
+*/
+
 
     private checkVariableDeclarationStatement(env: TypeEnvironment, stmt: VariableDeclarationStatement): TypeEnvironment {
         const infertype = stmt.vtype instanceof AutoTypeSignature ? undefined : this.resolveAndEnsureTypeOnly(stmt.sinfo, stmt.vtype, env.terms);

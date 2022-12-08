@@ -499,6 +499,9 @@ __internal entity Regex provides Some {
     }
 }
 
+//<summary>Primitive type for task identifiers</summary>
+typedecl TaskID = UUID4;
+
 //<summary>Static methods for Tuples.</summary>
 __universal concept Tuple provides Some {
 }

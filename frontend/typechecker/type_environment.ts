@@ -182,6 +182,56 @@ class ExpressionTypeEnvironment {
     setResultExpressionInfo(exp: TIRExpression, trepr: ResolvedType, finfo: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, trepr, finfo);
     }
+}
+
+class StatementTypeEnvironment {
+    readonly bodyid: string;
+    readonly binds: TemplateBindScope;
+    readonly pcodes: Map<string, TIRCodePack>;
+
+    readonly frozenVars: Set<string>;
+    readonly args: Map<string, VarInfo>;
+    readonly locals: Map<string, VarInfo>[];
+    
+    readonly flowinfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[];
+    readonly returninfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[];
+
+    private constructor(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], flowinfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[], returninfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>[]) {
+        this.bodyid = bodyid;
+        this.binds = binds;
+        this.pcodes = pcodes;
+
+        this.frozenVars = frozenVars;
+        this.args = args;
+        this.locals = locals;
+
+        this.flowinfo = flowinfo;
+        this.returninfo = returninfo;
+    }
+
+    getLocalVarInfo(name: string): VarInfo | undefined {
+        const locals = this.locals as Map<string, VarInfo>[];
+        for (let i = locals.length - 1; i >= 0; --i) {
+            if (locals[i].has(name)) {
+                return (locals[i].get(name) as VarInfo);
+            }
+        }
+
+        return undefined;
+    }
+
+    isVarNameDefined(name: string): boolean {
+        return this.getLocalVarInfo(name) !== undefined || (this.args as Map<string, VarInfo>).has(name);
+    }
+
+    lookupVar(name: string): VarInfo | null {
+        return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
+    }
+
+    static createInitialEnvForStatementEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): StatementTypeEnvironment {
+        return new StatementTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, [new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>()], []);
+    }
+
 
 /*
     
@@ -352,5 +402,5 @@ class ExpressionTypeEnvironment {
 export {
     FlowTypeTruthValue, FlowTypeTruthOps,
     VarInfo,
-    FlowTypeInfoOption, ExpressionTypeEnvironment
+    FlowTypeInfoOption, ExpressionTypeEnvironment, StatementTypeEnvironment
 };

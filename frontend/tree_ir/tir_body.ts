@@ -136,7 +136,9 @@ enum TIRExpressionTag {
     CallMemberFunctionWithChecksExpression = "CallMemberFunctionWithChecksExpression",
     CallMemberFunctionDynamicWithChecksExpression = "CallMemberFunctionDynamicWithChecksExpression",
     CallMemberFunctionSelfRefWithChecksExpression = "CallMemberFunctionSelfRefWithChecksExpression",
-    CallMemberFunctionDynamicSelfRefWithChecksExpression = "CallMemberFunctionDynamicSelfRefWithChecksExpression"
+    CallMemberFunctionDynamicSelfRefWithChecksExpression = "CallMemberFunctionDynamicSelfRefWithChecksExpression",
+
+    CallMemberActionExpression = "CallMemberActionExpression"
 }
 
 class TIRCodePack {
@@ -1485,11 +1487,15 @@ class TIRMatchExpression extends TIRExpression {
 }
 
 class TIRTaskSelfFieldExpression extends TIRExpression {
-    readonly field: string;
+    readonly tasktype: TIRTypeKey;
+    readonly field: TIRFieldKey;
+    readonly fname: string;
 
-    constructor(sinfo: SourceInfo, field: string, resultType: TIRTypeKey) {
-        super(TIRExpressionTag.TaskSelfFieldExpression, sinfo, resultType, `self.${field}`);
+    constructor(sinfo: SourceInfo, tasktype: TIRTypeKey, field: TIRFieldKey, fname: string, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.TaskSelfFieldExpression, sinfo, resultType, `self.${fname}`);
+        this.tasktype = tasktype;
         this.field = field;
+        this.fname = fname;
     }
 
     getUsedVars(): string[] {
@@ -1498,12 +1504,15 @@ class TIRTaskSelfFieldExpression extends TIRExpression {
 }
 
 class TIRTaskGetIDExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo, resultType: TIRTypeKey) {
+    readonly tasktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, tasktype: TIRTypeKey, resultType: TIRTypeKey) {
         super(TIRExpressionTag.TaskGetIDExpression, sinfo, resultType, `getTaskID`);
+        this.tasktype = tasktype;
     }
 
     getUsedVars(): string[] {
-        return [];
+        return ["self"];
     }
 }
 
@@ -2029,6 +2038,27 @@ class TIRCallMemberFunctionDynamicSelfRefWithChecksExpression extends TIRExpress
     }
 }
 
+class TIRCallMemberActionExpression extends TIRExpression {
+    readonly fkey: TIRInvokeKey;
+    readonly tsktype: TIRTypeKey;
+    readonly args: TIRExpression[]; 
+
+    constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberActionExpression, sinfo, rtype, `self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.fkey = fkey;
+        this.tsktype = tsktype;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(["self"], ...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
 class TIRLiteralValue {
     readonly exp: TIRExpression;
     readonly litstr: string;
@@ -2221,6 +2251,7 @@ export {
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,
+    TIRCallMemberActionExpression,
     TIRLiteralValue,
     TIRStatementTag,
     TIRStatement,
