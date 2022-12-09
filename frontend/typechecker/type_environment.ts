@@ -110,6 +110,17 @@ class FlowTypeInfoOption {
         const iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(this.expInferInfo).set(expr.expstr, { depvars: new Set<string>(expr.getUsedVars()), infertype: tinfer, infertruth: etruth});
         return new FlowTypeInfoOption(tinfer, this.etruth, iinfo);
     }
+
+    clearVars(vars: string[]): FlowTypeInfoOption {
+        let nei = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>();
+        this.expInferInfo.forEach((v, k) => {
+            if(!vars.some((vv) => v.depvars.has(vv))) {
+                nei.set(k, v);
+            }
+        });
+
+        return new FlowTypeInfoOption(this.tinfer, this.etruth, nei);
+    }
 }
 
 class ExpressionTypeEnvironment {
@@ -159,8 +170,8 @@ class ExpressionTypeEnvironment {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
-    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+    static createInitialEnvForExpressionEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], flows: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), flows);
     }
 
     static createInitialEnvForConstEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
@@ -181,6 +192,10 @@ class ExpressionTypeEnvironment {
 
     setResultExpressionInfo(exp: TIRExpression, trepr: ResolvedType, finfo: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, trepr, finfo);
+    }
+
+    updateFromClearVars(ninfo: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, this.expressionResult, this.trepr, ninfo);
     }
 }
 
@@ -209,6 +224,30 @@ class StatementTypeEnvironment {
         this.returninfo = returninfo;
     }
 
+    addVar(name: string, isConst: boolean, dtype: ResolvedType, isDefined: boolean, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
+        assert(this.flowinfo.length !== 0);
+
+        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => new Map<string, VarInfo>(frame));
+        localcopy[localcopy.length - 1].set(name, new VarInfo(dtype, isConst, false, isDefined));
+
+        const iinfo = rhs !== undefined ? rhs.flowinfo.map((fi) => new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(fi.expInferInfo).set(name, { depvars: new Set<string>(name), infertype: fi.tinfer, infertruth: fi.etruth})) : this.flowinfo;
+     
+        return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, localcopy, iinfo, this.returninfo);
+    }
+
+    setVar(name: string, rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
+        assert(this.flowinfo.length !== 0);
+
+        const oldv = this.lookupVar(name) as VarInfo;
+
+        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => new Map<string, VarInfo>(frame));
+        localcopy[localcopy.length - 1].set(name, new VarInfo(oldv.declaredType, false, false, true));
+           
+        const iinfo = rhs.flowinfo.map((fi) => new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(fi.expInferInfo).set(name, { depvars: new Set<string>(name), infertype: fi.tinfer, infertruth: fi.etruth}));
+     
+        return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, localcopy, iinfo, this.returninfo);
+    }
+
     getLocalVarInfo(name: string): VarInfo | undefined {
         const locals = this.locals as Map<string, VarInfo>[];
         for (let i = locals.length - 1; i >= 0; --i) {
@@ -230,6 +269,11 @@ class StatementTypeEnvironment {
 
     static createInitialEnvForStatementEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): StatementTypeEnvironment {
         return new StatementTypeEnvironment(bodyid, binds, pcodes, frozenVars, args, locals, [new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>()], []);
+    }
+
+    createInitialEnvForExpressionEval(): ExpressionTypeEnvironment {
+        const flows = this.flowinfo.map((ff) => new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, ff));
+        return ExpressionTypeEnvironment.createInitialEnvForExpressionEval(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, flows);
     }
 
 

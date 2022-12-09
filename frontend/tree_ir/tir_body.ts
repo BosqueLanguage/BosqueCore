@@ -105,8 +105,13 @@ enum TIRExpressionTag {
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
 
-    CoerceExpression = "CoerceExpression",
     CoerceSafeExpression = "CoerceSafeExpression",
+
+    CoerceRefCallResultExpression = "CoerceRefCallExpression",
+    CoerceTaskRefCallResultExpression = "CoerceTaskRefCallResultExpression",
+    CoerceActionCallResultExpression = "CoerceActionCallResultExpression",
+    xxx,
+
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
     CreateCodePackExpression = "CreateCodePackExpression",
@@ -138,6 +143,8 @@ enum TIRExpressionTag {
     CallMemberFunctionSelfRefWithChecksExpression = "CallMemberFunctionSelfRefWithChecksExpression",
     CallMemberFunctionDynamicSelfRefWithChecksExpression = "CallMemberFunctionDynamicSelfRefWithChecksExpression",
 
+    CallMemberFunctionTaskExpression = "CallMemberFunctionTaskExpression",
+    CallMemberFunctionTaskSelfRefExpression = "CallMemberFunctionTaskSelfRefExpression",
     CallMemberActionExpression = "CallMemberActionExpression"
 }
 
@@ -2038,6 +2045,48 @@ class TIRCallMemberFunctionDynamicSelfRefWithChecksExpression extends TIRExpress
     }
 }
 
+class TIRCallMemberFunctionTaskExpression extends TIRExpression {
+    readonly fkey: TIRInvokeKey;
+    readonly tsktype: TIRTypeKey;
+    readonly args: TIRExpression[]; 
+
+    constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberFunctionTaskExpression, sinfo, rtype, `self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.fkey = fkey;
+        this.tsktype = tsktype;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(["self"], ...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
+class TIRCallMemberFunctionTaskSelfRefExpression extends TIRExpression {
+    readonly fkey: TIRInvokeKey;
+    readonly tsktype: TIRTypeKey;
+    readonly args: TIRExpression[]; 
+
+    constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression, sinfo, rtype, `ref self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.fkey = fkey;
+        this.tsktype = tsktype;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(["self"], ...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
+
 class TIRCallMemberActionExpression extends TIRExpression {
     readonly fkey: TIRInvokeKey;
     readonly tsktype: TIRTypeKey;
@@ -2077,7 +2126,29 @@ enum TIRStatementTag {
 
     VarDeclareStatement = "VarDeclareStatement",
     VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
-    VarAssignStatement = "VarAssignStatement"
+    VarAssignStatement = "VarAssignStatement",
+
+    VarDeclareAndAssignStatementWRef = "VarDeclareAndAssignStatementWRef",
+    VarAssignStatementWRef = "VarAssignStatementWRef",
+
+    VarDeclareAndAssignStatementWTaskRef = "VarDeclareAndAssignStatementWTaskRef",
+    VarAssignStatementWTaskRef = "VarAssignStatementWTaskRef",
+
+    VarDeclareAndAssignStatementWAction = "VarDeclareAndAssignStatementWAction",
+    VarAssignStatementWAction = "VarAssignStatementWAction",
+
+    VarMultiDeclareStatement = "VarMultiDeclareStatement",
+    VarMultiDeclareAndAssignStatement = "VarMultiDeclareAndAssignStatement",
+    VarMultiAssignStatement = "VarMultiAssignStatement",
+
+    VarMultiDeclareAndAssignStatementWRef = "VarMultiDeclareAndAssignStatementWRef",
+    VarMultiAssignStatementWRef = "VarMultiAssignStatementWRef",
+
+    VarMultiDeclareAndAssignStatementWTaskRef = "VarMultiDeclareAndAssignStatementWTaskRef",
+    VarMultiAssignStatementWTaskRef = "VarMultiAssignStatementWTaskRef",
+
+    VarMultiDeclareAndAssignStatementWAction = "VarMultiDeclareAndAssignStatementWAction",
+    VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction"
 }
 
 abstract class TIRStatement {
@@ -2163,31 +2234,182 @@ class TIRDebugStatement extends TIRStatement {
     }
 }
 
-class TIRVarDeclareStatement extends TIRStatement {
+class TIRVarDeclareStatementGeneral extends TIRStatement {
     readonly vname: string;
     readonly vtype: TIRTypeKey;
 
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vname: string, vtype: TIRTypeKey) {
+        super(tag, sinfo, `var ${vname}: ${vtype};`);
+        this.vname = vname;
+        this.vtype = vtype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRVarDeclareAndAssignStatementGeneral extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly vexp: TIRExpression;
+    readonly isConst: boolean;
+
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
+        super(tag, sinfo, `${isConst ? "let" : "var"} ${vname}: ${vtype} = ${vexp.expstr};`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.vexp = vexp;
+        this.isConst = isConst;
+    }
+
+    getUsedVars(): string[] {
+        return this.vexp.getUsedVars();
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRVarAssignStatementGeneral extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly vexp: TIRExpression;
+
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vname: string, vtype: TIRTypeKey, vexp: TIRExpression) {
+        super(tag, sinfo, `${vname} = ${vexp.expstr};`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.vexp = vexp;
+    }
+
+    getUsedVars(): string[] {
+        return this.vexp.getUsedVars();
+    }
+
+    getModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRVarDeclareStatement extends TIRVarDeclareStatementGeneral {
     constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey) {
-        super(TIRStatementTag.VarDeclareStatement, sinfo, `let ${vname}: ${vtype};`);
-        this.vname = vname;
-        this.vtype = vtype;
-    }
-
-    getModVars(): string[] {
-        return [this.vname];
+        super(sinfo, TIRStatementTag.VarDeclareStatement, vname, vtype);
     }
 }
 
-class TIRVarDeclareAndAssignStatement extends TIRStatement {
-    readonly vname: string;
-    readonly vtype: TIRTypeKey;
+class TIRVarDeclareAndAssignStatement extends TIRVarDeclareAndAssignStatementGeneral {
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
+        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatement, vname, vtype, vexp, isConst);
+    }
+}
+
+class TIRVarAssignStatement extends TIRVarAssignStatementGeneral {
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression) {
+        super(sinfo, TIRStatementTag.VarAssignStatement, vname, vtype, vexp);
+    }
+}
+
+class TIRVarDeclareAndAssignStatementWRef extends TIRVarDeclareAndAssignStatementGeneral {
+    readonly refvar: string;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean, refvar: string) {
+        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatementWRef, vname, vtype, vexp, isConst);
+        this.refvar = refvar;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, this.refvar];
+    }
+}
+
+class TIRVarAssignStatementWRef extends TIRVarAssignStatementGeneral {
+    readonly refvar: string;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, refvar: string) {
+        super(sinfo, TIRStatementTag.VarAssignStatementWRef, vname, vtype, vexp);
+        this.refvar = refvar;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, this.refvar];
+    }
+}
+
+class TIRVarDeclareAndAssignStatementWTaskRef extends TIRVarDeclareAndAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatementWTaskRef, vname, vtype, vexp, isConst);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, "self"];
+    }
+}
+
+class TIRVarAssignStatementWTaskRef extends TIRVarAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarAssignStatementWTaskRef, vname, vtype, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, "self"];
+    }
+}
+
+class TIRVarDeclareAndAssignStatementWAction extends TIRVarDeclareAndAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatementWAction, vname, vtype, vexp, isConst);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, "self"];
+    }
+}
+
+class TIRVarAssignStatementWAction extends TIRVarAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarAssignStatementWAction, vname, vtype, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [this.vname, "self"];
+    }
+}
+
+class TIRMultiVarDeclareStatementGeneral extends TIRStatement {
+    readonly vinfo: { vname: string, vtype: TIRTypeKey }[];
+
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: { vname: string, vtype: TIRTypeKey }[]) {
+        super(tag, sinfo, `var ${vinfo.map((vi) => vi.vname + ": " + vi.vtype).join(", ")};`);
+        this.vinfo = vinfo;
+    }
+
+    getModVars(): string[] {
+        return this.vinfo.map((vi) => vi.vname);
+    }
+}
+
+class TIRMultiVarDeclareAndAssignStatementGeneral extends TIRStatement {
+    readonly vinfo: { vname: string, pos: number, vtype: TIRTypeKey }[];
     readonly vexp: TIRExpression;
     readonly isConst: boolean;
 
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
-        super(TIRStatementTag.VarDeclareAndAssignStatement, sinfo, `${isConst ? "const" : "let"} ${vname}: ${vtype} = ${vexp.expstr};`);
-        this.vname = vname;
-        this.vtype = vtype;
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean) {
+        super(tag, sinfo, `${isConst ? "let" : "var"} ${vinfo.map((vi) => vi.vname + "[" + vi.pos + "]: " + vi.vtype).join(", ")} = ${vexp.expstr};`);
+        this.vinfo = vinfo;
         this.vexp = vexp;
         this.isConst = isConst;
     }
@@ -2197,22 +2419,18 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
     }
 
     getModVars(): string[] {
-        return [this.vname];
+        return this.vinfo.map((vi) => vi.vname);
     }
 }
 
-class TIRVarAssignStatement extends TIRStatement {
-    readonly vname: string;
-    readonly vtype: TIRTypeKey;
+class TIRMultiVarAssignStatementGeneral extends TIRStatement {
+    readonly vinfo: { vname: string, pos: number, vtype: TIRTypeKey }[];
     readonly vexp: TIRExpression;
-    readonly isConst: boolean;
 
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
-        super(TIRStatementTag.VarAssignStatement, sinfo, `${vname} = ${vexp.expstr};`);
-        this.vname = vname;
-        this.vtype = vtype;
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression) {
+        super(tag, sinfo, `${vinfo.map((vi) => vi.vname + "[" + vi.pos + "]: " + vi.vtype).join(", ")} = ${vexp.expstr};`);
+        this.vinfo = vinfo;
         this.vexp = vexp;
-        this.isConst = isConst;
     }
 
     getUsedVars(): string[] {
@@ -2220,19 +2438,116 @@ class TIRVarAssignStatement extends TIRStatement {
     }
 
     getModVars(): string[] {
-        return [this.vname];
+        return this.vinfo.map((vi) => vi.vname);
+    }
+}
+
+class TIRMultiVarDeclareStatement extends TIRMultiVarDeclareStatementGeneral {
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, vtype: TIRTypeKey}[]) {
+        super(sinfo, TIRStatementTag.VarMultiDeclareStatement, vinfo);
+    }
+}
+
+class TIRMultiVarDeclareAndAssignStatement extends TIRMultiVarDeclareAndAssignStatementGeneral {
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean) {
+        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatement, vinfo, vexp, isConst);
+    }
+}
+
+class TIRMultiVarAssignStatement extends TIRMultiVarAssignStatementGeneral {
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression) {
+        super(sinfo, TIRStatementTag.VarMultiAssignStatement, vinfo, vexp);
+    }
+}
+
+class TIRMultiVarDeclareAndAssignStatementWRef extends TIRMultiVarDeclareAndAssignStatementGeneral {
+    readonly refvar: string;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, refvar: string) {
+        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatementWRef, vinfo, vexp, isConst);
+        this.refvar = refvar;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), this.refvar];
+    }
+}
+
+class TIRMultiVarAssignStatementWRef extends TIRMultiVarAssignStatementGeneral {
+    readonly refvar: string;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, refvar: string) {
+        super(sinfo, TIRStatementTag.VarMultiAssignStatementWRef, vinfo, vexp);
+        this.refvar = refvar;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), this.refvar];
+    }
+}
+
+class TIRMultiVarDeclareAndAssignStatementWTaskRef extends TIRMultiVarDeclareAndAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatementWTaskRef, vinfo, vexp, isConst);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), "self"];
+    }
+}
+
+class TIRMultiVarAssignStatementWTaskRef extends TIRMultiVarAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarMultiAssignStatementWTaskRef, vinfo, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), "self"];
+    }
+}
+
+
+class TIRMultiVarDeclareAndAssignStatementWAction extends TIRMultiVarDeclareAndAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatementWAction, vinfo, vexp, isConst);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), "self"];
+    }
+}
+
+class TIRMultiVarAssignStatementWAction extends TIRMultiVarAssignStatementGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.VarMultiAssignStatementWAction, vinfo, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getModVars(): string[] {
+        return [...this.vinfo.map((vi) => vi.vname), "self"];
     }
 }
 
 export {
     TIRCodePack,
     TIRExpressionTag, TIRExpression, TIRInvalidExpression,
-    TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression, 
+    TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression,
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
-    TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression, 
+    TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression,
     qqq,
     TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRCallStaticFunctionWithChecksExpression,
@@ -2249,12 +2564,19 @@ export {
     TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression,
     TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
-    TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression, 
+    TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionDynamicSelfRefExpression,
     TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionDynamicSelfRefWithChecksExpression,
-    TIRCallMemberActionExpression,
+    TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberActionExpression,
     TIRLiteralValue,
     TIRStatementTag,
     TIRStatement,
     TIRNopStatement, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement,
-    TIRVarDeclareStatement, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement
+    TIRVarDeclareStatement, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement,
+    TIRVarDeclareAndAssignStatementWRef, TIRVarAssignStatementWRef,
+    TIRVarDeclareAndAssignStatementWTaskRef, TIRVarAssignStatementWTaskRef,
+    TIRVarDeclareAndAssignStatementWAction, TIRVarAssignStatementWAction,
+    TIRMultiVarDeclareStatement, TIRMultiVarDeclareAndAssignStatement, TIRMultiVarAssignStatement,
+    TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarAssignStatementWRef,
+    TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
+    TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction
 };
