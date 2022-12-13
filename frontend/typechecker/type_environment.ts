@@ -275,8 +275,6 @@ class StatementTypeEnvironment {
         const flows = this.flowinfo.map((ff) => new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, ff));
         return ExpressionTypeEnvironment.createInitialEnvForExpressionEval(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, flows);
     }
-
-
 /*
     
 
