@@ -11,7 +11,7 @@ import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceCo
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRMultiVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRMultiVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRMultiVarDeclareStatement } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex } from "../bsqregex";
@@ -3400,10 +3400,12 @@ class TypeChecker {
                 const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds}, {decl: mresolve.decl, binds: binds});
 
-                const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
+                const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
+                this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
+
                 if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
                     if (mresolve.decl.decl.invoke.isThisRef) {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefWithChecksExpression(op.sinfo, fkey, tirrtype, refvar as string, argexps), rtype);
+                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefWithChecksExpression(op.sinfo, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
                     }
                     else {
                         return this.setResultExpression(env, new TIRCallMemberFunctionWithChecksExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
@@ -3411,7 +3413,7 @@ class TypeChecker {
                 }
                 else {
                     if (mresolve.decl.decl.invoke.isThisRef) {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, fkey, tirrtype, refvar as string, argexps), rtype);
+                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
                     }
                     else {
                         return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
@@ -3432,7 +3434,7 @@ class TypeChecker {
                 this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds});
             }
 
-            const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, rtype);
+            const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
             if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
                 return this.setResultExpression(env, new TIRCallMemberFunctionDynamicWithChecksExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
             }
@@ -4331,33 +4333,81 @@ class TypeChecker {
         }
     }
 
+    private checkMultiExpressionAtAssign(env: ExpressionTypeEnvironment, exp: Expression[], desiredtype: (ResolvedType | undefined)[]): ExpressionTypeEnvironment[] {
+        if (exp.length === 1) {
+            //There is no need to try and enforce a desired type since the result is ephemeral list that we will restructure anyway
+            //Right now this has to be a call expression -- which ignores the desired type info anyway
+
+            return [this.checkExpressionAtAssign(env, exp[0], undefined)];
+        }
+        else {
+            //here we want to try and coearce each expression individually
+
+            return exp.map((ee, ii) => {
+                switch (ee.tag) {
+                    case ExpressionTag.PostfixOpExpression: {
+                        return this.checkPostfixExpression(env.createFreshEnvExpressionFrom(), ee as PostfixOp, desiredtype[ii], true)
+                    }
+                    case ExpressionTag.TaskSelfActionExpression: {
+                        return this.checkTaskSelfAction(env.createFreshEnvExpressionFrom(), ee as TaskSelfActionExpression, true);
+                    }
+                    default: {
+                        return this.checkExpression(env.createFreshEnvExpressionFrom(), ee, desiredtype[ii]);
+                    }
+                }
+            });
+        }
+    }
+
     private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), "Cannot shadow previous definition");
+        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), `${vname} cannot shadow previous definition`);
 
         const infertype = rhs !== undefined ? this.envExpressionGetInferType(rhs) : undefined;
-        this.raiseErrorIf(sinfo, infertype === undefined && isConst, "Must define const var at declaration site");
-        this.raiseErrorIf(sinfo, infertype === undefined && decltype instanceof AutoTypeSignature, "Must define auto typed var at declaration site");
+        this.raiseErrorIf(sinfo, infertype === undefined && isConst, "must define const var at declaration site");
+        this.raiseErrorIf(sinfo, infertype === undefined && decltype instanceof AutoTypeSignature, "must define auto typed var at declaration site");
 
         const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
-        this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, vtype), "Expression is not of declared type");
+        this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, vtype), `expression is not of declared type ${vtype.typeID}`);
 
         return env.addVar(vname, isConst, vtype, infertype !== undefined, rhs);
     }
 
-    private checkDeclareMultipleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), "Cannot shadow previous definition");
-xxxx;
-        const infertype = rhs !== undefined ? this.envExpressionGetInferType(rhs) : undefined;
-        this.raiseErrorIf(sinfo, infertype === undefined && isConst, "Must define const var at declaration site");
-        this.raiseErrorIf(sinfo, infertype === undefined && decltype instanceof AutoTypeSignature, "Must define auto typed var at declaration site");
+    private checkDeclareMultipleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, isConst: boolean, vars: {vname: string, decltype: TypeSignature}[], rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
+        const iitype = rhs !== undefined ? this.envExpressionGetInferType(rhs) : undefined;
+        this.raiseErrorIf(sinfo, iitype !== undefined && iitype.options.length !== 1 && !(iitype.options[0] instanceof ResolvedEphemeralListType), `expected multiple assign values but got`);
+        this.raiseErrorIf(sinfo, iitype !== undefined && (iitype.options[0] as ResolvedEphemeralListType).types.length < vars.length, `expected at least ${vars.length} values`);
 
-        const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
-        this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, vtype), "Expression is not of declared type");
+        let cenv = env;
+        for(let i = 0; i < vars.length; ++i) {
+            this.raiseErrorIf(sinfo, env.isVarNameDefined(vars[i].vname), `${vars[i].vname} cannot shadow previous definition`);
+    
+            const infertype = iitype !== undefined ? (iitype.options[0] as ResolvedEphemeralListType).types[i] : undefined;
+            this.raiseErrorIf(sinfo, infertype === undefined && isConst, "Must define const var at declaration site");
+            this.raiseErrorIf(sinfo, infertype === undefined && vars[i].decltype instanceof AutoTypeSignature, "Must define auto typed var at declaration site");
 
-        return env.addVar(vname, isConst, vtype, infertype !== undefined, rhs);
+            const vtype = (vars[i].decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(vars[i].decltype, env.binds);
+            this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, vtype), `Expression is not of declared type ${vtype.typeID}`);
+
+            cenv = env.addVar(vars[i].vname, isConst, vtype, infertype !== undefined, rhs);
+        }
+
+        return cenv;
     }
 
-    private checkAssignSingleVariable(sinfo: SourceInfo, env: TypeEnvironment, vname: string, etype: ValueType, etreg: MIRRegisterArgument): TypeEnvironment {
+    private checkAssignSingleVariableExplicit(sinfo: SourceInfo, env: TypeEnvironment, vname: string, etype: ValueType): StatementTypeEnvironment {
+        const vinfo = env.lookupVar(vname);
+        this.raiseErrorIf(sinfo, vinfo === null, "Variable was not previously defined");
+        this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, "Variable defined as const");
+
+        this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(etype.flowtype, (vinfo as VarInfo).declaredType), "Assign value is not subtype of declared variable type");
+
+        const convreg = this.emitInlineConvertIfNeeded(sinfo, etreg, etype, (vinfo as VarInfo).declaredType) as MIRRegisterArgument;
+        this.m_emitter.emitRegisterStore(sinfo, convreg, new MIRRegisterArgument(vname), this.m_emitter.registerResolvedTypeReference((vinfo as VarInfo).declaredType), undefined);
+
+        return env.setVar(vname, etype.flowtype);
+    }
+
+    private checkAssignMultipleVariableExplicit(sinfo: SourceInfo, env: TypeEnvironment, vname: string, etype: ValueType): StatementTypeEnvironment {
         const vinfo = env.lookupVar(vname);
         this.raiseErrorIf(sinfo, vinfo === null, "Variable was not previously defined");
         this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, "Variable defined as const");
@@ -4387,7 +4437,7 @@ xxxx;
             let nstmt: TIRStatement[] = [];
             let nenv: StatementTypeEnvironment | undefined = undefined;
             if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref);
+                xxxx = this.envClearExps(rhs, rhs.expressionResult.thisref);
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
@@ -4397,7 +4447,7 @@ xxxx;
                 nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, refv)];
             }
             else if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref) 
+                xxxx = this.envClearExps(rhs, rhs.expressionResult.thisref) 
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
@@ -4407,7 +4457,7 @@ xxxx;
                 nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, refv)];
             }
             else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-                this.envClearExps(rhs, stmt.name, "self");
+                xxxx = this.envClearExps(rhs, "self");
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
@@ -4416,7 +4466,7 @@ xxxx;
                 nstmt = [new TIRVarDeclareAndAssignStatementWTaskRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
             }
             else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
-                this.envClearExps(rhs, stmt.name, "self");
+                xxxx = this.envClearExps(rhs, "self");
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
@@ -4425,7 +4475,6 @@ xxxx;
                 nstmt = [new TIRVarDeclareAndAssignStatementWAction(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
             }
             else {
-                this.envClearExps(rhs, stmt.name);
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
@@ -4439,61 +4488,85 @@ xxxx;
     }
 
     private checkMultiReturnVariableDeclarationStatement(env: StatementTypeEnvironment, stmt: MultiReturnWithDeclarationStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        if(stmt.exp === undefined) {
-            const declenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, undefined);
+        const vvdecls = stmt.vars.map((vv) => {
+            return {vname: vv.name, decltype: vv.vtype};
+        });
 
-            return [declenv, [new TIRMultiVarDeclareStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((declenv.lookupVar(stmt.name) as VarInfo).declaredType))]];
+        if(stmt.exp === undefined) {
+            const declenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, undefined);
+
+            const tirdecls = stmt.vars.map((vv) => {
+                const vtype = this.toTIRTypeKey((declenv.lookupVar(vv.name) as VarInfo).declaredType);
+                return {vname: vv.name, vtype: vtype};
+            });
+
+            return [declenv, [new TIRMultiVarDeclareStatement(stmt.sinfo, tirdecls)]];
         }
         else {
-            const itype = !(stmt.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(stmt.vtype, env.binds) : undefined;
-            let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, itype);
+            if(stmt.exp.length !== 1) {
+                const itypes: (ResolvedType | undefined)[] = stmt.vars.map((vv) => {
+                    return !(vv.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(vv.vtype, env.binds) : undefined;
+                });
+                let rhsexps = this.checkMultiExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, itypes);
 
-            let nstmt: TIRStatement[] = [];
-            let nenv: StatementTypeEnvironment | undefined = undefined;
-            if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref);
+                this.raiseErrorIf(stmt.sinfo, stmt.exp.length !== rhsexps.length, `mismatch between number of variables assigned and number of expressions`);
+                
+                const ielist = ResolvedType.createSingle(ResolvedEphemeralListType.create(stmt.vars.map((vv, ii) => !(vv.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(vv.vtype, env.binds) : this.envExpressionGetInferType(rhsexps[ii]))));
+                const createpack = new TIRConstructorEphemeralValueList(stmt.sinfo, this.toTIRTypeKey(ielist), rhsexps.map((rr, ii) => this.emitCoerceIfNeeded(rr, rr.expressionResult.sinfo, (ielist.options[0] as ResolvedEphemeralListType).types[ii]).expressionResult));
 
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
-            }
-            else if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
-                
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
-            }
-            else if(rhs.expressionResult instanceof TIRCallMemberFunctionDynamicSelfRefExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
-                
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
-            }
-            else if(rhs.expressionResult instanceof TIRCallMemberFunctionDynamicSelfRefWithChecksExpression) {
-                this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
-                
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
-            }
-            else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-                this.envClearExps(rhs, stmt.name, "self");
-                
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWTaskRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
-            }
-            else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
-                this.envClearExps(rhs, stmt.name, "self");
+                const vvinfo = stmt.vars.map((vv, ii) => {
+                    return {vname: vv.name, pos: vv.pos, vtype: this.toTIRTypeKey((ielist.options[0] as ResolvedEphemeralListType).types[ii])};
+                });
 
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatementWAction(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
+                const declenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.setResultExpression(env.createInitialEnvForExpressionEval(), createpack, ielist, undefined));
+                return [declenv, [new TIRMultiVarDeclareAndAssignStatement(stmt.sinfo, vvinfo, createpack, stmt.isConst)]]
             }
             else {
-                this.envClearExps(rhs, stmt.name);
+                let nstmt: TIRStatement[] = [];
+                let nenv: StatementTypeEnvironment | undefined = undefined;
+                if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref);
 
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-                nstmt = [new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst)];
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
+                }
+                else if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
+
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
+                }
+                else if (rhs.expressionResult instanceof TIRCallMemberFunctionDynamicSelfRefExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
+
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
+                }
+                else if (rhs.expressionResult instanceof TIRCallMemberFunctionDynamicSelfRefWithChecksExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref)
+
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.thisref)];
+                }
+                else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, "self");
+
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWTaskRef(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
+                }
+                else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
+                    xxxx = this.envClearExps(rhs, stmt.name, "self");
+
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRVarDeclareAndAssignStatementWAction(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst, rhs.expressionResult.tsktype)];
+                }
+                else {
+                    nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
+                    nstmt = [new TIRMultiVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((nenv.lookupVar(stmt.name) as VarInfo).declaredType), rhs.expressionResult, stmt.isConst)];
+                }
+
+                return [nenv, nstmt];
             }
-            
-            return [nenv, nstmt];
         }
     }
 

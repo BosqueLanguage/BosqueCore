@@ -1004,9 +1004,9 @@ class VariableDeclarationStatement extends Statement {
 class MultiReturnWithDeclarationStatement extends Statement {
     readonly isConst: boolean;
     readonly vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[];
-    readonly exp: Expression | undefined; //may be undef -- or must be a invoke with a multi-return
+    readonly exp: Expression[] | undefined; //may be undef -- or must be a invoke with a multi-return
 
-    constructor(sinfo: SourceInfo, isConst: boolean, vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[], exp: Expression | undefined) {
+    constructor(sinfo: SourceInfo, isConst: boolean, vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[], exp: Expression[] | undefined) {
         super(StatementTag.MultiReturnWithDeclarationStatement, sinfo);
         this.isConst = isConst;
         this.vars = vars;

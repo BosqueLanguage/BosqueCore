@@ -2811,26 +2811,42 @@ class Parser {
                 return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vars, assigns.length);
             }
             else {
-                let exp: Expression | undefined = undefined;
-                if(hasassign) {
-                    exp = this.parseExpression();
-                }
-
-                if ((exp === undefined && isConst)) {
-                    this.raiseError(line, "Const variable declaration must include an assignment to the variable");
-                }
-
-                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
                 if (vars.length === 1) {
-                    if (exp !== undefined) {
-                        this.raiseError(line, "Mismatch between variables declared and values provided");
+                    let exp: Expression | undefined = undefined;
+                    if(hasassign) {
+                        exp = this.parseExpression();
+                    }
+                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
+                
+                    if ((exp === undefined && isConst)) {
+                        this.raiseError(line, "Const variable declaration must include an assignment to the variable");
                     }
 
-                    const sexp = exp !== undefined ? exp : undefined;
-                    return new VariableDeclarationStatement(sinfo, vars[0].name, isConst, vars[0].vtype, sexp);
+                    return new VariableDeclarationStatement(sinfo, vars[0].name, isConst, vars[0].vtype, exp);
                 }
                 else {
+                    let exp: Expression[] | undefined = undefined;
+                    if(hasassign) {
+                        exp = [];
+                        while(!this.testToken(SYM_semicolon)) {
+                            exp.push(this.parseExpression());
+
+                            if(!this.testToken(SYM_coma) && !this.testToken(SYM_semicolon)) {
+                                this.raiseError(this.getCurrentLine(), `expected a "," or a ";" after expression`);
+                            }
+                            this.consumeTokenIf(SYM_coma);
+                        }
+                    }
+                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
+                
+                    if ((exp === undefined && isConst)) {
+                        this.raiseError(line, "Const variable declaration must include an assignment to the variable");
+                    }
+
+                    if(exp !== undefined && (exp.length !== vars.length || exp.length !== 1)) {
+                        this.raiseError(line, `Expected values for all ${vars.length} variables or a single multi-return call expression`);
+                    }
+
                     return new MultiReturnWithDeclarationStatement(sinfo, isConst, vars, exp);
                 }
             }
