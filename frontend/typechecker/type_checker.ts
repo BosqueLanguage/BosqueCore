@@ -4387,17 +4387,14 @@ class TypeChecker {
         return cenv;
     }
 
-    private checkAssignSingleVariableExplicit(sinfo: SourceInfo, env: TypeEnvironment, vname: string, etype: ValueType): StatementTypeEnvironment {
+    private checkAssignSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
         const vinfo = env.lookupVar(vname);
-        this.raiseErrorIf(sinfo, vinfo === null, "Variable was not previously defined");
-        this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, "Variable defined as const");
+        this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vname} was not previously defined`);
+        this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vname} is defined as const`);
 
-        this.raiseErrorIf(sinfo, !this.m_assembly.subtypeOf(etype.flowtype, (vinfo as VarInfo).declaredType), "Assign value is not subtype of declared variable type");
+        this.raiseErrorIf(sinfo, !this.subtypeOf(this.envExpressionGetInferType(rhs), (vinfo as VarInfo).declaredType), `Assign value (${this.envExpressionGetInferType(rhs).typeID}) is not subtype of declared variable type ${(vinfo as VarInfo).declaredType}`);
 
-        const convreg = this.emitInlineConvertIfNeeded(sinfo, etreg, etype, (vinfo as VarInfo).declaredType) as MIRRegisterArgument;
-        this.m_emitter.emitRegisterStore(sinfo, convreg, new MIRRegisterArgument(vname), this.m_emitter.registerResolvedTypeReference((vinfo as VarInfo).declaredType), undefined);
-
-        return env.setVar(vname, etype.flowtype);
+        return env.setVar(vname, rhs);
     }
 
     private checkAssignMultipleVariableExplicit(sinfo: SourceInfo, env: TypeEnvironment, vname: string, etype: ValueType): StatementTypeEnvironment {
