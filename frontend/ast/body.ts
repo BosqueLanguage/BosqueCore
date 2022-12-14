@@ -1027,9 +1027,9 @@ class VariableAssignmentStatement extends Statement {
 
 class MultiReturnWithAssignmentStatement extends Statement {
     readonly vars: {name: string, pos: number}[];
-    readonly exp: Expression; //must be an invoke with a multi-return
+    readonly exp: Expression[]; //must be an invoke with a multi-return
 
-    constructor(sinfo: SourceInfo, vars: {name: string, pos: number}[], exp: Expression) {
+    constructor(sinfo: SourceInfo, vars: {name: string, pos: number}[], exp: Expression[]) {
         super(StatementTag.MultiReturnWithAssignmentStatement, sinfo);
         this.vars = vars;
         this.exp = exp;

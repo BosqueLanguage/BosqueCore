@@ -2894,18 +2894,28 @@ class Parser {
                 return this.parseTaskRunStatement(sinfo, false, false, vars, assigns.length);
             }
             else {
-                const exp = this.parseExpression();
-
-                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
                 if (vars.length === 1) {
-                    if (exp !== undefined) {
-                        this.raiseError(line, "Mismatch between variables declared and values provided");
-                    }
-
+                    const exp = this.parseExpression();
+                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
+                
                     return new VariableAssignmentStatement(sinfo, vars[0].name, exp);
                 }
                 else {
+                    let exp: Expression[] = [];
+                    while (!this.testToken(SYM_semicolon)) {
+                        exp.push(this.parseExpression());
+
+                        if (!this.testToken(SYM_coma) && !this.testToken(SYM_semicolon)) {
+                            this.raiseError(this.getCurrentLine(), `expected a "," or a ";" after expression`);
+                        }
+                        this.consumeTokenIf(SYM_coma);
+                    }
+                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
+                
+                    if(exp.length !== vars.length || exp.length !== 1) {
+                        this.raiseError(line, `Expected values for all ${vars.length} variables or a single multi-return call expression`);
+                    }
+
                     return new MultiReturnWithAssignmentStatement(sinfo, vars, exp);
                 }
             }
