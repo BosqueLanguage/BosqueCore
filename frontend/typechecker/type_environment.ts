@@ -250,6 +250,11 @@ class StatementTypeEnvironment {
         return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, []);
     }
 
+    setFlowFromExpTestInfo(finfo: FlowTypeInfoOption[]): StatementTypeEnvironment {
+        const iinfo = finfo.map((fi) => new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>(fi.expInferInfo));
+        return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, iinfo);
+     }
+
     getLocalVarInfo(name: string): VarInfo | undefined {
         const locals = this.locals as Map<string, VarInfo>[];
         for (let i = locals.length - 1; i >= 0; --i) {
