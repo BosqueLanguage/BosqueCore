@@ -1725,7 +1725,9 @@ enum TIRStatementTag {
     VarMultiAssignStatementWTaskRef = "VarMultiAssignStatementWTaskRef",
 
     VarMultiDeclareAndAssignStatementWAction = "VarMultiDeclareAndAssignStatementWAction",
-    VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction"
+    VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction",
+
+    ReturnStatement = "ReturnStatement"
 }
 
 abstract class TIRStatement {
@@ -2115,6 +2117,19 @@ class TIRMultiVarAssignStatementWAction extends TIRMultiVarAssignStatementGenera
     }
 }
 
+class TIRReturnStatement extends TIRStatement {
+    readonly values: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, values: TIRExpression[]) {
+        super(TIRStatementTag.ReturnStatement, sinfo, `return ${values.map((vv) => vv.expstr).join(", ")};`);
+        this.values = values;
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(...this.values.map((vv) => vv.getUsedVars()));
+    }
+}
+
 export {
     TIRCodePack,
     TIRExpressionTag, TIRExpression, TIRInvalidExpression,
@@ -2157,5 +2172,6 @@ export {
     TIRMultiVarDeclareStatement, TIRMultiVarDeclareAndAssignStatement, TIRMultiVarAssignStatement,
     TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarAssignStatementWRef,
     TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
-    TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction
+    TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction,
+    TIRReturnStatement
 };

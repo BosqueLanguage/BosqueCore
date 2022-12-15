@@ -7,11 +7,11 @@ import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskEffectFlag, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction, ValidateDecl } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedEphemeralListType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedInternalEntityAtomType, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, EmptyStatement, VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement } from "../ast/body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorEphemeralValueList, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, InvalidExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, EmptyStatement, VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement } from "../ast/body";
 import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRMultiVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRMultiVarDeclareStatement, TIRPackMultiExpression, TIRCoerceSafeMultiExpression, TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRPackMultiExpressionWRef, TIRCoerceRefCallMultiResultExpression, TIRPackMultiExpressionWTaskRef, TIRCoerceTaskRefCallMultiResultExpression, TIRPackMultiExpressionWAction, TIRMultiVarDeclareAndAssignStatementWAction, TIRCoerceActionCallMultiResultExpression, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression, TIRLogicActionOrExpression, TIRBinLogicAndxpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRMultiVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRMultiVarDeclareStatement, TIRPackMultiExpression, TIRCoerceSafeMultiExpression, TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRPackMultiExpressionWRef, TIRCoerceRefCallMultiResultExpression, TIRPackMultiExpressionWTaskRef, TIRCoerceTaskRefCallMultiResultExpression, TIRPackMultiExpressionWAction, TIRMultiVarDeclareAndAssignStatementWAction, TIRCoerceActionCallMultiResultExpression, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRMultiVarAssignStatement, TIRMultiVarAssignStatementWAction, TIRMultiVarAssignStatementWTaskRef, TIRMultiVarAssignStatementWRef, TIRReturnStatement, TIRAbortStatement } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREntityType, TIREnumEntityType, TIREphemeralListType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvariantDecl, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRMemberFieldDecl, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidateDecl, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex } from "../bsqregex";
@@ -139,6 +139,7 @@ class TypeChecker {
     private m_buildLevel: BuildLevel;
 
     private m_file: string;
+    private m_rtypes: ResolvedType[];
     private m_taskOpsOk: boolean;
     private m_taskSelfOk: "no" | "read" | "write";
     private m_taskType: {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>} | undefined;
@@ -169,14 +170,13 @@ class TypeChecker {
     private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>}[] = [];
     private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>}[] = [];
 
-    private m_tempvarctr = 0;
-
     constructor(assembly: Assembly, buildlevel: BuildLevel, sortedSrcFiles: {fullname: string, shortname: string}[]) {
         this.m_assembly = assembly;
 
         this.m_buildLevel = buildlevel;
 
         this.m_file = "[No File]";
+        this.m_rtypes = [];
         this.m_taskOpsOk = false;
         this.m_taskSelfOk = "no";
         this.m_errors = [];
@@ -316,10 +316,6 @@ class TypeChecker {
         const tlit = new TIRLiteralValue(nexp.expressionResult, nexp.expressionResult.expstr); 
 
         return [tlit, nexp.trepr];
-    }
-
-    private generateTempVar(): string {
-        return `$tmp_var_${this.m_tempvarctr++}`;
     }
 
     private envExpressionGetInferType(env: ExpressionTypeEnvironment): ResolvedType {
@@ -4397,20 +4393,20 @@ class TypeChecker {
         return env.setVar(vname, rhs);
     }
 
-    private checkAssignMultipleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vars: {vname: string, decltype: TypeSignature}[], rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
+    private checkAssignMultipleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vars: string[], rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
         const iitype = this.envExpressionGetInferType(rhs);
         this.raiseErrorIf(sinfo, iitype !== undefined && iitype.options.length !== 1 && !(iitype.options[0] instanceof ResolvedEphemeralListType), `expected multiple assign values`);
         this.raiseErrorIf(sinfo, iitype !== undefined && (iitype.options[0] as ResolvedEphemeralListType).types.length < vars.length, `expected at least ${vars.length} values`);
 
         let cenv = env;
         for (let i = 0; i < vars.length; ++i) {
-            const vinfo = env.lookupVar(vars[i].vname);
-            this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vars[i].vname} was not previously defined`);
-            this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vars[i].vname} is defined as const`);
+            const vinfo = env.lookupVar(vars[i]);
+            this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vars[i]} was not previously defined`);
+            this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vars[i]} is defined as const`);
 
             this.raiseErrorIf(sinfo, !this.subtypeOf((iitype.options[0] as ResolvedEphemeralListType).types[i], (vinfo as VarInfo).declaredType), `Assign value (${(iitype.options[0] as ResolvedEphemeralListType).types[i].typeID}) is not subtype of declared variable type ${(vinfo as VarInfo).declaredType}`);
 
-            cenv = env.setVar(vars[i].vname, rhs);
+            cenv = env.setVar(vars[i], rhs);
         }
 
         return cenv;
@@ -4671,27 +4667,29 @@ class TypeChecker {
     }
 
     private checkMultiReturnVariableAssignmentStatement(env: StatementTypeEnvironment, stmt: MultiReturnWithAssignmentStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const vvdecls = stmt.vars.map((vv) => {
-            return { vname: vv.name, decltype: vv.vtype };
-        });
+        for(let i = 0; i < stmt.vars.length; ++i) {
+            this.raiseErrorIf(stmt.sinfo, env.getLocalVarInfo(stmt.vars[i].name) === undefined, `variable ${stmt.vars[i].name} not previously declared`);
+        }
+        
+        const vvdecls = stmt.vars.map((vv) => vv.name);
 
         if (stmt.exp.length !== 1) {
             const itypes: (ResolvedType | undefined)[] = stmt.vars.map((vv) => {
-                return !(vv.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(vv.vtype, env.binds) : undefined;
+                return (env.lookupVar(vv.name) as VarInfo).declaredType;
             });
             const rhsexps = this.checkMultiExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, itypes);
 
             this.raiseErrorIf(stmt.sinfo, stmt.exp.length !== rhsexps.length, `mismatch between number of variables assigned and number of expressions`);
 
-            const ielist = ResolvedType.createSingle(ResolvedEphemeralListType.create(stmt.vars.map((vv, ii) => !(vv.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(vv.vtype, env.binds) : this.envExpressionGetInferType(rhsexps[ii]))));
+            const ielist = ResolvedType.createSingle(ResolvedEphemeralListType.create(stmt.vars.map((vv) => (env.lookupVar(vv.name) as VarInfo).declaredType)));
             const createpack = new TIRConstructorEphemeralValueList(stmt.sinfo, this.toTIRTypeKey(ielist), rhsexps.map((rr, ii) => this.emitCoerceIfNeeded(rr, rr.expressionResult.sinfo, (ielist.options[0] as ResolvedEphemeralListType).types[ii]).expressionResult));
 
             const vvinfo = stmt.vars.map((vv, ii) => {
                 return { vname: vv.name, pos: vv.pos, vtype: this.toTIRTypeKey((ielist.options[0] as ResolvedEphemeralListType).types[ii]) };
             });
 
-            const declenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.setResultExpression(env.createInitialEnvForExpressionEval(), createpack, ielist, undefined));
-            return [declenv, [new TIRMultiVarDeclareAndAssignStatement(stmt.sinfo, vvinfo, createpack, stmt.isConst)]]
+            const declenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.setResultExpression(env.createInitialEnvForExpressionEval(), createpack, ielist, undefined));
+            return [declenv, [new TIRMultiVarAssignStatement(stmt.sinfo, vvinfo, createpack)]]
         }
         else {
             let nstmt: TIRStatement[] = [];
@@ -4704,19 +4702,14 @@ class TypeChecker {
 
             const ielist: ResolvedType[] = [];
             stmt.vars.forEach((vv) => {
-                if (vv.vtype instanceof AutoTypeSignature) {
-                    ielist.push((rhstype.options[0] as ResolvedEphemeralListType).types[vv.pos]);
-                }
-                else {
-                    ielist.push(this.normalizeTypeOnly(vv.vtype, env.binds));
-                }
+                ielist.push((env.lookupVar(vv.name) as VarInfo).declaredType);
             });
 
             const vvinfo = stmt.vars.map((vv, ii) => {
                 return { vname: vv.name, pos: vv.pos, vtype: this.toTIRTypeKey(ielist[ii]) };
             });
 
-            const packonly = stmt.vars.every((vv, ii) => vv.vtype instanceof AutoTypeSignature || (ielist[ii].typeID === (rhstype.options[0] as ResolvedEphemeralListType).types[vv.pos].typeID));
+            const packonly = stmt.vars.every((vv, ii) => (ielist[ii].typeID === (rhstype.options[0] as ResolvedEphemeralListType).types[vv.pos].typeID));
             const packtype = ResolvedType.createSingle(ResolvedEphemeralListType.create(ielist));
             const tirpacktype = this.toTIRTypeKey(packtype);
 
@@ -4733,63 +4726,63 @@ class TypeChecker {
             });
 
             if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-                nenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.envClearExps(rhs, rhs.expressionResult.thisref));
+                nenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.envClearExps(rhs, ...vvdecls, rhs.expressionResult.thisref));
 
                 if (packonly) {
                     const conve = new TIRPackMultiExpression(stmt.sinfo, rhs.expressionResult, packonlymask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.thisref)];
+                    nstmt = [new TIRMultiVarAssignStatementWRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.thisref)];
                 }
                 else {
                     const conve = new TIRCoerceRefCallMultiResultExpression(stmt.sinfo, rhs.expressionResult, packconvmask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.thisref)];
+                    nstmt = [new TIRMultiVarAssignStatementWRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.thisref)];
                 }
             }
             else if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-                nenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.envClearExps(rhs, rhs.expressionResult.thisref));
+                nenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.envClearExps(rhs, ...vvdecls, rhs.expressionResult.thisref));
 
                 if (packonly) {
                     const conve = new TIRPackMultiExpressionWRef(stmt.sinfo, rhs.expressionResult, packonlymask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.thisref)];
+                    nstmt = [new TIRMultiVarAssignStatementWRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.thisref)];
                 }
                 else {
                     const conve = new TIRCoerceRefCallMultiResultExpression(stmt.sinfo, rhs.expressionResult, packconvmask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.thisref)];
+                    nstmt = [new TIRMultiVarAssignStatementWRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.thisref)];
                 }
             }
             else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-                nenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.envClearExps(rhs, "self"));
+                nenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.envClearExps(rhs, ...vvdecls, "self"));
 
                 if (packonly) {
                     const conve = new TIRPackMultiExpressionWTaskRef(stmt.sinfo, rhs.expressionResult, packonlymask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWTaskRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.tsktype)];
+                    nstmt = [new TIRMultiVarAssignStatementWTaskRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.tsktype)];
                 }
                 else {
                     const conve = new TIRCoerceTaskRefCallMultiResultExpression(stmt.sinfo, rhs.expressionResult, packconvmask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWTaskRef(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.tsktype)];
+                    nstmt = [new TIRMultiVarAssignStatementWTaskRef(stmt.sinfo, vvinfo, conve, rhs.expressionResult.tsktype)];
                 }
             }
             else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
-                nenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, this.envClearExps(rhs, "self"));
+                nenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.envClearExps(rhs, ...vvdecls, "self"));
 
                 if (packonly) {
                     const conve = new TIRPackMultiExpressionWAction(stmt.sinfo, rhs.expressionResult, packonlymask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWAction(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.tsktype)];
+                    nstmt = [new TIRMultiVarAssignStatementWAction(stmt.sinfo, vvinfo, conve, rhs.expressionResult.tsktype)];
                 }
                 else {
                     const conve = new TIRCoerceActionCallMultiResultExpression(stmt.sinfo, rhs.expressionResult, packconvmask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatementWAction(stmt.sinfo, vvinfo, conve, stmt.isConst, rhs.expressionResult.tsktype)];
+                    nstmt = [new TIRMultiVarAssignStatementWAction(stmt.sinfo, vvinfo, conve, rhs.expressionResult.tsktype)];
                 }
             }
             else {
-                nenv = this.checkDeclareMultipleVariableExplicit(stmt.sinfo, env, stmt.isConst, vvdecls, rhs);
+                nenv = this.checkAssignMultipleVariableExplicit(stmt.sinfo, env, vvdecls, this.envClearExps(rhs, ...vvdecls));
 
                 if (packonly) {
                     const conve = new TIRPackMultiExpression(stmt.sinfo, rhs.expressionResult, packonlymask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatement(stmt.sinfo, vvinfo, conve, stmt.isConst)];
+                    nstmt = [new TIRMultiVarAssignStatement(stmt.sinfo, vvinfo, conve)];
                 }
                 else {
                     const conve = new TIRCoerceSafeMultiExpression(stmt.sinfo, rhs.expressionResult, packconvmask, tirpacktype);
-                    nstmt = [new TIRMultiVarDeclareAndAssignStatement(stmt.sinfo, vvinfo, conve, stmt.isConst)];
+                    nstmt = [new TIRMultiVarAssignStatement(stmt.sinfo, vvinfo, conve)];
                 }
             }
 
@@ -4797,97 +4790,19 @@ class TypeChecker {
         }
     }
 
-    /*
-    ReturnStatement = "ReturnStatement",
+    private checkReturnStatement(env: StatementTypeEnvironment, stmt: ReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
+        const rvals = stmt.values.map((vv, ii) => {
+            return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), vv, this.m_rtypes[ii]), vv.sinfo, this.m_rtypes[ii]);
+        });
 
-    IfElseStatement = "IfElseStatement",
-    SwitchStatement = "SwitchStatement",
-    MatchStatement = "MatchStatement",
-
-    AbortStatement = "AbortStatement",
-    AssertStatement = "AssertStatement", //assert(x > 0)
-
-    DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
-    RefCallStatement = "RefCallStatement",
-
-    EnvironmentFreshStatement = "EnvironmentFreshStatement",
-    EnvironmentSetStatement = "EnvironmentSetStatement",
-    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
-
-    TaskRunStatement = "TaskRunStatement", //run single task
-    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
-    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
-    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
-    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
-
-    TaskCallWithStatement = "TaskCallWithStatement",
-    TaskResultWithStatement = "TaskResultWithStatement",
-
-    TaskSetStatusStatement = "TaskSetStatusStatement",
-
-    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
-
-    TaskEventEmitStatement = "TaskEventEmitStatement",
-
-    LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
-
-    LoggerLevelStatement = "LoggerLevelStatement",
-    LoggerCategoryStatement = "LoggerCategoryStatement",
-    LoggerPrefixStatement = "LoggerPrefixStatement",
-
-    UnscopedBlockStatement = "UnscopedBlockStatement",
-    ScopedBlockStatement = "ScopedBlockStatement"
-*/
-
-
-    private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
-        this.raiseErrorIf(stmt.sinfo, env.isInYieldBlock(), "Cannot use return statment inside an expression block");
-
-        if (stmt.values.length === 1) {
-            const etreg = this.m_emitter.generateTmpRegister();
-            const venv = this.checkExpression(env, stmt.values[0], etreg, env.inferResult, { refok: true, orok: false });
-
-            const etype = env.inferResult || venv.getExpressionResult().valtype.flowtype;
-            this.m_emitter.emitReturnAssign(stmt.sinfo, this.emitInlineConvertIfNeeded(stmt.sinfo, etreg, venv.getExpressionResult().valtype, etype), this.m_emitter.registerResolvedTypeReference(etype));
-            this.m_emitter.emitDirectJump(stmt.sinfo, "returnassign");
-
-            return env.setReturn(this.m_assembly, etype);
-        }
-        else {
-            let regs: MIRRegisterArgument[] = [];
-            let rtypes: ResolvedType[] = [];
-            const itype = env.inferResult !== undefined ? env.inferResult.tryGetInferrableValueListConstructorType() : undefined;
-            for (let i = 0; i < stmt.values.length; ++i) {
-                const einfer = itype !== undefined ? itype.types[i] : undefined;
-
-                const etreg = this.m_emitter.generateTmpRegister();
-                const venv = this.checkExpression(env, stmt.values[i], etreg, einfer);
-
-                const rrtype = einfer || venv.getExpressionResult().valtype.flowtype;
-                regs.push(this.emitInlineConvertIfNeeded(stmt.sinfo, etreg, venv.getExpressionResult().valtype, rrtype));
-                rtypes.push(rrtype);
-            }
-
-            const etype = ResolvedType.createSingle(ResolvedEphemeralListType.create(rtypes));
-
-            const elreg = this.m_emitter.generateTmpRegister();
-            this.m_emitter.emitConstructorValueList(stmt.sinfo, this.m_emitter.registerResolvedTypeReference(etype), regs, elreg);
-                
-            this.m_emitter.emitReturnAssign(stmt.sinfo, elreg, this.m_emitter.registerResolvedTypeReference(etype));
-            this.m_emitter.emitDirectJump(stmt.sinfo, "returnassign");
-
-            return env.setReturn(this.m_assembly, etype);
-        }
+        return [env.endOfExecution(), [new TIRReturnStatement(stmt.sinfo, rvals.map((ee) => ee.expressionResult))]];
     }
 
-    private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
-        this.m_emitter.emitAbort(stmt.sinfo, "abort");
-
-        return env.setAbort();
+    private checkAbortStatement(env: StatementTypeEnvironment, stmt: AbortStatement): [StatementTypeEnvironment, TIRStatement[]] {
+        return [env.endOfExecution(), [new TIRAbortStatement(stmt.sinfo, "Abort")]];
     }
 
-    private checkAssertStatement(env: TypeEnvironment, stmt: AssertStatement): TypeEnvironment {
+    private checkAssertStatement(env: StatementTypeEnvironment, stmt: AssertStatement): [StatementTypeEnvironment, TIRStatement[]] {
         const testreg = this.m_emitter.generateTmpRegister();
         const test = this.checkExpressionMultiFlow(env, stmt.cond, testreg, undefined);
 
@@ -4927,6 +4842,49 @@ class TypeChecker {
 
         return env;
     }
+
+
+    /*
+    
+    IfElseStatement = "IfElseStatement",
+    SwitchStatement = "SwitchStatement",
+    MatchStatement = "MatchStatement",
+
+    AbortStatement = "AbortStatement",
+    AssertStatement = "AssertStatement", //assert(x > 0)
+
+    DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
+    RefCallStatement = "RefCallStatement",
+
+    EnvironmentFreshStatement = "EnvironmentFreshStatement",
+    EnvironmentSetStatement = "EnvironmentSetStatement",
+    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+
+    TaskRunStatement = "TaskRunStatement", //run single task
+    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
+    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
+
+    TaskCallWithStatement = "TaskCallWithStatement",
+    TaskResultWithStatement = "TaskResultWithStatement",
+
+    TaskSetStatusStatement = "TaskSetStatusStatement",
+
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
+
+    TaskEventEmitStatement = "TaskEventEmitStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+
+    LoggerLevelStatement = "LoggerLevelStatement",
+    LoggerCategoryStatement = "LoggerCategoryStatement",
+    LoggerPrefixStatement = "LoggerPrefixStatement",
+
+    UnscopedBlockStatement = "UnscopedBlockStatement",
+    ScopedBlockStatement = "ScopedBlockStatement"
+*/
 
     private checkStatement(env: TypeEnvironment, stmt: Statement): TypeEnvironment {
         this.raiseErrorIf(stmt.sinfo, !env.hasNormalFlow(), "Unreachable statements");
