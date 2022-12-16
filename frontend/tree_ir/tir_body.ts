@@ -184,15 +184,7 @@ abstract class TIRExpression {
         this.expstr = expstr;
     }
 
-    isTaskOperation(): boolean {
-        return false;
-    }
-
     isFailableOperation(): boolean {
-        return false;
-    }
-
-    isOverflowableOperation(): boolean {
         return false;
     }
 
@@ -389,6 +381,14 @@ class TIRAccessEnvValueExpression extends TIRExpression {
         this.valtype = valtype;
         this.restype = restype;
         this.orNoneMode = orNoneMode;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+
+    isFailableOperation(): boolean {
+        return !this.orNoneMode;
     }
 }
 
@@ -757,13 +757,9 @@ class TIRBinOpExpression extends TIRExpression {
         this.lhs = lhs;
         this.rhs = rhs;
     }
-    
+
     isFailableOperation(): boolean {
         return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
-    }
-
-    isOverflowableOperation(): boolean {
-        return this.optype === "Nat" || this.optype === "Int";
     }
 
     getUsedVars(): string[] {
@@ -1727,7 +1723,11 @@ enum TIRStatementTag {
     VarMultiDeclareAndAssignStatementWAction = "VarMultiDeclareAndAssignStatementWAction",
     VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction",
 
-    ReturnStatement = "ReturnStatement"
+    ReturnStatement = "ReturnStatement",
+
+    IfStatement = "IfStatement",
+    SwitchStatement = "SwitchStatement",
+    MatchStatement = "MatchStatement"
 }
 
 abstract class TIRStatement {
@@ -1741,23 +1741,15 @@ abstract class TIRStatement {
         this.stmtstr = stmtstr;
     }
 
-    isTaskOperation(): boolean {
-        return false;
-    }
-
     isFailableOperation(): boolean {
         return false;
     }
 
-    isOverflowableOperation(): boolean {
-        return false;
-    }
-
-    getUsedVars(): string[] {
+    getDirectlyUsedVars(): string[] {
         return [];
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [];
     }
 }
@@ -1792,10 +1784,10 @@ class TIRAssertCheckStatement extends TIRStatement {
     }
 
     isFailableOperation(): boolean {
-        return false;
+        return true;
     }
 
-    getUsedVars(): string[] {
+    getDirectlyUsedVars(): string[] {
         return this.cond.getUsedVars();
     }
 }
@@ -1808,7 +1800,11 @@ class TIRDebugStatement extends TIRStatement {
         this.value = value;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.value.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
         return this.value.getUsedVars();
     }
 }
@@ -1823,7 +1819,7 @@ class TIRVarDeclareStatementGeneral extends TIRStatement {
         this.vtype = vtype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname];
     }
 }
@@ -1842,11 +1838,15 @@ class TIRVarDeclareAndAssignStatementGeneral extends TIRStatement {
         this.isConst = isConst;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.vexp.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
         return this.vexp.getUsedVars();
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname];
     }
 }
@@ -1863,11 +1863,15 @@ class TIRVarAssignStatementGeneral extends TIRStatement {
         this.vexp = vexp;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.vexp.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
         return this.vexp.getUsedVars();
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname];
     }
 }
@@ -1898,7 +1902,7 @@ class TIRVarDeclareAndAssignStatementWRef extends TIRVarDeclareAndAssignStatemen
         this.refvar = refvar;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, this.refvar];
     }
 }
@@ -1911,7 +1915,7 @@ class TIRVarAssignStatementWRef extends TIRVarAssignStatementGeneral {
         this.refvar = refvar;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, this.refvar];
     }
 }
@@ -1924,7 +1928,7 @@ class TIRVarDeclareAndAssignStatementWTaskRef extends TIRVarDeclareAndAssignStat
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, "self"];
     }
 }
@@ -1937,7 +1941,7 @@ class TIRVarAssignStatementWTaskRef extends TIRVarAssignStatementGeneral {
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, "self"];
     }
 }
@@ -1950,7 +1954,7 @@ class TIRVarDeclareAndAssignStatementWAction extends TIRVarDeclareAndAssignState
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, "self"];
     }
 }
@@ -1963,7 +1967,7 @@ class TIRVarAssignStatementWAction extends TIRVarAssignStatementGeneral {
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [this.vname, "self"];
     }
 }
@@ -1976,7 +1980,7 @@ class TIRMultiVarDeclareStatementGeneral extends TIRStatement {
         this.vinfo = vinfo;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return this.vinfo.map((vi) => vi.vname);
     }
 }
@@ -1993,11 +1997,15 @@ class TIRMultiVarDeclareAndAssignStatementGeneral extends TIRStatement {
         this.isConst = isConst;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.vexp.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
         return this.vexp.getUsedVars();
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return this.vinfo.map((vi) => vi.vname);
     }
 }
@@ -2012,11 +2020,15 @@ class TIRMultiVarAssignStatementGeneral extends TIRStatement {
         this.vexp = vexp;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.vexp.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
         return this.vexp.getUsedVars();
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return this.vinfo.map((vi) => vi.vname);
     }
 }
@@ -2047,7 +2059,7 @@ class TIRMultiVarDeclareAndAssignStatementWRef extends TIRMultiVarDeclareAndAssi
         this.refvar = refvar;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), this.refvar];
     }
 }
@@ -2060,7 +2072,7 @@ class TIRMultiVarAssignStatementWRef extends TIRMultiVarAssignStatementGeneral {
         this.refvar = refvar;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), this.refvar];
     }
 }
@@ -2073,7 +2085,7 @@ class TIRMultiVarDeclareAndAssignStatementWTaskRef extends TIRMultiVarDeclareAnd
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), "self"];
     }
 }
@@ -2086,7 +2098,7 @@ class TIRMultiVarAssignStatementWTaskRef extends TIRMultiVarAssignStatementGener
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), "self"];
     }
 }
@@ -2099,7 +2111,7 @@ class TIRMultiVarDeclareAndAssignStatementWAction extends TIRMultiVarDeclareAndA
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), "self"];
     }
 }
@@ -2112,7 +2124,7 @@ class TIRMultiVarAssignStatementWAction extends TIRMultiVarAssignStatementGenera
         this.tsktype = tsktype;
     }
 
-    getModVars(): string[] {
+    getDirectlyModVars(): string[] {
         return [...this.vinfo.map((vi) => vi.vname), "self"];
     }
 }
@@ -2125,10 +2137,73 @@ class TIRReturnStatement extends TIRStatement {
         this.values = values;
     }
 
-    getUsedVars(): string[] {
+    isFailableOperation(): boolean {
+        return this.values.some((vv) => vv.isFailableOperation());
+    }
+
+    getDirectlyUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(...this.values.map((vv) => vv.getUsedVars()));
     }
 }
+
+class TIRIfStatement extends TIRStatement {
+    readonly ifentry: {test: TIRExpression, value: TIRScopedBlockStatement};
+    readonly elifentries: {test: TIRExpression, value: TIRScopedBlockStatement}[];
+    readonly elseentry: TIRScopedBlockStatement;
+
+    constructor(sinfo: SourceInfo, ifentry: {test: TIRExpression, value: TIRScopedBlockStatement}, elifentries: {test: TIRExpression, value: TIRScopedBlockStatement}[], elseentry: TIRScopedBlockStatement) {
+        super(TIRStatementTag.IfStatement, sinfo, `if(${ifentry.test.expstr}) ${ifentry.value.stmtstr} ${elifentries.map((efi) => `elif(${efi.test.expstr}) ${efi.value.stmtstr}`)} else ${elseentry.stmtstr}`);
+        this.ifentry = ifentry;
+        this.elifentries = elifentries;
+        this.elseentry = elseentry;
+    }
+
+    isFailableOperation(): boolean {
+        return this.ifentry.test.isFailableOperation() || this.ifentry.value.isFailableOperation() ||
+            this.elifentries.some((ee) => ee.test.isFailableOperation() || ee.value.isFailableOperation()) ||
+            this.elseentry.isFailableOperation();
+    }
+}
+
+class TIRBlockStatement {
+    readonly stmtstr: string;
+    readonly ops: TIRStatement[];
+    readonly isterminal: boolean;
+    
+    readonly defatentry: string[];
+    readonly defatexit: string[];
+
+    constructor(ops: TIRStatement[], isterminal: boolean, defatentry: string[], defatexit: string[]) {
+        this.stmtstr = "{" + ops.map((op) => op.stmtstr).join(" ") + "}";
+
+        this.ops = ops;
+        this.isterminal = isterminal;
+        
+        this.defatentry = defatentry;
+        this.defatexit = defatexit;
+    }
+
+    isFailableOperation(): boolean {
+        return this.ops.some((op) => op.isFailableOperation());
+    }
+
+    getDefinedVars(): string[] {
+        return this.defatexit.filter((vo) => !this.defatentry.includes(vo));
+    }
+} 
+
+class TIRUnscopedBlockStatement extends TIRBlockStatement {
+    constructor(ops: TIRStatement[], defatentry: string[], defatexit: string[]) {
+        super(ops, false, defatentry, defatexit);
+    }
+}
+
+class TIRScopedBlockStatement  extends TIRBlockStatement {
+    constructor(ops: TIRStatement[], isterminal: boolean, defatentry: string[], defatexit: string[]) {
+        super(ops, isterminal, defatentry, defatexit);
+    }
+}
+
 
 export {
     TIRCodePack,
@@ -2173,5 +2248,8 @@ export {
     TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarAssignStatementWRef,
     TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
     TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction,
-    TIRReturnStatement
+    TIRReturnStatement,
+    TIRIfStatement,
+    xxx,
+    TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
 };

@@ -222,6 +222,13 @@ class StatementTypeEnvironment {
         this.flowinfo = flowinfo;
     }
 
+    getDefVarInfo(): string[] {
+        const args = [...this.args].sort((a, b) => a[0].localeCompare(b[0])).map((vv) => vv[0]);
+        const locals = this.locals.map((ll) => [...ll].sort((a, b) => a[0].localeCompare(b[0])).map((vv) => vv[0]));
+
+        return args.concat(...locals);
+    }
+
     addVar(name: string, isConst: boolean, dtype: ResolvedType, isDefined: boolean, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
         assert(this.flowinfo.length !== 0);
 
@@ -272,6 +279,10 @@ class StatementTypeEnvironment {
 
     lookupVar(name: string): VarInfo | null {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
+    }
+
+    hasNormalFlow(): boolean {
+        return this.flowinfo.length !== 0;
     }
 
     static createInitialEnvForStatementEval(bodyid: string, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): StatementTypeEnvironment {

@@ -1045,7 +1045,7 @@ class ReturnStatement extends Statement {
     }
 }
 
-class IfElseStatement extends Statement {
+class IfStatement extends Statement {
     readonly condflow: {cond: Expression, value: ScopedBlockStatement}[];
     readonly elseflow: ScopedBlockStatement | undefined;
 
@@ -1096,9 +1096,9 @@ class AssertStatement extends Statement {
 }
 
 class DebugStatement extends Statement {
-    readonly value: Expression | undefined;
+    readonly value: Expression;
 
-    constructor(sinfo: SourceInfo, value: Expression | undefined) {
+    constructor(sinfo: SourceInfo, value: Expression) {
         super(StatementTag.DebugStatement, sinfo);
         this.value = value;
     }
@@ -1489,7 +1489,7 @@ export {
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, 
     ReturnStatement,
-    IfElseStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
+    IfStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,
     EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket,
     TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement,
