@@ -2165,6 +2165,52 @@ class TIRIfStatement extends TIRStatement {
     }
 }
 
+
+class TIRSwitchStatement extends TIRStatement {
+    readonly exp: TIRExpression;
+    readonly clauses: {match: TIRLiteralValue, value: TIRScopedBlockStatement}[];
+    readonly edefault: TIRScopedBlockStatement | undefined;
+    readonly isexhaustive: boolean;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRLiteralValue, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
+        super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.litstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
+        this.exp = exp;
+        this.clauses = clauses;
+        this.edefault = edefault;
+        this.isexhaustive = isexhaustive;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation() || 
+            this.clauses.some((cc) => cc.match.exp.isFailableOperation() || cc.value.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            !this.isexhaustive;
+    }
+}
+
+class TIRMatchStatement extends TIRStatement {
+    readonly exp: TIRExpression;
+    readonly clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRScopedBlockStatement}[];
+    readonly edefault: TIRScopedBlockStatement | undefined;
+    readonly isexhaustive: boolean;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
+        super(TIRStatementTag.MatchStatement, sinfo, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.mtype} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
+        this.exp = exp;
+        this.clauses = clauses;
+        this.edefault = edefault;
+        this.isexhaustive = isexhaustive;
+    }
+
+    isFailableOperation(): boolean {
+        return this.exp.isFailableOperation() || 
+            this.clauses.some((cc) => cc.match.isFailableOperation()) ||
+            this.clauses.some((cc) => cc.value.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            !this.isexhaustive;
+    }
+}
+
 class TIRBlockStatement {
     readonly stmtstr: string;
     readonly ops: TIRStatement[];
@@ -2249,7 +2295,7 @@ export {
     TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
     TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction,
     TIRReturnStatement,
-    TIRIfStatement,
+    TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,
     xxx,
     TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
 };
