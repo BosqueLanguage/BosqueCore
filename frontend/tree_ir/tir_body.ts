@@ -184,6 +184,8 @@ abstract class TIRExpression {
         this.expstr = expstr;
     }
 
+    static OverflowIsFailure: boolean = false;
+
     isFailableOperation(): boolean {
         return false;
     }
@@ -772,7 +774,13 @@ class TIRBinAddExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
     }
 
-    is
+    isFailableOperation(): boolean {
+        if (TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
+            return true;
+        }
+        
+        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
+    }
 }
 
 class TIRBinSubExpression extends TIRBinOpExpression {
@@ -781,14 +789,30 @@ class TIRBinSubExpression extends TIRBinOpExpression {
     }
 
     isFailableOperation(): boolean {
+        if(TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
+            return true;
+        }
+
         //unsigned underflow is a more dangerous issue that just overflows
-        return (this.optype === "Nat" || this.optype === "BigNat") || (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
+        if(this.optype === "Nat" || this.optype === "BigNat") {
+            return true;
+        }
+
+        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
     }
 }
 
 class TIRBinMultExpression extends TIRBinOpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.BinMultExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} * ${rhs.expstr})`);
+    }
+
+    isFailableOperation(): boolean {
+        if(TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
+            return true;
+        }
+
+        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
     }
 }
 

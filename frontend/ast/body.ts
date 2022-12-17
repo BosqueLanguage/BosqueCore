@@ -882,6 +882,7 @@ class TaskSelfActionExpression extends Expression {
         this.terms = terms;
         this.args = args;
     }
+    
     isTaskOperation(): boolean {
         return true;
     }

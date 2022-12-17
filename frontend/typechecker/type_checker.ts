@@ -181,6 +181,8 @@ class TypeChecker {
         this.m_taskSelfOk = "no";
         this.m_errors = [];
         
+        xxxx; //set TIRExpression overflowisfailure when setting these too
+
         this.m_sortedSrcFiles = sortedSrcFiles;
     }
 
