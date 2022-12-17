@@ -291,86 +291,28 @@ class StatementTypeEnvironment {
         const flows = [new FlowTypeInfoOption(ResolvedType.createInvalid(), FlowTypeTruthValue.Unknown, this.flowinfo)];
         return ExpressionTypeEnvironment.createInitialEnvForExpressionEval(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, this.locals, flows);
     }
+
+    pushLocalScope(): StatementTypeEnvironment {
+        const localscopy = [...(this.locals as Map<string, VarInfo>[]), new Map<string, VarInfo>()];
+        return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, localscopy, this.isDeadFlow, this.flowinfo);
+    }
+
+    popLocalScope(): StatementTypeEnvironment {
+        const localscopy = (this.locals as Map<string, VarInfo>[]).slice(0, -1);
+        let iinfo = new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>();
+        [...this.flowinfo].forEach((fi) => {
+            if([...fi[1].depvars].every((vv) => !this.locals[this.locals.length - 1].has(vv))) {
+                iinfo.set(fi[0], fi[1]);
+            }
+        });
+
+        return new StatementTypeEnvironment(this.bodyid, this.binds, this.pcodes, this.frozenVars, this.args, localscopy, this.isDeadFlow, iinfo);
+    }
+
 /*
     
-
-    setAbort(): TypeEnvironment {
-        assert(this.hasNormalFlow());
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, undefined, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    setReturn(assembly: Assembly, rtype: ResolvedType): TypeEnvironment {
-        assert(this.hasNormalFlow());
-        const rrtype = this.returnResult !== undefined ? assembly.typeUpperBound([this.returnResult, rtype]) : rtype;
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, undefined, this.inferResult, this.inferYield, this.expressionResult, rrtype, this.yieldResult, this.frozenVars);
-    }
-
-    setYield(assembly: Assembly, ytype: ResolvedType): TypeEnvironment {
-        assert(this.hasNormalFlow());
-        const rytype = this.yieldResult !== undefined ? assembly.typeUpperBound([this.yieldResult, ytype]) : ytype;
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, undefined, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, rytype, this.frozenVars);
-    }
-
-    pushLocalScope(): TypeEnvironment {
-        assert(this.hasNormalFlow());
-        let localscopy = [...(this.locals as Map<string, VarInfo>[]), new Map<string, VarInfo>()];
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localscopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    popLocalScope(): TypeEnvironment {
-        let localscopy = this.locals !== undefined ? (this.locals as Map<string, VarInfo>[]).slice(0, -1) : undefined;
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localscopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
     lookupPCode(pc: string): PCode | undefined {
         return this.pcodes.get(pc);
-    }
-
-    addVar(name: string, isConst: boolean, dtype: ResolvedType, isDefined: boolean, infertype: ResolvedType): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => new Map<string, VarInfo>(frame));
-        localcopy[localcopy.length - 1].set(name, new VarInfo(dtype, isConst, false, isDefined, infertype));
-
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localcopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    setVar(name: string, flowtype: ResolvedType): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        const oldv = this.lookupVar(name) as VarInfo;
-        const nv = oldv.assign(flowtype);
-
-        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => frame.has(name) ? new Map<string, VarInfo>(frame).set(name, nv) : new Map<string, VarInfo>(frame));
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localcopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    setRefVar(name: string): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        const oldv = this.lookupVar(name) as VarInfo;
-        const nv = oldv.assign(oldv.declaredType);
-
-        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => frame.has(name) ? new Map<string, VarInfo>(frame).set(name, nv) : new Map<string, VarInfo>(frame));
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, localcopy, this.inferResult, this.inferYield, this.expressionResult, this.returnResult, this.yieldResult, this.frozenVars);
-    }
-
-    multiVarUpdate(allDeclared: [boolean, string, ResolvedType, ResolvedType][], allAssigned: [string, ResolvedType][]): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        let nenv: TypeEnvironment = this;
-
-        for (let i = 0; i < allDeclared.length; ++i) {
-            const declv = allDeclared[i];
-            nenv = nenv.addVar(declv[1], declv[0], declv[2], true, declv[3]);
-        }
-
-        for (let i = 0; i < allAssigned.length; ++i) {
-            const assignv = allAssigned[i];
-            nenv = nenv.setVar(assignv[0], assignv[1]);
-        }
-
-        return nenv;
     }
 
     getCurrentFrameNames(): string[] {

@@ -1114,9 +1114,9 @@ class RefCallStatement extends Statement {
 }
 
 class EnvironmentFreshStatement extends Statement {
-    readonly assigns: {keyname: string, valexp: Expression}[];
+    readonly assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[];
 
-    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[]) {
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[]) {
         super(StatementTag.EnvironmentFreshStatement, sinfo);
         this.assigns = assigns;
     }
@@ -1127,9 +1127,9 @@ class EnvironmentFreshStatement extends Statement {
 }
 
 class EnvironmentSetStatement extends Statement {
-    readonly assigns: {keyname: string, valexp: Expression | undefined}[];
+    readonly assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[];
 
-    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[]) {
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[]) {
         super(StatementTag.EnvironmentSetStatement, sinfo);
         this.assigns = assigns;
     }
@@ -1140,11 +1140,11 @@ class EnvironmentSetStatement extends Statement {
 }
 
 class EnvironmentSetStatementBracket extends Statement {
-    readonly assigns: {keyname: string, valexp: Expression}[];
+    readonly assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[];
     readonly block: UnscopedBlockStatement | ScopedBlockStatement;
     readonly isFresh: boolean;
 
-    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement, isFresh: boolean) {
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[], block: UnscopedBlockStatement | ScopedBlockStatement, isFresh: boolean) {
         super(StatementTag.EnvironmentSetStatementBracket, sinfo);
         this.assigns = assigns;
         this.block = block;

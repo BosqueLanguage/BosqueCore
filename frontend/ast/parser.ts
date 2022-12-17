@@ -1610,10 +1610,59 @@ class Parser {
                 this.ensureToken(TokenStrings.Identifier, "name in argument list");
 
                 const name = this.consumeTokenAndGetValue();
-                this.ensureAndConsumeToken(SYM_colon, "named argument list");
+                this.ensureAndConsumeToken(SYM_eq, "named argument list");
 
                 const exp = this.parseExpression();
                 args.push({name: name, value: exp});
+
+                if (this.testAndConsumeTokenIf(SYM_coma)) {
+                    this.ensureNotToken(rparen, "argument list after \",\"");
+                }
+                else {
+                    this.ensureToken(rparen, "argument list -- maybe missing a \",\"");
+                }
+            }
+
+            this.clearRecover();
+            return args;
+        }
+        catch (ex) {
+            this.processRecover();
+            return [];
+        }
+    }
+
+    private parseEnvUpdateArguments(lparen: string, rparen: string): {name: string, value: [TypeSignature, Expression] | undefined}[] {
+        let args: {name: string, value: [TypeSignature, Expression] | undefined}[] = [];
+
+        try {
+            this.setRecover(this.scanMatchingParens(lparen, rparen));
+
+            this.consumeToken();
+            while (!this.testAndConsumeTokenIf(rparen)) {
+                this.ensureToken(TokenStrings.Identifier, "name in environment argument list");
+                const name = this.consumeTokenAndGetValue();
+
+                if(this.testToken(SYM_eq)) {
+                    this.consumeToken();
+
+                    this.ensureToken(TokenStrings.Identifier, "null value in environment argument list");
+                    const vv = this.consumeTokenAndGetValue();
+                    if(vv !== "_") {
+                        this.raiseError(this.getCurrentLine(), "expected _");
+                    }
+
+                    args.push({ name: name, value: undefined });
+                }
+                else {
+                    this.ensureAndConsumeToken(SYM_colon, "type in environment argument list");
+                    const ttype = this.parseTypeSignature();
+
+                    this.ensureAndConsumeToken(SYM_eq, "value in environment argument list")
+                    const exp = this.parseExpression();
+
+                    args.push({ name: name, value: [ttype, exp] });
+                }
 
                 if (this.testAndConsumeTokenIf(SYM_coma)) {
                     this.ensureNotToken(rparen, "argument list after \",\"");
@@ -2942,21 +2991,26 @@ class Parser {
             this.ensureTaskOpOk();
 
             this.consumeToken();
+
             const isfresh = this.testToken(SYM_lbrace);
-            let binds: {keyname: string, valexp: Expression}[] = [];
+            let binds: {keyname: string, valexp: [TypeSignature, Expression] | undefined}[] = [];
             if(isfresh) {
-                binds = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).map((nn) => {
+                binds = this.parseEnvUpdateArguments(SYM_lbrace, SYM_rbrace).map((nn) => {
                     return {keyname: nn.name, valexp: nn.value};
                 });
             }
             else {
-                binds = this.parseArgumentsNamed(SYM_lbrack, SYM_rbrack).map((nn) => {
+                binds = this.parseEnvUpdateArguments(SYM_lbrack, SYM_rbrack).map((nn) => {
                     return {keyname: nn.name, valexp: nn.value};
                 });
             }
 
             if(!isfresh && binds.length === 0) {
                 this.raiseError(sinfo.line, "environment update without any assignments is vacuous")
+            }
+
+            if(binds.some((bb, ii) => binds.findIndex((obb) => obb.keyname === bb.keyname) !== ii)) {
+                this.raiseError(sinfo.line, "duplicate key in environment operation");
             }
 
             if(this.testAndConsumeTokenIf(SYM_semicolon)) {

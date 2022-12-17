@@ -771,6 +771,8 @@ class TIRBinAddExpression extends TIRBinOpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
     }
+
+    is
 }
 
 class TIRBinSubExpression extends TIRBinOpExpression {
@@ -1723,11 +1725,25 @@ enum TIRStatementTag {
     VarMultiDeclareAndAssignStatementWAction = "VarMultiDeclareAndAssignStatementWAction",
     VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction",
 
+    CallStatementWRef = "CallStatementWRef",
+    CallStatementWTaskRef = "CallStatementWTaskRef",
+    CallStatementWAction = "CallStatementWAction",
+
     ReturnStatement = "ReturnStatement",
 
     IfStatement = "IfStatement",
     SwitchStatement = "SwitchStatement",
-    MatchStatement = "MatchStatement"
+    MatchStatement = "MatchStatement",
+
+    EnvironmentFreshStatement = "EnvironmentFreshStatement",
+    EnvironmentSetStatement = "EnvironmentSetStatement",
+    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+
+    TaskRunStatement = "TaskRunStatement", //run single task
+    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
+    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
 }
 
 abstract class TIRStatement {
@@ -2129,12 +2145,70 @@ class TIRMultiVarAssignStatementWAction extends TIRMultiVarAssignStatementGenera
     }
 }
 
+class TIRCallStatementWRefGeneral extends TIRStatement {
+    readonly vexp: TIRExpression;
+
+    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vexp: TIRExpression) {
+        super(tag, sinfo, `${vexp.expstr};`);
+        this.vexp = vexp;
+    }
+
+    isFailableOperation(): boolean {
+        return this.vexp.isFailableOperation();
+    }
+
+    getDirectlyUsedVars(): string[] {
+        return this.vexp.getUsedVars();
+    }
+}
+
+class TIRCallStatementWRef extends TIRCallStatementWRefGeneral {
+    readonly refvar: string;
+
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, refvar: string) {
+        super(sinfo, TIRStatementTag.CallStatementWRef, vexp);
+        this.refvar = refvar;
+    }
+
+    getDirectlyModVars(): string[] {
+        return [this.refvar];
+    }
+}
+
+class TIRCallStatementWTaskRef extends TIRCallStatementWRefGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.CallStatementWTaskRef, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getDirectlyModVars(): string[] {
+        return ["self"];
+    }
+}
+
+class TIRCallStatementWAction extends TIRCallStatementWRefGeneral {
+    readonly tsktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, tsktype: TIRTypeKey) {
+        super(sinfo, TIRStatementTag.CallStatementWAction, vexp);
+        this.tsktype = tsktype;
+    }
+
+    getDirectlyModVars(): string[] {
+        return ["self"];
+    }
+}
+
 class TIRReturnStatement extends TIRStatement {
     readonly values: TIRExpression[];
 
     constructor(sinfo: SourceInfo, values: TIRExpression[]) {
         super(TIRStatementTag.ReturnStatement, sinfo, `return ${values.map((vv) => vv.expstr).join(", ")};`);
         this.values = values;
+
+        xxxx; //I think we need to specialize this for ref calls on ref returns as well as multi-returns on returns
     }
 
     isFailableOperation(): boolean {
@@ -2210,6 +2284,174 @@ class TIRMatchStatement extends TIRStatement {
             !this.isexhaustive;
     }
 }
+
+class TIREnvironmentFreshStatement extends TIRStatement {
+    readonly assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression]}[];
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression]}[]) {
+        super(TIRStatementTag.EnvironmentFreshStatement, sinfo, `env{${assigns.map((asgn) => asgn.keyname + ": " + asgn.valexp[0] + "=" + asgn.valexp[1].expstr).join(", ")}};`);
+        this.assigns = assigns;
+    }
+
+    isFailableOperation(): boolean {
+        return this.assigns.some((asgn) => asgn.valexp[1].isFailableOperation());
+    }
+}
+
+class TIREnvironmentSetStatement extends TIRStatement {
+    readonly assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression] | undefined}[];
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression] | undefined}[]) {
+        super(TIRStatementTag.EnvironmentFreshStatement, sinfo, `env[${assigns.map((asgn) => asgn.keyname + (asgn.valexp !== undefined ? (": " + asgn.valexp[0] + "=" + asgn.valexp[1].expstr) : "=_")).join(", ")}];`);
+        this.assigns = assigns;
+    }
+
+    isFailableOperation(): boolean {
+        return this.assigns.some((asgn) => (asgn.valexp !== undefined && asgn.valexp[1].isFailableOperation()));
+    }
+}
+
+class TIREnvironmentSetStatementBracket extends TIRStatement {
+    readonly assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression] | undefined}[];
+    readonly block: TIRUnscopedBlockStatement | TIRScopedBlockStatement;
+    readonly isFresh: boolean;
+
+    constructor(sinfo: SourceInfo, assigns: {keyname: string, valexp: [TIRTypeKey, TIRExpression] | undefined}[], block: TIRUnscopedBlockStatement | TIRScopedBlockStatement, isFresh: boolean) {
+        super(TIRStatementTag.EnvironmentFreshStatement, sinfo, `env${isFresh ? "{" : "["}${assigns.map((asgn) => asgn.keyname + (asgn.valexp !== undefined ? (": " + asgn.valexp[0] + "=" + asgn.valexp[1].expstr) : "=_")).join(", ")}${isFresh ? "}" : "]"} ${block.stmtstr}`);
+        this.assigns = assigns;
+        this.block = block;
+        this.isFresh = isFresh;
+    }
+
+    isFailableOperation(): boolean {
+        return this.assigns.some((asgn) => (asgn.valexp !== undefined && asgn.valexp[1].isFailableOperation())) || this.block.isFailableOperation();
+    }
+}
+
+class TIRTaskRunStatement extends TIRStatement {
+    readonly isdefine: boolean;
+    readonly isconst: boolean;
+    readonly vtrgt: {name: string, vtype: TIRTypeKey} | undefined; //undef is for return position
+    readonly task: TIRTypeKey;
+    readonly taskargs: {argn: string, argv: TIRExpression}[];
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey} | undefined, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], args: TIRExpression[]) {
+        super(TIRStatementTag.TaskRunStatement, sinfo);
+        this.isdefine = isdefine;
+        this.isconst = isconst;
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return xxxx;
+    }
+}
+
+class TIRTaskExecuteMixedMultiStatement extends TIRStatement {
+
+}
+
+class TIRTaskMultiStatement extends TIRTaskExecuteStatement {
+    readonly isdefine: boolean;
+    readonly isconst: boolean;
+    readonly vtrgts: {name: string, vtype: TypeSignature}[] | undefined;
+    readonly tasks: TypeSignature[];
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[] | undefined, tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(TIRStatementTag.TaskMultiStatement, sinfo);
+        this.isdefine = isdefine;
+        this.isconst = isconst;
+        this.vtrgts = vtrgts;
+        this.tasks = tasks;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TIRTaskDashStatement extends TIRTaskExecuteStatement {
+    readonly isdefine: boolean;
+    readonly isconst: boolean;
+    readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
+    readonly task: TypeSignature[];
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly args: Expression[];
+
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature} | undefined, task: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+        super(TIRStatementTag.TaskDashStatement, sinfo);
+        this.isdefine = isdefine;
+        this.isconst = isconst;
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.args = args;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TIRTaskExecuteUniformMultiStatement extends TIRStatement {
+
+}
+
+class TIRTaskAllStatement extends TIRTaskExecuteStatement {
+    readonly isdefine: boolean;
+    readonly isconst: boolean;
+    readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
+    readonly task: TypeSignature;
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly arg: Expression;
+
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature} | undefined, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+        super(TIRStatementTag.TaskAllStatement, sinfo);
+        this.isdefine = isdefine;
+        this.isconst = isconst;
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.arg = arg;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+class TIRTaskRaceStatement extends TIRTaskExecuteStatement {
+    readonly isdefine: boolean;
+    readonly isconst: boolean;
+    readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
+    readonly task: TypeSignature;
+    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly arg: Expression;
+
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature} | undefined, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+        super(TIRStatementTag.TaskRaceStatement, sinfo);
+        this.isdefine = isdefine;
+        this.isconst = isconst;
+        this.vtrgt = vtrgt;
+        this.task = task;
+        this.taskargs = taskargs;
+        this.arg = arg;
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
+
 
 class TIRBlockStatement {
     readonly stmtstr: string;
@@ -2294,8 +2536,10 @@ export {
     TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarAssignStatementWRef,
     TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
     TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction,
+    TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction,
     TIRReturnStatement,
     TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,
+    TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket,
     xxx,
     TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
 };
