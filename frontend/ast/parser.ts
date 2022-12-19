@@ -2649,9 +2649,27 @@ class Parser {
         }
     }
 
-    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature}): Statement {
+    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature} | undefined): Statement {
         this.ensureTaskOpOk();
         
+        let allvvs: {name: string, vtype: TypeSignature}[] = [];
+        if (vv !== undefined) {
+            allvvs.push(vv);
+            while (!this.testToken(SYM_eq)) {
+                this.ensureAndConsumeToken(SYM_coma, "Expected , in task result assignment list");
+
+                const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isconst ? KW_let : KW_var);
+                const vvar = { name: assign.name, vtype: assign.vtype };
+
+                if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
+                    this.raiseError(this.getCurrentLine(), "Variable name is already defined");
+                }
+                this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name);
+
+                allvvs.push(vvar);
+            }
+        }
+
         this.consumeToken();
         this.ensureAndConsumeToken(SYM_coloncolon, "Task statement");
         this.ensureToken(TokenStrings.Identifier, "Task statement");
@@ -2659,6 +2677,10 @@ class Parser {
         const name = this.consumeTokenAndGetValue();
 
         if(name === "getTaskID" || name === "isCanceled") {
+            this.ensureAndConsumeToken(SYM_lparen, `Task expression ${name}`);
+            this.ensureAndConsumeToken(SYM_rparen, `Task expression ${name}`);
+            this.ensureAndConsumeToken(SYM_semicolon, `Task expression ${name}`);
+
             if(name === "getTaskID") {
                 if(vv === undefined) {
                     return new ReturnStatement(sinfo, new TaskGetIDExpression(sinfo));
@@ -2684,8 +2706,12 @@ class Parser {
         }
         else {
             let argpack: { argn: string, argv: Expression }[] = [];
-            if (this.testToken(SYM_lbrack)) {
-                this.parseListOf("Task Run arguments", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+            const isfresh = this.testToken(SYM_lbrace);
+            const lbb = isfresh ? SYM_lbrace : SYM_lbrack;
+            const rbb = isfresh ? SYM_rbrace : SYM_rbrack;
+
+            if (this.testToken(lbb)) {
+                this.parseListOf("Task Run arguments", lbb, rbb, SYM_coma, () => {
                     const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
                     this.ensureAndConsumeToken("=", "Task run argument");
                     const argv = this.parseExpression();
@@ -2704,17 +2730,17 @@ class Parser {
             this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
             if (name === "run") {
-                if (terms.length !== assigncount) {
+                if (terms.length !== allvvs.length) {
                     this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
                 }
 
                 if (terms.length === 1) {
                     //x = Task::run<T>(args)
-                    return new TaskRunStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args);
+                    return new TaskRunStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args);
                 }
                 else {
                     //y, z = Task::run<T, U>(argv, ...)
-                    return new TaskMultiStatement(sinfo, isdefine, isconst, vv, terms, argpack, args);
+                    return new TaskMultiStatement(sinfo, isdefine, isconst, allvvs, terms, isfresh, argpack, args);
                 }
             }
             else if (name === "dash") {
@@ -2722,36 +2748,36 @@ class Parser {
                     this.raiseError(sinfo.line, "dashing to a result on a single task is redundant -- use \"run\" instead");
                 }
 
-                if (vv !== undefined && vv.length !== 1) {
-                    this.raiseError(sinfo.line, "Task::dash produces a single Result");
+                if (terms.length !== allvvs.length) {
+                    this.raiseError(sinfo.line, "Must have equal numbers of tasks and result assignments");
                 }
 
-                //x = Task::dash<T, U>(argv, ...)
-                return new TaskDashStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms, argpack, args);
+                //x, y, z = Task::dash<T, U>(argv, ...)
+                return new TaskDashStatement(sinfo, isdefine, isconst, allvvs, terms, isfresh, argpack, args);
             }
             else if (name === "all") {
                 if (terms.length !== 1 || args.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
                 }
 
-                if (vv !== undefined && vv.length !== 1) {
+                if (allvvs.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all produces a single result List");
                 }
 
                 //x: List<V> = Task::all<T>(List<U>) <-- result list all done
-                return new TaskAllStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args[0]);
+                return new TaskAllStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args[0]);
             }
             else if (name === "race") {
                 if (terms.length !== 1 || args.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all runs same task on all args tuples in the list");
                 }
 
-                if (vv !== undefined && vv.length !== 1) {
+                if (allvvs.length !== 1) {
                     this.raiseError(sinfo.line, "Task::all produces a single Result");
                 }
 
                 //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
-                return new TaskRaceStatement(sinfo, isdefine, isconst, vv !== undefined ? vv[0] : undefined, terms[0], argpack, args[0]);
+                return new TaskRaceStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args[0]);
             }
             else {
                 this.raiseError(sinfo.line, "Unknown \"Task\" operation");
@@ -2796,11 +2822,13 @@ class Parser {
 
             const hasassign = this.testAndConsumeTokenIf(SYM_eq);
             const ismulti = this.testToken(SYM_coma);
-            if((hasassign || ismulti) && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vvar, ismulti);
+            if(ismulti || (hasassign && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task")) {
+                return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vvar);
             }
             else {
-                xxxx; //check not multi here
+                if(ismulti) {
+                    this.raiseError(this.getCurrentLine(), "Multiple variable assignement not generally supported yet!");
+                }
 
                 let exp: Expression | undefined = undefined;
                 if (hasassign) {
@@ -2831,57 +2859,23 @@ class Parser {
             return new TaskSetSelfFieldStatement(sinfo, fname, value);
         }
         else if (tk === TokenStrings.Identifier) {
-            const assigns = this.parseEphemeralListOf(() => {
-                return this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), undefined);
-            });
+            const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), undefined);
+            const vvar = { name: assign.name, vtype: assign.vtype };
 
-            if(assigns.every((aa) => aa === undefined)) {
-                this.raiseError(sinfo.line, "Vacuous variable declaration");
+            if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
+                this.raiseError(line, "Variable name is already defined");
             }
-                
-            let vars: {name: string, pos: number, vtype: TypeSignature}[] = [];
-            for(let i = 0; i < assigns.length; ++i) {
-                let assign = assigns[i];
-
-                if (assign !== undefined) {
-                    if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                        this.raiseError(line, "Variable name is already defined");
-                    }
-                    this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name);
-
-                    vars.push({ name: assign.name, pos: i, vtype: assign.vtype });
-                }
-            }
+            this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name);
 
             this.ensureAndConsumeToken(SYM_eq, "assignment statement");
             if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                return this.parseTaskRunStatement(sinfo, false, false, vars, assigns.length);
+                return this.parseTaskRunStatement(sinfo, false, false, vvar);
             }
             else {
-                if (vars.length === 1) {
-                    const exp = this.parseExpression();
-                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-                
-                    return new VariableAssignmentStatement(sinfo, vars[0].name, exp);
-                }
-                else {
-                    let exp: Expression[] = [];
-                    while (!this.testToken(SYM_semicolon)) {
-                        exp.push(this.parseExpression());
+                const exp = this.parseExpression();
+                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
-                        if (!this.testToken(SYM_coma) && !this.testToken(SYM_semicolon)) {
-                            this.raiseError(this.getCurrentLine(), `expected a "," or a ";" after expression`);
-                        }
-                        this.consumeTokenIf(SYM_coma);
-                    }
-                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-                
-                    if(exp.length !== vars.length || exp.length !== 1) {
-                        this.raiseError(line, `Expected values for all ${vars.length} variables or a single multi-return call expression`);
-                    }
-
-                    return new MultiReturnWithAssignmentStatement(sinfo, vars, exp);
-                }
+                return new VariableAssignmentStatement(sinfo, vvar.name, exp);
             }
         }
         else if (tk === KW_return) {
@@ -2892,7 +2886,7 @@ class Parser {
             }
             else {
                 if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                    return this.parseTaskRunStatement(sinfo, false, false, undefined, 0);
+                    return this.parseTaskRunStatement(sinfo, false, false, undefined);
                 }
                 else {
                     const exp = this.parseExpression();
