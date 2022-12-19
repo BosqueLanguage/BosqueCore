@@ -3085,8 +3085,6 @@ class TypeChecker {
                 this.raiseErrorIf(exp.sinfo, opsintro !== undefined, "Operator must have exactly one abstract/virtual declaration");
                 this.raiseErrorIf(exp.sinfo, opdecls.length === 0, "Operator must have at least one implementation");
 
-                const pnames = (opsintro as NamespaceOperatorDecl).invoke.params.map((p) => p.name);
-
                 //No terms to be bound on operator call
 
                 this.m_pendingNamespaceOperators.push({decl: opsintro as NamespaceOperatorDecl, impls: opdecls})
@@ -4471,11 +4469,11 @@ class TypeChecker {
         }
         else if (rval.expressionResult instanceof TIRCallMemberActionExpression) {
             const rhsconv = this.emitActionCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = new TIRReturnStatementWRef(stmt.sinfo, rhsconv.expressionResult);
+            rexp = new TIRReturnStatementWAction(stmt.sinfo, rhsconv.expressionResult);
         }
         else {
             const rhsconv = this.emitCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = new TIRReturnStatementWRef(stmt.sinfo, rhsconv.expressionResult);
+            rexp = new TIRReturnStatement(stmt.sinfo, rhsconv.expressionResult);
         }
 
         return [env.endOfExecution(), [rexp as TIRStatement]];
@@ -4728,6 +4726,8 @@ class TypeChecker {
     }
 
     private checkTaskRunStatement(env: StatementTypeEnvironment, stmt: TaskRunStatement): [StatementTypeEnvironment, TIRStatement[]] {
+        const taskdecl = xxxx;
+
     }
 
     private checkTaskMultiStatement(env: StatementTypeEnvironment, stmt: TaskMultiStatement): [StatementTypeEnvironment, TIRStatement[]] {

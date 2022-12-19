@@ -2705,13 +2705,9 @@ class Parser {
             }
         }
         else {
-            let argpack: { argn: string, argv: Expression }[] = [];
-            const isfresh = this.testToken(SYM_lbrace);
-            const lbb = isfresh ? SYM_lbrace : SYM_lbrack;
-            const rbb = isfresh ? SYM_rbrace : SYM_rbrack;
-
-            if (this.testToken(lbb)) {
-                this.parseListOf("Task Run arguments", lbb, rbb, SYM_coma, () => {
+            let argpack: { argn: string, argv: Expression | undefined }[] = [];
+            if (this.testToken(SYM_lbrace)) {
+                this.parseListOf("Task Run arguments", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                     const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
                     this.ensureAndConsumeToken("=", "Task run argument");
                     const argv = this.parseExpression();
@@ -2736,11 +2732,11 @@ class Parser {
 
                 if (terms.length === 1) {
                     //x = Task::run<T>(args)
-                    return new TaskRunStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args);
+                    return new TaskRunStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args);
                 }
                 else {
                     //y, z = Task::run<T, U>(argv, ...)
-                    return new TaskMultiStatement(sinfo, isdefine, isconst, allvvs, terms, isfresh, argpack, args);
+                    return new TaskMultiStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
                 }
             }
             else if (name === "dash") {
@@ -2753,7 +2749,7 @@ class Parser {
                 }
 
                 //x, y, z = Task::dash<T, U>(argv, ...)
-                return new TaskDashStatement(sinfo, isdefine, isconst, allvvs, terms, isfresh, argpack, args);
+                return new TaskDashStatement(sinfo, isdefine, isconst, allvvs, terms, argpack, args);
             }
             else if (name === "all") {
                 if (terms.length !== 1 || args.length !== 1) {
@@ -2765,7 +2761,7 @@ class Parser {
                 }
 
                 //x: List<V> = Task::all<T>(List<U>) <-- result list all done
-                return new TaskAllStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args[0]);
+                return new TaskAllStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
             }
             else if (name === "race") {
                 if (terms.length !== 1 || args.length !== 1) {
@@ -2777,7 +2773,7 @@ class Parser {
                 }
 
                 //x: Result<T, E> = Task::race<T>(List<U>) <-- result list all done
-                return new TaskRaceStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], isfresh, argpack, args[0]);
+                return new TaskRaceStatement(sinfo, isdefine, isconst, allvvs[0], terms[0], argpack, args[0]);
             }
             else {
                 this.raiseError(sinfo.line, "Unknown \"Task\" operation");

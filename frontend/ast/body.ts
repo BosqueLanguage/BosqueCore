@@ -1126,17 +1126,15 @@ class TaskRunStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature}; //undef is for return position
     readonly task: TypeSignature;
-    readonly newtargsscope: boolean;
-    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly taskargs: {argn: string, argv: Expression | undefined}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, newtargsscope: boolean, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
         super(StatementTag.TaskRunStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
         this.vtrgt = vtrgt;
         this.task = task;
-        this.newtargsscope = newtargsscope;
         this.taskargs = taskargs;
         this.args = args;
     }
@@ -1151,17 +1149,15 @@ class TaskMultiStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgts: {name: string, vtype: TypeSignature}[];
     readonly tasks: TypeSignature[];
-    readonly newtargsscope: boolean;
-    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly taskargs: {argn: string, argv: Expression | undefined}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], newtargsscope: boolean, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
         super(StatementTag.TaskMultiStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
         this.vtrgts = vtrgts;
         this.tasks = tasks;
-        this.newtargsscope = newtargsscope;
         this.taskargs = taskargs;
         this.args = args;
     }
@@ -1176,17 +1172,15 @@ class TaskDashStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature}[];
     readonly task: TypeSignature[];
-    readonly newtargsscope: boolean;
-    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly taskargs: {argn: string, argv: Expression | undefined}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}[], task: TypeSignature[], newtargsscope: boolean, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}[], task: TypeSignature[], taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
         super(StatementTag.TaskDashStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
         this.vtrgt = vtrgt;
         this.task = task;
-        this.newtargsscope = newtargsscope;
         this.taskargs = taskargs;
         this.args = args;
     }
@@ -1202,17 +1196,15 @@ class TaskAllStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature};
     readonly task: TypeSignature;
-    readonly newtargsscope: boolean;
-    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly taskargs: {argn: string, argv: Expression | undefined}[];
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, newtargsscope: boolean, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], arg: Expression) {
         super(StatementTag.TaskAllStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
         this.vtrgt = vtrgt;
         this.task = task;
-        this.newtargsscope = newtargsscope;
         this.taskargs = taskargs;
         this.arg = arg;
     }
@@ -1227,17 +1219,15 @@ class TaskRaceStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature};
     readonly task: TypeSignature;
-    readonly newtargsscope: boolean;
-    readonly taskargs: {argn: string, argv: Expression}[];
+    readonly taskargs: {argn: string, argv: Expression | undefined}[];
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, newtargsscope: boolean, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], arg: Expression) {
         super(StatementTag.TaskRaceStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
         this.vtrgt = vtrgt;
         this.task = task;
-        this.newtargsscope = newtargsscope;
         this.taskargs = taskargs;
         this.arg = arg;
     }
