@@ -4,8 +4,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, EphemeralListTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, MultiReturnWithAssignmentStatement, MultiReturnWithDeclarationStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
+import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { SourceInfo } from "../build_decls";
@@ -1154,20 +1154,6 @@ class Parser {
         return result;
     }
 
-    private parseEphemeralListOf<T>(fn: () => T): T[] {
-        let result: T[] = [];
-
-        while (true) {
-            result.push(fn());
-
-            if(!this.testAndConsumeTokenIf(SYM_coma)) {
-                break;
-            }
-        }
-
-        return result;
-    }
-
     parseBuildInfo(cb: BuildLevel): BuildLevel {
         if( this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release)) {
             return this.consumeTokenAndGetValue() as "debug" | "test" | "release";
@@ -1222,7 +1208,7 @@ class Parser {
 
         const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
         if (this.testAndConsumeTokenIf(SYM_colon)) {
-            resultInfo = this.parseResultType(false);
+            resultInfo = this.parseTypeSignature();
         }
         else {
             if (ikind === InvokableKind.PCodePred && allTypedParams) {
@@ -1285,30 +1271,6 @@ class Parser {
 
     ////
     //Type parsing
-
-    private parseResultType(ispcode: boolean): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
-
-        if(this.testToken(SYM_lparen)) {
-            const decls = this.parseListOf("result type", SYM_lparen, SYM_rparen, SYM_coma, () => {
-                return this.parseTypeSignature();
-            });
-
-            return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(sinfo, decls);
-        }
-        else {
-            if (ispcode) {
-                return this.parseTypeSignature();
-            }
-            else {
-                const decls = this.parseEphemeralListOf(() => {
-                    return this.parseTypeSignature();
-                });
-
-                return decls.length === 1 ? decls[0] : new EphemeralListTypeSignature(sinfo, decls);
-            }
-        }
-    } 
 
     private parseTypeSignature(): TypeSignature {
         return this.parseOrCombinatorType();
@@ -1540,7 +1502,7 @@ class Parser {
             });
 
             this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
-            const resultInfo = this.parseResultType(true);
+            const resultInfo = this.parseTypeSignature();
 
             this.clearRecover();
             return new FunctionTypeSignature(sinfo, false, recursive, params, resultInfo, ispred);
@@ -2662,43 +2624,34 @@ class Parser {
     ////
     //Statement parsing
 
-    parseAssignmentVarInfo(sinfo: SourceInfo, vars: "let" | "var" | undefined): {name: string, vtype: TypeSignature} | undefined {
+    parseAssignmentVarInfo(sinfo: SourceInfo, vars: "let" | "var" | undefined): {name: string, vtype: TypeSignature} {
         this.ensureToken(TokenStrings.Identifier, "assignment statement");
         const name = this.consumeTokenAndGetValue();
 
-        if (name === "_") {
-            return undefined;
+        let itype = this.m_penv.SpecialAutoSignature;
+        if (this.testAndConsumeTokenIf(":")) {
+            itype = this.parseTypeSignature();
+        }
+
+        if (vars !== undefined) {
+            return { name: name, vtype: itype };
         }
         else {
-            let itype = this.m_penv.SpecialAutoSignature;
-            if (this.testAndConsumeTokenIf(":")) {
-                itype = this.parseTypeSignature();
+            if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(name)) {
+                this.raiseError(sinfo.line, `Variable "${name}" is not defined in scope`);
             }
 
-            if (vars !== undefined) {
-                return {name: name, vtype: itype};
+            if (!(itype instanceof AutoTypeSignature)) {
+                this.raiseError(sinfo.line, `Cannot redeclare type of variable "${name}" on assignment`);
             }
-            else {
-                if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(name)) {
-                    this.raiseError(sinfo.line, `Variable "${name}" is not defined in scope`);
-                }
 
-                if (!(itype instanceof AutoTypeSignature)) {
-                    this.raiseError(sinfo.line, `Cannot redeclare type of variable "${name}" on assignment`);
-                }
-
-                return {name: name, vtype: itype};
-            }
+            return { name: name, vtype: itype };
         }
     }
 
-    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature}[] | undefined, assigncount: number): Statement {
+    private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature}): Statement {
         this.ensureTaskOpOk();
         
-        if(vv !== undefined && vv.length !== assigncount) {
-            this.raiseError(sinfo.line, "All task results must be used/consumed");
-        }
-
         this.consumeToken();
         this.ensureAndConsumeToken(SYM_coloncolon, "Task statement");
         this.ensureToken(TokenStrings.Identifier, "Task statement");
@@ -2708,24 +2661,24 @@ class Parser {
         if(name === "getTaskID" || name === "isCanceled") {
             if(name === "getTaskID") {
                 if(vv === undefined) {
-                    return new ReturnStatement(sinfo, [new TaskGetIDExpression(sinfo)]);
+                    return new ReturnStatement(sinfo, new TaskGetIDExpression(sinfo));
                 }
                 else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv[0].name, isconst, vv[0].vtype, new TaskGetIDExpression(sinfo));
+                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskGetIDExpression(sinfo));
                 }
                 else {
-                    return new VariableAssignmentStatement(sinfo, vv[0].name, new TaskGetIDExpression(sinfo));
+                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskGetIDExpression(sinfo));
                 }
             }
             else {
                 if(vv === undefined) {
-                    return new ReturnStatement(sinfo, [new TaskCancelRequestedExpression(sinfo)])
+                    return new ReturnStatement(sinfo, new TaskCancelRequestedExpression(sinfo))
                 }
                 else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv[0].name, isconst, vv[0].vtype, new TaskCancelRequestedExpression(sinfo));
+                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskCancelRequestedExpression(sinfo));
                 }
                 else {
-                    return new VariableAssignmentStatement(sinfo, vv[0].name, new TaskCancelRequestedExpression(sinfo));
+                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskCancelRequestedExpression(sinfo));
                 }
             }
         }
@@ -2833,71 +2786,33 @@ class Parser {
             this.consumeToken();
             const isConst = tk === KW_let;
 
-            const assigns = this.parseEphemeralListOf(() => {
-                return this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isConst ? KW_let : KW_var);
-            });
+            const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isConst ? KW_let : KW_var);
+            const vvar = { name: assign.name, vtype: assign.vtype };
 
-            if(assigns.every((aa) => aa === undefined)) {
-                this.raiseError(sinfo.line, "Vacuous variable declaration");
+            if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
+                this.raiseError(line, "Variable name is already defined");
             }
-                
-            let vars: {name: string, pos: number, vtype: TypeSignature}[] = [];
-            for(let i = 0; i < assigns.length; ++i) {
-                let assign = assigns[i];
-
-                if (assign !== undefined) {
-                    if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                        this.raiseError(line, "Variable name is already defined");
-                    }
-                    this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name);
-
-                    vars.push({ name: assign.name, pos: i, vtype: assign.vtype });
-                }
-            }
+            this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name);
 
             const hasassign = this.testAndConsumeTokenIf(SYM_eq);
-            if(hasassign && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vars, assigns.length);
+            const ismulti = this.testToken(SYM_coma);
+            if((hasassign || ismulti) && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
+                return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vvar, ismulti);
             }
             else {
-                if (vars.length === 1) {
-                    let exp: Expression | undefined = undefined;
-                    if(hasassign) {
-                        exp = this.parseExpression();
-                    }
-                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-                
-                    if ((exp === undefined && isConst)) {
-                        this.raiseError(line, "Const variable declaration must include an assignment to the variable");
-                    }
+                xxxx; //check not multi here
 
-                    return new VariableDeclarationStatement(sinfo, vars[0].name, isConst, vars[0].vtype, exp);
+                let exp: Expression | undefined = undefined;
+                if (hasassign) {
+                    exp = this.parseExpression();
                 }
-                else {
-                    let exp: Expression[] | undefined = undefined;
-                    if(hasassign) {
-                        exp = [];
-                        while(!this.testToken(SYM_semicolon)) {
-                            exp.push(this.parseExpression());
+                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
-                            if(!this.testToken(SYM_coma) && !this.testToken(SYM_semicolon)) {
-                                this.raiseError(this.getCurrentLine(), `expected a "," or a ";" after expression`);
-                            }
-                            this.consumeTokenIf(SYM_coma);
-                        }
-                    }
-                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-                
-                    if ((exp === undefined && isConst)) {
-                        this.raiseError(line, "Const variable declaration must include an assignment to the variable");
-                    }
-
-                    if(exp !== undefined && (exp.length !== vars.length || exp.length !== 1)) {
-                        this.raiseError(line, `Expected values for all ${vars.length} variables or a single multi-return call expression`);
-                    }
-
-                    return new MultiReturnWithDeclarationStatement(sinfo, isConst, vars, exp);
+                if ((exp === undefined && isConst)) {
+                    this.raiseError(line, "Const variable declaration must include an assignment to the variable");
                 }
+
+                return new VariableDeclarationStatement(sinfo, vvar.name, isConst, vvar.vtype, exp);
             }
         }
         else if(tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
@@ -2973,17 +2888,17 @@ class Parser {
             this.consumeToken();
 
             if(this.testAndConsumeTokenIf(SYM_semicolon)) {
-                return new ReturnStatement(sinfo, [new LiteralNoneExpression(sinfo)]);
+                return new ReturnStatement(sinfo, new LiteralNoneExpression(sinfo));
             }
             else {
                 if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
                     return this.parseTaskRunStatement(sinfo, false, false, undefined, 0);
                 }
                 else {
-                    const exps = this.parseEphemeralListOf(() => this.parseExpression());
+                    const exp = this.parseExpression();
 
                     this.ensureAndConsumeToken(SYM_semicolon, "return statement");
-                    return new ReturnStatement(sinfo, exps);
+                    return new ReturnStatement(sinfo, exp);
                 }
             }
         }

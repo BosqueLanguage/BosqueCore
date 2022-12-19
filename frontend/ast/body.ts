@@ -42,7 +42,6 @@ enum ExpressionTag {
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
-    ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
     ConstructorPCodeExpression = "ConstructorPCodeExpression",
 
     PCodeInvokeExpression = "PCodeInvokeExpression",
@@ -445,15 +444,6 @@ class ConstructorRecordExpression extends Expression {
 
     constructor(sinfo: SourceInfo, args: {property: string, value: Expression}[]) {
         super(ExpressionTag.ConstructorRecordExpression, sinfo);
-        this.args = args;
-    }
-}
-
-class ConstructorEphemeralValueList extends Expression {
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.ConstructorEphemeralValueList, sinfo);
         this.args = args;
     }
 }
@@ -915,9 +905,7 @@ enum StatementTag {
     EmptyStatement = "EmptyStatement",
 
     VariableDeclarationStatement = "VariableDeclarationStatement",
-    MultiReturnWithDeclarationStatement = "MultiReturnWithDeclarationStatement",
     VariableAssignmentStatement = "VariableAssignmentStatement",
-    MultiReturnWithAssignmentStatement = "MultiReturnWithAssignmentStatement",
 
     ReturnStatement = "ReturnStatement",
 
@@ -1002,19 +990,6 @@ class VariableDeclarationStatement extends Statement {
     }
 }
 
-class MultiReturnWithDeclarationStatement extends Statement {
-    readonly isConst: boolean;
-    readonly vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[];
-    readonly exp: Expression[] | undefined; //may be undef -- or must be a invoke with a multi-return
-
-    constructor(sinfo: SourceInfo, isConst: boolean, vars: {name: string, pos: number, vtype: TypeSignature /*may be auto*/}[], exp: Expression[] | undefined) {
-        super(StatementTag.MultiReturnWithDeclarationStatement, sinfo);
-        this.isConst = isConst;
-        this.vars = vars;
-        this.exp = exp;
-    }
-}
-
 class VariableAssignmentStatement extends Statement {
     readonly name: string;
     readonly exp: Expression;
@@ -1026,23 +1001,12 @@ class VariableAssignmentStatement extends Statement {
     }
 }
 
-class MultiReturnWithAssignmentStatement extends Statement {
-    readonly vars: {name: string, pos: number}[];
-    readonly exp: Expression[]; //must be an invoke with a multi-return
-
-    constructor(sinfo: SourceInfo, vars: {name: string, pos: number}[], exp: Expression[]) {
-        super(StatementTag.MultiReturnWithAssignmentStatement, sinfo);
-        this.vars = vars;
-        this.exp = exp;
-    }
-}
-
 class ReturnStatement extends Statement {
-    readonly values: Expression[];
+    readonly value: Expression;
 
-    constructor(sinfo: SourceInfo, values: Expression[]) {
+    constructor(sinfo: SourceInfo, value: Expression) {
         super(StatementTag.ReturnStatement, sinfo);
-        this.values = values;
+        this.value = value;
     }
 }
 
@@ -1471,7 +1435,7 @@ export {
     LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression,
     AccessFormatInfoExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
-    ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEphemeralValueList, 
+    ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
     CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
@@ -1488,7 +1452,7 @@ export {
     IfExpression, SwitchExpression, MatchExpression,
     TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
-    VariableDeclarationStatement, MultiReturnWithDeclarationStatement, VariableAssignmentStatement, MultiReturnWithAssignmentStatement, 
+    VariableDeclarationStatement, VariableAssignmentStatement, 
     ReturnStatement,
     IfStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,

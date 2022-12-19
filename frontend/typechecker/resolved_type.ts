@@ -557,21 +557,6 @@ class ResolvedRecordAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedEphemeralListType extends ResolvedAtomType {
-    readonly types: ResolvedType[];
-
-    constructor(typeID: string, types: ResolvedType[]) {
-        super(typeID);
-        this.types = types;
-    }
-
-    static create(entries: ResolvedType[]): ResolvedEphemeralListType {
-        const name = entries.map((entry) => entry.typeID).join(", ");
-
-        return new ResolvedEphemeralListType("(|" + name + "|)", entries);
-    }
-}
-
 class ResolvedType {
     readonly typeID: string;
     readonly options: ResolvedAtomType[];
@@ -872,8 +857,7 @@ export {
     ResolvedHavocEntityAtomType,
     ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
-    ResolvedTupleAtomType, ResolvedRecordAtomType, 
-    ResolvedEphemeralListType,
+    ResolvedTupleAtomType, ResolvedRecordAtomType,
     ResolvedType, 
     ResolvedFunctionTypeParam, ResolvedFunctionType,
     TemplateBindScope

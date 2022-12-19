@@ -99,19 +99,6 @@ class RecordTypeSignature extends TypeSignature {;
     }
 }
 
-class EphemeralListTypeSignature extends TypeSignature {
-    readonly entries: TypeSignature[];
-
-    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
-        super(sinfo);
-        this.entries = entries;
-    }
-
-    getDiagnosticName(): string {
-        return "(|" + this.entries.map((tt) => tt.getDiagnosticName()).join(", ") + "|)";
-    }
-}
-
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
 class FunctionParameter {
@@ -191,6 +178,6 @@ class UnionTypeSignature extends TypeSignature {
 export { 
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
-    TupleTypeSignature, RecordTypeSignature, EphemeralListTypeSignature,
+    TupleTypeSignature, RecordTypeSignature,
     RecursiveAnnotation, FunctionParameter, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };

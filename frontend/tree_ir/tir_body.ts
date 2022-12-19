@@ -44,7 +44,6 @@ enum TIRExpressionTag {
     ConstructorPrimaryCheckExpression = "ConstructorPrimaryCheckExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
-    ConstructorEphemeralValueList = "ConstructorEphemeralValueList",
 
     ConstructorListExpression = "ConstructorListExpression",
     ConstructorMapExpression = "ConstructorMapExpression",
@@ -109,16 +108,6 @@ enum TIRExpressionTag {
     CoerceRefCallResultExpression = "CoerceRefCallExpression",
     CoerceTaskRefCallResultExpression = "CoerceTaskRefCallExpression",
     CoerceActionCallResultExpression = "CoerceActionCallResultExpression",
-
-    PackMultiExpression = "PackMultiExpression",
-    PackMultiExpressionWRef = "PackMultiExpressionWRef",
-    PackMultiExpressionWTaskRef = "PackMultiExpressionWTaskRef",
-    PackMultiExpressionWAction = "PackMultiExpressionWAction",
-
-    CoerceSafeMultiExpression = "CoerceSafeMultiExpression",
-    CoerceRefCallMultiResultExpression = "CoerceRefCallMultiExpression",
-    CoerceTaskRefCallMultiResultExpression = "CoerceTaskRefCallMultiExpression",
-    CoerceActionCallMultiResultExpression = "CoerceActionCallResultMultiExpression",
 
     InjectExpression = "InjectExpression",
     ExtractExpression = "ExtractExpression",
@@ -528,12 +517,6 @@ class TIRConstructorTupleExpression extends TIRConstructorExpression {
 class TIRConstructorRecordExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorRecordExpression, sinfo, oftype, args, `{${args.map((arg) => arg.expstr).join(", ")}}`);
-    }
-}
-
-class TIRConstructorEphemeralValueList extends TIRConstructorExpression {
-    constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
-        super(TIRExpressionTag.ConstructorTupleExpression, sinfo, oftype, args, `elist -- ${args.map((arg) => arg.expstr).join(", ")}`);
     }
 }
 
@@ -1296,94 +1279,6 @@ class TIRCoerceSafeActionCallResultExpression extends TIRCoerceSafeSingleExpress
     }
 }
 
-//abstract class for return result repacking (no coerce ops needed)
-class TIRPackMultiDirectExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly packmask: number[];
-    
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, packmask: number[], packtype: TIRTypeKey, exprstr: string) {
-        super(tag, sinfo, packtype, exprstr);
-        this.exp = exp;
-        this.packmask = packmask;
-    }
-
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation();
-    }
-    
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-}
-
-class TIRPackMultiExpression extends TIRPackMultiDirectExpression {    
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: number[], packtype: TIRTypeKey) {
-        super(TIRExpressionTag.PackMultiExpression, sinfo, exp, packmask, packtype, `pack_result<${packmask.map((ii) => ii.toString()).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRPackMultiExpressionWRef extends TIRPackMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: number[], packtype: TIRTypeKey) {
-        super(TIRExpressionTag.PackMultiExpressionWRef, sinfo, exp, packmask, packtype, `pack_resultwref<${packmask.map((ii) => ii.toString()).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRPackMultiExpressionWTaskRef extends TIRPackMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: number[], packtype: TIRTypeKey) {
-        super(TIRExpressionTag.PackMultiExpressionWTaskRef, sinfo, exp, packmask, packtype, `pack_resultwtask<${packmask.map((ii) => ii.toString()).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRPackMultiExpressionWAction extends TIRPackMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: number[], packtype: TIRTypeKey) {
-        super(TIRExpressionTag.PackMultiExpressionWAction, sinfo, exp, packmask, packtype, `pack_resultwaction<${packmask.map((ii) => ii.toString()).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-//abstract class for handling multi returns with packing and coercion
-class TIRCoerceSafeMultiDirectExpression extends TIRExpression {
-    readonly exp: TIRExpression;
-    readonly packmask: {pos: number, totype: TIRTypeKey}[];
-    
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, packmask: {pos: number, totype: TIRTypeKey}[], totype: TIRTypeKey, exprstr: string) {
-        super(tag, sinfo, totype, exprstr);
-        this.exp = exp;
-        this.packmask = packmask;
-    }
-
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation();
-    }
-    
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
-    }
-}
-
-class TIRCoerceSafeMultiExpression extends TIRCoerceSafeMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: {pos: number, totype: TIRTypeKey}[], totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceSafeMultiExpression, sinfo, exp, packmask, totype, `coerce_result<${packmask.map((ii) => ii.pos.toString() + " as " + ii.totype).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRCoerceRefCallMultiResultExpression extends TIRCoerceSafeMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: {pos: number, totype: TIRTypeKey}[], totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceRefCallMultiResultExpression, sinfo, exp, packmask, totype, `coerce_resultwref<${packmask.map((ii) => ii.pos.toString() + " as " + ii.totype).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRCoerceTaskRefCallMultiResultExpression extends TIRCoerceSafeMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: {pos: number, totype: TIRTypeKey}[], totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceTaskRefCallMultiResultExpression, sinfo, exp, packmask, totype, `coerce_resultwtask<${packmask.map((ii) => ii.pos.toString() + " as " + ii.totype).join(", ")}>(${exp.expstr})`);
-    }
-}
-
-class TIRCoerceActionCallMultiResultExpression extends TIRCoerceSafeMultiDirectExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, packmask: {pos: number, totype: TIRTypeKey}[], totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceActionCallMultiResultExpression, sinfo, exp, packmask, totype, `coerce_resultwaction<${packmask.map((ii) => ii.pos.toString() + " as " + ii.totype).join(", ")}>(${exp.expstr})`);
-    }
-}
-
 //abstract inject/extract op
 class TIRInjectExtractExpression extends TIRExpression {
     readonly exp: TIRExpression;
@@ -1736,24 +1631,14 @@ enum TIRStatementTag {
     VarDeclareAndAssignStatementWAction = "VarDeclareAndAssignStatementWAction",
     VarAssignStatementWAction = "VarAssignStatementWAction",
 
-    VarMultiDeclareStatement = "VarMultiDeclareStatement",
-    VarMultiDeclareAndAssignStatement = "VarMultiDeclareAndAssignStatement",
-    VarMultiAssignStatement = "VarMultiAssignStatement",
-
-    VarMultiDeclareAndAssignStatementWRef = "VarMultiDeclareAndAssignStatementWRef",
-    VarMultiAssignStatementWRef = "VarMultiAssignStatementWRef",
-
-    VarMultiDeclareAndAssignStatementWTaskRef = "VarMultiDeclareAndAssignStatementWTaskRef",
-    VarMultiAssignStatementWTaskRef = "VarMultiAssignStatementWTaskRef",
-
-    VarMultiDeclareAndAssignStatementWAction = "VarMultiDeclareAndAssignStatementWAction",
-    VarMultiAssignStatementWAction = "VarMultiAssignStatementWAction",
-
     CallStatementWRef = "CallStatementWRef",
     CallStatementWTaskRef = "CallStatementWTaskRef",
     CallStatementWAction = "CallStatementWAction",
 
     ReturnStatement = "ReturnStatement",
+    ReturnStatementWRef = "ReturnStatementWRef",
+    ReturnStatementWTaskRef = "ReturnStatementWTaskRef",
+    ReturnStatementWAction = "ReturnStatementWAction",
 
     IfStatement = "IfStatement",
     SwitchStatement = "SwitchStatement",
@@ -2012,163 +1897,6 @@ class TIRVarAssignStatementWAction extends TIRVarAssignStatementGeneral {
     }
 }
 
-class TIRMultiVarDeclareStatementGeneral extends TIRStatement {
-    readonly vinfo: { vname: string, vtype: TIRTypeKey }[];
-
-    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: { vname: string, vtype: TIRTypeKey }[]) {
-        super(tag, sinfo, `var ${vinfo.map((vi) => vi.vname + ": " + vi.vtype).join(", ")};`);
-        this.vinfo = vinfo;
-    }
-
-    getDirectlyModVars(): string[] {
-        return this.vinfo.map((vi) => vi.vname);
-    }
-}
-
-class TIRMultiVarDeclareAndAssignStatementGeneral extends TIRStatement {
-    readonly vinfo: { vname: string, pos: number, vtype: TIRTypeKey }[];
-    readonly vexp: TIRExpression;
-    readonly isConst: boolean;
-
-    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean) {
-        super(tag, sinfo, `${isConst ? "let" : "var"} ${vinfo.map((vi) => vi.vname + "[" + vi.pos + "]: " + vi.vtype).join(", ")} = ${vexp.expstr};`);
-        this.vinfo = vinfo;
-        this.vexp = vexp;
-        this.isConst = isConst;
-    }
-
-    isFailableOperation(): boolean {
-        return this.vexp.isFailableOperation();
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return this.vexp.getUsedVars();
-    }
-
-    getDirectlyModVars(): string[] {
-        return this.vinfo.map((vi) => vi.vname);
-    }
-}
-
-class TIRMultiVarAssignStatementGeneral extends TIRStatement {
-    readonly vinfo: { vname: string, pos: number, vtype: TIRTypeKey }[];
-    readonly vexp: TIRExpression;
-
-    constructor(sinfo: SourceInfo, tag: TIRStatementTag, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression) {
-        super(tag, sinfo, `${vinfo.map((vi) => vi.vname + "[" + vi.pos + "]: " + vi.vtype).join(", ")} = ${vexp.expstr};`);
-        this.vinfo = vinfo;
-        this.vexp = vexp;
-    }
-
-    isFailableOperation(): boolean {
-        return this.vexp.isFailableOperation();
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return this.vexp.getUsedVars();
-    }
-
-    getDirectlyModVars(): string[] {
-        return this.vinfo.map((vi) => vi.vname);
-    }
-}
-
-class TIRMultiVarDeclareStatement extends TIRMultiVarDeclareStatementGeneral {
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, vtype: TIRTypeKey}[]) {
-        super(sinfo, TIRStatementTag.VarMultiDeclareStatement, vinfo);
-    }
-}
-
-class TIRMultiVarDeclareAndAssignStatement extends TIRMultiVarDeclareAndAssignStatementGeneral {
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean) {
-        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatement, vinfo, vexp, isConst);
-    }
-}
-
-class TIRMultiVarAssignStatement extends TIRMultiVarAssignStatementGeneral {
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression) {
-        super(sinfo, TIRStatementTag.VarMultiAssignStatement, vinfo, vexp);
-    }
-}
-
-class TIRMultiVarDeclareAndAssignStatementWRef extends TIRMultiVarDeclareAndAssignStatementGeneral {
-    readonly refvar: string;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, refvar: string) {
-        super(sinfo, TIRStatementTag.VarDeclareAndAssignStatementWRef, vinfo, vexp, isConst);
-        this.refvar = refvar;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), this.refvar];
-    }
-}
-
-class TIRMultiVarAssignStatementWRef extends TIRMultiVarAssignStatementGeneral {
-    readonly refvar: string;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, refvar: string) {
-        super(sinfo, TIRStatementTag.VarMultiAssignStatementWRef, vinfo, vexp);
-        this.refvar = refvar;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), this.refvar];
-    }
-}
-
-class TIRMultiVarDeclareAndAssignStatementWTaskRef extends TIRMultiVarDeclareAndAssignStatementGeneral {
-    readonly tsktype: TIRTypeKey;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
-        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatementWTaskRef, vinfo, vexp, isConst);
-        this.tsktype = tsktype;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), "self"];
-    }
-}
-
-class TIRMultiVarAssignStatementWTaskRef extends TIRMultiVarAssignStatementGeneral {
-    readonly tsktype: TIRTypeKey;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, tsktype: TIRTypeKey) {
-        super(sinfo, TIRStatementTag.VarMultiAssignStatementWTaskRef, vinfo, vexp);
-        this.tsktype = tsktype;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), "self"];
-    }
-}
-
-class TIRMultiVarDeclareAndAssignStatementWAction extends TIRMultiVarDeclareAndAssignStatementGeneral {
-    readonly tsktype: TIRTypeKey;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, isConst: boolean, tsktype: TIRTypeKey) {
-        super(sinfo, TIRStatementTag.VarMultiDeclareAndAssignStatementWAction, vinfo, vexp, isConst);
-        this.tsktype = tsktype;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), "self"];
-    }
-}
-
-class TIRMultiVarAssignStatementWAction extends TIRMultiVarAssignStatementGeneral {
-    readonly tsktype: TIRTypeKey;
-
-    constructor(sinfo: SourceInfo, vinfo: {vname: string, pos: number, vtype: TIRTypeKey}[], vexp: TIRExpression, tsktype: TIRTypeKey) {
-        super(sinfo, TIRStatementTag.VarMultiAssignStatementWAction, vinfo, vexp);
-        this.tsktype = tsktype;
-    }
-
-    getDirectlyModVars(): string[] {
-        return [...this.vinfo.map((vi) => vi.vname), "self"];
-    }
-}
-
 class TIRCallStatementWRefGeneral extends TIRStatement {
     readonly vexp: TIRExpression;
 
@@ -2225,22 +1953,44 @@ class TIRCallStatementWAction extends TIRCallStatementWRefGeneral {
     }
 }
 
-class TIRReturnStatement extends TIRStatement {
-    readonly values: TIRExpression[];
+class TIRReturnStatementGeneral extends TIRStatement {
+    readonly value: TIRExpression;
 
-    constructor(sinfo: SourceInfo, values: TIRExpression[]) {
-        super(TIRStatementTag.ReturnStatement, sinfo, `return ${values.map((vv) => vv.expstr).join(", ")};`);
-        this.values = values;
-
-        xxxx; //I think we need to specialize this for ref calls on ref returns as well as multi-returns on returns
+    constructor(tag: TIRStatementTag, sinfo: SourceInfo, value: TIRExpression, stmtstr: string) {
+        super(tag, sinfo, stmtstr);
+        this.value = value;
     }
 
     isFailableOperation(): boolean {
-        return this.values.some((vv) => vv.isFailableOperation());
+        return this.value.isFailableOperation();
     }
 
     getDirectlyUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(...this.values.map((vv) => vv.getUsedVars()));
+        return this.value.getUsedVars();
+    }
+}
+
+class TIRReturnStatement extends TIRReturnStatementGeneral {
+    constructor(sinfo: SourceInfo, value: TIRExpression) {
+        super(TIRStatementTag.ReturnStatement, sinfo, value, `return ${value.expstr};`);
+    }
+}
+
+class TIRReturnStatementWRef extends TIRReturnStatementGeneral {
+    constructor(sinfo: SourceInfo, value: TIRExpression) {
+        super(TIRStatementTag.ReturnStatementWRef, sinfo, value, `return ${value.expstr};`);
+    }
+}
+
+class TIRReturnStatementWTaskRef extends TIRReturnStatementGeneral {
+    constructor(sinfo: SourceInfo, value: TIRExpression) {
+        super(TIRStatementTag.ReturnStatementWTaskRef, sinfo, value, `return ${value.expstr};`);
+    }
+}
+
+class TIRReturnStatementWAction extends TIRReturnStatementGeneral {
+    constructor(sinfo: SourceInfo, value: TIRExpression) {
+        super(TIRStatementTag.ReturnStatementWAction, sinfo, value, `return ${value.expstr};`);
     }
 }
 
@@ -2375,11 +2125,7 @@ class TIRTaskRunStatement extends TIRStatement {
     }
 }
 
-class TIRTaskExecuteMixedMultiStatement extends TIRStatement {
-
-}
-
-class TIRTaskMultiStatement extends TIRTaskExecuteStatement {
+class TIRTaskMultiStatement extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
     readonly vtrgts: {name: string, vtype: TypeSignature}[] | undefined;
@@ -2402,7 +2148,7 @@ class TIRTaskMultiStatement extends TIRTaskExecuteStatement {
     }
 }
 
-class TIRTaskDashStatement extends TIRTaskExecuteStatement {
+class TIRTaskDashStatement extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
@@ -2425,11 +2171,7 @@ class TIRTaskDashStatement extends TIRTaskExecuteStatement {
     }
 }
 
-class TIRTaskExecuteUniformMultiStatement extends TIRStatement {
-
-}
-
-class TIRTaskAllStatement extends TIRTaskExecuteStatement {
+class TIRTaskAllStatement extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
@@ -2452,7 +2194,7 @@ class TIRTaskAllStatement extends TIRTaskExecuteStatement {
     }
 }
 
-class TIRTaskRaceStatement extends TIRTaskExecuteStatement {
+class TIRTaskRaceStatement extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature} | undefined;
@@ -2474,8 +2216,6 @@ class TIRTaskRaceStatement extends TIRTaskExecuteStatement {
         return true;
     }
 }
-
-
 
 class TIRBlockStatement {
     readonly stmtstr: string;
@@ -2537,9 +2277,7 @@ export {
     TIRBinLogicAndExpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
     TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
-    TIRPackMultiExpression, TIRPackMultiExpressionWRef, TIRPackMultiExpressionWTaskRef, TIRPackMultiExpressionWAction,
     TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, 
-    TIRCoerceSafeMultiExpression, TIRCoerceRefCallMultiResultExpression, TIRCoerceTaskRefCallMultiResultExpression, TIRCoerceActionCallMultiResultExpression,
     TIRInjectExpression, TIRExtractExpression,
     jjjj,
     TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression,
@@ -2556,12 +2294,8 @@ export {
     TIRVarDeclareAndAssignStatementWRef, TIRVarAssignStatementWRef,
     TIRVarDeclareAndAssignStatementWTaskRef, TIRVarAssignStatementWTaskRef,
     TIRVarDeclareAndAssignStatementWAction, TIRVarAssignStatementWAction,
-    TIRMultiVarDeclareStatement, TIRMultiVarDeclareAndAssignStatement, TIRMultiVarAssignStatement,
-    TIRMultiVarDeclareAndAssignStatementWRef, TIRMultiVarAssignStatementWRef,
-    TIRMultiVarDeclareAndAssignStatementWTaskRef, TIRMultiVarAssignStatementWTaskRef,
-    TIRMultiVarDeclareAndAssignStatementWAction, TIRMultiVarAssignStatementWAction,
     TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction,
-    TIRReturnStatement,
+    TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction,
     TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,
     TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket,
     xxx,
