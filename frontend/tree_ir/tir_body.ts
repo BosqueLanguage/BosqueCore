@@ -2164,53 +2164,63 @@ class TIRTaskMultiStatement extends TIRTaskExecStatment {
 }
 
 class TIRTaskDashStatement extends TIRTaskExecStatment {
-    readonly vtrgts: {name: string, vtype: TIRTypeKey}[];
-    readonly tasks: TIRTypeKey[];
-    readonly args: TIRExpression[];
+    readonly vtrgts: {name: string, vtype: TIRTypeKey, restype: TIRTypeKey,}[];
+    readonly tasks: {task: TIRTypeKey, targs: {argn: string, argv: TIRExpression}[], argtype: TIRTypeKey, consargtype: TIRTypeKey, argexp: TIRExpression}[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TIRTypeKey}[], tasks: TIRTypeKey[], taskargs: {argn: string, argv: TIRExpression}[], args: TIRExpression[]) {
-        super(TIRStatementTag.TaskDashStatement, sinfo, `${vtrgts.map((vv) => vv.name).join(", ")} = Task::dash`, `<${tasks.join(", ")}>(${args.map((aa) => aa.expstr).join(", ")})`, isdefine, isconst, taskargs);
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TIRTypeKey, restype: TIRTypeKey}[], tasks: {task: TIRTypeKey, targs: {argn: string, argv: TIRExpression}[], argtype: TIRTypeKey, consargtype: TIRTypeKey, argexp: TIRExpression}[]) {
+        super(TIRStatementTag.TaskMultiStatement, sinfo, isdefine, isconst, `${vtrgts.map((vv) => vv.name).join(", ")} = Task::dash<${tasks.map((tt) => tt.task).join(", ")}>(${tasks.map((tt) => tt.argexp.expstr).join(", ")})`);
         this.vtrgts = vtrgts;
         this.tasks = tasks;
-        this.args = args;
     }
 
     isFailableOperation(): boolean {
-        return this.args.some((aa) => aa.isFailableOperation()) || this.isFailableTaskArgs();
+        return this.tasks.some((tt) => tt.argexp.isFailableOperation() || tt.targs.some((aa) => aa.argv.isFailableOperation()));
     }
 }
 
 class TIRTaskAllStatement extends TIRTaskExecStatment {
-    readonly vtrgt: {name: string, vtype: TIRTypeKey};
+    readonly vtrgt: {name: string, vtype: TIRTypeKey, elemtype: TIRTypeKey};
     readonly task: TIRTypeKey;
+    readonly taskargs: {argn: string, argv: TIRExpression}[];
     readonly arg: TIRExpression;
+    readonly arglisttype: TIRTypeKey;
+    readonly argentrytype: TIRTypeKey;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], arg: TIRExpression) {
-        super(TIRStatementTag.TaskAllStatement, sinfo, `${vtrgt.name} = Task::all`, `<${task}>(${arg.expstr})`, isdefine, isconst, taskargs);
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey, elemtype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], arg: TIRExpression, arglisttype: TIRTypeKey, argentrytype: TIRTypeKey) {
+        super(TIRStatementTag.TaskAllStatement, sinfo, isdefine, isconst, `${vtrgt.name} = Task::all[${taskargs.map((ta) => ta.argn + "=" + ta.argv.expstr)}]<${task}>(${arg.expstr})`);
         this.vtrgt = vtrgt;
         this.task = task;
+        this.taskargs = taskargs;
         this.arg = arg;
+        this.arglisttype = arglisttype;
+        this.argentrytype = argentrytype;
     }
 
     isFailableOperation(): boolean {
-        return this.arg.isFailableOperation() || this.isFailableTaskArgs();
+        return this.arg.isFailableOperation() || this.taskargs.some((aa) => aa.argv.isFailableOperation());
     }
 }
 
 class TIRTaskRaceStatement extends TIRTaskExecStatment {
-    readonly vtrgt: {name: string, vtype: TIRTypeKey};
+    readonly vtrgt: {name: string, vtype: TIRTypeKey, restype: TIRTypeKey};
     readonly task: TIRTypeKey;
+    readonly taskargs: {argn: string, argv: TIRExpression}[];
     readonly arg: TIRExpression;
+    readonly arglisttype: TIRTypeKey;
+    readonly argentrytype: TIRTypeKey;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], arg: TIRExpression) {
-        super(TIRStatementTag.TaskRaceStatement, sinfo, `${vtrgt.name} = Task::all`, `<${task}>(${arg.expstr})`, isdefine, isconst, taskargs);
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey, restype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], arg: TIRExpression, arglisttype: TIRTypeKey, argentrytype: TIRTypeKey) {
+        super(TIRStatementTag.TaskRaceStatement, sinfo, isdefine, isconst, `${vtrgt.name} = Task::all[${taskargs.map((ta) => ta.argn + "=" + ta.argv.expstr)}]<${task}>(${arg.expstr})`);
         this.vtrgt = vtrgt;
         this.task = task;
+        this.taskargs = taskargs;
         this.arg = arg;
+        this.arglisttype = arglisttype;
+        this.argentrytype = argentrytype;
     }
 
     isFailableOperation(): boolean {
-        return this.arg.isFailableOperation() || this.isFailableTaskArgs();
+        return this.arg.isFailableOperation() || this.taskargs.some((aa) => aa.argv.isFailableOperation());
     }
 }
 

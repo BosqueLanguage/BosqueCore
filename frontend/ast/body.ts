@@ -1181,17 +1181,17 @@ class TaskMultiStatement extends Statement {
 class TaskDashStatement extends Statement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
-    readonly vtrgt: {name: string, vtype: TypeSignature}[];
-    readonly task: TypeSignature[];
+    readonly vtrgts: {name: string, vtype: TypeSignature}[];
+    readonly tasks: TypeSignature[];
     readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}[], task: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
         super(StatementTag.TaskDashStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
-        this.vtrgt = vtrgt;
-        this.task = task;
+        this.vtrgts = vtrgts;
+        this.tasks = tasks;
         this.taskargs = taskargs;
         this.args = args;
     }
