@@ -616,22 +616,22 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNoneType() };
         }
         else if (ofc.typeID.startsWith("Option<") && withc.typeID === "ISomething") {
-            const somthingres = ResolvedEntityAtomType.create(this.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl, ofc.conceptTypes[0].binds)
+            const somthingres = ResolvedSomethingEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType)
             return { tp: ResolvedType.createSingle(somthingres), fp: this.getSpecialNothingType() };
         }
         else if (ofc.typeID === "IOption" && withc.typeID === "ISomething") {
             return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNothingType() };
         }
         else {
-            xxx; //can we create a new type ofc & withc
-            return { tp: ResolvedType.createSingle(withc), fp: ResolvedType.createSingle(ofc) };
+            const nand = this.normalizeAndList([...withc.conceptTypes, ...ofc.conceptTypes]);
+            return { tp: nand, fp: ResolvedType.createSingle(ofc) };
         }
     }
 
     private splitConceptEntityTypes(ofc: ResolvedConceptAtomType, withe: ResolvedEntityAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        const somethingdecl = this.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl;
-        const okdecl = this.tryGetObjectTypeForFullyResolvedName("Result::Ok") as EntityTypeDecl;
-        const errdecl = this.tryGetObjectTypeForFullyResolvedName("Result::Err") as EntityTypeDecl;
+        const somethingdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl;
+        const okdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Ok") as EntityTypeDecl;
+        const errdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Err") as EntityTypeDecl;
 
         //
         //TODO: we may want to handle some ISomething, Something, Option, Nothing situations more precisely if they can arise
@@ -641,22 +641,22 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(withe), fp: this.getSpecialSomeConceptType() };
         }
         else if (ofc.typeID.startsWith("Option<") && withe.typeID === "Nothing") {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedEntityAtomType.create(somethingdecl, ofc.conceptTypes[0].binds)) };
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedSomethingEntityAtomType.create(somethingdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType)) };
         }
         else if (ofc.typeID.startsWith("Option<") && withe.typeID === "Something<") {
             return { tp: ResolvedType.createSingle(withe), fp: this.getSpecialNothingType() };
         }
         else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Ok<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedEntityAtomType.create(errdecl, ofc.conceptTypes[0].binds)) };
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedOkEntityAtomType.create(errdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
         }
         else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Err<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds)) };
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedErrEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
         }
         else if(this.atomSubtypeOf(withe, ofc)) {
             if(ofc.conceptTypes.length === 1 && ofc.conceptTypes[0].concept.attributes.includes("__adt_concept_type")) {
-                const splits = [...this.m_objectMap]
-                    .filter((tt) => tt[1].terms.length === 0)
-                    .map((tt) => ResolvedEntityAtomType.create(tt[1], new Map<string, ResolvedType>()))
+                const splits = [...this.m_assembly.getAllEntities()]
+                    .filter((tt) => tt.terms.length === 0)
+                    .map((tt) => ResolvedObjectEntityAtomType.create(tt, new Map<string, ResolvedType>()))
                     .filter((tt) => { 
                         const issubtype = this.atomSubtypeOf(tt, ofc);
                         const notwithe = tt.typeID !== withe.typeID;
@@ -796,22 +796,22 @@ class TypeChecker {
     }
 
     splitTypes(oft: ResolvedType, witht: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        if (oft.isEmptyType() || witht.isEmptyType()) {
-            return { tp: ResolvedType.createEmpty(), fp: ResolvedType.createEmpty() };
+        if (oft.isInvalidType() || witht.isInvalidType()) {
+            return { tp: undefined, fp: undefined };
         }
 
         if (oft.typeID === witht.typeID) {
-            return { tp: oft, fp: ResolvedType.createEmpty() };
+            return { tp: oft, fp: undefined };
         }
 
         const paths = oft.options.map((opt) => this.splitAtomWithType(opt, witht));
         let tp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.tp));
         let fp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.fp));
 
-        return {tp: this.typeUpperBound(tp), fp: this.typeUpperBound(fp)};
+        return {tp: this.normalizeUnionList(tp), fp: this.normalizeUnionList(fp)};
     }
 
-    getDerivedTypeProjection(fromtype: ResolvedType, oftype: ResolvedType): ResolvedType {
+    getDerivedTypeProjection(fromtype: ResolvedType, oftype: ResolvedType): ResolvedType | undefined {
         if(oftype.typeID === "Some") {
             return this.splitTypes(fromtype, this.getSpecialNoneType()).fp;
         }
@@ -1086,7 +1086,6 @@ class TypeChecker {
         return rtype;
     }
 
-
     private normalizeType_Tuple(t: TupleTypeSignature, binds: TemplateBindScope): ResolvedType {
         const entries = t.entries.map((entry) => this.normalizeTypeOnly(entry, binds));
         return ResolvedType.createSingle(ResolvedTupleAtomType.create(entries));
@@ -1115,7 +1114,7 @@ class TypeChecker {
             return ResolvedType.createInvalid();
         }
 
-        return this.getDerivedTypeProjection(fromt, oft);
+        return this.getDerivedTypeProjection(fromt, oft) || ResolvedType.createInvalid();
     }
 
     private normalizeType_And(t: AndTypeSignature, binds: TemplateBindScope): ResolvedType {
@@ -2139,23 +2138,23 @@ class TypeChecker {
         }
     }
 
-    restrictNone(from: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    restrictNone(from: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         return this.splitTypes(from, this.getSpecialNoneType());
     }
 
-    restrictSome(from: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    restrictSome(from: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         return this.splitTypes(from, this.getSpecialSomeConceptType());
     }
 
-    restrictNothing(from: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    restrictNothing(from: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         return this.splitTypes(from, this.getSpecialNothingType());
     }
 
-    restrictSomething(from: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    restrictSomething(from: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         return this.splitTypes(from, this.getSpecialISomethingConceptType());
     }
 
-    restrictT(from: ResolvedType, t: ResolvedType): { tp: ResolvedType, fp: ResolvedType } {
+    restrictT(from: ResolvedType, t: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
         return this.splitTypes(from, t);
     }
 
@@ -5050,49 +5049,93 @@ class TypeChecker {
         this.raiseErrorIf(stmt.sinfo, !env.hasNormalFlow(), "Unreachable statements");
 
         switch(stmt.tag) {
-            case StatementTag.EmptyStatement = "EmptyStatement",
-
-            case StatementTag.VariableDeclarationStatement = "VariableDeclarationStatement",
-            case StatementTag.VariableAssignmentStatement = "VariableAssignmentStatement",
-
-            case StatementTag.ReturnStatement = "ReturnStatement",
-
-            case StatementTag.IfElseStatement = "IfElseStatement",
-            case StatementTag.SwitchStatement = "SwitchStatement",
-            case StatementTag.MatchStatement = "MatchStatement",
-
-            case StatementTag.AbortStatement = "AbortStatement",
-            case StatementTag.AssertStatement = "AssertStatement", //assert(x > 0)
-
-            case StatementTag.DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
-            case StatementTag.RefCallStatement = "RefCallStatement",
-
-            case StatementTag.EnvironmentFreshStatement = "EnvironmentFreshStatement",
-            case StatementTag.EnvironmentSetStatement = "EnvironmentSetStatement",
-            case StatementTag.EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
-
-            case StatementTag.TaskRunStatement = "TaskRunStatement", //run single task
-            case StatementTag.TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
-            case StatementTag.TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
-            case StatementTag.TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
-            case StatementTag.TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
-
-            case StatementTag.TaskCallWithStatement = "TaskCallWithStatement",
-            case StatementTag.TaskResultWithStatement = "TaskResultWithStatement",
-
-            case StatementTag.TaskSetStatusStatement = "TaskSetStatusStatement",
-
-            case StatementTag.TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
-
-            case StatementTag.TaskEventEmitStatement = "TaskEventEmitStatement",
-
-            case StatementTag.LoggerEmitStatement = "LoggerEmitStatement",
-            case StatementTag.LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
-
-            case StatementTag.LoggerLevelStatement = "LoggerLevelStatement",
-            case StatementTag.LoggerCategoryStatement = "LoggerCategoryStatement",
-            case StatementTag.LoggerPrefixStatement = "LoggerPrefixStatement",
-
+            case StatementTag.EmptyStatement: {
+                return this.checkEmptyStatement(env, stmt as EmptyStatement);
+            }
+            case StatementTag.VariableDeclarationStatement: {
+                return this.checkVariableDeclarationStatement(env, stmt as VariableDeclarationStatement);
+            }
+            case StatementTag.VariableAssignmentStatement: {
+                return this.checkVariableAssignStatement(env, stmt as VariableAssignmentStatement);
+            }
+            case StatementTag.ReturnStatement: {
+                return this.checkReturnStatement(env, stmt as ReturnStatement);
+            }
+            case StatementTag.IfElseStatement: {
+                return this.checkIfStatement(env, stmt as IfStatement);
+            }
+            case StatementTag.SwitchStatement: {
+                return this.checkSwitchStatement(env, stmt as SwitchStatement);
+            }
+            case StatementTag.MatchStatement: {
+                return this.checkMatchStatement(env, stmt as MatchStatement);
+            }
+            case StatementTag.AbortStatement: {
+                return this.checkAbortStatement(env, stmt as AbortStatement);
+            }
+            case StatementTag.AssertStatement: {
+                return this.checkAssertStatement(env, stmt as AssertStatement);
+            }
+            case StatementTag.DebugStatement: {
+                return this.checkDebugStatement(env, stmt as DebugStatement);
+            }
+            case StatementTag.RefCallStatement: {
+                return this.checkRefCallStatement(env, stmt as RefCallStatement);
+            }
+            case StatementTag.EnvironmentFreshStatement: {
+                return this.checkEnvironmentFreshStatement(env, stmt as EnvironmentFreshStatement);
+            }
+            case StatementTag.EnvironmentSetStatement: {
+                return this.checkEnvironmentSetStatement(env, stmt as EnvironmentSetStatement);
+            }
+            case StatementTag.EnvironmentSetStatementBracket: {
+                return this.checkEnvironmentSetStatementBracket(env, stmt as EnvironmentSetStatementBracket);
+            }
+            case StatementTag.TaskRunStatement: {
+                return this.checkTaskRunStatement(env, stmt as TaskRunStatement);
+            }
+            case StatementTag.TaskMultiStatement: {
+                return this.checkTaskMultiStatement(env, stmt as TaskMultiStatement);
+            }
+            case StatementTag.TaskDashStatement: {
+                return this.checkTaskDashStatement(env, stmt as TaskDashStatement);
+            }
+            case StatementTag.TaskAllStatement: {
+                return this.checkTaskAllStatement(env, stmt as TaskAllStatement);
+            }
+            case StatementTag.TaskRaceStatement: {
+                return this.checkTaskRaceStatement(env, stmt as TaskRaceStatement);
+            }
+            case StatementTag.TaskCallWithStatement: {
+                return this.checkTaskCallWithStatement(env, stmt as TaskCallWithStatement);
+            }
+            case StatementTag.TaskResultWithStatement: {
+                return this.checkTaskResultWithStatement(env, stmt as TaskResultWithStatement);
+            }
+            case StatementTag.TaskSetStatusStatement: {
+                return this.checkTaskSetStatusStatement(env, stmt as TaskSetStatusStatement);
+            }
+            case StatementTag.TaskSetSelfFieldStatement: {
+                return this.checkTaskSetSelfFieldStatement(env, stmt as TaskSetSelfFieldStatement);
+            }
+            case StatementTag.TaskEventEmitStatement: {
+                return this.checkTaskEventEmitStatement(env, stmt as TaskEventEmitStatement);
+            }
+            case StatementTag.LoggerEmitStatement: {
+                return this.checkLoggerEmitStatement(env, stmt as LoggerEmitStatement);
+            }
+            case StatementTag.LoggerEmitConditionalStatement: {
+                return this.checkLoggerEmitConditionalStatement(env, stmt as LoggerEmitConditionalStatement);
+            }
+            case StatementTag.LoggerLevelStatement: {
+                return this.checkLoggerLevelStatement(env, stmt as LoggerLevelStatement);
+            }
+            case StatementTag.LoggerCategoryStatement: {
+                return this.checkLoggerCategoryStatement(env, stmt as LoggerCategoryStatement);
+            }
+            case StatementTag.LoggerPrefixStatement: {
+                return this.checkLoggerPrefixStatement(env, stmt as LoggerPrefixStatement);
+            }
             default: {
                 this.raiseError(stmt.sinfo, `Unknown statement kind -- ${stmt.tag}`);
                 return [env, []];

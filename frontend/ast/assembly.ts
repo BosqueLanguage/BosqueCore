@@ -747,6 +747,10 @@ class Assembly {
     getAllLiteralRegexs(): BSQRegex[] {
         return this.m_literalRegexs;
     }
+
+    getAllEntities(): EntityTypeDecl[] {
+        return [...this.m_objectMap].map((mm) => mm[1]);
+    }
 }
 
 export {
