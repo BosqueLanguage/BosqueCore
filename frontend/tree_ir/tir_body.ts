@@ -102,6 +102,7 @@ enum TIRExpressionTag {
     MatchExpression = "MatchExpression",
 
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
+    TaskSelfControlExpression = "TaskSelfControlExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
 
     CoerceSafeExpression = "CoerceSafeExpression",
@@ -1217,7 +1218,20 @@ class TIRTaskSelfFieldExpression extends TIRExpression {
     }
 
     getUsedVars(): string[] {
-        return [`self.${this.field}`];
+        return [`self`];
+    }
+}
+
+class TIRTaskSelfControlExpression extends TIRExpression {
+    readonly tasktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, tasktype: TIRTypeKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.TaskSelfControlExpression, sinfo, resultType, `self.cntl`);
+        this.tasktype = tasktype;
+    }
+
+    getUsedVars(): string[] {
+        return [`self`];
     }
 }
 
@@ -2105,51 +2119,47 @@ class TIREnvironmentSetStatementBracket extends TIRStatement {
 class TIRTaskExecStatment extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
-    readonly taskargs: {argn: string, argv: TIRExpression}[];
 
     constructor(tag: TIRStatementTag, sinfo: SourceInfo, stmtstr: string, argstr: string, isdefine: boolean, isconst: boolean, taskargs: {argn: string, argv: TIRExpression}[]) {
         super(tag, sinfo, (isdefine ? (isconst ? "let " : "var ") : "") + stmtstr + `[${taskargs.map((aa) => aa.argn + "=" + aa.argv.expstr).join(", ")}]` + argstr);
         this.isdefine= isdefine;
         this.isconst = isconst;
-        this.taskargs = taskargs;
-    }
-
-    isFailableTaskArgs(): boolean {
-        return this.taskargs.some((aa) => aa.argv.isFailableOperation());
     }
 }
 
 class TIRTaskRunStatement extends TIRTaskExecStatment {
     readonly vtrgt: {name: string, vtype: TIRTypeKey};
     readonly task: TIRTypeKey;
+    readonly taskargs: {argn: string, argv: TIRExpression}[];
+    readonly consarg: {rarg: TIRExpression, rtype: TIRTypeKey};
     readonly args: TIRExpression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], args: TIRExpression[]) {
-        super(TIRStatementTag.TaskRunStatement, sinfo, `${vtrgt.name} = Task::run`, `<${task}>(${args.map((aa) => aa.expstr).join(", ")})`, isdefine, isconst, taskargs);
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TIRTypeKey}, task: TIRTypeKey, taskargs: {argn: string, argv: TIRExpression}[], consarg: {rarg: TIRExpression, rtype: TIRTypeKey}, args: TIRExpression[]) {
+        super(TIRStatementTag.TaskRunStatement, sinfo, `${vtrgt.name} = Task::run`, `<${task}>(${[consarg.rarg, ...args].map((aa) => aa.expstr).join(", ")})`, isdefine, isconst, taskargs);
         this.vtrgt = vtrgt;
         this.task = task;
+        this.taskargs = taskargs;
+        this.consarg = consarg;
         this.args = args;
     }
 
     isFailableOperation(): boolean {
-        return this.args.some((aa) => aa.isFailableOperation()) || this.isFailableTaskArgs();
+        return this.args.some((aa) => aa.isFailableOperation()) || this.taskargs.some((aa) => aa.argv.isFailableOperation())
     }
 }
 
 class TIRTaskMultiStatement extends TIRTaskExecStatment {
     readonly vtrgts: {name: string, vtype: TIRTypeKey}[];
-    readonly tasks: TIRTypeKey[];
-    readonly args: TIRExpression[];
+    readonly tasks: {task: TIRTypeKey, targs: {argn: string, argv: TIRExpression}[], aarg: {atype: TIRTypeKey, aexp: TIRExpression}, consargtype: TIRTypeKey, fargtype: TIRTypeKey}[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TIRTypeKey}[], tasks: TIRTypeKey[], taskargs: {argn: string, argv: TIRExpression}[], args: TIRExpression[]) {
-        super(TIRStatementTag.TaskMultiStatement, sinfo, `${vtrgts.map((vv) => vv.name).join(", ")} = Task::run`, `<${tasks.join(", ")}>(${args.map((aa) => aa.expstr).join(", ")})`, isdefine, isconst, taskargs);
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TIRTypeKey}[], taskargs: {argn: string, argv: TIRExpression}[], tasks: {task: TIRTypeKey, targs: {argn: string, argv: TIRExpression}[], aarg: {atype: TIRTypeKey, aexp: TIRExpression}, consargtype: TIRTypeKey, fargtype: TIRTypeKey}[]) {
+        super(TIRStatementTag.TaskMultiStatement, sinfo, `${vtrgts.map((vv) => vv.name).join(", ")} = Task::run`, `<${tasks.map((tt) => tt.task).join(", ")}>(${tasks.map((tt) => tt.aarg.aexp.expstr).join(", ")})`, isdefine, isconst, taskargs);
         this.vtrgts = vtrgts;
         this.tasks = tasks;
-        this.args = args;
     }
 
     isFailableOperation(): boolean {
-        return this.args.some((aa) => aa.isFailableOperation()) || this.isFailableTaskArgs();
+        return this.tasks.some((tt) => tt.aarg.aexp.isFailableOperation() || tt.targs.some((aa) => aa.argv.isFailableOperation()));
     }
 }
 
@@ -2263,7 +2273,7 @@ export {
     TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression,
     TIRBinLogicAndExpression, TIRBinLogicOrExpression, TIRBinLogicImpliesExpression,
     TIRMapEntryConstructorExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression,
-    TIRTaskSelfFieldExpression, TIRTaskGetIDExpression,
+    TIRTaskSelfFieldExpression, TIRTaskSelfControlExpression, TIRTaskGetIDExpression,
     TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, 
     TIRInjectExpression, TIRExtractExpression,
     jjjj,

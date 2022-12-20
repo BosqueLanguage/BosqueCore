@@ -83,6 +83,7 @@ enum ExpressionTag {
     MatchExpression = "MatchExpression",
 
     TaskSelfFieldExpression = "TaskSelfFieldExpression",
+    TaskSelfControlExpression = "TaskSelfControlExpression",
     TaskSelfActionExpression = "TaskSelfActionExpression",
     TaskGetIDExpression = "TaskGetIDExpression",
     TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
@@ -861,6 +862,16 @@ class TaskSelfFieldExpression extends Expression {
     }
 }
 
+class TaskSelfControlExpression extends Expression {
+    constructor(sinfo: SourceInfo) {
+        super(ExpressionTag.TaskSelfControlExpression, sinfo);
+    }
+
+    isTaskOperation(): boolean {
+        return true;
+    }
+}
+
 class TaskSelfActionExpression extends Expression {
     readonly name: string;
     readonly terms: TypeSignature[];
@@ -1124,12 +1135,12 @@ class EnvironmentSetStatementBracket extends Statement {
 class TaskRunStatement extends Statement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
-    readonly vtrgt: {name: string, vtype: TypeSignature}; //undef is for return position
+    readonly vtrgt: {name: string, vtype: TypeSignature};
     readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression | undefined}[];
+    readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
         super(StatementTag.TaskRunStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
@@ -1149,10 +1160,10 @@ class TaskMultiStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgts: {name: string, vtype: TypeSignature}[];
     readonly tasks: TypeSignature[];
-    readonly taskargs: {argn: string, argv: Expression | undefined}[];
+    readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
         super(StatementTag.TaskMultiStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
@@ -1172,10 +1183,10 @@ class TaskDashStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature}[];
     readonly task: TypeSignature[];
-    readonly taskargs: {argn: string, argv: Expression | undefined}[];
+    readonly taskargs: {argn: string, argv: Expression}[];
     readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}[], task: TypeSignature[], taskargs: {argn: string, argv: Expression | undefined}[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}[], task: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
         super(StatementTag.TaskDashStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
@@ -1196,10 +1207,10 @@ class TaskAllStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature};
     readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression | undefined}[];
+    readonly taskargs: {argn: string, argv: Expression}[];
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], arg: Expression) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
         super(StatementTag.TaskAllStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
@@ -1219,10 +1230,10 @@ class TaskRaceStatement extends Statement {
     readonly isconst: boolean;
     readonly vtrgt: {name: string, vtype: TypeSignature};
     readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression | undefined}[];
+    readonly taskargs: {argn: string, argv: Expression}[];
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression | undefined}[], arg: Expression) {
+    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
         super(StatementTag.TaskRaceStatement, sinfo);
         this.isdefine = isdefine;
         this.isconst = isconst;
@@ -1450,7 +1461,7 @@ export {
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
     IfExpression, SwitchExpression, MatchExpression,
-    TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
+    TaskSelfFieldExpression, TaskSelfControlExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, VariableAssignmentStatement, 
     ReturnStatement,

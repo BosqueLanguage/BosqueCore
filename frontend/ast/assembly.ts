@@ -286,6 +286,34 @@ class MemberMethodDecl implements OOMemberDecl {
     }
 }
 
+class ControlFieldDecl implements OOMemberDecl {
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+    readonly name: string;
+
+    readonly declaredType: TypeSignature;
+    readonly defaultValue: ConstantExpressionValue | undefined;
+
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, defaultValue: ConstantExpressionValue | undefined) {
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+        this.name = name;
+        this.declaredType = dtype;
+        this.defaultValue = defaultValue;
+    }
+
+    getName(): string {
+        return this.name;
+    }
+
+    hasAttribute(attr: string): boolean {
+        return this.attributes.includes(attr);
+    }
+}
+
 class OOPTypeDecl {
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -396,7 +424,7 @@ class TaskEnsures {
 }
 
 class TaskTypeDecl extends OOPTypeDecl {
-    readonly defaults: StaticMemberDecl[];
+    readonly econtrol: ControlFieldDecl[];
     readonly actions: MemberMethodDecl[];
     readonly mainfunc: StaticFunctionDecl;
     readonly onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined };
@@ -411,7 +439,7 @@ class TaskTypeDecl extends OOPTypeDecl {
         validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
-        defaults: StaticMemberDecl[],
+        econtrol: ControlFieldDecl[],
         mainfunc: StaticFunctionDecl,
         actions: MemberMethodDecl[],
         onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
@@ -419,7 +447,7 @@ class TaskTypeDecl extends OOPTypeDecl {
         ensures: TaskEnsures[]) {
         super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature(sourceLocation, "Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
 
-        this.defaults = defaults;
+        this.econtrol = econtrol;
         this.mainfunc = mainfunc;
         this.actions = actions;
         this.onfuncs = onfuncs;
@@ -724,7 +752,7 @@ class Assembly {
 export {
     BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
-    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
+    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,
     PathValidator,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,

@@ -5,8 +5,8 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement } from "./body";
-import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression } from "./body";
+import { Assembly, BuildLevel, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { SourceInfo } from "../build_decls";
 
@@ -22,7 +22,7 @@ const KW_callwith = "callwith";
 const KW_concept = "concept";
 const KW_const = "const";
 const KW_debug = "debug";
-const KW_default = "default";
+const KW_control = "control";
 const KW_effect = "effect";
 const KW_elif = "elif";
 const KW_else = "else";
@@ -87,7 +87,7 @@ const KeywordStrings = [
     KW_concept,
     KW_const,
     KW_debug,
-    KW_default,
+    KW_control,
     KW_effect,
     KW_elif,
     KW_else,
@@ -1947,7 +1947,12 @@ class Parser {
             const sfname = this.consumeTokenAndGetValue();
 
             if (!this.testToken(SYM_le) && !this.testToken(SYM_lparen)) {
-                return new TaskSelfFieldExpression(sinfo, sfname);
+                if(sfname !== "cntl") {
+                    return new TaskSelfFieldExpression(sinfo, sfname);
+                }
+                else {
+                    return new PostfixOp(sinfo, new TaskSelfControlExpression(sinfo), [new PostfixAccessFromName(sinfo, sfname)]);
+                }
             }
             else {
                 const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
@@ -2705,7 +2710,7 @@ class Parser {
             }
         }
         else {
-            let argpack: { argn: string, argv: Expression | undefined }[] = [];
+            let argpack: { argn: string, argv: Expression }[] = [];
             if (this.testToken(SYM_lbrace)) {
                 this.parseListOf("Task Run arguments", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                     const argn = this.ensureAndConsumeToken(TokenStrings.Identifier, "Task Run argument name");
@@ -3582,30 +3587,32 @@ class Parser {
         staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), attributes, sname, stype, value));
     }
 
-    private parseDefaultMember(staticMembers: StaticMemberDecl[], allMemberNames: Set<string>, attributes: string[]) {
+    private parseControlMember(controlMembers: ControlFieldDecl[], allControlNames: Set<string>, attributes: string[]) {
         this.ensureTaskOpOk();
 
         const sinfo = this.getCurrentSrcInfo();
 
-        //[attr] default NAME: T = exp;
-        this.ensureAndConsumeToken(KW_default, "default task value");
+        //[attr] control NAME: T = exp;
+        this.ensureAndConsumeToken(KW_control, "control task value");
 
-        this.ensureToken(TokenStrings.Identifier, "default task value");
+        this.ensureToken(TokenStrings.Identifier, "control task value");
         const sname = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_colon, "default task value");
+        this.ensureAndConsumeToken(SYM_colon, "control task value");
         const stype = this.parseTypeSignature();
 
-        this.ensureAndConsumeToken(SYM_eq, "default task value");
-        const value = this.parseConstExpression(true);
-
-        this.ensureAndConsumeToken(SYM_semicolon, "default task value");
-
-        if (allMemberNames.has(sname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between const and other names");
+        let dval: ConstantExpressionValue | undefined = undefined;
+        if (this.testAndConsumeTokenIf(SYM_eq)) {
+            dval = this.parseConstExpression(true);
         }
 
-        allMemberNames.add(sname);
-        staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["task_default", ...attributes], sname, stype, value));
+        this.ensureAndConsumeToken(SYM_semicolon, "control task value");
+
+        if (allControlNames.has(sname)) {
+            this.raiseError(this.getCurrentLine(), "Collision between control names");
+        }
+
+        allControlNames.add(sname);
+        controlMembers.push(new ControlFieldDecl(sinfo, this.m_penv.getCurrentFile(), [...attributes], sname, stype, dval));
     }
 
     private parseStaticFunction(staticFunctions: StaticFunctionDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
@@ -3803,10 +3810,12 @@ class Parser {
         nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], 
+        controlFields: ControlFieldDecl[] | undefined,
         effects: TaskEffectFlag[], enveffects: TaskEnvironmentEffect[], resourceeffects: TaskResourceEffect[],
         taskensures: TaskEnsures[]
         ) {
         let allMemberNames = new Set<string>();
+        let allControlNames = new Set<string>();
         while (!this.testToken(SYM_lparen)) {
             const attributes = this.parseAttributes();
 
@@ -3822,8 +3831,11 @@ class Parser {
             else if (this.testToken(KW_const)) {
                 this.parseConstMember(staticMembers, allMemberNames, attributes);
             }
-            else if (this.testToken(KW_default)) {
-                this.parseDefaultMember(staticMembers, allMemberNames, attributes);
+            else if (this.testToken(KW_control)) {
+                if(controlFields === undefined) {
+                    this.raiseError(this.getCurrentLine(), "control fields not allowed on declaration of non-task type");
+                }
+                this.parseControlMember(controlFields as ControlFieldDecl[], allControlNames, attributes);
             }
             else if (this.testToken(KW_function)) {
                 this.parseStaticFunction(staticFunctions, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
@@ -3876,7 +3888,7 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
 
@@ -3934,7 +3946,7 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "entity declaration");
 
@@ -4047,12 +4059,14 @@ class Parser {
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
             
+            const controlfields: ControlFieldDecl[] = [];
+
             const effects: TaskEffectFlag[] = [];
             const enveffects: TaskEnvironmentEffect[] = [];
             const resourceeffects: TaskResourceEffect[] = [];
             const taskensures: TaskEnsures[] = [];
 
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods,  effects, enveffects, resourceeffects, taskensures);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, effects, enveffects, resourceeffects, taskensures);
 
             if(invariants.length !== 0) {
                 this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
@@ -4072,8 +4086,6 @@ class Parser {
 
             const feterms = [...currentTermNest, ...terms];
 
-            const defaults = staticMembers.filter((sm) => sm.attributes.includes("task_default"));
-
             const mainfunc = staticFunctions.find((ff) => ff.name === "main");
             if(mainfunc === undefined) {
                 this.raiseError(sinfo.line, "Does not have a \"main\" function defined")
@@ -4086,7 +4098,7 @@ class Parser {
                 onTimeout: memberMethods.find((mf) => mf.attributes.includes("onTimeout"))
             };
 
-            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, defaults, mainfunc as StaticFunctionDecl, actions, onfuncs, effects, enveffects, resourceeffects, taskensures);
+            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, effects, enveffects, resourceeffects, taskensures);
             this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
             currentDecl.tasks.set(ename, edecl);
         }
@@ -4152,7 +4164,7 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], []);
     
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
     
                 if(invariants.length !== 0 || validates.length !== 0) {
                     this.raiseError(sinfo.line, "cannot declare invariants on enum");
@@ -4498,7 +4510,7 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
 
                 this.ensureAndConsumeToken(SYM_rbrace, "typedecl");
 
@@ -4583,7 +4595,7 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], [], [], []);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], [], [], [], []);
             }
         }
 
@@ -4625,7 +4637,7 @@ class Parser {
                     const thisType = new NominalTypeSignature(esinfo, currentDecl.ns, [ename], []);
 
                     const nestedEntities = new Map<string, EntityTypeDecl>();
-                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], []);
+                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
                 }
             }
 
@@ -4649,7 +4661,7 @@ class Parser {
 
             const nestedEntities = new Map<string, EntityTypeDecl>();
             const memberFields: MemberFieldDecl[] = [];
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], [], [], []);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], [], [], [], []);
 
             if (cusing.length !== 0 && memberFields.length !== 0) {
                 this.raiseError(this.getCurrentLine(), "Cannot define fields in multiple places in ADT++ decl");
