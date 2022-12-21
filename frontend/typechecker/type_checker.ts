@@ -11,8 +11,8 @@ import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceCo
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRCallStaticFunctionWithChecksExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefWithChecksExpression, TIRCallMemberFunctionWithChecksExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionDynamicWithChecksExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRInvokeBodyImpl, TIRInvokeDirectImpl } from "../tree_ir/tir_body";
-import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberConstKey, TIRNamespaceMemberName, TIRObjectEntityType, TIROkEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeMemberName, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRInvokeBodyImpl, TIRInvokeDirectImpl } from "../tree_ir/tir_body";
+import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRHavocEntityType, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRObjectEntityType, TIROkEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -77,71 +77,37 @@ enum ResolveResultFlag {
     failure
 }
 
-class TIRInvokeIDGenerator {
-    static generateInvokeIDForInvariant(ttype: TIRTypeKey, invidx: number): TIRInvokeKey {
-        return `invariant_${ttype}$${invidx}`;
+class TIRIDGenerator {
+    static generateTermsBinds(terms: TIRTypeKey[]): string {
+        if(terms.length === 0) {
+            return "";
+        }
+
+        return `<${terms.join(",")}>`;
     }
 
-    static generateInvokeIDForValidate(ttype: TIRTypeKey, invidx: number): TIRInvokeKey {
-        return `validate_${ttype}$${invidx}`;
-    }
-
-    static generateInvokeIDForConstExp(): TIRInvokeKey {
-        xxxx;
-    }
-
-    static generateInvokeIDForPreCondition(tinv: TIRInvokeKey, pcidx: number): TIRInvokeKey {
-        xxxx;
-    }
-
-    static generateInvokeIDForPostCondition(tinv: TIRInvokeKey, pcidx: number): TIRInvokeKey {
-        xxxx;
-    }
-
-    static generateInvokeIDForExportableMethodMember(ttype: TIRTypeKey, name: string): TIRInvokeKey {
-        return `method_${ttype}$${name}`;
-    }
-
-    static generateInvokeIDForExportableStaticMember(ttype: TIRTypeKey, name: string): TIRInvokeKey {
-        return `function_${ttype}$${name}`;
-    }
-
-    static generateInvokeIDForNamespaceFunction(ns: string, name: string, terms: string[]): TIRInvokeKey {
-        return xxxx;
+    static generateInvokeIDForNamespaceFunction(ns: string, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        return `${ns}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 
     static generateInvokeIDForNamespaceOperatorBase(ns: string, name: string): TIRInvokeKey {
-        return `operator_base_${ns}$${name}`;
+        return `operator_base_${ns}::${name}`;
     }
 
     static generateInvokeIDForNamespaceOperatorImpl(ns: string, name: string, idx: number): TIRInvokeKey {
-        return `operator_impl_${idx}_${ns}$${name}`;
+        return `operator_impl_${idx}_${ns}::${name}`;
     }
 
-    static generateInvokeForMemberFunction(ttype: TIRTypeKey, name: string, terms: string[]): TIRInvokeKey {
-        return xxxx;
+    static generateInvokeForMemberFunction(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 
-    static generateInvokeForMemberMethod(ttype: TIRTypeKey, name: string, terms: string[]): TIRInvokeKey {
-        return xxxx;
-    }
-}
-
-class TIRMemberIDGenerator {
-    static generateDefaultMemberID(typeid: string, dname: string): TIRMemberConstKey {
-        return `${typeid}$${dname}`;
-    }
-
-    static generateMemberConstID(typeid: string, fname: string): TIRFieldKey {
-        return `${typeid}$${fname}`;
+    static generateInvokeForMemberMethod(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 
     static generateMemberFieldID(typeid: string, fname: string): TIRFieldKey {
         return `${typeid}$${fname}`;
-    }
-
-    static generateNamespaceConstID(ns: string, cname: string): TIRFieldKey {
-        return `${ns}$${cname}`;
     }
 }
 
@@ -1565,11 +1531,11 @@ class TypeChecker {
             const binds = new Map<string, TIRTypeKey>();
             rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
-            const mainfunc = {mkey: TIRInvokeIDGenerator.generateInvokeIDForExportableStaticMember(rtype.typeID, rtype.task.mainfunc.name), mname: rtype.task.mainfunc.name};
+            const mainfunc = {mkey: TIRIDGenerator.generateInvokeForMemberFunction(rtype.typeID, rtype.task.mainfunc.name, []), mname: rtype.task.mainfunc.name};
             const onfuncs = {
-                onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onCanel.name)) : undefined, 
-                onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onFailure.name)) : undefined, 
-                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRInvokeIDGenerator.generateInvokeIDForExportableMethodMember(rtype.typeID, rtype.task.onfuncs.onTimeout.name)) : undefined, 
+                onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onCanel.name, [])) : undefined, 
+                onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onFailure.name, [])) : undefined, 
+                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onTimeout.name, [])) : undefined, 
             };
 
             tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, supertypes, binds, mainfunc, onfuncs);
@@ -2777,12 +2743,10 @@ class TypeChecker {
             return this.emitCoerceIfNeeded(this.checkExpression(env, cexp, rtype), exp.sinfo, rtype);
         }
         else {
-            const nskey = TIRMemberIDGenerator.generateNamespaceConstID(exp.ns, exp.name);
-            const nname = new TIRNamespaceMemberName(exp.ns, exp.name);
             const tirrtype = this.toTIRTypeKey(rtype);
 
             this.m_pendingNamespaceConsts.push(cdecl);
-            return this.setResultExpression(env, new TIRAccessNamespaceConstantExpression(exp.sinfo, nskey, nname, tirrtype), rtype);
+            return this.setResultExpression(env, new TIRAccessNamespaceConstantExpression(exp.sinfo, exp.ns, exp.name, tirrtype), rtype);
         }
     }
 
@@ -2800,13 +2764,11 @@ class TypeChecker {
             return this.emitCoerceIfNeeded(this.checkExpression(env, cexp, rtype), exp.sinfo, rtype);
         }
         else {
-            const sfkey = TIRMemberIDGenerator.generateMemberConstID(cdecl.ttype.typeID, exp.name);
-            const etname = new TIRTypeName(cdecl.ootype.ns, cdecl.ootype.name, cdecl.ootype.terms.map((tt) => this.toTIRTypeKey(cdecl.oobinds.get(tt.name) as ResolvedType)));
-            const sfname = new TIRTypeMemberName(etname, exp.name, undefined);
+            const tirdecltype = this.toTIRTypeKey(cdecl.ttype);
             const tirrtype = this.toTIRTypeKey(rtype);
 
             this.m_pendingConstMemberDecls.push(cdecl);
-            return this.setResultExpression(env, new TIRAccessConstMemberFieldExpression(exp.sinfo, sfkey, sfname, tirrtype), rtype);
+            return this.setResultExpression(env, new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, tirrtype), rtype);
         }
     }
 
@@ -3108,20 +3070,14 @@ class TypeChecker {
 
                 this.m_pendingNamespaceOperators.push({decl: opsintro as NamespaceOperatorDecl, impls: opdecls})
 
-                const fkey = TIRInvokeIDGenerator.generateInvokeIDForNamespaceOperatorBase(nsdecl.ns, exp.name);
+                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceOperatorBase(nsdecl.ns, exp.name);
                 const rtype = this.normalizeTypeOnly((opsintro as NamespaceOperatorDecl).invoke.resultType, TemplateBindScope.createEmptyBindScope());
                 const tirrtype = this.toTIRTypeKey(rtype);
 
                 const argexps = this.checkArgumentList(exp.sinfo, env, exp.args, (opsintro as NamespaceOperatorDecl).invoke.params.map((pp) => pp.type), TemplateBindScope.createEmptyBindScope());
 
-                if(this.hasPreconditions((opsintro as NamespaceOperatorDecl).invoke) || this.hasPostconditions((opsintro as NamespaceOperatorDecl).invoke)) {
-                    const tircall = new TIRCallNamespaceOperatorExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
-                else {
-                    const tircall = new TIRCallNamespaceOperatorWithChecksExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
+                const tircall = new TIRCallNamespaceOperatorExpression(exp.sinfo, fkey, tirrtype, argexps);
+                return this.setResultExpression(env, tircall, rtype);
             }
             else {
                 this.raiseErrorIf(exp.sinfo, !nsdecl.functions.has(exp.name), `Function named '${exp.name}' is not defined`);
@@ -3136,20 +3092,14 @@ class TypeChecker {
 
                 this.m_pendingNamespaceFunctions.push({decl: fdecl, binds: binds});
 
-                const fkey = TIRInvokeIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 const rtype = this.normalizeTypeOnly(fdecl.invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
                 const tirrtype = this.toTIRTypeKey(rtype);
 
                 const argexps = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.invoke.params.map((pp) => pp.type), TemplateBindScope.createBaseBindScope(binds));
 
-                if(this.hasPreconditions(fdecl.invoke) || this.hasPostconditions(fdecl.invoke)) {
-                    const tircall = new TIRCallNamespaceFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
-                else {
-                    const tircall = new TIRCallNamespaceFunctionWithChecksExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
+                const tircall = new TIRCallNamespaceFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
+                return this.setResultExpression(env, tircall, rtype);
             }
         }
     }
@@ -3214,18 +3164,12 @@ class TypeChecker {
                 return this.setResultExpression(env, new TIRInjectExpression(exp.sinfo, argexps[0], tirrtype), rtype);
             }
             else {
-                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberFunction(tiroftype, exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRIDGenerator.generateInvokeForMemberFunction(tiroftype, exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
             
                 this.m_pendingFunctionMemberDecls.push({decl: fdecl, binds: binds});
 
-                if (this.hasPreconditions(fdecl.decl.invoke) || this.hasPostconditions(fdecl.decl.invoke)) {
-                    const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
-                else {
-                    const tircall = new TIRCallStaticFunctionWithChecksExpression(exp.sinfo, fkey, tirrtype, argexps);
-                    return this.setResultExpression(env, tircall, rtype);
-                }
+                const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, fkey, tirrtype, argexps);
+                return this.setResultExpression(env, tircall, rtype);
             }
         }
     }
@@ -3274,11 +3218,12 @@ class TypeChecker {
         this.raiseErrorIf(op.sinfo, this.envExpressionGetInferType(env).options.some((atom) => (atom as ResolvedTupleAtomType).types.length <= op.index), "Index may not be defined for tuple");
 
         this.raiseErrorIf(op.sinfo, this.envExpressionGetInferType(env).options.length !== 1, "only a single tuple is permitted -- todo: later want to generalize this")
+        const tiroftype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
 
         const idxtype = (this.envExpressionGetInferType(env).options[0] as ResolvedTupleAtomType).types[op.index];
         const tiridxtype = this.toTIRTypeKey(idxtype);
 
-        return this.setResultExpression(env, new TIRLoadIndexExpression(op.sinfo, env.expressionResult, op.index, tiridxtype), idxtype);
+        return this.setResultExpression(env, new TIRLoadIndexExpression(op.sinfo, env.expressionResult, tiroftype, op.index, tiridxtype), idxtype);
     }
 
     private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName): ExpressionTypeEnvironment {
@@ -3286,6 +3231,7 @@ class TypeChecker {
         const isobj = this.envExpressionGetInferType(env).options.every((atom) => atom instanceof ResolvedEntityAtomType);
 
         this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${this.envExpressionGetInferType(env)}`);
+        const tiroftype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
 
         if (isrecord) {
             this.raiseErrorIf(op.sinfo, this.envExpressionGetInferType(env).options.some((atom) => (atom as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) === undefined), `Property "${op.name}" not be defined for record`);
@@ -3293,7 +3239,8 @@ class TypeChecker {
             const rtype = ((this.envExpressionGetInferType(env).options[0] as ResolvedRecordAtomType).entries.find((entry) => entry.pname === op.name) as {pname: string, ptype: ResolvedType}).ptype;
             const tirrtype = this.toTIRTypeKey(rtype);
 
-            return this.setResultExpression(env, new TIRLoadPropertyExpression(op.sinfo, env.expressionResult, op.name, tirrtype), rtype);
+            this.raiseErrorIf(op.sinfo, this.envExpressionGetInferType(env).options.length === 0, "only non-virtual property loads are supported for now");
+            return this.setResultExpression(env, new TIRLoadPropertyExpression(op.sinfo, env.expressionResult, tiroftype, op.name, tirrtype), rtype);
         }
         else {
             const fftry = this.resolveMemberField(op.sinfo, this.envExpressionGetInferType(env), op.name);
@@ -3303,13 +3250,13 @@ class TypeChecker {
             const fftype = this.normalizeTypeOnly(ff.decl.declaredType, TemplateBindScope.createBaseBindScope(ff.oobinds));
             const tirfftype = this.toTIRTypeKey(fftype);
 
-            const fkey = TIRMemberIDGenerator.generateMemberFieldID(this.toTIRTypeKey(ff.ttype), op.name);
+            const fkey = TIRIDGenerator.generateMemberFieldID(this.toTIRTypeKey(ff.ttype), op.name);
 
             if(ff.ootype instanceof EntityTypeDecl) {
-                return this.setResultExpression(env, new TIRLoadFieldExpression(op.sinfo, env.expressionResult, fkey, tirfftype), fftype);
+                return this.setResultExpression(env, new TIRLoadFieldExpression(op.sinfo, tiroftype, env.expressionResult, fkey, tirfftype), fftype);
             }
             else {
-                return this.setResultExpression(env, new TIRLoadFieldVirtualExpression(op.sinfo, env.expressionResult, fkey, tirfftype), fftype);
+                return this.setResultExpression(env, new TIRLoadFieldVirtualExpression(op.sinfo, tirfftype, env.expressionResult, fkey, tirfftype), fftype);
             }
         }
     }
@@ -3352,6 +3299,7 @@ class TypeChecker {
             this.raiseErrorIf(op.sinfo, mresolve.impl.length !== 1, `Could not resolve implementation for non-virtual method ${op.name} from ${resolvefrom.typeID}`);
             const knownimpl = mresolve.impl[0];
 
+            const tkey = this.toTIRTypeKey(mresolve.impl[0].ttype);
             if (knownimpl.decl.invoke.body !== undefined && (typeof (knownimpl.decl.invoke.body.body) === "string") && ["special_nothing", "special_something", "special_extract"].includes(knownimpl.decl.invoke.body.body as string)) {
                 this.raiseErrorIf(op.sinfo, op.args.length !== 0, "No arguments permitted on this method");
 
@@ -3367,50 +3315,36 @@ class TypeChecker {
                 }
             }
             else {
-                const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds}, {decl: mresolve.decl, binds: binds});
 
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
                 this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
 
-                if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
-                    if (mresolve.decl.decl.invoke.isThisRef) {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefWithChecksExpression(op.sinfo, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
-                    }
-                    else {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionWithChecksExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
-                    }
+                if (mresolve.decl.decl.invoke.isThisRef) {
+                    return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, tkey, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
                 }
                 else {
-                    if (mresolve.decl.decl.invoke.isThisRef) {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
-                    }
-                    else {
-                        return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
-                    }
+                    return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, tkey, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
                 }
             }
         }
         else {
-            this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef, "cannot use ref on virtual method call -- variance on updated this ref type")
-            const declkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+            this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef, "cannot use ref on virtual method call -- variance on updated this ref type");
+            const tkey = this.toTIRTypeKey(mresolve.decl.ttype);
+            const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
             this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds});
 
             const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
             let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
                 const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
-                inferfkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds});
             }
 
             const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
-            if (this.hasPreconditions(mresolve.decl.decl.invoke) || this.hasPostconditions(mresolve.decl.decl.invoke)) {
-                return this.setResultExpression(env, new TIRCallMemberFunctionDynamicWithChecksExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
-            }
-            else {
-                return this.setResultExpression(env, new TIRCallMemberFunctionDynamicExpression(op.sinfo, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
-            }
+            return this.setResultExpression(env, new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
         }
     }
 
@@ -4062,7 +3996,7 @@ class TypeChecker {
         const fftype = this.normalizeTypeOnly(ff.declaredType, TemplateBindScope.createBaseBindScope(tsk.taskbinds));
         const tirfftype = this.toTIRTypeKey(fftype);
 
-        const fkey = TIRMemberIDGenerator.generateMemberFieldID(this.toTIRTypeKey(tasktype), exp.sfield);
+        const fkey = TIRIDGenerator.generateMemberFieldID(this.toTIRTypeKey(tasktype), exp.sfield);
         return this.setResultExpression(env, new TIRTaskSelfFieldExpression(exp.sinfo, this.toTIRTypeKey(tasktype), fkey, exp.sfield, tirfftype), fftype);
     }
 
@@ -4110,7 +4044,7 @@ class TypeChecker {
 
         const argexps = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params.map((pp) => pp.type), fdeclscope);
 
-        const fkey = TIRInvokeIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
         this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds});
 
         if(mresolve.invoke.attributes.includes("task_action")) {
@@ -4368,15 +4302,6 @@ class TypeChecker {
 
                 nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, refv)];
             }
-            else if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, this.envClearExps(rhs, rhs.expressionResult.thisref));
-
-                const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
-                const refv = rhs.expressionResult.thisref;
-                const rhsconv = this.emitRefCallCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
-
-                nstmt = [new TIRVarDeclareAndAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst, refv)];
-            }
             else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, this.envClearExps(rhs, "self"));
 
@@ -4421,15 +4346,6 @@ class TypeChecker {
 
             nstmt = [new TIRVarAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, refv)];
         }
-        else if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-            nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, this.envClearExps(rhs, stmt.name, rhs.expressionResult.thisref));
-
-            const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
-            const refv = rhs.expressionResult.thisref;
-            const rhsconv = this.emitRefCallCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
-
-            nstmt = [new TIRVarAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, refv)];
-        }
         else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, this.envClearExps(rhs, stmt.name, "self"));
 
@@ -4466,11 +4382,6 @@ class TypeChecker {
 
             return [nenv, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.thisref)]];
         }
-        else if (ee.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
-            const nenv = env.setFlowInfo(this.envExpressionCollapseFlowInfos(this.envClearExps(ee, ee.expressionResult.thisref).flowinfo).expInferInfo);
-
-            return [nenv, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.thisref)]];
-        }
         else if (ee.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             const nenv = env.setFlowInfo(this.envExpressionCollapseFlowInfos(this.envClearExps(ee, "self").flowinfo).expInferInfo);
 
@@ -4492,12 +4403,6 @@ class TypeChecker {
 
         let rexp: TIRStatement | undefined = undefined;
         if (rval.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            this.raiseErrorIf(stmt.sinfo, rval.expressionResult.thisref !== "this", "return on ref call not using this as reciever");
-            const rhsconv = this.emitRefCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-
-            rexp = new TIRReturnStatementWRef(stmt.sinfo, rhsconv.expressionResult);
-        }
-        else if (rval.expressionResult instanceof TIRCallMemberFunctionSelfRefWithChecksExpression) {
             this.raiseErrorIf(stmt.sinfo, rval.expressionResult.thisref !== "this", "return on ref call not using this as reciever");
             const rhsconv = this.emitRefCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
 

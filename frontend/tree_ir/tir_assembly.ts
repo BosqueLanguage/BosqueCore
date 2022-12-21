@@ -18,40 +18,9 @@ class TIRTypeName {
     }
 }
 
-class TIRNamespaceMemberName {
-    readonly ns: string;
-    readonly name: string;
-
-    constructor(ns: string, name: string) {
-        this.ns = ns;
-        this.name = name;
-    }
-}
-
-class TIRTypeMemberName {
-    readonly tname: TIRTypeName;
-    readonly name: string;
-    readonly templates: string[] | undefined;
-
-    constructor(tname: TIRTypeName, name: string, templates?: string[] | undefined) {
-        this.tname = tname;
-        this.name = name;
-        this.templates = templates || [];
-    }
-}
-
 type TIRTypeKey = string;
-
-type TIRNamespaceConstKey = string;
-type TIRMemberConstKey = string;
-type TIRLitKey = string;
-
 type TIRInvokeKey = string;
-type TIRPropertyKey = string;
 type TIRFieldKey = string;
-
-type TIRTupleIndex = number;
-
 
 class TIRFunctionParameter {
     readonly name: string;
@@ -65,25 +34,21 @@ class TIRFunctionParameter {
 }
 
 class TIRPreConditionDecl {
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
-    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
-        this.invkey = invkey;
+    constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
     }
 }
 
 class TIRPostConditionDecl {
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
     readonly origargs: TIRFunctionParameter[];
 
-    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[], origargs: TIRFunctionParameter[]) {
-        this.invkey = invkey;
+    constructor(exp: TIRExpression, args: TIRFunctionParameter[], origargs: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
         this.origargs = origargs;
@@ -91,24 +56,20 @@ class TIRPostConditionDecl {
 }
 
 class TIRInvariantDecl {
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
-    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
-        this.invkey = invkey;
+    constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
     }
 }
 
 class TIRValidateDecl {
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
-    constructor(invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
-        this.invkey = invkey;
+    constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
     }
@@ -138,16 +99,14 @@ class TIRTaskResourceEffect {
     readonly isread: boolean;
     readonly iswrite: boolean;
 
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly pathglob: TIRExpression | undefined; //returns a glob string of type PathGlob<pathdescriptor>
     readonly args: TIRFunctionParameter[];
 
-    constructor(pathdescriptor: TIRTypeKey,  isread: boolean, iswrite: boolean, invkey: TIRInvokeKey, pathglob: TIRExpression | undefined, args: TIRFunctionParameter[]) {
+    constructor(pathdescriptor: TIRTypeKey,  isread: boolean, iswrite: boolean, pathglob: TIRExpression | undefined, args: TIRFunctionParameter[]) {
         this.pathdescriptor = pathdescriptor;
         this.isread = isread;
         this.iswrite = iswrite;
 
-        this.invkey = invkey;
         this.pathglob = pathglob;
         this.args = args;
     }
@@ -155,13 +114,11 @@ class TIRTaskResourceEffect {
 
 class TIRTaskEnsures {
     readonly sinfo: SourceInfo;
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
-    constructor(sinfo: SourceInfo, invkey: TIRInvokeKey, exp: TIRExpression, args: TIRFunctionParameter[]) {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.sinfo = sinfo;
-        this.invkey = invkey;
         this.exp = exp;
         this.args = args;
     }
@@ -169,8 +126,6 @@ class TIRTaskEnsures {
 
 abstract class TIRInvoke {
     readonly invkey: TIRInvokeKey;
-    readonly iname: TIRNamespaceMemberName | TIRTypeMemberName;
-
     readonly name: string;
 
     readonly startSourceLocation: SourceInfo;
@@ -194,9 +149,8 @@ abstract class TIRInvoke {
     readonly preconditions: TIRPreConditionDecl[];
     readonly postconditions: TIRPostConditionDecl[];
 
-    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
         this.invkey = invkey;
-        this.iname = iname;
         this.name = name;
 
         this.startSourceLocation = sinfoStart;
@@ -223,16 +177,16 @@ abstract class TIRInvoke {
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
-    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
-        super(invkey, iname, name, sinfoStart, sinfoEnd, srcFile, bodyID, attributes, recursive, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, bodyID, attributes, recursive, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
     }
 }
 
 class TIRInvokeImplementation extends TIRInvoke {
     readonly body: TIRInvokeBodyImpl;
 
-    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRInvokeBodyImpl) {
-        super(invkey, iname, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRInvokeBodyImpl) {
+        super(invkey, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
     }
@@ -241,18 +195,16 @@ class TIRInvokeImplementation extends TIRInvoke {
 class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
-    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: string) {
-        super(invkey, iname, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: string) {
+        super(invkey, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
     }
 }
 
 class TIRConstMemberDecl {
-    readonly ckey: TIRMemberConstKey;
-    readonly cname: TIRTypeMemberName;
+    readonly tkey: TIRTypeKey;
     readonly name: string;
-    readonly defin: TIRTypeKey;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -262,28 +214,22 @@ class TIRConstMemberDecl {
     readonly declaredType: TIRTypeKey;
     readonly value: TIRExpression;
 
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
-
-    constructor(ckey: TIRMemberConstKey, cname: TIRTypeMemberName, name: string, defin: TIRTypeKey, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression, invkey: TIRInvokeKey) {
-        this.ckey = ckey;
-        this.cname = cname;
+    constructor(tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
+        this.tkey = tkey;
         this.name = name;
-        this.defin = defin;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
         this.declaredType = declaredtype;
         this.value = value;
-        this.invkey = invkey;
     }
 }
 
 class TIRStaticFunctionDecl {
     readonly ikey: TIRInvokeKey;
-    readonly fname: TIRTypeMemberName;
 
+    readonly tkey: TIRTypeKey;
     readonly name: string;
-    readonly defin: TIRTypeKey;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -291,11 +237,10 @@ class TIRStaticFunctionDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(defin: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
-        this.fname = invoke.iname as TIRTypeMemberName;
+        this.tkey = tkey;
         this.name = invoke.name;
-        this.defin = defin;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -305,9 +250,9 @@ class TIRStaticFunctionDecl {
 
 class TIRMemberFieldDecl {
     readonly fkey: TIRFieldKey;
-    readonly fname: TIRTypeMemberName;
+
+    readonly tkey: TIRTypeKey;
     readonly name: string;
-    readonly defin: TIRTypeKey;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -316,11 +261,10 @@ class TIRMemberFieldDecl {
 
     readonly declaredType: TIRTypeKey;
 
-    constructor(fkey: TIRFieldKey, fname: TIRTypeMemberName, name: string, defin: TIRTypeKey, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey) {
+    constructor(fkey: TIRFieldKey, tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey) {
         this.fkey = fkey;
-        this.fname = fname;
+        this.tkey = tkey;
         this.name = name;
-        this.defin = defin;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
@@ -330,9 +274,9 @@ class TIRMemberFieldDecl {
 
 class TIRMemberMethodDecl {
     readonly ikey: TIRInvokeKey;
-    readonly mname: TIRTypeMemberName;
+
+    readonly tkey: TIRTypeKey;
     readonly name: string;
-    readonly defin: TIRTypeKey;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -340,11 +284,10 @@ class TIRMemberMethodDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(defin: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
-        this.mname = invoke.iname as TIRTypeMemberName;
+        this.tkey = tkey;
         this.name = invoke.name;
-        this.defin = defin;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -400,8 +343,8 @@ abstract class TIREntityType extends TIROOType {
 class TIRObjectEntityType extends TIREntityType {
     readonly allfields: {fkey: TIRFieldKey, ftype: TIRTypeKey}[] = [];
 
-    readonly consinvariants: {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] = []; 
-    readonly apivalidates: {invk: TIRInvokeKey, args: {fkey: TIRFieldKey, argidx: number, ftype: TIRTypeKey}[]}[] = [];
+    readonly consinvariants: TIRInvariantDecl[] = []; 
+    readonly apivalidates: TIRValidateDecl[] = [];
 
     readonly vtable: Map<string, TIRInvokeKey> = new Map<string, TIRInvokeKey>(); 
     readonly binds: Map<string, TIRTypeKey>;
@@ -427,9 +370,9 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly valuetype: TIRTypeKey; //result of .value()
     readonly representation: TIRTypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
 
-    readonly consinvariantsall: {invk: TIRInvokeKey, vtype: TIRTypeKey}[] = []; 
-    readonly consinvariantsexplicit: {invk: TIRInvokeKey, vtype: TIRTypeKey}[] = []; 
-    readonly apivalidates: {invk: TIRInvokeKey, vtype: TIRTypeKey}[] = [];
+    readonly consinvariantsall: TIRInvariantDecl[] = []; 
+    readonly consinvariantsexplicit: TIRInvariantDecl[] = []; 
+    readonly apivalidates: TIRValidateDecl[] = [];
 
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
     readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
@@ -654,7 +597,7 @@ class TIRMapEntityTIRType extends TIRPrimitiveCollectionEntityType {
 class TIRTaskType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
 
-    readonly controls: {val: TIRLiteralValue, vkey: TIRLitKey | undefined, cname: string}[] = []; //control members
+    readonly controls: {val: TIRLiteralValue, cname: string}[] = []; //control members
     readonly actions: {akey: TIRInvokeKey, aname: string}[] = []; //methods
     readonly mainfunc: {mkey: TIRInvokeKey, mname: string}; //a static function
     readonly onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined };
@@ -720,9 +663,9 @@ class TIRTupleType extends TIRType {
 }
 
 class TIRRecordType extends TIRType {
-    readonly entries: {pname: TIRPropertyKey, ptype: TIRTypeKey}[];
+    readonly entries: {pname: string, ptype: TIRTypeKey}[];
 
-    constructor(tkey: TIRTypeKey, entries: {pname: TIRPropertyKey, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[]) {
+    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[]) {
         super(tkey, supertypes);
         this.entries = entries;
     }
@@ -753,8 +696,7 @@ class TIRCodePackType extends TIRType {
 }
 
 class TIRNamespaceConstDecl {
-    readonly ckey: TIRNamespaceConstKey;
-    readonly cname: TIRNamespaceMemberName;
+    readonly ns: string;
     readonly name: string;
     readonly defin: string;
 
@@ -766,11 +708,8 @@ class TIRNamespaceConstDecl {
     readonly declaredType: TIRTypeKey;
     readonly value: TIRExpression;
 
-    readonly invkey: TIRInvokeKey; //The invoke key that is assoicated with this expression -- e.g. you can call this function to check the expression
-
-    constructor(ckey: TIRNamespaceConstKey, cname: TIRNamespaceMemberName, name: string, defin: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression, invkey: TIRInvokeKey) {
-        this.ckey = ckey;
-        this.cname = cname;
+    constructor(ns: string, name: string, defin: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
+        this.ns = ns;
         this.name = name;
         this.defin = defin;
         this.sourceLocation = srcInfo;
@@ -778,27 +717,25 @@ class TIRNamespaceConstDecl {
         this.attributes = attributes;
         this.declaredType = declaredtype;
         this.value = value;
-        this.invkey = invkey;
     }
 }
 
 class TIRNamespaceFunctionDecl {
     readonly ikey: TIRInvokeKey;
-    readonly fname: TIRNamespaceMemberName;
-    readonly name: string;
-    readonly defin: string;
 
+    readonly ns: string;
+    readonly name: string;
+    
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(defin: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
-        this.fname = invoke.iname as TIRNamespaceMemberName;
+        this.ns = ns;
         this.name = invoke.name;
-        this.defin = defin;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -808,9 +745,8 @@ class TIRNamespaceFunctionDecl {
 
 class TIRNamespaceOperatorDecl {
     readonly ikey: TIRInvokeKey;
-    readonly fname: TIRNamespaceMemberName;
+    readonly ns: string;
     readonly name: string;
-    readonly defin: string;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -818,11 +754,10 @@ class TIRNamespaceOperatorDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(defin: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
-        this.fname = invoke.iname as TIRNamespaceMemberName;
+        this.ns = ns;
         this.name = invoke.name;
-        this.defin = defin;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -852,9 +787,9 @@ class TIRInfoTemplateTuple extends TIRInfoTemplate {
 }
 
 class TIRInfoTemplateConst extends TIRInfoTemplate {
-    readonly litexp: {val: TIRLiteralValue, vkey: TIRLitKey | undefined};
+    readonly litexp: TIRLiteralValue;
 
-    constructor(litexp: {val: TIRLiteralValue, vkey: TIRLitKey | undefined}) {
+    constructor(litexp: TIRLiteralValue) {
         super();
         this.litexp = litexp;
     }
@@ -939,8 +874,8 @@ class TIRAssembly {
 }
 
 export {
-    TIRTypeName, TIRNamespaceMemberName, TIRTypeMemberName, TIRNamespaceConstKey, TIRMemberConstKey,
-    TIRTypeKey, TIRInvokeKey, TIRPropertyKey, TIRFieldKey, TIRTupleIndex,
+    TIRTypeName,
+    TIRTypeKey, TIRInvokeKey, TIRFieldKey,
     TIRFunctionParameter,
     TIRInvariantDecl, TIRValidateDecl,
     TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
