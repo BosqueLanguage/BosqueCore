@@ -3076,15 +3076,15 @@ class Parser {
                 const block = this.parseBlockStatement("setCategory");
                 return new LoggerCategoryStatement(sinfo, cargs, block);
             }
-            else if(op === "prefix") {
+            else if(op === "scope") {
                 const pfxargs = this.parseArguments(SYM_lparen, SYM_rparen);
 
                 if(pfxargs.length === 0 || !(pfxargs[0] instanceof AccessFormatInfoExpression)) {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
-                this.ensureAndConsumeToken(KW_in, "prefix");
-                const block = this.parseBlockStatement("prefix");
+                this.ensureAndConsumeToken(KW_in, "scope");
+                const block = this.parseBlockStatement("scope");
 
                 return new LoggerPrefixStatement(sinfo, pfxargs[0] as AccessFormatInfoExpression, pfxargs.slice(1), block);
             }

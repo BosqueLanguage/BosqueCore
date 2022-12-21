@@ -6,7 +6,7 @@
 import { RecursiveAnnotation, TypeSignature } from "./type";
 import { InvokeDecl, BuildLevel } from "./assembly";
 
-import { SourceInfo } from "../build_decls";
+import { LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 enum ExpressionTag {
@@ -1322,8 +1322,6 @@ class TaskEventEmitStatement extends Statement {
         return true;
     }
 }
-
-type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "trace";
 
 class LoggerEmitStatement extends Statement {
     readonly level: LoggerLevel;

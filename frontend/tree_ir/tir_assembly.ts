@@ -1,5 +1,5 @@
 
-import { TIRExpression, TIRLiteralValue } from "./tir_body";
+import { TIRExpression, TIRInvokeBodyImpl, TIRLiteralValue } from "./tir_body";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -229,9 +229,9 @@ class TIRInvokeAbstractDeclaration extends TIRInvoke {
 }
 
 class TIRInvokeImplementation extends TIRInvoke {
-    readonly body: TIRBodyImplementation;
+    readonly body: TIRInvokeBodyImpl;
 
-    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRBodyImplementation) {
+    constructor(invkey: TIRInvokeKey, iname: TIRNamespaceMemberName | TIRTypeMemberName, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRInvokeBodyImpl) {
         super(invkey, iname, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;

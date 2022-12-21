@@ -24,6 +24,8 @@ type CodeFileInfo = {
     contents: string
 };
 
+type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "trace";
+
 function extractLiteralStringValue(str: string): string {
     //
     //TODO: right now we assume there are not escaped values in the string
@@ -38,7 +40,6 @@ function extractLiteralASCIIStringValue(str: string): string {
     return str.substring("ascii{".length + 1, str.length - (1 + "}".length));
 }
 
-
 function cleanCommentsStringsFromFileContents(str: string): string {
     const commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/ug;
     const stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/ug;
@@ -52,6 +53,7 @@ function cleanCommentsStringsFromFileContents(str: string): string {
 
 export {
     SourceInfo, CodeFileInfo,
+    LoggerLevel,
     extractLiteralStringValue, extractLiteralASCIIStringValue,
     cleanCommentsStringsFromFileContents
 }

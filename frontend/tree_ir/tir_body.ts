@@ -1,7 +1,7 @@
 
 import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRNamespaceMemberName, TIRPropertyKey, TIRTupleIndex, TIRTypeKey, TIRTypeMemberName } from "./tir_assembly";
 
-import { SourceInfo } from "../build_decls";
+import { LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 enum TIRExpressionTag {
@@ -1667,6 +1667,11 @@ enum TIRStatementTag {
     TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
     TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
     TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
+
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement"
 }
 
 abstract class TIRStatement {
@@ -2224,45 +2229,118 @@ class TIRTaskRaceStatement extends TIRTaskExecStatment {
     }
 }
 
+class TIRTaskSetSelfFieldStatement extends TIRStatement {
+    readonly tasktype: TIRTypeKey;
+    readonly field: TIRFieldKey;
+    readonly fname: string;
+    readonly value: TIRExpression;
+
+    constructor(sinfo: SourceInfo, tasktype: TIRTypeKey, field: TIRFieldKey, fname: string, value: TIRExpression) {
+        super(TIRStatementTag.TaskSetSelfFieldStatement, sinfo, `self.${fname} = ${value.expstr};`);
+        this.tasktype = tasktype;
+        this.field = field;
+        this.fname = fname;
+        this.value = value;
+    }
+
+    isFailableOperation(): boolean {
+        return this.value.isFailableOperation();
+    }
+
+    getDirectlyModVars(): string[] {
+        return ["self"];
+    }
+}
+
+class TIRLoggerEmitStatement extends TIRStatement {
+    readonly level: LoggerLevel;
+    readonly fmt: {namespace: string, keyname: string};
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, level: LoggerLevel, fmt: {namespace: string, keyname: string}, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${level}(${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
+        this.level = level;
+        this.fmt = fmt;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+}
+
+class TIRLoggerEmitConditionalStatement extends TIRStatement {
+    readonly level: LoggerLevel;
+    readonly fmt: {namespace: string, keyname: string};
+    readonly cond: TIRExpression;
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: TIRExpression, fmt: {namespace: string, keyname: string}, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${level}If(${cond.expstr}, ${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
+        this.level = level;
+        this.fmt = fmt;
+        this.cond = cond;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+}
+
 class TIRBlockStatement {
     readonly stmtstr: string;
     readonly ops: TIRStatement[];
     readonly isterminal: boolean;
-    
-    readonly defatentry: string[];
-    readonly defatexit: string[];
 
-    constructor(ops: TIRStatement[], isterminal: boolean, defatentry: string[], defatexit: string[]) {
+    constructor(ops: TIRStatement[], isterminal: boolean) {
         this.stmtstr = "{" + ops.map((op) => op.stmtstr).join(" ") + "}";
 
         this.ops = ops;
         this.isterminal = isterminal;
-        
-        this.defatentry = defatentry;
-        this.defatexit = defatexit;
     }
 
     isFailableOperation(): boolean {
         return this.ops.some((op) => op.isFailableOperation());
     }
-
-    getDefinedVars(): string[] {
-        return this.defatexit.filter((vo) => !this.defatentry.includes(vo));
-    }
 } 
 
 class TIRUnscopedBlockStatement extends TIRBlockStatement {
-    constructor(ops: TIRStatement[], defatentry: string[], defatexit: string[]) {
-        super(ops, false, defatentry, defatexit);
+    constructor(ops: TIRStatement[]) {
+        super(ops, false);
     }
 }
 
-class TIRScopedBlockStatement  extends TIRBlockStatement {
-    constructor(ops: TIRStatement[], isterminal: boolean, defatentry: string[], defatexit: string[]) {
-        super(ops, isterminal, defatentry, defatexit);
+class TIRScopedBlockStatement extends TIRBlockStatement {
+    constructor(ops: TIRStatement[], isterminal: boolean,) {
+        super(ops, isterminal);
     }
 }
 
+class TIRInvokeBodyImpl {
+}
+
+class TIRInvokeDirectImpl extends TIRInvokeBodyImpl {
+    readonly block: TIRScopedBlockStatement;
+
+    constructor(block: TIRScopedBlockStatement) {
+        super();
+        this.block = block;
+    }
+}
+
+class TIRInvokeWChecksImpl extends TIRInvokeBodyImpl {
+    readonly block: TIRScopedBlockStatement;
+    readonly preconds: TIRInvokeKey[];
+    readonly postconds: TIRInvokeKey[];
+
+    constructor(block: TIRScopedBlockStatement, preconds: TIRInvokeKey[], postconds: TIRInvokeKey[]) {
+        super();
+        this.block = block;
+        this.preconds = preconds;
+        this.postconds = postconds;
+    }
+}
 
 export {
     TIRCodePack,
@@ -2272,7 +2350,7 @@ export {
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
     TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
     TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
-    TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorEphemeralValueList, TIRConstructorListExpression, TIRConstructorMapExpression,
+    TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorListExpression, TIRConstructorMapExpression,
     qqq,
     TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCallNamespaceFunctionWithChecksExpression, TIRCallNamespaceOperatorWithChecksExpression, TIRCallStaticFunctionWithChecksExpression,
@@ -2306,6 +2384,8 @@ export {
     TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,
     TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket,
     TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement,
-    pppp,
-    TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
+    TIRTaskSetSelfFieldStatement,
+    TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement,
+    TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement,
+    TIRInvokeBodyImpl, TIRInvokeDirectImpl, TIRInvokeWChecksImpl
 };
