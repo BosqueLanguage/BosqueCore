@@ -911,9 +911,7 @@ class Parser {
     private m_errors: [string, number, string][];
     private m_recoverStack: number[];
 
-    readonly sortedSrcFiles: {fullname: string, shortname: string}[]; 
-
-    constructor(assembly: Assembly, srcFileNames: {fullname: string, shortname: string}[]) {
+    constructor(assembly: Assembly) {
         this.m_tokens = [];
         this.m_cpos = 0;
         this.m_epos = 0;
@@ -922,8 +920,6 @@ class Parser {
 
         this.m_errors = [];
         this.m_recoverStack = [];
-
-        this.sortedSrcFiles = srcFileNames.sort((a, b) => a.fullname.localeCompare(b.fullname));
     }
 
     private initialize(toks: Token[]) {
@@ -934,13 +930,6 @@ class Parser {
 
     ////
     //Helpers
-
-    private generateBodyID(sinfo: SourceInfo, srcFile: string, etag?: string): string {
-        //Keep consistent with version in type checker!!!
-        const sfpos = this.sortedSrcFiles.findIndex((entry) => entry.fullname === srcFile);
-
-        return `${this.sortedSrcFiles[sfpos].shortname}#k${sfpos}${etag !== undefined ? ("_" + etag) : ""}::${sinfo.line}@${sinfo.pos}`;
-    }
 
     private static attributeSetContains(attr: string, attribs: string[]): boolean {
         return attribs.indexOf(attr) !== -1;
@@ -1171,8 +1160,6 @@ class Parser {
         const srcFile = this.m_penv.getCurrentFile();
         const line = this.getCurrentLine();
 
-        const bodyid = this.generateBodyID(sinfo, srcFile);
-
         let fparams: FunctionParameter[] = [];
         if (ikind === InvokableKind.Member) {
             fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, undefined));
@@ -1244,7 +1231,7 @@ class Parser {
 
             try {
                 this.m_penv.pushFunctionScope(new FunctionScope(argNames, boundtemplates, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
-                body = this.parseBody(bodyid, srcFile);
+                body = this.parseBody(srcFile);
                 capturedvars = this.m_penv.getCurrentFunctionScope().getCaptureVars();
                 capturedtemplates = this.m_penv.getCurrentFunctionScope().getCaptureTemplates();
                 this.m_penv.popFunctionScope();
@@ -1257,14 +1244,14 @@ class Parser {
 
         if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
             const bbody = body as BodyImplementation;
-            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, fparams, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
+            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, fparams, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
         }
         else {
             if(body !== undefined) {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, body);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, body);
             }
             else {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), bodyid, srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, undefined);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, undefined);
             }
         }
     }
@@ -3295,19 +3282,19 @@ class Parser {
         }
     }
 
-    private parseBody(bodyid: string, file: string): BodyImplementation {
+    private parseBody(file: string): BodyImplementation {
         if(this.testToken(SYM_eq)) {
             this.consumeToken();
             const iname = this.consumeTokenAndGetValue();
             this.ensureAndConsumeToken(SYM_semicolon, "body");
             
-            return new BodyImplementation(bodyid, file, iname);
+            return new BodyImplementation(file, iname);
         }
         else if (this.testToken(SYM_lparen)) {
-            return new BodyImplementation(bodyid, file, this.parseScopedBlockStatement());
+            return new BodyImplementation(file, this.parseScopedBlockStatement());
         }
         else {
-            return new BodyImplementation(bodyid, file, this.parseExpression());
+            return new BodyImplementation(file, this.parseExpression());
         }
     }
 
@@ -4115,11 +4102,6 @@ class Parser {
 
         const sinfo = this.getCurrentSrcInfo();
 
-        const sfpos = this.sortedSrcFiles.findIndex((entry) => entry.fullname === this.m_penv.getCurrentFile());
-        if(sfpos === -1) {
-            this.raiseError(sinfo.line, "Source name not registered");
-        }   
-
         this.ensureAndConsumeToken(KW_enum, "enum declaration");
         this.ensureToken(TokenStrings.Type, "enum declaration");
 
@@ -4432,13 +4414,6 @@ class Parser {
             this.raiseError(line, "Collision between object and other names");
         }
 
-        const sfpos = this.sortedSrcFiles.findIndex((entry) => entry.fullname === this.m_penv.getCurrentFile());
-        if(sfpos === -1) {
-            this.raiseError(sinfo.line, "Source name not registered");
-        }
-        
-        const bodyid = `k${sfpos}#${this.sortedSrcFiles[sfpos].shortname}::${sinfo.line}@${sinfo.pos}`;
-
         this.ensureAndConsumeToken(SYM_eq, "typedecl");
         if (this.testToken(TokenStrings.Regex)) {
             //[attr] typedecl NAME = regex;
@@ -4453,9 +4428,8 @@ class Parser {
 
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
-            const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
-            const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "validator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsbody = new BodyImplementation(this.m_penv.getCurrentFile(), "validator_accepts");
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
             const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["Validator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__validator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
@@ -4472,9 +4446,8 @@ class Parser {
 
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
-            const acceptsid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "accepts");
-            const acceptsbody = new BodyImplementation(`${this.m_penv.getCurrentFile()}::${sinfo.pos}`, this.m_penv.getCurrentFile(), "pathvalidator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, acceptsid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsbody = new BodyImplementation(this.m_penv.getCurrentFile(), "pathvalidator_accepts");
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
             const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["PathValidator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__pathvalidator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
@@ -4484,17 +4457,12 @@ class Parser {
             this.m_penv.assembly.addValidatorPath((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, vv);
         }
         else {
-            //[attr] typedecl NAME = PRIMITIVE [provides ] [& {...}];
+            //[attr] typedecl NAME = PRIMITIVE [& {...}];
 
             const idval = this.parseNominalType() as NominalTypeSignature;
 
             let provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             provides.push([new NominalTypeSignature(sinfo, "Core", ["KeyType"]), new TypeConditionRestriction([new TemplateTypeRestriction(idval, false, false, new NominalTypeSignature(sinfo, "Core", ["KeyType"]))])]);
-
-            if(this.testAndConsumeTokenIf(KW_provides)) {
-                const eprovides = this.parseProvides(sinfo, true, [SYM_amp, SYM_semicolon]);
-                provides.push(...eprovides);
-            }
 
             const invariants: InvariantDecl[] = [];
             const validates: ValidateDecl[] = [];
@@ -4530,9 +4498,8 @@ class Parser {
 
             const vparam = new FunctionParameter("v", idval, undefined);
 
-            const valueid = this.generateBodyID(sinfo, this.m_penv.getCurrentFile(), "value");
-            const valuebody = new BodyImplementation(`${bodyid}_value`, this.m_penv.getCurrentFile(), "special_extract");
-            const valuedecl = new InvokeDecl("Core", sinfo, sinfo, valueid, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [vparam], false, idval, [], [], false, false, new Set<string>(), new Set<string>(), valuebody);
+            const valuebody = new BodyImplementation(this.m_penv.getCurrentFile(), "special_extract");
+            const valuedecl = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [vparam], false, idval, [], [], false, false, new Set<string>(), new Set<string>(), valuebody);
             const value = new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "value", valuedecl);
 
             memberMethods.push(value);
@@ -4554,11 +4521,6 @@ class Parser {
         const terms = this.parseTermDeclarations();
         if (currentDecl.checkDeclNameClash(iname)) {
             this.raiseError(line, "Collision between object and other names");
-        }
-
-        const sfpos = this.sortedSrcFiles.findIndex((entry) => entry.fullname === this.m_penv.getCurrentFile());
-        if (sfpos === -1) {
-            this.raiseError(sinfo.line, "Source name not registered");
         }
 
         //[attr] datatype NAME<...> [provides ... ] [using {...}] of

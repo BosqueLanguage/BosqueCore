@@ -1,5 +1,5 @@
 
-import { TIRExpression, TIRInvokeBodyImpl, TIRLiteralValue } from "./tir_body";
+import { TIRExpression, TIRLiteralValue, TIRStatement } from "./tir_body";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -55,7 +55,7 @@ class TIRPostConditionDecl {
     }
 }
 
-class TIRInvariantDecl {
+class TIRObjectInvariantDecl {
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
@@ -65,13 +65,33 @@ class TIRInvariantDecl {
     }
 }
 
-class TIRValidateDecl {
+class TIRObjectValidateDecl {
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
 
     constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
+    }
+}
+
+class TIRTypedeclInvariantDecl {
+    readonly exp: TIRExpression;
+    readonly vtype: TIRTypeKey;
+
+    constructor(exp: TIRExpression, vtype: TIRTypeKey) {
+        this.exp = exp;
+        this.vtype = vtype;
+    }
+}
+
+class TIRTypedeclValidateDecl {
+    readonly exp: TIRExpression;
+    readonly vtype: TIRTypeKey;
+
+    constructor(exp: TIRExpression, vtype: TIRTypeKey) {
+        this.exp = exp;
+        this.vtype = vtype;
     }
 }
 
@@ -131,7 +151,6 @@ abstract class TIRInvoke {
     readonly startSourceLocation: SourceInfo;
     readonly endSourceLocation: SourceInfo;
     readonly srcFile: string;
-    readonly bodyID: string;
 
     readonly attributes: string[];
     readonly recursive: boolean;
@@ -149,14 +168,13 @@ abstract class TIRInvoke {
     readonly preconditions: TIRPreConditionDecl[];
     readonly postconditions: TIRPostConditionDecl[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
         this.invkey = invkey;
         this.name = name;
 
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
         this.srcFile = srcFile;
-        this.bodyID = bodyID;
 
         this.attributes = attributes;
         this.recursive = recursive;
@@ -177,16 +195,16 @@ abstract class TIRInvoke {
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, bodyID, attributes, recursive, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
     }
 }
 
 class TIRInvokeImplementation extends TIRInvoke {
-    readonly body: TIRInvokeBodyImpl;
+    readonly body: TIRStatement[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRInvokeBodyImpl) {
-        super(invkey, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRStatement[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
     }
@@ -195,8 +213,8 @@ class TIRInvokeImplementation extends TIRInvoke {
 class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: string) {
-        super(invkey, name, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: string) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
     }
@@ -315,10 +333,6 @@ abstract class TIROOType extends TIRType {
 
     readonly attributes: string[];
 
-    //Members that are declared on this
-    readonly invariants: TIRInvariantDecl[] = []; 
-    readonly validates: TIRValidateDecl[] = [];
-
     readonly constMembers: TIRConstMemberDecl[] = [];
     readonly staticFunctions: TIRStaticFunctionDecl[] = [];
     readonly memberFields: TIRMemberFieldDecl[] = [];
@@ -343,8 +357,8 @@ abstract class TIREntityType extends TIROOType {
 class TIRObjectEntityType extends TIREntityType {
     readonly allfields: {fkey: TIRFieldKey, ftype: TIRTypeKey}[] = [];
 
-    readonly consinvariants: TIRInvariantDecl[] = []; 
-    readonly apivalidates: TIRValidateDecl[] = [];
+    readonly consinvariants: TIRObjectInvariantDecl[] = []; 
+    readonly apivalidates: TIRObjectValidateDecl[] = [];
 
     readonly vtable: Map<string, TIRInvokeKey> = new Map<string, TIRInvokeKey>(); 
     readonly binds: Map<string, TIRTypeKey>;
@@ -370,9 +384,9 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly valuetype: TIRTypeKey; //result of .value()
     readonly representation: TIRTypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
 
-    readonly consinvariantsall: TIRInvariantDecl[] = []; 
-    readonly consinvariantsexplicit: TIRInvariantDecl[] = []; 
-    readonly apivalidates: TIRValidateDecl[] = [];
+    readonly consinvariantsall: TIRTypedeclInvariantDecl[] = []; 
+    readonly consinvariantsexplicit: TIRTypedeclInvariantDecl[] = []; 
+    readonly apivalidates: TIRTypedeclValidateDecl[] = [];
 
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
     readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
@@ -877,7 +891,7 @@ export {
     TIRTypeName,
     TIRTypeKey, TIRInvokeKey, TIRFieldKey,
     TIRFunctionParameter,
-    TIRInvariantDecl, TIRValidateDecl,
+    TIRObjectInvariantDecl, TIRObjectValidateDecl, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl,
     TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
     TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive,
     TIRConstMemberDecl, TIRStaticFunctionDecl, TIRMemberFieldDecl, TIRMemberMethodDecl,

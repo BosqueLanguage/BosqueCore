@@ -1425,12 +1425,10 @@ class ScopedBlockStatement extends Statement {
 }
 
 class BodyImplementation {
-    readonly id: string;
     readonly file: string;
     readonly body: string | ScopedBlockStatement | Expression;
 
-    constructor(bodyid: string, file: string, body: string | ScopedBlockStatement | Expression) {
-        this.id = bodyid;
+    constructor(file: string, body: string | ScopedBlockStatement | Expression) {
         this.file = file;
         this.body = body;
     }

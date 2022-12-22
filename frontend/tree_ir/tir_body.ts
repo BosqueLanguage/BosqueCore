@@ -2228,31 +2228,6 @@ class TIRScopedBlockStatement extends TIRBlockStatement {
     }
 }
 
-class TIRInvokeBodyImpl {
-}
-
-class TIRInvokeDirectImpl extends TIRInvokeBodyImpl {
-    readonly block: TIRScopedBlockStatement;
-
-    constructor(block: TIRScopedBlockStatement) {
-        super();
-        this.block = block;
-    }
-}
-
-class TIRInvokeWChecksImpl extends TIRInvokeBodyImpl {
-    readonly block: TIRScopedBlockStatement;
-    readonly preconds: TIRExpression[];
-    readonly postconds: TIRExpression[];
-
-    constructor(block: TIRScopedBlockStatement, preconds: TIRExpression[], postconds: TIRExpression[]) {
-        super();
-        this.block = block;
-        this.preconds = preconds;
-        this.postconds = postconds;
-    }
-}
-
 export {
     TIRCodePack,
     TIRExpressionTag, TIRExpression, TIRInvalidExpression,
@@ -2296,6 +2271,5 @@ export {
     TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement,
     TIRTaskSetSelfFieldStatement,
     TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement,
-    TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement,
-    TIRInvokeBodyImpl, TIRInvokeDirectImpl, TIRInvokeWChecksImpl
+    TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
 };

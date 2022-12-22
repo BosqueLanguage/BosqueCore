@@ -113,7 +113,6 @@ class InvokeDecl {
     readonly startSourceLocation: SourceInfo;
     readonly endSourceLocation: SourceInfo;
     readonly srcFile: string;
-    readonly bodyID: string;
 
     readonly attributes: string[];
     readonly recursive: "yes" | "no" | "cond";
@@ -136,12 +135,11 @@ class InvokeDecl {
 
     readonly body: BodyImplementation | undefined;
 
-    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
+    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
         this.namespace = ns;
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
         this.srcFile = srcFile;
-        this.bodyID = bodyID;
 
         this.attributes = attributes;
         this.recursive = recursive;
@@ -168,12 +166,12 @@ class InvokeDecl {
         return new FunctionTypeSignature(sinfo, this.isThisRef, this.recursive, this.params, this.resultType, this.isPCodePred);
     }
 
-    static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
-        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
+    static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
+        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
     }
 
-    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, bodyID: string, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], body: BodyImplementation | undefined) {
-        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, bodyID, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, false, false, new Set<string>(), new Set<string>(), body);
+    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], body: BodyImplementation | undefined) {
+        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, false, false, new Set<string>(), new Set<string>(), body);
     }
 }
 
