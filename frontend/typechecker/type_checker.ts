@@ -6,13 +6,13 @@
 import * as assert from "assert";
 
 import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
-import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
+import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType, ResolvedInternalEntityAtomType } from "./resolved_type";
 import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement } from "../ast/body";
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
 import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotOp, TIRStatement, TIRPrefixNegateOp, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement } from "../tree_ir/tir_body";
-import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvokeKey, TIRListEntityType, TIRMapEntityTIRType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -5335,222 +5335,105 @@ class TypeChecker {
         try {
             this.m_file = tdecl.srcFile;
 
-            let terms = new Map<string, MIRType>();
-            tdecl.terms.forEach((term) => terms.set(term.name, this.m_emitter.registerResolvedTypeReference(binds.get(term.name) as ResolvedType)));
+            if (rtype instanceof ResolvedObjectEntityAtomType) {
+                const tiroo = this.m_tirTypeMap.get(tkey) as TIRObjectEntityType;
 
-            const provides = this.m_assembly.resolveProvides(tdecl, binds).map((provide) => {
-                const ptype = this.resolveAndEnsureTypeOnly(new SourceInfo(0, 0, 0, 0), provide, binds);
-                return this.m_emitter.registerResolvedTypeReference(ptype).typeID;
-            });
+                //set member fields
+                tdecl.memberFields.forEach((mf) => {
+                    const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
+                    const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createBaseBindScope(binds)));
 
-            if (tdecl instanceof EntityTypeDecl) {
-                if(tdecl.attributes.includes("__enum_type")) {
-                    const enums = tdecl.staticMembers.map((sdecl) => sdecl.name);
+                    tiroo.memberFields.push(new TIRMemberFieldDecl(fkey, tkey, mf.name, mf.sourceLocation, mf.srcFile, mf.attributes, decltype));
+                });
 
-                    const mirentity = new MIREnumEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, enums);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__typedprimitive")) {
-                    const rrtype = (tdecl.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
-                    let oftype = this.resolveAndEnsureTypeOnly(tdecl.sourceLocation, rrtype, binds);
+                //set all member fields
+                const allf = [...this.getAllOOFields(ResolvedType.createSingle(rtype), tdecl, binds)];
+                allf.forEach((ff) => {
+                    const enctype = this.toTIRTypeKey(ff[1][0]);
+                    const fkey = TIRIDGenerator.generateMemberFieldID(enctype, ff[0]);
+                    const ftype = this.toTIRTypeKey(this.normalizeTypeOnly(ff[1][2].declaredType, TemplateBindScope.createBaseBindScope(ff[1][3])));
 
-                    let basetype = oftype;
-                    let basetypedecl = basetype.getUniqueCallTargetType().object;
-                    while(!basetypedecl.attributes.includes("__typebase")) {
-                        const uutype = (basetypedecl.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
+                    tiroo.allfields.push({ fkey: fkey, ftype: ftype });
+                });
 
-                        basetype = this.resolveAndEnsureTypeOnly(tdecl.sourceLocation, uutype, basetype.getUniqueCallTargetType().binds);
-                        basetypedecl = basetype.getUniqueCallTargetType().object;
-                    }
+                //set invariants & validates
+                const allinv = this.processStdInvariantCheck(ResolvedType.createSingle(rtype), tdecl, binds);
+                tiroo.consinvariants.push(...allinv);
 
-                    let validatekey: string | undefined = undefined;
-                    let conskey: string | undefined = undefined;
-                    if(tdecl.invariants.length !== 0 || tdecl.validates.length !== 0) {
-                        const initinfo = this.generateInjectableEntityInitializerFunctions(tdecl, binds, oftype);
+                const allvalidates = this.processStdValidateCheck(ResolvedType.createSingle(rtype), tdecl, binds);
+                tiroo.apivalidates.push(...allvalidates);
+            }
+            else if (rtype instanceof ResolvedEnumEntityAtomType) {
+                const tirenum = this.m_tirTypeMap.get(tkey) as TIREnumEntityType;
 
-                        const validatebodyid = this.generateBodyID(tdecl.sourceLocation, tdecl.srcFile, "@@validateinput");
-                        const validatekeyid = MIRKeyGenerator.generateFunctionKeyWType(this.resolveOOTypeFromDecls(tdecl, binds), "@@validateinput", new Map<string, ResolvedType>(), []);
-                        this.generateInjectableInvariant(validatebodyid, validatekeyid.keyid, validatekeyid.shortname, tdecl, binds, initinfo.validateclauses);
-                        validatekey = validatekeyid.keyid;
+                //set all enum constants
+                tirenum.enums.forEach((enm) => {
+                    const edcl = tdecl.staticMembers.find((sf) => sf.name === enm) as StaticMemberDecl;
+                    const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(edcl.declaredType, TemplateBindScope.createBaseBindScope(binds)));
+                    const lvalue = this.reduceLiteralValueToCanonicalForm((edcl.value as ConstantExpressionValue).exp, TemplateBindScope.createBaseBindScope(binds));
 
-                        if (tdecl.invariants.length !== 0) {
-                            const consbodyid = this.generateBodyID(tdecl.sourceLocation, tdecl.srcFile, "@@directconstructor");
-                            const conskeyid = MIRKeyGenerator.generateFunctionKeyWType(this.resolveOOTypeFromDecls(tdecl, binds), "@@directconstructor", new Map<string, ResolvedType>(), []);
-                            this.generateInjectableConstructor(consbodyid, conskeyid.keyid, conskeyid.shortname, tdecl, binds, oftype, initinfo.invariantclauses);
-                            conskey = conskeyid.keyid;
-                        }
-                    }
-                    
-                    const mirentity = new MIRConstructableEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, oftype.typeID, validatekey, conskey, basetype.typeID);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__stringof_type") || tdecl.attributes.includes("__datastring_type")) {
-                    const miroftype = this.m_emitter.registerResolvedTypeReference(binds.get("T") as ResolvedType);
-                    
-                    if (tdecl.attributes.includes("__stringof_type")) {
-                        const mirentity = new MIRStringOfInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID);
-                        this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                    }
-                    else {
-                        const aoftype = (binds.get("T") as ResolvedType).options[0];
-                        const oodecl = (aoftype instanceof ResolvedEntityAtomType) ? aoftype.object : (aoftype as ResolvedConceptAtomType).conceptTypes[0].concept;
-                        const oobinds = (aoftype instanceof ResolvedEntityAtomType) ? aoftype.binds : (aoftype as ResolvedConceptAtomType).conceptTypes[0].binds;
+                    tirenum.enumMap.push(enm, lvalue[0] as TIRLiteralValue);
+                    tirenum.constMembers.push(new TIRConstMemberDecl(tkey, enm, edcl.sourceLocation, edcl.srcFile, edcl.attributes, decltype, (lvalue[0] as TIRLiteralValue).exp));
+                });
+            }
+            else if (rtype instanceof ResolvedTypedeclEntityAtomType) {
+                const tirdecl = this.m_tirTypeMap.get(tkey) as TIRTypedeclEntityType;
 
-                        const sf = (oodecl.staticFunctions.find((sfv) => sfv.name === "accepts") as StaticFunctionDecl);
-                        const mirencltype = this.m_emitter.registerResolvedTypeReference(this.resolveOOTypeFromDecls(oodecl, oobinds));
-                        const accepts = this.m_emitter.registerStaticCall(this.resolveOOTypeFromDecls(oodecl, oobinds), [mirencltype, oodecl, oobinds], sf, "accepts", oobinds, [], []);
-
-                        const mirentity = new MIRDataStringInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID, accepts);
-                        this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                    }
-                }
-                else if(tdecl.attributes.includes("__databuffer_type")) {
-                    const miroftype = this.m_emitter.registerResolvedTypeReference(binds.get("T") as ResolvedType);
-
-                    const aoftype = (binds.get("T") as ResolvedType).options[0];
-                    const oodecl = (aoftype instanceof ResolvedEntityAtomType) ? aoftype.object : (aoftype as ResolvedConceptAtomType).conceptTypes[0].concept;
-                    const oobinds = (aoftype instanceof ResolvedEntityAtomType) ? aoftype.binds : (aoftype as ResolvedConceptAtomType).conceptTypes[0].binds;
-
-                    const sf = (oodecl.staticFunctions.find((sfv) => sfv.name === "accepts") as StaticFunctionDecl);
-                    const mirencltype = this.m_emitter.registerResolvedTypeReference(this.resolveOOTypeFromDecls(oodecl, oobinds));
-                    const accepts = this.m_emitter.registerStaticCall(this.resolveOOTypeFromDecls(oodecl, oobinds), [mirencltype, oodecl, oobinds], sf, "accepts", oobinds, [], []);
-
-                    const mirentity = new MIRDataBufferInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID, accepts);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-
-                }
-                else if(tdecl.attributes.includes("__ok_type")) {
-                    const miroftype = this.m_emitter.registerResolvedTypeReference(binds.get("T") as ResolvedType);
-                    
-                    const mirentity = new MIRConstructableInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-
-                }
-                else if(tdecl.attributes.includes("__err_type")) {
-                    const miroftype = this.m_emitter.registerResolvedTypeReference(binds.get("E") as ResolvedType);
-                    
-                    const mirentity = new MIRConstructableInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__something_type")) {
-                    const miroftype = this.m_emitter.registerResolvedTypeReference(binds.get("T") as ResolvedType);
-                    
-                    const mirentity = new MIRConstructableInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, miroftype.typeID);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__havoc_type")) {
-                    const havocentity = new MIRHavocEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides);
-                    this.m_emitter.masm.entityDecls.set(tkey, havocentity);
-                }
-                else if(tdecl.attributes.includes("__list_type")) {
-                    const mirbinds = new Map<string, MIRType>().set("T", this.m_emitter.registerResolvedTypeReference(binds.get("T") as ResolvedType));
-
-                    if(this.buildmode === BuildApplicationMode.ModelChecker) {
-                        const llresolved = this.resolveAndEnsureTypeOnly(tdecl.sourceLocation, new NominalTypeSignature("Core", ["ListRepr"], [new TemplateTypeSignature("T")]), binds);
-                        this.m_emitter.registerResolvedTypeReference(llresolved);
-                    }
-
-                    const mirentity = new MIRPrimitiveListEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, mirbinds);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__stack_type")) {
-                    assert(false);
-                    //MIRPrimitiveStackEntityTypeDecl
-                }
-                else if(tdecl.attributes.includes("__queue_type")) {
-                    assert(false);
-                    //MIRPrimitiveQueueEntityTypeDecl
-                }
-                else if(tdecl.attributes.includes("__set_type")) {
-                    assert(false);
-                    //MIRPrimitiveSetEntityTypeDecl
-                }
-                else if(tdecl.attributes.includes("__map_type")) {
-                    const mirbinds = new Map<string, MIRType>().set("K", this.m_emitter.registerResolvedTypeReference(binds.get("K") as ResolvedType)).set("V", this.m_emitter.registerResolvedTypeReference(binds.get("V") as ResolvedType));
-
-                    if(this.buildmode === BuildApplicationMode.ModelChecker) {
-                        const mmresolved = this.resolveAndEnsureTypeOnly(tdecl.sourceLocation, new NominalTypeSignature("Core", ["MapRepr"], [new TemplateTypeSignature("K"), new TemplateTypeSignature("V")]), binds);
-                        this.m_emitter.registerResolvedTypeReference(mmresolved);
-                    }
-                    
-                    const mirentity = new MIRPrimitiveMapEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, mirbinds);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else if(tdecl.attributes.includes("__internal")) { 
-                    const mirentity = new MIRPrimitiveInternalEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
-                else {
-                    const initinfo = this.generateEntityInitializerFunctions(tdecl, binds);
-
-                    const invenvargs = new Map<string, VarInfo>();
-                    const consenvargs = new Map<string, VarInfo>();
-                    const ccfields = this.m_assembly.getAllOOFieldsConstructors(tdecl, binds);
-                    [...ccfields.req, ...ccfields.opt].forEach((ff) => {
-                        const fdi = ff[1];
-                        const ftype = this.resolveAndEnsureTypeOnly(fdi[1].sourceLocation, fdi[1].declaredType, fdi[2]);
-
-                        invenvargs.set(`$${fdi[1].name}`, new VarInfo(ftype, fdi[1].value === undefined, false, true, ftype));
-                        consenvargs.set(`$${fdi[1].name}`, new VarInfo(ftype, fdi[1].value === undefined, false, true, ftype));
-                    });
-                    const consfuncfields = [
-                        ...[...ccfields.req].map((ccf) => {
-                           return {cfkey: MIRKeyGenerator.generateFieldKey(this.resolveOOTypeFromDecls(ccf[1][0], ccf[1][2]), ccf[1][1].name), isoptional: false}
-                        }), 
-                        ...[...ccfields.opt].map((ccf) => {
-                            return {cfkey: MIRKeyGenerator.generateFieldKey(this.resolveOOTypeFromDecls(ccf[1][0], ccf[1][2]), ccf[1][1].name), isoptional: true}
-                         })
-                    ];
-
-                    let validatekey: string | undefined = undefined;
-                    if(initinfo.validateclauses.length !== 0) {
-                        const validatebodyid = this.generateBodyID(tdecl.sourceLocation, tdecl.srcFile, "@@validateinput");
-                        const validatekeyid = MIRKeyGenerator.generateFunctionKeyWType(this.resolveOOTypeFromDecls(tdecl, binds), "@@validateinput", new Map<string, ResolvedType>(), []);
-                        
-                        const validateenv = TypeEnvironment.createInitialEnvForCall(validatekeyid.keyid, validatebodyid, binds, new Map<string, PCode>(), invenvargs, undefined);
-                        this.generateInvariantCheck(validatebodyid, validateenv, validatekeyid.keyid, validatekeyid.shortname, tdecl, binds, {clauses: initinfo.validateclauses, optinits: initinfo.optinits});
-                        validatekey = validatekeyid.keyid;
-                    }
-
-                    const directconsbodyid = this.generateBodyID(tdecl.sourceLocation, tdecl.srcFile, "@@directconstructor");
-                    const directconskey = MIRKeyGenerator.generateFunctionKeyWType(this.resolveOOTypeFromDecls(tdecl, binds), "@@directconstructor", new Map<string, ResolvedType>(), []);
-                    
-                    const directconsenv = TypeEnvironment.createInitialEnvForCall(directconskey.keyid, directconsbodyid, binds, new Map<string, PCode>(), consenvargs, undefined);
-                    this.generateDirectConstructor(directconsbodyid, directconsenv, directconskey.keyid, directconskey.shortname, tdecl, binds, initinfo.invariantclauses);
-
-                    const fields: MIRFieldDecl[] = [];
-                    const finfos = [...this.m_assembly.getAllOOFieldsLayout(tdecl, binds)];
-                    finfos.forEach((ff) => {
-                        const fi = ff[1];
-                        const f = fi[1];
-
-                        const fkey = MIRKeyGenerator.generateFieldKey(this.resolveOOTypeFromDecls(fi[0], fi[2]), f.name);
-                        if (!this.m_emitter.masm.fieldDecls.has(fkey)) {
-                            const dtypeResolved = this.resolveAndEnsureTypeOnly(f.sourceLocation, f.declaredType, binds);
-                            const dtype = this.m_emitter.registerResolvedTypeReference(dtypeResolved);
-
-                            const mfield = new MIRFieldDecl(tkey, f.attributes, f.sourceLocation, f.srcFile, fkey, f.name, f.value !== undefined, dtype.typeID);
-                            this.m_emitter.masm.fieldDecls.set(fkey, mfield);
-                        }
-
-                        fields.push(this.m_emitter.masm.fieldDecls.get(fkey) as MIRFieldDecl);
-                    });
-
-                    const initconsbodyid = this.generateBodyID(tdecl.sourceLocation, tdecl.srcFile, "@@initconstructor");
-                    let initconskey: GeneratedKeyName<MIRInvokeKey> | undefined = undefined;
-                    if(this.constructorHasOptionals(tdecl, binds)) {
-                        initconskey = MIRKeyGenerator.generateFunctionKeyWType(this.resolveOOTypeFromDecls(tdecl, binds), "@@initconstructor", new Map<string, ResolvedType>(), []);
-                        const initconsenv = TypeEnvironment.createInitialEnvForCall(initconskey.keyid, initconsbodyid, binds, new Map<string, PCode>(), consenvargs, undefined);
-                        this.generateInitConstructor(initconsbodyid, initconsenv, initconskey.keyid, initconskey.shortname, tdecl, binds, initinfo.optinits, directconskey.keyid);
-                    }
-
-                    const mirentity = new MIRObjectEntityTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides, initinfo.invariantclauses.length !== 0, validatekey, initconskey !== undefined ? initconskey.keyid : undefined, directconskey.keyid, consfuncfields, fields);
-                    this.m_emitter.masm.entityDecls.set(tkey, mirentity);
-                }
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedValidatorEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedStringOfEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedASCIIStringOfEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedPathValidatorEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedPathEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedPathFragmentEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedPathGlobEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedOkEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedErrEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedSomethingEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedMapEntryEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedListEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedStackEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedQueueEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedSetEntityAtomType) {
+                xxxx;
+            }
+            else if(rtype instanceof ResolvedMapEntityAtomType) {
+                xxxx;
             }
             else {
-                const mirconcept = new MIRConceptTypeDecl(tdecl.sourceLocation, tdecl.srcFile, tkey, tdecl.attributes, tdecl.ns, tdecl.name, terms, provides);
-                this.m_emitter.masm.conceptDecls.set(tkey, mirconcept);
+                ; //nothing else to do
             }
         }
         catch (ex) {
