@@ -46,12 +46,10 @@ class TIRPreConditionDecl {
 class TIRPostConditionDecl {
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
-    readonly origargs: TIRFunctionParameter[];
 
-    constructor(exp: TIRExpression, args: TIRFunctionParameter[], origargs: TIRFunctionParameter[]) {
+    constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
-        this.origargs = origargs;
     }
 }
 
@@ -372,6 +370,7 @@ class TIRObjectEntityType extends TIREntityType {
 //Represents enum types declared as entities in the code
 class TIREnumEntityType extends TIREntityType {
     readonly enums: string[];
+    readonly litvals: Map<string, TIRLiteralValue> = new Map<string, TIRLiteralValue>();
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: string[]) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
@@ -893,7 +892,7 @@ export {
     TIRFunctionParameter,
     TIRObjectInvariantDecl, TIRObjectValidateDecl, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl,
     TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
-    TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive,
+    TIRInvoke, TIRPreConditionDecl, TIRPostConditionDecl, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive,
     TIRConstMemberDecl, TIRStaticFunctionDecl, TIRMemberFieldDecl, TIRMemberMethodDecl,
     TIRType,
     TIROOType, TIREntityType, TIRObjectEntityType, TIREnumEntityType, TIRTypedeclEntityType, TIRInternalEntityType, TIRPrimitiveInternalEntityType,
