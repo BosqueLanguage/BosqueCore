@@ -258,11 +258,11 @@ class RegexParser {
 }
 
 class BSQRegex {
-    readonly restr: string;
+    readonly regexstr: string;
     readonly re: RegexComponent;
 
     constructor(restr: string, re: RegexComponent) {
-        this.restr = restr;
+        this.regexstr = restr;
         this.re = re;
     }
 
@@ -293,7 +293,7 @@ class BSQRegex {
     }
 
     jemit(): any {
-        return { restr: this.restr, re: this.re.jemit() };
+        return { regexstr: this.regexstr, re: this.re.jemit() };
     }
 
     static jparse(obj: any): BSQRegex {

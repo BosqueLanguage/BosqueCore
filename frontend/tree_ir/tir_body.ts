@@ -250,7 +250,7 @@ class TIRLiteralRegexExpression extends TIRExpression {
     readonly value: BSQRegex;
 
     constructor(sinfo: SourceInfo, value: BSQRegex) {
-        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.restr);
+        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.regexstr);
         this.value = value;
     }
 }

@@ -722,7 +722,7 @@ class Assembly {
     }
 
     addValidatorRegex(resolvedName: string, validator: BSQRegex) {
-        let ere = this.m_literalRegexs.findIndex((lre) => lre.restr === validator.restr);
+        let ere = this.m_literalRegexs.findIndex((lre) => lre.regexstr === validator.regexstr);
         if(ere === -1) {
             ere = this.m_literalRegexs.length;
             this.m_literalRegexs.push(validator);
@@ -736,7 +736,7 @@ class Assembly {
     }
 
     addLiteralRegex(re: BSQRegex) {
-        const ere = this.m_literalRegexs.findIndex((lre) => lre.restr === re.restr);
+        const ere = this.m_literalRegexs.findIndex((lre) => lre.regexstr === re.regexstr);
         if(ere === -1) {
             this.m_literalRegexs.push(re);
         }
