@@ -211,7 +211,7 @@ class TIRInvokeImplementation extends TIRInvoke {
 class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: string) {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], resultType: TIRTypeKey, body: string) {
         super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
