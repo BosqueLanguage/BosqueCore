@@ -171,6 +171,10 @@ class ExpressionTypeEnvironment {
         return new ExpressionTypeEnvironment(binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), flows);
     }
 
+    static createInitialEnvForEvalStandalone(binds: TemplateBindScope): ExpressionTypeEnvironment {
+        return new ExpressionTypeEnvironment(binds, new Map<string, TIRCodePack>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+    }
+
     static createInitialEnvForEvalWArgs(binds: TemplateBindScope, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
         return new ExpressionTypeEnvironment(binds, new Map<string, TIRCodePack>(), new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }

@@ -711,7 +711,6 @@ class TIRCodePackType extends TIRType {
 class TIRNamespaceConstDecl {
     readonly ns: string;
     readonly name: string;
-    readonly defin: string;
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -721,10 +720,9 @@ class TIRNamespaceConstDecl {
     readonly declaredType: TIRTypeKey;
     readonly value: TIRExpression;
 
-    constructor(ns: string, name: string, defin: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
+    constructor(ns: string, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
         this.ns = ns;
         this.name = name;
-        this.defin = defin;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;

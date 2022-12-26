@@ -17,7 +17,8 @@
     },
     "devDependencies": {
         "decimal.js": "10.4.2",
-        "fraction.js": "4.2.0"
+        "fraction.js": "4.2.0",
+        "immutable": "4.2.1"
     },
     "scripts": {
         "build": "node ./build/build_all.js",
