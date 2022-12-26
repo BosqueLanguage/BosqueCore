@@ -188,9 +188,9 @@ class StaticMemberDecl implements OOMemberDecl {
     readonly name: string;
 
     readonly declaredType: TypeSignature;
-    readonly value: ConstantExpressionValue | undefined;
+    readonly value: ConstantExpressionValue;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, value: ConstantExpressionValue | undefined) {
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;

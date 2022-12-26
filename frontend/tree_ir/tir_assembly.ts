@@ -906,7 +906,7 @@ export {
     TIRUnionType,
     TIRInfoTemplate, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateValue,
     TIRStringTemplate,
-    TIRNamespaceConstDecl, TIRNamespaceFunctionDecl,
+    TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl,
     TIRNamespaceDeclaration,
     TIRAssembly
 };
