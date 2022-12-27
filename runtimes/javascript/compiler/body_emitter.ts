@@ -24,11 +24,12 @@ class BodyEmitter {
         }
 
         const ttype = this.m_assembly.typeMap.get(tt) as TIRType;
-        const samens = ttype.enclns === this.m_ns;
-        const corens = ttype.enclns === "Core";
-
+        
         let taccess: string = "[INVALID]";
         if(ttype instanceof TIRObjectEntityType) {
+            const samens = ttype.enclns === this.m_ns;
+        const corens = ttype.enclns === "Core";
+
             xxxx;
         }
         else if(ttype instanceof TIREnumEntityType) {
@@ -110,6 +111,9 @@ class BodyEmitter {
 
         else if(ttype instanceof TIRUnionType) {
             
+        }
+        else {
+            assert(false, "Unknown type in resolveTypeNameAccess");
         }
 
         this.m_typeResolveMemo.set(tt, taccess);

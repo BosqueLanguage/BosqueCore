@@ -313,14 +313,12 @@ class TIRMemberMethodDecl {
 
 abstract class TIRType {
     readonly tkey: TIRTypeKey;
-    readonly enclns: string;
 
     //direct suprertypes -- not saturated set
     readonly supertypes: Set<TIRTypeKey> | undefined;
 
-    constructor(tkey: TIRTypeKey, enclns: string, supertypes: TIRTypeKey[] | undefined) {
+    constructor(tkey: TIRTypeKey, supertypes: TIRTypeKey[] | undefined) {
         this.tkey = tkey;
-        this.enclns = enclns;
         this.supertypes = supertypes !== undefined ? new Set<TIRTypeKey>(supertypes) : undefined;
     }
 }
@@ -339,7 +337,7 @@ abstract class TIROOType extends TIRType {
     readonly memberMethods: TIRMemberMethodDecl[] = [];
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
-        super(tkey, tname.ns, supertypes);
+        super(tkey, supertypes);
         this.tname = tname;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
