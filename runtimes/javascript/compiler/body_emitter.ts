@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
-import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRObjectEntityType, TIROOType, TIRRecordType, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRObjectEntityType, TIROOType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 class BodyEmitter {
@@ -10,6 +10,7 @@ class BodyEmitter {
     private m_file: string;
     private m_ns: string = "[NOT SET]";
     private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
+    private m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
 
     constructor(assembly: TIRAssembly, file: string) {
         this.m_assembly = assembly;
