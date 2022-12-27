@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
-import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRRecordType, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRObjectEntityType, TIROOType, TIRRecordType, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 class BodyEmitter {
@@ -16,21 +16,25 @@ class BodyEmitter {
         this.m_file = file;
     }
 
-    private resolveTypeNameAccess(tt: TIRTypeKey): string {
+    private resolveTypeMemberAccess(tt: TIRTypeKey): string {
         assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
 
         if(this.m_typeResolveMemo.has(tt)) {
             return this.m_typeResolveMemo.get(tt) as string;
         }
 
-        const ttype = this.m_assembly.typeMap.get(tt) as TIRType;
-        
+        const ttype = this.m_assembly.typeMap.get(tt) as TIROOType;
+        const samens = ttype.tname.ns === this.m_ns;
+        const corens = ttype.tname.ns === "Core";
+
         let taccess: string = "[INVALID]";
         if(ttype instanceof TIRObjectEntityType) {
-            const samens = ttype.enclns === this.m_ns;
-        const corens = ttype.enclns === "Core";
-
-            xxxx;
+            if(ttype.binds.size !== 0) {
+                taccess = (samens || corens) ? ttype.tname : ;
+            }
+            else {
+                taccess = (samens || corens) ? : ;
+            }
         }
         else if(ttype instanceof TIREnumEntityType) {
 
@@ -101,17 +105,6 @@ class BodyEmitter {
             
         }
 
-
-        else if(ttype instanceof TIRTupleType) {
-            
-        }
-        else if(ttype instanceof TIRRecordType) {
-            
-        }
-
-        else if(ttype instanceof TIRUnionType) {
-            
-        }
         else {
             assert(false, "Unknown type in resolveTypeNameAccess");
         }
