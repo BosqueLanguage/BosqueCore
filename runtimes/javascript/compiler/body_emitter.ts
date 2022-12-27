@@ -1,32 +1,119 @@
 import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
-import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRMemberConstKey, TIRNamespaceConstKey, TIRRecordType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorEphemeralValueList, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadIndexVirtualExpression, TIRLoadPropertyExpression, TIRLoadPropertyVirtualExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
+import { TIRAssembly, TIRFieldKey, TIRInvokeKey, TIRRecordType, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 class BodyEmitter {
     private readonly m_assembly: TIRAssembly;
-    private readonly m_file: string;
 
-    private readonly m_typeNameMap: Map<TIRTypeKey, string>;
-
-    private readonly m_namespaceFunctionMap: Map<TIRInvokeKey, string>;
-    private readonly m_namespaceConstMap: Map<TIRNamespaceConstKey, string>;
-
-    private readonly m_memberFunctionMap: Map<TIRInvokeKey, string>;
-    private readonly m_memberConstMap: Map<TIRMemberConstKey, string>;
-    private readonly m_memberMethodMap: Map<TIRInvokeKey, string>;
-    private readonly m_memberFieldMap: Map<TIRFieldKey, string>;
+    private m_file: string;
+    private m_ns: string = "[NOT SET]";
+    private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
 
     constructor(assembly: TIRAssembly, file: string) {
         this.m_assembly = assembly;
         this.m_file = file;
     }
 
-    private getNameOfType(tt: TIRTypeKey): string {
-        assert(this.m_typeNameMap.has(tt), `missing type name entry ${tt}`);
+    private resolveTypeNameAccess(tt: TIRTypeKey): string {
+        assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
 
-        return this.m_typeNameMap.get(tt) as string; 
+        if(this.m_typeResolveMemo.has(tt)) {
+            return this.m_typeResolveMemo.get(tt) as string;
+        }
+
+        const ttype = this.m_assembly.typeMap.get(tt) as TIRType;
+        const samens = ttype.enclns === this.m_ns;
+        const corens = ttype.enclns === "Core";
+
+        let taccess: string = "[INVALID]";
+        if(ttype instanceof TIRObjectEntityType) {
+            xxxx;
+        }
+        else if(ttype instanceof TIREnumEntityType) {
+
+        }
+
+        else if(ttype instanceof TIRTypedeclEntityType) {
+            
+        }
+        else if(ttype instanceof TIRInternalEntityType) {
+            
+        }
+        else if(ttype instanceof TIRValidatorEntityType) {
+            
+        }
+
+        else if(ttype instanceof TIRStringOfEntityType) {
+            
+        }
+        else if(ttype instanceof TIRASCIIStringOfEntityType) {
+            
+        }
+        else if(ttype instanceof TIRPathValidatorEntityType) {
+            
+        }
+        else if(ttype instanceof TIRPathEntityType) {
+            
+        }
+        else if(ttype instanceof TIRPathFragmentEntityType) {
+            
+        }
+        else if(ttype instanceof TIRPathGlobEntityType) {
+            
+        }
+        else if(ttype instanceof TIROkEntityType) {
+            
+        }
+        else if(ttype instanceof TIRErrEntityType) {
+            
+        }
+        else if(ttype instanceof TIRSomethingEntityType) {
+            
+        }
+        else if(ttype instanceof TIRMapEntryEntityType) {
+            
+        }
+
+        else if(ttype instanceof TIRListEntityType) {
+            
+        }
+        else if(ttype instanceof TIRStackEntityType) {
+            
+        }
+        else if(ttype instanceof TIRQueueEntityType) {
+            
+        }
+        else if(ttype instanceof TIRSetEntityType) {
+            
+        }
+        else if(ttype instanceof TIRMapEntityType) {
+            
+        }
+
+        else if(ttype instanceof TIRTaskEntityType) {
+            
+        }
+
+        else if(ttype instanceof TIRConceptEntityType) {
+            
+        }
+
+
+        else if(ttype instanceof TIRTupleType) {
+            
+        }
+        else if(ttype instanceof TIRRecordType) {
+            
+        }
+
+        else if(ttype instanceof TIRUnionType) {
+            
+        }
+
+        this.m_typeResolveMemo.set(tt, taccess);
+        return taccess;
     }
 
     private getNameOfNamespaceFunction(fkey: TIRInvokeKey): string {
@@ -89,7 +176,7 @@ class BodyEmitter {
 
     private emitLiteralIntegralExpression(exp: TIRLiteralIntegralExpression): string {
         if(exp.etype === "Nat") {
-            return exp.expstr; //n suffix makes a bitint 
+            return exp.expstr; //n suffix makes a bigint 
         }
         else if(exp.etype === "Int") {
             return exp.expstr.slice(0, exp.expstr.length - 1) + "n"; //n suffix makes it a bigint
@@ -118,7 +205,7 @@ class BodyEmitter {
     }
 
     private emitLiteralRegexExpression(exp: TIRLiteralRegexExpression): string {
-        return exp.value.restr;
+        return exp.value.regexstr;
     }
 
     private emitLiteralStringExpression(exp: TIRLiteralStringExpression): string {
@@ -251,6 +338,87 @@ class BodyEmitter {
         return `${this.getNameOfType(exp.oftype)}.$constructorWithChecks_reprtype(${this.emitExpression(exp.arg)})`;
     }
 
+    CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
+    CallNamespaceOperatorExpression = "CallNamespaceOperatorExpression",
+    CallStaticFunctionExpression = "CallStaticFunctionExpression",
+
+    LogicActionAndExpression = "LogicActionAndExpression",
+    LogicActionOrExpression = "LogicActionOrExpression",
+
+    PrefixNotOpExpression = "PrefixNotOpExpression",
+    PrefixNegateOpExpression = "PrefixNegateOpExpression",
+
+    BinAddExpression = "BinAddExpression",
+    BinSubExpression = "BinSubExpression",
+    BinMultExpression = "BinMultExpression",
+    BinDivExpression = "BinDivExpression",
+
+    BinKeyEqBothUniqueExpression = "BinKeyEqBothUniqueExpression",
+    BinKeyEqOneUniqueExpression = "BinKeyEqOneUniqueExpression",
+    BinKeyEqGeneralExpression = "BinKeyEqGeneralExpression",
+
+    BinKeyNeqBothUniqueExpression = "BinKeyNeqBothUniqueExpression",
+    BinKeyNeqOneUniqueExpression = "BinKeyNeqOneUniqueExpression",
+    BinKeyNeqGeneralExpression = "BinKeyNeqGeneralExpression",
+
+    BinKeyUniqueLessExpression = "BinKeyUniqueLessExpression",
+    BinKeyGeneralLessExpression = "BinKeyGeneralLessExpression",
+
+    NumericEqExpression = "NumericEqExpression",
+    NumericNeqExpression = "NumericNeqExpression",
+    NumericLessExpression = "NumericLessExpression",
+    NumericLessEqExpression = "NumericLessEqExpression",
+    NumericGreaterExpression = "NumericGreaterExpression",
+    NumericGreaterEqExpression = "NumericGreaterEqExpression",
+
+    BinLogicAndExpression = "BinLogicAndExpression",
+    BinLogicOrExpression = "BinLogicOrExpression",
+    BinLogicImpliesExpression = "BinLogicImpliesExpression",
+
+    MapEntryConstructorExpression = "MapEntryConstructorExpression",
+
+    IfExpression = "IfExpression",
+    SwitchExpression = "SwitchExpression",
+    MatchExpression = "MatchExpression",
+
+    TaskSelfFieldExpression = "TaskSelfFieldExpression",
+    TaskSelfControlExpression = "TaskSelfControlExpression",
+    TaskGetIDExpression = "TaskGetIDExpression",
+
+    CoerceSafeExpression = "CoerceSafeExpression",
+    CoerceRefCallResultExpression = "CoerceRefCallExpression",
+    CoerceTaskRefCallResultExpression = "CoerceTaskRefCallExpression",
+    CoerceActionCallResultExpression = "CoerceActionCallResultExpression",
+
+    InjectExpression = "InjectExpression",
+    ExtractExpression = "ExtractExpression",
+    CreateCodePackExpression = "CreateCodePackExpression",
+
+    IsTypeCheckAlwaysExpression = "IsTypeCheckAlwaysExpression",
+    IsNotTypeCheckAlwaysExpression = "IsNotTypeCheckAlwaysExpression",
+    IsNoneExpression = "IsNoneExpression",
+    IsNotNoneExpression = "IsNotNoneExpression",
+    IsNothingExpression = "IsNothingExpression",
+    IsNotNothingExpression = "IsNotNothingExpression",
+    IsTypeExpression = "IsTypeExpression",
+    IsNotTypeExpression = "IsNotTypeExpression",
+    IsSubTypeExpression = "IsSubTypeExpression",
+    IsNotSubTypeExpression = "IsNotSubTypeExpression",
+
+    AsNoneExpression = "AsNoneExpression",
+    AsNotNoneExpression = "AsNotNoneExpression",
+    AsNothingExpression = "AsNothingExpression",
+    AsTypeExpression = "AsTypeExpression",
+    AsSubTypeExpression = "AsSubTypeExpression",
+
+    CallMemberFunctionExpression = "CallMemberFunctionExpression",
+    CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
+    CallMemberFunctionSelfRefExpression = "CallMemberFunctionSelfRefExpression",
+
+    CallMemberFunctionTaskExpression = "CallMemberFunctionTaskExpression",
+    CallMemberFunctionTaskSelfRefExpression = "CallMemberFunctionTaskSelfRefExpression",
+    CallMemberActionExpression = "CallMemberActionExpression"
+
     public emitExpression(exp: TIRExpression, toplevel?: boolean): string {
         switch (exp.tag) {
             case TIRExpressionTag.LiteralNoneExpression: {
@@ -313,14 +481,8 @@ class BodyEmitter {
             case TIRExpressionTag.LoadIndexExpression: {
                 return this.emitLoadIndexExpression(exp as TIRLoadIndexExpression);
             }
-            case TIRExpressionTag.LoadIndexVirtualExpression: {
-                return this.emitLoadIndexVirtualExpression(exp as TIRLoadIndexVirtualExpression);
-            }
             case TIRExpressionTag.LoadPropertyExpression: {
                 return this.emitLoadPropertyExpression(exp as TIRLoadPropertyExpression);
-            }
-            case TIRExpressionTag.LoadPropertyVirtualExpression: {
-                return this.emitLoadPropertyVirtualExpression(exp as TIRLoadPropertyVirtualExpression);
             }
             case TIRExpressionTag.LoadFieldExpression: {
                 return this.emitLoadFieldExpression(exp as TIRLoadFieldExpression);
@@ -339,9 +501,6 @@ class BodyEmitter {
             }
             case TIRExpressionTag.ConstructorRecordExpression: {
                 return this.emitConstructorRecordExpression(exp as TIRConstructorRecordExpression);
-            }
-            case TIRExpressionTag.ConstructorEphemeralValueList: {
-                return this.emitConstructorEphemeralValueList(exp as TIRConstructorEphemeralValueList);
             }
             case TIRExpressionTag.CodePackInvokeExpression: {
                 return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);

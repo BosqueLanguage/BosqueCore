@@ -4,12 +4,9 @@ import * as assert from "assert";
 class AssemblyEmitter {
     private readonly m_assembly: TIRAssembly;
 
-    
-
     constructor(assembly: TIRAssembly, m_typeNameMap: Map<TIRTypeKey, string>) {
         this.m_assembly = assembly;
     }
-
     
     private generateJsNameForType(tt: TIRType) {
         xxxx;
