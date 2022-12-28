@@ -3441,7 +3441,7 @@ class TypeChecker {
         const ntype = ResolvedType.getNumericBaseRepresentation(nenv.trepr.options);
         this.raiseErrorIf(exp.sinfo, ntype.typeID === "Nat" || ntype.typeID === "BigNat", `cannot negage unsigned type ${nenv.trepr.typeID}`);
         
-        return this.setResultExpression(nenv, new TIRPrefixNegateExpression(exp.sinfo, nenv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(ntype))), nenv.trepr)
+        return this.setResultExpression(nenv, new TIRPrefixNegateExpression(exp.sinfo, nenv.expressionResult, this.toTIRTypeKey(nenv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(ntype))), nenv.trepr)
     }
 
     private checkBinAddExpression(env: ExpressionTypeEnvironment, exp: BinAddExpression): ExpressionTypeEnvironment {
@@ -3454,7 +3454,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `addition is defined on numeric values of same type but got -- ${lenv.trepr.typeID} + ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
-        return this.setResultExpression(env, new TIRBinAddExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);
+        return this.setResultExpression(env, new TIRBinAddExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(renv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);
     }
 
     private checkBinSubExpression(env: ExpressionTypeEnvironment, exp: BinSubExpression): ExpressionTypeEnvironment {
@@ -3467,7 +3467,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `subtraction is defined on numeric values of same type but got -- ${lenv.trepr.typeID} - ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
-        return this.setResultExpression(env, new TIRBinSubExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);
+        return this.setResultExpression(env, new TIRBinSubExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(renv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);
     }
 
     private checkBinMultExpression(env: ExpressionTypeEnvironment, exp: BinMultExpression): ExpressionTypeEnvironment {
@@ -3486,16 +3486,19 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, lnb.typeID !== rnb.typeID, `underlying numeric types must be compatible but got ${lnb.typeID} * ${rnb.typeID}`);
 
         if((lnt instanceof ResolvedPrimitiveInternalEntityAtomType) && (rnt instanceof ResolvedPrimitiveInternalEntityAtomType)) {
-            return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
+            return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(lenv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
+        }
+        else if((lnt instanceof ResolvedTypedeclEntityAtomType) && (rnt instanceof ResolvedTypedeclEntityAtomType)) {
+            return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnb)), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnb));
         }
         else {
-            this.raiseErrorIf(exp.sinfo, (lnt instanceof ResolvedTypedeclEntityAtomType) && (rnt instanceof ResolvedTypedeclEntityAtomType), `multiplication requires at least on unit typed value but got ${lnt.typeID} * ${rnt.typeID}`);
+            this.raiseErrorIf(exp.sinfo, (lnt instanceof ResolvedTypedeclEntityAtomType) || (rnt instanceof ResolvedTypedeclEntityAtomType), `multiplication requires at least on unit typed value but got ${lnt.typeID} * ${rnt.typeID}`);
 
             if(lnt instanceof ResolvedTypedeclEntityAtomType) {
-                return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
+                return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(lenv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
             }
             else {
-                return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(rnt));
+                return this.setResultExpression(env, new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(renv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(rnb))), ResolvedType.createSingle(rnt));
             }
         }
     }
@@ -5829,7 +5832,6 @@ class TypeChecker {
             if(!tirns.operators.has(name)) {
                 tirns.operators.set(name, []);
             }
-            xxxx;
             (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).push(new TIRNamespaceOperatorDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
         }
         catch (ex) {
@@ -5848,7 +5850,10 @@ class TypeChecker {
             const iinv = this.processNamespaceOperatorImplInvokeInfo(name, fkey, invoke);
 
             const tirns = this.ensureTIRNamespaceDecl(ns);
-            tirns.functions.set(name, new TIRNamespaceOperatorDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
+            if(!tirns.operators.has(name)) {
+                tirns.operators.set(name, []);
+            }
+            (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).push(new TIRNamespaceOperatorDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
         }
         catch (ex) {
            ;

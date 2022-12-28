@@ -698,8 +698,11 @@ class TIRPrefixNotExpression extends TIRUnaryExpression {
 }
 
 class TIRPrefixNegateExpression extends TIRUnaryExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.PrefixNegateExpression, sinfo, ntype, exp, `-(${exp.expstr})`);
+    readonly optype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
+        super(TIRExpressionTag.PrefixNegateExpression, sinfo, exptype, exp, `-(${exp.expstr})`);
+        this.optype = ntype;
     }
 }
 
@@ -709,8 +712,8 @@ class TIRBinOpExpression extends TIRExpression {
     readonly lhs: TIRExpression;
     readonly rhs: TIRExpression;
 
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey, exprstr: string) {
-        super(tag, sinfo, ntype, exprstr);
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey, exprstr: string) {
+        super(tag, sinfo, exptype, exprstr);
         this.optype = ntype;
         this.lhs = lhs;
         this.rhs = rhs;
@@ -726,8 +729,8 @@ class TIRBinOpExpression extends TIRExpression {
 }
 
 class TIRBinAddExpression extends TIRBinOpExpression {
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
+        super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
     }
 
     isFailableOperation(): boolean {
@@ -740,8 +743,8 @@ class TIRBinAddExpression extends TIRBinOpExpression {
 }
 
 class TIRBinSubExpression extends TIRBinOpExpression {
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.BinSubExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} - ${rhs.expstr})`);
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
+        super(TIRExpressionTag.BinSubExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} - ${rhs.expstr})`);
     }
 
     isFailableOperation(): boolean {
@@ -759,8 +762,8 @@ class TIRBinSubExpression extends TIRBinOpExpression {
 }
 
 class TIRBinMultExpression extends TIRBinOpExpression {
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.BinMultExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} * ${rhs.expstr})`);
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
+        super(TIRExpressionTag.BinMultExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} * ${rhs.expstr})`);
     }
 
     isFailableOperation(): boolean {
@@ -773,8 +776,8 @@ class TIRBinMultExpression extends TIRBinOpExpression {
 }
 
 class TIRBinDivExpression extends TIRBinOpExpression {
-    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.BinDivExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} / ${rhs.expstr})`);
+    constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
+        super(TIRExpressionTag.BinDivExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} / ${rhs.expstr})`);
     }
 
     isFailableOperation(): boolean {

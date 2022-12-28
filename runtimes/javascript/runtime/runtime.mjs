@@ -7,12 +7,7 @@ function UnionValue(tkey, value) {
     this.value = value;
 }
 
-const unionReprTypes = new Set();
 const subtypeMap = new Map();
-
-function isUnionReprType(tkey) {
-    return unionReprTypes.has(tkey);
-}
 
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {
@@ -24,19 +19,37 @@ function isSubtype(tkey, ofkey) {
     }
 }
 
+const FIXED_NUMBER_MAX = 9223372036854775808n; 
+const FIXED_NUMBER_MIN = -9223372036854775808n; 
+
 function Unwind(kind, msg) {
     this.kind = kind;
     this.msg = msg;
 }
 
-function createRuntimeError(msg) {
-    return Unwind("error", msg);
+function raiseRuntimeError(msg) {
+    throw new Unwind("error", msg);
 }
 
-function createRuntimeErrorIf(cond, msg) {
+function raiseRuntimeErrorIf(cond, msg) {
     if(cond) {
-        return Unwind("error", msg);
+        throw new Unwind("error", msg);
     }
+}
+
+function safeMath(val, lb, ub) {
+    raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
+    return val;
+}
+
+function safeMathUnderflow(val, zero) {
+    raiseRuntimeErrorIf(val < zero, `arithmetic op underflow`);
+    return val;
+}
+
+function safeMathDiv(op, chk, v1, v2) {
+    raiseRuntimeErrorIf(!chk(v2), `division by 0`);
+    return val;
 }
 
 function BSQEnvironment(env, ...args) {
@@ -50,21 +63,37 @@ function BSQEnvironment(env, ...args) {
 BSQEnvironment.get = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
-        createRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
 
         return vv.value;
     }
 
-    createRuntimeErrorIf(env.parent === undefined, `key ${key} was not found in environment`);
+    raiseRuntimeErrorIf(env.parent === undefined, `key ${key} was not found in environment`);
     return BSQEnvironment.get(env.parent, key, oftype);
 };
 
-BSQEnvironment.getOrNone = function(env, key, oftype) {
+BSQEnvironment.getOrNoneUV = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
-        createRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
 
-        return isUnionReprType(vv.tkey) ? vv.value : new UnionValue(vv.tkey, vv.value);
+        return new UnionValue(vv.tkey, vv.value);
+    }
+
+    if(env.parent === undefined) {
+        return new UnionValue("BSQNone", undefined);
+    }
+    else {
+        return BSQEnvironment.getOrNoneUV(env.parent, key, oftype);
+    }
+};
+
+BSQEnvironment.getOrNoneDV = function(env, key, oftype) {
+    if(env.args.has(key)) {
+        const vv = env.args.get(key);
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+
+        return vv.value;
     }
 
     if(env.parent === undefined) {
@@ -80,12 +109,14 @@ BSQEnvironment.set = function(env, key, val, oftype) {
 };
 
 BSQEnvironment.clear = function(env, key) {
-    this.createRuntimeErrorIf(!env.args.has(key), `key ${key} not defined in (local) environment`);
+    raiseRuntimeErrorIf(!env.args.has(key), `key ${key} not defined in (local) environment`);
     env.args.delete(key);
 };
 
 export {
-    UnionValue, isUnionReprType, isSubtype,
-    Unwind, createRuntimeError, createRuntimeErrorIf,
+    UnionValue, isSubtype,
+    FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
+    Unwind, raiseRuntimeError, raiseRuntimeErrorIf,
+    safeMath, safeMathDiv, safeMathUnderflow,
     BSQEnvironment
 };
