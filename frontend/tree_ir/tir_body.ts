@@ -62,8 +62,8 @@ enum TIRExpressionTag {
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
 
-    PrefixNotOpExpression = "PrefixNotOpExpression",
-    PrefixNegateOpExpression = "PrefixNegateOpExpression",
+    PrefixNotExpression = "PrefixNotExpression",
+    PrefixNegateExpression = "PrefixNegateExpression",
 
     BinAddExpression = "BinAddExpression",
     BinSubExpression = "BinSubExpression",
@@ -611,20 +611,35 @@ class TIRCallFunctionExpression extends TIRExpression {
 }
 
 class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
-    constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
+    readonly ns: string;
+    readonly fname: string;
+
+    constructor(sinfo: SourceInfo, ns: string, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallNamespaceFunctionExpression, sinfo, fkey, rtype, args, `${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.ns = ns;
+        this.fname = fname;
     }
 }
 
 class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
-    constructor(sinfo: SourceInfo, declkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
+    readonly ns: string;
+    readonly oname: string;
+
+    constructor(sinfo: SourceInfo, ns: string, oname: string, declkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallNamespaceOperatorExpression, sinfo, declkey, rtype, args, `${declkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.ns = ns;
+        this.oname = oname;
     }
 }
 
 class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
-    constructor(sinfo: SourceInfo, fkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
+    readonly tkey: TIRTypeKey;
+    readonly fname: string;
+
+    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallStaticFunctionExpression, sinfo, fkey, rtype, args, `${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.tkey = tkey;
+        this.fname = fname;
     }
 }
 
@@ -676,15 +691,15 @@ class TIRUnaryExpression extends TIRExpression {
     }
 }
 
-class TIRPrefixNotOp extends TIRUnaryExpression {
+class TIRPrefixNotExpression extends TIRUnaryExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.PrefixNotOpExpression, sinfo, "Bool", exp, `!(${exp.expstr})`);
+        super(TIRExpressionTag.PrefixNotExpression, sinfo, "Bool", exp, `!(${exp.expstr})`);
     }
 }
 
-class TIRPrefixNegateOp extends TIRUnaryExpression {
+class TIRPrefixNegateExpression extends TIRUnaryExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ntype: TIRTypeKey) {
-        super(TIRExpressionTag.PrefixNegateOpExpression, sinfo, ntype, exp, `-(${exp.expstr})`);
+        super(TIRExpressionTag.PrefixNegateExpression, sinfo, ntype, exp, `-(${exp.expstr})`);
     }
 }
 
@@ -2241,7 +2256,7 @@ export {
     TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression,
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
-    TIRPrefixNotOp, TIRPrefixNegateOp,
+    TIRPrefixNotExpression, TIRPrefixNegateExpression,
     TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression,
     TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression,
     TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression,

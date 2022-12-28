@@ -533,7 +533,7 @@ __internal entity Nothing provides IOption, APIType {
 }
 
 //<summary>Type for representing the nothing option value.</summary>
-__internal __constructable entity Something<T> provides Option<T>, APIType when T grounded APIType, Testable when T grounded Testable {
+__internal __constructable entity Something<T> provides ISomething, Option<T>, APIType when T grounded APIType, Testable when T grounded Testable {
     method value(): T = special_extract;
 }
 
@@ -541,7 +541,7 @@ __internal __constructable entity Something<T> provides Option<T>, APIType when 
 __universal concept IOptionT provides Some {
 }
 
-__option_type concept Option<T> provides ISomething, APIType when T grounded APIType, Testable when T grounded Testable {
+__option_type concept Option<T> provides IOption, APIType when T grounded APIType, Testable when T grounded Testable {
     method asSomething(): Something<T> {
         return this.as<Something<T>>();
     }
@@ -550,7 +550,7 @@ __option_type concept Option<T> provides ISomething, APIType when T grounded API
         return this.asSomething().value();
     }
 
-    method convert<V=?>(): Option<V> {
+    method convert<V>(): Option<V> {
         if(this === nothing) {
             return nothing;
         }
@@ -606,7 +606,7 @@ concept Result<T, E> provides IResult, APIType when T grounded APIType && E grou
         return this.as<Result<T, E>::Err>().value();
     }
 
-    method convert<U=?, V=?>(): Result<U, V> {
+    method convert<U, V>(): Result<U, V> {
         if(this.is<Result<T, E>::Ok>()) {
             return Result<U, V>::Ok{this.result().as<U>()};
         }

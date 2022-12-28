@@ -1,8 +1,27 @@
 "use strict";
 
-function BoxedValue(btype, bvalue) {
-    this.btype = btype;
-    this.btype = bvalue;
+import * as assert from "assert";
+
+function UnionValue(tkey, value) {
+    this.tkey = tkey;
+    this.value = value;
+}
+
+const unionReprTypes = new Set();
+const subtypeMap = new Map();
+
+function isUnionReprType(tkey) {
+    return unionReprTypes.has(tkey);
+}
+
+function isSubtype(tkey, ofkey) {
+    if(tkey === ofkey) {
+        return true;
+    }
+    else {
+        assert(subtypeMap.has(ofkey), "Internal error -- missing subtype entry");
+        return subtypeMap.get(ofkey).includes(tkey);
+    }
 }
 
 function Unwind(kind, msg) {
@@ -14,81 +33,59 @@ function createRuntimeError(msg) {
     return Unwind("error", msg);
 }
 
-function checkOk(cond, err, value) {
-    if(!cond) {
-        throw err;
+function createRuntimeErrorIf(cond, msg) {
+    if(cond) {
+        return Unwind("error", msg);
+    }
+}
+
+function BSQEnvironment(env, ...args) {
+    this.parent = env;
+    this.args = new Map();
+    for(let i = 0; i < args.length; ++i) {
+        this.args.set(args[i][0], args[1]);
+    }
+}
+
+BSQEnvironment.get = function(env, key, oftype) {
+    if(env.args.has(key)) {
+        const vv = env.args.get(key);
+        createRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+
+        return vv.value;
     }
 
-    return value;
-}
-
-function BType(tkey, vtable, consts, functions, methods, fdisplay, feq, fless) {
-    this.tkey = tkey;
-    this.vtable = vtable; //record
-    this.consts = consts; //record
-    this.functions = functions; //record
-    this.methods = methods; //record
-    this.fdisplay = fdisplay;
-    this.feq = feq;
-    this.fless = fless;
-}
-
-const BTypeNone = new BType("None", {}, {}, {}, (v) => "none", (v1, v2) => v2 === null, (v1, v2) => v2 !== null);
-const BTypeNothing = new BType("Nothing", {}, {}, {}, (v) => "nothing", undefined, undefined);
-
-const BTypeBool = new BType("Bool", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => !v1 && v2);
-
-const BTypeNat = new BType("Nat", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
-const BTypeInt = new BType("Int", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
-const BTypeBigNat = new BType("BigNat", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
-const BTypeBigInt = new BType("BigInt", {}, {}, {}, (v) => `${v}`, (v1, v2) => v1 === v2, (v1, v2) => v1 < v2);
-
-const tirRegexMap = {
-    /*TIR_REGEX_MAP_INIT*/
-}; //string -> NFA
-
-
-const tirTypeMap = {
-    "None": BTypeNone,
-    "Nothing": BTypeNothing,
-    "Nat": BTypeNat,
-    "Int": BTypeInt,
-    "BigNat": BTypeBigNat,
-    "BigInt": BTypeBigInt,
-    /*TypeMap setup*/
+    createRuntimeErrorIf(env.parent === undefined, `key ${key} was not found in environment`);
+    return BSQEnvironment.get(env.parent, key, oftype);
 };
 
-const bsq_nonevalue = null;
-const bsq_nothingvalue = undefined;
+BSQEnvironment.getOrNone = function(env, key, oftype) {
+    if(env.args.has(key)) {
+        const vv = env.args.get(key);
+        createRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
 
-const bsq_environment = new Map(); //string -> {evtype: type, evvalue: value}
-function bsq_envget(key, typekey, err) {
-    if(!bsq_environment.has(key) || bsq_environment.get(key).evtype !== typekey) {
-        throw err;
+        return isUnionReprType(vv.tkey) ? vv.value : new UnionValue(vv.tkey, vv.value);
     }
 
-    return bsq_environment.get(key).envvalue;
-}
-
-function bsq_envgetornone(key, typekey, err) {
-    if(!bsq_environment.has(key)) {
-        return bsq_nonevalue;
+    if(env.parent === undefined) {
+        return new UnionValue("BSQNone", undefined);
     }
+    else {
+        return BSQEnvironment.get(env.parent, key, oftype);
+    }
+};
 
-    return bsq_envget(key, typekey, err);
-}
+BSQEnvironment.set = function(env, key, val, oftype) {
+    env.args.set(key, {tkey: oftype, value: val});
+};
 
+BSQEnvironment.clear = function(env, key) {
+    this.createRuntimeErrorIf(!env.args.has(key), `key ${key} not defined in (local) environment`);
+    env.args.delete(key);
+};
 
 export {
-    BoxedValue,
-    Unwind, createRuntimeError, checkOk,
-    BType,
-    BTypeNone, BTypeNothing,
-    BTypeBool,
-    BTypeNat, BTypeInt, BTypeBigNat, BTypeBigInt,
-    tirRegexMap,
-    tirTypeMap,
-
-    bsq_nonevalue, bsq_nothingvalue,
-    bsq_environment, bsq_envget, bsq_envgetornone
+    UnionValue, isUnionReprType, isSubtype,
+    Unwind, createRuntimeError, createRuntimeErrorIf,
+    BSQEnvironment
 };

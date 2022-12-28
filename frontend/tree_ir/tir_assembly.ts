@@ -246,6 +246,7 @@ class TIRStaticFunctionDecl {
 
     readonly tkey: TIRTypeKey;
     readonly name: string;
+    readonly terms: TIRTypeKey[];
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -253,10 +254,11 @@ class TIRStaticFunctionDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
+        this.terms = terms;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -294,16 +296,19 @@ class TIRMemberMethodDecl {
     readonly tkey: TIRTypeKey;
     readonly name: string;
 
+    readonly terms: TIRTypeKey[];
+
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
+        this.terms = terms;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -596,7 +601,7 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
 }
 
 //class representing Map<K, V>
-class TIRMapEntityTIRType extends TIRPrimitiveCollectionEntityType {
+class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeK: TIRTypeKey;
     readonly typeV: TIRTypeKey;
 
@@ -737,16 +742,19 @@ class TIRNamespaceFunctionDecl {
     readonly ns: string;
     readonly name: string;
     
+    readonly terms: TIRTypeKey[];
+
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
         this.ikey = invoke.invkey;
         this.ns = ns;
         this.name = invoke.name;
+        this.terms = terms;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -870,6 +878,7 @@ class TIRNamespaceDeclaration {
 class TIRAssembly {
     readonly namespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
     readonly typeMap: Map<TIRTypeKey, TIRType> = new Map<TIRTypeKey, TIRType>();
+    readonly fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl> = new Map<TIRTypeKey, TIRMemberFieldDecl>();
 
     readonly literalRegexs: BSQRegex[] = [];
     readonly validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
@@ -900,7 +909,7 @@ export {
     TIRPathValidatorEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType,
     TIRConstructableEntityType, TIROkEntityType, TIRErrEntityType, TIRSomethingEntityType, TIRMapEntryEntityType,
     TIRHavocEntityType,
-    TIRPrimitiveCollectionEntityType, TIRListEntityType, TIRStackEntityType, TIRQueueEntityType, TIRSetEntityType, TIRMapEntityTIRType,
+    TIRPrimitiveCollectionEntityType, TIRListEntityType, TIRStackEntityType, TIRQueueEntityType, TIRSetEntityType, TIRMapEntityType,
     TIRTaskType,
     TIRConceptType, TIRConceptSetType,
     TIRTupleType, TIRRecordType,
