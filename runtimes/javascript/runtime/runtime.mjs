@@ -60,11 +60,21 @@ function BSQEnvironment(env, ...args) {
     }
 }
 
+BSQEnvironment.has = function(env, key) {
+    if(env.args.has(key)) {
+        const vv = env.args.get(key);
+        return vv !== undefined;
+    }
+
+    return env.parent !== undefined && BSQEnvironment.has(env.parent, key);
+};
+
 BSQEnvironment.get = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
-        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+        raiseRuntimeErrorIf(vv === undefined, `key ${key} was not found in environment`); //tombstone
 
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
         return vv.value;
     }
 
@@ -75,8 +85,11 @@ BSQEnvironment.get = function(env, key, oftype) {
 BSQEnvironment.getOrNoneUV = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
-        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+        if(vv === undefined) {
+           return new UnionValue("BSQNone", undefined); //tombstone
+        }
 
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
         return new UnionValue(vv.tkey, vv.value);
     }
 
@@ -91,8 +104,11 @@ BSQEnvironment.getOrNoneUV = function(env, key, oftype) {
 BSQEnvironment.getOrNoneDV = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
-        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+        if(vv === undefined) {
+           return new UnionValue("BSQNone", undefined); //tombstone
+        }
 
+        raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
         return vv.value;
     }
 
@@ -109,8 +125,8 @@ BSQEnvironment.set = function(env, key, val, oftype) {
 };
 
 BSQEnvironment.clear = function(env, key) {
-    raiseRuntimeErrorIf(!env.args.has(key), `key ${key} not defined in (local) environment`);
-    env.args.delete(key);
+    raiseRuntimeErrorIf(!BSQEnvironment.has(env, key), `key ${key} not defined in environment`);
+    env.args.set(key, undefined);
 };
 
 export {

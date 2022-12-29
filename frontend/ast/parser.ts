@@ -56,6 +56,7 @@ const KW_resultwith = "resultwith";
 const KW_return = "return";
 const KW_requires = "requires";
 const KW_something = "something";
+const KW_spec = "spec";
 const KW_switch = "switch";
 const KW_task = "task";
 const KW_test = "test";
@@ -121,6 +122,7 @@ const KeywordStrings = [
     KW_return,
     KW_requires,
     KW_something,
+    KW_spec,
     KW_switch,
     KW_task,
     KW_test,
@@ -278,6 +280,7 @@ const AttributeStrings = [
     "public",
     "release",
     "test",
+    "spec",
     "virtual",
     
     "onCancel",
@@ -1145,7 +1148,7 @@ class Parser {
 
     parseBuildInfo(cb: BuildLevel): BuildLevel {
         if( this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release)) {
-            return this.consumeTokenAndGetValue() as "debug" | "test" | "release";
+            return this.consumeTokenAndGetValue() as "spec" | "debug" | "test" | "release";
         }
         else {
             return cb;

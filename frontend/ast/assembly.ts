@@ -10,10 +10,13 @@ import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
 
-type BuildLevel = "debug" | "test" | "release";
+type BuildLevel = "spec" | "debug" | "test" | "release";
 
 function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
-    if(enabled === "debug") {
+    if(enabled === "spec") {
+        return check === "spec" || check === "debug" || check === "test" || check === "release";
+    }
+    else if(enabled === "debug") {
         return check === "debug" || check === "test" || check === "release";
     }
     else if(enabled === "test") {
