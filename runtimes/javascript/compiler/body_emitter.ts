@@ -2,7 +2,7 @@ import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREntityType, TIREnumEntityType, TIRInternalEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
+import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRSwitchExpression, TIRTaskGetIDExpression, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
@@ -280,7 +280,15 @@ class BodyEmitter {
     }
 
     private emitAccessVariableExpression(exp: TIRAccessVariableExpression): string {
-        return exp.name;
+        if(exp.name === "this") {
+            return "$This";
+        }
+        else if(exp.name === "$this") {
+            return "$$This";
+        }
+        else {
+            return exp.name;
+        }
     }
 
     private emitLoadIndexExpression(exp: TIRLoadIndexExpression): string {
@@ -481,89 +489,231 @@ class BodyEmitter {
     }
 
     private emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): string {
-        return `($Core.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `($KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
-    private emitBinKeyEqOneUniqueExpression(exp: TIRBinKeyEqOneUniqueExpression, toplevel: boolean): string {
-        const kval = `${this.emitExpression(exp.garg)}.tkey === "${exp.oftype}"`;
-        const eqval = `($Core.$KeyEqualOps.get("${exp.oftype}"))(${this.emitExpression(exp.garg)}.value, ${this.emitExpression(exp.uarg, true)})`;
-        const keq = `${kval} && ${eqval}`;
-
-        return toplevel ? keq : ("(" + keq + ")");
+    private emitBinKeyEqOneUniqueExpression(exp: TIRBinKeyEqOneUniqueExpression): string {
+        return `$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
     }
     
     private emitBinKeyEqGeneralExpression(exp: TIRBinKeyEqGeneralExpression): string {
-       xxxx;
+        return `$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
-    private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression): string {
-       xxxx;
+    private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression, toplevel: boolean): string {
+        const rr = `($KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return toplevel ? rr : "(" + rr + ")";
     }
-    private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression): string {
-       xxxx;
+
+    private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression, toplevel: boolean): string {
+        const rr = `$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
+        return toplevel ? rr : "(" + rr + ")";
     }
-    private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression): string {
-       xxxx;
+    
+    private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression, toplevel: boolean): string {
+        const rr = `$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyUniqueLessExpression(exp: TIRBinKeyUniqueLessExpression): string {
-       xxxx;
+        return `($KeyLessOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
+
     private emitBinKeyGeneralLessExpression(exp: TIRBinKeyGeneralLessExpression): string {
-       xxxx;
+        return `$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: TIRNumericEqExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} === ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} === ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} === ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
+
     private emitNumericNeqExpression(exp: TIRNumericNeqExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} !== ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} !== ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} !== ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
+
     private emitNumericLessExpression(exp: TIRNumericLessExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} < ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} < ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} < ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
+
     private emitNumericLessEqExpression(exp: TIRNumericLessEqExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} <= ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} <= ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} <= ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
+
     private emitNumericGreaterExpression(exp: TIRNumericGreaterExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} > ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} > ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} > ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
+
     private emitNumericGreaterEqExpression(exp: TIRNumericGreaterEqExpression, toplevel: boolean): string {
-       xxxx;
+        const lexp = this.emitExpression(exp.lhs);
+        const rexp = this.emitExpression(exp.rhs);
+
+        let cmp = "[MISSING]";
+        if(exp.optype === "Nat" || exp.optype === "Int") {
+            cmp = `${lexp} >= ${rexp}`;
+        }
+        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
+            cmp = `${lexp} >= ${rexp}`;
+        }
+        else if(exp.optype === "Rational") {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+        }
+        else if(exp.optype === "Float") {
+            cmp = `${lexp} >= ${rexp}`;
+        }
+        else {
+            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+        }
+
+        return toplevel ? cmp : "(" + cmp + ")";
     }
 
     private emitBinLogicAndExpression(exp: TIRBinLogicAndExpression, toplevel: boolean): string {
-       xxxx;
+        const rr = `${this.emitExpression(exp.lhs)} && ${this.emitExpression(exp.rhs)}`;
+        return toplevel ? rr : "(" + rr + ")";
     }
+
     private emitBinLogicOrExpression(exp: TIRBinLogicOrExpression, toplevel: boolean): string {
-       xxxx;
+        const rr = `${this.emitExpression(exp.lhs)} || ${this.emitExpression(exp.rhs)}`;
+        return toplevel ? rr : "(" + rr + ")";
     }
+
     private emitBinLogicImpliesExpression(exp: TIRBinLogicImpliesExpression, toplevel: boolean): string {
-       xxxx;
+        const rr = `!${this.emitExpression(exp.lhs)} || ${this.emitExpression(exp.rhs)}`;
+        return toplevel ? rr : "(" + rr + ")";
     }
 
-    private emitMapEntryConstructorExpression(exp: TIRMapEntryConstructorExpression, toplevel: boolean): string {
-       xxxx;
+    private emitMapEntryConstructorExpression(exp: TIRMapEntryConstructorExpression): string {
+        return `[${this.emitExpression(exp.kexp, true)}, ${this.emitExpression(exp.vexp, true)}]`;
     }
 
-    private emitIfExpression(exp: TIRIfExpression): string {
-       xxxx;
+    private emitIfExpression(exp: TIRIfExpression, toplevel: boolean): string {
+        let rstr = `${this.emitExpression(exp.ifentry.test)} ? ${this.emitExpression(exp.ifentry.value)} : `;
+        for(let i = 0; i < exp.elifentries.length; ++i){
+            rstr += `${this.emitExpression(exp.elifentries[i].test)} ? ${this.emitExpression(exp.elifentries[i].value)} : `
+        }
+        rstr += this.emitExpression(exp.elseentry);
+
+        return toplevel ? rstr : "(" + rstr + ")";
     }
-    private emitSwitchExpression(exp: TIRSwitchExpression): string {
-       xxxx;
+
+    private emitSwitchExpression(exp: TIRSwitchExpression, toplevel: boolean): string {
+        return NOT_IMPLEMENTED_EXPRESSION(exp.tag);
     }
-    private emitMatchExpression(exp: TIRMatchExpression): string {
-       xxxx;
+    
+    private emitMatchExpression(exp: TIRMatchExpression, toplevel: boolean): string {
+        return NOT_IMPLEMENTED_EXPRESSION(exp.tag);
     }
 
     private emitTaskSelfFieldExpression(exp: TIRTaskSelfFieldExpression): string {
-       xxxx;
+        return `$Self.${exp.fname}`;
     }
+
     private emitTaskSelfControlExpression(exp: TIRTaskSelfControlExpression): string {
-       xxxx;
+        return "$Self.$CNTL";
     }
+
     private emitTaskGetIDExpression(exp: TIRTaskGetIDExpression): string {
-       xxxx;
+        return "$Self.$ID";
     }
 
     private emitCoerceSafeExpression(exp: TIRCoerceSafeExpression): string {
@@ -579,22 +729,18 @@ class BodyEmitter {
        xxxx;
     }
 
-    private emitInjectExpression(exp: TIRInjectExpression): string {
-       xxxx;
+    private emitInjectExpression(exp: TIRInjectExpression, toplevel: boolean): string {
+       return this.emitExpression(exp.exp, toplevel);
     }
-    private emitExtractExpression(exp: TIRExtractExpression): string {
-       xxxx;
+
+    private emitExtractExpression(exp: TIRExtractExpression, toplevel: boolean): string {
+       return this.emitExpression(exp.exp, toplevel);
     }
+    
     private emitCreateCodePackExpression(exp: TIRCreateCodePackExpression): string {
        xxxx;
     }
 
-    private emitIsTypeCheckAlwaysExpression(exp: TIRIsTypeCheckAlwaysExpression): string {
-       xxxx;
-    }
-    private emitIsNotTypeCheckAlwaysExpression(exp: TIRIsNotTypeCheckAlwaysExpression): string {
-       xxxx;
-    }
     private emitIsNoneExpression(exp: TIRIsNoneExpression): string {
        xxxx;
     }
@@ -607,6 +753,7 @@ class BodyEmitter {
     private emitIsNotNothingExpression(exp: TIRIsNotNothingExpression): string {
        xxxx;
     }
+    
     private emitIsTypeExpression(exp: TIRIsTypeExpression): string {
        xxxx;
     }

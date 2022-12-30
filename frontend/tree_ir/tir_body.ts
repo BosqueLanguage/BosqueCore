@@ -111,8 +111,6 @@ enum TIRExpressionTag {
     ExtractExpression = "ExtractExpression",
     CreateCodePackExpression = "CreateCodePackExpression",
 
-    IsTypeCheckAlwaysExpression = "IsTypeCheckAlwaysExpression",
-    IsNotTypeCheckAlwaysExpression = "IsNotTypeCheckAlwaysExpression",
     IsNoneExpression = "IsNoneExpression",
     IsNotNoneExpression = "IsNotNoneExpression",
     IsNothingExpression = "IsNothingExpression",
@@ -1324,24 +1322,6 @@ class TIRTypeTestExpression extends TIRExpression {
     }
 }
 
-class TIRIsTypeCheckAlwaysExpression extends TIRTypeTestExpression {
-    readonly bv: boolean;
-
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, bv: boolean) {
-        super(TIRExpressionTag.IsTypeCheckAlwaysExpression, sinfo, exp, oftype, `istypealways<${oftype}>(${exp.expstr})===${bv}`);
-        this.bv = bv;
-    }
-}
-
-class TIRIsNotTypeCheckAlwaysExpression extends TIRTypeTestExpression {
-    readonly bv: boolean;
-
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, bv: boolean) {
-        super(TIRExpressionTag.IsNotTypeCheckAlwaysExpression, sinfo, exp, oftype, `isnottypealways<${oftype}>(${exp.expstr})===${bv}`);
-        this.bv = bv;
-    }
-}
-
 class TIRIsNoneExpression extends TIRTypeTestExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsNoneExpression, sinfo, exp, "None", `isnone(${exp.expstr})`);
@@ -2269,7 +2249,6 @@ export {
     TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, 
     TIRInjectExpression, TIRExtractExpression,
     jjjj,
-    TIRIsTypeCheckAlwaysExpression, TIRIsNotTypeCheckAlwaysExpression,
     TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression,
