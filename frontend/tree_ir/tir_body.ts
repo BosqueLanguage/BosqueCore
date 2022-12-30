@@ -1224,11 +1224,13 @@ class TIRTaskGetIDExpression extends TIRExpression {
 //abstract class for coerce ops that do a single value (maybe a ref or task return too)
 class TIRCoerceSafeSingleExpression extends TIRExpression {
     readonly exp: TIRExpression;
+    readonly fromtype: TIRTypeKey
     readonly totype: TIRTypeKey;
     
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey, exprstr: string) {
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, fromtype: TIRTypeKey, totype: TIRTypeKey, exprstr: string) {
         super(tag, sinfo, totype, exprstr);
         this.exp = exp;
+        this.fromtype = fromtype;
         this.totype = totype;
     }
 
@@ -1242,27 +1244,27 @@ class TIRCoerceSafeSingleExpression extends TIRExpression {
 }
 
 class TIRCoerceSafeExpression extends TIRCoerceSafeSingleExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceSafeExpression, sinfo, exp, totype, `coerce_safe<${totype}>(${exp.expstr})`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, fromtype: TIRTypeKey, totype: TIRTypeKey) {
+        super(TIRExpressionTag.CoerceSafeExpression, sinfo, exp, fromtype, totype, `coerce_safe<${totype}>(${exp.expstr})`);
     }
 }
 
 class TIRCoerceSafeRefCallResultExpression extends TIRCoerceSafeSingleExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceRefCallResultExpression, sinfo, exp, totype, `coerce_refresult<${totype}>(${exp.expstr})`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, fromtype: TIRTypeKey, totype: TIRTypeKey) {
+        super(TIRExpressionTag.CoerceRefCallResultExpression, sinfo, exp, fromtype, totype, `coerce_refresult<${totype}>(${exp.expstr})`);
     }
 }
 
 
 class TIRCoerceSafeTaskRefCallResultExpression extends TIRCoerceSafeSingleExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceTaskRefCallResultExpression, sinfo, exp, totype, `coerce_taskrefresult<${totype}>(${exp.expstr})`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, fromtype: TIRTypeKey, totype: TIRTypeKey) {
+        super(TIRExpressionTag.CoerceTaskRefCallResultExpression, sinfo, exp, fromtype, totype, `coerce_taskrefresult<${totype}>(${exp.expstr})`);
     }
 }
 
 class TIRCoerceSafeActionCallResultExpression extends TIRCoerceSafeSingleExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
-        super(TIRExpressionTag.CoerceActionCallResultExpression, sinfo, exp, totype, `coerce_actionresult<${totype}>(${exp.expstr})`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, fromtype: TIRTypeKey, totype: TIRTypeKey) {
+        super(TIRExpressionTag.CoerceActionCallResultExpression, sinfo, exp, fromtype, totype, `coerce_actionresult<${totype}>(${exp.expstr})`);
     }
 }
 
