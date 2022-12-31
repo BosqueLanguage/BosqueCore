@@ -4082,13 +4082,13 @@ class TypeChecker {
         this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds});
 
         if(mresolve.invoke.attributes.includes("task_action")) {
-            return this.setResultExpression(env, new TIRCallMemberActionExpression(exp.sinfo, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
+            return this.setResultExpression(env, new TIRCallMemberActionExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
         }
         else if (mresolve.invoke.isThisRef) {
-            return this.setResultExpression(env, new TIRCallMemberFunctionTaskSelfRefExpression(exp.sinfo, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
+            return this.setResultExpression(env, new TIRCallMemberFunctionTaskSelfRefExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
         }
         else {
-            return this.setResultExpression(env, new TIRCallMemberFunctionTaskExpression(exp.sinfo, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
+            return this.setResultExpression(env, new TIRCallMemberFunctionTaskExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
         }
     }
 

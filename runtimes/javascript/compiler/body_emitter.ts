@@ -2,7 +2,7 @@ import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREntityType, TIREnumEntityType, TIRInternalEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRSwitchExpression, TIRTaskGetIDExpression, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
+import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRSwitchExpression, TIRTaskGetIDExpression, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
@@ -43,8 +43,8 @@ class BodyEmitter {
 
         let taccess: string = "[INVALID]";
         if(ttype instanceof TIRObjectEntityType) {
-            if(ttype.binds.size !== 0) {
-                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.${ttype.tname.name}`;
+            if(ttype.binds.size === 0) {
+                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
                 if(corens) {
                     this.m_coreImports.add(`BSQ${ttype.tname.name}`);
                 }
@@ -64,13 +64,13 @@ class BodyEmitter {
             }
         }
         else if(ttype instanceof TIREnumEntityType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.${ttype.tname.name}`;
+            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
             if (corens) {
                 this.m_coreImports.add(`BSQ${ttype.tname.name}`);
             }
         }
         else if(ttype instanceof TIRTypedeclEntityType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.${ttype.tname.name}`;
+            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
             if (corens) {
                 this.m_coreImports.add(`BSQ${ttype.tname.name}`);
             }
@@ -135,14 +135,14 @@ class BodyEmitter {
             taccess = `$CoreTypes["${ttype.tkey}"]`;
         }
         else if(ttype instanceof TIRTaskType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.${ttype.tname.name}`;
+            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
             if (corens) {
                 this.m_coreImports.add(`BSQ${ttype.tname.name}`);
             }
         }
         else if(ttype instanceof TIRConceptType) {
-            if(ttype.binds.size !== 0) {
-                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.${ttype.tname.name}`;
+            if(ttype.binds.size === 0) {
+                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
                 if(corens) {
                     this.m_coreImports.add(`BSQ${ttype.tname.name}`);
                 }
@@ -909,7 +909,28 @@ class BodyEmitter {
     }
 
     private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
-       xxxx;
+        const thisarg = this.emitExpression(exp.thisarg, true);
+        
+        const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
+        const declunion = this.typeEncodedAsUnion(exp.tkey);
+        let thisargas = "[NOT SET]"; 
+        if(thisunion === declunion) {
+            thisargas = "__expval__";
+        }
+        else {
+            if(thisunion) {
+                thisargas = "__expval__.value";
+            }
+            else {
+                thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
+            }
+        }
+
+        const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
+        const eexp = `((__expval__) => __expval__.${exp.fname}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
+        
+
+        return toplevel ? eexp : "(" + eexp + ")";
     }
     
     private emitCallMemberFunctionSelfRefExpression(exp: TIRCallMemberFunctionSelfRefExpression, toplevel: boolean): string {
@@ -920,14 +941,28 @@ class BodyEmitter {
         return toplevel ? eexp : "(" + eexp + ")";
     }
 
-    private emitCallMemberFunctionTaskExpression(exp: TIRCallMemberFunctionTaskExpression): string {
-       xxxx;
+    private emitCallMemberFunctionTaskExpression(exp: TIRCallMemberFunctionTaskExpression, toplevel: boolean): string {
+        const aargs = ["self", ...exp.args.map((arg) => this.emitExpression(arg, true))];
+        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}.${exp.fname}`;
+        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        return toplevel ? eexp : "(" + eexp + ")";
     }
-    private emitCallMemberFunctionTaskSelfRefExpression(exp: TIRCallMemberFunctionTaskSelfRefExpression): string {
-       xxxx;
+
+    private emitCallMemberFunctionTaskSelfRefExpression(exp: TIRCallMemberFunctionTaskSelfRefExpression, toplevel: boolean): string {
+        const aargs = ["self", ...exp.args.map((arg) => this.emitExpression(arg, true))];
+        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}.${exp.fname}`;
+        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        return toplevel ? eexp : "(" + eexp + ")";
     }
-    private emitCallMemberActionExpression(exp: TIRCallMemberActionExpression): string {
-        xxxx;
+
+    private emitCallMemberActionExpression(exp: TIRCallMemberActionExpression, toplevel: boolean): string {
+        const aargs = ["self", ...exp.args.map((arg) => this.emitExpression(arg, true))];
+        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}.${exp.fname}`;
+        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        return toplevel ? eexp : "(" + eexp + ")";
     }
 
     public emitExpression(exp: TIRExpression, toplevel?: boolean): string {
@@ -972,7 +1007,7 @@ class BodyEmitter {
                 return this.emitLiteralASCIITemplateStringExpression(exp as TIRLiteralASCIITemplateStringExpression);
             }
             case TIRExpressionTag.LiteralTypedPrimitiveDirectExpression: {
-                return this.emitLiteralTypedPrimitiveDirectExpression(exp as TIRLiteralTypedPrimitiveDirectExpression);
+                return this.emitLiteralTypedPrimitiveDirectExpression(exp as TIRLiteralTypedPrimitiveDirectExpression, toplevel || false);
             }
             case TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
                 return this.emitLiteralTypedPrimitiveConstructorExpression(exp as TIRLiteralTypedPrimitiveConstructorExpression);
@@ -1017,22 +1052,103 @@ class BodyEmitter {
                 return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);
             }
             case TIRExpressionTag.ResultOkConstructorExpression: {
-                return this.emitResultOkConstructorExpression(exp as TIRResultOkConstructorExpression);
+                return this.emitResultOkConstructorExpression(exp as TIRResultOkConstructorExpression, toplevel || false);
             }
             case TIRExpressionTag.ResultErrConstructorExpression: {
-                return this.emitResultErrConstructorExpression(exp as TIRResultErrConstructorExpression);
+                return this.emitResultErrConstructorExpression(exp as TIRResultErrConstructorExpression, toplevel || false);
             }
             case TIRExpressionTag.SomethingConstructorExpression: {
-                return this.emitSomethingConstructorExpression(exp as TIRSomethingConstructorExpression);
+                return this.emitSomethingConstructorExpression(exp as TIRSomethingConstructorExpression, toplevel || false);
             }
             case TIRExpressionTag.TypedeclDirectExpression: {
-                return this.emitTypedeclDirectExpression(exp as TIRTypedeclDirectExpression);
+                return this.emitTypedeclDirectExpression(exp as TIRTypedeclDirectExpression, toplevel || false);
             }
             case TIRExpressionTag.TypedeclConstructorExpression: {
                 return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
             }
-
-            xxxx;
+            case TIRExpressionTag.CallNamespaceFunctionExpression: {
+                return this.emitCallNamespaceFunctionExpression(exp as TIRCallNamespaceFunctionExpression);
+            }
+            case TIRExpressionTag.CallNamespaceOperatorExpression: {
+                return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
+            }
+            case TIRExpressionTag.CallStaticFunctionExpression: {
+                return this.emitCallStaticFunctionExpression(exp as TIRCallStaticFunctionExpression);
+            }
+            case TIRExpressionTag.LogicActionAndExpression = "LogicActionAndExpression",
+            case TIRExpressionTag.LogicActionOrExpression = "LogicActionOrExpression",
+        
+            case TIRExpressionTag.PrefixNotExpression = "PrefixNotExpression",
+            case TIRExpressionTag.PrefixNegateExpression = "PrefixNegateExpression",
+        
+            case TIRExpressionTag.BinAddExpression = "BinAddExpression",
+            case TIRExpressionTag.BinSubExpression = "BinSubExpression",
+            case TIRExpressionTag.BinMultExpression = "BinMultExpression",
+            case TIRExpressionTag.BinDivExpression = "BinDivExpression",
+        
+            case TIRExpressionTag.BinKeyEqBothUniqueExpression = "BinKeyEqBothUniqueExpression",
+            case TIRExpressionTag.BinKeyEqOneUniqueExpression = "BinKeyEqOneUniqueExpression",
+            case TIRExpressionTag.BinKeyEqGeneralExpression = "BinKeyEqGeneralExpression",
+        
+            case TIRExpressionTag.BinKeyNeqBothUniqueExpression = "BinKeyNeqBothUniqueExpression",
+            case TIRExpressionTag.BinKeyNeqOneUniqueExpression = "BinKeyNeqOneUniqueExpression",
+            case TIRExpressionTag.BinKeyNeqGeneralExpression = "BinKeyNeqGeneralExpression",
+        
+            case TIRExpressionTag.BinKeyUniqueLessExpression = "BinKeyUniqueLessExpression",
+            case TIRExpressionTag.BinKeyGeneralLessExpression = "BinKeyGeneralLessExpression",
+        
+            case TIRExpressionTag.NumericEqExpression = "NumericEqExpression",
+            case TIRExpressionTag.NumericNeqExpression = "NumericNeqExpression",
+            case TIRExpressionTag.NumericLessExpression = "NumericLessExpression",
+            case TIRExpressionTag.NumericLessEqExpression = "NumericLessEqExpression",
+            case TIRExpressionTag.NumericGreaterExpression = "NumericGreaterExpression",
+            case TIRExpressionTag.NumericGreaterEqExpression = "NumericGreaterEqExpression",
+        
+            case TIRExpressionTag.BinLogicAndExpression = "BinLogicAndExpression",
+            case TIRExpressionTag.BinLogicOrExpression = "BinLogicOrExpression",
+            case TIRExpressionTag.BinLogicImpliesExpression = "BinLogicImpliesExpression",
+        
+            case TIRExpressionTag.MapEntryConstructorExpression = "MapEntryConstructorExpression",
+        
+            case TIRExpressionTag.IfExpression = "IfExpression",
+            case TIRExpressionTag.SwitchExpression = "SwitchExpression",
+            case TIRExpressionTag.MatchExpression = "MatchExpression",
+        
+            case TIRExpressionTag.TaskSelfFieldExpression = "TaskSelfFieldExpression",
+            case TIRExpressionTag.TaskSelfControlExpression = "TaskSelfControlExpression",
+            case TIRExpressionTag.TaskGetIDExpression = "TaskGetIDExpression",
+        
+            case TIRExpressionTag.CoerceSafeExpression = "CoerceSafeExpression",
+            case TIRExpressionTag.CoerceRefCallResultExpression = "CoerceRefCallExpression",
+            case TIRExpressionTag.CoerceTaskRefCallResultExpression = "CoerceTaskRefCallExpression",
+            case TIRExpressionTag.CoerceActionCallResultExpression = "CoerceActionCallResultExpression",
+        
+            case TIRExpressionTag.InjectExpression = "InjectExpression",
+            case TIRExpressionTag.ExtractExpression = "ExtractExpression",
+            case TIRExpressionTag.CreateCodePackExpression = "CreateCodePackExpression",
+        
+            case TIRExpressionTag.IsNoneExpression = "IsNoneExpression",
+            case TIRExpressionTag.IsNotNoneExpression = "IsNotNoneExpression",
+            case TIRExpressionTag.IsNothingExpression = "IsNothingExpression",
+            case TIRExpressionTag.IsNotNothingExpression = "IsNotNothingExpression",
+            case TIRExpressionTag.IsTypeExpression = "IsTypeExpression",
+            case TIRExpressionTag.IsNotTypeExpression = "IsNotTypeExpression",
+            case TIRExpressionTag.IsSubTypeExpression = "IsSubTypeExpression",
+            case TIRExpressionTag.IsNotSubTypeExpression = "IsNotSubTypeExpression",
+        
+            case TIRExpressionTag.AsNoneExpression = "AsNoneExpression",
+            case TIRExpressionTag.AsNotNoneExpression = "AsNotNoneExpression",
+            case TIRExpressionTag.AsNothingExpression = "AsNothingExpression",
+            case TIRExpressionTag.AsTypeExpression = "AsTypeExpression",
+            case TIRExpressionTag.AsSubTypeExpression = "AsSubTypeExpression",
+        
+            case TIRExpressionTag.CallMemberFunctionExpression = "CallMemberFunctionExpression",
+            case TIRExpressionTag.CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
+            case TIRExpressionTag.CallMemberFunctionSelfRefExpression = "CallMemberFunctionSelfRefExpression",
+        
+            case TIRExpressionTag.CallMemberFunctionTaskExpression = "CallMemberFunctionTaskExpression",
+            case TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression = "CallMemberFunctionTaskSelfRefExpression",
+            case TIRExpressionTag.CallMemberActionExpression = "CallMemberActionExpression"
 
             default: {
                 assert(false, `Unknown expression kind ${exp.tag}`);
