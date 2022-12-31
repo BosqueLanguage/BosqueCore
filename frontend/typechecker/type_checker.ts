@@ -3359,10 +3359,10 @@ class TypeChecker {
                 this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
 
                 if (mresolve.decl.decl.invoke.isThisRef) {
-                    return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, tkey, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
+                    return this.setResultExpression(env, new TIRCallMemberFunctionSelfRefExpression(op.sinfo, tkey, op.name, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
                 }
                 else {
-                    return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, tkey, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+                    return this.setResultExpression(env, new TIRCallMemberFunctionExpression(op.sinfo, tkey, op.name, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
                 }
             }
         }
@@ -3381,7 +3381,7 @@ class TypeChecker {
             }
 
             const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
-            return this.setResultExpression(env, new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+            return this.setResultExpression(env, new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, op.name, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
         }
     }
 
