@@ -11,31 +11,22 @@ Bosque is an open-source project developing a new Programming Language and Devel
 
 Features in the **_Bosque Programming Language_** include typed strings and paths [TODO], block-syntax [TODO], functor-libs [TODO], dynamic operator multi-dispatch [TODO], ref methods [TODO], typedecls & datatypes [TODO], task-flows [TODO], and extensive logical assertion integration [TODO]. Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
 
-The **_Bosque Testing Framework_** provides a built-in unit testing system, a powerful new SMT powered property-based testing system, and the ability to symbolically search for errors that can be triggered by user inputs in the entrypoints to the program (see the `bosque` command section below). These tests and checks can find compact debuggable inputs that trigger and error or failing test and, in many cases, can also prove that there will never be a case with a “small repro” that triggers the error! 
+The **_Bosque Development Stack_** provides state of the art observability and debugging features (including time-travel debugging) [TODO], a novel symbolic testing framework [TODO], and, with the introduction of APITypes [TODO], a new way to version and validate package behaviors. These features provide a developers with the ability to generate tests for an API before a line of code is even written, test against imported code (or external services) using auto-generated mocks and, check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs! The testing tools allow for deep analysis of code flows in an appliction and can find compact debuggable inputs that trigger and error or failing test *or* prove that there is no small input that will trigger the error! For any bugs that do make it into the wild the ability to record and then locally replay the exact error accelerates their diagnosis resolution as well as makes _non-repro_ and _intermitent_ issues a thing of the past. 
 
+<!---
 The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using slower but stable log time persistent structures). 
-
-The **_Bosque API Types_** provide a way to specify an application interface in a clean manner that is independent of the specifics of the Bosque type system. This enables the auto-generation of input validation and encoding logic. We currently support a universal JSON encoding but more efficient representations are possible. This design ensures that Bosque APIs can easily be integrated into polyglot systems (e.g. microservice architectures) or integrated into existing codebases (e.g. Node.js or C++). 
-
-**_Observability and Debuggability_**
-
-The **_Bosque Package Manager_** (see the `bosque` command section) provides a centralized way to organize, test, and build an application – either as a standalone command or to integrate into other applications via JSON APIs. This manager is designed to take advantage of the checking capabilities of Bosque and will enable developers to (1) test against imported code using auto-generated mocks and (2) check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs!
-
+--->
 
 # Documentation
 
-Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and [Tooling](#Tooling) sections. A rundown of notable and/or unique features in the Bosque language is provided on the [Language Highlights](docs/language/highlights.md) page and complete documenation for the language and standard libraries are on the [Language](docs/language/overview.md) and [Libraries](docs/libraries/overview.md) doc pages respectively.
+Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and [Tooling](#Tooling) sections. Complete documenation for the language and standard libraries are on the [Language](docs/language/overview.md) and [Libraries](docs/libraries/overview.md) doc pages respectively.
 
 Detailed Documentation, Tutorials, and Technical Information:
-* [Language Highlights](docs/language/highlights.md)
 * [Language Docs](docs/language/overview.md)
 * [Library Docs](docs/libraries/overview.md)
-* [Runtime and GC Docs](docs/runtime/overview.md)
-* Tooling -- !TODO!
+* Runtime and GC Docs -- !TODO!
 * Checkers -- !TODO!
-* Tutorials - _Coming Eventually!_
 * [Technical Papers](docs/papers/publist.md)
-* [Contribution guidelines](CONTRIBUTING.md)
 
 ## Code Snippets
 
@@ -61,20 +52,10 @@ function allPositive(...args: List<Int>): Bool {
 allPositive(1, 3, 4) //true
 ```
 
-**Tuples and Records:**
-
-```none
-function doit(tup: [Int, Bool], rec: {f: String, g: Int}): Int {
-    return tup.0 + rec.g;
-}
-
-doit([1, false], {f="ok", g=3}) //4
-```
-
 **Sign (with default argument):**
 
 ```none
-function sign(x?: Int=0i): Int {
+function sign(x: Int): Int {
     var y: Int;
 
     if(x == 0i) {
@@ -89,10 +70,9 @@ function sign(x?: Int=0i): Int {
 
 sign(5i)    //1
 sign(-5i)   //-1
-sign()     //0
 ```
 
-**Nominal Types Data Invariants:**
+**Nominal Types with Data Invariants and Ref Methods:**
 
 ```
 concept WithName {
@@ -169,7 +149,7 @@ printType(none) //"n"
 
 ```
 
-**Validated and Typed Strings:**
+**Validated Strings:**
 ```
 typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
 typedecl CSSpt = /[0-9]+pt/;
@@ -188,40 +168,7 @@ is3pt('3pt'_CSSpt) //true
 is3pt('4pt'_CSSpt) //false
 ```
 
-```
-entity StatusCode provides Parsable {
-    field code: Int;
-    field name: String;
-
-    function parse(name: String): Result<StatusCode, String> {
-        return switch(name) {|
-            "IO"        => ok(StatusCode{1, name})
-            | "Network" => ok(StatusCode{2, name})
-            | _         => err("Unknown code")
-        |};
-    }
-
-    function accepts(name: String): Bool {
-        return name === "IO" || name === "Network";
-    }
-}
-
-function isIOCode(s: DataString<StatusCode>): Bool {
-    return s === 'IO'_StatusCode;
-}
-
-isIOCode("IO");               //type error not a DataString<StatusCode>
-isIOCode('Input'_StatusCode)  //type error not a valid StatusCode string
-StatusCode::parse("Input") //runtime error not a valid StatusCode string
-
-isIOCode('Network'_StatusCode)               //false
-isIOCode('IO'_StatusCode)                    //true
-
-let ec: StatusCode = StatusCode{'IO'};
-assert(ec.code == 1i); //true
-```
-
-**Numeric Types**
+**Typedecl Types**
 
 ```
 typedecl Fahrenheit = Int;
@@ -243,132 +190,6 @@ isFreezing(5_Celsius)  //false
 isFreezing(-5_Celsius) //true
 
 ```
-<!-- 
-## API Types
-
-Bosque is designed to integrate easily into existing codebases and the fundamentally polyglot world of service based cloud applications. To support this Bosque uses the concept of *API Types*. These are a set of Bosque types that can be:
-1. Encoded and understood independently of (most) details of the Bosque type system or operational semantics.
-2. Efficiently serialized/deserialized in a language agnostic manner -- the default is JSON.
-3. Have auto-generated validation and structured generator code produced from the type signature.
-
-Most primitive types are valid APITypes including the exptected `None`, `Bool`, `Nat`, `Int`, `String`, `DateTime`, `UUID`, etc. The structured type `StringOf<T>` is also an APIType and both `DataString<T>` and `DataBuffer<T>` are also valid APITypes when the underlying type is as well. Lifting is applied to `typedecl` declared types, Tuples, Records, `List<T>`, `Map<K, V>`, `Option<T>`, and `Result<T, E>`. Arbitrary `entity` and `concept` types can also be declared as APITypes by having them `provide` the concept `APIType` and when all fields are publicly visible APITypes. 
-
-A function can be exported from the application in a `.bsqapi` file (see info on the `bosque` command) using the `entrypoint` annotation and ensuring that it consumes and returns APITypes. These functions can be run from the command line using the `bosque run` command and providing the arguments as a JSON list or the code can be compiled for integration into other applications with JSON as the foreign-function interface. -->
-
-# The `bosque` Command 
-
-The `bosque` command is the primary tool for building, testing, and managing bosque packages and applications. The bosque command can be run on sets of files _or_, preferably, used in conjunction with Bosque packages which are defined with a `package.json` format.
-
-## Calculator Example
-
-To illustrate how packages and the `bosque` command work we have a simple calculator app in the `impl/src/test/apps/readme_calc/` directory (along with more interesting tic-tac-toe and rental apps). 
-
-This directory contains a `package.json` file which defines the package. As expected it has required name/version/description/license fields. The next part of the package definition, the `src` entry, is a list of source files (or globs) that make up the core logic of the application. Finally, we define two sets of files (or globs) that define the `entrypoints` of the application that will be exposed to consumers and a set of `testfiles` that can be used for unit-testing and property-based symbolic checking.
-
-### Calculator Source Code, Entrypoints, and Test Definitions
-
-The source code file, `calc_impl.bsq`, for the calculator has two simple function implementation (`sign` and `abs`):
-
-```
-namespace Main;
-
-function abs_impl(arg: BigInt): BigInt {
-    var res = arg;
-
-    if(arg < 0I) {
-        res = -arg;
-    }
-   
-    return res;
-}
-
-function sign_impl(arg: BigInt): BigInt {
-    return arg > 0I ? 1I : -1I;
-}
-```
-
-These functions are used, along with some direct implementations, to create the external API surface of the package (defined in the `entrypoints` files with a `.bsqapi` extension). The calculator exports several functions including `div` which uses a `Result` to handle the case of division by zero and uses the pre/post features of the Bosque language (`ensures`) to document the behavior of the `abs` and `sign` methods for the clients of this package.
-
-```
-namespace Main;
-
-//More entrypoint functions ...
-
-entrypoint function div(arg1: BigInt, arg2: BigInt): Result<BigInt> {
-    if(arg2 == 0I) {
-        return err();
-    }
-    else {
-        return ok(arg1 / arg2);
-    }
-}
-
-entrypoint function abs(arg: BigInt): BigInt 
-    ensures $return == arg || $return == -arg;
-    ensures $return >= 0I;
-{
-    return abs_impl(arg);
-}
-
-entrypoint function sign(arg: BigInt): BigInt 
-    ensures $return == 1I || $return == -1I;
-{
-    return sign_impl(arg);
-}
-```
-
-### **The `run` Action**
-
-The `run` action in the `bosque` command provides a simple interface for invoking the entrypoints from a command line using JSON values. The syntax `run [package.json] [--entrypoint Namespace::function]` will load the code/api specified in the package (default `./package.json`) and find/run the specified function (default `Main::main`). The arguments can be provided on the command line, `--args [...]`, or via stdin. The image blow shows how to execute the `div` and `sign` APIs. 
-
-![](resources/images/readme/CalcRun.gif)
-
-### **The `test` Action**
-
-The `test` action handles running unit-tests and property-tests defined in the `testfiles` (with a `.bsqtest` extension). All functions that are declared as `chktest` functions will be run. Functions with 0 arguments are physically executed while functions with arguments are treated as parametric property tests and checked with the SMT solver for _small_ inputs that may violate the desired property (i.e. the test returns false).
-
-```
-namespace Main;
-
-chktest function abs_neg(): Bool {
-    return abs_impl(-3I) == 3I;
-}
-
-chktest function sign_pos(): Bool {
-    return sign_impl(5I) > 0I;
-}
-
-chktest function sign_neg(): Bool {
-    return sign_impl(-4I) < 0I;
-}
-
-chktest function sign_neg_is_minus1(x: BigInt): Bool 
-    requires x < 0I;
-{
-    return sign_impl(x) == -1I;
-}
-
-chktest function sign_pos_is_1(x: BigInt): Bool 
-    requires x >= 0I;
-{
-    return sign_impl(x) == 1I;
-}
-```
-
-![](resources/images/readme/CalcTest.gif)
-
-Running the `test` action as shown results in 3 tests being identified as unit-tests and physically executed with 2 tests being identified as parametric property tests and checked symbolically. In this app all 3 of the unit-tests pass and the symbolic checker is able to prove that one of the property tests is satisfied for all (small) inputs. However, the other property test does have a violating input, namely when `x` is `0` when the function `sign_impl` evaluates to `-1` but the expected property is that the sign should be `1`. 
-
-### **The `apptest` Action**
-
-The `apptest` action takes the power of the symbolic checker that Bosque provides and applies it to possible runtime errors, assertion failures, pre/post conditions, and invariants that may be triggered by a client calling an API provided in the package `entrypoints`. Running the `apptest` command takes each entrypoint function and checks all possible errors reachable to either (1) find a small repro input that triggers the error or (2) prove that no such small input exists.
-
-![](resources/images/readme/CalcAppTest.gif)
-
-This results in 2 checks of postconditions, for `sign` and `abs`, and one check for a possible div-by-zero in the `div` entrypoint. In all three cases the checker is able to prove that there is no input that can trigger any of these errors or violate any of the post-conditions!
-
-The other apps have more interesting code, tests, and errors to experiment with as well.
-
 # Installing the Bosque Language (Development)
 
 In order to install/build the project the following are needed:
@@ -377,13 +198,8 @@ In order to install/build the project the following are needed:
 - The LTS version of [node.js](https://nodejs.org/en/download/) ( According to your OS )
 - Typescript (install with: `npm i typescript -g`)
 - Git and [git-lfs](https://git-lfs.github.com/) setup
-- A C++ compiler -- by default `clang` on Linux/Mac and `cl.exe` on Windows
 
-**Note: If you are running examples from the "Learn Bosque Programming" book please use the [LearnBosqueProgramming](https://github.com/microsoft/BosqueLanguage/tree/LearnBosqueProgramming) branch which is sync'd with the version of code used in the book.**
-
-### Build & Test
-
-The `impl` directory contains the reference implementation parser, type checker, interpreter, and command line runner. In this directory, build and test the Bosque reference implementation with:
+## Build & Test
 
 ```none
 npm install && npm test
@@ -391,7 +207,7 @@ npm install && npm test
 
 The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
-### Visual Studio Code Integration
+## Visual Studio Code Integration
 
 This repository provides basic [Visual Studio Code](https://code.visualstudio.com/) IDE support for the Bosque language (currently limited to syntax and brace highlighting). The installation requires manually copying the full `bosque-language-tools/` folder into your user `.vscode/extensions/` directory and restarting VSCode.
 
@@ -399,15 +215,12 @@ This repository provides basic [Visual Studio Code](https://code.visualstudio.co
 
 This project welcomes community contributions.
 
-* [Submit bugs](https://github.com/Microsoft/BosqueLanguage/issues) and help us verify fixes.
-* [Submit pull requests](https://github.com/Microsoft/BosqueLanguage/pulls) for bug fixes and features and discuss existing proposals.
+* [Submit bugs](https://github.com/BosqueLanguage/BosqueCore/issues) and help us verify fixes.
+* [Submit pull requests](https://github.com/BosqueLanguage/BosqueCore/pulls) for bug fixes and features and discuss existing proposals.
 * Chat about the [@BosqueLanguage](https://twitter.com/BosqueLanguage) (or [#BosqueLanguage](https://twitter.com/hashtag/BosqueLanguage)) on Twitter.
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-
-Please refer to [Contribution Guidelines](CONTRIBUTING.md) for more details.
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/).
 
 ## License
 
