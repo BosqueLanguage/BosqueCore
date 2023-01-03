@@ -1075,87 +1075,232 @@ class BodyEmitter {
             case TIRExpressionTag.CallStaticFunctionExpression: {
                 return this.emitCallStaticFunctionExpression(exp as TIRCallStaticFunctionExpression);
             }
-            case TIRExpressionTag.LogicActionAndExpression = "LogicActionAndExpression",
-            case TIRExpressionTag.LogicActionOrExpression = "LogicActionOrExpression",
-        
-            case TIRExpressionTag.PrefixNotExpression = "PrefixNotExpression",
-            case TIRExpressionTag.PrefixNegateExpression = "PrefixNegateExpression",
-        
-            case TIRExpressionTag.BinAddExpression = "BinAddExpression",
-            case TIRExpressionTag.BinSubExpression = "BinSubExpression",
-            case TIRExpressionTag.BinMultExpression = "BinMultExpression",
-            case TIRExpressionTag.BinDivExpression = "BinDivExpression",
-        
-            case TIRExpressionTag.BinKeyEqBothUniqueExpression = "BinKeyEqBothUniqueExpression",
-            case TIRExpressionTag.BinKeyEqOneUniqueExpression = "BinKeyEqOneUniqueExpression",
-            case TIRExpressionTag.BinKeyEqGeneralExpression = "BinKeyEqGeneralExpression",
-        
-            case TIRExpressionTag.BinKeyNeqBothUniqueExpression = "BinKeyNeqBothUniqueExpression",
-            case TIRExpressionTag.BinKeyNeqOneUniqueExpression = "BinKeyNeqOneUniqueExpression",
-            case TIRExpressionTag.BinKeyNeqGeneralExpression = "BinKeyNeqGeneralExpression",
-        
-            case TIRExpressionTag.BinKeyUniqueLessExpression = "BinKeyUniqueLessExpression",
-            case TIRExpressionTag.BinKeyGeneralLessExpression = "BinKeyGeneralLessExpression",
-        
-            case TIRExpressionTag.NumericEqExpression = "NumericEqExpression",
-            case TIRExpressionTag.NumericNeqExpression = "NumericNeqExpression",
-            case TIRExpressionTag.NumericLessExpression = "NumericLessExpression",
-            case TIRExpressionTag.NumericLessEqExpression = "NumericLessEqExpression",
-            case TIRExpressionTag.NumericGreaterExpression = "NumericGreaterExpression",
-            case TIRExpressionTag.NumericGreaterEqExpression = "NumericGreaterEqExpression",
-        
-            case TIRExpressionTag.BinLogicAndExpression = "BinLogicAndExpression",
-            case TIRExpressionTag.BinLogicOrExpression = "BinLogicOrExpression",
-            case TIRExpressionTag.BinLogicImpliesExpression = "BinLogicImpliesExpression",
-        
-            case TIRExpressionTag.MapEntryConstructorExpression = "MapEntryConstructorExpression",
-        
-            case TIRExpressionTag.IfExpression = "IfExpression",
-            case TIRExpressionTag.SwitchExpression = "SwitchExpression",
-            case TIRExpressionTag.MatchExpression = "MatchExpression",
-        
-            case TIRExpressionTag.TaskSelfFieldExpression = "TaskSelfFieldExpression",
-            case TIRExpressionTag.TaskSelfControlExpression = "TaskSelfControlExpression",
-            case TIRExpressionTag.TaskGetIDExpression = "TaskGetIDExpression",
-        
-            case TIRExpressionTag.CoerceSafeExpression = "CoerceSafeExpression",
-            case TIRExpressionTag.CoerceRefCallResultExpression = "CoerceRefCallExpression",
-            case TIRExpressionTag.CoerceTaskRefCallResultExpression = "CoerceTaskRefCallExpression",
-            case TIRExpressionTag.CoerceActionCallResultExpression = "CoerceActionCallResultExpression",
-        
-            case TIRExpressionTag.InjectExpression = "InjectExpression",
-            case TIRExpressionTag.ExtractExpression = "ExtractExpression",
-            case TIRExpressionTag.CreateCodePackExpression = "CreateCodePackExpression",
-        
-            case TIRExpressionTag.IsNoneExpression = "IsNoneExpression",
-            case TIRExpressionTag.IsNotNoneExpression = "IsNotNoneExpression",
-            case TIRExpressionTag.IsNothingExpression = "IsNothingExpression",
-            case TIRExpressionTag.IsNotNothingExpression = "IsNotNothingExpression",
-            case TIRExpressionTag.IsTypeExpression = "IsTypeExpression",
-            case TIRExpressionTag.IsNotTypeExpression = "IsNotTypeExpression",
-            case TIRExpressionTag.IsSubTypeExpression = "IsSubTypeExpression",
-            case TIRExpressionTag.IsNotSubTypeExpression = "IsNotSubTypeExpression",
-        
-            case TIRExpressionTag.AsNoneExpression = "AsNoneExpression",
-            case TIRExpressionTag.AsNotNoneExpression = "AsNotNoneExpression",
-            case TIRExpressionTag.AsNothingExpression = "AsNothingExpression",
-            case TIRExpressionTag.AsTypeExpression = "AsTypeExpression",
-            case TIRExpressionTag.AsSubTypeExpression = "AsSubTypeExpression",
-        
-            case TIRExpressionTag.CallMemberFunctionExpression = "CallMemberFunctionExpression",
-            case TIRExpressionTag.CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
-            case TIRExpressionTag.CallMemberFunctionSelfRefExpression = "CallMemberFunctionSelfRefExpression",
-        
-            case TIRExpressionTag.CallMemberFunctionTaskExpression = "CallMemberFunctionTaskExpression",
-            case TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression = "CallMemberFunctionTaskSelfRefExpression",
-            case TIRExpressionTag.CallMemberActionExpression = "CallMemberActionExpression"
-
+            case TIRExpressionTag.LogicActionAndExpression: {
+                return this.emitLogicActionAndExpression(exp as TIRLogicActionAndExpression, toplevel || false);
+            }
+            case TIRExpressionTag.LogicActionOrExpression: {
+                return this.emitLogicActionOrExpression(exp as TIRLogicActionOrExpression, toplevel || false);
+            }
+            case TIRExpressionTag.PrefixNotExpression: {
+                return this.emitPrefixNotOpExpression(exp as TIRPrefixNotExpression, toplevel || false);
+            }
+            case TIRExpressionTag.PrefixNegateExpression: {
+                return this.emitPrefixNegateOpExpression(exp as TIRPrefixNegateExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinAddExpression: {
+                return this.emitBinAddExpression(exp as TIRBinAddExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinSubExpression: {
+                return this.emitBinSubExpression(exp as TIRBinSubExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinMultExpression: {
+                return this.emitBinMultExpression(exp as TIRBinMultExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinDivExpression: {
+                return this.emitBinDivExpression(exp as TIRBinDivExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinKeyEqBothUniqueExpression: {
+                return this.emitBinKeyEqBothUniqueExpression(exp as TIRBinKeyEqBothUniqueExpression);
+            }
+            case TIRExpressionTag.BinKeyEqOneUniqueExpression: {
+                return this.emitBinKeyEqOneUniqueExpression(exp as TIRBinKeyEqOneUniqueExpression);
+            }
+            case TIRExpressionTag.BinKeyEqGeneralExpression: {
+                return this.emitBinKeyEqGeneralExpression(exp as TIRBinKeyEqGeneralExpression);
+            }
+            case TIRExpressionTag.BinKeyNeqBothUniqueExpression: {
+                return this.emitBinKeyNeqBothUniqueExpression(exp as TIRBinKeyNeqBothUniqueExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinKeyNeqOneUniqueExpression: {
+                return this.emitBinKeyNeqOneUniqueExpression(exp as TIRBinKeyNeqOneUniqueExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinKeyNeqGeneralExpression: {
+                return this.emitBinKeyNeqGeneralExpression(exp as TIRBinKeyNeqGeneralExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinKeyUniqueLessExpression: {
+                return this.emitBinKeyUniqueLessExpression(exp as TIRBinKeyUniqueLessExpression);
+            }
+            case TIRExpressionTag.BinKeyGeneralLessExpression: {
+                return this.emitBinKeyGeneralLessExpression(exp as TIRBinKeyGeneralLessExpression);
+            }
+            case TIRExpressionTag.NumericEqExpression: {
+                return this.emitNumericEqExpression(exp as TIRNumericEqExpression, toplevel || false);
+            }
+            case TIRExpressionTag.NumericNeqExpression: {
+                return this.emitNumericNeqExpression(exp as TIRNumericNeqExpression, toplevel || false);
+            }
+            case TIRExpressionTag.NumericLessExpression: {
+                return this.emitNumericLessExpression(exp as TIRNumericLessExpression, toplevel || false);
+            }
+            case TIRExpressionTag.NumericLessEqExpression: {
+                return this.emitNumericLessEqExpression(exp as TIRNumericLessEqExpression, toplevel || false);
+            }
+            case TIRExpressionTag.NumericGreaterExpression: {
+                return this.emitNumericGreaterExpression(exp as TIRNumericGreaterExpression, toplevel || false);
+            }
+            case TIRExpressionTag.NumericGreaterEqExpression: {
+                return this.emitNumericGreaterEqExpression(exp as TIRNumericGreaterEqExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinLogicAndExpression: {
+                return this.emitBinLogicAndExpression(exp as TIRBinLogicAndExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinLogicOrExpression: {
+                return this.emitBinLogicOrExpression(exp as TIRBinLogicOrExpression, toplevel || false);
+            }
+            case TIRExpressionTag.BinLogicImpliesExpression: {
+                return this.emitBinLogicImpliesExpression(exp as TIRBinLogicImpliesExpression, toplevel || false);
+            }
+            case TIRExpressionTag.MapEntryConstructorExpression: {
+                return this.emitMapEntryConstructorExpression(exp as TIRMapEntryConstructorExpression);
+            }
+            case TIRExpressionTag.IfExpression: {
+                return this.emitIfExpression(exp as TIRIfExpression, toplevel || false);
+            }
+            case TIRExpressionTag.SwitchExpression: {
+                return this.emitSwitchExpression(exp as TIRSwitchExpression, toplevel || false);
+            }
+            case TIRExpressionTag.MatchExpression: {
+                return this.emitMatchExpression(exp as TIRMatchExpression, toplevel || false);
+            }
+            case TIRExpressionTag.TaskSelfFieldExpression: {
+                return this.emitTaskSelfFieldExpression(exp as TIRTaskSelfFieldExpression);
+            }
+            case TIRExpressionTag.TaskSelfControlExpression: {
+                return this.emitTaskSelfControlExpression(exp as TIRTaskSelfControlExpression);
+            }
+            case TIRExpressionTag.TaskGetIDExpression: {
+                return this.emitTaskGetIDExpression(exp as TIRTaskGetIDExpression);
+            }
+            case TIRExpressionTag.CoerceSafeExpression: {
+                return this.emitCoerceSafeExpression(exp as TIRCoerceSafeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CoerceRefCallResultExpression: {
+                return this.emitCoerceRefCallResultExpression(exp as TIRCoerceSafeRefCallResultExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CoerceTaskRefCallResultExpression: {
+                return this.emitCoerceTaskRefCallResultExpression(exp as TIRCoerceSafeTaskRefCallResultExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CoerceActionCallResultExpression: {
+                return this.emitCoerceActionCallResultExpression(exp as TIRCoerceSafeActionCallResultExpression, toplevel || false);
+            }
+            case TIRExpressionTag.InjectExpression: {
+                return this.emitInjectExpression(exp as TIRInjectExpression, toplevel || false);
+            }
+            case TIRExpressionTag.ExtractExpression: {
+                return this.emitExtractExpression(exp as TIRExtractExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CreateCodePackExpression: {
+                return this.emitCreateCodePackExpression(exp as TIRCreateCodePackExpression);
+            }
+            case TIRExpressionTag.IsNoneExpression: {
+                return this.emitIsNoneExpression(exp as TIRIsNoneExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsNotNoneExpression: {
+                return this.emitIsNotNoneExpression(exp as TIRIsNotNoneExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsNothingExpression: {
+                return this.emitIsNothingExpression(exp as TIRIsNothingExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsNotNothingExpression: {
+                return this.emitIsNotNothingExpression(exp as TIRIsNotNothingExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsTypeExpression: {
+                return this.emitIsTypeExpression(exp as TIRIsTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsNotTypeExpression: {
+                return this.emitIsNotTypeExpression(exp as TIRIsNotTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsSubTypeExpression: {
+                return this.emitIsSubTypeExpression(exp as TIRIsSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.IsNotSubTypeExpression: {
+                return this.emitIsNotSubTypeExpression(exp as TIRIsNotSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNoneExpression: {
+                return this.emitAsNoneExpression(exp as TIRAsNoneExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotNoneExpression: {
+                return this.emitAsNotNoneExpression(exp as TIRAsNotNoneExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNothingExpression: {
+                return this.emitAsNothingExpression(exp as TIRAsNothingExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsTypeExpression: {
+                return this.emitAsTypeExpression(exp as TIRAsTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsSubTypeExpression: {
+                return this.emitAsSubTypeExpression(exp as TIRAsSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionExpression: {
+                return this.emitCallMemberFunctionExpression(exp as TIRCallMemberFunctionExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionDynamicExpression: {
+                return this.emitCallMemberFunctionDynamicExpression(exp as TIRCallMemberFunctionDynamicExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionSelfRefExpression: {
+                return this.emitCallMemberFunctionSelfRefExpression(exp as TIRCallMemberFunctionSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskExpression: {
+                return this.emitCallMemberFunctionTaskExpression(exp as TIRCallMemberFunctionTaskExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression: {
+                return this.emitCallMemberFunctionTaskSelfRefExpression(exp as TIRCallMemberFunctionTaskSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberActionExpression: {
+                return this.emitCallMemberActionExpression(exp as TIRCallMemberActionExpression, toplevel || false);
+            }
             default: {
                 assert(false, `Unknown expression kind ${exp.tag}`);
                 return `[UNKNOWN TAG ${exp.tag}]`
             }
         }
     }
+
+    private emitNopStatement = "NopStatement",
+    private emitAbortStatement = "AbortStatement",
+    private emitAssertCheckStatement = "AssertCheckStatement",
+    private emitDebugStatement = "DebugStatement",
+
+    private emitVarDeclareStatement = "VarDeclareStatement",
+    private emitVarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
+    private emitVarAssignStatement = "VarAssignStatement",
+
+    private emitVarDeclareAndAssignStatementWRef = "VarDeclareAndAssignStatementWRef",
+    private emitVarAssignStatementWRef = "VarAssignStatementWRef",
+
+    private emitVarDeclareAndAssignStatementWTaskRef = "VarDeclareAndAssignStatementWTaskRef",
+    private emitVarAssignStatementWTaskRef = "VarAssignStatementWTaskRef",
+
+    private emitVarDeclareAndAssignStatementWAction = "VarDeclareAndAssignStatementWAction",
+    private emitVarAssignStatementWAction = "VarAssignStatementWAction",
+
+    CallStatementWRef = "CallStatementWRef",
+    CallStatementWTaskRef = "CallStatementWTaskRef",
+    CallStatementWAction = "CallStatementWAction",
+
+    ReturnStatement = "ReturnStatement",
+    ReturnStatementWRef = "ReturnStatementWRef",
+    ReturnStatementWTaskRef = "ReturnStatementWTaskRef",
+    ReturnStatementWAction = "ReturnStatementWAction",
+
+    IfStatement = "IfStatement",
+    SwitchStatement = "SwitchStatement",
+    MatchStatement = "MatchStatement",
+
+    EnvironmentFreshStatement = "EnvironmentFreshStatement",
+    EnvironmentSetStatement = "EnvironmentSetStatement",
+    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+
+    TaskRunStatement = "TaskRunStatement", //run single task
+    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
+    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
+    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
+
+    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
+
+    LoggerEmitStatement = "LoggerEmitStatement",
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement"
 }
 
 export {
