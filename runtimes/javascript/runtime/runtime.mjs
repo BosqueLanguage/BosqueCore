@@ -37,6 +37,16 @@ function raiseRuntimeErrorIf(cond, msg) {
     }
 }
 
+function raiseUserAssert(msg) {
+    throw new Unwind("assert", msg);
+}
+
+function raiseUserAssertIf(cond, msg) {
+    if(cond) {
+        throw new Unwind("assert", msg);
+    }
+}
+
 function safeMath(val, lb, ub) {
     raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
     return val;
@@ -56,8 +66,16 @@ function BSQEnvironment(env, ...args) {
     this.parent = env;
     this.args = new Map();
     for(let i = 0; i < args.length; ++i) {
-        this.args.set(args[i][0], args[1]);
+        this.args.set(args[i][0], args[i][1]);
     }
+}
+
+BSQEnvironment.push = function(env) {
+    return new BSQEnvironment(env);
+};
+
+BSQEnvironment.pop = function(env) {
+    return env.parent;
 }
 
 BSQEnvironment.has = function(env, key) {
@@ -129,10 +147,31 @@ BSQEnvironment.clear = function(env, key) {
     env.args.set(key, undefined);
 };
 
+
+let loglevel = "info";
+
+function setloglevel(level) {
+    loglevel = level;
+}
+
+function checkloglevel(level) {
+    return level === "fatal" || level === "error" || level === "warn" || level === "info";
+}
+
+function log(level, fmt, ...args) {
+    const msg = fmt + " -- " + args.map((arg) => JSON.stringify(arg)).join(" ");
+    console.log(msg);
+
+    if(level === "fatal") {
+        raiseUserAssert("log at fatal level -- " + msg);
+    }
+}
+
 export {
     UnionValue, isSubtype,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
-    Unwind, raiseRuntimeError, raiseRuntimeErrorIf,
+    Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,
-    BSQEnvironment
+    BSQEnvironment,
+    setloglevel, checkloglevel, log
 };

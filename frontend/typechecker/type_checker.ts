@@ -3889,7 +3889,7 @@ class TypeChecker {
         
         let cenv: ExpressionTypeEnvironment = venv;
         let exhaustive = false;
-        let results: {test: TIRLiteralValue | undefined, value: ExpressionTypeEnvironment}[] = [];
+        let results: {test: TIRExpression | undefined, litval: TIRLiteralValue | undefined, value: ExpressionTypeEnvironment}[] = [];
         for (let i = 0; i < exp.switchflow.length; ++i) {
             //it is a wildcard match
             if(exp.switchflow[i].condlit === undefined) {
@@ -3897,7 +3897,7 @@ class TypeChecker {
 
                 const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
 
-                results.push({test: undefined, value: trueenv});
+                results.push({test: undefined, litval: undefined, value: trueenv});
                 exhaustive = true;
                 break;
             }
@@ -3914,7 +3914,7 @@ class TypeChecker {
                         this.raiseErrorIf(exp.sinfo, i == exp.switchflow.length - 1, `exhaustive none check should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
 
                         const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
-                        results.push({test: undefined, value: trueenv});
+                        results.push({test: undefined, litval: tval, value: trueenv});
                         exhaustive = true;
                         break;
                     }
@@ -3928,7 +3928,7 @@ class TypeChecker {
                         this.raiseErrorIf(exp.sinfo, i == exp.switchflow.length - 1, `exhaustive nothing check should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
 
                         const trueenv = this.checkExpression(cenv, exp.switchflow[i].value, desiredtype);
-                        results.push({test: undefined, value: trueenv});
+                        results.push({test: undefined, litval: tval, value: trueenv});
                         exhaustive = true;
                         break;
                     }
@@ -3944,7 +3944,7 @@ class TypeChecker {
                 const cflow = this.convertToBoolFlowsOnResult(fexp);
 
                 const trueenv = this.checkExpression(fexp.createFreshFlowEnvExpressionFrom(cflow.tenvs), exp.switchflow[i].value, desiredtype);
-                results.push({test: tval, value: trueenv});
+                results.push({test: fexp.expressionResult, litval: tval, value: trueenv});
                 
                 cenv = fexp.setResultExpressionInfo(venv.expressionResult, venv.trepr, cflow.fenvs);
             }
@@ -3956,7 +3956,7 @@ class TypeChecker {
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
             .map((ffp) => {
-                return { match: ffp.test as TIRLiteralValue, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult };
+                return { match: ffp.test as TIRExpression, litval: ffp.litval as TIRLiteralValue, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult };
             });
         const edefault = results.find((ffp) => ffp.test === undefined) ? this.emitSafeCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult : undefined;
 
@@ -4523,7 +4523,7 @@ class TypeChecker {
         
         let cenv: ExpressionTypeEnvironment = venv;
         let exhaustive = false;
-        let results: {test: TIRLiteralValue | undefined, value: [StatementTypeEnvironment, TIRScopedBlockStatement]}[] = [];
+        let results: {test: TIRExpression | undefined, litval: TIRLiteralValue | undefined, value: [StatementTypeEnvironment, TIRScopedBlockStatement]}[] = [];
         for (let i = 0; i < stmt.switchflow.length; ++i) {
             //it is a wildcard match
             if(stmt.switchflow[i].condlit === undefined) {
@@ -4531,7 +4531,7 @@ class TypeChecker {
 
                 const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
 
-                results.push({test: undefined, value: trueenv});
+                results.push({test: undefined, litval: undefined, value: trueenv});
                 exhaustive = true;
                 break;
             }
@@ -4548,7 +4548,7 @@ class TypeChecker {
                         this.raiseErrorIf(stmt.sinfo, i == stmt.switchflow.length - 1, `exhaustive none check should be last option in switch statement but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
 
                         const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
-                        results.push({test: undefined, value: trueenv});
+                        results.push({test: undefined, litval: tval, value: trueenv});
                         exhaustive = true;
                         break;
                     }
@@ -4562,7 +4562,7 @@ class TypeChecker {
                         this.raiseErrorIf(stmt.sinfo, i == stmt.switchflow.length - 1, `exhaustive nothing check should be last option in switch statement but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
 
                         const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
-                        results.push({test: undefined, value: trueenv});
+                        results.push({test: undefined, litval: tval, value: trueenv});
                         exhaustive = true;
                         break;
                     }
@@ -4578,7 +4578,7 @@ class TypeChecker {
                 const cflow = this.convertToBoolFlowsOnResult(fexp);
 
                 const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cflow.tenvs).expInferInfo), stmt.switchflow[i].value);
-                results.push({test: tval, value: trueenv});
+                results.push({test: fexp.expressionResult, litval: tval, value: trueenv});
                 
                 cenv = fexp.setResultExpressionInfo(venv.expressionResult, venv.trepr, cflow.fenvs);
             }
@@ -4586,7 +4586,7 @@ class TypeChecker {
 
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => { return { match: ffp.test as TIRLiteralValue, value: ffp.value[1] };});
+            .map((ffp) => { return { match: ffp.test as TIRExpression, litval: ffp.litval as TIRLiteralValue, value: ffp.value[1] };});
         const edefault = results.find((ffp) => ffp.test === undefined) ? results[results.length - 1].value[1] : undefined;
 
         const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, clauses, edefault, exhaustive);

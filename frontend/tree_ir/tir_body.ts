@@ -1119,12 +1119,12 @@ class TIRIfExpression extends TIRExpression {
 
 class TIRSwitchExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRLiteralValue, value: TIRExpression}[];
+    readonly clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRExpression}[];
     readonly edefault: TIRExpression | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRLiteralValue, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
-        super(TIRExpressionTag.SwitchExpression, sinfo, etype, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.litstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
+        super(TIRExpressionTag.SwitchExpression, sinfo, etype, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.litval.litstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
         this.edefault = edefault;
@@ -1133,7 +1133,7 @@ class TIRSwitchExpression extends TIRExpression {
 
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.exp.isFailableOperation() || cc.value.isFailableOperation()) ||
+            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation()) ||
             (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
             !this.isexhaustive;
     }
@@ -1141,7 +1141,7 @@ class TIRSwitchExpression extends TIRExpression {
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(
             this.exp.getUsedVars(),
-            ...this.clauses.map((ci) => ci.match.exp.getUsedVars()), ...this.clauses.map((ci) => ci.value.getUsedVars()),
+            ...this.clauses.map((ci) => ci.match.getUsedVars()), ...this.clauses.map((ci) => ci.value.getUsedVars()),
             (this.edefault !== undefined ? this.edefault.getUsedVars() : [])
         );
     }
@@ -1935,12 +1935,12 @@ class TIRIfStatement extends TIRStatement {
 
 class TIRSwitchStatement extends TIRStatement {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRLiteralValue, value: TIRScopedBlockStatement}[];
+    readonly clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRScopedBlockStatement}[];
     readonly edefault: TIRScopedBlockStatement | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRLiteralValue, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
-        super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.litstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
+        super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.litval.litstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
         this.exp = exp;
         this.clauses = clauses;
         this.edefault = edefault;
@@ -1949,7 +1949,7 @@ class TIRSwitchStatement extends TIRStatement {
 
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.exp.isFailableOperation() || cc.value.isFailableOperation()) ||
+            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation()) ||
             (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
             !this.isexhaustive;
     }

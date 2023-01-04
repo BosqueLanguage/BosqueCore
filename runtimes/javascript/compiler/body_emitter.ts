@@ -1,10 +1,14 @@
 import * as assert from "assert";
 
 import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREntityType, TIREnumEntityType, TIRInternalEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRSomethingConstructorExpression, TIRSwitchExpression, TIRTaskGetIDExpression, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression } from "../../../frontend/tree_ir/tir_body";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRInternalEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAbortStatement, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
+    assert(false, `NOT IMEPLEMENTED -- ${tag}`);
+}
+
+function NOT_IMPLEMENTED_STATEMENT(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
 }
 
@@ -17,6 +21,8 @@ class BodyEmitter {
     private m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
+
+    private m_varCtr = 0;
 
     constructor(assembly: TIRAssembly, file: string) {
         this.m_assembly = assembly;
@@ -176,10 +182,6 @@ class BodyEmitter {
         return `"${str}"`;
     }
 
-    private generateError(sinfo: SourceInfo, msg: string): string {
-        return `$Runtime.raiseRuntimeError("${msg} @ ${sinfo.line} in ${this.m_file}")`;
-    }
-
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
         return "null";
     }
@@ -281,10 +283,10 @@ class BodyEmitter {
 
     private emitAccessVariableExpression(exp: TIRAccessVariableExpression): string {
         if(exp.name === "this") {
-            return "$This";
+            return "$_this";
         }
         else if(exp.name === "$this") {
-            return "$$This";
+            return "$_$this";
         }
         else {
             return exp.name;
@@ -705,15 +707,15 @@ class BodyEmitter {
     }
 
     private emitTaskSelfFieldExpression(exp: TIRTaskSelfFieldExpression): string {
-        return `$Self.${exp.fname}`;
+        return `self.${exp.fname}`;
     }
 
     private emitTaskSelfControlExpression(exp: TIRTaskSelfControlExpression): string {
-        return "$Self.$CNTL";
+        return "self.$CNTL";
     }
 
     private emitTaskGetIDExpression(exp: TIRTaskGetIDExpression): string {
-        return "$Self.$ID";
+        return "self.$ID";
     }
 
     private emitCoerceSafeExpression(exp: TIRCoerceSafeExpression, toplevel: boolean): string {
@@ -1256,51 +1258,263 @@ class BodyEmitter {
         }
     }
 
-    private emitNopStatement = "NopStatement",
-    private emitAbortStatement = "AbortStatement",
-    private emitAssertCheckStatement = "AssertCheckStatement",
-    private emitDebugStatement = "DebugStatement",
+    private emitNopStatement(stmt: TIRNopStatement): string {
+        return "; //nop";
+    }
 
-    private emitVarDeclareStatement = "VarDeclareStatement",
-    private emitVarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
-    private emitVarAssignStatement = "VarAssignStatement",
+    private emitAbortStatement(stmt: TIRAbortStatement): string {
+        return `$Runtime.raiseUserAssert("${stmt.msg}" + "-- ${this.m_file}@${stmt.sinfo.line}");`;
+    }
 
-    private emitVarDeclareAndAssignStatementWRef = "VarDeclareAndAssignStatementWRef",
-    private emitVarAssignStatementWRef = "VarAssignStatementWRef",
+    private emitAssertCheckStatement(stmt: TIRAssertCheckStatement): string {
+        return `$Runtime.raiseUserAssertIf(!${this.emitExpression(stmt.cond, true)}, "${stmt.msg}" + "-- ${this.m_file}@${stmt.sinfo.line}");`;
+    }
 
-    private emitVarDeclareAndAssignStatementWTaskRef = "VarDeclareAndAssignStatementWTaskRef",
-    private emitVarAssignStatementWTaskRef = "VarAssignStatementWTaskRef",
+    private emitDebugStatement(stmt: TIRDebugStatement): string {
+        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch(ex) { console.log("__debug(${stmt.value.expstr}) evaluation failed"); }`;
+    }
 
-    private emitVarDeclareAndAssignStatementWAction = "VarDeclareAndAssignStatementWAction",
-    private emitVarAssignStatementWAction = "VarAssignStatementWAction",
+    private emitVarDeclareStatement(stmt: TIRVarDeclareStatement): string {
+        return `let ${stmt.vname};`;
+    }
 
-    CallStatementWRef = "CallStatementWRef",
-    CallStatementWTaskRef = "CallStatementWTaskRef",
-    CallStatementWAction = "CallStatementWAction",
+    private emitVarDeclareAndAssignStatement(stmt: TIRVarDeclareAndAssignStatement): string {
+        return (stmt.isConst ? "const " : "let ") + `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+    }
 
-    ReturnStatement = "ReturnStatement",
-    ReturnStatementWRef = "ReturnStatementWRef",
-    ReturnStatementWTaskRef = "ReturnStatementWTaskRef",
-    ReturnStatementWAction = "ReturnStatementWAction",
+    private emitVarAssignStatement(stmt: TIRVarAssignStatement): string {
+        return `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+    }
 
-    IfStatement = "IfStatement",
-    SwitchStatement = "SwitchStatement",
-    MatchStatement = "MatchStatement",
+    private emitVarDeclareAndAssignStatementWRef(stmt: TIRVarDeclareAndAssignStatementWRef): string {
+        const tmpv = `$_tmp_${this.m_varCtr++}`; 
+        return (stmt.isConst ? "const " : "let ") + `[${tmpv}, ${stmt.vname}] = ${this.emitExpression(stmt.vexp, true)}; ${stmt.refvar} = ${tmpv};`;
+    }
 
-    EnvironmentFreshStatement = "EnvironmentFreshStatement",
-    EnvironmentSetStatement = "EnvironmentSetStatement",
-    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+    private emitVarAssignStatementWRef(stmt: TIRVarAssignStatementWRef): string {
+        return `[${stmt.refvar}, ${stmt.vname}] = ${this.emitExpression(stmt.vexp)};`;
+    }
 
-    TaskRunStatement = "TaskRunStatement", //run single task
-    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
-    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
-    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
-    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
+    private emitVarDeclareAndAssignStatementWTaskRef(stmt: TIRVarDeclareAndAssignStatementWTaskRef): string {
+        const tmpv = `$_tmp_${this.m_varCtr++}`; 
+        return (stmt.isConst ? "const " : "let ") + `[${tmpv}, ${stmt.vname}] = ${this.emitExpression(stmt.vexp, true)}; self = ${tmpv};`;
+    }
 
-    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
+    private emitVarAssignStatementWTaskRef(stmt: TIRVarDeclareAndAssignStatementWTaskRef): string {
+        return `[self, ${stmt.vname}] = ${this.emitExpression(stmt.vexp)};`;
+    }
 
-    LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement"
+    private emitVarDeclareAndAssignStatementWAction(stmt: TIRVarDeclareAndAssignStatementWAction): string {
+        const tmpv = `$_tmp_${this.m_varCtr++}`; 
+        return (stmt.isConst ? "const " : "let ") + `[${tmpv}, ${stmt.vname}] = ${this.emitExpression(stmt.vexp, true)}; self = ${tmpv};`;
+    }
+
+    private emitVarAssignStatementWAction(stmt: TIRVarDeclareAndAssignStatementWAction): string {
+        return `[self, ${stmt.vname}] = ${this.emitExpression(stmt.vexp)};`;
+    }
+
+    private emitCallStatementWRef(stmt: TIRCallStatementWRef): string {
+        return `[${stmt.refvar}] = ${this.emitExpression(stmt.vexp, true)};`;
+    }
+
+    private emitCallStatementWTaskRef(stmt: TIRCallStatementWTaskRef): string {
+        return `[self] = ${this.emitExpression(stmt.vexp, true)};`;
+    }
+
+    private emitCallStatementWAction(stmt: TIRCallStatementWAction): string {
+        return `[self] = ${this.emitExpression(stmt.vexp, true)};`;
+    }
+
+    private emitReturnStatement(stmt: TIRReturnStatement): string {
+        return `return ${this.emitExpression(stmt.value, true)};`;
+    }
+
+    private emitReturnStatementWRef(stmt: TIRReturnStatementWRef): string {
+        return `return [$_this, ${this.emitExpression(stmt.value, true)}];`;
+    }
+
+    private emitReturnStatementWTaskRef(stmt: TIRReturnStatementWTaskRef): string {
+        return `return [self, ${this.emitExpression(stmt.value, true)}];`;
+    }
+
+    private emitReturnStatementWAction(stmt: TIRReturnStatementWAction): string {
+        return `return [self, ${this.emitExpression(stmt.value, true)}];`;
+    }   
+
+    private emitIfStatement(stmt: TIRIfStatement, indent: string): string {
+        let sstr = `if(${this.emitExpression(stmt.ifentry.test, true)}) ${this.emitScopedBlock(stmt.ifentry.value, indent)}\n`;
+
+        for(let i = 0; i < stmt.elifentries.length; ++i) {
+            sstr += indent + `else if(${this.emitExpression(stmt.elifentries[i].test, true)}) ${this.emitScopedBlock(stmt.elifentries[i].value, indent)}\n`;
+        }
+
+        sstr += indent + `else ${this.emitScopedBlock(stmt.elseentry, indent)}\n`;
+
+        return sstr;
+    }
+
+    private emitSwitchStatement(stmt: TIRSwitchStatement, indent: string): string {
+        let sstr = `if(${this.emitExpression(stmt.clauses[0].match, true)}) ${this.emitScopedBlock(stmt.clauses[0].value, indent)}\n`;
+
+        for(let i = 1; i < stmt.clauses.length; ++i) {
+            sstr += indent + `else if(${this.emitExpression(stmt.clauses[i].match, true)}) ${this.emitScopedBlock(stmt.clauses[i].value, indent)}\n`;
+        }
+
+        if(stmt.edefault !== undefined) {
+            sstr += indent + `else ${this.emitScopedBlock(stmt.edefault, indent)}\n`;
+        }
+        else {
+            sstr += indent + "else {\n"
+            if(stmt.isexhaustive) {
+                sstr += indent + "    ;\n";
+            }
+            else {
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + -- "${this.m_file} @ ${stmt.sinfo.line}")` + ";\n"
+            }
+            sstr += indent + "}\n";
+        }
+
+        return sstr;
+    }
+
+    private emitMatchStatement(stmt: TIRMatchStatement, indent: string): string {
+        let sstr = `if(${this.emitExpression(stmt.clauses[0].match, true)}) ${this.emitScopedBlock(stmt.clauses[0].value, indent)}\n`;
+
+        for(let i = 1; i < stmt.clauses.length; ++i) {
+            sstr += indent + `else if(${this.emitExpression(stmt.clauses[i].match, true)}) ${this.emitScopedBlock(stmt.clauses[i].value, indent)}\n`;
+        }
+
+        if(stmt.edefault !== undefined) {
+            sstr += indent + `else ${this.emitScopedBlock(stmt.edefault, indent)}\n`;
+        }
+        else {
+            sstr += indent + "else {\n"
+            if(stmt.isexhaustive) {
+                sstr += indent + "    ;\n";
+            }
+            else {
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ ${stmt.sinfo.line}")` + ";\n"
+            }
+            sstr += indent + "}\n";
+        }
+
+        return sstr;
+    }
+
+    private emitEnvironmentFreshStatement(stmt: TIREnvironmentFreshStatement): string {
+        const binds = stmt.assigns.map((asgn) => `["${asgn.keyname}", {tkey: "${asgn.valexp[0]}", value: ${this.emitExpression(asgn.valexp[1], true)}}]`);
+        return `self.$environment = new $Runtime.BSQEnvironment(undefined, ${binds.join(", ")});`
+    }
+
+    private emitEnvironmentSetStatement(stmt: TIREnvironmentSetStatement): string {
+        const binds = stmt.assigns.map((asgn) => {
+            if(asgn.valexp === undefined) {
+                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+            }
+            else {
+                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+            }
+        });
+
+        return binds.join(" ");
+    }
+
+    private emitEnvironmentSetStatementBracket(stmt: TIREnvironmentSetStatementBracket, indent: string): string {
+        let sstr = "";
+        let tmpe = `$_tmpenv_${this.m_varCtr++}`;
+        if(stmt.isFresh) {
+            sstr = `const ${tmpe} = self.$environment; self.$environment = new $Runtime.BSQEnvironment(undefined);`;
+        }
+        else {
+            sstr = `self.$environment = $Runtime.BSQEnvironment.push(self.$environment);`;
+        }
+
+        const binds = stmt.assigns.map((asgn) => {
+            if(asgn.valexp === undefined) {
+                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+            }
+            else {
+                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+            }
+        });
+        sstr += (binds.length !== 0) ? ("\n" + indent + binds.join(" ")) : ""
+
+        if(stmt.block instanceof TIRScopedBlockStatement) {
+            sstr += this.emitScopedBlock(stmt.block, indent);
+        }
+        else {
+            sstr += this.emitUnscopedBlock(stmt.block, indent);
+        }
+
+        if(stmt.isFresh) {
+            sstr += `self.$environment = ${tmpe}\n`;
+        }
+        else {
+            sstr += `self.$environment = $Runtime.BSQEnvironment.pop(self.$environment);\n`;
+        }
+
+    }
+
+    private emitTaskRunStatement(stmt: TIRTaskRunStatement): string {
+
+    }
+
+    private emitTaskMultiStatement(stmt: TIRTaskMultiStatement): string {
+
+    }
+
+    private emitTaskDashStatement(stmt: TIRTaskDashStatement): string {
+
+    }
+
+    private emitTaskAllStatement(stmt: TIRTaskAllStatement): string {
+
+    }
+
+    private emitTaskRaceStatement(stmt: TIRTaskRaceStatement): string {
+
+    }
+
+    private emitTaskSetSelfFieldStatement(stmt: TIRTaskSetSelfFieldStatement): string {
+        return `self.${stmt.fname} = ${this.emitExpression(stmt.value, true)};`;
+    }
+
+    private emitLoggerEmitStatement(stmt: TIRLoggerEmitStatement): string {
+        const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
+        const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
+
+        return `if($Runtime.checkloglevel(${stmt.level})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
+    }
+
+    private emitLoggerEmitConditionalStatement(stmt: TIRLoggerEmitConditionalStatement): string {
+        const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
+        const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
+        
+        const test = this.emitExpression(stmt.cond);
+        return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
+    }
+
+    private emitScopedBlock(blck: TIRScopedBlockStatement, indent: string): string {
+        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
+
+        return indent + "{\n" + stmts + "\n" + indent + "}";
+    }
+
+    private emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {
+        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
+
+        return indent + "/*{|*/\n" + stmts + "\n" + indent + "/*|}/*";
+    }
+
+    private emitStatement(stmt: TIRStatement, indent: string): string {
+        switch(stmt.tag) {
+            case :
+            default: {
+                assert(false, `Unknown statement kind ${stmt.tag}`);
+                return `[UNKNOWN TAG ${stmt.tag}]`
+            }
+        }
+    }
 }
 
 export {
