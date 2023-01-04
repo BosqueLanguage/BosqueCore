@@ -1,21 +1,56 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRAssembly, TIREnumEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRConstMemberDecl, TIREnumEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIROOType, TIRStaticFunctionDecl, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 
-class AssemblyEmitter {
+class NamespaceEmitter {
     private readonly m_assembly: TIRAssembly;
+    private readonly m_ns: string;
 
-    constructor(assembly: TIRAssembly) {
+    private m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
+
+    constructor(assembly: TIRAssembly, ns: string) {
         this.m_assembly = assembly;
+        this.m_ns = ns;
+    }
+
+    private updateCoreImports(bemitter: BodyEmitter) {
+        bemitter.m_coreImports.forEach((ii) => this.m_coreImports.add(ii));
+    }
+
+    private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
+
+    }
+
+    private emitMemberFunction(ootype: TIROOType, cdecl: TIRStaticFunctionDecl): string {
+
+    }
+
+    private emitMemberField(ootype: TIROOType, cdecl: TIRMemberFieldDecl): string {
+    }
+
+    private emitMemberMethod(ootype: TIROOType, cdecl: TIRMemberMethodDecl): string {
+
     }
 
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile));
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
+
+        const entries = ttype.enums.map((ee) => `${ee}: ${bemitter.emitExpression((ttype.litvals.get(ee) as TIRLiteralValue).exp)}`).join(",\n    ");
+        const enums = `BSQ${ttype.tname.name} = {${entries}\n};`;
+
+        this.updateCoreImports(bemitter);
+        return enums;
+    }
+
+    private emitTIRTypedeclEntityType(): string {
         
-        const entries = ttype.enums.map((ee) => `${ee}: ${this.}`)
-        const enums = `BSQ${ttype.tname.name} = `;
+    }
+
+    private emitTIRObjectEntityType(): string {
+        
     }
 
     private emitTIRPrimitiveInternalEntityType(): string {
@@ -86,14 +121,6 @@ class AssemblyEmitter {
         
     }
 
-    private emitTIRTypedeclEntityType(): string {
-        
-    }
-
-    private emitTIRObjectEntityType(): string {
-        
-    }
-
     private emitTIRTaskType(): string {
         
     }
@@ -121,6 +148,27 @@ class AssemblyEmitter {
     private emitTIRCodePackType(): string {
         
     }
+
+
+
+    private emitConst(ttype: TIRNamespaceConstDecl): string {
+        
+    }
+
+    private emitFunction(ttype: TIRNamespaceFunctionDecl): string {
+        
+    }
+
+    private emitOperator(ttype: TIRNamespaceDeclaration): string {
+        
+    }
+
+    private emitType(ttype: TIRType): string {
+
+    }
+}
+
+class AssemblyEmitter {
 }
 
 export {

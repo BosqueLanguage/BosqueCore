@@ -15,18 +15,19 @@ function NOT_IMPLEMENTED_STATEMENT(tag: string): string {
 class BodyEmitter {
     private readonly m_assembly: TIRAssembly;
 
-    private m_file: string;
-    private m_ns: string = "[NOT SET]";
+    private readonly m_file: string;
+    private readonly m_ns: string = "[NOT SET]";
     private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
-    private m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
+    m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
 
     private m_varCtr = 0;
 
-    constructor(assembly: TIRAssembly, file: string) {
+    constructor(assembly: TIRAssembly, file: string, ns: string) {
         this.m_assembly = assembly;
         this.m_file = file;
+        this.m_ns = ns;
     }
 
     private typeEncodedAsUnion(tt: TIRTypeKey): boolean {
@@ -81,7 +82,7 @@ class BodyEmitter {
                 this.m_coreImports.add(`BSQ${ttype.tname.name}`);
             }
         }
-        else if(ttype instanceof TIRInternalEntityType) {
+        else if(ttype instanceof TIRPrimitiveInternalEntityType) {
             taccess = `BSQ${ttype.tname.name}`;
             this.m_coreImports.add(`BSQ${ttype.tname.name}`);
         }
