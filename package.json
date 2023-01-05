@@ -16,6 +16,8 @@
         "refa":"0.10.0"
     },
     "devDependencies": {
+        "mocha": "10.2.0",
+        "@types/mocha": "10.0.1",
         "decimal.js": "10.4.2",
         "fraction.js": "4.2.0",
         "immutable": "4.2.1"
