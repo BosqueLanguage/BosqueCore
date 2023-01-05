@@ -147,7 +147,6 @@ BSQEnvironment.clear = function(env, key) {
     env.args.set(key, undefined);
 };
 
-
 let loglevel = "info";
 
 function setloglevel(level) {

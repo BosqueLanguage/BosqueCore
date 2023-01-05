@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRAssembly, TIRConstMemberDecl, TIREnumEntityType, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIROOType, TIRStaticFunctionDecl, TIRTaskType, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRConstMemberDecl, TIREnumEntityType, TIRFieldKey, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPrimitiveInternalEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction } from "./builtin_emitter";
@@ -24,7 +24,7 @@ class NamespaceEmitter {
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
 
-        const cstr = `${bemitter.resolveTypeMemberAccess(cdecl.tkey)}.${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)};`;
+        const cstr = `${cdecl.name}: ${bemitter.emitExpression(cdecl.value, true)}`;
 
         this.updateCoreImports(bemitter);
         return cstr;
@@ -43,20 +43,16 @@ class NamespaceEmitter {
         }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;
-            body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, "", `${fdecl.tkey}::${fdecl.name}`, false);
+            body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, "    ", `${fdecl.tkey}::${fdecl.name}`, false);
         }
 
         if(body === undefined) {
             return undefined;
         }
-        const cstr = `${bemitter.resolveTypeMemberAccess(fdecl.tkey)}.${fdecl.name} = function(${args}) ${body};`;
+        const cstr = `${fdecl.name}: function(${args}) ${body}`;
         
         this.updateCoreImports(bemitter);
         return cstr;
-    }
-
-    private emitMemberField(ootype: TIROOType, fdecl: TIRMemberFieldDecl): string {
-        xxxx;
     }
 
     private emitMemberMethod(ootype: TIROOType, mdecl: TIRMemberMethodDecl): string {
@@ -67,9 +63,9 @@ class NamespaceEmitter {
         assert(!(mdecl.invoke instanceof TIRInvokeAbstractDeclaration) && !(mdecl.invoke instanceof TIRInvokePrimitive), "should not be doing this!!");
             
         const mimpl = mdecl.invoke as TIRInvokeImplementation;
-        const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, "", `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
+        const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, "    ", `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
         
-        const cstr = `${bemitter.resolveTypeMemberAccess(mdecl.tkey)}.${mdecl.name} = function(${args}) ${body};`;
+        const cstr = `${mdecl.name}: function(${args}) ${body}`;
         
         this.updateCoreImports(bemitter);
         return cstr;
@@ -78,32 +74,80 @@ class NamespaceEmitter {
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
-        const entries = ttype.enums.map((ee) => `${ee}: ${bemitter.emitExpression((ttype.litvals.get(ee) as TIRLiteralValue).exp)}`).join(",\n    ");
-        const enums = `BSQ${ttype.tname.name} = {${entries}\n};`;
+        const entries = ttype.enums.map((ee) => `${ee}: ${bemitter.emitExpression((ttype.litvals.get(ee) as TIRLiteralValue).exp)}`);
+        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
+        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
 
-        this.;
+        const enums = `const BSQ${ttype.tname.name} = {${[...entries, ...funcs, ...methods].join(",\n    ")}\n};`;
 
         this.updateCoreImports(bemitter);
         return enums;
     }
 
-    private emitTIRTypedeclEntityType(): string {
+    private emitTIRTypedeclEntityType(ttype: TIRTypedeclEntityType): string {
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
+
+        const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
+        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
+        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+
+        let consfuncs: string[] = [];
+        if(ttype.consinvariantsall.length !== 0) {
+            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey} -- ${cc.exp.expstr}");`).join("\n    ") + "\n    ";
+            consfuncs.push(`$constructorWithChecks_basetype: function($value) {${checks}return $value;\n    }`);
+        }
+        if(ttype.consinvariantsexplicit.length !== 0) {
+            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey} -- ${cc.exp.expstr}");`).join("\n    ") + "\n    ";
+            consfuncs.push(`$constructorWithChecks: function($value) {${checks}return $value;\n    }`);
+        }
+
+        const tdecl = `const BSQ${ttype.tname.name} = {${[...consts, ...funcs, ...methods, ...consfuncs].join(",\n    ")}\n};`;
+
+        this.updateCoreImports(bemitter);
+        return tdecl;
+    }
+
+    private emitTIRObjectEntityType(ttype: TIRObjectEntityType): string {
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
+
+        const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
+        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
+        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+
+        const fnames = ttype.allfields.map((ff) => (this.m_assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl).name);
+
+        let consfuncs: string[] = [];
+        consfuncs.push(`$constructorDirect: function(${fnames.join(", ")} { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; })`);
+
+        if(ttype.consinvariants.length !== 0) {
+            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey} -- ${cc.exp.expstr}");`).join("\n    ") + "\n    ";
+            consfuncs.push(`$constructorWithChecks_basetype: function(${fnames.map((fn) => "$" + fn).join(", ")}) {${checks}return {${fnames.map((fn) => fn + ": $" + fn).join(", ")}};\n    }`);
+        }
+
+        const odecl = `const BSQ${ttype.tname.name} = {${[...consts, ...funcs, ...methods, ...consfuncs].join(",\n    ")}\n};`;
+
+        this.updateCoreImports(bemitter);
+        return odecl;
+    }
+
+    private emitTIRPrimitiveInternalEntityType(ttype: TIRPrimitiveInternalEntityType): string {
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
+
+        const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
+        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
+        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+
+        const tdecl = `const BSQ${ttype.tname.name} = {${[...consts, ...funcs, ...methods].join(",\n    ")}\n};`;
+
+        this.updateCoreImports(bemitter);
+        return tdecl;
+    }
+
+    private emitTIRValidatorEntityType(ttype: TIRValidatorEntityType): string {
         
     }
 
-    private emitTIRObjectEntityType(): string {
-        
-    }
-
-    private emitTIRPrimitiveInternalEntityType(): string {
-        
-    }
-
-    private emitTIRValidatorEntityType(): string {
-        
-    }
-
-    private emitTIRStringOfEntityType(): string {
+    private emitTIRStringOfEntityType(ttype: TIRStringOfEntityType): string {
         
     }
 
