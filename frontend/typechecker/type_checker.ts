@@ -87,6 +87,7 @@ class TIRIDGenerator {
     }
 
     static generateInvokeIDForNamespaceFunction(ns: string, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        xxxx; //lambda
         return `${ns}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 
@@ -99,10 +100,12 @@ class TIRIDGenerator {
     }
 
     static generateInvokeForMemberFunction(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        xxxx; //lambda
         return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 
     static generateInvokeForMemberMethod(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[]): TIRInvokeKey {
+        xxxx; //lambda
         return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}`;
     }
 

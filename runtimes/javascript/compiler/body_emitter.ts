@@ -1,7 +1,7 @@
 import * as assert from "assert";
 
-import { extractLiteralStringValue, SourceInfo } from "../../../frontend/build_decls";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRInternalEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { extractLiteralStringValue } from "../../../frontend/build_decls";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAbortStatement, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWAction, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
@@ -905,8 +905,21 @@ class BodyEmitter {
 
     private emitCallMemberFunctionExpression(exp: TIRCallMemberFunctionExpression, toplevel: boolean): string {
         const aargs = [this.emitExpression(exp.thisarg, true), ...exp.args.map((arg) => this.emitExpression(arg, true))];
-        const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.fname}`;
-        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        const ttype = this.m_assembly.typeMap.get(exp.tkey) as TIROOType;
+        const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
+        assert(invk !== undefined, "emitCallMemberFunctionExpression");
+
+        const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
+        let meexp = "[NOT SET]";
+        if(invk.terms.length === 0) {
+            meexp = `.${exp.fname}`;
+        }
+        else {
+            meexp = `.$Methods["${exp.fkey}"]`;
+        }
+        
+        const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
 
         return toplevel ? eexp : "(" + eexp + ")";
     }
@@ -914,48 +927,100 @@ class BodyEmitter {
     private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
         const thisarg = this.emitExpression(exp.thisarg, true);
         
-        const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
-        const declunion = this.typeEncodedAsUnion(exp.tkey);
-        let thisargas = "[NOT SET]"; 
-        if(thisunion === declunion) {
-            thisargas = "__expval__";
+        if(exp.inferfkey !== undefined) {
+
         }
         else {
-            if(thisunion) {
-                thisargas = "__expval__.value";
+            const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
+            const declunion = this.typeEncodedAsUnion(exp.tkey);
+            let thisargas = "[NOT SET]";
+            if (thisunion === declunion) {
+                thisargas = "__expval__";
             }
             else {
-                thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
+                if (thisunion) {
+                    thisargas = "__expval__.value";
+                }
+                else {
+                    thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
+                }
             }
+
+            let vtable = "[NOT SET]";
+            if(thisunion) {
+                vtable = `$Runtime.vtablemap.get(__expval__.tkey).$VTable["${exp.fkey}"]`
+            }
+            else {
+                vtable = `${this.resolveTypeMemberAccess(exp.thisarg.etype)}.$VTable["${exp.fkey}"]`;
+            }
+            
+
+            const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
+            const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
+
+            return toplevel ? eexp : "(" + eexp + ")";
         }
-
-        const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
-        const eexp = `((__expval__) => __expval__.${exp.fname}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
-        
-
-        return toplevel ? eexp : "(" + eexp + ")";
     }
     
     private emitCallMemberFunctionSelfRefExpression(exp: TIRCallMemberFunctionSelfRefExpression, toplevel: boolean): string {
         const aargs = [this.emitExpression(exp.thisarg, true), ...exp.args.map((arg) => this.emitExpression(arg, true))];
-        const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.fname}`;
-        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        const ttype = this.m_assembly.typeMap.get(exp.tkey) as TIROOType;
+        const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
+        assert(invk !== undefined, "emitCallMemberFunctionExpression");
+
+        const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
+        let meexp = "[NOT SET]";
+        if(invk.terms.length === 0) {
+            meexp = `.${exp.fname}`;
+        }
+        else {
+            meexp = `.$Methods["${exp.fkey}"]`;
+        }
+
+        const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
 
         return toplevel ? eexp : "(" + eexp + ")";
     }
 
     private emitCallMemberFunctionTaskExpression(exp: TIRCallMemberFunctionTaskExpression, toplevel: boolean): string {
         const aargs = ["self", ...exp.args.map((arg) => this.emitExpression(arg, true))];
-        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}.${exp.fname}`;
-        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        const ttype = this.m_assembly.typeMap.get(exp.tsktype) as TIRTaskType;
+        const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
+        assert(invk !== undefined, "emitCallMemberFunctionExpression");
+
+        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
+        let meexp = "[NOT SET]";
+        if(invk.terms.length === 0) {
+            meexp = `.${exp.fname}`;
+        }
+        else {
+            meexp = `.$Methods["${exp.fkey}"]`;
+        }
+
+        const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
 
         return toplevel ? eexp : "(" + eexp + ")";
     }
 
     private emitCallMemberFunctionTaskSelfRefExpression(exp: TIRCallMemberFunctionTaskSelfRefExpression, toplevel: boolean): string {
         const aargs = ["self", ...exp.args.map((arg) => this.emitExpression(arg, true))];
-        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}.${exp.fname}`;
-        const eexp = `${fexp}(${aargs.join(", ")})`;
+
+        const ttype = this.m_assembly.typeMap.get(exp.tsktype) as TIRTaskType;
+        const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
+        assert(invk !== undefined, "emitCallMemberFunctionExpression");
+
+        const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
+        let meexp = "[NOT SET]";
+        if(invk.terms.length === 0) {
+            meexp = `.${exp.fname}`;
+        }
+        else {
+            meexp = `.$Methods["${exp.fkey}"]`;
+        }
+
+        const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
 
         return toplevel ? eexp : "(" + eexp + ")";
     }

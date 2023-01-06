@@ -30,7 +30,7 @@ class NamespaceEmitter {
         return cstr;
     }
 
-    private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl): string | undefined {
+    private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string | undefined {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns); 
 
         const args = fdecl.invoke.params.map((pp) => pp.name).join(", ");
@@ -43,19 +43,19 @@ class NamespaceEmitter {
         }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;
-            body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, "    ", `${fdecl.tkey}::${fdecl.name}`, false);
+            body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, indent, `${fdecl.tkey}::${fdecl.name}`, false);
         }
 
         if(body === undefined) {
             return undefined;
         }
-        const cstr = `${fdecl.name}: function(${args}) ${body}`;
+        const cstr =  `function(${args}) ${body}`;
         
         this.updateCoreImports(bemitter);
         return cstr;
     }
 
-    private emitMemberMethod(ootype: TIROOType, mdecl: TIRMemberMethodDecl): string {
+    private emitMemberMethod(ootype: TIROOType, mdecl: TIRMemberMethodDecl, indent: string): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(mdecl.srcFile), this.m_ns); 
 
         const args = [(ootype instanceof TIRTaskType ? "self" : "$_this"), ...mdecl.invoke.params.map((pp) => pp.name)].join(", ");
@@ -63,20 +63,34 @@ class NamespaceEmitter {
         assert(!(mdecl.invoke instanceof TIRInvokeAbstractDeclaration) && !(mdecl.invoke instanceof TIRInvokePrimitive), "should not be doing this!!");
             
         const mimpl = mdecl.invoke as TIRInvokeImplementation;
-        const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, "    ", `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
+        const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, indent, `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
         
-        const cstr = `${mdecl.name}: function(${args}) ${body}`;
+        const cstr = `function(${args}) ${body}`;
         
         this.updateCoreImports(bemitter);
         return cstr;
+    }
+
+    private emitOOTypeFunctions(ootype: TIROOType): string[] {
+        const finline = ootype.staticFunctions.filter((ff) => ff.terms.length === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
+        const fkey = ootype.staticFunctions.filter((ff) => ff.terms.length !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
+
+        return [finline.join(",\n    "), `$Functions: {${fkey.join(",\n    ")}\n    }`];
+    }
+
+    private emitOOTypeMethods(ootype: TIROOType): string[] {
+        const minline = ootype.memberMethods.filter((mm) => mm.terms.length === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
+        const mkey = ootype.memberMethods.filter((mm) => mm.terms.length !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
+
+        return [minline.join(",\n    "), `$Methods: {${mkey.join(",\n    ")}\n    }`];
     }
 
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const entries = ttype.enums.map((ee) => `${ee}: ${bemitter.emitExpression((ttype.litvals.get(ee) as TIRLiteralValue).exp)}`);
-        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
-        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+        const funcs = this.emitOOTypeFunctions(ttype);
+        const methods = this.emitOOTypeMethods(ttype);
 
         const enums = `const BSQ${ttype.tname.name} = {${[...entries, ...funcs, ...methods].join(",\n    ")}\n};`;
 
@@ -88,8 +102,8 @@ class NamespaceEmitter {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
-        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
-        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+        const funcs = this.emitOOTypeFunctions(ttype);
+        const methods = this.emitOOTypeMethods(ttype);
 
         let consfuncs: string[] = [];
         if(ttype.consinvariantsall.length !== 0) {

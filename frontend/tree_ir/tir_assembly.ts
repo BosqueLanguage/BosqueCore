@@ -21,6 +21,7 @@ class TIRTypeName {
 type TIRTypeKey = string;
 type TIRInvokeKey = string;
 type TIRFieldKey = string;
+type TIRPCodeKey = string;
 
 class TIRFunctionParameter {
     readonly name: string;
@@ -212,7 +213,7 @@ class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
     constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], resultType: TIRTypeKey, body: string) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, false, false, false, false, params, isThisRef, resultType, preconds, postconds);
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, false, false, false, false, params, false, resultType, [], []);
 
         this.body = body;
     }
@@ -246,7 +247,9 @@ class TIRStaticFunctionDecl {
 
     readonly tkey: TIRTypeKey;
     readonly name: string;
+
     readonly terms: TIRTypeKey[];
+    readonly pcodes: TIRPCodeKey[];
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -254,11 +257,12 @@ class TIRStaticFunctionDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
         this.terms = terms;
+        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -297,6 +301,7 @@ class TIRMemberMethodDecl {
     readonly name: string;
 
     readonly terms: TIRTypeKey[];
+    readonly pcodes: TIRPCodeKey[];
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -304,11 +309,12 @@ class TIRMemberMethodDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
         this.terms = terms;
+        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -702,6 +708,7 @@ class TIRCodePackType extends TIRType {
     readonly invtarget: TIRInvokeKey;
     readonly callargs: TIRTypeKey[];
     readonly capturedargs: {argname: string, argtype: TIRTypeKey}[];
+    xxxx;
     readonly resulttype: TIRTypeKey;
 
     constructor(tkey: TIRTypeKey, invtarget: TIRInvokeKey, callargs: TIRTypeKey[], capturedargs: {argname: string, argtype: TIRTypeKey}[], resulttype: TIRTypeKey) {
@@ -743,6 +750,7 @@ class TIRNamespaceFunctionDecl {
     readonly name: string;
     
     readonly terms: TIRTypeKey[];
+    readonly pcodes: TIRPCodeKey[];
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -750,11 +758,12 @@ class TIRNamespaceFunctionDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[]) {
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
         this.ikey = invoke.invkey;
         this.ns = ns;
         this.name = invoke.name;
         this.terms = terms;
+        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -777,6 +786,31 @@ class TIRNamespaceOperatorDecl {
         this.ikey = invoke.invkey;
         this.ns = ns;
         this.name = invoke.name;
+        this.sourceLocation = sinfo;
+        this.srcFile = srcFile;
+        this.attributes = invoke.attributes;
+        this.invoke = invoke;
+    }
+}
+
+class TIRNamespaceLambdaDecl {
+    readonly ikey: TIRInvokeKey;
+    readonly pcid: TIRPCodeKey;
+
+    readonly terms: TIRTypeKey[];
+    readonly pcodes: TIRPCodeKey[];
+
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
+
+    readonly attributes: string[];
+    readonly invoke: TIRInvoke;
+
+    constructor(pcid: TIRPCodeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
+        this.ikey = invoke.invkey;
+        this.pcid = pcid;
+        this.terms = terms;
+        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -897,7 +931,7 @@ class TIRAssembly {
 
 export {
     TIRTypeName,
-    TIRTypeKey, TIRInvokeKey, TIRFieldKey,
+    TIRTypeKey, TIRInvokeKey, TIRFieldKey, TIRPCodeKey,
     TIRFunctionParameter,
     TIRObjectInvariantDecl, TIRObjectValidateDecl, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl,
     TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
@@ -917,7 +951,7 @@ export {
     TIRUnionType,
     TIRInfoTemplate, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateValue,
     TIRStringTemplate,
-    TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl,
+    TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRNamespaceLambdaDecl,
     TIRNamespaceDeclaration,
     TIRAssembly
 };

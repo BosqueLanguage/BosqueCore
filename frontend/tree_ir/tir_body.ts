@@ -1,5 +1,5 @@
 
-import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assembly";
+import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRTypeKey, TIRPCodeKey } from "./tir_assembly";
 
 import { LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -136,7 +136,7 @@ enum TIRExpressionTag {
 }
 
 class TIRCodePack {
-    readonly code: TIRInvokeDecl;
+    readonly code: TIRPCodeKey[];
     readonly ftype: TIRCodePackType;
 
     readonly capturedValues: {cname: string, ctype: ResolvedType}[];
