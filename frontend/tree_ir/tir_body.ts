@@ -1,5 +1,5 @@
 
-import { TIRCodePackType, TIRFieldKey, TIRInvokeKey, TIRTypeKey, TIRPCodeKey } from "./tir_assembly";
+import { TIRCodePack, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assembly";
 
 import { LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -34,6 +34,7 @@ enum TIRExpressionTag {
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     TIRAccessConstMemberFieldExpression = " TIRAccessConstMemberFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
+    AccessCapturedVariableExpression = "AccessCapturedVariableExpression",
 
     LoadIndexExpression = "LoadIndexExpression",
     LoadPropertyExpression = "LoadPropertyExpression",
@@ -133,21 +134,6 @@ enum TIRExpressionTag {
     CallMemberFunctionTaskExpression = "CallMemberFunctionTaskExpression",
     CallMemberFunctionTaskSelfRefExpression = "CallMemberFunctionTaskSelfRefExpression",
     CallMemberActionExpression = "CallMemberActionExpression"
-}
-
-class TIRCodePack {
-    readonly code: TIRPCodeKey[];
-    readonly ftype: TIRCodePackType;
-
-    readonly capturedValues: {cname: string, ctype: ResolvedType}[];
-    readonly capturedCodePacks: {cpname: string, cpval: TIRCodePack}[];
-
-    constructor(code: TIRInvokeDecl, ftype: ResolvedFunctionType, capturedValues: {cname: string, ctype: ResolvedType}[], capturedCodePacks: {cpname: string, cpval: TIRCodePack}[]) {
-        this.code = code;
-        this.ftype = ftype;
-        this.capturedValues = capturedValues;
-        this.capturedCodePacks = capturedCodePacks;
-    }
 }
 
 abstract class TIRExpression {
@@ -410,6 +396,19 @@ class TIRAccessVariableExpression extends TIRExpression {
     }
 }
 
+class TIRAccessCapturedVariableExpression extends TIRExpression {
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, name: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.AccessCapturedVariableExpression, sinfo, etype, name);
+        this.name = name;
+    }
+
+    getUsedVars(): string[] {
+        return [this.name];
+    }
+}
+
 //abstract class for load index/property/field/fieldvirtual
 class TIRLoadSingleExpression extends TIRExpression {
     readonly tkey: TIRTypeKey;
@@ -530,9 +529,26 @@ class TIRConstructorMapExpression extends TIRConstructorExpression {
     }
 }
 
-/*
-    CodePackInvokeExpression = "CodePackInvokeExpression",
-*/
+class TIRCodePackInvokeExpression extends TIRExpression {
+    readonly cpack: TIRCodePack;
+    readonly packarg: {argn: string, iscapture: boolean};
+    readonly args: TIRExpression[];
+
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, cpack: TIRCodePack, packarg: {argn: string, iscapture: boolean}, args: TIRExpression[]) {
+        super(TIRExpressionTag.CodePackInvokeExpression, sinfo, etype, `${cpack.invk}(${[packarg.argn, ...args.map((arg) => arg.expstr)].join(", ")})`);
+        this.cpack = cpack;
+        this.packarg = packarg;
+        this.args = args;
+    }
+
+    isFailableOperation(): boolean {
+        return this.args.some((arg) => arg.isFailableOperation());
+    }
+
+    getUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
+    }
+}
 
 //abstract class for single argument constructors
 class TIRConstructorOfExpression extends TIRExpression {
@@ -1300,9 +1316,20 @@ class TIRExtractExpression extends TIRInjectExtractExpression {
     }
 }
 
-/*
-class TIRCreateCodePackExpression = "CreateCodePackExpression",
-*/
+class TIRCreateCodePackExpression extends TIRExpression {
+    readonly capturedirect: string[];
+    readonly captureindirect: string[];
+    readonly capturepackdirect: string[];
+    readonly capturepackindirect: string[];
+
+    constructor(sinfo: SourceInfo, cptype: TIRTypeKey, capturedirect: string[], captureindirect: string[], capturepackdirect: string[], capturepackindirect: string[]) {
+        super(TIRExpressionTag.CreateCodePackExpression, sinfo, cptype, `create_pack<${cptype}>(${[...capturedirect, ...captureindirect, ...capturepackdirect, ...capturepackindirect].join(", ")})`);
+        this.capturedirect = capturedirect;
+        this.captureindirect = captureindirect;
+        this.capturepackdirect = capturepackdirect;
+        this.capturepackindirect = capturepackindirect;
+    }
+}
 
 //abstract class for type test operations
 class TIRTypeTestExpression extends TIRExpression {
@@ -2223,10 +2250,10 @@ export {
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression,
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
-    TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression,
+    TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRAccessCapturedVariableExpression,
     TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorListExpression, TIRConstructorMapExpression,
-    qqq,
+    TIRCodePackInvokeExpression,
     TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression,
     TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStaticFunctionExpression,
     TIRLogicActionAndExpression, TIRLogicActionOrExpression,
@@ -2239,7 +2266,7 @@ export {
     TIRTaskSelfFieldExpression, TIRTaskSelfControlExpression, TIRTaskGetIDExpression,
     TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, 
     TIRInjectExpression, TIRExtractExpression,
-    jjjj,
+    TIRCreateCodePackExpression,
     TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsNotNothingExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,
     TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression,

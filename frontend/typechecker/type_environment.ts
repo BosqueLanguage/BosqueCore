@@ -1,7 +1,6 @@
 
-import { ResolvedType, TemplateBindScope } from "./resolved_type";
+import { ResolvedFunctionType, ResolvedType, TemplateBindScope } from "./resolved_type";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
-
 import { SourceInfo } from "../build_decls";
 
 enum FlowTypeTruthValue {
@@ -124,7 +123,7 @@ class FlowTypeInfoOption {
 
 class ExpressionTypeEnvironment {
     readonly binds: TemplateBindScope;
-    readonly pcodes: Map<string, TIRCodePack>;
+    readonly pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>;
 
     readonly frozenVars: Set<string>;
     readonly args: Map<string, VarInfo>;
@@ -135,7 +134,7 @@ class ExpressionTypeEnvironment {
     
     readonly flowinfo: FlowTypeInfoOption[];
 
-    private constructor(binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, trepr: ResolvedType, flowinfo: FlowTypeInfoOption[]) {
+    private constructor(binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, trepr: ResolvedType, flowinfo: FlowTypeInfoOption[]) {
         this.binds = binds;
         this.pcodes = pcodes;
 
@@ -167,24 +166,24 @@ class ExpressionTypeEnvironment {
         return this.getLocalVarInfo(name) || (this.args as Map<string, VarInfo>).get(name) || null;
     }
 
-    static createInitialEnvForExpressionEval(binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], flows: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
+    static createInitialEnvForExpressionEval(binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], flows: FlowTypeInfoOption[]): ExpressionTypeEnvironment {
         return new ExpressionTypeEnvironment(binds, pcodes, frozenVars, args, locals, new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), flows);
     }
 
     static createInitialEnvForEvalStandalone(binds: TemplateBindScope): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(binds, new Map<string, TIRCodePack>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+        return new ExpressionTypeEnvironment(binds, new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
     static createInitialEnvForEvalWArgs(binds: TemplateBindScope, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(binds, new Map<string, TIRCodePack>(), new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+        return new ExpressionTypeEnvironment(binds, new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
-    static createInitialEnvForEvalWArgsPCodes(binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
+    static createInitialEnvForEvalWArgsPCodes(binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>): ExpressionTypeEnvironment {
         return new ExpressionTypeEnvironment(binds, pcodes, new Set<string>(), args, [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
     static createInitialEnvForLiteralEval(binds: TemplateBindScope): ExpressionTypeEnvironment {
-        return new ExpressionTypeEnvironment(binds, new Map<string, TIRCodePack>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
+        return new ExpressionTypeEnvironment(binds, new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), new Map<string, VarInfo>(), [], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid(), FlowTypeInfoOption.createInitial());
     }
 
     createFreshEnvExpressionFrom(): ExpressionTypeEnvironment {
@@ -206,7 +205,7 @@ class ExpressionTypeEnvironment {
 
 class StatementTypeEnvironment {
     readonly binds: TemplateBindScope;
-    readonly pcodes: Map<string, TIRCodePack>;
+    readonly pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>;
 
     readonly frozenVars: Set<string>;
     readonly args: Map<string, VarInfo>;
@@ -215,7 +214,7 @@ class StatementTypeEnvironment {
     readonly isDeadFlow: boolean;
     readonly flowinfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>;
 
-    private constructor(binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], isDeadFlow: boolean, flowinfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>) {
+    private constructor(binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], isDeadFlow: boolean, flowinfo: Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>) {
         this.binds = binds;
         this.pcodes = pcodes;
 
@@ -286,7 +285,7 @@ class StatementTypeEnvironment {
         return !this.isDeadFlow;
     }
 
-    static createInitialEnvForStatementEval(binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): StatementTypeEnvironment {
+    static createInitialEnvForStatementEval(binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, frozenVars: Set<string>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[]): StatementTypeEnvironment {
         return new StatementTypeEnvironment(binds, pcodes, frozenVars, args, locals, false, new Map<string, {depvars: Set<string>, infertype: ResolvedType, infertruth: FlowTypeTruthValue}>());
     }
 
@@ -311,95 +310,6 @@ class StatementTypeEnvironment {
 
         return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, localscopy, this.isDeadFlow, iinfo);
     }
-
-/*
-    
-    lookupPCode(pc: string): PCode | undefined {
-        return this.pcodes.get(pc);
-    }
-
-    getCurrentFrameNames(): string[] {
-        let res: string[] = [];
-        (this.locals as Map<string, VarInfo>[])[(this.locals as Map<string, VarInfo>[]).length - 1].forEach((v, k) => {
-            res.push(k);
-        });
-        return res;
-    }
-
-    getAllLocalNames(): Set<string> {
-        let names = new Set<string>();
-        (this.locals as Map<string, VarInfo>[]).forEach((frame) => {
-            frame.forEach((v, k) => {
-                names.add(k);
-            });
-        });
-        return names;
-    }
-
-    freezeVars(inferyield: ResolvedType | undefined): TypeEnvironment {
-        assert(this.hasNormalFlow());
-
-        let svars = new Set<string>();
-        for (let i = 0; i < (this.locals as Map<string, VarInfo>[]).length; ++i) {
-            (this.locals as Map<string, VarInfo>[])[i].forEach((v, k) => svars.add(k));
-        }
-
-        const iyeild = [...this.inferYield, inferyield];
-
-        return new TypeEnvironment(this.ikey, this.bodyid, this.terms, this.pcodes, this.args, this.locals, this.inferResult, iyeild, this.expressionResult, this.returnResult, this.yieldResult, svars);
-    }
-
-    static join(assembly: Assembly, ...opts: TypeEnvironment[]): TypeEnvironment {
-        assert(opts.length !== 0);
-
-        if (opts.length === 1) {
-            return opts[0];
-        }
-        else {
-            const fopts = opts.filter((opt) => opt.locals !== undefined);
-
-            let argnames: string[] = [];
-            fopts.forEach((opt) => {
-                (opt.args as Map<string, VarInfo>).forEach((v, k) => argnames.push(k));
-            });
-
-            let args = fopts.length !== 0 ? new Map<string, VarInfo>() : undefined;
-            if (args !== undefined) {
-                argnames.forEach((aname) => {
-                    const vinfo = VarInfo.join(assembly, ...fopts.map((opt) => (opt.args as Map<string, VarInfo>).get(aname) as VarInfo));
-                    (args as Map<string, VarInfo>).set(aname, vinfo);
-                });
-            }
-
-            let locals = fopts.length !== 0 ? ([] as Map<string, VarInfo>[]) : undefined;
-            if (locals !== undefined) {
-                for (let i = 0; i < (fopts[0].locals as Map<string, VarInfo>[]).length; ++i) {
-                    let localsi = new Map<string, VarInfo>();
-                    (fopts[0].locals as Map<string, VarInfo>[])[i].forEach((v, k) => {
-                        localsi.set(k, VarInfo.join(assembly, ...fopts.map((opt) => opt.lookupVar(k) as VarInfo)));
-                    });
-
-                    locals.push(localsi);
-                }
-            }
-
-            const expresall = fopts.filter((opt) => opt.expressionResult !== undefined).map((opt) => opt.getExpressionResult());
-            let expres: ExpressionReturnResult | undefined = undefined;
-            if (expresall.length !== 0) {
-                const retype = ValueType.join(assembly, ...expresall.map((opt) => opt.valtype));
-                const rflow = FlowTypeTruthOps.join(...expresall.map((opt) => opt.truthval));
-                const evar = expresall.every((ee) => ee.expvar === expresall[0].expvar) ? expresall[0].expvar : undefined;
-                expres = new ExpressionReturnResult(retype, rflow, evar);
-            }
-
-            const rflow = opts.filter((opt) => opt.returnResult !== undefined).map((opt) => opt.returnResult as ResolvedType);
-            const yflow = opts.filter((opt) => opt.yieldResult !== undefined).map((opt) => opt.yieldResult as ResolvedType);
-
-            return new TypeEnvironment(opts[0].ikey, opts[0].bodyid, opts[0].terms, opts[0].pcodes, args, locals, opts[0].inferResult, opts[0].inferYield, expres, rflow.length !== 0 ? assembly.typeUpperBound(rflow) : undefined, yflow.length !== 0 ? assembly.typeUpperBound(yflow) : undefined, opts[0].frozenVars);
-        }
-    }
-
-    */
 }
 
 export {

@@ -705,17 +705,14 @@ class TIRUnionType extends TIRType {
 }
 
 class TIRCodePackType extends TIRType {
-    readonly invtarget: TIRInvokeKey;
+    readonly invk: TIRInvokeKey;
     readonly callargs: TIRTypeKey[];
-    readonly capturedargs: {argname: string, argtype: TIRTypeKey}[];
-    xxxx;
     readonly resulttype: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, invtarget: TIRInvokeKey, callargs: TIRTypeKey[], capturedargs: {argname: string, argtype: TIRTypeKey}[], resulttype: TIRTypeKey) {
+    constructor(tkey: TIRTypeKey, invk: TIRInvokeKey, callargs: TIRTypeKey[], resulttype: TIRTypeKey) {
         super(tkey, undefined);
-        this.invtarget = invtarget;
+        this.invk = invk;
         this.callargs = callargs;
-        this.capturedargs = capturedargs;
         this.resulttype = resulttype;
     }
 }
@@ -815,6 +812,32 @@ class TIRNamespaceLambdaDecl {
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
         this.invoke = invoke;
+    }
+}
+
+class TIRCodePack {
+    readonly codekey: TIRPCodeKey;
+    readonly invk: TIRInvokeKey;
+    readonly recursive: boolean;
+
+    readonly ptype: TIRTypeKey; //code pack type
+
+    readonly terms: TIRTypeKey[]; //Implicit template terms that this is bound with (e.g. if it uses type T from outer scope bound to Int then we need to specialize on whatever T is specialized to)
+    readonly pcodes: TIRPCodeKey[]; //Implicit "template" pcode that is bound with this (e.g. if it uses afun from argument to enclosing method we need to specialize on whatever afun is specialized to) 
+    
+    //Maps from captured variables to their captured values
+    readonly capturedValues: {cname: string, ctype: TIRTypeKey}[];
+    readonly capturedCodePacks: {cpname: string, cpval: TIRTypeKey}[];
+
+    constructor(codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRTypeKey}[]) {
+        this.codekey = codekey;
+        this.invk = invk;
+        this.recursive = recursive;
+        this.ptype = ptype;
+        this.terms = terms;
+        this.pcodes = pcodes;
+        this.capturedValues = capturedValues;
+        this.capturedCodePacks = capturedCodePacks;
     }
 }
 
@@ -953,5 +976,6 @@ export {
     TIRStringTemplate,
     TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRNamespaceLambdaDecl,
     TIRNamespaceDeclaration,
+    TIRCodePack,
     TIRAssembly
 };

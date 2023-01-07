@@ -8,7 +8,10 @@ function UnionValue(tkey, value) {
 }
 
 const subtypeMap = new Map();
+
 const vtablemap = new Map();
+
+const pcodemap = new Map();
 
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {
@@ -169,7 +172,7 @@ function log(level, fmt, ...args) {
 
 export {
     UnionValue, isSubtype,
-    vtablemap,
+    vtablemap, pcodemap,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,
