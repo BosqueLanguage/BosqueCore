@@ -12,7 +12,7 @@ import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalType
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
 import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression } from "../tree_ir/tir_body";
-import { TIRASCIIStringOfEntityType, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -154,15 +154,15 @@ class TypeChecker {
     private m_pendingTaskDecls: TIRTaskType[] = [];
 
     private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
-    private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
     private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
 
     private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-    private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>}[] = [];
-    private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     private m_lambdaCtr = 0;
-    private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declenv: ExpressionTypeEnvironment, bodybinds: Map<string, ResolvedType>}[] = [];
+    private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     constructor(assembly: Assembly, buildlevel: BuildLevel, overflowisfailure: boolean) {
         this.m_assembly = assembly;
@@ -2528,7 +2528,7 @@ class TypeChecker {
         }
     }
 
-    private checkPCodeExpression(env: ExpressionTypeEnvironment, exp: ConstructorPCodeExpression, expectedFunction: ResolvedFunctionType): ExpressionTypeEnvironment {
+    private checkPCodeExpression(env: ExpressionTypeEnvironment, exp: ConstructorPCodeExpression, expectedFunction: ResolvedFunctionType): [TIRCreateCodePackExpression, ResolvedFunctionType] {
         this.raiseErrorIf(exp.sinfo, exp.isAuto && expectedFunction === undefined, "Could not infer auto function type");
 
         let bodybinds = new Map<string, ResolvedType>();
@@ -2540,11 +2540,11 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, ltypetry === undefined, "Invalid lambda type");
         const ltype = ltypetry as ResolvedFunctionType;
 
-        this.raiseErrorIf(exp.sinfo, exp.invoke.params.length !== (ltypetry as ResolvedFunctionType).params.length, "Mismatch in expected parameter count and provided function parameter count");
-        this.raiseErrorIf(exp.sinfo, expectedFunction !== undefined && !this.functionSubtypeOf(ltypetry as ResolvedFunctionType, expectedFunction), "Mismatch in expected and provided function signature");
+        this.raiseErrorIf(exp.sinfo, exp.invoke.params.length !== ltype.params.length, "Mismatch in expected parameter count and provided function parameter count");
+        this.raiseErrorIf(exp.sinfo, expectedFunction !== undefined && !this.functionSubtypeOf(ltype, expectedFunction), "Mismatch in expected and provided function signature");
 
-        let capturedVarMap: Map<string, TIRTypeKey> = new Map<string, TIRTypeKey>();
-        let capturedPCodeMap = new Map<string, TIRPCodeKey>();
+        let capturedVarMap = new Map<string, TIRTypeKey>();
+        let capturedPCodeMap = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
 
         let captures: string[] = [];
         exp.invoke.captureVarSet.forEach((v) => captures.push(v));
@@ -2552,7 +2552,8 @@ class TypeChecker {
 
         captures.forEach((v) => {
             if (env.pcodes.has(v)) {
-                capturedPCodeMap.set(v, (env.pcodes.get(v) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                const pcc = env.pcodes.get(v) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType};
+                capturedPCodeMap.set(v, {iscapture: true, pcode: pcc.pcode, ftype: pcc.ftype});
             }
             else {
                 const vinfo = env.lookupVar(v);
@@ -2565,16 +2566,16 @@ class TypeChecker {
         });
 
         const pcterms = [...bodybinds].map((bb) => this.toTIRTypeKey(bb[1])).sort();
-        const pclcaptures = [...capturedPCodeMap].map((pm) => pm[1]).sort();
+        const pclcaptures = [...capturedPCodeMap].map((pm) => pm[1].pcode.codekey).sort();
 
         const pcvarinfo = [...capturedVarMap].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cname: cv[0], ctype: cv[1]}; });
-        const pclinfo = [...capturedPCodeMap].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cpname: cv[0], cpval: cv[1]}; });
+        const pclinfo = [...capturedPCodeMap].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
 
         const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
-        const cpacktype = new TIRCodePackType(lcodekey, linvkey, ltype.params.map((p) => this.toTIRTypeKey(p.type as ResolvedType)), this.toTIRTypeKey(ltype.resultType));
+        const cpacktype = new TIRCodePackType(lcodekey);
         const cpack = new TIRCodePack(lcodekey, linvkey, exp.invoke.recursive === "yes", lcodekey, pcterms, pclcaptures, pcvarinfo, pclinfo);
 
-        this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, declenv: env, bodybinds: bodybinds});
+        this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, declbinds: env.binds, bodybinds: bodybinds, pcodes: capturedPCodeMap});
 
         let capturedirect: string[] = [];
         let captureindirect: string[] = [];
@@ -2600,10 +2601,10 @@ class TypeChecker {
             }
         });
 
-        return this.setResultExpression(env, new TIRCreateCodePackExpression(exp.sinfo, lcodekey, capturedirect, captureindirect, capturepackdirect, capturepackindirect), this.getSpecialNoneType());
+        return [new TIRCreateCodePackExpression(exp.sinfo, cpack, lcodekey, capturedirect, captureindirect, capturepackdirect, capturepackindirect), ltype];
     }
 
-    private checkArgumentList(sinfo: SourceInfo, env: ExpressionTypeEnvironment, args: Expression[], expectedtypes: TypeSignature[], fbinds: TemplateBindScope): TIRExpression[] {
+    private checkArgumentList(sinfo: SourceInfo, env: ExpressionTypeEnvironment, args: Expression[], expectedtypes: TypeSignature[], fbinds: TemplateBindScope): [TIRExpression[], (ResolvedFunctionType | undefined)[]] {
         this.raiseErrorIf(sinfo, args.length !== expectedtypes.length, `call expected ${expectedtypes.length} arguments but got ${args.length}`);
         const eenvs = args.map((arg, ii) => {
             if (this.isPCodeTypedExpression(arg, env)) {
@@ -2618,21 +2619,23 @@ class TypeChecker {
         });
 
         let cexps: TIRExpression[] = [];
+        let ftypes: (ResolvedFunctionType | undefined)[] = [];
         for (let i = 0; i < eenvs.length; ++i) {
             const oftype = this.normalizeTypeGeneral(expectedtypes[i], fbinds);
-            if (oftype instanceof ResolvedType) {
-                this.raiseErrorIf(args[i].sinfo, !this.subtypeOf(this.envExpressionGetInferType(eenvs[i]), oftype), `${this.envExpressionGetInferType(eenvs[i]).typeID} is not a subtype of ${oftype.typeID}`);
-
-                cexps.push(this.emitCoerceIfNeeded(eenvs[i], args[i].sinfo, oftype).expressionResult);
+            if (Array.isArray(eenvs[i])) {
+                cexps.push((eenvs[i] as [TIRCreateCodePackExpression, ResolvedFunctionType])[0]);
+                ftypes.push((eenvs[i] as [TIRCreateCodePackExpression, ResolvedFunctionType])[1]);
             }
             else {
-                this.raiseErrorIf(args[i].sinfo, !(eenvs[i].expressionResult instanceof TIRCodePack), "expected a code pack expression");
-                
-                cexps.push(eenvs[i].expressionResult);
+                assert(oftype instanceof ResolvedType, "Something went wrong");
+                this.raiseErrorIf(args[i].sinfo, !this.subtypeOf(this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment), oftype), `${this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment).typeID} is not a subtype of ${oftype.typeID}`);
+
+                cexps.push(this.emitCoerceIfNeeded(eenvs[i] as ExpressionTypeEnvironment, args[i].sinfo, oftype).expressionResult);
+                ftypes.push(undefined);
             }
         }
 
-        return cexps;
+        return [cexps, ftypes];
     }
 
     private checkLiteralNoneExpression(env: ExpressionTypeEnvironment, exp: LiteralNoneExpression): ExpressionTypeEnvironment {
@@ -3149,7 +3152,7 @@ class TypeChecker {
                 const rtype = this.normalizeTypeOnly((opsintro as NamespaceOperatorDecl).invoke.resultType, TemplateBindScope.createEmptyBindScope());
                 const tirrtype = this.toTIRTypeKey(rtype);
 
-                const argexps = this.checkArgumentList(exp.sinfo, env, exp.args, (opsintro as NamespaceOperatorDecl).invoke.params.map((pp) => pp.type), TemplateBindScope.createEmptyBindScope());
+                const [argexps, _] = this.checkArgumentList(exp.sinfo, env, exp.args, (opsintro as NamespaceOperatorDecl).invoke.params.map((pp) => pp.type), TemplateBindScope.createEmptyBindScope());
 
                 const tircall = new TIRCallNamespaceOperatorExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
@@ -3165,13 +3168,19 @@ class TypeChecker {
                 }
                 this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.invoke.terms, TemplateBindScope.createEmptyBindScope(), binds, fdecl.invoke.termRestrictions);
 
-                this.m_pendingNamespaceFunctions.push({decl: fdecl, binds: binds});
-
-                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
                 const rtype = this.normalizeTypeOnly(fdecl.invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
                 const tirrtype = this.toTIRTypeKey(rtype);
 
-                const argexps = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.invoke.params.map((pp) => pp.type), TemplateBindScope.createBaseBindScope(binds));
+                const [argexps, fargs] = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.invoke.params.map((pp) => pp.type), TemplateBindScope.createBaseBindScope(binds));
+                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, exp.name, fdecl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+
+                let pcodes = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
+                argexps.forEach((ee, ii) => {
+                    if(ee instanceof TIRCreateCodePackExpression) {
+                        pcodes.set(fdecl.invoke.params[ii].name, {iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType});
+                    }
+                });
+                this.m_pendingNamespaceFunctions.push({decl: fdecl, binds: binds, pcodes: pcodes});
 
                 const tircall = new TIRCallNamespaceFunctionExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
@@ -3232,15 +3241,21 @@ class TypeChecker {
             return this.setResultExpression(env, new TIRInvalidExpression(exp.sinfo, tirrtype), rtype);
         }
         else {
-            const argexps = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
+            const [argexps, fargs] = this.checkArgumentList(exp.sinfo, env, exp.args, fdecl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
 
             if (fdecl.decl.invoke.body !== undefined && fdecl.decl.invoke.body.body === "special_inject") {
                 return this.setResultExpression(env, new TIRInjectExpression(exp.sinfo, argexps[0], tirrtype), rtype);
             }
             else {
-                const fkey = TIRIDGenerator.generateInvokeForMemberFunction(this.toTIRTypeKey(fdecl.ttype), exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRIDGenerator.generateInvokeForMemberFunction(this.toTIRTypeKey(fdecl.ttype), exp.name, fdecl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
             
-                this.m_pendingFunctionMemberDecls.push({decl: fdecl, binds: binds});
+                let pcodes = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
+                argexps.forEach((ee, ii) => {
+                    if(ee instanceof TIRCreateCodePackExpression) {
+                        pcodes.set(fdecl.decl.invoke.params[ii].name, {iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType});
+                    }
+                });
+                this.m_pendingFunctionMemberDecls.push({decl: fdecl, binds: binds, pcodes: pcodes});
 
                 const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, this.toTIRTypeKey(fdecl.ttype), exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
@@ -3389,7 +3404,7 @@ class TypeChecker {
                 }
             }
             else {
-                const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
                 this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds}, {decl: mresolve.decl, binds: binds});
 
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
@@ -3406,14 +3421,14 @@ class TypeChecker {
         else {
             this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef, "cannot use ref on virtual method call -- variance on updated this ref type");
             const tkey = this.toTIRTypeKey(mresolve.decl.ttype);
-            const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+            const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
             this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds});
 
             const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
             let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
                 const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
-                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
                 this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds});
             }
 
@@ -4115,7 +4130,7 @@ class TypeChecker {
 
         const argexps = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params.map((pp) => pp.type), fdeclscope);
 
-        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)));
+        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
         this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds});
 
         if(mresolve.invoke.attributes.includes("task_action")) {
@@ -5371,7 +5386,7 @@ class TypeChecker {
         return ([] as TIRTypedeclInvariantDecl[]).concat(...chkinvsaa);
     }
 
-    private processPrecondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, exps: PreConditionDecl[]): TIRPreConditionDecl[] {
+    private processPrecondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, exps: PreConditionDecl[]): TIRPreConditionDecl[] {
         try {
             let fargs = new Map<string, VarInfo>();
             let args: TIRFunctionParameter[] = [];
@@ -5384,7 +5399,7 @@ class TypeChecker {
             invk.params.forEach((ff, fname) => {
                 const ptype = this.normalizeTypeGeneral(ff.type, binds);
                 if (ptype instanceof ResolvedFunctionType) {
-                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
                 }
                 else {
                     fargs.set(ff.name, new VarInfo(ptype, true, false, true));

@@ -1317,13 +1317,16 @@ class TIRExtractExpression extends TIRInjectExtractExpression {
 }
 
 class TIRCreateCodePackExpression extends TIRExpression {
+    readonly pcodepack: TIRCodePack;
+
     readonly capturedirect: string[];
     readonly captureindirect: string[];
     readonly capturepackdirect: string[];
     readonly capturepackindirect: string[];
 
-    constructor(sinfo: SourceInfo, cptype: TIRTypeKey, capturedirect: string[], captureindirect: string[], capturepackdirect: string[], capturepackindirect: string[]) {
+    constructor(sinfo: SourceInfo, pcodepack: TIRCodePack, cptype: TIRTypeKey, capturedirect: string[], captureindirect: string[], capturepackdirect: string[], capturepackindirect: string[]) {
         super(TIRExpressionTag.CreateCodePackExpression, sinfo, cptype, `create_pack<${cptype}>(${[...capturedirect, ...captureindirect, ...capturepackdirect, ...capturepackindirect].join(", ")})`);
+        this.pcodepack = pcodepack;
         this.capturedirect = capturedirect;
         this.captureindirect = captureindirect;
         this.capturepackdirect = capturepackdirect;

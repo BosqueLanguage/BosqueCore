@@ -705,15 +705,8 @@ class TIRUnionType extends TIRType {
 }
 
 class TIRCodePackType extends TIRType {
-    readonly invk: TIRInvokeKey;
-    readonly callargs: TIRTypeKey[];
-    readonly resulttype: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, invk: TIRInvokeKey, callargs: TIRTypeKey[], resulttype: TIRTypeKey) {
+    constructor(tkey: TIRTypeKey) {
         super(tkey, undefined);
-        this.invk = invk;
-        this.callargs = callargs;
-        this.resulttype = resulttype;
     }
 }
 
@@ -827,9 +820,9 @@ class TIRCodePack {
     
     //Maps from captured variables to their captured values
     readonly capturedValues: {cname: string, ctype: TIRTypeKey}[];
-    readonly capturedCodePacks: {cpname: string, cpval: TIRTypeKey}[];
+    readonly capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[];
 
-    constructor(codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRTypeKey}[]) {
+    constructor(codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[]) {
         this.codekey = codekey;
         this.invk = invk;
         this.recursive = recursive;
