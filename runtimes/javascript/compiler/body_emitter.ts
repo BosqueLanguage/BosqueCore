@@ -1562,28 +1562,23 @@ class BodyEmitter {
 
     private emitLoggerEmitStatement(stmt: TIRLoggerEmitStatement): string {
         const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
-
-        xxxx; //should not fail here -- instead want to log that arg eval failed (at high level)
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
 
-        return `if($Runtime.checkloglevel(${stmt.level})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
+        return `if($Runtime.checkloglevel(${stmt.level})) { try { $Runtime.log("${fmt}", ${stmt.level}, ${fmt}, ${args}); } catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } }`;
     }
 
     private emitLoggerEmitConditionalStatement(stmt: TIRLoggerEmitConditionalStatement): string {
         const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
         
-        xxxx; //should not fail here -- instead want to log that arg eval failed (at high level)
         const test = this.emitExpression(stmt.cond);
-        return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
+        return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { try { $Runtime.log("${fmt}", ${stmt.level}, ${fmt}, ${args}); } catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } }`
     }
 
     private emitLoggerSetPrefixStatement(stmt: TIRLoggerSetPrefixStatement): string {
         const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
         
-        xxxx; //should not fail here -- instead want to log that arg eval failed (at high level)
-        const test = this.emitExpression(stmt.cond);
         return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
     }
 
@@ -1594,9 +1589,8 @@ class BodyEmitter {
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {
-        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
-
-        return indent + "/*{|*/\n" + stmts + "\n" + indent + "/*|}/*";
+        //TODO: need to declare vars as let before block so we can support things like -- LoggerSetPrefix that need to wrap the block as a try{...}catch{...}
+        return NOT_IMPLEMENTED_STATEMENT("TIRUnscopedBLock");
     }
 
     private emitStatement(stmt: TIRStatement, indent: string): string {
@@ -1702,6 +1696,9 @@ class BodyEmitter {
             }
             case TIRStatementTag.LoggerEmitConditionalStatement: {
                 return this.emitLoggerEmitConditionalStatement(stmt as TIRLoggerEmitConditionalStatement);
+            }
+            case TIRStatementTag.LoggerSetPrefixStatement: {
+                return this.emitLoggerSetPrefixStatement(stmt as TIRLoggerSetPrefixStatement);
             }
             default: {
                 assert(false, `Unknown statement kind ${stmt.tag}`);

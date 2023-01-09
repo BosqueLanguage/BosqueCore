@@ -152,6 +152,7 @@ BSQEnvironment.clear = function(env, key) {
 };
 
 let loglevel = "info";
+let logprefix = [];
 
 function setloglevel(level) {
     loglevel = level;
@@ -161,13 +162,38 @@ function checkloglevel(level) {
     return level === "fatal" || level === "error" || level === "warn" || level === "info";
 }
 
-function log(level, fmt, ...args) {
+function log(level, tag, fmt, ...args) {
     const msg = fmt + " -- " + args.map((arg) => JSON.stringify(arg)).join(" ");
-    console.log(msg);
+    if(logprefix.length === 0) {
+        console.log(JSON.stringify(
+            {
+                tag: tag,
+                msg: msg
+            }
+        ));
+    }
+    else {
+        console.log(JSON.stringify(
+            {
+                tag: tag,
+                prefix: logprefix.map((pp) => pp.smsg),
+                msg: msg
+            }
+        ));
+    }
 
     if(level === "fatal") {
         raiseUserAssert("log at fatal level -- " + msg);
     }
+}
+
+function pushlogprefix(fmt, ...args) {
+    const smsg = fmt + " -- " + args.map((arg) => JSON.stringify(arg)).join(" ");
+    logprefix.push({fmt: fmt, args: args, smsg: smsg});
+}
+
+function poplogprefix() {
+    logprefix.pop();
 }
 
 export {
@@ -177,5 +203,5 @@ export {
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,
     BSQEnvironment,
-    setloglevel, checkloglevel, log
+    setloglevel, checkloglevel, log, pushlogprefix, pushlogprefix
 };
