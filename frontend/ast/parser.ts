@@ -1796,58 +1796,58 @@ class Parser {
         return ptok === "::";
     }
 
-    private parsePrimaryExpression(): Expression {
+    private parsePrimaryExpression(): [Expression, boolean] {
         const line = this.getCurrentLine();
         const sinfo = this.getCurrentSrcInfo();
 
         const tk = this.peekToken();
         if (tk === KW_none) {
             this.consumeToken();
-            return new LiteralNoneExpression(sinfo);
+            return [new LiteralNoneExpression(sinfo), false];
         }
         else if (tk === KW_nothing) {
             this.consumeToken();
-            return new LiteralNothingExpression(sinfo);
+            return [new LiteralNothingExpression(sinfo), false];
         }
         else if (tk === KW_true || tk === KW_false) {
             this.consumeToken();
-            return new LiteralBoolExpression(sinfo, tk === KW_true);
+            return [new LiteralBoolExpression(sinfo, tk === KW_true), false];
         }
         else if (tk === TokenStrings.Int) {
             const istr = this.consumeTokenAndGetValue();
-            return new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialIntSignature);
+            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialIntSignature), false];
         }
         else if (tk === TokenStrings.Nat) {
             const istr = this.consumeTokenAndGetValue();
-            return new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialNatSignature);
+            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialNatSignature), false];
         }
         else if (tk === TokenStrings.Float) {
             const fstr = this.consumeTokenAndGetValue();
-            return new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialFloatSignature);
+            return [new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialFloatSignature), false];
         }
         else if (tk === TokenStrings.Decimal) {
             const fstr = this.consumeTokenAndGetValue();
-            return new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialDecimalSignature);
+            return [new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialDecimalSignature), false];
         }
         else if (tk === TokenStrings.BigInt) {
             const istr = this.consumeTokenAndGetValue();
-            return new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigIntSignature);
+            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigIntSignature), false];
         }
         else if (tk === TokenStrings.BigNat) {
             const istr = this.consumeTokenAndGetValue();
-            return new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigNatSignature);
+            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigNatSignature), false];
         }
         else if (tk === TokenStrings.Rational) {
             const istr = this.consumeTokenAndGetValue();
-            return new LiteralRationalExpression(sinfo, istr, this.m_penv.SpecialRationalSignature);
+            return [new LiteralRationalExpression(sinfo, istr, this.m_penv.SpecialRationalSignature), false];
         }
         else if (tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralStringExpression(sinfo, sstr);
+            return [new LiteralStringExpression(sinfo, sstr), false];
         }
         else if (tk === TokenStrings.ASCIIString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralASCIIStringExpression(sinfo, sstr);
+            return [new LiteralASCIIStringExpression(sinfo, sstr), false];
         }
         else if (tk === TokenStrings.TypedString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
@@ -1855,11 +1855,11 @@ class Parser {
                 const ttype = this.parseFollowTypeTag("typed primitive", true);
 
                 const asstr = "\"" + sstr.slice(1, sstr.length - 1) + "\"";
-                return new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralStringExpression(sinfo, asstr), ttype);
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralStringExpression(sinfo, asstr), ttype), false];
             }
             else {
                 const ttype = this.parseFollowTypeTag("typed string", false);
-                return new LiteralTypedStringExpression(sinfo, sstr, ttype);
+                return [new LiteralTypedStringExpression(sinfo, sstr, ttype), false];
             }
         }
         else if (tk === TokenStrings.ASCIITypedString) {
@@ -1868,20 +1868,20 @@ class Parser {
                 const ttype = this.parseFollowTypeTag("typed primitive", true);
 
                 const asstr = "\"" + sstr.slice("ascii{".length + 1, sstr.length - (1 + "}".length)) + "\"";
-                return new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralASCIIStringExpression(sinfo, asstr), ttype);
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralASCIIStringExpression(sinfo, asstr), ttype), false];
             }
             else {
                 const ttype = this.parseFollowTypeTag("ascii typed string", false);
-                return new LiteralASCIITypedStringExpression(sinfo, sstr, ttype);
+                return [new LiteralASCIITypedStringExpression(sinfo, sstr, ttype), false];
             }
         }
         else if (tk === TokenStrings.TemplateString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralTemplateStringExpression(sinfo, sstr);
+            return [new LiteralTemplateStringExpression(sinfo, sstr), false];
         }
         else if (tk === TokenStrings.TemplateASCIIString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return new LiteralASCIITemplateStringExpression(sinfo, sstr);
+            return [new LiteralASCIITemplateStringExpression(sinfo, sstr), false];
         }
         else if (tk === TokenStrings.Regex) {
             const restr = this.consumeTokenAndGetValue(); //keep in escaped format
@@ -1891,7 +1891,7 @@ class Parser {
             }
 
             this.m_penv.assembly.addLiteralRegex(re as BSQRegex);
-            return new LiteralRegexExpression(sinfo, re as BSQRegex);
+            return [new LiteralRegexExpression(sinfo, re as BSQRegex), false];
         }
         else if (tk === KW_ok || tk === KW_err || tk === KW_something) {
             this.consumeToken();
@@ -1907,7 +1907,7 @@ class Parser {
             }
             this.ensureAndConsumeToken(")", tk + "constructor -- missing closing \")\"?");
 
-            return new SpecialConstructorExpression(sinfo, tk, arg);
+            return [new SpecialConstructorExpression(sinfo, tk, arg), false];
         }
         else if (tk === KW_env) {
             this.ensureTaskOpOk();
@@ -1926,7 +1926,7 @@ class Parser {
             const keyname = this.consumeTokenAndGetValue();
             this.ensureToken(SYM_rbrack, "environment access");
 
-            return new AccessEnvValueExpression(sinfo, keyname, opttype, isNoneMode);
+            return [new AccessEnvValueExpression(sinfo, keyname, opttype, isNoneMode), false];
         }
         else if (tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
             this.ensureTaskOpOk();
@@ -1938,20 +1938,35 @@ class Parser {
 
             if (!this.testToken(SYM_le) && !this.testToken(SYM_lparen)) {
                 if(sfname !== "cntl") {
-                    return new TaskSelfFieldExpression(sinfo, sfname);
+                    return [new TaskSelfFieldExpression(sinfo, sfname), false];
                 }
                 else {
-                    return new PostfixOp(sinfo, new TaskSelfControlExpression(sinfo), [new PostfixAccessFromName(sinfo, sfname)]);
+                    return [new PostfixOp(sinfo, new TaskSelfControlExpression(sinfo), [new PostfixAccessFromName(sinfo, sfname)]), false];
                 }
             }
             else {
                 const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
                 const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                return new TaskSelfActionExpression(sinfo, sfname, targs, args);
+                return [new TaskSelfActionExpression(sinfo, sfname, targs, args, false), false];
             }
         }
-        else if (tk === TokenStrings.Identifier) {
+        else if (tk === KW_ref && this.peekToken(1) === TokenStrings.Identifier && this.peekTokenData(1) === "self") {
+            this.ensureTaskOpOk();
+            this.consumeToken();
+            this.consumeToken();
+
+            this.ensureAndConsumeToken(SYM_dot, "self field access");
+            this.ensureNotToken(TokenStrings.Identifier, "self field access");
+            const sfname = this.consumeTokenAndGetValue();
+
+            const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
+            const args = this.parseArguments(SYM_lparen, SYM_rparen);
+
+            return [new TaskSelfActionExpression(sinfo, sfname, targs, args, true), false];
+        }
+        else if (tk === TokenStrings.Identifier || this.testFollows(KW_ref, TokenStrings.Identifier)) {
+            const refstr = this.testAndConsumeTokenIf(KW_ref);
             let namestr = this.consumeTokenAndGetValue();
 
             const tryfunctionns = this.m_penv.tryResolveNamespace(undefined, namestr);
@@ -1959,19 +1974,23 @@ class Parser {
             if (isvar) {
                 const istr = this.m_penv.useLocalVar(namestr);
 
+                if(refstr && (this.testToken(SYM_lbrack) || this.testToken(SYM_lparen))) {
+                    this.raiseError(line, "cannot use ref on lambda invoke");
+                }
+
                 if (this.testToken(SYM_lbrack)) {
                     const rec = this.parseRecursiveAnnotation();
                     const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                    return new PCodeInvokeExpression(sinfo, istr, rec, args);
+                    return [new PCodeInvokeExpression(sinfo, istr, rec, args), false];
                 }
                 else if (this.testToken(SYM_lparen)) {
                     const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                    return new PCodeInvokeExpression(sinfo, istr, "no", args);
+                    return [new PCodeInvokeExpression(sinfo, istr, "no", args), false];
                 }
                 else {
-                    return new AccessVariableExpression(sinfo, istr);
+                    return [new AccessVariableExpression(sinfo, istr), refstr];
                 }
             }
             else {
@@ -1979,15 +1998,19 @@ class Parser {
                     this.raiseError(line, `Cannot resolve namespace for "${namestr}"`);
                 }
 
+                if(refstr) {
+                    this.raiseError(line, "cannot use ref on namespace invoke");
+                }
+
                 const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
                 const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
                 const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                return new CallNamespaceFunctionOrOperatorExpression(sinfo, tryfunctionns as string, namestr, targs, rec, args);
+                return [new CallNamespaceFunctionOrOperatorExpression(sinfo, tryfunctionns as string, namestr, targs, rec, args), false];
             }
         }
         else if (tk === KW_fn || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn) || tk === KW_pred || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
-            return this.parsePCodeTerm();
+            return [this.parsePCodeTerm(), false];
         }
         else if (tk === SYM_lparen && !this.checkTypeScopeBasedExpressionFollowsParens()) {
             try {
@@ -1998,31 +2021,31 @@ class Parser {
                 this.ensureAndConsumeToken(SYM_rparen, "(Exp _<- Missing \")\"?");
 
                 this.clearRecover();
-                return exp;
+                return [exp, false];
             }
             catch (ex) {
                 this.processRecover();
-                return new InvalidExpression(sinfo);
+                return [new InvalidExpression(sinfo), false];
             }
         }
         else if (this.testToken(SYM_lbrack)) {
             const args = this.parseArguments(SYM_lbrack, SYM_rbrack);
-            return new ConstructorTupleExpression(sinfo, args);
+            return [new ConstructorTupleExpression(sinfo, args), false];
         }
         else if  (this.testToken(SYM_lbrace)) {
             const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).sort((a, b) => a.name.localeCompare(b.name));
-            return new ConstructorRecordExpression(sinfo, args.map((nn) => {
+            return [new ConstructorRecordExpression(sinfo, args.map((nn) => {
                 return {property: nn.name, value: nn.value};
-            }));
+            })), false];
         }
         else if (this.testToken(SYM_land) || this.testToken(SYM_lor)) {
             const op = this.consumeTokenAndGetValue() as "/\\" | "\\/";
             const args = this.parseArguments(SYM_lparen, SYM_rparen);
             if(op === SYM_land) {
-                return new LogicActionAndExpression(sinfo, args);
+                return [new LogicActionAndExpression(sinfo, args), false];
             }
             else {
-                return new LogicActionOrExpression(sinfo, args);
+                return [new LogicActionOrExpression(sinfo, args), false];
             }
         }
         else if (this.testFollows(TokenStrings.Namespace, SYM_coloncolon, TokenStrings.Identifier)) {
@@ -2035,10 +2058,10 @@ class Parser {
                 this.ensureTaskOpOk();
 
                 if(name === "getTaskID") {
-                    return new TaskGetIDExpression(sinfo);
+                    return [new TaskGetIDExpression(sinfo), false];
                 }
                 else {
-                    return new TaskCancelRequestedExpression(sinfo);
+                    return [new TaskCancelRequestedExpression(sinfo), false];
                 }
             }
             else {
@@ -2049,14 +2072,14 @@ class Parser {
 
                 if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen)) {
                     //just a constant access
-                    return new AccessNamespaceConstantExpression(sinfo, ns, name);
+                    return [new AccessNamespaceConstantExpression(sinfo, ns, name), false];
                 }
                 else {
                     const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
                     const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
                     const args = this.parseArguments(SYM_lparen, SYM_rparen);
 
-                    return new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args);
+                    return [new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args), false];
                 }
             }
         }
@@ -2066,7 +2089,7 @@ class Parser {
             this.consumeToken();
             const name = this.consumeTokenAndGetValue();
 
-            return new AccessFormatInfoExpression(sinfo, ns, name);
+            return [new AccessFormatInfoExpression(sinfo, ns, name), false];
         }
         else if (this.testFollows(TokenStrings.Namespace, SYM_hash, TokenStrings.Type)) {
             //it is a namespace access of some formatter info
@@ -2079,7 +2102,7 @@ class Parser {
                 ns = "[Unresolved Error]";
             }
 
-            return new AccessFormatInfoExpression(sinfo, ns, name);
+            return [new AccessFormatInfoExpression(sinfo, ns, name), false];
         }
         else {
             const ttype = this.parseTypeSignature();
@@ -2089,29 +2112,32 @@ class Parser {
                 const name = this.consumeTokenAndGetValue();
                 if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen) && !this.testToken(SYM_lbrace)) {
                     //just a static access
-                    return new AccessStaticFieldExpression(sinfo, ttype, name);
+                    return [new AccessStaticFieldExpression(sinfo, ttype, name), false];
                 }
                 else {
                     const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
                     const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
                     const args = this.parseArguments(SYM_lparen, SYM_rparen);
-                    return new CallStaticFunctionExpression(sinfo, ttype, name, targs, rec, args);
+                    return [new CallStaticFunctionExpression(sinfo, ttype, name, targs, rec, args), false];
                 }
             }
             else if (this.testFollows(SYM_lbrace)) {
-                return this.parseConstructorPrimary(ttype);
+                return [this.parseConstructorPrimary(ttype), false];
             }
             else {
+                //
+                //TODO: maybe a better error here -- slice the string at the position...
+                //
                 this.raiseError(line, "Unknown token sequence in parsing expression");
-                return new InvalidExpression(sinfo);
+                return [new InvalidExpression(sinfo), false];
             }
         }
     }
     
-    private literalPrefixStackAndTypedConstructorHandler(ops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[]] {
+    private literalPrefixStackAndTypedConstructorHandler(ops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[], boolean] {
         const sinfo = this.getCurrentSrcInfo();
 
-        let exp = this.parsePrimaryExpression();
+        let [exp, refpfx] = this.parsePrimaryExpression();
         if (this.testToken(TokenStrings.FollowTypeSep)) {
             const ttype = this.parseFollowTypeTag("typed primitive", true);
 
@@ -2120,15 +2146,15 @@ class Parser {
                 //Typed strings handled in parse primary
 
             if(okexp) {
-                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, ttype), ops];
+                return [new LiteralTypedPrimitiveConstructorExpression(sinfo, exp, ttype), ops, false];
             }
             else {
                 this.raiseError(sinfo.line, `Only literal values can be used in typed initializers`);
-                return [new InvalidExpression(sinfo), []];
+                return [new InvalidExpression(sinfo), [], false];
             }
         }
         else {
-            return [exp, ops];
+            return [exp, ops, refpfx];
         }
     }
 
@@ -2195,9 +2221,8 @@ class Parser {
 
     private parsePostfixExpression(pfxops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[]] {
         const rootinfo = this.getCurrentSrcInfo();
-        let [rootexp, remainingops] = this.literalPrefixStackAndTypedConstructorHandler(pfxops);
 
-        let refpfx = this.testAndConsumeTokenIf(KW_ref);
+        let [rootexp, remainingops, refpfx] = this.literalPrefixStackAndTypedConstructorHandler(pfxops);
 
         let ops: PostfixOperation[] = [];
         while (true) {
@@ -2959,11 +2984,11 @@ class Parser {
         }
         else if (tk === KW_ref) {
             const call = this.parsePostfixExpression([]);
-            if(!(call[0] instanceof PostfixOp)) {
+            if(!(call[0] instanceof PostfixOp) && !(call[0] instanceof TaskSelfActionExpression)) {
                 this.raiseError(sinfo.line, "ref invoke statement");
             }
 
-            return new RefCallStatement(sinfo, call[0] as PostfixOp);
+            return new RefCallStatement(sinfo, call[0] as (PostfixOp | TaskSelfActionExpression));
         }
         else if(tk === KW_callwith) {
             this.ensureTaskOpOk();

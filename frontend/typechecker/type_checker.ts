@@ -3382,7 +3382,14 @@ class TypeChecker {
 
         const tirdecltype = this.toTIRTypeKey(mresolve.decl.ttype);
 
-        const argexps = this.checkArgumentList(op.sinfo, env.createFreshEnvExpressionFrom(), op.args, mresolve.decl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
+        const [argexps, fargs] = this.checkArgumentList(op.sinfo, env.createFreshEnvExpressionFrom(), op.args, mresolve.decl.decl.invoke.params.map((pp) => pp.type), fdeclscope);
+
+        let pcodes = new Map<string, { iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType }>();
+        argexps.forEach((ee, ii) => {
+            if (ee instanceof TIRCreateCodePackExpression) {
+                pcodes.set(mresolve.decl.decl.invoke.params[ii].name, { iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType });
+            }
+        });
 
         if((!mresolve.decl.decl.attributes.includes("abstract") && !mresolve.decl.decl.attributes.includes("virtual"))) {
             this.raiseErrorIf(op.sinfo, mresolve.impl.length !== 1, `Could not resolve implementation for non-virtual method ${op.name} from ${resolvefrom.typeID}`);
@@ -3404,8 +3411,8 @@ class TypeChecker {
                 }
             }
             else {
-                const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
-                this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds}, {decl: mresolve.decl, binds: binds});
+                const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+                this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds, pcodes: pcodes}, {decl: mresolve.decl, binds: binds, pcodes: pcodes});
 
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
                 this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
@@ -3421,15 +3428,15 @@ class TypeChecker {
         else {
             this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef, "cannot use ref on virtual method call -- variance on updated this ref type");
             const tkey = this.toTIRTypeKey(mresolve.decl.ttype);
-            const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
-            this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds});
+            const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+            this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds, pcodes: pcodes});
 
             const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
             let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
                 const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
-                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
-                this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds});
+                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+                this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds, pcodes: pcodes});
             }
 
             const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
@@ -4128,10 +4135,18 @@ class TypeChecker {
 
         const tirdecltype = this.toTIRTypeKey(tasktype);
 
-        const argexps = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params.map((pp) => pp.type), fdeclscope);
+        const [argexps, fargs] = this.checkArgumentList(exp.sinfo, env.createFreshEnvExpressionFrom(), exp.args, mresolve.invoke.params.map((pp) => pp.type), fdeclscope);
+        let pcodes = new Map<string, { iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType }>();
+        argexps.forEach((ee, ii) => {
+            if (ee instanceof TIRCreateCodePackExpression) {
+                pcodes.set(mresolve.invoke.params[ii].name, { iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType });
+            }
+        });
 
-        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).codekey));
-        this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds});
+        const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+        this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds, pcodes: pcodes});
+
+        xxxx;
 
         if(mresolve.invoke.attributes.includes("task_action")) {
             return this.setResultExpression(env, new TIRCallMemberActionExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
@@ -5132,7 +5147,23 @@ class TypeChecker {
     }
 
     private checkLoggerPrefixStatement(env: StatementTypeEnvironment, stmt: LoggerPrefixStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        return TYPECHECKER_NOT_IMPLEMENTED<[StatementTypeEnvironment, TIRStatement[]]>("LoggerPrefixStatement");
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+
+        this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
+        const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
+
+        let tmap = new Map<number, ResolvedType>();
+        this.gatherInfoTemplateTypesAndChecks(stmt.sinfo, env, tt, tmap);
+
+        this.raiseErrorIf(stmt.sinfo, stmt.args.length !== tmap.size, `number of expected args (${tmap.size}) and number provided (${stmt.args.length}) differ`);
+        const args = stmt.args.map((arg, ii) => {
+            this.raiseErrorIf(arg.sinfo, !tmap.has(ii), `Missing formatter for argument ${ii}`);
+            const etype = tmap.get(ii) as ResolvedType;
+            return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
+        });
+
+        return [env, [new TIRLoggerPrefixStatement(stmt.sinfo, stmt.level, stmt.msg, args)]];
     }
 
     private checkStatement(env: StatementTypeEnvironment, stmt: Statement): [StatementTypeEnvironment, TIRStatement[]] {

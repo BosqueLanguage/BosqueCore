@@ -1601,7 +1601,8 @@ enum TIRStatementTag {
     TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
 
     LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement"
+    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
+    LoggerSetPrefixStatement = "LoggerSetPrefixStatement"
 }
 
 abstract class TIRStatement {
@@ -2193,10 +2194,6 @@ class TIRLoggerEmitStatement extends TIRStatement {
         this.fmt = fmt;
         this.args = args;
     }
-
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
-    }
 }
 
 class TIRLoggerEmitConditionalStatement extends TIRStatement {
@@ -2212,9 +2209,18 @@ class TIRLoggerEmitConditionalStatement extends TIRStatement {
         this.cond = cond;
         this.args = args;
     }
+}
 
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
+class TIRLoggerSetPrefixStatement extends TIRStatement {
+    readonly fmt: {namespace: string, keyname: string};
+    readonly args: TIRExpression[];
+    readonly block: TIRScopedBlockStatement | TIRUnscopedBlockStatement;
+
+    constructor(sinfo: SourceInfo, fmt: {namespace: string, keyname: string}, block: TIRScopedBlockStatement | TIRUnscopedBlockStatement, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerSetPrefixStatement, sinfo, `Logger::scope(${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")}) ${block.stmtstr}`);
+        this.fmt = fmt;
+        this.args = args;
+        this.block = block;
     }
 }
 
@@ -2288,6 +2294,6 @@ export {
     TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket,
     TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement,
     TIRTaskSetSelfFieldStatement,
-    TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement,
+    TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRLoggerSetPrefixStatement,
     TIRBlockStatement, TIRUnscopedBlockStatement, TIRScopedBlockStatement
 };

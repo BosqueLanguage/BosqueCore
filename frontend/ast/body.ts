@@ -876,12 +876,14 @@ class TaskSelfActionExpression extends Expression {
     readonly name: string;
     readonly terms: TypeSignature[];
     readonly args: Expression[];
+    readonly isSelfRef: boolean;
 
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[], isSelfRef: boolean) {
         super(ExpressionTag.TaskSelfActionExpression, sinfo);
         this.name = name;
         this.terms = terms;
         this.args = args;
+        this.isSelfRef = isSelfRef;
     }
     
     isTaskOperation(): boolean {
@@ -1081,9 +1083,9 @@ class DebugStatement extends Statement {
 }
 
 class RefCallStatement extends Statement {
-    readonly call: PostfixOp;
+    readonly call: PostfixOp | TaskSelfActionExpression;
 
-    constructor(sinfo: SourceInfo, call: PostfixOp) {
+    constructor(sinfo: SourceInfo, call: PostfixOp | TaskSelfActionExpression) {
         super(StatementTag.RefCallStatement, sinfo);
         this.call = call;
     }
