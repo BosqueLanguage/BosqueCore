@@ -11,7 +11,7 @@ import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceCo
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
@@ -1437,8 +1437,9 @@ class TypeChecker {
         else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createEmptyBindScope()).map((rr) => this.toTIRTypeKey(rr));
+            const iskeytype = this.subtypeOf(ResolvedType.createSingle(rtype), this.getSpecialKeyTypeConceptType());
 
-            tirtype = new TIRPrimitiveInternalEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes);
+            tirtype = new TIRPrimitiveInternalEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, iskeytype);
         }
         else if(rtype instanceof ResolvedValidatorEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
@@ -4146,7 +4147,7 @@ class TypeChecker {
         const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
         this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds, pcodes: pcodes});
 
-        xxxx;
+        this.raiseErrorIf(exp.sinfo, exp.isSelfRef !== mresolve.hasAttribute("ref"), `mismatch on self/this ref at callsite ${mresolve.name}`);
 
         if(mresolve.invoke.attributes.includes("task_action")) {
             return this.setResultExpression(env, new TIRCallMemberActionExpression(exp.sinfo, exp.name, fkey, tirrtype, this.toTIRTypeKey(tasktype), argexps), rtype);
@@ -5163,7 +5164,16 @@ class TypeChecker {
             return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
         });
 
-        return [env, [new TIRLoggerPrefixStatement(stmt.sinfo, stmt.level, stmt.msg, args)]];
+        let renv = env;
+        let bblock: TIRScopedBlockStatement | TIRUnscopedBlockStatement | undefined = undefined;
+        if(stmt.block instanceof ScopedBlockStatement) {
+            [renv, bblock] = this.checkScopedBlockStatement(env, stmt.block);
+        }
+        else {
+            [renv, bblock] = this.checkUnscopedBlockStatement(env, stmt.block);
+        }
+
+        return [renv, [new TIRLoggerSetPrefixStatement(stmt.sinfo, stmt.msg, bblock, args)]];
     }
 
     private checkStatement(env: StatementTypeEnvironment, stmt: Statement): [StatementTypeEnvironment, TIRStatement[]] {
@@ -5454,7 +5464,7 @@ class TypeChecker {
         }
     }
 
-    private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, TIRCodePack>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
+    private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
         try {
             let fargs = new Map<string, VarInfo>();
             let args: TIRFunctionParameter[] = [];
@@ -5467,7 +5477,7 @@ class TypeChecker {
             invk.params.forEach((ff, fname) => {
                 const ptype = this.normalizeTypeGeneral(ff.type, binds);
                 if (ptype instanceof ResolvedFunctionType) {
-                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
                 }
                 else {
                     fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5578,17 +5588,24 @@ class TypeChecker {
         }
     }
 
-    private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeImplementation {
+    private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ptype));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5602,19 +5619,26 @@ class TypeChecker {
 
         const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(ibinds), pcodes, new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)), false, "no");
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, false, false, false, false, params, false, restype, preconds, postconds, body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, body);
     }
 
-    private processNamespaceFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokePrimitive {
+    private processNamespaceFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ptype));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
@@ -5623,7 +5647,7 @@ class TypeChecker {
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)));
         const body = (invoke.body as BodyImplementation).body as string;
-        return new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, params, restype, body);
+        return new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, params, restype, body);
     }
 
     private processNamespaceOperatorDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl): TIRInvoke {
@@ -5645,12 +5669,12 @@ class TypeChecker {
         this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions not supported on operators yet");
 
         if(invoke.body === undefined) {
-            return new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, false, true, params, false, restype, [], []);
+            return new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, true, params, false, restype, [], []);
         }
         else {
-            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, TIRCodePack>(), new Set<string>(), fargs, []);
+            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), fargs, []);
             const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
-            return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, false, false, true, false, params, false, restype, [], [], body);
+            return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], body);
         }
     }
 
@@ -5671,22 +5695,29 @@ class TypeChecker {
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
         this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions not supported on operators yet");
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, TIRCodePack>(), new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, false, false, true, false, params, false, restype, [], [], body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], body);
     }
 
-    private processMemberFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeImplementation {
+    private processMemberFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ptype));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5700,19 +5731,26 @@ class TypeChecker {
 
         const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, "no");
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, false, false, false, false, params, false, restype, preconds, postconds, body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, body);
     }
 
-    private processMemberFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokePrimitive {
+    private processMemberFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].code.recursive === "yes"));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
@@ -5722,20 +5760,27 @@ class TypeChecker {
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
 
         const body = (invoke.body as BodyImplementation).body as string;
-        return new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, params, restype, body);
+        return new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, params, restype, body);
     }
 
-    private processMemberMethodPureDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeAbstractDeclaration {
+    private processMemberMethodPureDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeAbstractDeclaration {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].code.recursive === "yes"));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5749,20 +5794,27 @@ class TypeChecker {
         const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.preconditions);
         const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.postconditions);
 
-        return new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, true, false, params, false, restype, preconds, postconds);
+        return new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, params, false, restype, preconds, postconds);
     }
 
-    private processMemberMethodVirtualDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeImplementation {
+    private processMemberMethodVirtualDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].code.recursive === "yes"));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5778,20 +5830,27 @@ class TypeChecker {
 
         const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, true, true, false, false, params, false, restype, preconds, postconds, body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, body);
     }
 
-    private processMemberMethodVirtualImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], declaredecl: [ResolvedType, InvokeDecl, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeImplementation {
+    private processMemberMethodVirtualImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], declaredecl: [ResolvedType, InvokeDecl, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].code.recursive === "yes"));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5807,20 +5866,27 @@ class TypeChecker {
 
         const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, true, true, false, false, params, false, restype, preconds, postconds, body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, body);
     }
 
-    private processMemberMethodImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, TIRCodePack>): TIRInvokeImplementation {
+    private processMemberMethodImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].code.recursive === "yes"));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
 
+        const tbinds = new Map<string, TIRTypeKey>();
+        [...ibinds].forEach((bb) => {
+            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
+        });
+
+        let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as TIRCodePack).ftype.tkey));
+                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
             }
             else {
                 fargs.set(ff.name, new VarInfo(ptype, true, false, true));
@@ -5836,10 +5902,10 @@ class TypeChecker {
 
         const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), this.m_taskOpsOk, this.m_taskSelfOk);
-        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, true, false, false, false, params, invoke.isThisRef, restype, preconds, postconds, body);
+        return new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, false, false, params, invoke.isThisRef, restype, preconds, postconds, body);
     }
 
-    private processPCodeInvokeInfo(name: string, invkey: TIRInvokeKey, enclosingDecl: [ResolvedType, TIRType, OOPTypeDecl, Map<string, ResolvedType>] | undefined, kind: "namespace" | "static" | "member" | "operator", invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: PCode[], pargs: [string, ResolvedType][]): MIRInvokeDecl {
+    private processPCodeInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: PCode[], pargs: [string, ResolvedType][]): MIRInvokeDecl {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
         xxxx;
@@ -5877,7 +5943,7 @@ class TypeChecker {
         }
     }
 
-    processNamespaceFunctionDecl(fkey: TIRInvokeKey, ns: string, name: string, invoke: InvokeDecl, binds: Map<string, ResolvedType>, terms: TIRTypeKey[], pcodes: Map<string, TIRCodePack>) {
+    processNamespaceFunctionDecl(fkey: TIRInvokeKey, ns: string, name: string, invoke: InvokeDecl, binds: Map<string, ResolvedType>, terms: TIRTypeKey[], pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
         try {
             this.m_file = invoke.srcFile;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(binds));

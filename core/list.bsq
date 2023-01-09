@@ -6,6 +6,7 @@
 //The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
+/*
 function rangeInt(start: Int, end: Int): List<Int>
     requires start <= end;
 {
@@ -49,6 +50,7 @@ function ziplist<T, U, V>(lt: List<T>, lu: List<U>, f: recursive? fn(_: T, _: U)
         return ListOps::s_list_map_fn_sync<T, U, V>[recursive?](lt, lu, f);
     }
 }
+*/
 
 __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded APIType, TestableType when T grounded TestableType {
     internal function s_append_helper(l1: List<T>, l2: List<T>): List<T> {
@@ -66,6 +68,272 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
+    method size(): Nat {
+        if(ListOps::s_list_empty<T>(this)) {
+            return 0n;
+        }
+        else {
+            return ListOps::s_list_size<T>(this);
+        }
+    }
+
+    method empty(): Bool {
+        return ListOps::s_list_empty<T>(this);
+    }
+
+    method front(): T 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_front<T>(this);
+    }
+
+    method back(): T 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_back<T>(this);
+    }
+
+    method get(i: Nat): T
+        requires i < ListOps::s_list_size<T>(this);
+    {
+        return ListOps::s_list_get<T>(this, i);
+    }
+
+    recursive? method allOf(p: recursive? pred(_: T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return !ListOps::s_list_has_pred<T>[recursive?](this, recursive? pred(v: T): Bool => !p[recursive?](v));
+        }
+    }
+
+    recursive? method allOfIdx(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return !ListOps::s_list_has_pred_idx<T>[recursive?](this, recursive? pred(v: T, idx: Nat): Bool => !p[recursive?](v, idx));
+        }
+    }
+
+    recursive? method noneOf(p: recursive? pred(_: T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return !ListOps::s_list_has_pred<T>[recursive?](this, p);
+        }
+    }
+
+    recursive? method noneOfIdx(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return true;
+        }
+        else {
+            return !ListOps::s_list_has_pred_idx<T>[recursive?](this, p);
+        }
+    }
+
+    recursive? method someOf(p: recursive? pred(_: T) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_has_pred<T>[recursive?](this, p);
+        }
+    }
+
+    recursive? method someOfIdx(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_has_pred_idx<T>[recursive?](this, p);
+        }
+    }
+
+    recursive? method find(p: recursive? pred(_: T) -> Bool): T
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
+        assert idx != -1i;
+
+        return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
+    }
+
+    recursive? method findIdx(p: recursive? pred(_: T, _: Nat) -> Bool): T
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
+        assert idx != -1i;
+
+        return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
+    }
+
+    recursive? method findIndexOf(p: recursive? pred(_: T) -> Bool): Nat
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
+
+        assert idx != -1i;
+        return NumericOps::s_intToNat(idx);
+    }
+
+    recursive? method findIndexOf(p: recursive? pred(_: T, _: Nat) -> Bool): Nat
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
+
+        assert idx != -1i;
+        return NumericOps::s_intToNat(idx);
+    }
+
+    recursive? method filter(p: recursive? pred(_: T) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_filter_pred<T>[recursive?](this, p);
+        }
+    }
+
+    recursive? method filterIdx(p: recursive? pred(_: T, _: Nat) -> Bool): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_filter_pred_idx<T>[recursive?](this, p);
+        }
+    }
+
+    method filterType<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v.is<U>(), fn(vv: T): U => s_safeAs<T, U>(vv));
+        }
+    }
+
+    method castType<U>(): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => v.as<U>());
+        }
+    }
+
+    recursive? method map<U>(f: recursive? fn(_: T) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{}; 
+        }
+        else {
+            return ListOps::s_list_map_fn<T, U>[recursive?](this, f);
+        }
+    }
+
+    recursive? method mapIdx<U>(f: recursive? fn(_: T, _: Nat) -> U): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{}; 
+        }
+        else {
+            return ListOps::s_list_map_fn_idx<T, U>[recursive?](this, f);
+        }
+    }
+
+    method {when T grounded KeyType} project<U>(m: Map<T, U>): List<U> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<U>{};
+        }
+        else {
+            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => {
+                return m.get(v);
+            });
+        }
+    }
+
+    method append(l: List<T>): List<T> {
+        return List<T>::s_append_helper<T>(this, l);
+    }
+
+    method prepend(l: List<T>): List<T> {
+        return List<T>::s_append_helper<T>(l, this);
+    }
+
+    method pushBack(v: T): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{v};
+        }
+        else {
+            return ListOps::s_list_push_back<T>(this, v);
+        }
+    }
+
+    method pushFront(v: T): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{v};
+        }
+        else {
+            return ListOps::s_list_push_front<T>(this, v);
+        }
+    }
+
+    method popBack(): List<T> 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_pop_back<T>(this);
+    }
+
+    method popFront(): List<T> 
+        requires !ListOps::s_list_empty<T>(this);
+    {
+        return ListOps::s_list_pop_front<T>(this);
+    }
+
+    method set(i: Nat, v: T): List<T> 
+        requires i < ListOps::s_list_size<T>(this);
+    {
+        return ListOps::s_list_set<T>(this, i, v);
+    }
+
+    method insert(i: Nat, v: T): List<T> 
+        requires i <= ListOps::s_list_size<T>(this);
+    {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{v};
+        }
+        else {
+            return ListOps::s_list_insert<T>(this, i, v);
+        }
+    }
+
+    method remove(i: Nat): List<T> 
+        requires i < ListOps::s_list_size<T>(this);
+    {
+        return ListOps::s_list_remove<T>(this, i);
+    }
+
+    recursive? method reduce<U>(init: U, f: recursive? fn(_: U, _: T) -> U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_reduce<T, U>[recursive?](this, init, f);
+        }
+    }
+
+    recursive? method reduce<U>(init: U, f: recursive? fn(_: U, _: T, _: Nat) -> U): U {
+        if(ListOps::s_list_empty<T>(this)) {
+            return init;
+        }
+        else {
+            return ListOps::s_list_reduce_idx<T, U>[recursive?](this, init, f);
+        }
+    }
+
+/*
     method index(): List<[Nat, T]> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<[Nat, T]>{};
@@ -102,29 +370,10 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    method size(): Nat {
-        if(ListOps::s_list_empty<T>(this)) {
-            return 0n;
-        }
-        else {
-            return ListOps::s_list_size<T>(this);
-        }
-    }
-
-    method empty(): Bool {
-        return ListOps::s_list_empty<T>(this);
-    }
-
     method lastIndex(): Nat
         requires !ListOps::s_list_empty<T>(this);
     {
         return ListOps::s_list_size<T>(this) - 1n;
-    }
-
-    method front(): T 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_front<T>(this);
     }
 
     method frontOrNone(): T? {
@@ -155,12 +404,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    method back(): T 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_back<T>(this);
-    }
-
     method backOrNone(): T? {
         if(ListOps::s_list_empty<T>(this)) {
             return none;
@@ -187,12 +430,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         else {
             return false;
         }
-    }
-
-    method get(i: Nat): T
-        requires i < ListOps::s_list_size<T>(this);
-    {
-        return ListOps::s_list_get<T>(this, i);
     }
 
     method getOrNone(i: Nat): T? {
@@ -312,60 +549,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         else {
             res = ListOps::s_list_front<T>(this);
             return true;
-        }
-    }
-
-    recursive? method allOf(p: recursive? pred(_: T) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return true;
-        }
-        else {
-            return !ListOps::s_list_has_pred<T>[recursive?](this, recursive? pred(v: T): Bool => !p[recursive?](v));
-        }
-    }
-
-    recursive? method allOf(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return true;
-        }
-        else {
-            return !ListOps::s_list_has_pred_idx<T>[recursive?](this, recursive? pred(v: T, idx: Nat): Bool => !p[recursive?](v, idx));
-        }
-    }
-
-    recursive? method noneOf(p: recursive? pred(_: T) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return true;
-        }
-        else {
-            return !ListOps::s_list_has_pred<T>[recursive?](this, p);
-        }
-    }
-
-    recursive? method noneOf(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return true;
-        }
-        else {
-            return !ListOps::s_list_has_pred_idx<T>[recursive?](this, p);
-        }
-    }
-
-    recursive? method someOf(p: recursive? pred(_: T) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return false;
-        }
-        else {
-            return ListOps::s_list_has_pred<T>[recursive?](this, p);
-        }
-    }
-
-    recursive? method someOf(p: recursive? pred(_: T, _: Nat) -> Bool): Bool {
-        if(ListOps::s_list_empty<T>(this)) {
-            return false;
-        }
-        else {
-            return ListOps::s_list_has_pred_idx<T>[recursive?](this, p);
         }
     }
 
@@ -1083,23 +1266,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method find(p: recursive? pred(_: T) -> Bool): T
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
-        assert idx != -1i;
-
-        return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
-    }
-
-    recursive? method find(p: recursive? pred(_: T, _: Nat) -> Bool): T
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
-        assert idx != -1i;
-
-        return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
-    }
+    
 
     recursive? method findOrNone(p: recursive? pred(_: T) -> Bool): T? {
         if(ListOps::s_list_empty<T>(this)) {
@@ -1315,23 +1482,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method findIndexOf(p: recursive? pred(_: T) -> Bool): Nat
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
-
-        assert idx != -1i;
-        return NumericOps::s_intToNat(idx);
-    }
-
-    recursive? method findIndexOf(p: recursive? pred(_: T, _: Nat) -> Bool): Nat
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
-
-        assert idx != -1i;
-        return NumericOps::s_intToNat(idx);
-    }
+    
 
     recursive? method findIndexOfOrNone(p: recursive? pred(_: T) -> Bool): Nat? {
         if(ListOps::s_list_empty<T>(this)) {
@@ -1663,33 +1814,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method filter(p: recursive? pred(_: T) -> Bool): List<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_filter_pred<T>[recursive?](this, p);
-        }
-    }
-
-    recursive? method filter(p: recursive? pred(_: T, _: Nat) -> Bool): List<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{};
-        }
-        else {
-            return ListOps::s_filter_pred_idx<T>[recursive?](this, p);
-        }
-    }
-
-    method filterType<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v.is<U>(), fn(vv: T): U => s_safeAs<T, U>(vv));
-        }
-    }
-
     method filterSome(): List<T!Some> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T!Some>{};
@@ -1723,15 +1847,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
         else {
             ListOps::s_list_filter_map_fn<T, T!IResultE>(this, pred(v: T): Bool => v.is<T!IResultE>(), fn(vv: T): T!IResultE => s_safeAs<T, T!IResultE>(vv));
-        }
-    }
-
-    method castType<U>(): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => v.as<U>());
         }
     }
 
@@ -2055,24 +2170,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method map<U=?>(f: recursive? fn(_: T) -> U): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{}; 
-        }
-        else {
-            return ListOps::s_list_map_fn<T, U>[recursive?](this, f);
-        }
-    }
-
-    recursive? method map<U=?>(f: recursive? fn(_: T, _: Nat) -> U): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{}; 
-        }
-        else {
-            return ListOps::s_list_map_fn_idx<T, U>[recursive?](this, f);
-        }
-    }
-
     recursive? method mapNone<U=?>(f: recursive? fn(_: T!Some) -> U): List<U?>  {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U?>{}; 
@@ -2133,17 +2230,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
                 else {
                     return something(f[recursive?](v.data(), idx));
                 }
-            });
-        }
-    }
-
-    method {when T grounded KeyType} project<U=?>(m: Map<T, U>): List<U> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<U>{};
-        }
-        else {
-            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => {
-                return m.get(v);
             });
         }
     }
@@ -2220,14 +2306,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
                 }
             });
         }
-    }
-
-    method append(l: List<T>): List<T> {
-        return List<T>::s_append_helper<T>(this, l);
-    }
-
-    method prepend(l: List<T>): List<T> {
-        return List<T>::s_append_helper<T>(l, this);
     }
 
     recursive? method partition<K grounded KeyType=?>(pf: recursive? fn(_: T) -> K): Map<K, List<T>> {
@@ -2419,79 +2497,6 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    method pushBack(v: T): List<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{v};
-        }
-        else {
-            return ListOps::s_list_push_back<T>(this, v);
-        }
-    }
-
-    method pushFront(v: T): List<T> {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{v};
-        }
-        else {
-            return ListOps::s_list_push_front<T>(this, v);
-        }
-    }
-
-    method popBack(): List<T> 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_pop_back<T>(this);
-    }
-
-    method popFront(): List<T> 
-        requires !ListOps::s_list_empty<T>(this);
-    {
-        return ListOps::s_list_pop_front<T>(this);
-    }
-
-    method set(i: Nat, v: T): List<T> 
-        requires i < ListOps::s_list_size<T>(this);
-    {
-        return ListOps::s_list_set<T>(this, i, v);
-    }
-
-    method insert(i: Nat, v: T): List<T> 
-        requires i <= ListOps::s_list_size<T>(this);
-    {
-        if(ListOps::s_list_empty<T>(this)) {
-            return List<T>{v};
-        }
-        else {
-            return ListOps::s_list_insert<T>(this, i, v);
-        }
-    }
-
-    method remove(i: Nat): List<T> 
-        requires i < ListOps::s_list_size<T>(this);
-    {
-        return ListOps::s_list_remove<T>(this, i);
-    }
-
-    //TODO: we can make this inferable later when we have a better infer procedure for lambdas 
-    //      (since the U is in the body and the return type this may fail in the checker if we run it today)
-    recursive? method reduce<U>(init: U, f: recursive? fn(_: U, _: T) -> U): U {
-        if(ListOps::s_list_empty<T>(this)) {
-            return init;
-        }
-        else {
-            return ListOps::s_list_reduce<T, U>[recursive?](this, init, f);
-        }
-    }
-
-    recursive? method reduce<U>(init: U, f: recursive? fn(_: U, _: T, _: Nat) -> U): U {
-        if(ListOps::s_list_empty<T>(this)) {
-            return init;
-        }
-        else {
-            return ListOps::s_list_reduce_idx<T, U>[recursive?](this, init, f);
-        }
-    }
-
     recursive? method transduce<E, U>(env: E, f: recursive? fn(_: T, _: E) -> (|E, U|)): (|E, List<U>|) {
         if(ListOps::s_list_empty<T>(this)) {
             return (|env, List<U>{}|);
@@ -2517,4 +2522,5 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
     //
     //TODO: Convert to Map<K, V> and Set<T> operations
     //
+*/
 }

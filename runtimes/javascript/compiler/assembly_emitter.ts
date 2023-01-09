@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRAssembly, TIRConstMemberDecl, TIREnumEntityType, TIRFieldKey, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPrimitiveInternalEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRConstMemberDecl, TIREnumEntityType, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPrimitiveInternalEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction } from "./builtin_emitter";
@@ -72,15 +72,15 @@ class NamespaceEmitter {
     }
 
     private emitOOTypeFunctions(ootype: TIROOType): string[] {
-        const finline = ootype.staticFunctions.filter((ff) => ff.terms.length === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
-        const fkey = ootype.staticFunctions.filter((ff) => ff.terms.length !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
+        const finline = ootype.staticFunctions.filter((ff) => ff.terms.length === 0 && ff.pcodes.length === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
+        const fkey = ootype.staticFunctions.filter((ff) => ff.terms.length !== 0 || ff.terms.length !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
 
         return [finline.join(",\n    "), `$Functions: {${fkey.join(",\n    ")}\n    }`];
     }
 
     private emitOOTypeMethods(ootype: TIROOType): string[] {
-        const minline = ootype.memberMethods.filter((mm) => mm.terms.length === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
-        const mkey = ootype.memberMethods.filter((mm) => mm.terms.length !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
+        const minline = ootype.memberMethods.filter((mm) => mm.terms.length === 0 && mm.pcodes.length === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
+        const mkey = ootype.memberMethods.filter((mm) => mm.terms.length !== 0 || mm.pcodes.length !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
 
         return [minline.join(",\n    "), `$Methods: {${mkey.join(",\n    ")}\n    }`];
     }
@@ -125,8 +125,8 @@ class NamespaceEmitter {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
-        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
-        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+        const funcs = this.emitOOTypeFunctions(ttype)
+        const methods = this.emitOOTypeMethods(ttype);
 
         const fnames = ttype.allfields.map((ff) => (this.m_assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl).name);
 
@@ -148,8 +148,8 @@ class NamespaceEmitter {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
-        const funcs = ttype.staticFunctions.map((sf) => this.emitMemberFunction(ttype, sf));
-        const methods = ttype.memberMethods.map((mm) => this.emitMemberMethod(ttype, mm));
+        const funcs = this.emitOOTypeFunctions(ttype)
+        const methods = this.emitOOTypeMethods(ttype);
 
         const tdecl = `const BSQ${ttype.tname.name} = {${[...consts, ...funcs, ...methods].join(",\n    ")}\n};`;
 

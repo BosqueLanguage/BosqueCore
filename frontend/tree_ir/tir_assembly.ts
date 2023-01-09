@@ -154,6 +154,9 @@ abstract class TIRInvoke {
     readonly attributes: string[];
     readonly recursive: boolean;
 
+    readonly tbinds: Map<string, TIRTypeKey>;
+    readonly pcodes: Map<string, TIRPCodeKey>;
+
     readonly isMemberMethod: boolean;
     readonly isVirtual: boolean;
     readonly isDynamicOperator: boolean;
@@ -167,7 +170,7 @@ abstract class TIRInvoke {
     readonly preconditions: TIRPreConditionDecl[];
     readonly postconditions: TIRPostConditionDecl[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
         this.invkey = invkey;
         this.name = name;
 
@@ -177,6 +180,9 @@ abstract class TIRInvoke {
 
         this.attributes = attributes;
         this.recursive = recursive;
+
+        this.tbinds = tbinds;
+        this.pcodes = pcodes;
 
         this.isMemberMethod = isMemberMethod;
         this.isVirtual = isVirtual;
@@ -194,16 +200,16 @@ abstract class TIRInvoke {
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
     }
 }
 
 class TIRInvokeImplementation extends TIRInvoke {
     readonly body: TIRStatement[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRStatement[]) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRStatement[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
 
         this.body = body;
     }
@@ -212,8 +218,8 @@ class TIRInvokeImplementation extends TIRInvoke {
 class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, params: TIRFunctionParameter[], resultType: TIRTypeKey, body: string) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, false, false, false, false, params, false, resultType, [], []);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, params: TIRFunctionParameter[], resultType: TIRTypeKey, body: string) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, false, false, false, false, params, false, resultType, [], []);
 
         this.body = body;
     }
@@ -419,8 +425,11 @@ abstract class TIRInternalEntityType extends TIREntityType {
 
 //class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
 class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
+    readonly iskeytype: boolean;
+
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+        this.iskeytype = iskeytype;
     }
 } 
 

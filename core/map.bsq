@@ -9,7 +9,7 @@ namespace Core;
 __internal entity MapEntry<K grounded KeyType, V> provides Some, APIType when K grounded APIType && V grounded APIType, TestableType when K grounded TestableType && V grounded TestableType {
 }
 
-__internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>, APIType when K grounded APIType && V grounded APIType, TestableType when K grounded TestableType && V grounded TestableType {
+__internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry<K, V>>, APIType when K grounded APIType && V grounded APIType, TestableType when K grounded TestableType && V grounded TestableType {
     method empty(): Bool {
         return MapOps::s_map_empty<K, V>(this);
     }
@@ -28,6 +28,7 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>,
         return MapOps::s_map_get<K, V>(this, key);
     }
 
+/*
     method getOrNone(key: K): V? {
 #if CHECK_LIBS
         if(!MapOps::s_map_has<K, V>(this, key)) {
@@ -62,27 +63,6 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>,
         }
         else {
             return something(vv);
-        }
-#endif
-    }
-
-    method getTry(key: K, out? v: V): Bool {
-#if CHECK_LIBS
-        if(!MapOps::s_map_has<K, V>(this, key)) {
-            return false;
-        }
-        else {
-            v = MapOps::s_map_get<K, V>(this, key);
-            return true;
-        }
-#else
-        let vv, b = MapOps::s_map_find<K, V>(this, key);
-        if(!b) {
-            return false;
-        }
-        else {
-            v = vv;
-            return true;
         }
 #endif
     }
@@ -176,7 +156,7 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>,
             return MapOps::s_map_remap<K, V, U>[recursive?](this, f);
         }
     }
-
+*/
     method add(k: K, v: V): Map<K, V>
         requires MapOps::s_map_empty<K, V>(this) || !MapOps::s_map_has<K, V>(this, k);
     {
@@ -203,10 +183,4 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<[K, V]>,
     //
     //TODO: ref versions of the add/remove/set operators
     //
-
-    internal function s_initializer_add(m: Map<K, V>, vtup: [K, V]): Map<K, V> {
-        assert(!MapOps::s_map_has<K, V>(m, vtup.0));
-
-        return MapOps::s_map_add<K, V>(m, vtup.0, vtup.1);
-    }
 }

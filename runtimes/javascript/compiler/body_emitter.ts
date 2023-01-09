@@ -2,7 +2,7 @@ import * as assert from "assert";
 
 import { extractLiteralStringValue } from "../../../frontend/build_decls";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWAction, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
+import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWAction, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
@@ -338,6 +338,14 @@ class BodyEmitter {
         const tt = this.m_assembly.getTypeAs<TIRRecordType>(exp.oftype);
         const entries = exp.args.map((arg, ii) => `${tt.entries[ii].pname}: ${this.emitExpression(arg, true)})`);
         return `{${entries.join(", ")}}`;
+    }
+
+    private emitConstructorListExpression(exp: TIRConstructorListExpression): string {
+        return `$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+    }
+
+    private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
+        return `$MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
@@ -800,7 +808,12 @@ class BodyEmitter {
     }
     
     private emitCreateCodePackExpression(exp: TIRCreateCodePackExpression): string {
-       xxxx;
+        const capturepcdirect = exp.capturepackdirect.map((pcc) => pcc);
+        const capturepcindirect = exp.capturepackindirect.map((pcc) => `$CodePack.${pcc}`);
+        const capturevvdirect = exp.capturedirect.map((pcc) => pcc);
+        const capturevvindirect = exp.captureindirect.map((pcc) => `$CodePack.${pcc}`);
+
+        return `{${[...capturevvdirect, ...capturevvindirect, ...capturepcdirect, ...capturepcindirect].join(", ")}}`;
     }
 
     private emitIsNoneExpression(exp: TIRIsNoneExpression, toplevel: boolean): string {
@@ -931,13 +944,10 @@ class BodyEmitter {
     private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
         const thisarg = this.emitExpression(exp.thisarg, true);
         
-        if(exp.inferfkey !== undefined) {
-            xxxx;
-        }
-        else {
-            const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
-            const declunion = this.typeEncodedAsUnion(exp.tkey);
-            let thisargas = "[NOT SET]";
+        const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
+        const declunion = this.typeEncodedAsUnion(exp.tkey);
+        let thisargas = "[NOT SET]";
+        if (declunion) {
             if (thisunion === declunion) {
                 thisargas = "__expval__";
             }
@@ -949,7 +959,42 @@ class BodyEmitter {
                     thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
                 }
             }
+        }
+        else {
+            if (thisunion === declunion) {
+                thisargas = "__expval__";
+            }
+            else {
+                if (thisunion) {
+                    thisargas = "__expval__.value";
+                }
+                else {
+                    thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
+                }
+            }
+        }
 
+        const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
+
+        if(exp.inferfkey !== undefined) {
+            const ttype = this.m_assembly.typeMap.get(exp.tkey) as TIROOType;
+            const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
+            assert(invk !== undefined, "emitCallMemberFunctionExpression");
+
+            const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
+            let meexp = "[NOT SET]";
+            if (invk.terms.length === 0 && invk.pcodes.length === 0) {
+                meexp = `.${exp.fname}`;
+            }
+            else {
+                meexp = `.$Methods["${exp.fkey}"]`;
+            }
+
+            const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
+
+            return toplevel ? eexp : "(" + eexp + ")";
+        }
+        else {
             let vtable = "[NOT SET]";
             if(thisunion) {
                 vtable = `$Runtime.vtablemap.get(__expval__.tkey).$VTable["${exp.fkey}"]`
@@ -958,8 +1003,6 @@ class BodyEmitter {
                 vtable = `${this.resolveTypeMemberAccess(exp.thisarg.etype)}.$VTable["${exp.fkey}"]`;
             }
             
-
-            const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
             const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
 
             return toplevel ? eexp : "(" + eexp + ")";
@@ -1122,6 +1165,12 @@ class BodyEmitter {
             }
             case TIRExpressionTag.ConstructorRecordExpression: {
                 return this.emitConstructorRecordExpression(exp as TIRConstructorRecordExpression);
+            }
+            case TIRExpressionTag.ConstructorListExpression : {
+                return this.emitConstructorListExpression(exp as TIRConstructorListExpression);
+            }
+            case TIRExpressionTag.ConstructorMapExpression: {
+                return this.emitConstructorMapExpression(exp as TIRConstructorMapExpression);
             }
             case TIRExpressionTag.CodePackInvokeExpression: {
                 return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);
@@ -1575,11 +1624,14 @@ class BodyEmitter {
         return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { try { $Runtime.log("${fmt}", ${stmt.level}, ${fmt}, ${args}); } catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } }`
     }
 
-    private emitLoggerSetPrefixStatement(stmt: TIRLoggerSetPrefixStatement): string {
+    private emitLoggerSetPrefixStatement(stmt: TIRLoggerSetPrefixStatement, indent: string): string {
         const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
         
-        return `if($Runtime.checkloglevel(${stmt.level} && ${test})) { $Runtime.log(${stmt.level}, ${fmt}, ${args}); }`
+        const bblock = (stmt.block instanceof TIRScopedBlockStatement) ? this.emitScopedBlock(stmt.block, indent) : this.emitUnscopedBlock(stmt.block, indent);
+
+        //TODO: unscoped block needs some work here!
+        return `$Runtime.pushlogprefix(${fmt}, ${args}); try ${bblock}\n${indent}catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } \n${indent}$Runtime.poplogprefix();`
     }
 
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string): string {
@@ -1698,7 +1750,7 @@ class BodyEmitter {
                 return this.emitLoggerEmitConditionalStatement(stmt as TIRLoggerEmitConditionalStatement);
             }
             case TIRStatementTag.LoggerSetPrefixStatement: {
-                return this.emitLoggerSetPrefixStatement(stmt as TIRLoggerSetPrefixStatement);
+                return this.emitLoggerSetPrefixStatement(stmt as TIRLoggerSetPrefixStatement, indent);
             }
             default: {
                 assert(false, `Unknown statement kind ${stmt.tag}`);

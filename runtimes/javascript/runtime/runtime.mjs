@@ -203,5 +203,5 @@ export {
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,
     BSQEnvironment,
-    setloglevel, checkloglevel, log, pushlogprefix, pushlogprefix
+    setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
 };
