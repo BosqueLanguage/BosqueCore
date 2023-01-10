@@ -6,7 +6,7 @@
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression } from "./body";
-import { Assembly, BuildLevel, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEffectFlag, TaskEnsures, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
+import { Assembly, BuildLevel, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { SourceInfo } from "../build_decls";
 
@@ -283,10 +283,6 @@ const AttributeStrings = [
     "spec",
     "virtual",
     
-    "onCancel",
-    "onFailure",
-    "onTimeout",
-
     "__chktest",
 
     "__internal",
@@ -2091,19 +2087,6 @@ class Parser {
 
             return [new AccessFormatInfoExpression(sinfo, ns, name), false];
         }
-        else if (this.testFollows(TokenStrings.Namespace, SYM_hash, TokenStrings.Type)) {
-            //it is a namespace access of some formatter info
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            ns = this.m_penv.tryResolveNamespace(ns, name);
-            if (ns === undefined) {
-                ns = "[Unresolved Error]";
-            }
-
-            return [new AccessFormatInfoExpression(sinfo, ns, name), false];
-        }
         else {
             const ttype = this.parseTypeSignature();
 
@@ -3048,7 +3031,6 @@ class Parser {
                 this.raiseError(sinfo.line, `Task::${op} takes a single argument`);
             }
 
-                
             this.ensureAndConsumeToken(SYM_semicolon, `Task::${op} operation`);
                     
             if(op === "status") {
@@ -3748,55 +3730,77 @@ class Parser {
         }
     }
 
-    private parseEffect(effects: TaskEffectFlag[], enveffects: TaskEnvironmentEffect[], resourceeffects: TaskResourceEffect[]) {
+    private parseEffect(statuseffect: TaskStatusEffect, eventeffect: TaskEventEffect, enveffect: TaskEnvironmentEffect, resourceeffects: TaskResourceEffect[]) {
         this.ensureTaskOpOk();
 
         const sinfo = this.getCurrentSrcInfo();
 
         this.ensureAndConsumeToken(KW_effect, "effect");
 
-        this.ensureToken(TokenStrings.Identifier, "effect notation");
-        const rw = this.consumeTokenAndGetValue();
-
-        const isread = rw.includes("r");
-        const iswrite = rw.includes("w");
-        if (rw.length > 2 || (rw[0] !== "r" && rw[0] !== "w") || (rw[1] !== "r" && rw[1] !== "w")) {
-            this.raiseError(sinfo.line, `Unknown read/write value "${rw}" on effect`);
-        }
-
         this.ensureAndConsumeToken(SYM_plus, "effect notation");
-        this.ensureToken(TokenStrings.Type, "effect type");
+        this.ensureToken(TokenStrings.Identifier, "effect type");
         const effect = this.consumeTokenAndGetValue();
 
-        if(effect === "Status") {
-            effects.push(TaskEffectFlag.Status);
+        if(effect === "status") {
+            this.ensureToken(SYM_lbrack, "status effect");
+            const enames = this.parseListOf("status effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                return this.parseTypeSignature();
+            }); 
+            
+            statuseffect.statusinfo.push(...enames);
         }
-        else if(effect === "Event") {
-            effects.push(TaskEffectFlag.Event);
+        else if(effect === "event") {
+            this.ensureToken(SYM_lbrack, "event effect");
+            const enames = this.parseListOf("event effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                return this.parseTypeSignature();
+            }); 
+            
+            eventeffect.eventinfo.push(...enames);
         }
-        else if(effect === "Environment") {
-            effects.push(TaskEffectFlag.Environment);
+        else if(effect === "environment") {
+            this.ensureToken(SYM_lbrack, "environment effect");
+            const enames = this.parseListOf("environment effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+                this.ensureToken(TokenStrings.String, "environment variable name");
+                const vv = this.consumeTokenAndGetValue();
 
-            this.ensureToken(SYM_le, "Environment effect");
-            const enames = this.parseListOf("Environment effect", SYM_le, SYM_ge, SYM_coma, () => {
-                this.ensureToken(TokenStrings.String, "Environment variable name");
-                return this.consumeTokenAndGetValue();
+                let isw = false;
+                if(this.testAndConsumeTokenIf(SYM_plus)) {
+                    this.ensureToken(TokenStrings.Identifier, "environment effect write");
+                    const tt = this.consumeTokenAndGetValue();
+                    if(tt !== "w") {
+                        this.raiseError(this.getCurrentLine(), `expected a "w" modifier`);
+                    }
+                    isw = true;
+                }
+                return {vv: vv, isw: isw};
             });
 
-            enveffects.push(...enames.map((nn) => new TaskEnvironmentEffect(nn, isread, iswrite)));
+            enveffect.evars.push(...enames);
         }
-        else if(effect === "Resource") {
-            effects.push(TaskEffectFlag.Resource);
+        else if(effect === "resource") {
+            let isread = true;
+            let iswrite = true;
+            if(this.testToken(TokenStrings.Identifier)) {
+                const rw = this.consumeTokenAndGetValue();
 
-            this.ensureAndConsumeToken(SYM_lparen, "Resource effect");
-            const rtype = this.parseTypeSignature();
-
-            let rpathexp: ConstantExpressionValue | undefined = undefined;
-            if(this.testAndConsumeTokenIf(SYM_coma)) {
-                rpathexp = this.parseConstExpression(true);
+                isread = rw.includes("r");
+                iswrite = rw.includes("w");
+                if (rw.length > 2 || (rw[0] !== "r" && rw[0] !== "w") || (rw[1] !== "r" && rw[1] !== "w")) {
+                    this.raiseError(sinfo.line, `Unknown read/write value "${rw}" on effect`);
+                }
             }
 
-            this.ensureAndConsumeToken(SYM_rparen, "Resource effect");
+            const rtype = this.parseTypeSignature();
+            let rpathexp: ConstantExpressionValue | undefined = undefined;
+            if(this.testToken(SYM_lbrack)) {
+                this.ensureAndConsumeToken(SYM_lbrack, "Resource effect");
+                    
+                if(this.testAndConsumeTokenIf(SYM_coma)) {
+                    rpathexp = this.parseConstExpression(true);
+                }
+
+                this.ensureAndConsumeToken(SYM_rbrack, "Resource effect");
+            }
 
             resourceeffects.push(new TaskResourceEffect(rtype, rpathexp, isread, iswrite));
         }
@@ -3808,27 +3812,12 @@ class Parser {
         this.ensureAndConsumeToken(SYM_semicolon, "effect notation");
     }
 
-    parseEnsuresOnTask(): TaskEnsures {
-        this.ensureTaskOpOk();
-
-        this.consumeToken();
-        const level = this.parseBuildInfo(KW_release);
-        const sinfo = this.getCurrentSrcInfo();
-        const exp = this.parseConstExpression(true);
-
-        this.ensureAndConsumeToken(SYM_semicolon, "Task ensures");
-
-        return new TaskEnsures(sinfo, level, exp);
-    }
-
     private parseOOPMembersCommon(sinfo: SourceInfo, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
         nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], 
         controlFields: ControlFieldDecl[] | undefined,
-        effects: TaskEffectFlag[], enveffects: TaskEnvironmentEffect[], resourceeffects: TaskResourceEffect[],
-        taskensures: TaskEnsures[]
-        ) {
+        statuseffects: TaskStatusEffect, eventeffects: TaskEventEffect, enveffects: TaskEnvironmentEffect, resourceeffects: TaskResourceEffect[]) {
         let allMemberNames = new Set<string>();
         let allControlNames = new Set<string>();
         while (!this.testToken(SYM_lparen)) {
@@ -3865,10 +3854,7 @@ class Parser {
                 this.parseMemberAction(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name))
             }
             else if(this.testToken(KW_effect)) {
-                this.parseEffect(effects, enveffects, resourceeffects);
-            }
-            else if(this.testToken(KW_ensures)) {
-                taskensures.push(this.parseEnsuresOnTask());
+                this.parseEffect(statuseffects, eventeffects, enveffects, resourceeffects);
             }
             else {
                 this.raiseError(this.getCurrentLine(), `Unknown member ${this.peekTokenData()}`);
@@ -3903,7 +3889,10 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
 
@@ -3961,7 +3950,10 @@ class Parser {
             const memberFields: MemberFieldDecl[] = [];
             const memberMethods: MemberMethodDecl[] = [];
             const nestedEntities = new Map<string, EntityTypeDecl>();
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "entity declaration");
 
@@ -4076,12 +4068,11 @@ class Parser {
             
             const controlfields: ControlFieldDecl[] = [];
 
-            const effects: TaskEffectFlag[] = [];
-            const enveffects: TaskEnvironmentEffect[] = [];
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
             const resourceeffects: TaskResourceEffect[] = [];
-            const taskensures: TaskEnsures[] = [];
-
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, effects, enveffects, resourceeffects, taskensures);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>(...[...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
 
             if(invariants.length !== 0) {
                 this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
@@ -4108,12 +4099,19 @@ class Parser {
 
             const actions = memberMethods.filter((mf) => mf.attributes.includes("task_action"));
             const onfuncs = {
-                onCanel: memberMethods.find((mf) => mf.attributes.includes("onCancel")),
-                onFailure: memberMethods.find((mf) => mf.attributes.includes("onFailure")), 
-                onTimeout: memberMethods.find((mf) => mf.attributes.includes("onTimeout"))
+                onCanel: memberMethods.find((mf) => mf.name === "onCancel"),
+                onFailure: memberMethods.find((mf) => mf.name === "onFailure"), 
+                onTimeout: memberMethods.find((mf) => mf.name === "onTimeout")
             };
 
-            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, effects, enveffects, resourceeffects, taskensures);
+            const lfuncs = {
+                logStart: memberMethods.find((mf) => mf.name === "logStart"),
+                logEnd: memberMethods.find((mf) => mf.name === "onFailure"), 
+                taskEnsures: memberMethods.find((mf) => mf.name === "taskEnsures"),
+                taskWarns: memberMethods.find((mf) => mf.name === "taskWarns")
+            };
+
+            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, lfuncs, statuseffect, eventeffect, enveffect, resourceeffects);
             this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
             currentDecl.tasks.set(ename, edecl);
         }
@@ -4174,7 +4172,10 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], []);
     
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
+                const statuseffect = new TaskStatusEffect([]);
+                const eventeffect = new TaskEventEffect([]);
+                const enveffect = new TaskEnvironmentEffect([]);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
     
                 if(invariants.length !== 0 || validates.length !== 0) {
                     this.raiseError(sinfo.line, "cannot declare invariants on enum");
@@ -4506,7 +4507,10 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
+                const statuseffect = new TaskStatusEffect([]);
+                const eventeffect = new TaskEventEffect([]);
+                const enveffect = new TaskEnvironmentEffect([]);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
                 this.ensureAndConsumeToken(SYM_rbrace, "typedecl");
 
@@ -4585,7 +4589,10 @@ class Parser {
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], [], [], [], []);
+                const statuseffect = new TaskStatusEffect([]);
+                const eventeffect = new TaskEventEffect([]);
+                const enveffect = new TaskEnvironmentEffect([]);
+                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
             }
         }
 
@@ -4627,7 +4634,10 @@ class Parser {
                     const thisType = new NominalTypeSignature(esinfo, currentDecl.ns, [ename], []);
 
                     const nestedEntities = new Map<string, EntityTypeDecl>();
-                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], [], [], [], []);
+                    const statuseffect = new TaskStatusEffect([]);
+                    const eventeffect = new TaskEventEffect([]);
+                    const enveffect = new TaskEnvironmentEffect([]);
+                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
                 }
             }
 
@@ -4651,7 +4661,10 @@ class Parser {
 
             const nestedEntities = new Map<string, EntityTypeDecl>();
             const memberFields: MemberFieldDecl[] = [];
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], [], [], [], []);
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
+            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(...terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             if (cusing.length !== 0 && memberFields.length !== 0) {
                 this.raiseError(this.getCurrentLine(), "Cannot define fields in multiple places in ADT++ decl");

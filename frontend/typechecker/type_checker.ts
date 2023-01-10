@@ -12,7 +12,7 @@ import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalType
 import { FlowTypeTruthOps, ExpressionTypeEnvironment, VarInfo, FlowTypeTruthValue, FlowTypeInfoOption, StatementTypeEnvironment } from "./type_environment";
 
 import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRCoerceSafeActionCallResultExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRIsNoneExpression, TIRIsNotNoneExpression, TIRIsNothingExpression, TIRIsSubTypeExpression, TIRAsNoneExpression, TIRAsNotNoneExpression, TIRAsNothingExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRIsNotNothingExpression, TIRIsNotTypeExpression, TIRIsNotSubTypeExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatement, TIRVarAssignStatementWRef, TIRVarAssignStatementWTaskRef, TIRVarAssignStatementWAction, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement } from "../tree_ir/tir_body";
-import { TIRASCIIStringOfEntityType, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskEffectFlag, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
@@ -1600,10 +1600,17 @@ class TypeChecker {
             const onfuncs = {
                 onCanel: rtype.task.onfuncs.onCanel !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onCanel.name, [], [])) : undefined, 
                 onFailure: rtype.task.onfuncs.onFailure !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onFailure.name, [], [])) : undefined, 
-                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onTimeout.name, [], [])) : undefined, 
+                onTimeout: rtype.task.onfuncs.onTimeout !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.onfuncs.onTimeout.name, [], [])) : undefined 
             };
 
-            tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, supertypes, binds, mainfunc, onfuncs);
+            const lfuncs = {
+                logStart: rtype.task.lfuncs.logStart !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.lfuncs.logStart.name, [], [])) : undefined, 
+                logEnd: rtype.task.lfuncs.logEnd !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.lfuncs.logEnd.name, [], [])) : undefined, 
+                taskEnsures: rtype.task.lfuncs.taskEnsures !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.lfuncs.taskEnsures.name, [], [])) : undefined, 
+                taskWarns: rtype.task.lfuncs.taskWarns !== undefined ? (TIRIDGenerator.generateInvokeForMemberMethod(rtype.typeID, rtype.task.lfuncs.taskWarns.name, [], [])) : undefined 
+            };
+
+            tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, supertypes, binds, mainfunc, onfuncs, lfuncs);
             this.m_pendingTaskDecls.push(tirtype as TIRTaskType);
         }
         else if(rtype instanceof ResolvedTupleAtomType) {
@@ -5578,7 +5585,6 @@ class TypeChecker {
 
         //set controls fields
         tdecl.econtrol.forEach((mf) => {
-            const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createEmptyBindScope()));
             let litval: TIRLiteralValue | undefined = undefined;
             if(mf.defaultValue !== undefined) {
                 litval = this.reduceLiteralValueToCanonicalForm(mf.defaultValue.exp, TemplateBindScope.createEmptyBindScope())[0];
@@ -5588,15 +5594,73 @@ class TypeChecker {
             tiroo.controls.push({val: litval, cname: mf.name});
         });
 
-        tdecl.effects.forEach((eff) => {
-            tiroo.effects.push(xxx);
+        tdecl.statuseffect.statusinfo.forEach((eff) => {
+            const setype = this.normalizeTypeOnly(eff, TemplateBindScope.createEmptyBindScope());
+            this.raiseErrorIf(eff.sinfo, setype.options.some((tt) => !(tt instanceof ResolvedEntityAtomType) && !(tt instanceof ResolvedConceptAtomType)), "Only nominal types can be used for status effects");
+
+            tiroo.statuseffect.statusinfo.push(this.toTIRTypeKey(setype));
         });
 
-        tdecl.enveffect.forEach((eff) => {
-            xxxx;
+        tdecl.statuseffect.statusinfo.forEach((eff) => {
+            const setype = this.normalizeTypeOnly(eff, TemplateBindScope.createEmptyBindScope());
+            this.raiseErrorIf(eff.sinfo, setype.options.some((tt) => !(tt instanceof ResolvedEntityAtomType) && !(tt instanceof ResolvedConceptAtomType)), "Only nominal types can be used for status effects");
+
+            tiroo.statuseffect.statusinfo.push(this.toTIRTypeKey(setype));
         });
 
-        assert(tdecl.resourceeffect.length === 0 && tdecl.ensures.length === 0, "NOT IMPLEMENTED YET -- processTaskType");
+        if(tdecl.enveffect.evars.find((ev) => ev.vv === "*" && !ev.isw)) {
+            tiroo.enveffect.readvars.push("*");
+        }
+        if(tdecl.enveffect.evars.find((ev) => ev.vv === "*" && ev.isw)) {
+            tiroo.enveffect.writevars.push("*");
+        }
+        
+        tdecl.enveffect.evars.forEach((eff) => {
+            if(!eff.isw) {
+                if(!tiroo.enveffect.readvars.includes("*") && !tiroo.enveffect.readvars.includes(eff.vv)) {
+                    tiroo.enveffect.readvars.push(eff.vv);
+                }
+            }
+            else {
+                if(!tiroo.enveffect.writevars.includes("*") && !tiroo.enveffect.writevars.includes(eff.vv)) {
+                    tiroo.enveffect.writevars.push(eff.vv);
+                }
+            }
+        });
+
+        assert(tdecl.resourceeffect.length === 0, "NOT IMPLEMENTED YET -- processTaskType");
+
+        //mainfunc
+        const dr = this.resolveMemberFunction(tdecl.sourceLocation, ResolvedType.createSingle(rtype), "main") as OOMemberLookupInfo<StaticFunctionDecl>;
+        this.m_pendingFunctionMemberDecls.push({decl: dr, binds: new Map<string, ResolvedType>(), pcodes: new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>()});
+
+        if(tdecl.onfuncs.onCanel !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.onfuncs.onFailure !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.onfuncs.onTimeout !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.lfuncs.logStart !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.lfuncs.logEnd !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.lfuncs.taskEnsures !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
+
+        if(tdecl.lfuncs.taskWarns !== undefined) {
+            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
+        }
     }
 
     private checkInvokeDecl(sinfo: SourceInfo, invoke: InvokeDecl) {
@@ -6194,7 +6258,7 @@ class TypeChecker {
                 this.m_taskSelfOk = (decl.decl.invoke.isThisRef) ? "write" : "read";
             }
 
-            const tirinv = this.processMemberFunctionInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
+            const tirinv = this.processMemberMethodImplInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
             tirtt.memberMethods.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
         }
         catch(ex) {
@@ -6203,9 +6267,29 @@ class TypeChecker {
     }
 
     processMemberTaskAction(vkey: MIRVirtualMethodKey, mkey: MIRInvokeKey, shortname: string, name: string, enclosingDecl: [MIRType, OOPTypeDecl, Map<string, ResolvedType>], mdecl: MemberMethodDecl, binds: Map<string, ResolvedType>, pcodes: PCode[], cargs: [string, ResolvedType][]) {
+
     }
 
-    processMemberTaskMain(vkey: MIRVirtualMethodKey, mkey: MIRInvokeKey, shortname: string, name: string, enclosingDecl: [MIRType, OOPTypeDecl, Map<string, ResolvedType>], mdecl: MemberMethodDecl, binds: Map<string, ResolvedType>, pcodes: PCode[], cargs: [string, ResolvedType][]) {
+    processMemberTaskMain(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
+        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
+        
+        if(tirtt.staticFunctions.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
+            return;
+        }
+
+        try {
+            this.m_file = decl.decl.srcFile;
+            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_taskOpsOk = decl.ootype instanceof TaskTypeDecl;
+            this.m_taskSelfOk = "write";
+            this.m_taskType = {taskdecl: decl.ootype as TaskTypeDecl, taskbinds: binds};
+
+            const tirinv = this.processMemberFunctionInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
+            tirtt.staticFunctions.push(new TIRStaticFunctionDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
+        }
+        catch(ex) {
+            ;
+        }
     }
 
     processRegexInfo() {

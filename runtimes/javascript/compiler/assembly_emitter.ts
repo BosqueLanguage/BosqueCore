@@ -223,7 +223,7 @@ class NamespaceEmitter {
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")} { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; })`);
 
         //
-        //TODO: main func and such here too!
+        //TODO: onX funcs such here too!
         //
 
         return `const BSQ${ttype.tname.name} = {${[...consts, ...funcs, ...methods, ...consfuncs].join(",\n    ")}\n};`;

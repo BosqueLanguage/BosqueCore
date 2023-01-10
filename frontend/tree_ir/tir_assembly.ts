@@ -94,22 +94,29 @@ class TIRTypedeclValidateDecl {
     }
 }
 
-enum TIRTaskEffectFlag {
-    Status = "Status",
-    Event = "Event",
-    Resource = "Resource",
-    Environment = "Environment"
+class TIRTaskStatusEffect {
+    readonly statusinfo: TIRTypeKey[];
+
+    constructor(statusinfo: TIRTypeKey[]) {
+        this.statusinfo = statusinfo;
+    }
+}
+
+class TIRTaskEventEffect {
+    readonly eventinfo: TIRTypeKey[];
+
+    constructor(eventinfo: TIRTypeKey[]) {
+        this.eventinfo = eventinfo;
+    }
 }
 
 class TIRTaskEnvironmentEffect {
-    readonly evar: string; //string "*" is wildcard
-    readonly isread: boolean;
-    readonly iswrite: boolean;
+    readonly readvars: string[]; //string "*" is wildcard
+    readonly writevars: string[]; //string "*" is wildcard
 
-    constructor(evar: string, isread: boolean, iswrite: boolean) {
-        this.evar = evar;
-        this.isread = isread;
-        this.iswrite = iswrite;
+    constructor(readvars: string[], writevars: string[]) {
+        this.readvars = readvars;
+        this.writevars = writevars;
     }
 }
 
@@ -624,9 +631,12 @@ class TIRTaskType extends TIROOType {
     readonly actions: {akey: TIRInvokeKey, aname: string}[] = []; //methods
     readonly mainfunc: {mkey: TIRInvokeKey, mname: string}; //a static function
     readonly onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined };
+    readonly lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined };
 
-    readonly effects: TIRTaskEffectFlag[] = [];
-    readonly enveffect: TIRTaskEnvironmentEffect[] = [];
+
+    readonly statuseffect: TIRTaskStatusEffect = new TIRTaskStatusEffect([]);
+    readonly eventeffect: TIRTaskEventEffect = new TIRTaskEventEffect([]);
+    readonly enveffect: TIRTaskEnvironmentEffect = new TIRTaskEnvironmentEffect([], []);
     readonly resourceeffect: TIRTaskResourceEffect[] = [];
 
     readonly ensures: TIRTaskEnsures[] = [];
@@ -634,11 +644,13 @@ class TIRTaskType extends TIROOType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], 
         binds: Map<string, TIRTypeKey>, mainfunc: {mkey: TIRInvokeKey, mname: string}, 
         onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined },
+        lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined }
     ) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.binds = binds;
         this.mainfunc = mainfunc;
         this.onfuncs = onfuncs;
+        this.lfuncs = lfuncs;
     }
 }
 
@@ -939,7 +951,7 @@ export {
     TIRTypeKey, TIRInvokeKey, TIRFieldKey, TIRPCodeKey,
     TIRFunctionParameter,
     TIRObjectInvariantDecl, TIRObjectValidateDecl, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl,
-    TIRTaskEffectFlag, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
+    TIRTaskStatusEffect, TIRTaskEventEffect, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
     TIRInvoke, TIRPreConditionDecl, TIRPostConditionDecl, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive,
     TIRConstMemberDecl, TIRStaticFunctionDecl, TIRMemberFieldDecl, TIRMemberMethodDecl,
     TIRType,

@@ -151,6 +151,10 @@ BSQEnvironment.clear = function(env, key) {
     env.args.set(key, undefined);
 };
 
+//
+//TODO: logging needs to be configured on a per task level -- i.e. should be member vars on a task
+//
+
 let loglevel = "info";
 let logprefix = [];
 

@@ -379,22 +379,27 @@ class EntityTypeDecl extends OOPTypeDecl {
     }
 }
 
-enum TaskEffectFlag {
-    Status = "Status",
-    Event = "Event",
-    Resource = "Resource",
-    Environment = "Environment"
+class TaskStatusEffect {
+    readonly statusinfo: TypeSignature[];
+
+    constructor(statusinfo: TypeSignature[]) {
+        this.statusinfo = statusinfo;
+    }
+}
+
+class TaskEventEffect {
+    readonly eventinfo: TypeSignature[];
+
+    constructor(eventinfo: TypeSignature[]) {
+        this.eventinfo = eventinfo;
+    }
 }
 
 class TaskEnvironmentEffect {
-    readonly evar: string; //string "*" is wildcard
-    readonly isread: boolean;
-    readonly iswrite: boolean;
+    readonly evars: {vv: string, isw: boolean}[]; //string "*" is wildcard
 
-    constructor(evar: string, isread: boolean, iswrite: boolean) {
-        this.evar = evar;
-        this.isread = isread;
-        this.iswrite = iswrite;
+    constructor(evars: {vv: string, isw: boolean}[]) {
+        this.evars = evars;
     }
 }
 
@@ -412,29 +417,17 @@ class TaskResourceEffect {
     }
 }
 
-class TaskEnsures {
-    readonly sinfo: SourceInfo;
-    readonly level: BuildLevel;
-    readonly exp: ConstantExpressionValue;
-
-    constructor(sinfo: SourceInfo, level: BuildLevel, exp: ConstantExpressionValue) {
-        this.sinfo = sinfo;
-        this.level = level;
-        this.exp = exp;
-    }
-}
-
 class TaskTypeDecl extends OOPTypeDecl {
     readonly econtrol: ControlFieldDecl[];
     readonly actions: MemberMethodDecl[];
     readonly mainfunc: StaticFunctionDecl;
     readonly onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined };
+    readonly lfuncs: { logStart: StaticFunctionDecl | undefined, logEnd: StaticFunctionDecl | undefined, taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined };
 
-    readonly effects: TaskEffectFlag[];
-    readonly enveffect: TaskEnvironmentEffect[];
+    readonly statuseffect: TaskStatusEffect;
+    readonly eventeffect: TaskEventEffect
+    readonly enveffect: TaskEnvironmentEffect;
     readonly resourceeffect: TaskResourceEffect[];
-
-    readonly ensures: TaskEnsures[];
 
     constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[],
         validates: ValidateDecl[],
@@ -444,20 +437,20 @@ class TaskTypeDecl extends OOPTypeDecl {
         mainfunc: StaticFunctionDecl,
         actions: MemberMethodDecl[],
         onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
-        effects: TaskEffectFlag[], enveffect: TaskEnvironmentEffect[], resourceeffect: TaskResourceEffect[],
-        ensures: TaskEnsures[]) {
+        lfuncs: { logStart: StaticFunctionDecl | undefined, logEnd: StaticFunctionDecl | undefined, taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined },
+        statuseffect: TaskStatusEffect, eventeffect: TaskEventEffect, enveffect: TaskEnvironmentEffect, resourceeffect: TaskResourceEffect[]) {
         super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature(sourceLocation, "Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
 
         this.econtrol = econtrol;
         this.mainfunc = mainfunc;
         this.actions = actions;
         this.onfuncs = onfuncs;
+        this.lfuncs = lfuncs;
 
-        this.effects = effects;
+        this.statuseffect = statuseffect;
+        this.eventeffect = eventeffect;
         this.enveffect = enveffect;
         this.resourceeffect = resourceeffect;
-
-        this.ensures = ensures;
     }
 }
 
@@ -758,7 +751,7 @@ export {
     BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
-    TaskEffectFlag, TaskEnvironmentEffect, TaskResourceEffect, TaskEnsures, TaskTypeDecl,
+    TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
     PathValidator,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
     StringTemplate,
