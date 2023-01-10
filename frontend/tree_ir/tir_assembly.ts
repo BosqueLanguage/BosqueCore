@@ -95,10 +95,10 @@ class TIRTypedeclValidateDecl {
 }
 
 enum TIRTaskEffectFlag {
-    Status,
-    Event,
-    Resource,
-    Environment
+    Status = "Status",
+    Event = "Event",
+    Resource = "Resource",
+    Environment = "Environment"
 }
 
 class TIRTaskEnvironmentEffect {
@@ -620,7 +620,7 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRTaskType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
 
-    readonly controls: {val: TIRLiteralValue, cname: string}[] = []; //control members
+    readonly controls: {val: TIRLiteralValue | undefined, cname: string}[] = []; //control members
     readonly actions: {akey: TIRInvokeKey, aname: string}[] = []; //methods
     readonly mainfunc: {mkey: TIRInvokeKey, mname: string}; //a static function
     readonly onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined };

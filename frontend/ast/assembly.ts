@@ -380,10 +380,10 @@ class EntityTypeDecl extends OOPTypeDecl {
 }
 
 enum TaskEffectFlag {
-    Status,
-    Event,
-    Resource,
-    Environment
+    Status = "Status",
+    Event = "Event",
+    Resource = "Resource",
+    Environment = "Environment"
 }
 
 class TaskEnvironmentEffect {
