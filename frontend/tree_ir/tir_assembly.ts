@@ -254,21 +254,16 @@ class TIRStaticFunctionDecl {
     readonly tkey: TIRTypeKey;
     readonly name: string;
 
-    readonly terms: TIRTypeKey[];
-    readonly pcodes: TIRPCodeKey[];
-
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
-        this.terms = terms;
-        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -306,21 +301,16 @@ class TIRMemberMethodDecl {
     readonly tkey: TIRTypeKey;
     readonly name: string;
 
-    readonly terms: TIRTypeKey[];
-    readonly pcodes: TIRPCodeKey[];
-
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
         this.tkey = tkey;
         this.name = invoke.name;
-        this.terms = terms;
-        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -747,9 +737,6 @@ class TIRNamespaceFunctionDecl {
 
     readonly ns: string;
     readonly name: string;
-    
-    readonly terms: TIRTypeKey[];
-    readonly pcodes: TIRPCodeKey[];
 
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -757,12 +744,10 @@ class TIRNamespaceFunctionDecl {
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
         this.ns = ns;
         this.name = invoke.name;
-        this.terms = terms;
-        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -796,20 +781,15 @@ class TIRNamespaceLambdaDecl {
     readonly ikey: TIRInvokeKey;
     readonly pcid: TIRPCodeKey;
 
-    readonly terms: TIRTypeKey[];
-    readonly pcodes: TIRPCodeKey[];
-
     readonly sourceLocation: SourceInfo;
     readonly srcFile: string;
 
     readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
-    constructor(pcid: TIRPCodeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]) {
+    constructor(pcid: TIRPCodeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
         this.ikey = invoke.invkey;
         this.pcid = pcid;
-        this.terms = terms;
-        this.pcodes = pcodes;
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
@@ -911,10 +891,10 @@ class TIRNamespaceDeclaration {
     alltypes: TIRTypeKey[] = [];
 
     consts: Map<string, TIRNamespaceConstDecl>;
-    functions: Map<string, TIRNamespaceFunctionDecl>;
+    functions: Map<string, TIRNamespaceFunctionDecl[]>;
     operators: Map<string, TIRNamespaceOperatorDecl[]>;
-    concepts: Map<string, TIRTypeKey>;
-    objects: Map<string, TIRTypeKey>;
+    concepts: Map<string, TIRTypeKey[]>;
+    objects: Map<string, TIRTypeKey[]>;
     
     tasks: Map<string, TIRTypeKey>;
     msgformats: Map<string, TIRInfoTemplate>;
@@ -923,10 +903,10 @@ class TIRNamespaceDeclaration {
     constructor(ns: string) {
         this.ns = ns;
         this.consts = new Map<string, TIRNamespaceConstDecl>();
-        this.functions = new Map<string, TIRNamespaceFunctionDecl>();
+        this.functions = new Map<string, TIRNamespaceFunctionDecl[]>();
         this.operators = new Map<string, TIRNamespaceOperatorDecl[]>();
-        this.concepts = new Map<string, TIRTypeKey>();
-        this.objects = new Map<string, TIRTypeKey>();
+        this.concepts = new Map<string, TIRTypeKey[]>();
+        this.objects = new Map<string, TIRTypeKey[]>();
 
         this.tasks = new Map<string, TIRTypeKey>();
         this.msgformats = new Map<string, TIRInfoTemplate>();

@@ -373,10 +373,12 @@ class BodyEmitter {
     }
 
     private emitCallNamespaceFunctionExpression(exp: TIRCallNamespaceFunctionExpression): string {
-        const invk = this.m_assembly.getNamespace(exp.ns).functions.get(exp.fname) as TIRNamespaceFunctionDecl;
+        const invks = this.m_assembly.getNamespace(exp.ns).functions.get(exp.fname) as TIRNamespaceFunctionDecl[];
+        const invk = invks.find((ii) => ii.ikey === exp.fkey) as TIRNamespaceFunctionDecl;
+
         const nspfx = this.m_ns !== invk.ns && invk.ns !== "Core" ? `${invk.ns}.` : "";
 
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             if(invk.ns === "Core") {
                 this.m_coreImports.add(invk.name);
             }
@@ -403,7 +405,7 @@ class BodyEmitter {
         assert(invk !== undefined, "emitCallStaticFunctionExpression");
 
         const accessterm = this.resolveTypeMemberAccess(ttype.tkey);
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             return `${accessterm}.${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
@@ -929,7 +931,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
         let meexp = "[NOT SET]";
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -983,7 +985,7 @@ class BodyEmitter {
 
             const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
             let meexp = "[NOT SET]";
-            if (invk.terms.length === 0 && invk.pcodes.length === 0) {
+            if (invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
                 meexp = `.${exp.fname}`;
             }
             else {
@@ -1018,7 +1020,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
         let meexp = "[NOT SET]";
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -1039,7 +1041,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
         let meexp = "[NOT SET]";
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -1060,7 +1062,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
         let meexp = "[NOT SET]";
-        if(invk.terms.length === 0 && invk.pcodes.length === 0) {
+        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
