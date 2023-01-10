@@ -657,9 +657,9 @@ class Assembly {
     private m_objectMap: Map<string, EntityTypeDecl> = new Map<string, EntityTypeDecl>();
     private m_taskMap: Map<string, TaskTypeDecl> = new Map<string, TaskTypeDecl>();
 
-    private m_literalRegexs: BSQRegex[] = [];
-    private m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
-    private m_validatorPaths: Map<string, PathValidator> = new Map<string, PathValidator>();
+    m_literalRegexs: BSQRegex[] = [];
+    m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
+    m_validatorPaths: Map<string, PathValidator> = new Map<string, PathValidator>();
 
     tryGetConceptTypeForFullyResolvedName(name: string): ConceptTypeDecl | undefined {
         return this.m_conceptMap.get(name);
@@ -736,10 +736,6 @@ class Assembly {
         if(ere === -1) {
             this.m_literalRegexs.push(re);
         }
-    }
-
-    getAllLiteralRegexs(): BSQRegex[] {
-        return this.m_literalRegexs;
     }
 
     getAllEntities(): EntityTypeDecl[] {

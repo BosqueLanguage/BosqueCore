@@ -1,3 +1,4 @@
+import * as assert  from "assert";
 import { BSQRegex } from "./bsqregex";
 
 class PathValidator {
@@ -28,15 +29,18 @@ class PathValidator {
     }
 
     acceptsPath(pth: string): boolean {
-        xxxx;
+        assert(false, "NOT IMPLEMENtED -- acceptsPath");
+        return false;
     }
 
     acceptsPathFragment(pth: string): boolean {
-        xxxx;
+        assert(false, "NOT IMPLEMENtED -- acceptsPathFragment");
+        return false;
     }
 
     acceptsPathGlob(pth: string): boolean {
-        xxxx;
+        assert(false, "NOT IMPLEMENtED -- acceptsPathGlob");
+        return false;
     }
 }
 
