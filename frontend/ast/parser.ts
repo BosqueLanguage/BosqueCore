@@ -4683,6 +4683,10 @@ class Parser {
             this.ensureAndConsumeToken(SYM_semicolon, "datatype");
         }
 
+        //
+        //TODO: may want to do a bit more linking of adt concept and entities for things like exhaustive checking
+        //
+
         const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__adt_concept_type"], currentDecl.ns, iname, terms, provides, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, new Map<string, EntityTypeDecl>());
         currentDecl.concepts.set(iname, cdecl);
         this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, cdecl);

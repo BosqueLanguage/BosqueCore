@@ -148,18 +148,19 @@ class TypeChecker {
     private m_tirNamespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
     private m_toTIRprocessingstack: ResolvedAtomType[] = [];
 
-    private m_pendingEntityDecls: TIRObjectEntityType[] = [];
-    private m_pendingTypedeclDecls: TIRTypedeclEntityType[] = [];
-    private m_pendingConceptDecls: TIRConceptType[] = [];
-    private m_pendingTaskDecls: TIRTaskType[] = [];
+    private m_pendingEntityDecls: {tirtype: TIRObjectEntityType, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingEnumDecls: {tirtype: TIREnumEntityType, rtype: ResolvedEnumEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingTypedeclDecls: {tirtype: TIRTypedeclEntityType, rtype: ResolvedTypedeclEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingConceptDecls: {tirtype: TIRConceptType, rtype: ResolvedConceptAtomTypeEntry, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
+    private m_pendingTaskDecls: {tirtype: TIRTaskType, rtype: ResolvedTaskAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
 
     private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
-    private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-    private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
+    private m_pendingNamespaceFunctions: {fkey: TIRInvokeKey, decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingNamespaceOperators: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl, impls: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl}[]}[] = [];
 
     private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-    private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-    private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingFunctionMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingMethodMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     private m_lambdaCtr = 0;
     private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
@@ -1409,7 +1410,7 @@ class TypeChecker {
             rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
             tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, binds);
-            this.m_pendingEntityDecls.push(tirtype as TIRObjectEntityType);
+            this.m_pendingEntityDecls.push({tirtype: tirtype as TIRObjectEntityType, rtype: rtype, tdecl: rtype.object, binds: rtype.getBinds()});
         }
         else if(rtype instanceof ResolvedEnumEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
@@ -1417,6 +1418,7 @@ class TypeChecker {
             const enums = rtype.object.staticMembers.map((sm) => sm.name);
 
             tirtype = new TIREnumEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, enums);
+            this.m_pendingEnumDecls.push({tirtype: tirtype as TIREnumEntityType, rtype: rtype, tdecl: rtype.object, binds: new Map<string, ResolvedType>()});
         }
         else if(rtype instanceof ResolvedTypedeclEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
@@ -1432,7 +1434,7 @@ class TypeChecker {
             const pthof = validators.pthof !== undefined ? ({vtype: validators.pthof.validator.typeID, vpth: this.m_assembly.tryGetPathValidatorForFullyResolvedName(validators.pthof.validator.typeID) as PathValidator, kind: validators.pthof.kind}) : undefined;
 
             tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof);
-            this.m_pendingTypedeclDecls.push(tirtype as TIRTypedeclEntityType);
+            this.m_pendingTypedeclDecls.push({tirtype: tirtype as TIRTypedeclEntityType, rtype: rtype, tdecl: rtype.object, binds: rtype.getBinds()});
         }
         else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
@@ -1579,7 +1581,7 @@ class TypeChecker {
                 rconcept.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
                 tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, supertypes, binds);
-                this.m_pendingConceptDecls.push(tirtype as TIRConceptType);
+                this.m_pendingConceptDecls.push({tirtype: tirtype as TIRConceptType, rtype: rtype.conceptTypes[0], tdecl: rtype.conceptTypes[0].concept, binds: rtype.conceptTypes[0].binds});
             }
             else {
                 const tirconjuncts = rtype.conceptTypes.map((cpt) => {
@@ -1611,7 +1613,7 @@ class TypeChecker {
             };
 
             tirtype = new TIRTaskType(rtype.typeID, tname, rtype.task.sourceLocation, rtype.task.srcFile, rtype.task.attributes, supertypes, binds, mainfunc, onfuncs, lfuncs);
-            this.m_pendingTaskDecls.push(tirtype as TIRTaskType);
+            this.m_pendingTaskDecls.push({tirtype: tirtype as TIRTaskType, rtype: rtype, tdecl: rtype.task, binds: new Map<string, ResolvedType>()});
         }
         else if(rtype instanceof ResolvedTupleAtomType) {
             const supertypes = this.getConceptsProvidedByTuple(rtype).conceptTypes.map((cc) => this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cc]))));
@@ -3148,13 +3150,9 @@ class TypeChecker {
         else {
             if (nsdecl.operators.has(exp.name)) {
                 const opsintro = (nsdecl.operators.get(exp.name) as NamespaceOperatorDecl[]).find((nso) =>  nso.invoke.attributes.includes("abstract") || nso.invoke.attributes.includes("virtual"));
-                const opdecls = (nsdecl.operators.get(exp.name) as NamespaceOperatorDecl[]).filter((nso) => !nso.invoke.attributes.includes("abstract"));
+                const opdecls = (nsdecl.operators.get(exp.name) as NamespaceOperatorDecl[]).filter((nso) => !nso.invoke.attributes.includes("abstract") && !nso.invoke.attributes.includes("virtual"));
                 this.raiseErrorIf(exp.sinfo, opsintro !== undefined, "Operator must have exactly one abstract/virtual declaration");
                 this.raiseErrorIf(exp.sinfo, opdecls.length === 0, "Operator must have at least one implementation");
-
-                //No terms to be bound on operator call
-
-                this.m_pendingNamespaceOperators.push({decl: opsintro as NamespaceOperatorDecl, impls: opdecls})
 
                 const fkey = TIRIDGenerator.generateInvokeIDForNamespaceOperatorBase(nsdecl.ns, exp.name);
                 const rtype = this.normalizeTypeOnly((opsintro as NamespaceOperatorDecl).invoke.resultType, TemplateBindScope.createEmptyBindScope());
@@ -3162,6 +3160,7 @@ class TypeChecker {
 
                 const [argexps, _] = this.checkArgumentList(exp.sinfo, env, exp.args, (opsintro as NamespaceOperatorDecl).invoke.params.map((pp) => pp.type), TemplateBindScope.createEmptyBindScope());
 
+                this.m_pendingNamespaceOperators.push({fkey: fkey, decl: opsintro as NamespaceOperatorDecl, impls: opdecls.map((opi, ii) => { return {fkey: TIRIDGenerator.generateInvokeIDForNamespaceOperatorImpl(opi.ns, opi.name, ii), decl: opi}; })});
                 const tircall = new TIRCallNamespaceOperatorExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
             }
@@ -3188,7 +3187,7 @@ class TypeChecker {
                         pcodes.set(fdecl.invoke.params[ii].name, {iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType});
                     }
                 });
-                this.m_pendingNamespaceFunctions.push({decl: fdecl, binds: binds, pcodes: pcodes});
+                this.m_pendingNamespaceFunctions.push({fkey: fkey, decl: fdecl, binds: binds, pcodes: pcodes});
 
                 const tircall = new TIRCallNamespaceFunctionExpression(exp.sinfo, nsdecl.ns, exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
@@ -3263,7 +3262,7 @@ class TypeChecker {
                         pcodes.set(fdecl.decl.invoke.params[ii].name, {iscapture: false, pcode: ee.pcodepack, ftype: fargs[ii] as ResolvedFunctionType});
                     }
                 });
-                this.m_pendingFunctionMemberDecls.push({decl: fdecl, binds: binds, pcodes: pcodes});
+                this.m_pendingFunctionMemberDecls.push({fkey: fkey, decl: fdecl, binds: binds, pcodes: pcodes});
 
                 const tircall = new TIRCallStaticFunctionExpression(exp.sinfo, this.toTIRTypeKey(fdecl.ttype), exp.name, fkey, tirrtype, argexps);
                 return this.setResultExpression(env, tircall, rtype);
@@ -3419,8 +3418,11 @@ class TypeChecker {
                 }
             }
             else {
+                const knowntype = this.toTIRTypeKey(knownimpl.ttype);
+                const knownkey = TIRIDGenerator.generateInvokeForMemberMethod(knowntype, op.name, knownimpl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+                
                 const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
-                this.m_pendingMethodMemberDecls.push({decl: knownimpl, binds: binds, pcodes: pcodes}, {decl: mresolve.decl, binds: binds, pcodes: pcodes});
+                this.m_pendingMethodMemberDecls.push({fkey: knownkey, decl: knownimpl, declaredecl: mresolve.decl, binds: binds, pcodes: pcodes}, {fkey: fkey, decl: mresolve.decl, declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
 
                 const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
                 this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
@@ -3437,14 +3439,14 @@ class TypeChecker {
             this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef, "cannot use ref on virtual method call -- variance on updated this ref type");
             const tkey = this.toTIRTypeKey(mresolve.decl.ttype);
             const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
-            this.m_pendingMethodMemberDecls.push({decl: mresolve.decl, binds: binds, pcodes: pcodes});
+            this.m_pendingMethodMemberDecls.push({fkey: declkey, decl: mresolve.decl, declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
 
             const inferthistype = this.toTIRTypeKey(this.envExpressionGetInferType(env));
             let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
                 const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
                 inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
-                this.m_pendingMethodMemberDecls.push({decl: mresolve.impl[0], binds: binds, pcodes: pcodes});
+                this.m_pendingMethodMemberDecls.push({fkey: inferfkey, decl: mresolve.impl[0], declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
             }
 
             const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
@@ -4152,7 +4154,8 @@ class TypeChecker {
         });
 
         const fkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, exp.name, mresolve.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
-        this.m_pendingMethodMemberDecls.push({decl: new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve), binds: binds, pcodes: pcodes});
+        const mldecl = new OOMemberLookupInfo<MemberMethodDecl>(tasktype, tsk.taskdecl, tsk.taskbinds, mresolve);
+        this.m_pendingMethodMemberDecls.push({fkey: fkey, decl: mldecl, declaredecl: mldecl, binds: binds, pcodes: pcodes});
 
         this.raiseErrorIf(exp.sinfo, exp.isSelfRef !== mresolve.hasAttribute("ref"), `mismatch on self/this ref at callsite ${mresolve.name}`);
 
@@ -5513,7 +5516,7 @@ class TypeChecker {
         }
     }
 
-    processOOType(tkey: TIRTypeKey, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
+    processOOBaseType(tkey: TIRTypeKey, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
         if (rtype instanceof ResolvedObjectEntityAtomType) {
             const tiroo = this.m_tirTypeMap.get(tkey) as TIRObjectEntityType;
 
@@ -5570,6 +5573,10 @@ class TypeChecker {
         else {
             ; //nothing else to do
         }
+    }
+
+    processOOConceptType(tkey: TIRTypeKey, rtype: ResolvedConceptAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
+        ; //nothing else to do
     }
 
     private processTaskType(tkey: TIRTypeKey, rtype: ResolvedTaskAtomType, tdecl: TaskTypeDecl) {
@@ -5632,7 +5639,8 @@ class TypeChecker {
 
         //mainfunc
         const dr = this.resolveMemberFunction(tdecl.sourceLocation, ResolvedType.createSingle(rtype), "main") as OOMemberLookupInfo<StaticFunctionDecl>;
-        this.m_pendingFunctionMemberDecls.push({decl: dr, binds: new Map<string, ResolvedType>(), pcodes: new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>()});
+        const fkey = TIRIDGenerator.generateInvokeForMemberFunction(tkey, "main", [], []);
+        this.m_pendingFunctionMemberDecls.push({fkey: fkey, decl: dr, binds: new Map<string, ResolvedType>(), pcodes: new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>()});
 
         if(tdecl.onfuncs.onCanel !== undefined) {
             assert(false, "NOT IMPLEMENTED YET -- processTaskType");
@@ -6173,7 +6181,7 @@ class TypeChecker {
         }
     }
 
-    private processMemberFunction(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
+    private processMemberFunction(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
         const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
         
         if(tirtt.staticFunctions.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
@@ -6293,7 +6301,7 @@ class TypeChecker {
         }
     }
 
-    private processMemberTaskMain(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
+    private processMemberTaskMain(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
         const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
         
         if(tirtt.staticFunctions.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
@@ -6329,6 +6337,7 @@ class TypeChecker {
 
     private anyTypesPending(): boolean {
         return this.m_pendingEntityDecls.length !== 0 ||
+            this.m_pendingEnumDecls.length !== 0 ||
             this.m_pendingTypedeclDecls.length !== 0 ||
             this.m_pendingConceptDecls.length !== 0 ||
             this.m_pendingTaskDecls.length !== 0;
@@ -6340,49 +6349,97 @@ class TypeChecker {
         }
 
         return this.m_pendingNamespaceConsts.length !== 0 ||
-        private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-        private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
-    
-        private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-        private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-        private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-    
-        private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-
+            this.m_pendingNamespaceFunctions.length !== 0 ||
+            this.m_pendingNamespaceOperators.length !== 0 ||
+            this.m_pendingConstMemberDecls.length !== 0 ||
+            this.m_pendingFunctionMemberDecls.length !== 0 ||
+            this.m_pendingMethodMemberDecls.length !== 0 ||
+            this.m_pendingCodeDecls.length !== 0;
     }
 
     private updateVirtualPending() {
         xxxx;
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, exportfuncs: {ns: string, fname: string}[],
-        //TODO: exportconsts: {ns: string, cname: string}[],
-        //TODO: exporttypes: {ns: string, tname: string}[]
-        ): TIRAssembly {
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, exportvals: {ns: string, fname: string}[]): TIRAssembly {
         let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure);
 
-        exportfuncs.forEach((ef) => {
+        exportvals.forEach((ee) => {
+            //could be function, const, task, or type
             xxxx;
         });
 
-        while(this.anyPending()) {
-            while(this.anyTypesPending()) {
-                if(private m_pendingEntityDecls: TIRObjectEntityType[] = [];
-                    private m_pendingTypedeclDecls: TIRTypedeclEntityType[] = [];
-                    private m_pendingConceptDecls: TIRConceptType[] = [];
-                    private m_pendingTaskDecls: TIRTaskType[] = [];
-                )
+        while(tchecker.anyPending()) {
+            while(tchecker.anyTypesPending()) {
+                if(tchecker.m_pendingEntityDecls.length !== 0) {
+                    const edecl = tchecker.m_pendingEntityDecls.shift() as {tirtype: TIRObjectEntityType, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
+                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
+                }
+                else if(tchecker.m_pendingEnumDecls.length !== 0) {
+                    const edecl = tchecker.m_pendingEnumDecls.shift() as {tirtype: TIREnumEntityType, rtype: ResolvedEnumEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
+                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
+                }
+                else if(tchecker.m_pendingTypedeclDecls.length !== 0) {
+                    const edecl = tchecker.m_pendingTypedeclDecls.shift() as {tirtype: TIRTypedeclEntityType, rtype: ResolvedTypedeclEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
+                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
+                }
+                else if(tchecker.m_pendingConceptDecls.length !== 0) {
+                    const cdecl = tchecker.m_pendingConceptDecls.shift() as {tirtype: TIRConceptType, rtype: ResolvedConceptAtomTypeEntry, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
+                    tchecker.processOOConceptType(cdecl.tirtype.tkey, ResolvedConceptAtomType.create([cdecl.rtype]), cdecl.tdecl, cdecl.binds);
+                }
+                else {
+                    const tdecl = tchecker.m_pendingTaskDecls.shift() as {tirtype: TIRTaskType, rtype: ResolvedTaskAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
+                    tchecker.processTaskType(tdecl.tirtype.tkey, tdecl.rtype, tdecl.tdecl as TaskTypeDecl);
+                }
             }
 
-            if(this.private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
-                private m_pendingNamespaceFunctions: {decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-                private m_pendingNamespaceOperators: {decl: NamespaceOperatorDecl, impls: NamespaceOperatorDecl[]}[] = [];
-            
-                private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-                private m_pendingFunctionMemberDecls: {decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-                private m_pendingMethodMemberDecls: {decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-            
-                private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+            if(tchecker.m_pendingNamespaceConsts.length !== 0) {
+                const cdecl = tchecker.m_pendingNamespaceConsts.shift() as NamespaceConstDecl;
+                tchecker.processConstExpr(cdecl);
+            }
+            else if(tchecker.m_pendingNamespaceFunctions.length !== 0) {
+                const nfd = tchecker.m_pendingNamespaceFunctions.shift() as {fkey: TIRInvokeKey, decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
+                tchecker.processNamespaceFunctionDecl(nfd.fkey, nfd.decl.ns, nfd.decl.name, nfd.decl.invoke, nfd.binds, nfd.pcodes);
+            }
+            else if(tchecker.m_pendingNamespaceOperators.length !== 0) {
+                const nfd = tchecker.m_pendingNamespaceOperators.shift() as {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl, impls: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl}[]};
+                tchecker.processNamespaceOperatorDecl(nfd.fkey, nfd.decl.ns, nfd.decl.name, nfd.decl.invoke);
+
+                nfd.impls.forEach((ff) => {
+                    tchecker.processNamespaceOperatorImpl(ff.fkey, ff.decl.ns, ff.decl.name, ff.decl.invoke);
+                });
+            }
+            else if(tchecker.m_pendingConstMemberDecls.length !== 0) {
+                const mcc = tchecker.m_pendingConstMemberDecls.shift() as OOMemberLookupInfo<StaticMemberDecl>;
+                tchecker.processMemberConst([mcc.ttype, mcc.ootype, mcc.decl, mcc.oobinds]);
+            }
+            else if(tchecker.m_pendingFunctionMemberDecls) {
+                const mfd = tchecker.m_pendingFunctionMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
+                if(mfd.decl.ootype instanceof TaskTypeDecl && mfd.decl.decl.name === "main") {
+                    tchecker.processMemberTaskMain(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
+                }
+                else {
+                    tchecker.processMemberFunction(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
+                }
+            }
+            else if(tchecker.m_pendingMethodMemberDecls) {
+                const mmd = tchecker.m_pendingMethodMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
+                if(mmd.decl.decl.attributes.includes("virtual") || mmd.decl.decl.attributes.includes("abstract")) {
+                    tchecker.processMemberMethodVirtual(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
+                }
+                else if(mmd.decl.decl.attributes.includes("override")) {
+                    tchecker.processMemberMethodOverride(mmd.fkey, mmd.decl, mmd.declaredecl, mmd.binds, mmd.pcodes);
+                }
+                else if(mmd.decl.decl.attributes.includes("task_action")) {
+                    tchecker.processMemberTaskAction(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
+                }
+                else {
+                    tchecker.processMemberMethodDirect(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
+                }
+            }
+            else {
+                m_pendingCodeDecls;
+            }
         }
 
         xxxx;

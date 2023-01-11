@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction } from "./builtin_emitter";
@@ -222,6 +222,8 @@ class NamespaceEmitter {
         let consfuncs: string[] = [];
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")} { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; })`);
 
+        xxxx; //setup mainfunc stuff here ...
+
         //
         //TODO: onX funcs such here too!
         //
@@ -243,14 +245,23 @@ class NamespaceEmitter {
     }
 
     private emitConst(nsconst: TIRNamespaceConstDecl): string {
-        
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns);
+
+        const cdecl = `const ${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)};`;
+
+        this.updateCoreImports(bemitter);
+        return cdecl;
     }
 
-    private emitFunction(nsfunc: TIRNamespaceFunctionDecl): string {
-        
+    private emitFunctionInline(nsfunc: TIRNamespaceFunctionDecl): string {
+        return ff.name + ": " + this.emitMemberFunction(ootype, ff, "    ");
     }
 
-    private emitOperator(nsoperator: TIRNamespaceDeclaration): string {
+    private emitFunctionKey(nsfunc: TIRNamespaceFunctionDecl): string {
+       return `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        ");
+    }
+
+    private emitOperator(nsoperator: TIRNamespaceOperatorDecl): string {
         
     }
 
