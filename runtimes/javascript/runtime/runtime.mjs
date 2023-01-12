@@ -10,6 +10,7 @@ function UnionValue(tkey, value) {
 const subtypeMap = new Map();
 
 const vtablemap = new Map();
+//--GENERATED_$vtablesetup--
 
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {

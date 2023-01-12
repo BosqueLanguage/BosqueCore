@@ -601,10 +601,28 @@ class AssemblyEmitter {
         });
     };
 
-    generateJSCode(): {nsname: string, contents: string}[] {
+    generateJSCode(corecode: string, runtimecode: string): {nsname: string, contents: string}[] {
         this.processAssembly();
 
-        let outmodules: {nsname: string, contents: string}[] = [];
+        let outmodules: {nsname: string, contents: string}[] = [
+            {   
+                nsname: "corelibs.mjs",
+                contents: corecode
+                    .replace("//--GENERATED_$KeyEqualOps--", [...this.keyeqinfo].map((ke) => `$KeyEqualOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
+                    .replace("//--GENERATED_$KeyLessOps--", [...this.keyeqinfo].map((ke) => `$KeyLessOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
+            },
+            {   
+                nsname: "runtime.mjs",
+                contents: runtimecode
+                    .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map(${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}));`).join("\n"))
+            }
+        ];
+
+        this.namespacedecls.forEach((nsd, name) => {
+            outmodules.push({nsname: `${name}.mjs`, contents: nsd});
+        });
+
+        return outmodules;
     }
 }
 
