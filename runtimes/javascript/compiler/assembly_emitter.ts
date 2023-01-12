@@ -1,10 +1,10 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
-import { emitBuiltinMemberFunction } from "./builtin_emitter";
+import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
 
 class NamespaceEmitter {
     private readonly m_assembly: TIRAssembly;
@@ -24,13 +24,13 @@ class NamespaceEmitter {
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
 
-        const cstr = `${cdecl.name}: ${bemitter.emitExpression(cdecl.value, true)}`;
+        const cstr = `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!$CF_${cdecl.name}) { $CF_${cdecl.name} = true; $CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return $CV_${cdecl.name}; }`;
 
         this.updateCoreImports(bemitter);
         return cstr;
     }
 
-    private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string | undefined {
+    private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns); 
 
         const args = fdecl.invoke.params.map((pp) => pp.name).join(", ");
@@ -47,7 +47,7 @@ class NamespaceEmitter {
         }
 
         if(body === undefined) {
-            return undefined;
+            return "";
         }
         const cstr =  `function(${args}) ${body}`;
         
@@ -222,7 +222,7 @@ class NamespaceEmitter {
         let consfuncs: string[] = [];
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")} { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; })`);
 
-        xxxx; //setup mainfunc stuff here ...
+        assert(false, "need to setup task mainfunc stuff here");
 
         //
         //TODO: onX funcs such here too!
@@ -248,25 +248,68 @@ class NamespaceEmitter {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns);
 
         const cdecl = `const ${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)};`;
+        const cdcl = `let $CF_${nsconst.name} = false; let $CV_${nsconst.name} = undefined; function ${nsconst.name}() { if(!$CF_${nsconst.name}) { $CF_${nsconst.name} = true; $CV_${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)}; } return $CV_${nsconst.name}; }`;
+
 
         this.updateCoreImports(bemitter);
         return cdecl;
     }
 
+    private emitNamespaceFunction(fdecl: TIRNamespaceFunctionDecl, indent: string): string {
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns); 
+
+        const args = fdecl.invoke.params.map((pp) => pp.name).join(", ");
+
+        let body: string | undefined = "[NOT SET]";
+        assert(!(fdecl.invoke instanceof TIRInvokeAbstractDeclaration), "should not be doing this!!");
+            
+        if(fdecl.invoke instanceof TIRInvokePrimitive) {
+            body = emitBuiltinNamespaceFunction(fdecl, bemitter);
+        }
+        else {
+            const fimpl = fdecl.invoke as TIRInvokeImplementation;
+            body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, indent, `${fdecl.ns}::${fdecl.name}`, false);
+        }
+
+        if(body === undefined) {
+            return "";
+        }
+        const cstr =  `function(${args}) ${body}`;
+        
+        this.updateCoreImports(bemitter);
+        return cstr;
+    }
+
+
     private emitFunctionInline(nsfunc: TIRNamespaceFunctionDecl): string {
-        return ff.name + ": " + this.emitMemberFunction(ootype, ff, "    ");
+        return nsfunc.name + " = " + this.emitNamespaceFunction(nsfunc, "    ");
     }
 
     private emitFunctionKey(nsfunc: TIRNamespaceFunctionDecl): string {
-       return `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        ");
+       return `"${nsfunc.ikey}": ` + this.emitNamespaceFunction(nsfunc, "        ");
     }
 
     private emitOperator(nsoperator: TIRNamespaceOperatorDecl): string {
-        
+        assert(false, "NOT IMPLEMENTED -- operator");
     }
 
     private emitCodePackFunction(pcode: TIRCodePack): string {
+        const invk = this.m_assembly.invokeMap.get(pcode.invk) as TIRInvoke;
+        assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
+
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns); 
+
+        const args = invk.params.map((pp) => pp.name).join(", ");            
+        const body = bemitter.emitBodyStatementList(invk.body, [], [], "        ", pcode.codekey, false);
+
+        if(body === undefined) {
+            return "";
+        }
+        const cstr =  `function(${args}) ${body}`;
         
+        this.updateCoreImports(bemitter);
+
+        return `"${pcode.invk}": ` + cstr;
     }
 
     private emitType(ttype: TIRType): [boolean, string] | undefined {
@@ -348,10 +391,10 @@ class AssemblyEmitter {
     }
 
     private processAssembly() {
-        xxxx;
+        
     };
 
-    generateJSCode(): {asmname: string, contents: string}[] {
+    generateJSCode(): {nsname: string, contents: string}[] {
 
     }
 }

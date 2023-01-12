@@ -909,6 +909,10 @@ class TIRNamespaceDeclaration {
     objects: Map<string, TIRTypeKey[]>;
     
     tasks: Map<string, TIRTypeKey>;
+
+    lambdas: Map<TIRInvokeKey, TIRNamespaceLambdaDecl>;
+    codepacks: Map<TIRPCodeKey, TIRCodePack>;
+
     msgformats: Map<string, TIRInfoTemplate>;
     stringformats: Map<string, TIRStringTemplate>;
 
@@ -921,19 +925,24 @@ class TIRNamespaceDeclaration {
         this.objects = new Map<string, TIRTypeKey[]>();
 
         this.tasks = new Map<string, TIRTypeKey>();
+
+        this.lambdas = new Map<TIRInvokeKey, TIRNamespaceLambdaDecl>();
+        this.codepacks = new Map<TIRPCodeKey, TIRCodePack>();
+
         this.msgformats = new Map<string, TIRInfoTemplate>();
         this.stringformats = new Map<string, TIRStringTemplate>();
     }
 }
 
 class TIRAssembly {
-    readonly namespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
-    readonly typeMap: Map<TIRTypeKey, TIRType> = new Map<TIRTypeKey, TIRType>();
-    readonly fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl> = new Map<TIRTypeKey, TIRMemberFieldDecl>();
+    readonly namespaceMap: Map<string, TIRNamespaceDeclaration>;
+    readonly typeMap: Map<TIRTypeKey, TIRType>;
+    readonly fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>;
+    readonly invokeMap: Map<TIRTypeKey, TIRInvoke>;
 
-    readonly literalRegexs: BSQRegex[] = [];
-    readonly validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
-    readonly validatorPaths: Map<string, PathValidator> = new Map<string, PathValidator>();
+    readonly literalRegexs: BSQRegex[];
+    readonly validatorRegexs: Map<string, BSQRegex>;
+    readonly validatorPaths: Map<string, PathValidator>;
 
     getNamespace(ns: string): TIRNamespaceDeclaration {
         assert(this.namespaceMap.has(ns), "Missing namespace?");
@@ -943,6 +952,16 @@ class TIRAssembly {
     getTypeAs<T extends TIRType>(tkey: TIRTypeKey): T {
         assert(this.typeMap.has(tkey), "Missing type");
         return this.typeMap.get(tkey) as T;
+    }
+
+    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, literalRegexs: BSQRegex[], validatorRegexs: Map<string, BSQRegex>, validatorPaths: Map<string, PathValidator>) {
+        this.namespaceMap = namespaceMap;
+        this.typeMap = typeMap;
+        this.fieldMap = fieldMap;
+        this.invokeMap = invokeMap;
+        this.literalRegexs = literalRegexs;
+        this.validatorRegexs = validatorRegexs;
+        this.validatorPaths = validatorPaths;
     }
 }
 

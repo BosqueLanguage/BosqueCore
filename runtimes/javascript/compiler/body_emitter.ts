@@ -275,11 +275,11 @@ class BodyEmitter {
     }
 
     private emitAccessNamespaceConstantExpression(exp: TIRAccessNamespaceConstantExpression): string {
-        return `${exp.ns}.${exp.cname}`;
+        return `${exp.ns}.${exp.cname}()`;
     }
 
     private emitAccessConstMemberFieldExpression(exp: TIRAccessConstMemberFieldExpression): string {
-        return `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.cname}`;
+        return `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.cname}()`;
     }
 
     private emitAccessVariableExpression(exp: TIRAccessVariableExpression): string {
