@@ -2,8 +2,6 @@
 import * as FS from "fs";
 import * as Path from "path";
 
-import * as Chalk from "chalk";
-
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
 import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
@@ -18,23 +16,26 @@ const runtime_code = FS.readFileSync(runtime_path).toString();
 
 const fullargs = process.argv;
 
-function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
+function workflowLoadUserSrc(files: string[]): CodeFileInfo[] {
     try {
         let code: CodeFileInfo[] = [];
 
         for (let i = 0; i < files.length; ++i) {
             const realpath = Path.resolve(files[i]);
+            process.stdout.write(`loading ${realpath}...\n`);
+
             code.push({ srcpath: realpath, filename: Path.basename(files[i]), contents: FS.readFileSync(realpath).toString() });
         }
 
         return code;
     }
     catch (ex) {
-        return undefined;
+        process.stdout.write("Failed to load file!");
+        process.exit(1);
     }
 }
 
-function workflowLoadCoreSrc(): CodeFileInfo[] | undefined {
+function workflowLoadCoreSrc(): CodeFileInfo[] {
     try {
         let code: CodeFileInfo[] = [];
 
@@ -48,7 +49,8 @@ function workflowLoadCoreSrc(): CodeFileInfo[] | undefined {
         return code;
     }
     catch (ex) {
-        return undefined;
+        process.stdout.write("Failed to load file!");
+        process.exit(1);
     }
 }
 
@@ -60,7 +62,7 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
     const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, istestbuild, true, false, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
-            process.stdout.write(Chalk.red(`Parse error -- ${errors[i]}\n`));
+            process.stdout.write(`Parse error -- ${errors[i]}\n`);
         }
 
         process.exit(1);
@@ -104,16 +106,14 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
         }
 
     } catch(e) {
-        process.stdout.write(Chalk.red(`JS emit error -- ${e}\n`));
+        process.stdout.write(`JS emit error -- ${e}\n`);
         process.exit(1);
     }
 }
 
 function buildJSDefault(into: string, srcfiles: string[]) {
     process.stdout.write("loading user sources...\n");
-    const usersrcinfo = srcfiles.map((sf) => {
-        return { srcpath: sf, filename: Path.basename(sf), contents: FS.readFileSync(sf).toString() };
-    });
+    const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
     workflowEmitToDir(into, userpackage, core_code, runtime_code, "test", false, [{ns: "Main", fname: "main"}]);
