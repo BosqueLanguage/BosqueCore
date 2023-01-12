@@ -11,8 +11,6 @@ const subtypeMap = new Map();
 
 const vtablemap = new Map();
 
-const pcodemap = new Map();
-
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {
         return true;
@@ -202,7 +200,7 @@ function poplogprefix() {
 
 export {
     UnionValue, isSubtype,
-    vtablemap, pcodemap,
+    vtablemap,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,

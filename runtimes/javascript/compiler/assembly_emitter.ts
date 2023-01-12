@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
@@ -9,12 +9,14 @@ import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./built
 class NamespaceEmitter {
     private readonly m_assembly: TIRAssembly;
     private readonly m_ns: string;
+    private readonly m_decl: TIRNamespaceDeclaration;
 
     private m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
 
-    constructor(assembly: TIRAssembly, ns: string) {
+    constructor(assembly: TIRAssembly, ns: string, nsdecl: TIRNamespaceDeclaration) {
         this.m_assembly = assembly;
         this.m_ns = ns;
+        this.m_decl = nsdecl;
     }
 
     private updateCoreImports(bemitter: BodyEmitter) {
@@ -246,13 +248,10 @@ class NamespaceEmitter {
 
     private emitConst(nsconst: TIRNamespaceConstDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns);
-
-        const cdecl = `const ${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)};`;
         const cdcl = `let $CF_${nsconst.name} = false; let $CV_${nsconst.name} = undefined; function ${nsconst.name}() { if(!$CF_${nsconst.name}) { $CF_${nsconst.name} = true; $CV_${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)}; } return $CV_${nsconst.name}; }`;
 
-
         this.updateCoreImports(bemitter);
-        return cdecl;
+        return cdcl;
     }
 
     private emitNamespaceFunction(fdecl: TIRNamespaceFunctionDecl, indent: string): string {
@@ -312,7 +311,7 @@ class NamespaceEmitter {
         return `"${pcode.invk}": ` + cstr;
     }
 
-    private emitType(ttype: TIRType): [boolean, string] | undefined {
+    private emitType(ttype: TIRType): [boolean, string] {
         if(ttype instanceof TIREnumEntityType) {
             return [false, this.emitTIREnumEntityType(ttype)];
         }
@@ -368,17 +367,147 @@ class NamespaceEmitter {
             return this.emitTIRConceptType(ttype);
         }
         else {
-            return undefined;
+            return [false, ""];
         }
     }
 
-    emitNamespace(): string {
-        xxxx;
+    private emitInfoFmt(mfmt: TIRInfoTemplate): string {
+        if(mfmt instanceof TIRInfoTemplateConst) {
+            return mfmt.litexp.litstr;
+        }
+        else if (mfmt instanceof TIRInfoTemplateMacro) {
+            return mfmt.macro;
+        }
+        else if (mfmt instanceof TIRInfoTemplateValue) {
+            return `$${mfmt.argpos} as ${mfmt.argtype}`;
+        }
+        else if (mfmt instanceof TIRInfoTemplateRecord) {
+            return "{" + mfmt.entries.map((ee) => `${ee.name}: ${this.emitInfoFmt(ee.value)}`).join(", ") + "}";
+        }
+        else {
+            assert(mfmt instanceof TIRInfoTemplateTuple);
+
+            return "[" + mfmt.entries.map((ee) => this.emitInfoFmt(ee)).join(", ") + "]";
+        }
+    }
+
+    emitNamespace(nsdeps: string[]): string {
+        let eexports: string[] = [];
+        if(this.m_ns === "Core") {
+            eexports.push("$CoreTypes", "$CoreFunctions");
+        }
+        else {
+            eexports.push("$Types", "$Functions");
+        }
+
+        //TODO: right now we only check for exported functions
+
+        let formats: string[] = [];
+        this.m_decl.msgformats.forEach((mfd, nn) => {
+            const mf = this.emitInfoFmt(mfd);
+            formats.push(`const ${nn} = "${mf}";`);
+        });
+
+        this.m_decl.stringformats.forEach((sfd, nn) => {
+            const sf = sfd.str;
+            formats.push(`const ${nn} = "${sf}";`);
+        });
+
+        let itypes: string[] = [];
+        let ktypes: string[] = [];
+        this.m_decl.concepts.forEach((ttk) => {
+            ttk.forEach((tk) => {
+                const [isinline, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
+                if(isinline) {
+                    itypes.push(ccs);
+                }
+                else {
+                    ktypes.push(ccs);
+                }
+            });
+        });
+    
+        this.m_decl.objects.forEach((ttk) => {
+            ttk.forEach((tk) => {
+                const [isinline, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
+                if(isinline) {
+                    itypes.push(ccs);
+                }
+                else {
+                    ktypes.push(ccs);
+                }
+            });
+        });
+
+        this.m_decl.tasks.forEach((ttk) => {
+            const [isinline, ccs] = this.emitType(this.m_assembly.typeMap.get(ttk) as TIRType);
+            if (isinline) {
+                itypes.push(ccs);
+            }
+            else {
+                ktypes.push(ccs);
+            }
+        });
+
+        let consts: string[] = []; 
+        this.m_decl.consts.forEach((cdecl) => {
+            consts.push(this.emitConst(cdecl));
+        });
+
+        let ifuncs: string[] = [];
+        let kfuncs: string[] = [];
+        this.m_decl.functions.forEach((ffl) => {
+            ffl.forEach((ff) => {
+                if(ff.invoke.tbinds.size === 0 && ff.invoke.params.length === 0) {
+                    const fstr = this.emitFunctionInline(ff);
+                    ifuncs.push(fstr);
+
+                    if(ff.attributes.includes("export")) {
+                        eexports.push(ff.name);
+                    }
+                }
+                else {
+                    const fstr = this.emitFunctionKey(ff);
+                    kfuncs.push(fstr);
+                }
+            });
+        });
+
+        this.m_decl.lambdas.forEach((lfd) => {
+            const lf = this.emitCodePackFunction(this.m_decl.codepacks.get(lfd.pcid) as TIRCodePack);
+            kfuncs.push(lf);
+        });
+
+        this.m_decl.operators.forEach((opdl) => {
+            opdl.forEach((opd) => {
+                const opf = this.emitOperator(opd);
+                ifuncs.push(opf);
+            });
+        });
+
+        const stdimps = `import * as $CoreLibs from "corelibs.mjs"; import * as $Runtime from "runtime.mjs";`
+        const coreimps = this.m_ns !== "Core" ? `import {${[...this.m_coreImports].join(", ")}} from $Core;` : "";
+        const depimps = nsdeps.map((dep) => `import * as ${dep} from "${dep}.mjs";`).join("\n");
+
+        const fmts = formats.join("\n");
+
+        const constdecls = consts.join("\n\n");
+
+        const itypedecls = itypes.join("\n\n");
+        const ktypedecls = `const $${this.m_ns === "Core" ? "Core" : ""}Types = {${ktypes.join("\n    ")}\n};\n`;
+
+        const ifuncdecls = ifuncs.join("\n\n");
+        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${ktypes.join("\n    ")}\n};\n`;
+
+        const exportdecl = `export {${eexports.join(", ")}\n};`
+
+        return ["use strict;", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n\n");
     }
 }
 
 class AssemblyEmitter {
     readonly assembly: TIRAssembly;
+    readonly nsdeps: Map<string, string[]>;
     readonly corelib: string;
     readonly runtime: string;
 
@@ -386,22 +515,96 @@ class AssemblyEmitter {
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
     readonly keyeqinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
     readonly keylessinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
-    readonly vcallinfo: Map<TIRTypeKey, Map<TIRInvokeKey, TIRInvokeKey>> = new Map<TIRTypeKey, Map<TIRInvokeKey, TIRInvokeKey>>();
+    readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
 
-    constructor(assembly: TIRAssembly, corelib: string, runtime: string) {
+    private m_subtypeCache: Map<TIRTypeKey, Map<TIRTypeKey, boolean>> = new Map<TIRTypeKey, Map<TIRTypeKey, boolean>>();
+    
+    private isSubtype(t: TIRTypeKey, oftype: TIRTypeKey): boolean {
+        if(!this.m_subtypeCache.has(oftype)) {
+            this.m_subtypeCache.set(oftype, new Map<TIRTypeKey, boolean>());
+        }
+        let subt = this.m_subtypeCache.get(oftype) as Map<TIRTypeKey, boolean>;
+
+        if(subt.has(t)) {
+            return subt.get(t) as boolean;
+        }
+
+        let issub = false;
+        const ttype = this.assembly.typeMap.get(t) as TIRType;
+        if(ttype.supertypes !== undefined) {
+            if(ttype.supertypes.has(oftype)) {
+                issub = true;
+            }
+            else {
+                issub = [...ttype.supertypes].some((ss) => this.isSubtype(ss, oftype));
+            }
+        }
+
+        subt.set(t, issub);
+        return issub;
+    }
+
+    constructor(assembly: TIRAssembly, nsdeps: Map<string, string[]>, corelib: string, runtime: string) {
         this.assembly = assembly;
+        this.nsdeps = nsdeps;
         this.corelib = corelib;
         this.runtime = runtime;
     }
 
     private processAssembly() {
         this.assembly.namespaceMap.forEach((nsd, ns) => {
-            this.namespacedecls.set(ns, );
+            const nsemit = new NamespaceEmitter(this.assembly, ns, nsd);
+            const tirns = nsemit.emitNamespace(this.nsdeps.get(ns) as string[]);
+
+            this.namespacedecls.set(ns, tirns);
+        });
+
+        //setup various maps
+        let keyeqinfo = new Map<TIRTypeKey, string>();
+        let keylessinfo = new Map<TIRTypeKey, string>();
+        this.assembly.typeMap.forEach((tt) => {
+            if(tt instanceof TIRConceptType) {
+                const subt: TIRTypeKey[] = [];
+                this.assembly.typeMap.forEach((tother) => {
+                    if(this.isSubtype(tother.tkey, tt.tkey)) {
+                        subt.push(tother.tkey);
+                    }
+                })
+            }
+
+            if(tt instanceof TIROOType && tt.iskeytype) {
+                if(tt instanceof TIREnumEntityType) {
+                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                }
+                else if(tt instanceof TIRTypedeclEntityType) {
+                    keyeqinfo.set(tt.tkey, `(a, b) => $KeyEqualOps.get("${tt.representation}")(a, b)`);
+                    keylessinfo.set(tt.tkey, `(a, b) => $KeyLessOps.get("${tt.representation}")(a, b)`);
+                }
+                else if((tt instanceof TIRStringOfEntityType) || (tt instanceof TIRASCIIStringOfEntityType)) {
+                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                }
+                else if((tt instanceof TIRPathEntityType) || (tt instanceof TIRPathFragmentEntityType) || (tt instanceof TIRPathGlobEntityType)) {
+                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                }
+                else {
+                    assert(tt instanceof TIRPrimitiveInternalEntityType);
+                    ; //should already be in the table 
+                }
+            }
+
+            if(tt instanceof TIRObjectEntityType) {
+                this.vcallinfo.set(tt.tkey, tt.vtable);
+            }
         });
     };
 
     generateJSCode(): {nsname: string, contents: string}[] {
+        this.processAssembly();
 
+        let outmodules: {nsname: string, contents: string}[] = [];
     }
 }
 

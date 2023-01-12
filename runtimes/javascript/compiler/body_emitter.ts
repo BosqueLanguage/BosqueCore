@@ -349,7 +349,7 @@ class BodyEmitter {
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
-        return `$Runtime.pcodemap.get("${exp.cpack.invk}")(${[exp.packarg, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
+        return `$Functions["${exp.cpack.invk}"](${[exp.packarg, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
     }
 
     private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression, toplevel: boolean): string {

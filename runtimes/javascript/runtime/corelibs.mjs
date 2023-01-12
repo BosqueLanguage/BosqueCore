@@ -1,15 +1,44 @@
 "use strict";
 
-const { IList, IMap } = require('immutable')
+import * as assert from "assert";
+import { IList, IMap } from "immutable";
 
 const $KeyEqualOps = new Map();
 $KeyEqualOps.set("None", (a, b) => (a === undefined && b === undefined));
 $KeyEqualOps.set("Bool", (a, b) => (a === b));
+$KeyEqualOps.set("Nat", (a, b) => (a === b));
+$KeyEqualOps.set("Int", (a, b) => (a === b));
+$KeyEqualOps.set("BigNat", (a, b) => (a === b));
+$KeyEqualOps.set("BigInt", (a, b) => (a === b));
+$KeyEqualOps.set("String", (a, b) => (a === b));
+$KeyEqualOps.set("UTCDateTime", (a, b) => assert(false));
+$KeyEqualOps.set("PlainDate", (a, b) => assert(false));
+$KeyEqualOps.set("PlainTime", (a, b) => assert(false));
+$KeyEqualOps.set("TickTime", (a, b) => assert(false));
+$KeyEqualOps.set("LogicalTime", (a, b) => assert(false));
+$KeyEqualOps.set("ISOTimeStamp", (a, b) => assert(false));
+$KeyEqualOps.set("UUID4", (a, b) => assert(false));
+$KeyEqualOps.set("UUID7", (a, b) => assert(false));
+$KeyEqualOps.set("SHAContentHash", (a, b) => assert(false));
 //--GENERATED_$KeyEqualOps--
 
 const $KeyLessOps = new Map();
 $KeyLessOps.set("None", (a, b) => false);
 $KeyLessOps.set("Bool", (a, b) => (!a && b));
+$KeyLessOps.set("Nat", (a, b) => (a < b));
+$KeyLessOps.set("Int", (a, b) => (a < b));
+$KeyLessOps.set("BigNat", (a, b) => (a < b));
+$KeyLessOps.set("BigInt", (a, b) => (a < b));
+$KeyLessOps.set("String", (a, b) => (a < b));
+$KeyLessOps.set("UTCDateTime", (a, b) => assert(false));
+$KeyLessOps.set("PlainDate", (a, b) => assert(false));
+$KeyLessOps.set("PlainTime", (a, b) => assert(false));
+$KeyLessOps.set("TickTime", (a, b) => assert(false));
+$KeyLessOps.set("LogicalTime", (a, b) => assert(false));
+$KeyLessOps.set("ISOTimeStamp", (a, b) => assert(false));
+$KeyLessOps.set("UUID4", (a, b) => assert(false));
+$KeyLessOps.set("UUID7", (a, b) => assert(false));
+$KeyLessOps.set("SHAContentHash", (a, b) => assert(false));
 //--GENERATED_$KeyLessOps--
 
 function $KeyEqualMixed(uval, gval, oftype) {

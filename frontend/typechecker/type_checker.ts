@@ -129,6 +129,7 @@ class TIRIDGenerator {
 class TypeChecker {
     private readonly m_assembly: Assembly;
     private m_buildLevel: BuildLevel;
+    private m_issmtbuild: boolean;
 
     private m_file: string;
     private m_rtype: ResolvedType;
@@ -169,10 +170,11 @@ class TypeChecker {
     private m_lambdaCtr = 0;
     private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, overflowisfailure: boolean) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel, overflowisfailure: boolean, issmtbuild: boolean) {
         this.m_assembly = assembly;
 
         this.m_buildLevel = buildlevel;
+        this.m_issmtbuild = issmtbuild;
 
         this.m_file = "[No File]";
         this.m_rtype = this.getSpecialNoneType();
@@ -6508,8 +6510,68 @@ class TypeChecker {
         }
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, exportvals: {ns: string, fname: string}[]): TIRAssembly {
-        let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure);
+    private processSpecialTypes() {
+        this.toTIRTypeKey(this.getSpecialNoneType());
+        this.toTIRTypeKey(this.getSpecialBoolType());
+        this.toTIRTypeKey(this.getSpecialIntType());
+        this.toTIRTypeKey(this.getSpecialNatType());
+        this.toTIRTypeKey(this.getSpecialBigIntType());
+        this.toTIRTypeKey(this.getSpecialBigNatType());
+        this.toTIRTypeKey(this.getSpecialRationalType());
+        this.toTIRTypeKey(this.getSpecialFloatType());
+        this.toTIRTypeKey(this.getSpecialDecimalType());
+        this.toTIRTypeKey(this.getSpecialStringType());
+        this.toTIRTypeKey(this.getSpecialASCIIStringType());
+        this.toTIRTypeKey(this.getSpecialByteBufferType());
+        this.toTIRTypeKey(this.getSpecialDateTimeType());
+        this.toTIRTypeKey(this.getSpecialUTCDateTimeType());
+        this.toTIRTypeKey(this.getSpecialPlainDateType());
+        this.toTIRTypeKey(this.getSpecialPlainTimeType());
+
+        this.toTIRTypeKey(this.getSpecialTickTimeType());
+        this.toTIRTypeKey(this.getSpecialLogicalTimeType());
+        this.toTIRTypeKey(this.getSpecialISOTimeStampType());
+        this.toTIRTypeKey(this.getSpecialUUID4Type());
+        this.toTIRTypeKey(this.getSpecialUUID7Type());
+        this.toTIRTypeKey(this.getSpecialSHAContentHashType());
+        this.toTIRTypeKey(this.getSpecialLatLongCoordinateType());
+        this.toTIRTypeKey(this.getSpecialRegexType());
+        this.toTIRTypeKey(this.getSpecialNothingType());
+        this.toTIRTypeKey(this.getSpecialTaskIDType());
+
+        this.toTIRTypeKey(this.getSpecialAnyConceptType());
+        this.toTIRTypeKey(this.getSpecialSomeConceptType());
+
+        this.toTIRTypeKey(this.getSpecialKeyTypeConceptType());
+        this.toTIRTypeKey(this.getSpecialValidatorConceptType());
+        this.toTIRTypeKey(this.getSpecialPathValidatorConceptType());
+
+        this.toTIRTypeKey(this.getSpecialTestableTypeConceptType());
+        this.toTIRTypeKey(this.getSpecialAPITypeConceptType());
+        this.toTIRTypeKey(this.getSpecialTupleConceptType());
+        this.toTIRTypeKey(this.getSpecialRecordConceptType());
+
+        this.toTIRTypeKey(this.getSpecialISomethingConceptType());
+        this.toTIRTypeKey(this.getSpecialIOptionConceptType());
+        this.toTIRTypeKey(this.getSpecialIOptionTConceptType());
+
+        this.toTIRTypeKey(this.getSpecialIResultConceptType());
+        this.toTIRTypeKey(this.getSpecialIOkConceptType());
+        this.toTIRTypeKey(this.getSpecialIErrTConceptType());
+        this.toTIRTypeKey(this.getSpecialIResultTConceptType());
+        this.toTIRTypeKey(this.getSpecialIResultEConceptType());
+
+        this.toTIRTypeKey(this.getSpecialObjectConceptType());
+
+        if (this.m_issmtbuild) {
+            this.toTIRTypeKey(this.getSpecialHavocType());
+        }
+    }
+
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): TIRAssembly {
+        let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure, issmtbuild);
+
+        tchecker.processSpecialTypes();
 
         exportvals.forEach((ee) => {
             //could be function, const, task, or type
