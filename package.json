@@ -17,6 +17,7 @@
         "refa":"0.10.0"
     },
     "devDependencies": {
+        "fs-extra": "11.1.0",
         "mocha": "10.2.0",
         "@types/mocha": "10.0.1",
         "decimal.js": "10.4.2",

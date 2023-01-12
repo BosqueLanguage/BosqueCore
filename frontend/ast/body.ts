@@ -4,9 +4,9 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { RecursiveAnnotation, TypeSignature } from "./type";
-import { InvokeDecl, BuildLevel } from "./assembly";
+import { InvokeDecl } from "./assembly";
 
-import { LoggerLevel, SourceInfo } from "../build_decls";
+import { BuildLevel, LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 enum ExpressionTag {

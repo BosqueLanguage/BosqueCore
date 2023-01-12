@@ -6693,7 +6693,7 @@ class TypeChecker {
         }
     }
 
-    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, istestbuild: boolean, isoverflowfailure: boolean, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: new Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
+    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, istestbuild: boolean, isoverflowfailure: boolean, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
         ////////////////
         //Parse the contents and generate the assembly
         const assembly = new Assembly();
