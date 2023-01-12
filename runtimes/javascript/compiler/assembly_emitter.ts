@@ -508,8 +508,6 @@ class NamespaceEmitter {
 class AssemblyEmitter {
     readonly assembly: TIRAssembly;
     readonly nsdeps: Map<string, string[]>;
-    readonly corelib: string;
-    readonly runtime: string;
 
     readonly namespacedecls: Map<string, string> = new Map<string, string>();
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
@@ -544,11 +542,9 @@ class AssemblyEmitter {
         return issub;
     }
 
-    constructor(assembly: TIRAssembly, nsdeps: Map<string, string[]>, corelib: string, runtime: string) {
+    constructor(assembly: TIRAssembly, nsdeps: Map<string, string[]>) {
         this.assembly = assembly;
         this.nsdeps = nsdeps;
-        this.corelib = corelib;
-        this.runtime = runtime;
     }
 
     private processAssembly() {

@@ -6,26 +6,9 @@
 import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body";
 
-import { SourceInfo } from "../build_decls";
+import { BuildLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-
-type BuildLevel = "spec" | "debug" | "test" | "release";
-
-function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
-    if(enabled === "spec") {
-        return check === "spec" || check === "debug" || check === "test" || check === "release";
-    }
-    else if(enabled === "debug") {
-        return check === "debug" || check === "test" || check === "release";
-    }
-    else if(enabled === "test") {
-        return check === "test" || check === "release";
-    }
-    else {
-        return check === "release";
-    }
-}
 
 class TemplateTermDecl {
     readonly name: string;
@@ -744,7 +727,6 @@ class Assembly {
 }
 
 export {
-    BuildLevel, isBuildLevelEnabled,
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,

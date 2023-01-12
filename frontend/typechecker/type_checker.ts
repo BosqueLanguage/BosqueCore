@@ -5,7 +5,7 @@
 
 import * as assert from "assert";
 
-import { Assembly, BuildLevel, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, isBuildLevelEnabled, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
+import { Assembly, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
 import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation } from "../ast/body";
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
@@ -15,7 +15,8 @@ import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRA
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
-import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo } from "../build_decls";
+import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo, BuildLevel, isBuildLevelEnabled, PackageConfig } from "../build_decls";
+import { Parser } from "../ast/parser";
 
 function TYPECHECKER_TODO<T>(action: string): T {
     console.log(`TODO: ${action}`);
@@ -6568,7 +6569,7 @@ class TypeChecker {
         }
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): TIRAssembly {
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[] } {
         let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure, issmtbuild);
 
         tchecker.processSpecialTypes();
@@ -6684,7 +6685,100 @@ class TypeChecker {
         //process regex literals + validators decls (regex and path)
         const lvinfo = tchecker.processRegexAndValidatorInfo();
 
-        return new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators);
+        if(tchecker.m_errors.length !== 0) {
+            return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`) };
+        }
+        else {
+            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [] };
+        }
+    }
+
+    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, istestbuild: boolean, isoverflowfailure: boolean, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: new Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
+        ////////////////
+        //Parse the contents and generate the assembly
+        const assembly = new Assembly();
+        const allfiles = ([] as [PackageConfig, string, string, string][]).concat(...pckge.map((pk) => pk.src.map((srci) => [pk, srci.srcpath, srci.filename, srci.contents] as [PackageConfig, string, string, string])));
+
+        const p = new Parser(assembly);
+        let filetonsnamemap = new Map<string, Set<string>>();
+        let nsfilemap = new Map<string, [PackageConfig, string, string, string][]>();
+        let allfe: [PackageConfig, string, string, string][] = [];
+        try {
+            for(let i = 0; i < allfiles.length; ++i) {
+                const fe = allfiles[i];
+                const deps = p.parseCompilationUnitGetNamespaceDeps(fe[1], fe[3], fe[0].macrodefs);
+            
+                if(deps === undefined) {
+                    return { tasm: undefined, errors: ["Hard failure in parse of namespace deps"] };
+                }
+
+                if(deps.ns !== "Core") {
+                    deps.deps.push("Core");
+                }
+
+                const nsnamemap = ["Core", deps.ns, ...[...deps.remap].map((rrp) => rrp[0])];
+                filetonsnamemap.set(fe[1], new Set<string>(nsnamemap));
+
+                if(!depsmap.has(deps.ns)) {
+                    depsmap.set(deps.ns, []);
+                }
+                depsmap.set(deps.ns, [...(depsmap.get(deps.ns) as string[]), ...deps.deps].sort());
+
+                if(!nsfilemap.has(deps.ns)) {
+                    nsfilemap.set(deps.ns, []);
+                }
+                (nsfilemap.get(deps.ns) as [PackageConfig, string, string, string][]).push(fe);
+            }
+
+            const allns = [...depsmap].map((dm) => dm[0]).sort();
+            let nsdone = new Set<string>();
+            while(nsdone.size < allns.length) {
+                const nsopts = allns.filter((ns) => {
+                    const ndeps = depsmap.get(ns) as string[];
+                    return !nsdone.has(ns) && ndeps.every((dep) => nsdone.has(dep));
+                });
+
+                if(nsopts.length === 0) {
+                    //TODO: should hunt down the cycle -- or misspelled module name
+                    return { tasm: undefined, errors: ["Cyclic dependency in namespaces or misspelled import namespace"] };
+                }
+
+                const nns = nsopts[0];
+                const nsfiles = nsfilemap.get(nns) as [PackageConfig, string, string, string][];
+
+                for (let i = 0; i < nsfiles.length; ++i) {
+                    const parseok = p.parseCompilationUnitPass1(nsfiles[i][1], nsfiles[i][3], nsfiles[i][0].macrodefs);
+                    if (!parseok || p.getParseErrors() !== undefined) {
+                        const parseErrors = p.getParseErrors();
+                        if (parseErrors !== undefined) {
+                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)) };
+                        }
+                    }
+                }
+    
+                for (let i = 0; i < nsfiles.length; ++i) {
+                    const parseok = p.parseCompilationUnitPass2(nsfiles[i][1], nsfiles[i][3], nsfiles[i][0].macrodefs, filetonsnamemap.get(nsfiles[i][1]) as Set<string>);
+                    if (!parseok || p.getParseErrors() !== undefined) {
+                        const parseErrors = p.getParseErrors();
+                        if (parseErrors !== undefined) {
+                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)) };
+                        }
+                    }
+                }
+
+                allfe = [...allfe, ...nsfiles].sort((a, b) => a[1].localeCompare(b[1]));
+                nsdone.add(nns);
+            }
+        }
+        catch (ex) {
+            return { tasm: undefined, errors: [`Hard failure in parse with exception -- ${ex}`] };
+        }
+
+        //
+        //TODO: compute hash of sources here -- maybe bundle for debugging or something too?
+        //
+
+        return TypeChecker.processAssembly(assembly, buildLevel, isoverflowfailure, issmtbuild, entrypoints);
     }
 }
 
