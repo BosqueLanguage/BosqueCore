@@ -22,8 +22,7 @@ function copyResourceDir(dir) {
 process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core");
-copyResourceDir("tooling/checker/runtime");
-copyResourceDir("tooling/morphir/bsqtranspiler/runtime");
-copyResourceDir("test/bsqunit/tests");
+copyResourceDir("runtimes/javascript/runtime");
+//copyResourceDir("test/bsqunit/tests");
 
 process.stdout.write(`done!\n`);
