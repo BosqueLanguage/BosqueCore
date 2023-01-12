@@ -1435,7 +1435,9 @@ class TypeChecker {
             const strof = validators.strof !== undefined ? ({vtype: validators.strof.typeID, vre: this.processValidatorRegex(rtype.object.sourceLocation, validators.strof.typeID)}) : undefined;
             const pthof = validators.pthof !== undefined ? ({vtype: validators.pthof.validator.typeID, vpth: this.m_assembly.tryGetPathValidatorForFullyResolvedName(validators.pthof.validator.typeID) as PathValidator, kind: validators.pthof.kind}) : undefined;
 
-            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof);
+            const iskeytype = this.subtypeOf(ResolvedType.createSingle(ResolvedType.createSingle(rtype.representation)), this.getSpecialKeyTypeConceptType());
+
+            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof, iskeytype);
             this.m_pendingTypedeclDecls.push({tirtype: tirtype as TIRTypedeclEntityType, rtype: rtype, tdecl: rtype.object, binds: rtype.getBinds()});
         }
         else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {

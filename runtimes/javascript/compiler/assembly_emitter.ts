@@ -371,6 +371,10 @@ class NamespaceEmitter {
             return undefined;
         }
     }
+
+    emitNamespace(): string {
+        xxxx;
+    }
 }
 
 class AssemblyEmitter {
@@ -378,7 +382,7 @@ class AssemblyEmitter {
     readonly corelib: string;
     readonly runtime: string;
 
-    readonly namespacedecls: Map<string, string[]> = new Map<string, string[]>();
+    readonly namespacedecls: Map<string, string> = new Map<string, string>();
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
     readonly keyeqinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
     readonly keylessinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
@@ -391,7 +395,9 @@ class AssemblyEmitter {
     }
 
     private processAssembly() {
-        
+        this.assembly.namespaceMap.forEach((nsd, ns) => {
+            this.namespacedecls.set(ns, );
+        });
     };
 
     generateJSCode(): {nsname: string, contents: string}[] {
