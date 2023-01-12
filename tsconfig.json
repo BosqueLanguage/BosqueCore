@@ -13,11 +13,11 @@
         "outDir": "bin"
     },
     "include": [
-        "frontend/*.ts", 
-        "frontend/ast/*.ts", 
-        "frontend/tree_ir/*.ts",
-        "frontend/typechecker/*.ts",
-        "runtimes/javascript/*.ts",
-        "runtimes/javascript/compiler/*.ts"
+        "src/frontend/*.ts", 
+        "src/frontend/ast/*.ts", 
+        "src/frontend/tree_ir/*.ts",
+        "src/frontend/typechecker/*.ts",
+        "src/runtimes/javascript/*.ts",
+        "src/runtimes/javascript/compiler/*.ts"
     ]
 }
