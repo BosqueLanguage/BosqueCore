@@ -437,10 +437,10 @@ class BodyEmitter {
         const bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`
 
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, FIXED_NUMBER_MIN, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else {
             return toplevel ? bexp : ("(" + bexp + ")");
@@ -451,10 +451,10 @@ class BodyEmitter {
         const bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`
         
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, FIXED_NUMBER_MIN, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "BigNat") {
             return `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
@@ -468,10 +468,10 @@ class BodyEmitter {
         const bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`
         
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, FIXED_NUMBER_MIN, FIXED_NUMBER_MAX)`;
+            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else {
             return toplevel ? bexp : ("(" + bexp + ")");
@@ -1493,7 +1493,7 @@ class BodyEmitter {
                 sstr += indent + "    ;\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + -- "${this.m_file} @ ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + -- "${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1517,7 +1517,7 @@ class BodyEmitter {
                 sstr += indent + "    ;\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1766,11 +1766,11 @@ class BodyEmitter {
         let rconds = "";
 
         if(preconds.length !== 0) {
-            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n" + bodyindent;
+            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
         }
 
         if(postconds.length === 0) {
-            return `{\n${rconds}${body.map((stmt) => this.emitStatement(stmt, bodyindent)).join("\n" + bodyindent)}\n${indent}}`;
+            return `{\n${rconds}${bodyindent}${body.map((stmt) => this.emitStatement(stmt, bodyindent)).join("\n" + bodyindent)}\n${indent}}`;
         }
         else {
             const wbodyindent = bodyindent + "    ";

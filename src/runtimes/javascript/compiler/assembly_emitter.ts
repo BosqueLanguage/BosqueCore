@@ -281,11 +281,11 @@ class NamespaceEmitter {
 
 
     private emitFunctionInline(nsfunc: TIRNamespaceFunctionDecl): string {
-        return nsfunc.name + " = " + this.emitNamespaceFunction(nsfunc, "    ");
+        return "const " + nsfunc.name + " = " + this.emitNamespaceFunction(nsfunc, "");
     }
 
     private emitFunctionKey(nsfunc: TIRNamespaceFunctionDecl): string {
-       return `"${nsfunc.ikey}": ` + this.emitNamespaceFunction(nsfunc, "        ");
+       return `"${nsfunc.ikey}": ` + this.emitNamespaceFunction(nsfunc, "    ");
     }
 
     private emitOperator(nsoperator: TIRNamespaceOperatorDecl): string {
@@ -501,7 +501,7 @@ class NamespaceEmitter {
 
         const exportdecl = `export {${eexports.join(", ")}\n};`
 
-        return ["use strict;", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n\n");
+        return ["\"use strict;\"", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n\n");
     }
 }
 
