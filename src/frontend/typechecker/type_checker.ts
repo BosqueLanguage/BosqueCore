@@ -967,7 +967,7 @@ class TypeChecker {
                 this.checkTemplateTypesOnType(t.sinfo, fconcept.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fconcept.terms, t.terms, binds);
 
-                rtype = ResolvedType.createSingle(ResolvedConceptAtomTypeEntry.create(fconcept, bbinds));
+                rtype = ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(fconcept, bbinds)]));
             }
 
             const fobject = this.m_assembly.tryGetObjectTypeForFullyResolvedName(ttname);
@@ -1757,7 +1757,7 @@ class TypeChecker {
     getSpecialValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("Validator"); }
     getSpecialPathValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("PathValidator"); }
 
-    getSpecialTestableTypeConceptType(): ResolvedType { return this.internSpecialConceptType("TestableType"); }
+    getSpecialTestableTypeConceptType(): ResolvedType { return this.internSpecialConceptType("Testable"); }
     getSpecialAPITypeConceptType(): ResolvedType { return this.internSpecialConceptType("APIType"); }
     getSpecialTupleConceptType(): ResolvedType { return this.internSpecialConceptType("Tuple"); }
     getSpecialRecordConceptType(): ResolvedType { return this.internSpecialConceptType("Record"); }
@@ -2279,7 +2279,7 @@ class TypeChecker {
         for (let i = 0; i < tt.provides.length; ++i) {
             const rsig = this.normalizeTypeOnly(tt.provides[i][0], binds);
             if(rsig.options.length !== 1 || !(rsig.options[0] instanceof ResolvedConceptAtomType)) {
-                this.raiseError(tt.sourceLocation, `provides types must a concept -- got ${rsig.typeID}`);
+                this.raiseError(tt.sourceLocation, `provides types must be a concept -- got ${rsig.typeID}`);
                 return [];
             }
 
@@ -3527,7 +3527,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `addition is defined on numeric values of same type but got -- ${lenv.trepr.typeID} + ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, lenv.trepr.typeID !== renv.trepr.typeID, `addition is defined on numeric values of same type but got -- ${lenv.trepr.typeID} + ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRBinAddExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(renv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);
@@ -3540,7 +3540,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `subtraction is defined on numeric values of same type but got -- ${lenv.trepr.typeID} - ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, lenv.trepr.typeID !== renv.trepr.typeID, `subtraction is defined on numeric values of same type but got -- ${lenv.trepr.typeID} - ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRBinSubExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(renv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(nntype))), renv.trepr);

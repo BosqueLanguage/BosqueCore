@@ -55,14 +55,14 @@ __internal __constructable __litvaluetype __typedeclable entity PathFragment<T u
     private function s_into(s: String): PathFragment<T> = special_inject;
     method value(): String = special_extract;
 
-    private function s_isPrefix(): boolean = pathfragment_isprefix;
-    private function s_isSuffix(): boolean = pathfragment_issuffix;
+    private function s_isPrefix(): Boolean = pathfragment_isprefix;
+    private function s_isSuffix(): Boolean = pathfragment_issuffix;
 
-    method isPrefix(): boolean {
+    method isPrefix(): Boolean {
         return PathFragment<T>::s_isPrefix(this);
     }
 
-    method isPrefix(): boolean {
+    method isPrefix(): Boolean {
         return PathFragment<T>::s_isSuffix(this);
     }
 }

@@ -1525,7 +1525,7 @@ class Parser {
         try {
             this.setRecover(this.scanMatchingParens(lparen, rparen));
 
-            this.consumeToken();
+            this.ensureAndConsumeToken(lparen, "argument list");
             while (!this.testAndConsumeTokenIf(rparen)) {
                 const exp = this.parseExpression();
                 args.push(exp);
@@ -1663,7 +1663,10 @@ class Parser {
             this.raiseError(this.getCurrentLine(), "Expected recursive annotation");
         }
 
-        this.ensureToken(SYM_rbrack, "recursive annotation");
+        recursive = this.testToken("recursive") ? "yes" : "cond";
+        this.consumeToken();
+
+        this.ensureAndConsumeToken(SYM_rbrack, "recursive annotation");
          
         return recursive;
     }
@@ -2088,6 +2091,9 @@ class Parser {
             return [new AccessFormatInfoExpression(sinfo, ns, name), false];
         }
         else {
+            if(this.testToken(TokenStrings.Numberino)) {
+                this.raiseError(this.getCurrentLine(), `expected numeric specifier, [i, n, I, N, f, d, R], on literal but got naked ${this.peekTokenData()}`)
+            }
             const ttype = this.parseTypeSignature();
 
             if (this.testFollows(SYM_coloncolon, TokenStrings.Identifier)) {

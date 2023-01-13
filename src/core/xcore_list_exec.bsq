@@ -17,19 +17,19 @@ internal entity ListOps provides Some {
     __assume_safe internal function s_list_back<T>(l: List<T>): T = s_list_back;
     __assume_safe internal function s_list_front<T>(l: List<T>): T = s_list_front;
     
-    __conditional_safe internal recursive? function s_list_has_pred<T>(l: List<T>, p: recursive? pred(_: T) -> Bool): Bool = s_list_has_pred;
-    __conditional_safe internal recursive? function s_list_has_pred_idx<T>(l: List<T>, p: recursive? pred(_: T, _: Nat) -> Bool): Bool = s_list_has_pred_idx;
+    __conditional_safe internal recursive? function s_list_has_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_has_pred;
+    __conditional_safe internal recursive? function s_list_has_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): Bool = s_list_has_pred_idx;
 
-    __conditional_safe internal recursive? function s_list_find_pred<T>(l: List<T>, p: recursive? pred(_: T) -> Bool): Int = s_list_find_pred;
-    __conditional_safe internal recursive? function s_list_find_pred_idx<T>(l: List<T>, p: recursive? pred(_: T, _: Nat) -> Bool): Int = s_list_find_pred_idx;
+    __conditional_safe internal recursive? function s_list_find_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): Int = s_list_find_pred;
+    __conditional_safe internal recursive? function s_list_find_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): Int = s_list_find_pred_idx;
     
-    __conditional_safe internal recursive? function s_list_filter_pred<T>(l: List<T>, p: recursive? pred(_: T) -> Bool): List<T> = s_list_filter_pred;
-    __conditional_safe internal recursive? function s_list_filter_pred_idx<T>(l: List<T>, p: recursive? pred(_: T, _: Nat) -> Bool): List<T> = s_list_filter_pred_idx;
+    __conditional_safe internal recursive? function s_list_filter_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = s_list_filter_pred;
+    __conditional_safe internal recursive? function s_list_filter_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): List<T> = s_list_filter_pred_idx;
 
-    __conditional_safe internal recursive? function s_list_filter_map_fn<T, U>(l: List<T>, p: recursive? pred(_: T) -> Bool, f: recursive? fn(_: T) -> U): List<U> = s_list_filter_map_fn;
+    __conditional_safe internal recursive? function s_list_filter_map_fn<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> = s_list_filter_map_fn;
 
-    __conditional_safe internal recursive? function s_list_map_fn<T, U>(l: List<T>, f: recursive? fn(_: T) -> U): List<U> = s_list_map;
-    __conditional_safe internal recursive? function s_list_map_fn_idx<T, U>(l: List<T>, f: recursive? fn(_: T, _: Nat) -> U): List<U> = s_list_map_idx;
+    __conditional_safe internal recursive? function s_list_map_fn<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> = s_list_map;
+    __conditional_safe internal recursive? function s_list_map_fn_idx<T, U>(l: List<T>, f: recursive? fn(T, Nat) -> U): List<U> = s_list_map_idx;
 
     __safe internal function s_list_push_back<T>(l: List<T>, v: T): List<T> = s_list_push_back;
     __safe internal function s_list_push_front<T>(l: List<T>, v: T): List<T> = s_list_push_front;    
