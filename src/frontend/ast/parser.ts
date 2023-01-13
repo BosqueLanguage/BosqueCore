@@ -14,7 +14,6 @@ const KW_recursive_q = "recursive?";
 const KW_recursive = "recursive";
 
 const KW_action = "action";
-const KW_as = "as";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
@@ -80,7 +79,6 @@ const KeywordStrings = [
     KW_recursive,
     
     KW_action,
-    KW_as,
     KW__debug,
     KW_abort,
     KW_assert,
@@ -158,6 +156,7 @@ const SYM_rbrace = "}";
 const SYM_rbracebar = "|}";
 
 const SYM_hash = "#";
+const SYM_percent = "%";
 const SYM_amp = "&";
 const SYM_ampamp = "&&";
 const SYM_bang = "!";
@@ -199,6 +198,7 @@ const SymbolStrings = [
     SYM_rbracebar,
 
     SYM_hash,
+    SYM_percent,
     SYM_amp,
     SYM_bang,
     SYM_ampamp,
@@ -636,12 +636,12 @@ class Lexer {
     }
 
     private static readonly _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
-    private static readonly _s_ascii_stringRe = /ascii{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
+    private static readonly _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
     private static readonly _s_typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
-    private static readonly _s_ascii_typedStringRe = /ascii{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'}/uy;
+    private static readonly _s_ascii_typedStringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
     private static readonly _s_template_stringRe = /[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
-    private static readonly _s_ascii_template_stringRe = /ascii{[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"}/uy;
+    private static readonly _s_ascii_template_stringRe = /ascii\{[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
 
     private tryLexString() {
         Lexer._s_template_stringRe.lastIndex = this.m_cpos;
@@ -2369,10 +2369,10 @@ class Parser {
                 const lhs = aexp;
                 const rhs = this.parsePrefixExpression();
                 if(op === SYM_times) {
-                    return new BinMultExpression(sinfo, lhs, rhs);
+                    aexp = new BinMultExpression(sinfo, lhs, rhs);
                 }
                 else {
-                    return new BinDivExpression(sinfo, lhs, rhs);
+                    aexp = new BinDivExpression(sinfo, lhs, rhs);
                 }
             }
 
@@ -2404,10 +2404,10 @@ class Parser {
                 const lhs = aexp;
                 const rhs = this.parseMultiplicativeExpression();
                 if(op === SYM_plus) {
-                    return new BinAddExpression(sinfo, lhs, rhs);
+                    aexp = new BinAddExpression(sinfo, lhs, rhs);
                 }
                 else {
-                    return new BinSubExpression(sinfo, lhs, rhs);
+                    aexp = new BinSubExpression(sinfo, lhs, rhs);
                 }
             }
 
@@ -3300,7 +3300,7 @@ class Parser {
             
             return new BodyImplementation(file, iname);
         }
-        else if (this.testToken(SYM_lparen)) {
+        else if (this.testToken(SYM_lbrace)) {
             return new BodyImplementation(file, this.parseScopedBlockStatement());
         }
         else {
@@ -3350,7 +3350,7 @@ class Parser {
                     this.consumeToken();
                 }
 
-                const tconstraint = this.parseTemplateConstraint(!this.testToken(SYM_coma));
+                const tconstraint = this.parseTemplateConstraint(!this.testToken(SYM_coma) && !this.testToken(SYM_ge));
                 return new TemplateTermDecl(templatename, isunique, isgrounded, isnumeric, tconstraint);
             });
         }
@@ -3457,7 +3457,7 @@ class Parser {
         let nsp = {fromns: fromns, asns: fromns}; //case of import NS;
         if(this.testToken(TokenStrings.Identifier)) {
             const nn = this.consumeTokenAndGetValue();
-            if(nn !== KW_as) {
+            if(nn !== "as") {
                 this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
             }
 
@@ -3483,7 +3483,7 @@ class Parser {
         let asns = fromns; //case of import NS;
         if(this.testToken(TokenStrings.Identifier)) {
             const nn = this.consumeTokenAndGetValue();
-            if(nn !== KW_as) {
+            if(nn !== "as") {
                 this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
             }
 
@@ -3659,11 +3659,9 @@ class Parser {
     private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
-        this.ensureAndConsumeToken("method", "member method");
-
         //[attr] method ref NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        const refrcvr = this.testAndConsumeTokenIf(KW_ref);
         this.ensureAndConsumeToken(KW_method, "member method");
+        const refrcvr = this.testAndConsumeTokenIf(KW_ref);
         const termRestrictions = this.parseTermRestriction(true);
 
         this.ensureToken(TokenStrings.Identifier, "member method");
@@ -3684,8 +3682,6 @@ class Parser {
         this.ensureTaskOpOk();
 
         const sinfo = this.getCurrentSrcInfo();
-
-        this.ensureAndConsumeToken("action", "member action");
 
         //[attr] action NAME<T where C...>(params): type { ... }
         this.ensureAndConsumeToken("action", "task action");
@@ -3820,7 +3816,7 @@ class Parser {
         statuseffects: TaskStatusEffect, eventeffects: TaskEventEffect, enveffects: TaskEnvironmentEffect, resourceeffects: TaskResourceEffect[]) {
         let allMemberNames = new Set<string>();
         let allControlNames = new Set<string>();
-        while (!this.testToken(SYM_lparen)) {
+        while (!this.testToken(SYM_rbrace)) {
             const attributes = this.parseAttributes();
 
             if(this.testToken(KW_entity)) {
@@ -4806,7 +4802,7 @@ class Parser {
         this.ensureNotToken(TokenStrings.FormatSpecifier, "info format");
         const mfmt = Number.parseInt(this.consumeTokenAndGetValue().slice(1));
 
-        this.ensureAndConsumeToken(KW_as, "info format");
+        this.ensureAndConsumeToken(SYM_percent, "info format");
         const ftype = this.parseTypeSignature();
 
         return new InfoTemplateValue(mfmt, ftype);

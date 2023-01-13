@@ -118,6 +118,10 @@ class ParserEnvironment {
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
     }
 
+    isFunctionScopeActive(): boolean {
+        return this.m_functionScopes.length !== 0;
+    }
+
     getCurrentFunctionScope(): FunctionScope {
         return this.m_functionScopes[this.m_functionScopes.length - 1];
     }
@@ -153,22 +157,26 @@ class ParserEnvironment {
     }
 
     useLocalVar(name: string): string {
-        const cscope = this.getCurrentFunctionScope();
+        if (this.isFunctionScopeActive()) {
+            const cscope = this.getCurrentFunctionScope();
 
-        if (!cscope.isVarNameDefined(name) && cscope.isPCodeEnv()) {
-            cscope.getCaptureVars().add(name);
+            if (!cscope.isVarNameDefined(name) && cscope.isPCodeEnv()) {
+                cscope.getCaptureVars().add(name);
+            }
         }
         
         return name;
     }
 
     useTemplateType(name: string): string {
-        const cscope = this.getCurrentFunctionScope();
+        if (this.isFunctionScopeActive()) {
+            const cscope = this.getCurrentFunctionScope();
 
-        if (!cscope.isTemplateNameDefined(name) && cscope.isPCodeEnv()) {
-            cscope.getCaptureTemplates().add(name);
+            if (!cscope.isTemplateNameDefined(name) && cscope.isPCodeEnv()) {
+                cscope.getCaptureTemplates().add(name);
+            }
         }
-        
+
         return name;
     }
 

@@ -7,7 +7,7 @@ import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
-const bosque_dir: string = Path.join(__dirname, "../../../../");
+const bosque_dir: string = Path.join(__dirname, "../../../");
 const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
 const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
 

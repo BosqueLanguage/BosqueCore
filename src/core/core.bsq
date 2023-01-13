@@ -191,14 +191,6 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
     __safe private function s_empty(s: String): Bool = string_empty;
     __assume_safe private function s_concat2(s1: String, s2: String): String = string_append;
 
-    function concat(s1: String, s2: String): String {
-        return String::s_concat2(s1, s2);
-    }
-
-    function concat(s1: String, s2: String, s3: String): String {
-        return String::s_concat2(s1, String::s_concat2(s2, s3);)
-    }
-
     function concat(sl: List<String>): String {
         return StringOps::s_strconcat(sl);
     }
@@ -386,14 +378,14 @@ __internal __typedeclable __typebase entity DateTime provides Some, APIType {
         requires DateOps::s_check_DayInMonth(day, month, year);
         requires hour < 24n;
         requires min < 60n;
-        requires sec < 61n
+        requires sec < 61n;
     {
         return DateTime::s_create(year, month, day, hour, min, sec, tzdata);
     }
 }
 
 __internal __typedeclable __typebase entity UTCDateTime provides Some, APIType, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, ): UTCDateTime = utcdatetime_create;
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime = utcdatetime_create;
 
     function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime
         requires 1900n <= year && year <= 2200n;
@@ -525,7 +517,7 @@ __universal concept IOption provides Some {
 }
 
 //<summary>Generic type for all Option<T> to inherit from.</summary>
-__universal private concept ISomething provides IOption {
+__universal concept ISomething provides IOption {
 }
 
 //<summary>Type for representing the nothing option value.</summary>
@@ -541,7 +533,7 @@ __internal __constructable entity Something<T> provides ISomething, Option<T>, A
 __universal concept IOptionT provides Some {
 }
 
-__option_type concept Option<T> provides IOption, APIType when T grounded APIType, Testable when T grounded Testable {
+concept Option<T> provides IOption, APIType when T grounded APIType, Testable when T grounded Testable {
     method asSomething(): Something<T> {
         return this.as<Something<T>>();
     }
@@ -565,11 +557,11 @@ __universal concept IResult provides Some {
 }
 
 //<summary>Generic type for all Result<T, E>::Ok to inherit from.</summary>
-__universal internal concept IOk provides Some {
+__universal concept IOk provides Some {
 }
 
 //<summary>Generic type for all Result<T, E>::Err to inherit from.</summary>
-__universal internal concept IErr provides Some {
+__universal concept IErr provides Some {
 }
 
 //<summary>Type for flagging T projection from Result -- kludge that has no other purpose.</summary>

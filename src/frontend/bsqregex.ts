@@ -281,7 +281,7 @@ class BSQRegex {
     }
 
     static parse(currentns: string, rstr: string): BSQRegex | string {
-        const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 2));
+        const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 1));
         const rep = reparser.parseComponent();
        
         if(typeof(rep) === "string") {
