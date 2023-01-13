@@ -1,7 +1,7 @@
 "use strict";
 
 import * as assert from "assert";
-import { IList, IMap } from "immutable";
+import { List as IList, Map as IMap } from "immutable";
 
 const $KeyEqualOps = new Map();
 $KeyEqualOps.set("None", (a, b) => (a === undefined && b === undefined));

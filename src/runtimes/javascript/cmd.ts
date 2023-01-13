@@ -102,7 +102,13 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             const ppth = Path.join(into, jscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
-            FS.writeFileSync(ppth, jscode[i].contents);
+
+            if(jscode[i].nsname !== "Main.mjs") {
+                FS.writeFileSync(ppth, jscode[i].contents);
+            }
+            else {
+                FS.writeFileSync(ppth, jscode[i].contents + "\n\n" + "console.log(main(...process.argv.slice(2)));\n");
+            }
         }
 
     } catch(e) {
