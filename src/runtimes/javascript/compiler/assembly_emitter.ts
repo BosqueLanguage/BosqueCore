@@ -501,7 +501,7 @@ class NamespaceEmitter {
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict;\"", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n");
+        return ["\"use strict\";", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n");
     }
 }
 
