@@ -6572,6 +6572,8 @@ class TypeChecker {
     static processAssembly(asm: Assembly, buildlevel: BuildLevel, isoverflowfailure: boolean, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[] } {
         let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure, issmtbuild);
 
+        //Must always have Core namespace and special types registered -- even if just as default values
+        tchecker.m_tirNamespaceMap.set("Core", new TIRNamespaceDeclaration("Core"));
         tchecker.processSpecialTypes();
 
         exportvals.forEach((ee) => {

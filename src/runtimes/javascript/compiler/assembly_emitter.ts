@@ -485,8 +485,8 @@ class NamespaceEmitter {
             });
         });
 
-        const stdimps = `import * as $CoreLibs from "./corelibs.mjs"; import * as $Runtime from "./runtime.mjs";`
-        const coreimps = this.m_ns !== "Core" ? `import {${[...this.m_coreImports].join(", ")}} from "./$Core";` : "";
+        const stdimps = [`import * as $CoreLibs from "./corelibs.mjs";`, `import * as $Runtime from "./runtime.mjs";`];
+        const coreimps = this.m_ns !== "Core" ? `import {${[...this.m_coreImports].join(", ")}} from "./Core.mjs";` : "";
         const depimps = nsdeps.filter((dep) => dep !== "Core").map((dep) => `import * as ${dep} from "./${dep}.mjs";`).join("\n");
 
         const fmts = formats.join("\n");
@@ -494,14 +494,16 @@ class NamespaceEmitter {
         const constdecls = consts.join("\n\n");
 
         const itypedecls = itypes.join("\n\n");
-        const ktypedecls = `const $${this.m_ns === "Core" ? "Core" : ""}Types = {${ktypes.join("\n    ")}\n};\n`;
+        const ktypedecls = `const $${this.m_ns === "Core" ? "Core" : ""}Types = {${ktypes.join("\n    ")}\n};\n\n`;
 
         const ifuncdecls = ifuncs.join("\n\n");
-        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${ktypes.join("\n    ")}\n};\n`;
+        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${ktypes.join("\n    ")}\n};\n\n`;
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict\";", stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl].join("\n");
+        return ["\"use strict\";", ...stdimps, coreimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl]
+            .filter((cmpt) => cmpt !== "")
+            .join("\n");
     }
 }
 
