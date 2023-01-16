@@ -330,10 +330,12 @@ abstract class TIRType {
 
     //direct suprertypes -- not saturated set
     readonly supertypes: Set<TIRTypeKey> | undefined;
+    readonly isexportable: boolean;
 
-    constructor(tkey: TIRTypeKey, supertypes: TIRTypeKey[] | undefined) {
+    constructor(tkey: TIRTypeKey, supertypes: TIRTypeKey[] | undefined, isexportable: boolean) {
         this.tkey = tkey;
         this.supertypes = supertypes !== undefined ? new Set<TIRTypeKey>(supertypes) : undefined;
+        this.isexportable = isexportable;
     }
 }
 
@@ -352,8 +354,8 @@ abstract class TIROOType extends TIRType {
 
     readonly iskeytype: boolean;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
-        super(tkey, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
+        super(tkey, supertypes, isexportable);
         this.tname = tname;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
@@ -363,8 +365,8 @@ abstract class TIROOType extends TIRType {
 }
 
 abstract class TIREntityType extends TIROOType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
     }
 }
 
@@ -378,8 +380,8 @@ class TIRObjectEntityType extends TIREntityType {
     readonly vtable: Map<string, TIRInvokeKey> = new Map<string, TIRInvokeKey>(); 
     readonly binds: Map<string, TIRTypeKey>;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
         this.binds = binds;
     }
 }
@@ -390,7 +392,7 @@ class TIREnumEntityType extends TIREntityType {
     readonly litvals: Map<string, TIRLiteralValue> = new Map<string, TIRLiteralValue>();
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.enums = enums;
     }
 }
@@ -407,8 +409,8 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
     readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
         this.valuetype = valuetype;
         this.representation = representation;
         this.strvalidator = strvalidator;
@@ -418,15 +420,15 @@ class TIRTypedeclEntityType extends TIREntityType {
 
 //base class for all the primitive types that are defined
 abstract class TIRInternalEntityType extends TIREntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
     }
 } 
 
-//class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
+//class representing all the primitive values (Int, Bool, String, ...). All of these are special implemented values
 class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, true);
     }
 } 
 
@@ -435,7 +437,7 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.revalidator = revalidator;
     }
 }
@@ -446,7 +448,7 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
@@ -458,7 +460,7 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
@@ -469,7 +471,7 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     readonly pthvalidator: PathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.pthvalidator = pthvalidator;
     }
 }
@@ -480,7 +482,7 @@ class TIRPathEntityType extends TIRInternalEntityType {
     readonly pthvalidator: PathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -492,7 +494,7 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
     readonly pthvalidator: PathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -503,7 +505,7 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
     readonly pthvalidator: PathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -511,8 +513,8 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
 
 //class representing Ok, Err, Something types
 abstract class TIRConstructableEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
     }
 }
 
@@ -520,8 +522,8 @@ class TIROkEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
     readonly typeE: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
         this.typeE = typeE;
     }
@@ -531,8 +533,8 @@ class TIRErrEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
     readonly typeE: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
         this.typeE = typeE;
     }
@@ -541,8 +543,8 @@ class TIRErrEntityType extends TIRConstructableEntityType {
 class TIRSomethingEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
 }
@@ -551,8 +553,8 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     readonly typeK: TIRTypeKey;
     readonly typeV: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeK = typeK;
         this.typeV = typeV;
     }
@@ -561,14 +563,14 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
 //class representing special havoc type
 class TIRHavocEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, [], false);
+        super(tkey, tname, srcInfo, srcFile, attributes, [], false, false);
     }
 }
 
 //abstract class for all the builtin collection types
 abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
     }
 }
 
@@ -576,8 +578,8 @@ abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
 class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
 }
@@ -586,8 +588,8 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
 }
@@ -596,8 +598,8 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
 }
@@ -606,8 +608,8 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
 }
@@ -617,8 +619,8 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeK: TIRTypeKey;
     readonly typeV: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeK = typeK;
         this.typeV = typeV;
     }
@@ -646,7 +648,7 @@ class TIRTaskType extends TIROOType {
         onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined },
         lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined }
     ) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.binds = binds;
         this.mainfunc = mainfunc;
         this.onfuncs = onfuncs;
@@ -657,8 +659,8 @@ class TIRTaskType extends TIROOType {
 class TIRConceptType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
         this.binds = binds;
     }
 
@@ -682,8 +684,8 @@ class TIRConceptType extends TIROOType {
 class TIRConceptSetType extends TIRType {
     readonly conceptTypes: TIRTypeKey[]; //each is a TIRConceptType
 
-    constructor(tkey: TIRTypeKey, concepts: TIRTypeKey[]) {
-        super(tkey, concepts);
+    constructor(tkey: TIRTypeKey, concepts: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, concepts, isexportable);
         this.conceptTypes = concepts;
     }
 }
@@ -691,8 +693,8 @@ class TIRConceptSetType extends TIRType {
 class TIRTupleType extends TIRType {
     readonly types: TIRTypeKey[];
 
-    constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[]) {
-        super(tkey, supertypes);
+    constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, supertypes, isexportable);
         this.types = types;
     }
 }
@@ -700,8 +702,8 @@ class TIRTupleType extends TIRType {
 class TIRRecordType extends TIRType {
     readonly entries: {pname: string, ptype: TIRTypeKey}[];
 
-    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[]) {
-        super(tkey, supertypes);
+    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, supertypes, isexportable);
         this.entries = entries;
     }
 }
@@ -709,15 +711,15 @@ class TIRRecordType extends TIRType {
 class TIRUnionType extends TIRType {
     readonly options: TIRTypeKey[];
 
-    constructor(tkey: TIRTypeKey, options: TIRTypeKey[]) {
-        super(tkey, undefined);
+    constructor(tkey: TIRTypeKey, options: TIRTypeKey[], isexportable: boolean) {
+        super(tkey, undefined, isexportable);
         this.options = options;
     }
 }
 
 class TIRCodePackType extends TIRType {
     constructor(tkey: TIRTypeKey) {
-        super(tkey, undefined);
+        super(tkey, undefined, false);
     }
 }
 

@@ -8,9 +8,34 @@ function UnionValue(tkey, value) {
 }
 
 const subtypeMap = new Map();
+//--GENERATED_$subtypesetup--
 
 const vtablemap = new Map();
 //--GENERATED_$vtablesetup--
+
+const ioMarshalMap = new Map();
+ioMarshalMap.set("None", {parse: (jv) => undefined, emit: (nv) => undefined});
+ioMarshalMap.set("Bool", {parse: (jv) => jv === "true", emit: (nv) => nv});
+ioMarshalMap.set("Nat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("Int", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("BigNat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("BigInt", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("Rational", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("Float", {parse: (jv) => jv, emit: (nv) => nv});
+ioMarshalMap.set("Rational", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("String", {parse: (jv) => jv, emit: (nv) => nv});
+ioMarshalMap.set("DateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("UTCDateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("PlainDate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("PlainTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("TickTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("LogicalTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("ISOTimeStamp", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("UUID4", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("UUID7", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("SHAContentHash", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("LatLongCoordinate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+//--GENERATED_$iomarshalsetup--
 
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {
@@ -20,6 +45,14 @@ function isSubtype(tkey, ofkey) {
         assert(subtypeMap.has(ofkey), "Internal error -- missing subtype entry");
         return subtypeMap.get(ofkey).includes(tkey);
     }
+}
+
+function bsqMarshalParse(tt, jv) {
+    return ioMarshalMap.get(tt).parse(jv);
+}
+
+function bsqMarshalEmit(tt, nv) {
+    return ioMarshalMap.get(tt).emit(nv);
 }
 
 const FIXED_NUMBER_MAX = 9223372036854775808n; 
@@ -202,6 +235,7 @@ function poplogprefix() {
 export {
     UnionValue, isSubtype,
     vtablemap,
+    bsqMarshalParse, bsqMarshalEmit,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow,

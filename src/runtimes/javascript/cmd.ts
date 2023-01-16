@@ -2,8 +2,10 @@
 import * as FS from "fs";
 import * as Path from "path";
 
+import * as assert from "assert";
+
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
-import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRInvoke } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
@@ -107,7 +109,18 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
                 FS.writeFileSync(ppth, jscode[i].contents);
             }
             else {
-                FS.writeFileSync(ppth, jscode[i].contents + "\n\n" + "console.log(JSON.stringify(main(...process.argv.slice(2))));\n");
+                assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
+                const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
+
+                const loadlogic = "[" + epf.params.map((pp, ii) => `$Runtime.bsqMarshalParse("${pp.type}", actual_args[${ii}])`).join(", ") + "]";
+                const emitlogic = `$Runtime.bsqMarshalEmit("${epf.resultType}", res_val)`;
+
+                FS.writeFileSync(ppth, jscode[i].contents + "\n\n" 
+                + `const actual_args = process.argv.slice(2);\n`
+                + `const bsq_args = ${loadlogic};\n`
+                + `const res_val = main(...bsq_args);\n`
+                + `const jres_val = ${emitlogic};\n`
+                + `console.log(JSON.stringify(jres_val));\n`);
             }
         }
 

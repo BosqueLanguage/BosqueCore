@@ -42,7 +42,7 @@ describe('Readme Add', function () {
 
   describe('main()', function () {
     it('expected 7n', function () {
-      expect(invokeExecutionOn(jsmain)).to.eql(7n);
+      expect(invokeExecutionOn(jsmain)).to.eql(7);
     });
   });
 

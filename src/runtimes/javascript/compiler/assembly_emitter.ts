@@ -513,9 +513,12 @@ class AssemblyEmitter {
 
     readonly namespacedecls: Map<string, string> = new Map<string, string>();
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
+    readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
+
     readonly keyeqinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
     readonly keylessinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
-    readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
+
+    readonly marshalinfo: Map<TIRTypeKey, {parse: string, emit: string}> = new Map<TIRTypeKey, {parse: string, emit: string}>();
 
     private m_subtypeCache: Map<TIRTypeKey, Map<TIRTypeKey, boolean>> = new Map<TIRTypeKey, Map<TIRTypeKey, boolean>>();
     
@@ -558,8 +561,6 @@ class AssemblyEmitter {
         });
 
         //setup various maps
-        let keyeqinfo = new Map<TIRTypeKey, string>();
-        let keylessinfo = new Map<TIRTypeKey, string>();
         this.assembly.typeMap.forEach((tt) => {
             if(tt instanceof TIRConceptType) {
                 const subt: TIRTypeKey[] = [];
@@ -567,25 +568,27 @@ class AssemblyEmitter {
                     if(this.isSubtype(tother.tkey, tt.tkey)) {
                         subt.push(tother.tkey);
                     }
-                })
+                });
+
+                this.subtypeinfo.set(tt.tkey, subt);
             }
 
             if(tt instanceof TIROOType && tt.iskeytype) {
                 if(tt instanceof TIREnumEntityType) {
-                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
-                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                    this.keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    this.keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
                 }
                 else if(tt instanceof TIRTypedeclEntityType) {
-                    keyeqinfo.set(tt.tkey, `(a, b) => $KeyEqualOps.get("${tt.representation}")(a, b)`);
-                    keylessinfo.set(tt.tkey, `(a, b) => $KeyLessOps.get("${tt.representation}")(a, b)`);
+                    this.keyeqinfo.set(tt.tkey, `(a, b) => $KeyEqualOps.get("${tt.representation}")(a, b)`);
+                    this.keylessinfo.set(tt.tkey, `(a, b) => $KeyLessOps.get("${tt.representation}")(a, b)`);
                 }
                 else if((tt instanceof TIRStringOfEntityType) || (tt instanceof TIRASCIIStringOfEntityType)) {
-                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
-                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                    this.keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    this.keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
                 }
                 else if((tt instanceof TIRPathEntityType) || (tt instanceof TIRPathFragmentEntityType) || (tt instanceof TIRPathGlobEntityType)) {
-                    keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
-                    keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
+                    this.keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
+                    this.keylessinfo.set(tt.tkey, "(a, b) => (a < b)");
                 }
                 else {
                     assert(tt instanceof TIRPrimitiveInternalEntityType);
@@ -595,6 +598,12 @@ class AssemblyEmitter {
 
             if(tt instanceof TIRObjectEntityType) {
                 this.vcallinfo.set(tt.tkey, tt.vtable);
+            }
+
+            if(tt.isexportable && !(tt instanceof TIRPrimitiveInternalEntityType)) {
+                const parsef = "[NOT IMPLEMENTED]";
+                const emitf = "[NOT IMPLEMENTED]";
+                this.marshalinfo.set(tt.tkey, {parse: parsef, emit: emitf});
             }
         });
     };
@@ -612,7 +621,10 @@ class AssemblyEmitter {
             {   
                 nsname: "runtime.mjs",
                 contents: runtimecode
+                    .replace("//--GENERATED_$subtypesetup--", [...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", new Set(${sti[1].map((st) => "\"" + st + "\"").join(", ")}));`).join("\n"))
                     .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map(${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}));`).join("\n"))
+                    .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
+
             }
         ];
 

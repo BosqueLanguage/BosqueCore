@@ -25,7 +25,8 @@
         "uuidv4": "6.2.13"
     },
     "scripts": {
-        "build": "node ./build/build_all.js"
+        "build": "node ./build/build_all.js",
+        "test": "node ./node_modules/mocha/bin/mocha.js"
     },
     "files": [
         "bin/*"

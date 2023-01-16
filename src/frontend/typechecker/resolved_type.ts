@@ -566,6 +566,14 @@ class ResolvedType {
         this.options = options;
     }
 
+    static isUniversalConceptType(tt: ResolvedAtomType): boolean {
+        if(!(tt instanceof ResolvedConceptAtomType)) {
+            return false;
+        }
+
+        return tt.conceptTypes.some((cpt) => cpt.concept.attributes.includes("__universal"));
+    }
+
     static isGroundedType(options: ResolvedAtomType[]): boolean {
         return options.every((opt) => {
             if(opt instanceof ResolvedConceptAtomType) {
