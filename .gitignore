@@ -1,9 +1,7 @@
 /node_modules
 /bin
 /.vscode
-/test/apps/*/*.smt2
-/test/apps/*/bin/_build_.json
-/test/apps/*/bin/_build_.smt2
+/build/test/**
 *.xml
 *.dgml
 

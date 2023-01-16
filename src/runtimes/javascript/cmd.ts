@@ -107,7 +107,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
                 FS.writeFileSync(ppth, jscode[i].contents);
             }
             else {
-                FS.writeFileSync(ppth, jscode[i].contents + "\n\n" + "console.log(main(...process.argv.slice(2)));\n");
+                FS.writeFileSync(ppth, jscode[i].contents + "\n\n" + "console.log(JSON.stringify(main(...process.argv.slice(2))));\n");
             }
         }
 
@@ -128,7 +128,7 @@ function buildJSDefault(into: string, srcfiles: string[]) {
 }
 
 if(fullargs.length > 2 && fullargs[2] === "--outdir") {
-    buildJSDefault(fullargs[2], fullargs.slice(3));
+    buildJSDefault(fullargs[3], fullargs.slice(4));
 }
 else {
     buildJSDefault("./jsout", fullargs.slice(2));

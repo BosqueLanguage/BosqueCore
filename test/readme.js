@@ -12,7 +12,7 @@ const genbin = path.join(proj_root, "bin/runtimes/javascript/cmd.js")
 
 function codegen(srcdir, dstdir) {
   fsextra.ensureDirSync(dstdir);
-  execFileSync(`node`, [genbin, "--output", dstdir, srcdir]);
+  execFileSync(`node`, [genbin, "--outdir", dstdir, srcdir]);
 }
 
 function invokeExecutionOn(jsmain, ...args) {
@@ -23,20 +23,20 @@ function invokeExecutionOn(jsmain, ...args) {
 describe('Readme Add', function () {
   const testopt = "readme_add";
   const srcdir = path.join(proj_root, "test/bsqsrc", testopt) + ".bsq";
-  const dstdir = path.join(proj_root, "build", testopt);
-  const jsmain = path.join(proj_root, "build", testopt, "Main.js");
+  const dstdir = path.join(proj_root, "build/test", testopt);
+  const jsmain = path.join(proj_root, "build/test", testopt, "Main.mjs");
 
   before(function () {
     codegen(srcdir, dstdir);
   });
 
   after(function() {
-    fsextra.removeSync(dstdir);
+    //fsextra.removeSync(dstdir);
   });
 
   describe('main()', function () {
     it('expected 7n', function () {
-      expect(invokeExecutionOn(jsmain, "main")).to.eql(7n);
+      expect(invokeExecutionOn(jsmain)).to.eql(7n);
     });
   });
 
