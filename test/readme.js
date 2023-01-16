@@ -4,43 +4,47 @@ const expect = require("chai").expect;
 
 const path = require("path");
 const fsextra = require("fs-extra");
-const execcmd = require("child_process").execFileSync;
+const { json } = require("stream/consumers");
+const execFileSync = require("child_process").execFileSync;
 
 const proj_root = path.join(__dirname, "../");
 const genbin = path.join(proj_root, "bin/runtimes/javascript/cmd.js")
 
-function codegen(testopt, done) {
-  try {
-    const srcdir = path.join(proj_root, "test", testopt) + "/*";
-    const dstdir = path.join(proj_root, "build", testopt);
-
-    fsextra.ensureDirSync(dstdir);
-    execcmd(`node`, [genbin, srcdir]);
-  }
-  catch (ex) {
-    return false;
-  }
-
-  return true;
+function codegen(srcdir, dstdir) {
+  fsextra.ensureDirSync(dstdir);
+  execFileSync(`node`, [genbin, "--output", dstdir, srcdir]);
 }
 
-function invokeExecutionOn(...args) {
-  try {
-    const jsmain = path.join(proj_root, "build", testopt, "Main.js");
-    execcmd(`node`, [jsmain, ...args]);
-  }
-  catch (ex) {
-    return false;
-  }
-
-  return true;
+function invokeExecutionOn(jsmain, ...args) {
+  const rr = execFileSync(`node`, [jsmain, ...args]);
+  return JSON.parse(rr);
 }
 
-describe('Readme', function () {
-  describe('add2(3, 4)', function () {
-    it('expected pass', function () {
+describe('Readme Add', function () {
+  const testopt = "readme_add";
+  const srcdir = path.join(proj_root, "test/bsqsrc", testopt) + ".bsq";
+  const dstdir = path.join(proj_root, "build", testopt);
+  const jsmain = path.join(proj_root, "build", testopt, "Main.js");
 
-      expect([1, 2, 3]).to.eql([1, -2, 3]);
+  before(function () {
+    codegen(srcdir, dstdir);
+  });
+
+  after(function() {
+    fsextra.removeSync(dstdir);
+  });
+
+  describe('main()', function () {
+    it('expected 7n', function () {
+      expect(invokeExecutionOn(jsmain, "main")).to.eql(7n);
     });
   });
+
+/*
+  describe('add2(3, 4)', function () {
+    it('expected 7n', function (done) {
+      expect(invokeExecutionOn(done, 3, 4)).to.eql(7);
+    });
+  });
+*/
 });

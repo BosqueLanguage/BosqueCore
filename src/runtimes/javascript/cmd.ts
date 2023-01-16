@@ -30,7 +30,7 @@ function workflowLoadUserSrc(files: string[]): CodeFileInfo[] {
         return code;
     }
     catch (ex) {
-        process.stdout.write("Failed to load file!");
+        process.stderr.write("Failed to load file!\n");
         process.exit(1);
     }
 }
@@ -49,7 +49,7 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
         return code;
     }
     catch (ex) {
-        process.stdout.write("Failed to load file!");
+        process.stderr.write("Failed to load file!\n");
         process.exit(1);
     }
 }
@@ -112,7 +112,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
         }
 
     } catch(e) {
-        process.stdout.write(`JS emit error -- ${e}\n`);
+        process.stderr.write(`JS emit error -- ${e}\n`);
         process.exit(1);
     }
 }
@@ -127,4 +127,9 @@ function buildJSDefault(into: string, srcfiles: string[]) {
     process.stdout.write("done!\n");
 }
 
-buildJSDefault("./jsout", fullargs.slice(2));
+if(fullargs.length > 2 && fullargs[2] === "--outdir") {
+    buildJSDefault(fullargs[2], fullargs.slice(3));
+}
+else {
+    buildJSDefault("./jsout", fullargs.slice(2));
+}
