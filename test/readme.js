@@ -10,6 +10,14 @@ const execFileSync = require("child_process").execFileSync;
 const proj_root = path.join(__dirname, "../");
 const genbin = path.join(proj_root, "bin/runtimes/javascript/cmd.js")
 
+function generatePaths(testopt) {
+  return {
+    srcfile: path.join(proj_root, "test/bsqsrc", testopt) + ".bsq",
+    dstdir: path.join(proj_root, "build/test", testopt),
+    jsmain: path.join(proj_root, "build/test", testopt, "Main.mjs")
+  }
+}
+
 function codegen(srcdir, dstdir) {
   fsextra.ensureDirSync(dstdir);
   execFileSync(`node`, [genbin, "--outdir", dstdir, srcdir]);
@@ -22,12 +30,10 @@ function invokeExecutionOn(jsmain, ...args) {
 
 describe('Readme Add', function () {
   const testopt = "readme_add";
-  const srcdir = path.join(proj_root, "test/bsqsrc", testopt) + ".bsq";
-  const dstdir = path.join(proj_root, "build/test", testopt);
-  const jsmain = path.join(proj_root, "build/test", testopt, "Main.mjs");
+  const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
   before(function () {
-    codegen(srcdir, dstdir);
+    codegen(srcfile, dstdir);
   });
 
   after(function() {
