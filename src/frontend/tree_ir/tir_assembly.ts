@@ -817,6 +817,7 @@ class TIRNamespaceLambdaDecl {
 }
 
 class TIRCodePack {
+    readonly ns: string;
     readonly codekey: TIRPCodeKey;
     readonly invk: TIRInvokeKey;
     readonly recursive: boolean;
@@ -830,7 +831,8 @@ class TIRCodePack {
     readonly capturedValues: {cname: string, ctype: TIRTypeKey}[];
     readonly capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[];
 
-    constructor(codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[]) {
+    constructor(ns: string, codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[]) {
+        this.ns = ns;
         this.codekey = codekey;
         this.invk = invk;
         this.recursive = recursive;
@@ -946,6 +948,7 @@ class TIRAssembly {
     readonly typeMap: Map<TIRTypeKey, TIRType>;
     readonly fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>;
     readonly invokeMap: Map<TIRTypeKey, TIRInvoke>;
+    readonly pcodemap: Map<TIRPCodeKey, TIRCodePack>;
 
     readonly literalRegexs: BSQRegex[];
     readonly validatorRegexs: Map<string, BSQRegex>;
@@ -961,11 +964,12 @@ class TIRAssembly {
         return this.typeMap.get(tkey) as T;
     }
 
-    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, literalRegexs: BSQRegex[], validatorRegexs: Map<string, BSQRegex>, validatorPaths: Map<string, PathValidator>) {
+    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], validatorRegexs: Map<string, BSQRegex>, validatorPaths: Map<string, PathValidator>) {
         this.namespaceMap = namespaceMap;
         this.typeMap = typeMap;
         this.fieldMap = fieldMap;
         this.invokeMap = invokeMap;
+        this.pcodemap = pcodemap;
         this.literalRegexs = literalRegexs;
         this.validatorRegexs = validatorRegexs;
         this.validatorPaths = validatorPaths;

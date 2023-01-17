@@ -138,6 +138,7 @@ class TypeChecker {
     private m_istestbuild: boolean;
 
     private m_file: string;
+    private m_ns: string;
     private m_rtype: ResolvedType;
     private m_taskOpsOk: boolean;
     private m_taskSelfOk: "no" | "read" | "write";
@@ -155,6 +156,7 @@ class TypeChecker {
     private m_tirNamespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
     private m_tirFieldMap: Map<string, TIRMemberFieldDecl> = new Map<string, TIRMemberFieldDecl>();
     private m_tirInvokeMap: Map<string, TIRInvoke> = new Map<string, TIRInvoke>();
+    private m_tirCodePackMap: Map<TIRPCodeKey, TIRCodePack> = new Map<TIRPCodeKey, TIRCodePack>();
     private m_toTIRprocessingstack: ResolvedAtomType[] = [];
 
     private m_instantiatedVTableTypes: ResolvedObjectEntityAtomType[] = [];
@@ -184,6 +186,7 @@ class TypeChecker {
         this.m_istestbuild = istestbuild;
 
         this.m_file = "[No File]";
+        this.m_ns = "[NOT SET]";
         this.m_rtype = this.getSpecialNoneType();
         this.m_taskOpsOk = false;
         this.m_taskSelfOk = "no";
@@ -192,8 +195,9 @@ class TypeChecker {
         TIRExpression.OverflowIsFailure = overflowisfailure;
     }
 
-    initializeForBody(file: string, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write") {
+    initializeForBody(file: string, ns: string, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write") {
         this.m_file = file;
+        this.m_ns = ns;
         this.m_rtype = rtype;
         this.m_taskOpsOk = taskok;
         this.m_taskSelfOk = selfok;
@@ -1653,6 +1657,26 @@ class TypeChecker {
             tirtype = (undefined as any) as TIRType;
         }
 
+        if(tirtype instanceof TIROOType) {
+            const nsdecl = this.m_tirNamespaceMap.get(tirtype.tname.ns) as TIRNamespaceDeclaration;
+
+            if (tirtype instanceof TIRTaskType) {
+                nsdecl.tasks.set(tirtype.tname.name, tirtype.tkey);
+            }
+            else if (tirtype instanceof TIRConceptType) {
+                if(!nsdecl.concepts.has(tirtype.tname.name)) {
+                    nsdecl.concepts.set(tirtype.tname.name, []);
+                }
+                (nsdecl.concepts.get(tirtype.tname.name) as TIRTypeKey[]).push(tirtype.tkey);
+            }
+            else {
+                if(!nsdecl.objects.has(tirtype.tname.name)) {
+                    nsdecl.objects.set(tirtype.tname.name, []);
+                }
+                (nsdecl.objects.get(tirtype.tname.name) as TIRTypeKey[]).push(tirtype.tkey);
+            }
+        }
+
         this.m_toTIRprocessingstack.pop();
         this.m_tirTypeMap.set(rtype.typeID, tirtype);
 
@@ -2612,7 +2636,7 @@ class TypeChecker {
 
         const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
         const cpacktype = new TIRCodePackType(lcodekey);
-        const cpack = new TIRCodePack(lcodekey, linvkey, exp.invoke.recursive === "yes", lcodekey, pcterms, pclcaptures, pcvarinfo, pclinfo);
+        const cpack = new TIRCodePack(this.m_ns, lcodekey, linvkey, exp.invoke.recursive === "yes", lcodekey, pcterms, pclcaptures, pcvarinfo, pclinfo);
 
         this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, desiredfunc: ltype, declbinds: env.binds, bodybinds: bodybinds, pcodes: capturedPCodeMap});
 
@@ -5344,7 +5368,7 @@ class TypeChecker {
     }
 
     private checkBodyExpression(srcFile: string, env: ExpressionTypeEnvironment, body: Expression, rtype: ResolvedType, selfok: "no" | "read"): TIRStatement[] {
-        this.initializeForBody(srcFile, rtype, false, selfok);
+        this.initializeForBody(srcFile, this.m_ns, rtype, false, selfok);
 
         const evalue = this.emitCoerceIfNeeded(this.checkExpression(env, body, rtype), body.sinfo, rtype);
         const sblck = new TIRScopedBlockStatement([new TIRReturnStatement(body.sinfo, evalue.expressionResult)], true);
@@ -5353,7 +5377,7 @@ class TypeChecker {
     }
 
     private checkBodyStatement(srcFile: string, env: StatementTypeEnvironment, body: ScopedBlockStatement, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write"): TIRStatement[] {
-        this.initializeForBody(srcFile, rtype, taskok, selfok);
+        this.initializeForBody(srcFile, this.m_ns, rtype, taskok, selfok);
 
         const sblck = this.checkScopedBlockStatement(env, body);
         return sblck[1].ops;
@@ -6142,6 +6166,7 @@ class TypeChecker {
 
         try {
             this.m_file = cdcl.srcFile;
+            this.m_ns = cdcl.ns;
             this.m_rtype = this.getSpecialNoneType();
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6169,6 +6194,7 @@ class TypeChecker {
 
         try {
             this.m_file = invoke.srcFile;
+            this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6200,6 +6226,7 @@ class TypeChecker {
 
         try {
             this.m_file = invoke.srcFile;
+            this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6226,6 +6253,7 @@ class TypeChecker {
 
         try {
             this.m_file = invoke.srcFile;
+            this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6251,6 +6279,7 @@ class TypeChecker {
 
         try {
             this.m_file = cpdecl.srcFile;
+            this.m_ns = cpdecl.namespace;
             this.m_rtype = desiredfunc.resultType;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6260,6 +6289,8 @@ class TypeChecker {
 
             tirns.lambdas.set(cpdata.invk, new TIRNamespaceLambdaDecl(cpdata.codekey, cpdecl.startSourceLocation, cpdecl.srcFile, iinv));
             tirns.codepacks.set(cpdata.codekey, cpdata);
+
+            this.m_tirCodePackMap.set(cpdata.codekey, cpdata);
         }
         catch (ex) {
            ;
@@ -6275,6 +6306,7 @@ class TypeChecker {
 
         try {
             this.m_file = decl[2].srcFile;
+            this.m_ns = decl[1].ns;
             this.m_rtype = this.getSpecialNoneType();
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6302,6 +6334,7 @@ class TypeChecker {
 
         try {
             this.m_file = decl.decl.srcFile;
+            this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6325,6 +6358,7 @@ class TypeChecker {
         virtualmemberdecls.push({fkey: fkey, decl: decl, binds: binds, pcodes: pcodes});
         try {
             this.m_file = decl.decl.srcFile;
+            this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
@@ -6369,6 +6403,7 @@ class TypeChecker {
 
         try {
             this.m_file = decl.decl.srcFile;
+            this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
             this.m_taskOpsOk = decl.ootype instanceof TaskTypeDecl;
             this.m_taskSelfOk = "no";
@@ -6396,6 +6431,7 @@ class TypeChecker {
 
         try {
             this.m_file = decl.decl.srcFile;
+            this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
             this.m_taskOpsOk = true;
             this.m_taskSelfOk = "no";
@@ -6423,6 +6459,7 @@ class TypeChecker {
 
         try {
             this.m_file = decl.decl.srcFile;
+            this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
             this.m_taskOpsOk = true;
             this.m_taskSelfOk = "write";
@@ -6713,7 +6750,7 @@ class TypeChecker {
             return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`) };
         }
         else {
-            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [] };
+            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [] };
         }
     }
 

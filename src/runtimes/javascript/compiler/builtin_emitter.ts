@@ -1,9 +1,17 @@
 import * as assert from "assert";
 
-import { TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRStaticFunctionDecl } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl } from "../../../frontend/tree_ir/tir_assembly";
 import { BodyEmitter } from "./body_emitter";
 
-function emitBuiltinNamespaceFunction(func: TIRNamespaceFunctionDecl, bemitter: BodyEmitter): string | undefined {
+function resolveCodePack(asm: TIRAssembly, inv: TIRInvoke, pcname: string): TIRCodePack {
+    return asm.pcodemap.get(inv.pcodes.get(pcname) as TIRPCodeKey) as TIRCodePack;
+}
+
+function resolveCapturedPackArgs(pcname: string, pcc: TIRCodePack): string[] {
+    return [pcname, ...pcc.capturedCodePacks.map((pcc) => pcc.cpname)];
+}
+
+function emitBuiltinNamespaceFunction(asm: TIRAssembly, func: TIRNamespaceFunctionDecl, bemitter: BodyEmitter): string | undefined {
     switch ((func.invoke as TIRInvokePrimitive).body) {
         case "special_extract":
         case "special_inject": {
@@ -16,11 +24,19 @@ function emitBuiltinNamespaceFunction(func: TIRNamespaceFunctionDecl, bemitter: 
     }
 }
 
-function emitBuiltinMemberFunction(ttype: TIROOType, func: TIRStaticFunctionDecl, bemitter: BodyEmitter): string | undefined {
+function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIRStaticFunctionDecl, bemitter: BodyEmitter): string | undefined {
     switch ((func.invoke as TIRInvokePrimitive).body) {
         case "special_extract":
         case "special_inject": {
             return undefined;
+        }
+        case "s_list_empty": {
+            return `{ return  ${func.invoke.params[0].name}.size === 0; }`;
+        }
+        case "s_list_has_pred": {
+            const pcode = resolveCodePack(asm, func.invoke, "p");
+            const pred = `($$vv) => ${pcode.invk}(${[...resolveCapturedPackArgs("p", pcode), "$$vv"].join(", ")})`
+            return `{ return ${func.invoke.params[0].name}.findIndex(${pred}) !== -1; }`;
         }
         default: {
             assert(false, `Unknown primitive member function -- ${(func.invoke as TIRInvokePrimitive).body}`);

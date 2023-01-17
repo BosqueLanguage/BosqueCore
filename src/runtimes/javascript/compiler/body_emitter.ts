@@ -24,7 +24,6 @@ class BodyEmitter {
     private readonly m_file: string;
     private readonly m_ns: string = "[NOT SET]";
     private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
-    m_coreImports: Set<TIRTypeKey> = new Set<TIRTypeKey>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
 
@@ -52,127 +51,81 @@ class BodyEmitter {
 
         const ttype = this.m_assembly.typeMap.get(tt) as TIROOType;
         const samens = ttype.tname.ns === this.m_ns;
-        const corens = ttype.tname.ns === "Core";
 
         let taccess: string = "[INVALID]";
         if(ttype instanceof TIRObjectEntityType) {
             if(ttype.binds.size === 0) {
-                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-                if(corens) {
-                    this.m_coreImports.add(`BSQ${ttype.tname.name}`);
-                }
+                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
             }
             else {
-                if(corens) {
-                    taccess = `$CoreTypes["${ttype.tkey}"]`;
+                if (samens) {
+                    taccess = `$Types["${ttype.tkey}"]`;
                 }
                 else {
-                    if(samens) {
-                        taccess = `$Types["${ttype.tkey}"]`;
-                    }
-                    else {
-                        taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                    }
+                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
                 }
             }
         }
         else if(ttype instanceof TIREnumEntityType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            if (corens) {
-                this.m_coreImports.add(`BSQ${ttype.tname.name}`);
-            }
+            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
         }
         else if(ttype instanceof TIRTypedeclEntityType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            if (corens) {
-                this.m_coreImports.add(`BSQ${ttype.tname.name}`);
-            }
+            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
         }
         else if(ttype instanceof TIRPrimitiveInternalEntityType) {
             taccess = `BSQ${ttype.tname.name}`;
-            this.m_coreImports.add(`BSQ${ttype.tname.name}`);
         }
-        else if(ttype instanceof TIRValidatorEntityType) {
-            if(corens) {
-                taccess = `$CoreTypes["${ttype.tkey}"]`;
+        else if (ttype instanceof TIRValidatorEntityType) {
+            if (samens) {
+                taccess = `$Types["${ttype.tkey}"]`;
             }
             else {
-                if(samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                }
+                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
             }
         }
-        else if((ttype instanceof TIRStringOfEntityType) || (ttype instanceof TIRASCIIStringOfEntityType)) {
-            if(corens) {
-                taccess = `$CoreTypes["${ttype.tkey}"]`;
+        else if ((ttype instanceof TIRStringOfEntityType) || (ttype instanceof TIRASCIIStringOfEntityType)) {
+            if (samens) {
+                taccess = `$Types["${ttype.tkey}"]`;
             }
             else {
-                if(samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                }
+                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
             }
         }
-        else if(ttype instanceof TIRPathValidatorEntityType) {
-            if(corens) {
-                taccess = `$CoreTypes["${ttype.tkey}"]`;
+        else if (ttype instanceof TIRPathValidatorEntityType) {
+            if (samens) {
+                taccess = `$Types["${ttype.tkey}"]`;
             }
             else {
-                if(samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                }
+                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
+
             }
         }
-        else if((ttype instanceof TIRPathEntityType) || (ttype instanceof TIRPathFragmentEntityType) || (ttype instanceof TIRPathGlobEntityType)) {
-            if(corens) {
-                taccess = `$CoreTypes["${ttype.tkey}"]`;
+        else if ((ttype instanceof TIRPathEntityType) || (ttype instanceof TIRPathFragmentEntityType) || (ttype instanceof TIRPathGlobEntityType)) {
+            if (samens) {
+                taccess = `$Types["${ttype.tkey}"]`;
             }
             else {
-                if(samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                }
+                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
             }
         }
         else if((ttype instanceof TIRListEntityType) || (ttype instanceof TIRStackEntityType) || (ttype instanceof TIRQueueEntityType) ||  (ttype instanceof TIRSetEntityType) || (ttype instanceof TIRMapEntityType)) {
-            taccess = `$CoreTypes["${ttype.tkey}"]`;
+            taccess = `Core.$Types["${ttype.tkey}"]`;
         }
         else if(ttype instanceof TIRTaskType) {
-            taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            if (corens) {
-                this.m_coreImports.add(`BSQ${ttype.tname.name}`);
-            }
+            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
         }
         else if(ttype instanceof TIRConceptType) {
             if(ttype.binds.size === 0) {
-                taccess = (samens || corens) ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-                if(corens) {
-                    this.m_coreImports.add(`BSQ${ttype.tname.name}`);
-                }
+                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
             }
             else {
-                if(corens) {
-                    taccess = `$CoreTypes["${ttype.tkey}"]`;
+                if (samens) {
+                    taccess = `$Types["${ttype.tkey}"]`;
                 }
                 else {
-                    if(samens) {
-                        taccess = `$Types["${ttype.tkey}"]`;
-                    }
-                    else {
-                        taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`; 
-                    }
+                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
                 }
-            }   
+            }
         }
         else {
             assert(false, "Unknown type in resolveTypeNameAccess");
@@ -347,15 +300,15 @@ class BodyEmitter {
     }
 
     private emitConstructorListExpression(exp: TIRConstructorListExpression): string {
-        return `$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        return `$CoreLibs.$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
-        return `$MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        return `$CoreLibs.$MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
-        return `$Functions["${exp.cpack.invk}"](${[exp.packarg.argn, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
+        return `${exp.cpack.ns + ".$Functions"}["${exp.cpack.invk}"](${[exp.packarg.argn, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
     }
 
     private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression, toplevel: boolean): string {
@@ -382,22 +335,11 @@ class BodyEmitter {
         const invks = this.m_assembly.getNamespace(exp.ns).functions.get(exp.fname) as TIRNamespaceFunctionDecl[];
         const invk = invks.find((ii) => ii.ikey === exp.fkey) as TIRNamespaceFunctionDecl;
 
-        const nspfx = this.m_ns !== invk.ns && invk.ns !== "Core" ? `${invk.ns}.` : "";
-
         if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
-            if(invk.ns === "Core") {
-                this.m_coreImports.add(invk.name);
-            }
-
-            return `${nspfx}${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${invk.ns}.${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
-            if(invk.ns === "Core") {
-                return `$CoreFunctions["${invk.name}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
-            }
-            else {
-                return `${nspfx}$Functions["${invk.ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
-            }
+            return `${invk.ns}.$Functions["${invk.ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
     }
 
