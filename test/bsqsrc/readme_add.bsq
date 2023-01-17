@@ -1,10 +1,5 @@
 namespace Main;
 
-export function add2(x: Nat, y: Nat): Nat {
+export function main(x: Nat, y: Nat): Nat {
     return x + y;
-}
-
-export function main(): Nat {
-    return 3n + 4n;
-    //return add2(3n, 4n);
 }

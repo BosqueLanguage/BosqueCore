@@ -458,7 +458,7 @@ class NamespaceEmitter {
         let kfuncs: string[] = [];
         this.m_decl.functions.forEach((ffl) => {
             ffl.forEach((ff) => {
-                if(ff.invoke.tbinds.size === 0 && ff.invoke.params.length === 0) {
+                if(ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0) {
                     const fstr = this.emitFunctionInline(ff);
                     ifuncs.push(fstr);
 
@@ -497,7 +497,7 @@ class NamespaceEmitter {
         const ktypedecls = `const $${this.m_ns === "Core" ? "Core" : ""}Types = {${ktypes.join("\n    ")}\n};\n\n`;
 
         const ifuncdecls = ifuncs.join("\n\n");
-        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${ktypes.join("\n    ")}\n};\n\n`;
+        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${kfuncs.join("\n    ")}\n};\n\n`;
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 

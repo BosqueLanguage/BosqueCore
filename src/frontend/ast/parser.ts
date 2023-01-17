@@ -1154,15 +1154,10 @@ class Parser {
     ////
     //Misc parsing
 
-    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean, optSelfType: TypeSignature | undefined): InvokeDecl {
+    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean): InvokeDecl {
         const sinfo = this.getCurrentSrcInfo();
         const srcFile = this.m_penv.getCurrentFile();
         const line = this.getCurrentLine();
-
-        let fparams: FunctionParameter[] = [];
-        if (ikind === InvokableKind.Member) {
-            fparams.push(new FunctionParameter("this", optSelfType as TypeSignature, undefined));
-        }
 
         let resultInfo = this.m_penv.SpecialAutoSignature;
 
@@ -1209,7 +1204,7 @@ class Parser {
             }
         }
 
-        const argNames = new Set<string>(...fparams.map((param) => param.name));
+        const argNames = new Set<string>(...params.map((param) => param.name));
         let preconds: PreConditionDecl[] = [];
         let postconds: PostConditionDecl[] = [];
         let body: BodyImplementation | undefined = undefined;
@@ -1243,14 +1238,14 @@ class Parser {
 
         if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
             const bbody = body as BodyImplementation;
-            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, fparams, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
+            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, params, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
         }
         else {
             if(body !== undefined) {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, body);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, body);
             }
             else {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, fparams, optSelfRef, resultInfo, preconds, postconds, undefined);
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, undefined);
             }
         }
     }
@@ -1696,7 +1691,7 @@ class Parser {
         const ispred = this.testToken(KW_pred);
         this.consumeToken();
 
-        const sig = this.parseInvokableCommon(ispred ? InvokableKind.PCodePred : InvokableKind.PCodeFn, false, [], isrecursive, [], [...this.m_penv.getCurrentFunctionScope().getBoundTemplates()], undefined, false, undefined);
+        const sig = this.parseInvokableCommon(ispred ? InvokableKind.PCodePred : InvokableKind.PCodeFn, false, [], isrecursive, [], [...this.m_penv.getCurrentFunctionScope().getBoundTemplates()], undefined, false);
         const someAuto = sig.params.some((param) => param.type instanceof AutoTypeSignature) || (sig.resultType instanceof AutoTypeSignature);
         const allAuto = sig.params.every((param) => param.type instanceof AutoTypeSignature) && (sig.resultType instanceof AutoTypeSignature);
         if (someAuto && !allAuto) {
@@ -3632,7 +3627,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false, undefined);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false);
 
         if (allMemberNames.has(fname)) {
             this.raiseError(this.getCurrentLine(), "Collision between static and other names");
@@ -3677,7 +3672,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr, thisType);
+        const sig = this.parseInvokableCommon(InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr);
 
         allMemberNames.add(mname);
 
@@ -3696,7 +3691,7 @@ class Parser {
         this.ensureToken(TokenStrings.Identifier, "task action");
         const mname = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
-        const sig = this.parseInvokableCommon(InvokableKind.Member, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true, thisType);
+        const sig = this.parseInvokableCommon(InvokableKind.Member, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true);
 
         allMemberNames.add(mname);
 
@@ -4892,7 +4887,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, [], undefined, false, undefined);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, [], undefined, false);
 
         currentDecl.functions.set(fname, new NamespaceFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, fname, sig));
     }
@@ -4926,7 +4921,7 @@ class Parser {
         }
 
         const isabstract = attributes.includes("abstract");
-        const sig = this.parseInvokableCommon(InvokableKind.DynamicOperator, isabstract, attributes, recursive, [], [], undefined, false, undefined);
+        const sig = this.parseInvokableCommon(InvokableKind.DynamicOperator, isabstract, attributes, recursive, [], [], undefined, false);
 
         if (!ns.operators.has(fname)) {
             ns.operators.set(fname, []);

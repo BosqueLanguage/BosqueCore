@@ -32,25 +32,17 @@ describe('Readme Add', function () {
   const testopt = "readme_add";
   const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
-  before(function () {
-    codegen(srcfile, dstdir);
-  });
+  before(function () { codegen(srcfile, dstdir); });
+  after(function() { fsextra.removeSync(dstdir); });
 
-  after(function() {
-    //fsextra.removeSync(dstdir);
-  });
-
-  describe('main()', function () {
-    it('expected 7n', function () {
-      expect(invokeExecutionOn(jsmain)).to.eql(7);
+  describe('add2(3n, 4n)', function () {
+    it('expected 7', function () {
+      expect(invokeExecutionOn(jsmain, 3, 4)).to.eql(7);
     });
   });
-
-/*
-  describe('add2(3, 4)', function () {
-    it('expected 7n', function (done) {
-      expect(invokeExecutionOn(done, 3, 4)).to.eql(7);
+  describe('add2(3n, 0n)', function () {
+    it('expected 3', function () {
+      expect(invokeExecutionOn(jsmain, 3, 0)).to.eql(3);
     });
   });
-*/
 });
