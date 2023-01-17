@@ -1382,7 +1382,7 @@ class Parser {
         const tname = this.consumeTokenAndGetValue();
         ns = this.m_penv.tryResolveNamespace(ns, tname);
         if (ns === undefined) {
-            ns = "[Unresolved Error]";
+            ns = "[Unresolved Namespace]";
         }
 
         let tnames: string[] = [tname];
@@ -2061,7 +2061,7 @@ class Parser {
             else {
                 ns = this.m_penv.tryResolveNamespace(ns, name);
                 if (ns === undefined) {
-                    ns = "[Unresolved Error]";
+                    ns = "[Unresolved Namespace]";
                 }
 
                 if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen)) {
@@ -4914,7 +4914,7 @@ class Parser {
 
             nns = this.m_penv.tryResolveNamespace(nns, fname);
             if (nns === undefined) {
-                nns = "[Unresolved Error]";
+                nns = "[Unresolved Namespace]";
             }
 
             ns = this.m_penv.assembly.getNamespace(nns);

@@ -170,7 +170,7 @@ class TypeChecker {
     private m_pendingMethodMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     private m_lambdaCtr = 0;
-    private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     constructor(assembly: Assembly, buildlevel: BuildLevel, overflowisfailure: boolean, issmtbuild: boolean, istestbuild: boolean) {
         this.m_assembly = assembly;
@@ -2079,7 +2079,7 @@ class TypeChecker {
             return ResolveResultFlag.failure;
         }
 
-        return new OOMemberResolution<T>(decls[1], impls, totalresolve);
+        return new OOMemberResolution<T>(decls[0], impls, totalresolve);
     }
 
     resolveMemberConst(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
@@ -2147,6 +2147,10 @@ class TypeChecker {
 
     normalizeTypeOnly(t: TypeSignature, binds: TemplateBindScope): ResolvedType {
         const res = this.normalizeTypeGeneral(t, binds);
+
+        this.raiseErrorIf(t.sinfo, (res instanceof ResolvedFunctionType), `Function type not expected here -- got ${t.getDiagnosticName()}`);
+        this.raiseErrorIf(t.sinfo, res.typeID === "[INVALID]", `Type ${t.getDiagnosticName()} is invalid`);
+
         if (res instanceof ResolvedFunctionType) {
             return ResolvedType.createInvalid();
         }
@@ -2394,7 +2398,7 @@ class TypeChecker {
             return env;
         }
 
-        this.raiseErrorIf(sinfo, !this.subtypeOf(this.envExpressionGetInferType(env), trgttype), `Cannot convert type ${this.envExpressionGetInferType(env)} into ${trgttype.typeID}`);
+        this.raiseErrorIf(sinfo, !this.subtypeOf(this.envExpressionGetInferType(env), trgttype), `Cannot convert type ${this.envExpressionGetInferType(env).typeID} into ${trgttype.typeID}`);
         return this.setResultExpressionBoolPassThrough(env, new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(this.envExpressionGetInferType(env)), this.toTIRTypeKey(trgttype)), trgttype);
     }
 
@@ -2604,7 +2608,7 @@ class TypeChecker {
         const cpacktype = new TIRCodePackType(lcodekey);
         const cpack = new TIRCodePack(lcodekey, linvkey, exp.invoke.recursive === "yes", lcodekey, pcterms, pclcaptures, pcvarinfo, pclinfo);
 
-        this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, declbinds: env.binds, bodybinds: bodybinds, pcodes: capturedPCodeMap});
+        this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, desiredfunc: ltype, declbinds: env.binds, bodybinds: bodybinds, pcodes: capturedPCodeMap});
 
         let capturedirect: string[] = [];
         let captureindirect: string[] = [];
@@ -3190,7 +3194,7 @@ class TypeChecker {
                 this.raiseErrorIf(exp.sinfo, fdecl.invoke.terms.length !== exp.terms.length, "missing template types");
                 let binds = new Map<string, ResolvedType>();
                 for(let i = 0; i < fdecl.invoke.terms.length; ++i) {
-                    binds.set(fdecl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], TemplateBindScope.createEmptyBindScope()));
+                    binds.set(fdecl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
                 }
                 this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.invoke.terms, TemplateBindScope.createEmptyBindScope(), binds, fdecl.invoke.termRestrictions);
 
@@ -3224,7 +3228,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, fdecl.decl.invoke.terms.length !== exp.terms.length, "missing template types");
         let binds = new Map<string, ResolvedType>();
         for(let i = 0; i < fdecl.decl.invoke.terms.length; ++i) {
-            binds.set(fdecl.decl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], TemplateBindScope.createBaseBindScope(fdecl.oobinds)));
+            binds.set(fdecl.decl.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
         }
         this.checkTemplateTypesOnInvoke(exp.sinfo, fdecl.decl.invoke.terms, TemplateBindScope.createBaseBindScope(fdecl.oobinds), binds, fdecl.decl.invoke.termRestrictions);
 
@@ -3398,7 +3402,7 @@ class TypeChecker {
         this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.terms.length !== op.terms.length, "missing template types");
         let binds = new Map<string, ResolvedType>();
         for (let i = 0; i < mresolve.decl.decl.invoke.terms.length; ++i) {
-            binds.set(mresolve.decl.decl.invoke.terms[i].name, this.normalizeTypeOnly(op.terms[i], TemplateBindScope.createBaseBindScope(mresolve.decl.oobinds)));
+            binds.set(mresolve.decl.decl.invoke.terms[i].name, this.normalizeTypeOnly(op.terms[i], env.binds));
         }
         this.checkTemplateTypesOnInvoke(op.sinfo, mresolve.decl.decl.invoke.terms, TemplateBindScope.createBaseBindScope(mresolve.decl.oobinds), binds, mresolve.decl.decl.invoke.termRestrictions);
 
@@ -3810,7 +3814,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} < ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `order is defined on numeric values of same type but got -- ${lenv.trepr.typeID} < ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRNumericLessExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -3823,7 +3827,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} <= ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `order is defined on numeric values of same type but got -- ${lenv.trepr.typeID} <= ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRNumericLessEqExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -3836,7 +3840,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} > ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `order is defined on numeric values of same type but got -- ${lenv.trepr.typeID} > ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRNumericGreaterExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -3849,7 +3853,7 @@ class TypeChecker {
         const renv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined), exp.sinfo);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} >= ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `order is defined on numeric values of same type but got -- ${lenv.trepr.typeID} >= ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return this.setResultExpression(env, new TIRNumericGreaterEqExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -4154,7 +4158,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, mresolve.invoke.terms.length !== exp.terms.length, "missing template types");
         let binds = new Map<string, ResolvedType>();
         for (let i = 0; i < mresolve.invoke.terms.length; ++i) {
-            binds.set(mresolve.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], TemplateBindScope.createBaseBindScope(tsk.taskbinds)));
+            binds.set(mresolve.invoke.terms[i].name, this.normalizeTypeOnly(exp.terms[i], env.binds));
         }
         this.checkTemplateTypesOnInvoke(exp.sinfo, mresolve.invoke.terms, TemplateBindScope.createBaseBindScope(tsk.taskbinds), binds, mresolve.invoke.termRestrictions);
 
@@ -6070,7 +6074,7 @@ class TypeChecker {
         return inv;
     }
 
-    private processPCodeInvokeInfo(invkey: TIRInvokeKey, invoke: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processPCodeInvokeInfo(invkey: TIRInvokeKey, invoke: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkPCodeDecl(invoke.startSourceLocation, invoke, declbinds);
 
         const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
@@ -6083,24 +6087,24 @@ class TypeChecker {
         let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
         let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeOnly(ff.type, declbinds);
+        invoke.params.forEach((ff, ii) => {
+            const ptype = desiredfunc.params[ii].type as ResolvedType;
            
             fargs.set(ff.name, new VarInfo(ptype, true, false, true));
             params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
         });
 
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, declbinds));
+        const restype = this.toTIRTypeKey(desiredfunc.resultType);
 
         let body: TIRStatement[] = [];
         let bimpl = (invoke.body as BodyImplementation).body;
         if(bimpl instanceof Expression) {
             const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsPCodes(TemplateBindScope.createBaseBindScope(bodybinds), pcodes, fargs);
-            body = this.checkBodyExpression(invoke.srcFile, env, bimpl, this.normalizeTypeOnly(invoke.resultType, declbinds), "no");
+            body = this.checkBodyExpression(invoke.srcFile, env, bimpl, desiredfunc.resultType, "no");
         }
         else {
             const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(bodybinds), pcodes, invoke.captureVarSet, fargs, []);
-            body = this.checkBodyStatement(invoke.srcFile, env, bimpl as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(bodybinds)), false, "no");
+            body = this.checkBodyStatement(invoke.srcFile, env, bimpl as ScopedBlockStatement, desiredfunc.resultType, false, "no");
         }
 
         const inv = new TIRInvokeImplementation(invkey, "lambda", invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, true, params, false, restype, [], [], body);
@@ -6233,7 +6237,7 @@ class TypeChecker {
         }
     }
 
-    private processLambdaFunction(cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
+    private processLambdaFunction(cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
         const tirns = this.ensureTIRNamespaceDecl(cpdecl.namespace);
         if(tirns.lambdas.has(cpdata.invk)) {
             return;
@@ -6241,12 +6245,12 @@ class TypeChecker {
 
         try {
             this.m_file = cpdecl.srcFile;
-            this.m_rtype = this.normalizeTypeOnly(cpdecl.resultType, declbinds);
+            this.m_rtype = desiredfunc.resultType;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
 
-            const iinv = this.processPCodeInvokeInfo("lambda", cpdecl, declbinds, bodybinds, pcodes);
+            const iinv = this.processPCodeInvokeInfo("lambda", cpdecl, desiredfunc, declbinds, bodybinds, pcodes);
 
             tirns.lambdas.set(cpdata.invk, new TIRNamespaceLambdaDecl(cpdata.codekey, cpdecl.startSourceLocation, cpdecl.srcFile, iinv));
             tirns.codepacks.set(cpdata.codekey, cpdata);
@@ -6663,7 +6667,7 @@ class TypeChecker {
                 const mcc = tchecker.m_pendingConstMemberDecls.shift() as OOMemberLookupInfo<StaticMemberDecl>;
                 tchecker.processMemberConst([mcc.ttype, mcc.ootype, mcc.decl, mcc.oobinds]);
             }
-            else if(tchecker.m_pendingFunctionMemberDecls) {
+            else if(tchecker.m_pendingFunctionMemberDecls.length !== 0) {
                 const mfd = tchecker.m_pendingFunctionMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
                 if(mfd.decl.ootype instanceof TaskTypeDecl && mfd.decl.decl.name === "main") {
                     tchecker.processMemberTaskMain(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
@@ -6672,7 +6676,7 @@ class TypeChecker {
                     tchecker.processMemberFunction(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
                 }
             }
-            else if(tchecker.m_pendingMethodMemberDecls) {
+            else if(tchecker.m_pendingMethodMemberDecls.length !== 0) {
                 const mmd = tchecker.m_pendingMethodMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
                 if(mmd.decl.decl.attributes.includes("virtual") || mmd.decl.decl.attributes.includes("abstract")) {
                     tchecker.processMemberMethodVirtual(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes, virtualmemberdecls);
@@ -6688,8 +6692,8 @@ class TypeChecker {
                 }
             }
             else if(tchecker.m_pendingCodeDecls.length !== 0) {
-                const lmd = tchecker.m_pendingCodeDecls.shift() as {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                tchecker.processLambdaFunction(lmd.cptype, lmd.cpdata, lmd.cpdecl, lmd.declbinds, lmd.bodybinds, lmd.pcodes);
+                const lmd = tchecker.m_pendingCodeDecls.shift() as {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
+                tchecker.processLambdaFunction(lmd.cptype, lmd.cpdata, lmd.cpdecl, lmd.desiredfunc, lmd.declbinds, lmd.bodybinds, lmd.pcodes);
             }
             else {
                 tchecker.updateVirtualPending(virtualmemberdecls);
