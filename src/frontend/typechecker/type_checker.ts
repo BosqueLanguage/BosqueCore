@@ -966,7 +966,7 @@ class TypeChecker {
 
             const fconcept = this.m_assembly.tryGetConceptTypeForFullyResolvedName(ttname);
             if (fconcept !== undefined) {
-                this.checkTemplateTypesOnType(t.sinfo, fconcept.terms, binds);
+                this.checkTemplateTypesOnType(t.sinfo, fconcept.terms, t.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fconcept.terms, t.terms, binds);
 
                 rtype = ResolvedType.createSingle(ResolvedConceptAtomType.create([ResolvedConceptAtomTypeEntry.create(fconcept, bbinds)]));
@@ -976,7 +976,7 @@ class TypeChecker {
             if (fobject !== undefined) {
                 let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
 
-                this.checkTemplateTypesOnType(t.sinfo, fobject.terms, binds);
+                this.checkTemplateTypesOnType(t.sinfo, fobject.terms, t.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fobject.terms, t.terms, binds);
 
                 if(fobject.attributes.includes("__enum_type")) {
@@ -1112,7 +1112,7 @@ class TypeChecker {
 
             const ftask = this.m_assembly.tryGetTaskTypeForFullyResolvedName(ttname);
             if (ftask !== undefined) {
-                this.checkTemplateTypesOnType(t.sinfo, ftask.terms, binds);
+                this.checkTemplateTypesOnType(t.sinfo, ftask.terms, t.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, ftask.terms, t.terms, binds);
 
                 rtype = ResolvedType.createSingle(ResolvedTaskAtomType.create(ftask, bbinds));
@@ -2438,10 +2438,10 @@ class TypeChecker {
         return this.setResultExpression(env, new TIRCoerceSafeActionCallResultExpression(sinfo, env.expressionResult, this.toTIRTypeKey(this.envExpressionGetInferType(env)), this.toTIRTypeKey(trgttype)), trgttype);
     }
 
-    private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], typescope: TemplateBindScope) {
+    private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], giventerms: TypeSignature[], typescope: TemplateBindScope) {
         for(let i = 0; i < terms.length; ++i) {
             const terminfo = terms[i];
-            const termtype = typescope.templateResolveType(terminfo.name);
+            const termtype = this.normalizeTypeOnly(giventerms[i], typescope);
 
             const termconstraint = this.normalizeTypeOnly(terminfo.tconstraint, TemplateBindScope.createEmptyBindScope());
             const boundsok = this.subtypeOf(termtype, termconstraint);

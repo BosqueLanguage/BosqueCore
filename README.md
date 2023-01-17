@@ -37,19 +37,23 @@ function add2(x: Nat, y: Nat): Nat {
     return x + y;
 }
 
-add2(2, 3)     //5
-add2(x=2, y=3) //5
-add2(y=2, 5)   //7
+add2(3n, 4n) //7n
+add2(3n, 0n) //3n
+
+add2(3i, 4f) //type error -- defined on Nat but given Int and Float args 
+add2(3, 4)   //type error -- all numeric literals must have kind specifier
 ```
 
 **All positive check using rest parameters and lambda:**
 
 ```none
-function allPositive(...args: List<Int>): Bool {
+function allPositive(args: List<Int>): Bool {
     return args.allOf(fn(x) => x >= 0i);
 }
 
-allPositive(1, 3, 4) //true
+allPositive([1, 3, 4])  //true
+allPositive([])         //true
+allPositive([1, 3, -4]) //false
 ```
 
 **Sign (with default argument):**
