@@ -1,10 +1,16 @@
-import * as assert from "assert";
 import * as path from "path";
 
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
+
+
+function assert(cond: boolean, msg?: string) {
+    if(!cond) {
+        throw new Error((msg || "error")  + " -- assembly_emitter.ts");
+    }
+} 
 
 class NamespaceEmitter {
     private readonly m_assembly: TIRAssembly;
@@ -77,14 +83,20 @@ class NamespaceEmitter {
         const finline = ootype.staticFunctions.filter((ff) => ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
         const fkey = ootype.staticFunctions.filter((ff) => ff.invoke.tbinds.size !== 0 || ff.invoke.pcodes.size !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
 
-        return [finline.join(",\n    "), `$Functions: {${fkey.join(",\n    ")}\n    }`];
+        const finlinestr = finline.length !== 0 ? ("    " + finline.join(",\n    ")) : "";
+        const fkeystr = fkey.length !== 0 ? (`$Functions: {    ${fkey.join(",\n    ")}\n    }`) : "";
+
+        return [finlinestr, fkeystr];
     }
 
     private emitOOTypeMethods(ootype: TIROOType): string[] {
         const minline = ootype.memberMethods.filter((mm) => mm.invoke.tbinds.size === 0 && mm.invoke.pcodes.size === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
         const mkey = ootype.memberMethods.filter((mm) => mm.invoke.tbinds.size !== 0 || mm.invoke.pcodes.size !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
 
-        return [minline.join(",\n    "), `$Methods: {${mkey.join(",\n    ")}\n    }`];
+        const minlinestr = minline.length !== 0 ? ("    " + minline.join(",\n    ")) : "";
+        const mkeystr = mkey.length !== 0 ? (`$Methods: {    ${mkey.join(",\n    ")}\n    }`) : "";
+
+        return [minlinestr, mkeystr];
     }
 
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
@@ -290,6 +302,7 @@ class NamespaceEmitter {
 
     private emitOperator(nsoperator: TIRNamespaceOperatorDecl): string {
         assert(false, "NOT IMPLEMENTED -- operator");
+        return "[NOT IMPLEMENTED]";
     }
 
     private emitCodePackFunction(pcode: TIRCodePack): string {
@@ -299,7 +312,7 @@ class NamespaceEmitter {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns); 
 
         const args = invk.params.map((pp) => pp.name).join(", ");            
-        const body = bemitter.emitBodyStatementList(invk.body, [], [], "        ", pcode.codekey, false);
+        const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
 
         if(body === undefined) {
             return "";
@@ -387,7 +400,7 @@ class NamespaceEmitter {
         else {
             assert(mfmt instanceof TIRInfoTemplateTuple);
 
-            return "[" + mfmt.entries.map((ee) => this.emitInfoFmt(ee)).join(", ") + "]";
+            return "[" + (mfmt as TIRInfoTemplateTuple).entries.map((ee) => this.emitInfoFmt(ee)).join(", ") + "]";
         }
     }
 
@@ -494,10 +507,10 @@ class NamespaceEmitter {
         const constdecls = consts.join("\n\n");
 
         const itypedecls = itypes.join("\n\n");
-        const ktypedecls = `const $${this.m_ns === "Core" ? "Core" : ""}Types = {${ktypes.join("\n    ")}\n};\n\n`;
+        const ktypedecls = ktypes.length !== 0 ? `const $${this.m_ns === "Core" ? "Core" : ""}Types = {\n    ${ktypes.join("\n    ")}\n};\n\n` : "";
 
         const ifuncdecls = ifuncs.join("\n\n");
-        const kfuncdecls = `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {${kfuncs.join("\n    ")}\n};\n\n`;
+        const kfuncdecls = kfuncs.length !== 0 ? `const $${this.m_ns === "Core" ? "Core" : ""}Functions = {\n    ${kfuncs.join("\n    ")}\n};\n\n` : "";
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 

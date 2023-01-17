@@ -4,7 +4,12 @@ import { TIRExpression, TIRLiteralValue, TIRStatement } from "./tir_body";
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 import { PathValidator } from "../path_validator";
-import * as assert from "assert";
+
+function assert(cond: boolean, msg: string) {
+    if(!cond) {
+        throw new Error(msg + " -- tir_assembly.ts");
+    }
+} 
 
 class TIRTypeName {
     readonly ns: string;

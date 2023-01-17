@@ -3,8 +3,6 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import * as assert from "assert";
-
 import { Assembly, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
 import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation } from "../ast/body";
@@ -17,6 +15,12 @@ import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSet
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo, BuildLevel, isBuildLevelEnabled, PackageConfig } from "../build_decls";
 import { Parser } from "../ast/parser";
+
+function assert(cond: boolean, msg?: string) {
+    if(!cond) {
+        throw new Error((msg || "error")  + " -- type_checker.ts");
+    }
+} 
 
 function TYPECHECKER_TODO<T>(action: string): T {
     console.log(`TODO: ${action}`);
@@ -423,7 +427,8 @@ class TypeChecker {
     }
 
     private envExpressionCollapseFlowInfos(infos: FlowTypeInfoOption[]): FlowTypeInfoOption {
-        const itype = this.normalizeUnionList(infos.map((ii) => ii.tinfer));
+        const tinfertypes = infos.map((ii) => ii.tinfer).filter((ii) => !ii.isInvalidType());
+        const itype = tinfertypes.length !== 0 ? this.normalizeUnionList(infos.map((ii) => ii.tinfer)) : ResolvedType.createInvalid();
 
         const allexps = ([] as string[]).concat(...infos.map((ii) => [...ii.expInferInfo].map((vv) => vv[0])));
         const iexps = allexps.filter((ename) => infos.every((ii) => ii.expInferInfo.has(ename)));
@@ -1645,6 +1650,7 @@ class TypeChecker {
         }
         else {
             assert(false, `Unknown type to convert ${rtype.typeID}`);
+            tirtype = (undefined as any) as TIRType;
         }
 
         this.m_toTIRprocessingstack.pop();
@@ -2661,9 +2667,9 @@ class TypeChecker {
             }
             else {
                 assert(oftype instanceof ResolvedType, "Something went wrong");
-                this.raiseErrorIf(args[i].sinfo, !this.subtypeOf(this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment), oftype), `${this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment).typeID} is not a subtype of ${oftype.typeID}`);
+                this.raiseErrorIf(args[i].sinfo, !this.subtypeOf(this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment), oftype as ResolvedType), `${this.envExpressionGetInferType(eenvs[i] as ExpressionTypeEnvironment).typeID} is not a subtype of ${oftype.typeID}`);
 
-                cexps.push(this.emitCoerceIfNeeded(eenvs[i] as ExpressionTypeEnvironment, args[i].sinfo, oftype).expressionResult);
+                cexps.push(this.emitCoerceIfNeeded(eenvs[i] as ExpressionTypeEnvironment, args[i].sinfo, oftype as ResolvedType).expressionResult);
                 ftypes.push(undefined);
             }
         }
@@ -6250,7 +6256,7 @@ class TypeChecker {
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
 
-            const iinv = this.processPCodeInvokeInfo("lambda", cpdecl, desiredfunc, declbinds, bodybinds, pcodes);
+            const iinv = this.processPCodeInvokeInfo(cpdata.invk, cpdecl, desiredfunc, declbinds, bodybinds, pcodes);
 
             tirns.lambdas.set(cpdata.invk, new TIRNamespaceLambdaDecl(cpdata.codekey, cpdecl.startSourceLocation, cpdecl.srcFile, iinv));
             tirns.codepacks.set(cpdata.codekey, cpdata);
@@ -6523,7 +6529,7 @@ class TypeChecker {
             assert(msg instanceof InfoTemplateValue, `Unknown info template kind ${msg}`);
 
             const vmsg = msg as InfoTemplateValue;
-            return new TIRInfoTemplateValue(vmsg.argpos, this.toTIRTypeKey(this.normalizeTypeOnly(msg.argtype, TemplateBindScope.createEmptyBindScope())));
+            return new TIRInfoTemplateValue(vmsg.argpos, this.toTIRTypeKey(this.normalizeTypeOnly(vmsg.argtype, TemplateBindScope.createEmptyBindScope())));
         }
     }
 

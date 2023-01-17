@@ -1,6 +1,10 @@
-import * as assert from "assert";
-
 import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
+
+function assert(cond: boolean, msg?: string) {
+    if(!cond) {
+        throw new Error((msg || "error")  + " -- resolved_type.ts");
+    }
+} 
 
 abstract class ResolvedAtomType {
     readonly typeID: string;

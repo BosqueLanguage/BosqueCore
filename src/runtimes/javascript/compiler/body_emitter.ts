@@ -1,15 +1,21 @@
-import * as assert from "assert";
-
 import { extractLiteralStringValue } from "../../../frontend/build_decls";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWAction, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
+
+function assert(cond: boolean, msg?: string) {
+    if(!cond) {
+        throw new Error((msg || "error")  + " -- body_emitter.ts");
+    }
+} 
 
 function NOT_IMPLEMENTED_EXPRESSION(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
+    return "[NOT IMPLEMENTED]";
 }
 
 function NOT_IMPLEMENTED_STATEMENT(tag: string): string {
     assert(false, `NOT IMEPLEMENTED -- ${tag}`);
+    return "[NOT IMPLEMENTED]";
 }
 
 class BodyEmitter {
@@ -349,7 +355,7 @@ class BodyEmitter {
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
-        return `$Functions["${exp.cpack.invk}"](${[exp.packarg, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
+        return `$Functions["${exp.cpack.invk}"](${[exp.packarg.argn, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
     }
 
     private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression, toplevel: boolean): string {
@@ -405,11 +411,11 @@ class BodyEmitter {
         assert(invk !== undefined, "emitCallStaticFunctionExpression");
 
         const accessterm = this.resolveTypeMemberAccess(ttype.tkey);
-        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
-            return `${accessterm}.${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+        if((invk as TIRStaticFunctionDecl).invoke.tbinds.size === 0 && (invk as TIRStaticFunctionDecl).invoke.pcodes.size === 0) {
+            return `${accessterm}.${(invk as TIRStaticFunctionDecl).name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
-            return `${accessterm}.$Functions["${invk.ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${accessterm}.$Functions["${(invk as TIRStaticFunctionDecl).ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
     }
 
@@ -931,7 +937,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
         let meexp = "[NOT SET]";
-        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
+        if((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -985,7 +991,7 @@ class BodyEmitter {
 
             const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
             let meexp = "[NOT SET]";
-            if (invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
+            if ((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
                 meexp = `.${exp.fname}`;
             }
             else {
@@ -1020,7 +1026,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
         let meexp = "[NOT SET]";
-        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
+        if((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -1041,7 +1047,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
         let meexp = "[NOT SET]";
-        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
+        if((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
@@ -1062,7 +1068,7 @@ class BodyEmitter {
 
         const fexp = `${this.resolveTypeMemberAccess(exp.tsktype)}`;
         let meexp = "[NOT SET]";
-        if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
+        if((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
             meexp = `.${exp.fname}`;
         }
         else {
