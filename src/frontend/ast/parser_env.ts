@@ -15,7 +15,7 @@ class FunctionScope {
     private readonly m_ispcode: boolean;
     private readonly m_args: Set<string>;
     private readonly m_boundtemplates: Set<string>;
-    private m_locals: string[][];
+    private m_locals: { name: string, scopedname: string, isbinder: boolean }[][];
 
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature, ispcode: boolean) {
         this.m_rtype = rtype;
@@ -40,15 +40,26 @@ class FunctionScope {
     }
 
     isVarNameDefined(name: string): boolean {
-        return this.m_args.has(name) || this.m_locals.some((frame) => frame.some((nn) => nn === name));
+        return this.m_args.has(name) || this.m_locals.some((frame) => frame.some((nn) => nn.name === name));
     }
 
     isTemplateNameDefined(name: string): boolean {
         return this.m_boundtemplates.has(name);
     }
 
-    defineLocalVar(name: string) {
-        this.m_locals[this.m_locals.length - 1].push(name);
+    getScopedVarName(name: string): string {
+        for (let i = this.m_locals.length - 1; i >= 0; --i) {
+            const vinfo = this.m_locals[i].find((fr) => fr.name === name);
+            if (vinfo !== undefined) {
+                return vinfo.scopedname;
+            }
+        }
+
+        return name;
+    }
+
+    defineLocalVar(name: string, scopedname: string, isbinder: boolean) {
+        this.m_locals[this.m_locals.length - 1].push({ name: name, scopedname: scopedname, isbinder: isbinder });
     }
 
     getCaptureVars(): Set<string> {
@@ -159,6 +170,15 @@ class ParserEnvironment {
     useLocalVar(name: string): string {
         if (this.isFunctionScopeActive()) {
             const cscope = this.getCurrentFunctionScope();
+
+            if (name.startsWith("$")) {
+                for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
+                    if (this.m_functionScopes[i].isVarNameDefined(name)) {
+                        name = this.m_functionScopes[i].getScopedVarName(name);
+                        break;
+                    }
+                }
+            }
 
             if (!cscope.isVarNameDefined(name) && cscope.isPCodeEnv()) {
                 cscope.getCaptureVars().add(name);

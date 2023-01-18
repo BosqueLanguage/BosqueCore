@@ -829,7 +829,7 @@ class IfExpression extends Expression {
 
 class SwitchExpression extends Expression {
     readonly sval: Expression;
-    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[];
+    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindvar: string}[];
 
     constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[]) {
         super(ExpressionTag.SwitchExpression, sinfo);
@@ -840,7 +840,7 @@ class SwitchExpression extends Expression {
 
 class MatchExpression extends Expression {
     readonly sval: Expression;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression}[];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression, bindvar: string}[];
 
     constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: Expression}[]) {
         super(ExpressionTag.MatchExpression, sinfo);

@@ -35,6 +35,7 @@ const KW_field = "field";
 const KW_fn = "fn";
 const KW_function = "function";
 const KW_if = "if";
+const KW_iftype = "iftype";
 const KW_import = "import";
 const KW_in = "in";
 const KW_invariant = "invariant";
@@ -100,6 +101,7 @@ const KeywordStrings = [
     KW_fn,
     KW_function,
     KW_if,
+    KW_iftype,
     KW_import,
     KW_in,
     KW_invariant,
@@ -2301,13 +2303,16 @@ class Parser {
     }
 
     private parseStatementExpression(ops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[]] {
-        if (this.testToken("if")) {
+        if (this.testToken(KW_if)) {
             return [this.parseIfExpression(), ops];
         }
-        else if (this.testToken("switch")) {
+        else if (this.testToken(KW_iftype)) {
+            return [this.parseIfTypeExpression(), ops];
+        }
+        else if (this.testToken(KW_switch)) {
             return [this.parseSwitchExpression(), ops];
         }
-        else if (this.testToken("match")) {
+        else if (this.testToken(KW_match)) {
             return [this.parseMatchExpression(), ops];
         }
         else {
@@ -2530,6 +2535,38 @@ class Parser {
         return new IfExpression(sinfo, conds, elsebody);
     }
 
+    private parseIfTypeExpression(): Expression {
+        const sinfo = this.getCurrentSrcInfo();
+
+        let conds: {cond: Expression, value: Expression}[] = [];
+
+        xxxx;
+        this.consumeToken();
+        this.ensureAndConsumeToken(SYM_lparen, "if expression test condition");
+        const iftest = this.parseExpression();
+        this.ensureAndConsumeToken(SYM_rparen, "if expression test condition");
+
+        this.ensureAndConsumeToken(KW_then, "if expression value")
+        const ifbody = this.parseExpression();
+        conds.push({ cond: iftest, value: ifbody });
+
+        while (this.testAndConsumeTokenIf(KW_elif)) {
+            this.ensureAndConsumeToken(SYM_lparen, "elif expression test condition");
+            const eliftest = this.parseExpression();
+            this.ensureAndConsumeToken(SYM_rparen, "elif expression test condition");
+
+            this.ensureAndConsumeToken(KW_then, "elif expression value")
+            const elifbody = this.parseExpression();
+
+            conds.push({ cond: eliftest, value: elifbody });
+        }
+
+        this.ensureAndConsumeToken(KW_else, "if expression else value");
+        const elsebody = this.parseExpression();
+
+        return new IfTypeExpression(sinfo, conds, elsebody);
+    }
+
     private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
         if (this.testToken(TokenStrings.Identifier)) {
             const tv = this.consumeTokenAndGetValue();
@@ -2553,22 +2590,38 @@ class Parser {
         const mexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "switch expression dispatch value");
 
-        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression }[] = [];
+        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression, bindvar: string }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch expression options");
-        
-        const swlit = this.parseSwitchLiteralGuard();
-        this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-        const swvalue = this.parseExpression();
 
-        entries.push({ condlit: swlit, value: swvalue });
+        const swlit = this.parseSwitchLiteralGuard();
+        try {
+            this.m_penv.getCurrentFunctionScope().pushLocalScope();
+            this.m_penv.getCurrentFunctionScope().defineLocalVar("$sexp", `$sexp_@${sinfo.pos}`, true);
+
+            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+            const swvalue = this.parseExpression();
+
+            entries.push({ condlit: swlit, value: swvalue, bindvar: `$sexp_@${sinfo.pos}`});
+        }
+        finally {
+            this.m_penv.getCurrentFunctionScope().popLocalScope();
+        }
+
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
 
             const swlitx = this.parseSwitchLiteralGuard();
-            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-            const swvaluex = this.parseExpression();
+            try {
+                this.m_penv.getCurrentFunctionScope().pushLocalScope();
+                this.m_penv.getCurrentFunctionScope().defineLocalVar("$sexp", `$sexp_@${sinfo.pos}`, true);
+                this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
+                const swvaluex = this.parseExpression();
 
-            entries.push({ condlit: swlitx, value: swvaluex });
+                entries.push({ condlit: swlitx, value: swvaluex, bindvar: `$sexp_@${sinfo.pos}` });
+            }
+            finally {
+                this.m_penv.getCurrentFunctionScope().popLocalScope();
+            }
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch expression options");
 
@@ -2601,6 +2654,7 @@ class Parser {
         let entries: { mtype: TypeSignature | undefined, value: Expression }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "match expression options");
 
+        xxxx;
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "match expression entry");
         const mvalue = this.parseExpression();
@@ -3227,6 +3281,7 @@ class Parser {
         let entries: { condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch statement options");
         
+        xxxx;
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
         const swvalue = this.parseStatementActionInBlock();
@@ -3258,6 +3313,7 @@ class Parser {
         let entries: { mtype: TypeSignature | undefined, value: ScopedBlockStatement }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "match statement options");
 
+        xxxx;
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "match statement entry");
         const mvalue = this.parseStatementActionInBlock();
