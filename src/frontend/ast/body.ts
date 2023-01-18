@@ -816,11 +816,45 @@ class MapEntryConstructorExpression extends Expression {
     }
 }
 
-class IfExpression extends Expression {
-    readonly condflow: {cond: Expression, value: Expression}[];
-    readonly elseflow: Expression;
+abstract class IfTest {
+    readonly exp: Expression;
+    readonly bindername: string | undefined; 
 
-    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: Expression}[], elseflow: Expression) {
+    constructor(exp: Expression, bindername: string | undefined) {
+        this.exp = exp;
+        this.bindername = bindername;
+    }
+}
+
+class IfExpTest extends IfTest {
+    constructor(exp: Expression, bindername: string | undefined) {
+        super(exp, bindername);
+    }
+}
+
+class IfTypeTest extends IfTest {
+    readonly ttype: TypeSignature;
+
+    constructor(ttype: TypeSignature, exp: Expression, bindername: string | undefined) {
+        super(exp, bindername);
+        this.ttype = ttype;
+    }
+}
+
+class IfEqTest extends IfTest {
+    readonly literal: LiteralExpressionValue;
+
+    constructor(literal: LiteralExpressionValue, exp: Expression, bindername: string | undefined) {
+        super(exp, bindername);
+        this.literal = literal;
+    }
+}
+
+class IfExpression extends Expression {
+    readonly condflow: {cond: IfTest, value: Expression}[];
+    readonly elseflow: {value: Expression, binderinfo: [string, Expression] | undefined};
+
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression}[], elseflow: {value: Expression, binderinfo: [string, Expression] | undefined}) {
         super(ExpressionTag.IfExpression, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
@@ -829,22 +863,26 @@ class IfExpression extends Expression {
 
 class SwitchExpression extends Expression {
     readonly sval: Expression;
-    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindvar: string}[];
+    readonly bindername: string | undefined;
+    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[]) {
         super(ExpressionTag.SwitchExpression, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.switchflow = switchflow;
     }
 }
 
 class MatchExpression extends Expression {
     readonly sval: Expression;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression, bindvar: string}[];
+    readonly bindername: string | undefined;
+    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, flow: {mtype: TypeSignature | undefined, value: Expression}[]) {
         super(ExpressionTag.MatchExpression, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.matchflow = flow;
     }
 }
@@ -919,6 +957,7 @@ enum StatementTag {
 
     VariableDeclarationStatement = "VariableDeclarationStatement",
     VariableAssignmentStatement = "VariableAssignmentStatement",
+    VariableRetypeStatement = "VariableRetypeStatement",
 
     ReturnStatement = "ReturnStatement",
 
@@ -1014,6 +1053,17 @@ class VariableAssignmentStatement extends Statement {
     }
 }
 
+class VariableRetypeStatement extends Statement {
+    readonly name: string;
+    readonly oftype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, name: string, oftype: TypeSignature) {
+        super(StatementTag.VariableRetypeStatement, sinfo);
+        this.name = name;
+        this.oftype = oftype;
+    }
+}
+
 class ReturnStatement extends Statement {
     readonly value: Expression;
 
@@ -1025,9 +1075,9 @@ class ReturnStatement extends Statement {
 
 class IfStatement extends Statement {
     readonly condflow: {cond: Expression, value: ScopedBlockStatement}[];
-    readonly elseflow: ScopedBlockStatement | undefined;
+    readonly elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined};
 
-    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: ScopedBlockStatement | undefined) {
+    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined}) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
@@ -1036,22 +1086,26 @@ class IfStatement extends Statement {
 
 class SwitchStatement extends Statement {
     readonly sval: Expression;
+    readonly bindername: string | undefined;
     readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[]) {
         super(StatementTag.SwitchStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.switchflow = switchflow;
     }
 }
 
 class MatchStatement extends Statement {
     readonly sval: Expression;
+    readonly bindername: string | undefined;
     readonly matchflow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[]) {
         super(StatementTag.ScopedBlockStatement, sinfo);
         this.sval = sval;
+        this.bindername = bindername;
         this.matchflow = flow;
     }
 }
@@ -1458,10 +1512,12 @@ export {
     NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
+    IfTest, IfExpTest, IfTypeTest, IfEqTest,
     IfExpression, SwitchExpression, MatchExpression,
     TaskSelfFieldExpression, TaskSelfControlExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
-    VariableDeclarationStatement, VariableAssignmentStatement, 
+    VariableDeclarationStatement, VariableAssignmentStatement,
+    VariableRetypeStatement,
     ReturnStatement,
     IfStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,

@@ -5033,6 +5033,9 @@ class TypeChecker {
             case StatementTag.VariableAssignmentStatement: {
                 return this.checkVariableAssignStatement(env, stmt as VariableAssignmentStatement);
             }
+            case StatementTag.VariableRetypeStatement: {
+                return xxxx;
+            }
             case StatementTag.ReturnStatement: {
                 return this.checkReturnStatement(env, stmt as ReturnStatement);
             }

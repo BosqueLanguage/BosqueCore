@@ -171,7 +171,7 @@ class ParserEnvironment {
         if (this.isFunctionScopeActive()) {
             const cscope = this.getCurrentFunctionScope();
 
-            if (name.startsWith("$")) {
+            if (name === "$") {
                 for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
                     if (this.m_functionScopes[i].isVarNameDefined(name)) {
                         name = this.m_functionScopes[i].getScopedVarName(name);
@@ -219,6 +219,22 @@ class ParserEnvironment {
                 return fromns !== undefined ? fromns.fromns : undefined;
             }
         }
+    }
+
+    getBinderExtension(): string {
+        if (this.isFunctionScopeActive()) {
+            let bcount = 0;
+
+            for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
+                if (this.m_functionScopes[i].isVarNameDefined("$")) {
+                    bcount++;
+                }
+            }
+
+            return bcount.toString();
+        }
+        
+        return "0";
     }
 }
 
