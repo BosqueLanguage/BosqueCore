@@ -3354,11 +3354,12 @@ class Parser {
     private parseScopedBlockStatementWithBinder(): [boolean, ScopedBlockStatement] {
         try {
             this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension()}`, true);
+            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension("$")}`, true);
 
-            xxxx;
+            const ss = this.parseScopedBlockStatement();
+            const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
 
-            return this.parseScopedBlockStatement();
+            return [isbind, ss];
         }
         finally {
             this.m_penv.getCurrentFunctionScope().popLocalScope();
@@ -3367,137 +3368,116 @@ class Parser {
 
     private parseIfElseStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
-        let conds: {cond: IfTest, value: ScopedBlockStatement}[] = [];
+        let conds: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined }[] = [];
 
         this.ensureAndConsumeToken(KW_if, "if statement cond");
         const iftest = this.parseIfTest(bindername);
-        const ifbody = iftest.bindername !== undefined ? this.parseScopedBlockStatementWithBinder() : this.parseScopedBlockStatement();
-        conds.push({cond: iftest, value: ifbody});
+        const [ifbind, ifbody] = this.parseScopedBlockStatementWithBinder();
+        conds.push({cond: iftest, value: ifbody, binderinfo: ifbind ? bindername : undefined});
 
         while (this.testAndConsumeTokenIf(KW_elif)) {
             const eliftest = this.parseIfTest(bindername);
-            const elifbody = eliftest.bindername !== undefined ? this.parseScopedBlockStatementWithBinder() : this.parseScopedBlockStatement();
-            conds.push({cond: eliftest, value: elifbody});
+            const [elifbind, elifbody] = this.parseScopedBlockStatementWithBinder();
+            conds.push({cond: eliftest, value: elifbody, binderinfo: elifbind ? bindername : undefined});
         }
 
-        this.ensureAndConsumeToken(KW_else, "if statement else value");
-        if(!this.isBinderToken()) {
-            const elsebody = this.parseScopedBlockStatement();
-            return new IfStatement(sinfo, conds, {value: elsebody, binderinfo: undefined});
+        if(!this.testAndConsumeTokenIf(KW_else)) {
+            return new IfStatement(sinfo, conds, undefined);
         }
         else {
-            this.consumeToken();
-            this.ensureAndConsumeToken(SYM_lbrack, "else clause binder");
-            const elsebind = this.parseExpression();
-            this.ensureAndConsumeToken(SYM_rbrack, "else clause binder");
-
-            const elsebody = this.parseScopedBlockStatementWithBinder();
-            return new IfStatement(sinfo,conds, {value: elsebody, binderinfo: [bindername, elsebind]});
+            const elsebody = this.parseScopedBlockStatement();
+            return new IfStatement(sinfo, conds, elsebody);
         }
     }
 
-    private parseStatementActionInBlock(isbinder: boolean): ScopedBlockStatement {
-        if (!isbinder) {
+    private parseStatementActionInBlock(): [boolean, ScopedBlockStatement] {
+        try {
+            this.m_penv.getCurrentFunctionScope().pushLocalScope();
+            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension("$")}`, true);
+
             if (this.testToken("{")) {
-                return this.parseScopedBlockStatement();
+                const ss = this.parseScopedBlockStatement();
+                const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
+
+                return [isbind, ss];
             }
             else {
-                return new ScopedBlockStatement(this.getCurrentSrcInfo(), [this.parseLineStatement()]);
+                const ss = this.parseLineStatement();
+                const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
+
+                return [isbind, new ScopedBlockStatement(this.getCurrentSrcInfo(), [ss])];
             }
         }
-        else {
-            try {
-                this.m_penv.getCurrentFunctionScope().pushLocalScope();
-                this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension()}`, true);
-
-                if (this.testToken("{")) {
-                    return this.parseScopedBlockStatement();
-                }
-                else {
-                    return new ScopedBlockStatement(this.getCurrentSrcInfo(), [this.parseLineStatement()]);
-                }
-            }
-            finally {
-                this.m_penv.getCurrentFunctionScope().popLocalScope();
-            }
+        finally {
+            this.m_penv.getCurrentFunctionScope().popLocalScope();
         }
     }
 
     private parseSwitchStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
         this.ensureAndConsumeToken(KW_switch, "switch statement dispatch value");
-
-        const isbinder = this.isBinderToken();
-        if(isbinder) {
-            this.consumeToken();
-        }
 
         this.ensureAndConsumeToken(SYM_lparen, "switch statement dispatch value");
         const mexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "switch statement dispatch value");
 
-        let entries: { condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement }[] = [];
+        let entries: { condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement, binderinfo: string | undefined }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch statement options");
         
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-        const swvalue = this.parseStatementActionInBlock(isbinder);
+        const [swbind, swvalue] = this.parseStatementActionInBlock();
 
-        entries.push({ condlit: swlit, value: swvalue });
+        entries.push({ condlit: swlit, value: swvalue, binderinfo: swbind ? bindername : undefined});
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-            const swvaluex = this.parseStatementActionInBlock(isbinder);
+            const [swbindx, swvaluex] = this.parseStatementActionInBlock();
 
-            entries.push({ condlit: swlitx, value: swvaluex });
+            entries.push({ condlit: swlitx, value: swvaluex, binderinfo: swbindx ? bindername : undefined });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch statement options");
 
-        return new SwitchStatement(sinfo, mexp, isbinder ? bindername : undefined, entries);
+        return new SwitchStatement(sinfo, mexp, entries);
     }
 
     private parseMatchStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
         this.ensureAndConsumeToken(KW_match, "match statement dispatch value");
-
-        const isbinder = this.isBinderToken();
-        if(isbinder) {
-            this.consumeToken();
-        }
 
         this.ensureAndConsumeToken(SYM_lparen, "match statement dispatch value");
         const mexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "match statement dispatch value");
  
-        let entries: { mtype: TypeSignature | undefined, value: ScopedBlockStatement }[] = [];
+        let entries: { mtype: TypeSignature | undefined, value: ScopedBlockStatement, binderinfo: string | undefined  }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "match statement options");
 
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "match statement entry");
-        const mvalue = this.parseStatementActionInBlock(isbinder);
+        const [mbind, mvalue] = this.parseStatementActionInBlock();
 
-        entries.push({ mtype: mtype, value: mvalue });
+        entries.push({ mtype: mtype, value: mvalue, binderinfo: mbind ? bindername : undefined });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
             
             const mtypex = this.parseMatchTypeGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "match statement entry");
-            const mvaluex = this.parseStatementActionInBlock(isbinder);
+            const [mbindx, mvaluex] = this.parseStatementActionInBlock();
 
 
-            entries.push({ mtype: mtypex, value: mvaluex });
+            entries.push({ mtype: mtypex, value: mvaluex, binderinfo: mbindx ? bindername : undefined });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch statment options");
 
-        return new MatchStatement(sinfo, mexp, isbinder ? bindername : undefined, entries);
+        return new MatchStatement(sinfo, mexp, entries);
     }
 
     private parseStatement(): Statement {

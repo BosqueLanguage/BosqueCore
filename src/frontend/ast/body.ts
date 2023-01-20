@@ -1135,10 +1135,10 @@ class ReturnStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-    readonly condflow: {cond: IfTest, value: ScopedBlockStatement}[];
-    readonly elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined};
+    readonly condflow: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined}[];
+    readonly elseflow: ScopedBlockStatement | undefined;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: ScopedBlockStatement}[], elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined}) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined}[], elseflow: ScopedBlockStatement | undefined) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
@@ -1147,26 +1147,22 @@ class IfStatement extends Statement {
 
 class SwitchStatement extends Statement {
     readonly sval: Expression;
-    readonly bindername: string | undefined;
-    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[];
+    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[]) {
         super(StatementTag.SwitchStatement, sinfo);
         this.sval = sval;
-        this.bindername = bindername;
         this.switchflow = switchflow;
     }
 }
 
 class MatchStatement extends Statement {
     readonly sval: Expression;
-    readonly bindername: string | undefined;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[]) {
         super(StatementTag.ScopedBlockStatement, sinfo);
         this.sval = sval;
-        this.bindername = bindername;
         this.matchflow = flow;
     }
 }
