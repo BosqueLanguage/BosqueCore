@@ -722,6 +722,15 @@ class TIRUnionType extends TIRType {
     }
 }
 
+class TIREListType extends TIRType {
+    readonly types: TIRTypeKey[];
+
+    constructor(tkey: TIRTypeKey, types: TIRTypeKey[]) {
+        super(tkey, undefined, false);
+        this.types = types;
+    }
+}
+
 class TIRCodePackType extends TIRType {
     constructor(tkey: TIRTypeKey) {
         super(tkey, undefined, false);
@@ -994,7 +1003,7 @@ export {
     TIRTaskType,
     TIRConceptType, TIRConceptSetType,
     TIRTupleType, TIRRecordType,
-    TIRCodePackType,
+    TIREListType, TIRCodePackType,
     TIRUnionType,
     TIRInfoTemplate, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateValue,
     TIRStringTemplate,

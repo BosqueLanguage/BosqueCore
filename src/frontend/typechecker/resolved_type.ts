@@ -815,6 +815,14 @@ class ResolvedFunctionType {
     }
 }
 
+class ResolvedEListType {
+    readonly types: ResolvedType[];
+
+    constructor(types: ResolvedType[]) {
+        this.types = types;
+    }
+}
+
 class TemplateBindScope {
     readonly scopes: Map<string, ResolvedType>[] = [];
 
@@ -871,6 +879,6 @@ export {
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType,
     ResolvedType, 
-    ResolvedFunctionTypeParam, ResolvedFunctionType,
+    ResolvedEListType, ResolvedFunctionTypeParam, ResolvedFunctionType,
     TemplateBindScope
 };
