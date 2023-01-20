@@ -137,6 +137,8 @@ enum TIRExpressionTag {
     AsNotEqualToLiteralExpression = "AsNotEqualToLiteralExpression",
     AsTypeExpression = "AsTypeExpression",
     AsNotTypeExpression = "AsNotTypeExpression",
+    AsSubTypeExpression = "AsSubTypeExpression",
+    AsNotSubTypeExpression = "AsNotSubTypeExpression",
 
     CallMemberFunctionExpression = "CallMemberFunctionExpression",
     CallMemberFunctionDynamicExpression = "CallMemberFunctionDynamicExpression",
@@ -1350,7 +1352,7 @@ class TIRCreateCodePackExpression extends TIRExpression {
 }
 
 //abstract class for is test operations
-abstract class TIRITestIsExpression extends TIRExpression {
+abstract class TIRTestIsExpression extends TIRExpression {
     readonly exp: TIRExpression;
 
     constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, exprstr: string) {
@@ -1368,7 +1370,7 @@ abstract class TIRITestIsExpression extends TIRExpression {
 }
 
 //abstract class for is special test operations
-abstract class TIRITestIsSpecialExpression extends TIRITestIsExpression {
+abstract class TIRITestIsSpecialExpression extends TIRTestIsExpression {
     constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, exprstr: string) {
         super(tag, sinfo, exp, exprstr);
     }
@@ -1411,7 +1413,7 @@ class TIRIsErrSpecialExpression extends TIRITestIsSpecialExpression {
 }
 
 //abstract class for is literal compare operations
-abstract class TIRITestIsLiteralEqExpression extends TIRITestIsExpression {
+abstract class TIRITestIsLiteralEqExpression extends TIRTestIsExpression {
     readonly literal: TIRLiteralValue;
 
     constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, exprstr: string) {
@@ -1421,43 +1423,64 @@ abstract class TIRITestIsLiteralEqExpression extends TIRITestIsExpression {
 }
 
 class TIRIsEqualToLiteralExpression extends TIRITestIsLiteralEqExpression {
-
-}
-
-class TIRIsNotEqualToLiteralExpression extends TIRITestIsLiteralEqExpression {
-
-}
-
-//abstract class for is type compare operations
-abstract class TIRITestIsTypeExpression extends TIRITestIsExpression {
-    readonly ttype: TIRTypeKey;
-
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, exprstr: string) {
-        super(tag, sinfo, exp, exprstr);
-        this.literal = literal;
+    constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue) {
+        super(TIRExpressionTag.IsEqualToLiteralExpression, sinfo, exp, literal, `${exp.expstr}?[${literal.litstr}]`);
     }
 }
 
-class TIRIsTypeExpression = "IsTypeExpression",
-class TIRIsNotTypeExpression = "IsNotTypeExpression",
+class TIRIsNotEqualToLiteralExpression extends TIRITestIsLiteralEqExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue) {
+        super(TIRExpressionTag.IsNotEqualToLiteralExpression, sinfo, exp, literal, `${exp.expstr}?[!${literal.litstr}]`);
+    }
+}
 
-IsSubTypeExpression = "IsTypeExpression",
-    IsNotSubTypeExpression = "IsNotTypeExpression",
+//abstract class for is type compare operations
+abstract class TIRITestIsTypeExpression extends TIRTestIsExpression {
+    readonly ttype: TIRTypeKey;
 
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, exprstr: string) {
+        super(tag, sinfo, exp, exprstr);
+        this.ttype = ttype;
+    }
+}
+
+class TIRIsTypeExpression extends TIRITestIsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
+        super(TIRExpressionTag.IsTypeExpression, sinfo, exp, ttype, `${exp.expstr}?[${ttype}]`);
+    }
+}
+
+class TIRIsNotTypeExpression  extends TIRITestIsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
+        super(TIRExpressionTag.IsNotTypeExpression, sinfo, exp, ttype, `${exp.expstr}?[!${ttype}]`);
+    }
+}
+
+class TIRIsSubTypeExpression  extends TIRITestIsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
+        super(TIRExpressionTag.IsSubTypeExpression, sinfo, exp, ttype, `${exp.expstr}?[<:${ttype}]`);
+    }
+}
+
+class TIRIsNotSubTypeExpression  extends TIRITestIsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
+        super(TIRExpressionTag.IsNotSubTypeExpression, sinfo, exp, ttype, `${exp.expstr}?[!<:${ttype}]`);
+    }
+}
 
 //abstract class for as expressions
 abstract class TIRAsExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly oftype: TIRTypeKey;
+    readonly issafe: boolean;
     
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, exprstr: string) {
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean, exprstr: string) {
         super(tag, sinfo, oftype, exprstr);
         this.exp = exp;
-        this.oftype = oftype;
+        this.issafe = issafe;
     }
     
     isFailableOperation(): boolean {
-        return true;
+        return !this.issafe;
     }
 
     getUsedVars(): string[] {
@@ -1465,98 +1488,104 @@ abstract class TIRAsExpression extends TIRExpression {
     }
 }
 
-    AsNoneSpecialExpression = "AsNoneSpecialExpression",
-    AsSomeSpecialExpression = "AsSomeSpecialExpression",
-    AsNothingSpecialExpression = "AsNothingSpecialExpression",
-    AsSomethingSpecialExpression = "AsSomethingSpecialExpression",
-    AsOkSpecialExpression = "AsOkSpecialExpression",
-    AsErrSpecialExpression = "AsOkSpecialExpression",
-
-
-    AsEqualToLiteralExpression = "AsEqualToLiteralExpression",
-    AsNotEqualToLiteralExpression = "AsNotEqualToLiteralExpression",
-    AsTypeExpression = "AsTypeExpression",
-    AsNotTypeExpression = "AsNotTypeExpression",
-
-class TIRIsNoneExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNoneExpression, sinfo, exp, "None", `isnone(${exp.expstr})`);
+//abstract class for is special test operations
+abstract class TIRAsSpecialExpression extends TIRAsExpression {
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean, exprstr: string) {
+        super(tag, sinfo, exp, oftype, issafe, exprstr);
     }
 }
 
-class TIRIsNotNoneExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNotNoneExpression, sinfo, exp, "None", `isnotnone(${exp.expstr})`);
+class TIRAsNoneSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, issafe: boolean) {
+        super(TIRExpressionTag.AsNoneSpecialExpression, sinfo, exp, "None", issafe, `${exp.expstr}@[none]`);
     }
 }
 
-class TIRIsNothingExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNothingExpression, sinfo, exp, "Nothing", `isnothing(${exp.expstr})`);
+class TIRAsSomeSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsSomeSpecialExpression, sinfo, exp, oftype, issafe, `${exp.expstr}@[!none]`);
     }
 }
 
-class TIRIsSomethingExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.IsNotNothingExpression, sinfo, exp, "Nothing", `isnotnothing(${exp.expstr})`);
+class TIRAsNothingSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, issafe: boolean) {
+        super(TIRExpressionTag.AsNothingSpecialExpression, sinfo, exp, "Nothing", issafe, `${exp.expstr}@[nothing]`);
     }
 }
 
-class TIRIsTypeExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.IsTypeExpression, sinfo, exp, oftype, `istype<${oftype}>(${exp.expstr})`);
+class TIRAsSomethingSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsSomethingSpecialExpression, sinfo, exp, oftype, issafe, `${exp.expstr}@[something]`);
     }
 }
 
-class TIRIsNotTypeExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.IsNotTypeExpression, sinfo, exp, oftype, `isnottype<${oftype}>(${exp.expstr})`);
+class TIRAsOkSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsOkSpecialExpression, sinfo, exp, oftype, issafe, `${exp.expstr}@[ok]`);
     }
 }
 
-class TIRIsSubTypeExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.IsSubTypeExpression, sinfo, exp, oftype, `issubtype<${oftype}>(${exp.expstr})`);
+class TIRAsErrSpecialExpression extends TIRAsSpecialExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsErrSpecialExpression, sinfo, exp, oftype, issafe, `${exp.expstr}@[err]`);
     }
 }
 
-class TIRIsNotSubTypeExpression extends TIRTypeTestExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.IsNotSubTypeExpression, sinfo, exp, oftype, `isnotsubtype<${oftype}>(${exp.expstr})`);
+//abstract class for is literal as operations
+abstract class TIRIAsLiteralEqExpression extends TIRAsExpression {
+    readonly literal: TIRLiteralValue;
+
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, oftype: TIRTypeKey, issafe: boolean, exprstr: string) {
+        super(tag, sinfo, exp, oftype, issafe, exprstr);
+        this.literal = literal;
     }
 }
 
-class TIRAsNoneExpression extends TIRAsExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.AsNoneExpression, sinfo, exp, "None", `asnone(${exp.expstr})`);
+class TIRAsEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsEqualToLiteralExpression, sinfo, exp, literal, oftype, issafe, `${exp.expstr}@[${literal.litstr}]`);
     }
 }
 
-class TIRAsNotNoneExpression extends TIRAsExpression {    
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.AsNotNoneExpression, sinfo, exp, "Some", `assome(${exp.expstr})`);
+class TIRAsNotEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsNotEqualToLiteralExpression, sinfo, exp, literal, oftype, issafe, `${exp.expstr}@[!${literal.litstr}]`);
     }
 }
 
-class TIRAsNothingExpression extends TIRAsExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
-        super(TIRExpressionTag.AsNothingExpression, sinfo, exp, "Nothing", `asnothing(${exp.expstr})`);
+//abstract class for is type as operations
+abstract class TIRITestAsTypeExpression extends TIRAsExpression {
+    readonly ttype: TIRTypeKey;
+
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey, issafe: boolean, exprstr: string) {
+        super(tag, sinfo, exp, oftype, issafe, exprstr);
+        this.ttype = ttype;
     }
 }
 
-class TIRAsTypeExpression extends TIRAsExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.AsTypeExpression, sinfo, exp, oftype, `astype<${oftype}>(${exp.expstr})`);
+class TIRAsTypeExpression extends TIRITestAsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsTypeExpression, sinfo, exp, ttype, oftype, issafe, `${exp.expstr}@[${ttype}]`);
     }
 }
 
-class TIRAsSubTypeExpression extends TIRAsExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.AsSubTypeExpression, sinfo, exp, oftype, `assubtype<${oftype}>(${exp.expstr})`);
+class TIRAsNotTypeExpression extends TIRITestAsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsNotTypeExpression, sinfo, exp, ttype, oftype, issafe, `${exp.expstr}@[!${ttype}]`);
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+class TIRAsSubTypeExpression extends TIRITestAsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsSubTypeExpression, sinfo, exp, ttype, oftype, issafe, `${exp.expstr}@[<:${ttype}]`);
+    }
+}
+
+class TIRAsNotSubTypeExpression extends TIRITestAsTypeExpression {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey, issafe: boolean) {
+        super(TIRExpressionTag.AsNotSubTypeExpression, sinfo, exp, ttype, oftype, issafe, `${exp.expstr}@[!<:${ttype}]`);
+    }
+}
 
 //abstract class for member function calls
 abstract class TIRIMemberFunctionExpression extends TIRExpression {
@@ -1675,8 +1704,9 @@ enum TIRStatementTag {
     CallWRefStatement = "CallWRefStatememt",
 
     VariableRetypeStatement = "VariableRetypeStatement",
-    VariableSCReturnStatement = "VariableSCReturnStatement",
     VariableSCRetypeStatement = "VariableSCRetypeStatement",
+    ExpressionSCReturnDefineAndAssignStatement = "ExpressionSCReturnDefineAndAssignStatement",
+    ExpressionSCReturnAssignStatement = "ExpressionSCReturnAssignStatement",
 
     ReturnStatement = "ReturnStatement",
     ReturnStatementWRef = "ReturnStatementWRef",
@@ -1874,21 +1904,100 @@ class TIRVariableRetypeStatement extends TIRStatement {
     readonly vname: string;
     readonly origtype: TIRTypeKey;
     readonly newtype: TIRTypeKey;
+    readonly asconv: TIRAsExpression
 
-    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, newtype: TIRTypeKey) {
-        super(TIRStatementTag.VariableRetypeStatement, sinfo, `${}`);
+    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, newtype: TIRTypeKey, asconv: TIRAsExpression) {
+        super(TIRStatementTag.VariableRetypeStatement, sinfo, `${vname} = ${asconv.expstr}`);
         this.vname = vname;
         this.origtype = origtype;
         this.newtype = newtype;
+        this.asconv = asconv;
+    }
+
+    isFailableOperation(): boolean {
+        return this.asconv.isFailableOperation();
+    }
+
+    getDirectlyModVars(): string[] {
+        return [this.vname];
+    }
+
+    getDirectlyUsedVars(): string[] {
+        return this.asconv.getUsedVars();
     }
 }
 
-class TIRVariableSCReturnStatement extends TIRStatement {
+class TIRVariableSCRetypeStatement extends TIRStatement {
+    readonly vname: string;
+    readonly origtype: TIRTypeKey;
+    readonly test: TIRTestIsExpression;
+    readonly asconv: TIRAsExpression;
+    readonly resexp: TIRExpression;
 
+    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression) {
+        super(TIRStatementTag.VariableSCRetypeStatement, sinfo, `${vname} ?? ${test.expstr} -- ${vname} = safe ${asconv.expstr} : ${resexp.expstr}`);
+        this.vname = vname;
+        this.origtype = origtype;
+        this.test = test;
+        this.asconv = asconv;
+        this.resexp = resexp;
+    }
+
+    isFailableOperation(): boolean {
+        return this.test.isFailableOperation() || this.asconv.isFailableOperation() || this.resexp.isFailableOperation();
+    }
+
+    getDirectlyModVars(): string[] {
+        return [this.vname];
+    }
+
+    getDirectlyUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.asconv.getUsedVars(), this.asconv.getUsedVars(), this.resexp.getUsedVars());
+    }
 }
 
-class TIRVariableSCRetypeStatement extends TIRStatement {
+class TIRExpressionSCReturnDefineAndAssignStatement extends TIRStatement {
+    //always implicitly reads from scratch location
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly isconst: boolean;
+    
+    readonly fromtype: TIRTypeKey;
+    readonly test: TIRTestIsExpression | TIRExpression;
+    readonly asconv: TIRExpression;
+    readonly resexp: TIRExpression;
 
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, isconst: boolean, fromtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression) {
+        super(TIRStatementTag.ExpressionSCReturnDefineAndAssignStatement, sinfo, `${isconst ? "let" : "var"} ${vname}: ${vtype} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.isconst = isconst;
+        this.fromtype = fromtype;
+        this.test = test;
+        this.asconv = asconv;
+        this.resexp = resexp;
+    }
+}
+
+class TIRExpressionSCReturnAssignStatement extends TIRStatement {
+    //always implicitly reads from scratch location
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    
+    readonly fromtype: TIRTypeKey;
+    readonly test: TIRTestIsExpression | TIRExpression;
+    readonly asconv: TIRExpression;
+    readonly resexp: TIRExpression;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, fromtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression) {
+        super(TIRStatementTag.ExpressionSCReturnAssignStatement, sinfo, `${vname} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.fromtype = fromtype;
+        this.test = test;
+        this.asconv = asconv;
+        this.resexp = resexp;
+    }
 }
 
 class TIRReturnStatementGeneral extends TIRStatement {
@@ -2264,10 +2373,15 @@ export {
     TIRCoerceSafeExpression,
     TIRInjectExpression, TIRExtractExpression,
     TIRCreateCodePackExpression,
-    
-    TIRITestIsExpression, TIRITestIsSpecialExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingExpression, TIRIsSomethingExpression, TIRIsOkSpecialExpression, TIRIsErrSpecialExpression,
-
-
+    TIRTestIsExpression, 
+    TIRITestIsSpecialExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsOkSpecialExpression, TIRIsErrSpecialExpression,
+    TIRITestIsLiteralEqExpression, TIRIsEqualToLiteralExpression, TIRIsNotEqualToLiteralExpression,
+    TIRITestIsTypeExpression, TIRIsTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsNotSubTypeExpression,
+    TIRAsExpression,
+    TIRAsSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomeSpecialExpression, TIRAsNothingSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsOkSpecialExpression, TIRAsErrSpecialExpression,
+    TIRIAsLiteralEqExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression,
+    TIRITestAsTypeExpression, TIRAsTypeExpression, TIRAsNotTypeExpression, TIRAsSubTypeExpression, TIRAsNotSubTypeExpression,
+    TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRExpressionSCReturnDefineAndAssignStatement, TIRExpressionSCReturnAssignStatement,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression,
     TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberActionExpression,
     TIRLiteralValue,
