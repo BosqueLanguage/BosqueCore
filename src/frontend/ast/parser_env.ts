@@ -15,7 +15,7 @@ class FunctionScope {
     private readonly m_ispcode: boolean;
     private readonly m_args: Set<string>;
     private readonly m_boundtemplates: Set<string>;
-    private m_locals: { name: string, scopedname: string, isbinder: boolean }[][];
+    private m_locals: {vars: { name: string, scopedname: string, isbinder: boolean }[], isImplicitBinderUsed: boolean}[];
 
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature, ispcode: boolean) {
         this.m_rtype = rtype;
@@ -28,7 +28,7 @@ class FunctionScope {
     }
 
     pushLocalScope() {
-        this.m_locals.push([]);
+        this.m_locals.push({vars: [], isImplicitBinderUsed: false});
     }
 
     popLocalScope() {
@@ -40,7 +40,7 @@ class FunctionScope {
     }
 
     isVarNameDefined(name: string): boolean {
-        return this.m_args.has(name) || this.m_locals.some((frame) => frame.some((nn) => nn.name === name));
+        return this.m_args.has(name) || this.m_locals.some((frame) => frame.vars.some((nn) => nn.name === name));
     }
 
     isTemplateNameDefined(name: string): boolean {
@@ -49,7 +49,7 @@ class FunctionScope {
 
     getScopedVarName(name: string): string {
         for (let i = this.m_locals.length - 1; i >= 0; --i) {
-            const vinfo = this.m_locals[i].find((fr) => fr.name === name);
+            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === name);
             if (vinfo !== undefined) {
                 return vinfo.scopedname;
             }
@@ -58,8 +58,35 @@ class FunctionScope {
         return name;
     }
 
+    getBinderExtension(vname: string): string {
+        let bcount = 0;
+
+        for (let i = this.m_locals.length - 1; i >= 0; --i) {
+            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === vname);
+            if (vinfo !== undefined) {
+                bcount++;
+            }
+        }
+
+        return bcount.toString();
+    }
+
+    getUsedImplicitBinder(): boolean {
+        return this.m_locals.length !== 0 ? this.m_locals[this.m_locals.length - 1].isImplicitBinderUsed : false;
+    }
+
+    markUsedImplicitBinder() {
+        for (let i = this.m_locals.length - 1; i >= 0; --i) {
+            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === "$");
+            if (vinfo !== undefined) {
+                this.m_locals[i].isImplicitBinderUsed = true;
+                return;
+            }
+        }
+    }
+
     defineLocalVar(name: string, scopedname: string, isbinder: boolean) {
-        this.m_locals[this.m_locals.length - 1].push({ name: name, scopedname: scopedname, isbinder: isbinder });
+        this.m_locals[this.m_locals.length - 1].vars.push({ name: name, scopedname: scopedname, isbinder: isbinder });
     }
 
     getCaptureVars(): Set<string> {
@@ -169,9 +196,18 @@ class ParserEnvironment {
 
     useLocalVar(name: string): string {
         if (this.isFunctionScopeActive()) {
+            const oname = name;
             const cscope = this.getCurrentFunctionScope();
 
-            if (name === "$") {
+            if(oname === "$") {
+                for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
+                    if (this.m_functionScopes[i].isVarNameDefined(name)) {
+                        this.m_functionScopes[i].markUsedImplicitBinder();
+                    }
+                }
+            }
+
+            if (name.startsWith("$")) {
                 for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
                     if (this.m_functionScopes[i].isVarNameDefined(name)) {
                         name = this.m_functionScopes[i].getScopedVarName(name);
@@ -221,20 +257,8 @@ class ParserEnvironment {
         }
     }
 
-    getBinderExtension(): string {
-        if (this.isFunctionScopeActive()) {
-            let bcount = 0;
-
-            for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
-                if (this.m_functionScopes[i].isVarNameDefined("$")) {
-                    bcount++;
-                }
-            }
-
-            return bcount.toString();
-        }
-        
-        return "0";
+    getBinderExtension(vname: string): string {
+        return this.getCurrentFunctionScope().getBinderExtension(vname);
     }
 }
 

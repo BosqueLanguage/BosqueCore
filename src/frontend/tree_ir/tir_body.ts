@@ -1563,21 +1563,16 @@ enum TIRStatementTag {
     DebugStatement = "DebugStatement",
 
     VarDeclareStatement = "VarDeclareStatement",
-    VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
     VarAssignStatement = "VarAssignStatement",
-
-    VarDeclareAndAssignStatementWRef = "VarDeclareAndAssignStatementWRef",
-    VarAssignStatementWRef = "VarAssignStatementWRef",
-
-    VarDeclareAndAssignStatementWTaskRef = "VarDeclareAndAssignStatementWTaskRef",
-    VarAssignStatementWTaskRef = "VarAssignStatementWTaskRef",
-
-    VarDeclareAndAssignStatementWAction = "VarDeclareAndAssignStatementWAction",
-    VarAssignStatementWAction = "VarAssignStatementWAction",
+    VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
 
     CallStatementWRef = "CallStatementWRef",
     CallStatementWTaskRef = "CallStatementWTaskRef",
     CallStatementWAction = "CallStatementWAction",
+
+    VariableRetypeStatement = "VariableRetypeStatement",
+    VariableSCReturnStatement = "VariableSCReturnStatement",
+    VariableSCRetypeStatement = "VariableSCRetypeStatement",
 
     ReturnStatement = "ReturnStatement",
     ReturnStatementWRef = "ReturnStatementWRef",
@@ -1850,6 +1845,8 @@ class TIRVarAssignStatementWAction extends TIRVarAssignStatementGeneral {
 class TIRCallStatementWRefGeneral extends TIRStatement {
     readonly vexp: TIRExpression;
 
+    xxxx; //needs an optional assign var as well -- we are breaking up assign with ref into call-ref and assign + cast (if needed) as 2 steps -- also can do early return 
+
     constructor(sinfo: SourceInfo, tag: TIRStatementTag, vexp: TIRExpression) {
         super(tag, sinfo, `${vexp.expstr};`);
         this.vexp = vexp;
@@ -1902,6 +1899,10 @@ class TIRCallStatementWAction extends TIRCallStatementWRefGeneral {
         return ["self"];
     }
 }
+
+VariableRetypeStatement = "VariableRetypeStatement",
+    VariableSCReturnStatement = "VariableSCReturnStatement",
+    VariableSCRetypeStatement = "VariableSCRetypeStatement",
 
 class TIRReturnStatementGeneral extends TIRStatement {
     readonly value: TIRExpression;

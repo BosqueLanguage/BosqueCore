@@ -8,11 +8,6 @@ namespace Core;
 
 //<summary>Special type which all values are instances of.</summary>
 __universal concept Any {
-    method is<T>(): Bool = special_method;
-    method as<T>(): T = special_method;
-
-    method isSome(): Bool = special_method;
-    method isNone(): Bool = special_method;
 }
 
 //<summary>Special type for representing all non-none values.</summary>
@@ -504,20 +499,10 @@ __universal concept Record provides Some {
 
 //<summary>Generic type for all Option<T> to inherit from.</summary>
 __universal concept IOption provides Some {
-    method isNothing(): Bool = special_nothing;
-    method isSomething(): Bool = special_something;
-
-    method asNothing(): Nothing {
-        return this.as<Nothing>();
-    }
-
-    method asSomething<T>(): Something<T> {
-        return this.as<Something<T>>();
-    }
 }
 
 //<summary>Generic type for all Option<T> to inherit from.</summary>
-__universal concept ISomething provides IOption {
+__universal concept Something provides IOption {
 }
 
 //<summary>Type for representing the nothing option value.</summary>
@@ -534,12 +519,8 @@ __universal concept IOptionT provides Some {
 }
 
 concept Option<T> provides IOption, APIType when T grounded APIType, Testable when T grounded Testable {
-    method asSomething(): Something<T> {
-        return this.as<Something<T>>();
-    }
-
     method data(): T {
-        return this.asSomething().value();
+        return this@[Something<T>].value();
     }
 
     method convert<V>(): Option<V> {
@@ -547,7 +528,7 @@ concept Option<T> provides IOption, APIType when T grounded APIType, Testable wh
             return nothing;
         }
         else {
-            return Something{this.data().as<V>()};
+            return Something{this.data()@[V]};
         }
     }
 }
@@ -583,27 +564,27 @@ concept Result<T, E> provides IResult, APIType when T grounded APIType && E grou
     }
 
     method isOk(): Bool {
-        return this.is<Result<T, E>::Ok>();
+        return this@[Result<T, E>::Ok];
     }
 
     method isErr(): Bool {
-        return this.is<Result<T, E>::Err>();
+        return this@[Result<T, E>::Err];
     }
 
     method result(): T {
-        return this.as<Result<T, E>::Ok>().value();
+        return this@[Result<T, E>::Ok].value();
     }
 
     method error(): E {
-        return this.as<Result<T, E>::Err>().value();
+        return this@[Result<T, E>::Err].value();
     }
 
     method convert<U, V>(): Result<U, V> {
-        if(this.is<Result<T, E>::Ok>()) {
-            return Result<U, V>::Ok{this.result().as<U>()};
+        if(this?[Result<T, E>::Ok]) {
+            return Result<U, V>::Ok{this.result()@[U]};
         }
         else {
-            return Result<U, V>::Err{this.error().as<V>()};
+            return Result<U, V>::Err{this.error()@[V]};
         }
     }
 }

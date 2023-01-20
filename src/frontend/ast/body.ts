@@ -9,6 +9,62 @@ import { InvokeDecl } from "./assembly";
 import { BuildLevel, LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
+abstract class ITest {
+    readonly isnot: boolean;
+
+    constructor(isnot: boolean) {
+        this.isnot = isnot;
+    }
+}
+
+class ITestType extends ITest {
+    readonly ttype: TypeSignature;
+    
+    constructor(isnot: boolean, ttype: TypeSignature) {
+        super(isnot);
+        this.ttype = ttype;
+    }
+}
+
+class ITestLiteral extends ITest {
+    readonly literal: LiteralExpressionValue;
+    
+    constructor(isnot: boolean, literal: LiteralExpressionValue) {
+        super(isnot);
+        this.literal = literal;
+    }
+}
+
+class ITestNone extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
+class ITestNothing extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
+class ITestSomething extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
+class ITestOk extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
+class ITestErr extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
 enum ExpressionTag {
     Clear = "[CLEAR]",
     InvalidExpresion = "[INVALID]",
@@ -540,8 +596,8 @@ enum PostfixOpTag {
     PostfixAccessFromIndex = "PostfixAccessFromIndex",
     PostfixAccessFromName = "PostfixAccessFromName",
 
-    PostfixIs = "PostfixIs",
-    PostfixAs = "PostfixAs",
+    PostfixIsTest = "PostfixIsTest",
+    PostfixAsConvert = "PostfixAsConvert",
 
     PostfixInvoke = "PostfixInvoke"
 }
@@ -585,21 +641,21 @@ class PostfixAccessFromName extends PostfixOperation {
     }
 }
 
-class PostfixIs extends PostfixOperation {
-    readonly istype: TypeSignature;
+class PostfixIsTest extends PostfixOperation {
+    readonly ttest: ITest;
 
-    constructor(sinfo: SourceInfo, istype: TypeSignature) {
-        super(sinfo, PostfixOpTag.PostfixIs);
-        this.istype = istype;
+    constructor(sinfo: SourceInfo, ttest: ITest) {
+        super(sinfo, PostfixOpTag.PostfixIsTest);
+        this.ttest = ttest;
     }
 }
 
-class PostfixAs extends PostfixOperation {
-    readonly astype: TypeSignature;
+class PostfixAsConvert extends PostfixOperation {
+    readonly ttest: ITest;
 
-    constructor(sinfo: SourceInfo, astype: TypeSignature) {
-        super(sinfo, PostfixOpTag.PostfixAs);
-        this.astype = astype;
+    constructor(sinfo: SourceInfo, ttest: ITest) {
+        super(sinfo, PostfixOpTag.PostfixAsConvert);
+        this.ttest = ttest;
     }
 }
 
@@ -816,45 +872,21 @@ class MapEntryConstructorExpression extends Expression {
     }
 }
 
-abstract class IfTest {
+class IfTest {
     readonly exp: Expression;
-    readonly bindername: string | undefined; 
+    readonly itestopt: ITest | undefined;
 
-    constructor(exp: Expression, bindername: string | undefined) {
+    constructor(exp: Expression, itestopt: ITest | undefined) {
         this.exp = exp;
-        this.bindername = bindername;
-    }
-}
-
-class IfExpTest extends IfTest {
-    constructor(exp: Expression, bindername: string | undefined) {
-        super(exp, bindername);
-    }
-}
-
-class IfTypeTest extends IfTest {
-    readonly ttype: TypeSignature;
-
-    constructor(ttype: TypeSignature, exp: Expression, bindername: string | undefined) {
-        super(exp, bindername);
-        this.ttype = ttype;
-    }
-}
-
-class IfEqTest extends IfTest {
-    readonly literal: LiteralExpressionValue;
-
-    constructor(literal: LiteralExpressionValue, exp: Expression, bindername: string | undefined) {
-        super(exp, bindername);
-        this.literal = literal;
+        this.itestopt = itestopt;
     }
 }
 
 class IfExpression extends Expression {
-    readonly condflow: {cond: IfTest, value: Expression}[];
-    readonly elseflow: {value: Expression, binderinfo: [string, Expression] | undefined};
+    readonly condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[];
+    readonly elseflow: Expression;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression}[], elseflow: {value: Expression, binderinfo: [string, Expression] | undefined}) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[], elseflow: Expression) {
         super(ExpressionTag.IfExpression, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
@@ -863,26 +895,22 @@ class IfExpression extends Expression {
 
 class SwitchExpression extends Expression {
     readonly sval: Expression;
-    readonly bindername: string | undefined;
-    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[];
+    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined}[]) {
         super(ExpressionTag.SwitchExpression, sinfo);
         this.sval = sval;
-        this.bindername = bindername;
         this.switchflow = switchflow;
     }
 }
 
 class MatchExpression extends Expression {
     readonly sval: Expression;
-    readonly bindername: string | undefined;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression}[];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, bindername: string | undefined, flow: {mtype: TypeSignature | undefined, value: Expression}[]) {
+    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined}[]) {
         super(ExpressionTag.MatchExpression, sinfo);
         this.sval = sval;
-        this.bindername = bindername;
         this.matchflow = flow;
     }
 }
@@ -957,7 +985,10 @@ enum StatementTag {
 
     VariableDeclarationStatement = "VariableDeclarationStatement",
     VariableAssignmentStatement = "VariableAssignmentStatement",
+
     VariableRetypeStatement = "VariableRetypeStatement",
+    ExpressionSCReturnStatement = "VariableSCReturnStatement",
+    VariableSCRetypeStatement = "VariableSCRetypeStatement",
 
     ReturnStatement = "ReturnStatement",
 
@@ -1032,35 +1063,65 @@ class VariableDeclarationStatement extends Statement {
     readonly isConst: boolean;
     readonly vtype: TypeSignature; //may be auto
     readonly exp: Expression | undefined; //may be undef
+    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, name: string, isConst: boolean, vtype: TypeSignature, exp: Expression | undefined) {
+    constructor(sinfo: SourceInfo, name: string, isConst: boolean, vtype: TypeSignature, exp: Expression | undefined, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined) {
         super(StatementTag.VariableDeclarationStatement, sinfo);
         this.name = name;
         this.isConst = isConst;
         this.vtype = vtype;
         this.exp = exp;
+        this.scinfo = scinfo;
     }
 }
 
 class VariableAssignmentStatement extends Statement {
     readonly name: string;
     readonly exp: Expression;
+    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, name: string, exp: Expression) {
+    constructor(sinfo: SourceInfo, name: string, exp: Expression, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined) {
         super(StatementTag.VariableAssignmentStatement, sinfo);
         this.name = name;
         this.exp = exp;
+        this.scinfo = scinfo;
     }
 }
 
 class VariableRetypeStatement extends Statement {
     readonly name: string;
-    readonly oftype: TypeSignature;
+    readonly ttest: ITest;
 
-    constructor(sinfo: SourceInfo, name: string, oftype: TypeSignature) {
+    constructor(sinfo: SourceInfo, name: string, ttest: ITest) {
         super(StatementTag.VariableRetypeStatement, sinfo);
         this.name = name;
-        this.oftype = oftype;
+        this.ttest = ttest;
+    }
+}
+
+class ExpressionSCReturnStatement extends Statement {
+    readonly exp: Expression;
+    readonly ttest: ITest | Expression;
+    readonly res: Expression | undefined;
+
+    constructor(sinfo: SourceInfo, exp: Expression, ttest: ITest | Expression, res: Expression | undefined) {
+        super(StatementTag.ExpressionSCReturnStatement, sinfo);
+        this.exp = exp;
+        this.ttest = ttest;
+        this.res = res;
+    }
+}
+
+class VariableSCRetypeStatement extends Statement {
+    readonly name: string;
+    readonly ttest: ITest;
+    readonly res: Expression | undefined;
+
+    constructor(sinfo: SourceInfo, name: string, ttest: ITest, res: Expression | undefined) {
+        super(StatementTag.VariableSCRetypeStatement, sinfo);
+        this.name = name;
+        this.ttest = ttest;
+        this.res = res;
     }
 }
 
@@ -1074,10 +1135,10 @@ class ReturnStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-    readonly condflow: {cond: Expression, value: ScopedBlockStatement}[];
+    readonly condflow: {cond: IfTest, value: ScopedBlockStatement}[];
     readonly elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined};
 
-    constructor(sinfo: SourceInfo, condflow: {cond: Expression, value: ScopedBlockStatement}[], elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined}) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: ScopedBlockStatement}[], elseflow: {value: ScopedBlockStatement | undefined, binderinfo: [string, Expression] | undefined}) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
@@ -1138,10 +1199,12 @@ class DebugStatement extends Statement {
 
 class RefCallStatement extends Statement {
     readonly call: PostfixOp | TaskSelfActionExpression;
+    readonly optscinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, call: PostfixOp | TaskSelfActionExpression) {
+    constructor(sinfo: SourceInfo, call: PostfixOp | TaskSelfActionExpression, optscinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined) {
         super(StatementTag.RefCallStatement, sinfo);
         this.call = call;
+        this.optscinfo = optscinfo;
     }
 }
 
@@ -1492,6 +1555,7 @@ class BodyImplementation {
 
 export {
     RecursiveAnnotation,
+    ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr,
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
@@ -1504,7 +1568,7 @@ export {
     LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixAccessFromIndex, PostfixAccessFromName,
-    PostfixIs, PostfixAs,
+    PostfixIsTest, PostfixAsConvert,
     PostfixInvoke, PCodeInvokeExpression,
     PrefixNotOp, PrefixNegateOp,
     BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
@@ -1512,12 +1576,12 @@ export {
     NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
     BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
     MapEntryConstructorExpression,
-    IfTest, IfExpTest, IfTypeTest, IfEqTest,
+    IfTest,
     IfExpression, SwitchExpression, MatchExpression,
     TaskSelfFieldExpression, TaskSelfControlExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, VariableAssignmentStatement,
-    VariableRetypeStatement,
+    VariableRetypeStatement, ExpressionSCReturnStatement, VariableSCRetypeStatement,
     ReturnStatement,
     IfStatement, AbortStatement, AssertStatement, DebugStatement, RefCallStatement,
     SwitchStatement, MatchStatement,

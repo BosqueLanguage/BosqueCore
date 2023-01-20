@@ -212,7 +212,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
             return List<U>{};
         }
         else {
-            return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v.is<U>(), fn(vv: T): U => s_safeAs<T, U>(vv));
+            return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v?[U], fn(vv: T): U => s_safeAs<T, U>(vv));
         }
     }
 
@@ -221,7 +221,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
             return List<U>{};
         }
         else {
-            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => v.as<U>());
+            return ListOps::s_list_map_fn<T, U>(this, fn(v: T): U => v@[U]);
         }
     }
 

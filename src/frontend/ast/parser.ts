@@ -5,7 +5,7 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAs, PostfixInvoke, PostfixIs, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, IfTypeTest, IfEqTest, IfExpTest, VariableRetypeStatement } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement } from "./body";
 import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { BuildLevel, SourceInfo } from "../build_decls";
@@ -155,6 +155,8 @@ const SYM_rparen = ")";
 const SYM_rbrace = "}";
 const SYM_rbracebar = "|}";
 
+const SYM_at = "@";
+const SYM_atat = "@@";
 const SYM_hash = "#";
 const SYM_percent = "%";
 const SYM_amp = "&";
@@ -177,6 +179,7 @@ const SYM_bar = "|";
 const SYM_barbar = "||";
 const SYM_plus = "+";
 const SYM_question = "?";
+const SYM_questionquestion = "??";
 const SYM_le = "<";
 const SYM_leq = "<=";
 const SYM_ge = ">";
@@ -197,6 +200,8 @@ const SymbolStrings = [
     SYM_rbrace,
     SYM_rbracebar,
 
+    SYM_at,
+    SYM_atat,
     SYM_hash,
     SYM_percent,
     SYM_amp,
@@ -219,6 +224,7 @@ const SymbolStrings = [
     SYM_barbar,
     SYM_plus,
     SYM_question,
+    SYM_questionquestion,
     SYM_le,
     SYM_leq,
     SYM_ge,
@@ -1151,10 +1157,6 @@ class Parser {
         }
     }
 
-    private isBinderToken(): boolean {
-        return this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "$";
-    }
-
     ////
     //Misc parsing
 
@@ -1518,6 +1520,74 @@ class Parser {
 
     ////
     //Expression parsing
+    private parseITest(): ITest {
+        if(this.testToken(SYM_lbrack)) {
+            return this.parseITypeTest();
+        }
+        else if(this.testToken(SYM_le)) {
+            return this.parseILiteralTest();
+        }
+        else {
+            const isnot = this.testAndConsumeTokenIf(SYM_bang);
+
+            if(this.testToken(KW_none)) {
+                return new ITestNone(isnot);
+            }
+            else if(this.testToken(KW_nothing)) {
+                return new ITestNothing(isnot);
+            }
+            else if(this.testToken(KW_something)) {
+                return new ITestSomething(isnot);
+            }
+            else if(this.testToken(KW_ok)) {
+                return new ITestOk(isnot);
+            }
+            else if(this.testAndConsumeTokenIf(KW_err)) {
+                return new ITestErr(isnot);
+            }
+            else {
+                this.raiseError(this.getCurrentLine(), `Unknown option for ITest -- ${this.peekTokenData()}`);
+                return (undefined as any) as ITest;
+            }
+        }
+    }
+
+    private parseITypeTest(): ITest {
+        this.consumeToken();
+        const isnot = this.testAndConsumeTokenIf(SYM_bang);
+        const ttype = this.parseTypeSignature();
+        this.ensureAndConsumeToken(SYM_rbrack, "itype test");
+
+        return new ITestType(isnot, ttype);
+    }
+
+    private parseILiteralTest(): ITest {
+        this.consumeToken();
+        const isnot = this.testAndConsumeTokenIf(SYM_bang);
+
+        if (this.testToken(KW_none)) {
+            return new ITestNone(isnot);
+        }
+        else if (this.testToken(KW_nothing)) {
+            return new ITestNothing(isnot);
+        }
+        else if (this.testToken(KW_something)) {
+            return new ITestSomething(isnot);
+        }
+        else if (this.testToken(KW_ok)) {
+            return new ITestOk(isnot);
+        }
+        else if (this.testAndConsumeTokenIf(KW_err)) {
+            return new ITestErr(isnot);
+        }
+        else {
+            const literal = this.parseLiteralExpression("itype test");
+            this.ensureAndConsumeToken(SYM_rbrack, "itype test");
+
+            return new ITestLiteral(isnot, literal);
+        }
+    }
+
     private parseArguments(lparen: string, rparen: string): Expression[] {
         let args: Expression[] = [];
 
@@ -2165,48 +2235,6 @@ class Parser {
         }
     }
 
-    private handleSpecialCaseMethods(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string): PostfixOperation {
-        if (specificResolve !== undefined) {
-            this.raiseError(this.getCurrentLine(), "Cannot use specific resolve on special methods");
-        }
-
-        const line = sinfo.line;
-        if (name === "is") {
-            this.ensureAndConsumeToken(SYM_le, "is");
-            const istype = this.parseTypeSignature();
-            this.ensureAndConsumeToken(SYM_ge, "is");
-            this.ensureAndConsumeToken(SYM_lparen, "is");
-            this.ensureAndConsumeToken(SYM_rparen, "is");
-
-            return new PostfixIs(sinfo, istype);
-        }
-        else if (name === "isSome") {
-            this.ensureAndConsumeToken(SYM_lparen, "isSome");
-            this.ensureAndConsumeToken(SYM_rparen, "isSome");
-
-            return new PostfixIs(sinfo, this.m_penv.SpecialSomeSignature);
-        }
-        else if (name === "isNone") {
-            this.ensureAndConsumeToken(SYM_lparen, "isNone");
-            this.ensureAndConsumeToken(SYM_rparen, "isNone");
-
-            return new PostfixIs(sinfo, this.m_penv.SpecialNoneSignature);
-        }
-        else if (name === "as") {
-            this.ensureAndConsumeToken(SYM_le, "as");
-            const astype = this.parseTypeSignature();
-            this.ensureAndConsumeToken(SYM_ge, "as");
-            this.ensureAndConsumeToken(SYM_lparen, "as");
-            this.ensureAndConsumeToken(SYM_rparen, "as");
-
-            return new PostfixAs(sinfo, astype);
-        }
-        else {
-            this.raiseError(line, "unknown special operation");
-            return (undefined as unknown) as PostfixOperation;
-        }
-    }
-
     private parsePostfixExpression(pfxops: ("!" | "+" | "-")[]): [Expression, ("!" | "+" | "-")[]] {
         const rootinfo = this.getCurrentSrcInfo();
 
@@ -2216,7 +2244,19 @@ class Parser {
         while (true) {
             const sinfo = this.getCurrentSrcInfo();
 
-            if (this.testToken(SYM_dot)) {
+            if(this.testToken(SYM_question)) {
+                this.consumeToken();
+
+                const ttest = this.parseITest();
+                ops.push(new PostfixIsTest(sinfo, ttest));
+            }
+            else if(this.testToken(SYM_at)) {
+                this.consumeToken();
+                
+                const ttest = this.parseITest();
+                ops.push(new PostfixAsConvert(sinfo, ttest));
+            }
+            else if (this.testToken(SYM_dot)) {
                 this.consumeToken();
 
                 if (this.testToken(TokenStrings.Numberino)) {
@@ -2237,14 +2277,7 @@ class Parser {
                     this.ensureToken(TokenStrings.Identifier, "postfix \".\" access");
                     const name = this.consumeTokenAndGetValue();
 
-                    if (name === "as" || name === "is" || name === "isSome" || name === "isNone") {
-                        if(refpfx) {
-                            this.raiseError(sinfo.line, "cannot use \"ref on Any type method call\"");
-                        }
-
-                        ops.push(this.handleSpecialCaseMethods(sinfo, specificResolve, name));
-                    }
-                    else if (!(this.testToken(SYM_le) || this.testToken(SYM_lbrack) || this.testToken(SYM_lparen))) {
+                    if (!(this.testToken(SYM_le) || this.testToken(SYM_lbrack) || this.testToken(SYM_lparen))) {
                         if(refpfx) {
                             this.raiseError(sinfo.line, "Cannot use \"ref on field/property index op\"");
                         }
@@ -2506,59 +2539,33 @@ class Parser {
     private parseIfTest(bindername: string): IfTest {
         const tk = this.peekToken();
         
-        if(tk === SYM_le) {
-            this.consumeToken();
-            const oftype = this.parseTypeSignature();
-            this.ensureAndConsumeToken(SYM_ge, "if type test");
-
-            const isbinder = this.isBinderToken();
-            if(isbinder) {
-                this.consumeToken();
-            }
-
-            this.ensureAndConsumeToken(SYM_lparen, "if type test");
-            const exp = this.parseExpression();
-            this.ensureAndConsumeToken(SYM_rparen, "if type test");
-
-            return new IfTypeTest(oftype, exp, isbinder ? bindername : undefined);
-        }
-        else if(tk === SYM_lbrack) {
-            this.consumeToken();
-            const literal = this.parseLiteralExpression("if equal literal test");
-            this.ensureAndConsumeToken(SYM_rbrack, "if equal literal test");
-
-            const isbinder = this.isBinderToken();
-            if(isbinder) {
-                this.consumeToken();
-            }
-
-            this.ensureAndConsumeToken(SYM_lparen, "if equal literal test");
-            const exp = this.parseExpression();
-            this.ensureAndConsumeToken(SYM_rparen, "if equal literal test");
-
-            return new IfEqTest(literal, exp, isbinder ? bindername : undefined);
-        }
-        else {
-            const isbinder = this.isBinderToken();
-            if(isbinder) {
-                this.consumeToken();
-            }
-
+        if(tk !== SYM_lparen) {
+            const itest = this.parseITest();
+            
             this.ensureAndConsumeToken(SYM_lparen, "if test");
             const exp = this.parseExpression();
             this.ensureAndConsumeToken(SYM_rparen, "if test");
 
-            return new IfExpTest(exp, isbinder ? bindername : undefined);
+            return new IfTest(exp, itest);
+        }
+        else {
+            this.ensureAndConsumeToken(SYM_lparen, "if test");
+            const exp = this.parseExpression();
+            this.ensureAndConsumeToken(SYM_rparen, "if test");
+
+            return new IfTest(exp,  undefined);
         }
     }
 
-    private parseExpressionWithBinder(): Expression {
+    private parseExpressionWithBinder(): [boolean, Expression] {
         try {
             this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension()}`, true);
+            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension("$")}`, true);
 
-            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-            return this.parseExpression();
+            const ee = this.parseExpression();
+            const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
+
+            return [isbind, ee];
         }
         finally {
             this.m_penv.getCurrentFunctionScope().popLocalScope();
@@ -2567,40 +2574,30 @@ class Parser {
 
     private parseIfExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
-        let conds: {cond: IfTest, value: Expression}[] = [];
+        let conds: {cond: IfTest, value: Expression, binderinfo: string | undefined}[] = [];
 
         this.consumeToken();
         const iftest = this.parseIfTest(bindername);
 
         this.ensureAndConsumeToken(KW_then, "if expression value")
-        const ifbody = iftest.bindername !== undefined ? this.parseExpressionWithBinder() : this.parseExpression();
-        conds.push({ cond: iftest, value: ifbody });
+        const [ifbind, ifbody] = this.parseExpressionWithBinder();
+        conds.push({ cond: iftest, value: ifbody, binderinfo: ifbind ? bindername : undefined });
 
         while (this.testAndConsumeTokenIf(KW_elif)) {
             const eliftest = this.parseIfTest(bindername);
 
             this.ensureAndConsumeToken(KW_then, "elif expression value")
-            const elifbody = eliftest.bindername !== undefined ? this.parseExpressionWithBinder() : this.parseExpression();
+            const [elifbind, elifbody] = this.parseExpressionWithBinder();
 
-            conds.push({ cond: eliftest, value: elifbody });
+            conds.push({ cond: eliftest, value: elifbody, binderinfo: elifbind ? bindername : undefined});
         }
 
         this.ensureAndConsumeToken(KW_else, "if expression else value");
-        if(!this.isBinderToken()) {
-            const elsebody = this.parseExpression();
-            return new IfExpression(sinfo, conds, {value: elsebody, binderinfo: undefined});
-        }
-        else {
-            this.consumeToken();
-            this.ensureAndConsumeToken(SYM_lbrack, "else clause binder");
-            const elsebind = this.parseExpression();
-            this.ensureAndConsumeToken(SYM_rbrack, "else clause binder");
+        const elsebody = this.parseExpression();
 
-            const elsebody = this.parseExpressionWithBinder();
-            return new IfExpression(sinfo,conds, {value: elsebody, binderinfo: [bindername, elsebind]});
-        }
+        return new IfExpression(sinfo, conds, elsebody);
     }
 
     private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
@@ -2619,40 +2616,35 @@ class Parser {
 
     private parseSwitchExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
         this.ensureAndConsumeToken(KW_switch, "switch expression dispatch value");
-
-        const isbinder = this.isBinderToken();
-        if(isbinder) {
-            this.consumeToken();
-        }
 
         this.ensureAndConsumeToken(SYM_lparen, "switch expression dispatch value");
         const mexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "switch expression dispatch value");
 
-        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression }[] = [];
+        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch expression options");
 
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-        const swvalue = isbinder ? this.parseExpressionWithBinder(): this.parseExpression();
+        const [swbind, swvalue] = this.parseExpressionWithBinder();
 
-        entries.push({ condlit: swlit, value: swvalue });
+        entries.push({ condlit: swlit, value: swvalue, bindername: swbind ? bindername : undefined });
         
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-            const swvaluex =  isbinder ? this.parseExpressionWithBinder() : this.parseExpression();
+            const [swbindx, swvaluex] = this.parseExpressionWithBinder();
 
-            entries.push({ condlit: swlitx, value: swvaluex });
+            entries.push({ condlit: swlitx, value: swvaluex, bindername: swbindx ? bindername : undefined });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch expression options");
 
-        return new SwitchExpression(sinfo, mexp, isbinder ? bindername : undefined, entries);
+        return new SwitchExpression(sinfo, mexp, entries);
     }
 
     private parseMatchTypeGuard(): TypeSignature | undefined {
@@ -2671,44 +2663,98 @@ class Parser {
 
     private parseMatchExpression(): Expression {
         const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
+        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
 
         this.ensureAndConsumeToken(KW_match, "match expression dispatch value");
-
-        const isbinder = this.isBinderToken();
-        if(isbinder) {
-            this.consumeToken();
-        }
 
         this.ensureAndConsumeToken(SYM_lparen, "match expression dispatch value");
         const mexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "match expression dispatch value");
  
-        let entries: { mtype: TypeSignature | undefined, value: Expression }[] = [];
+        let entries: { mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "match expression options");
 
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "match expression entry");
-        const mvalue = isbinder ? this.parseExpressionWithBinder() : this.parseExpression();
+        const [mbind, mvalue] = this.parseExpressionWithBinder();
 
-        entries.push({ mtype: mtype, value: mvalue });
+        entries.push({ mtype: mtype, value: mvalue, bindername: mbind ? bindername : undefined });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
             
             const mtypex = this.parseMatchTypeGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "match expression entry");
-            const mvaluex = isbinder ? this.parseExpressionWithBinder() : this.parseExpression();
+            const [mbindx, mvaluex] = this.parseExpressionWithBinder();
 
 
-            entries.push({ mtype: mtypex, value: mvaluex });
+            entries.push({ mtype: mtypex, value: mvaluex, bindername: mbindx ? bindername : undefined });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "match expression options");
 
-        return new MatchExpression(sinfo, mexp, isbinder ? bindername : undefined, entries);
+        return new MatchExpression(sinfo, mexp, entries);
     }
 
     private parseExpression(): Expression {
         return this.parseMapEntryConstructorExpression();
+    }
+
+    private parseSCReturnTest(): ITest | Expression {
+        if(this.testToken(SYM_lbrack)) {
+            return this.parseITypeTest();
+        }
+        else if(this.testToken(SYM_le)) {
+            return this.parseILiteralTest();
+        }
+        else {
+            const isnot = this.testAndConsumeTokenIf(SYM_bang);
+
+            if(this.testToken(KW_none)) {
+                return new ITestNone(isnot);
+            }
+            else if(this.testToken(KW_nothing)) {
+                return new ITestNothing(isnot);
+            }
+            else if(this.testToken(KW_something)) {
+                return new ITestSomething(isnot);
+            }
+            else if(this.testToken(KW_ok)) {
+                return new ITestOk(isnot);
+            }
+            else if(this.testAndConsumeTokenIf(KW_err)) {
+                return new ITestErr(isnot);
+            }
+            else {
+                return this.parseExpression();
+            }
+        }
+    }
+
+    private parseSCRefExpression(): [Expression, {sctest: ITest | Expression, scaction: Expression | undefined} | undefined] {
+        const ee = this.parsePostfixExpression([])[0];
+        if(this.testToken(SYM_questionquestion)) {
+            this.consumeToken();
+            const sctest = this.parseSCReturnTest();
+            const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+
+            return [ee, {sctest: sctest, scaction: scaction}];
+        }
+        else {
+            return [ee, undefined];
+        }
+    }
+
+    private parseSCAssignExpression(): [Expression, {sctest: ITest | Expression, scaction: Expression | undefined} | undefined] {
+        const ee = this.parseExpression();
+        if(this.testToken(SYM_questionquestion)) {
+            this.consumeToken();
+            const sctest = this.parseSCReturnTest();
+            const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+
+            return [ee, {sctest: sctest, scaction: scaction}];
+        }
+        else {
+            return [ee, undefined];
+        }
     }
 
     ////
@@ -2776,10 +2822,10 @@ class Parser {
                     return new ReturnStatement(sinfo, new TaskGetIDExpression(sinfo));
                 }
                 else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskGetIDExpression(sinfo));
+                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskGetIDExpression(sinfo), undefined);
                 }
                 else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskGetIDExpression(sinfo));
+                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskGetIDExpression(sinfo), undefined);
                 }
             }
             else {
@@ -2787,10 +2833,10 @@ class Parser {
                     return new ReturnStatement(sinfo, new TaskCancelRequestedExpression(sinfo))
                 }
                 else if(isdefine) {
-                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskCancelRequestedExpression(sinfo));
+                    return new VariableDeclarationStatement(sinfo, vv.name, isconst, vv.vtype, new TaskCancelRequestedExpression(sinfo), undefined);
                 }
                 else {
-                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskCancelRequestedExpression(sinfo));
+                    return new VariableAssignmentStatement(sinfo, vv.name, new TaskCancelRequestedExpression(sinfo), undefined);
                 }
             }
         }
@@ -2917,8 +2963,9 @@ class Parser {
                 }
 
                 let exp: Expression | undefined = undefined;
+                let sccinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined = undefined;
                 if (hasassign) {
-                    exp = this.parseExpression();
+                    [exp, sccinfo] = this.parseSCAssignExpression();
                 }
                 this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
@@ -2926,7 +2973,7 @@ class Parser {
                     this.raiseError(line, "Const variable declaration must include an assignment to the variable");
                 }
 
-                return new VariableDeclarationStatement(sinfo, vvar.name, isConst, vvar.vtype, exp);
+                return new VariableDeclarationStatement(sinfo, vvar.name, isConst, vvar.vtype, exp, sccinfo);
             }
         }
         else if(tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
@@ -2945,14 +2992,33 @@ class Parser {
             return new TaskSetSelfFieldStatement(sinfo, fname, value);
         }
         else if (tk === TokenStrings.Identifier) {
-            if(this.peekToken(1) === SYM_lbrack) {
+            if(this.peekToken(1) === SYM_at) {
                 const name = this.consumeTokenAndGetValue();
                 this.consumeToken();
-                const oftype = this.parseTypeSignature();
+                const ttest = this.parseITest()
                 this.ensureAndConsumeToken(SYM_rbrack, "variable retype");
                 this.ensureAndConsumeToken(SYM_semicolon, "variable retype");
 
-                return new VariableRetypeStatement(sinfo, name, oftype);
+                return new VariableRetypeStatement(sinfo, name, ttest);
+            }
+            else if(this.peekToken(1) === SYM_atat || this.peekToken(1) === SYM_questionquestion) {
+                const name = this.consumeTokenAndGetValue();
+
+                const isconvert = this.testToken(SYM_atat);
+                this.consumeToken();
+
+                if(isconvert) {
+                    const sctest = this.parseITest();
+                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+
+                    return new VariableSCRetypeStatement(sinfo, name, sctest, scaction);
+                }
+                else {
+                    const sctest = this.parseSCReturnTest();
+                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+
+                    return new ExpressionSCReturnStatement(sinfo, new AccessVariableExpression(sinfo, name), sctest, scaction);
+                }
             }
             else {
                 const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), undefined);
@@ -2968,10 +3034,10 @@ class Parser {
                     return this.parseTaskRunStatement(sinfo, false, false, vvar);
                 }
                 else {
-                    const exp = this.parseExpression();
+                    const [exp, scinfo] = this.parseSCAssignExpression();
                     this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
 
-                    return new VariableAssignmentStatement(sinfo, vvar.name, exp);
+                    return new VariableAssignmentStatement(sinfo, vvar.name, exp, scinfo);
                 }
             }
         }
@@ -3064,12 +3130,12 @@ class Parser {
             return new DebugStatement(sinfo, value);
         }
         else if (tk === KW_ref) {
-            const call = this.parsePostfixExpression([]);
+            const call = this.parseSCRefExpression();
             if(!(call[0] instanceof PostfixOp) && !(call[0] instanceof TaskSelfActionExpression)) {
                 this.raiseError(sinfo.line, "ref invoke statement");
             }
 
-            return new RefCallStatement(sinfo, call[0] as (PostfixOp | TaskSelfActionExpression));
+            return new RefCallStatement(sinfo, call[0] as (PostfixOp | TaskSelfActionExpression), call[1]);
         }
         else if(tk === KW_callwith) {
             this.ensureTaskOpOk();
@@ -3213,6 +3279,15 @@ class Parser {
             return this.parseUnscopedBlockStatement();
         }
         else {
+            const [exp, tsccinfo] = this.parseSCAssignExpression();
+            if(tsccinfo === undefined) {
+                this.raiseError(line, `expected short-circuit return guard but did not find it`);
+            }
+            const sccinfo = tsccinfo as {sctest: ITest | Expression, scaction: Expression | undefined};
+
+            this.ensureAndConsumeToken(SYM_semicolon, "short-circuit return guard");
+            return new ExpressionSCReturnStatement(sinfo, exp, sccinfo.sctest, sccinfo.scaction);
+
             this.raiseError(line, "Unknown statement structure");
             return new InvalidStatement(sinfo);
         }
@@ -3276,8 +3351,18 @@ class Parser {
         }
     }
 
-    private parseScopedBlockStatementWithBinder(): ScopedBlockStatement {
-        xxxx;
+    private parseScopedBlockStatementWithBinder(): [boolean, ScopedBlockStatement] {
+        try {
+            this.m_penv.getCurrentFunctionScope().pushLocalScope();
+            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension()}`, true);
+
+            xxxx;
+
+            return this.parseScopedBlockStatement();
+        }
+        finally {
+            this.m_penv.getCurrentFunctionScope().popLocalScope();
+        }
     }
 
     private parseIfElseStatement(): Statement {
@@ -3297,25 +3382,59 @@ class Parser {
             conds.push({cond: eliftest, value: elifbody});
         }
 
-        xxxx;
-        const elsebody = this.testAndConsumeTokenIf(KW_else) ? this.parseScopedBlockStatement() : undefined;
-
-        return new IfStatement(sinfo, conds, elsebody);
-    }
-
-    private parseStatementActionInBlock(): ScopedBlockStatement {
-        if(this.testToken("{")) {
-            return this.parseScopedBlockStatement();
+        this.ensureAndConsumeToken(KW_else, "if statement else value");
+        if(!this.isBinderToken()) {
+            const elsebody = this.parseScopedBlockStatement();
+            return new IfStatement(sinfo, conds, {value: elsebody, binderinfo: undefined});
         }
         else {
-            return new ScopedBlockStatement(this.getCurrentSrcInfo(), [this.parseLineStatement()]);
+            this.consumeToken();
+            this.ensureAndConsumeToken(SYM_lbrack, "else clause binder");
+            const elsebind = this.parseExpression();
+            this.ensureAndConsumeToken(SYM_rbrack, "else clause binder");
+
+            const elsebody = this.parseScopedBlockStatementWithBinder();
+            return new IfStatement(sinfo,conds, {value: elsebody, binderinfo: [bindername, elsebind]});
+        }
+    }
+
+    private parseStatementActionInBlock(isbinder: boolean): ScopedBlockStatement {
+        if (!isbinder) {
+            if (this.testToken("{")) {
+                return this.parseScopedBlockStatement();
+            }
+            else {
+                return new ScopedBlockStatement(this.getCurrentSrcInfo(), [this.parseLineStatement()]);
+            }
+        }
+        else {
+            try {
+                this.m_penv.getCurrentFunctionScope().pushLocalScope();
+                this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension()}`, true);
+
+                if (this.testToken("{")) {
+                    return this.parseScopedBlockStatement();
+                }
+                else {
+                    return new ScopedBlockStatement(this.getCurrentSrcInfo(), [this.parseLineStatement()]);
+                }
+            }
+            finally {
+                this.m_penv.getCurrentFunctionScope().popLocalScope();
+            }
         }
     }
 
     private parseSwitchStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
+        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
 
         this.ensureAndConsumeToken(KW_switch, "switch statement dispatch value");
+
+        const isbinder = this.isBinderToken();
+        if(isbinder) {
+            this.consumeToken();
+        }
 
         this.ensureAndConsumeToken(SYM_lparen, "switch statement dispatch value");
         const mexp = this.parseExpression();
@@ -3324,10 +3443,9 @@ class Parser {
         let entries: { condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch statement options");
         
-        xxxx;
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-        const swvalue = this.parseStatementActionInBlock();
+        const swvalue = this.parseStatementActionInBlock(isbinder);
 
         entries.push({ condlit: swlit, value: swvalue });
         while (this.testToken(SYM_bar)) {
@@ -3335,19 +3453,25 @@ class Parser {
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-            const swvaluex = this.parseStatementActionInBlock();
+            const swvaluex = this.parseStatementActionInBlock(isbinder);
 
             entries.push({ condlit: swlitx, value: swvaluex });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch statement options");
 
-        return new SwitchStatement(sinfo, mexp, entries);
+        return new SwitchStatement(sinfo, mexp, isbinder ? bindername : undefined, entries);
     }
 
     private parseMatchStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
+        const bindername = `$_$_${this.m_penv.getBinderExtension()}`;
 
         this.ensureAndConsumeToken(KW_match, "match statement dispatch value");
+
+        const isbinder = this.isBinderToken();
+        if(isbinder) {
+            this.consumeToken();
+        }
 
         this.ensureAndConsumeToken(SYM_lparen, "match statement dispatch value");
         const mexp = this.parseExpression();
@@ -3356,10 +3480,9 @@ class Parser {
         let entries: { mtype: TypeSignature | undefined, value: ScopedBlockStatement }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "match statement options");
 
-        xxxx;
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "match statement entry");
-        const mvalue = this.parseStatementActionInBlock();
+        const mvalue = this.parseStatementActionInBlock(isbinder);
 
         entries.push({ mtype: mtype, value: mvalue });
         while (this.testToken(SYM_bar)) {
@@ -3367,14 +3490,14 @@ class Parser {
             
             const mtypex = this.parseMatchTypeGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "match statement entry");
-            const mvaluex = this.parseStatementActionInBlock();
+            const mvaluex = this.parseStatementActionInBlock(isbinder);
 
 
             entries.push({ mtype: mtypex, value: mvaluex });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch statment options");
 
-        return new MatchStatement(sinfo, mexp, entries);
+        return new MatchStatement(sinfo, mexp, isbinder ? bindername : undefined, entries);
     }
 
     private parseStatement(): Statement {
