@@ -5,11 +5,11 @@
 
 import { Assembly, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation, VariableRetypeStatement, ITest } from "../ast/body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestErr, ITestNone, ITestNothing, ITestSomething, ITestOk } from "../ast/body";
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
@@ -585,88 +585,78 @@ class TypeChecker {
         return {tp: this.normalizeUnionList(tp), fp: this.normalizeUnionList(fp)};
     }
 
-    private processITestAsTest_None(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_None(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         const tsplit = this.splitTypes(oftype, this.getSpecialNoneType());
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
-            return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
         }
         else {
-            return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
         }
     }
 
-    private processITestAsTest_Nothing(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Nothing(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         this.raiseErrorIf(sinfo, !oftype.isOptionType(), "Special nothing test is only valid on Option<T> types (not part of a union etc.)");
-
         const tsplit = this.splitTypes(oftype, this.getSpecialNothingType());
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
-            return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
         }
         else {
-            return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
         }
     }
 
-    private processITestAsTest_Something(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Something(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         this.raiseErrorIf(sinfo, !oftype.isOptionType(), "Special something test is only valid on Option<T> types (not part of a union etc.)");
-
         const tsplit = this.splitTypes(oftype, this.getSpecialNothingType());
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
-            return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
         }
         else {
-            return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
         }
     }
 
-    private processITestAsTest_Ok(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Ok(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         this.raiseErrorIf(sinfo, !oftype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         const binds = (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
         const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-
         const tsplit = this.splitTypes(oftype, oktype);
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
-            return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
         }
         else {
-            return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
         }
     }
 
-    private processITestAsTest_Err(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Err(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         this.raiseErrorIf(sinfo, !oftype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         const binds = (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
         const oktype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-
         const tsplit = this.splitTypes(oftype, oktype);
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
-            return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
         }
         else {
-            return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
         }
     }
 
-    private processITestAsTest_Literal(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, literal: LiteralExpressionValue, ltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Literal(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, literal: LiteralExpressionValue, ltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
         if(isnot) {
-            let tptype: ResolvedType = ResolvedType.createInvalid();
-            let fptype: ResolvedType = ResolvedType.createInvalid();
+            let tptype: ResolvedType | undefined = undefined;
+            let fptype: ResolvedType | undefined = undefined;
 
             if(literal.exp instanceof LiteralNoneExpression || literal.exp instanceof LiteralNothingExpression) {
                 const tsplit = this.splitTypes(oftype, ltype);
-                this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
-                tptype = tsplit.fp as ResolvedType;
+                tptype = tsplit.fp;
                 fptype = ltype;
             }
             else {
@@ -674,66 +664,285 @@ class TypeChecker {
                 fptype = oftype;
             }
 
-            this.raiseErrorIf(exp.sinfo, tptype.isInvalidType() || fptype.isInvalidType(), `Test is always true/false`);
             return { testexp: new TIRIsNotEqualToLiteralExpression(exp.sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
         }
         else {
-            let tptype: ResolvedType = ResolvedType.createInvalid();
-            let fptype: ResolvedType = ResolvedType.createInvalid();
+            let tptype: ResolvedType | undefined = undefined;
+            let fptype: ResolvedType | undefined = undefined;
 
             if(literal.exp instanceof LiteralNoneExpression || literal.exp instanceof LiteralNothingExpression) {
                 const tsplit = this.splitTypes(oftype, ltype);
-                this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
                 tptype = ltype;
-                fptype = tsplit.fp as ResolvedType;
+                fptype = tsplit.fp;
             }
             else {
                 tptype = oftype;
                 fptype = oftype;
             }
 
-            this.raiseErrorIf(sinfo, tptype.isInvalidType() || fptype.isInvalidType(), `Test is always true/false`);
             return { testexp: new TIRIsEqualToLiteralExpression(exp.sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
         }
     }
 
-    private processITestAsTest_Type(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    private processITestAsTest_Type(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefinede} {
         const tsplit = this.splitTypes(oftype, oftype);
-        this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
 
         if(isnot) {
             if(oftype.options.length === 1 && ResolvedType.isUniqueType(oftype.options[0])) {
                 if(oftype.isNoneType()) {
-                    return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+                    return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
                 }
                 else if(oftype.isNothingType()) {
-                    return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+                    return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
                 }
                 else {
-                    return { testexp: new TIRIsNotTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+                    return { testexp: new TIRIsNotTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
                 }
             }
             else {
                 if(oftype.isSomeType()) {
-                    return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+                    return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
                 }
                 else {
-                    return { testexp: new TIRIsNotSubTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+                    return { testexp: new TIRIsNotSubTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
                 }
             }
         }
         else {
-            xxxx;
+            if(oftype.options.length === 1 && ResolvedType.isUniqueType(oftype.options[0])) {
+                if(oftype.isNoneType()) {
+                    return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                }
+                else if(oftype.isNothingType()) {
+                    return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                }
+                else {
+                    return { testexp: new TIRIsTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                }
+            }
+            else {
+                if(oftype.isSomeType()) {
+                    return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                }
+                else {
+                    return { testexp: new TIRIsSubTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                }
+            }
         }
     }
     
-    private processITestAsTest(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, tt: ITest): {
+    private processITestAsTest(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+        if(tt instanceof ITestType) {
+            return this.processITestAsTest_Type(sinfo, exp, oftype, tirexp, tt.isnot);
+        }
+        else if(tt instanceof ITestLiteral) {
+            const [tirliteral, ltype] = this.reduceLiteralValueToCanonicalForm(tt.literal.exp, binds);
+            this.raiseErrorIf(sinfo, tirliteral === undefined, `could not evaluate literal value`);
 
+            return this.processITestAsTest_Literal(sinfo, exp, oftype, tt.literal, ltype, tirexp, tirliteral as TIRLiteralValue, tt.isnot);
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                return this.processITestAsTest_None(sinfo, exp, oftype, tirexp, tt.isnot);
+            }
+            else if(tt instanceof ITestNothing) {
+                return this.processITestAsTest_Nothing(sinfo, exp, oftype, tirexp, tt.isnot);
+            }
+            else if(tt instanceof ITestSomething) {
+                return this.processITestAsTest_Something(sinfo, exp, oftype, tirexp, tt.isnot);
+            }
+            else if(tt instanceof ITestOk) {
+                return this.processITestAsTest_Ok(sinfo, exp, oftype, tirexp, tt.isnot);
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                return this.processITestAsTest_Err(sinfo, exp, oftype, tirexp, tt.isnot);
+            }
+        }
     }
 
-    private processITestAsConvert(tt: ITest, knownsafe: boolean): {
-        
+/////////////////////////////////////////////////////////
+    private processITestAsConvert_None(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        const tsplit = this.splitTypes(oftype, this.getSpecialNoneType());
+
+        if (issafe) {
+            if(isnot) {
+                return { asexp: this.generateCoerceExpForITestConv(tirexp, oftype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialSomeConceptType()), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            }
+            else {
+                return { asexp: this.generateCoerceExpForITestConv(tirexp, oftype, sinfo, this.getSpecialNoneType()), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            }
+        }
+        else {
+            if (isnot) {
+                return { asexp: new TIRAsSomeSpecialExpression(exp.sinfo, tirexp, tsplit.fp !== undefined ? this.toTIRTypeKey(tsplit.fp) : "Some"), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            }
+            else {
+                return { asexp: new TIRAsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            }
+        }
+}
+
+private processITestAsConvert_Nothing(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    this.raiseErrorIf(sinfo, !oftype.isOptionType(), "Special nothing test is only valid on Option<T> types (not part of a union etc.)");
+    const tsplit = this.splitTypes(oftype, this.getSpecialNothingType());
+    if (issafe) {
+        if(isnot) {
+            return { asexp: this.generateCoerceExpForITestConv(tirexp, oftype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialISomethingConceptType()), trueflow: tsplit.fp, falseflow: tsplit.tp };
+        }
+        else {
+            return { asexp: this.generateCoerceExpForITestConv(tirexp, oftype, sinfo, this.getSpecialNothingType()), trueflow: tsplit.tp, falseflow: tsplit.fp };
+        }
+    }
+    else {
+        if (isnot) {
+            return { asexp: new TIRAsSomethingSpecialExpression(exp.sinfo, tirexp, tsplit.fp !== undefined ? this.toTIRTypeKey(tsplit.fp) : "Something"), trueflow: tsplit.fp, falseflow: tsplit.tp };
+        }
+        else {
+            return { asexp: new TIRAsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+        }
+    }
+}
+
+private processITestAsConvert_Something(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    this.raiseErrorIf(sinfo, !oftype.isOptionType(), "Special something test is only valid on Option<T> types (not part of a union etc.)");
+
+    const tsplit = this.splitTypes(oftype, this.getSpecialNothingType());
+    this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+    if(isnot) {
+        return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+    }
+    else {
+        return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+    }
+}
+
+private processITestAsConvert_Ok(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    this.raiseErrorIf(sinfo, !oftype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+    const binds = (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
+    const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+
+    const tsplit = this.splitTypes(oftype, oktype);
+    this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+    if(isnot) {
+        return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+    }
+    else {
+        return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+    }
+}
+
+private processITestAsConvert_Err(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    this.raiseErrorIf(sinfo, !oftype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+    const binds = (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
+    const oktype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+
+    const tsplit = this.splitTypes(oftype, oktype);
+    this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+    if(isnot) {
+        return { testexp: new TIRIsOkSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+    }
+    else {
+        return { testexp: new TIRIsErrSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+    }
+}
+
+private processITestAsConvert_Literal(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, literal: LiteralExpressionValue, ltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    if(isnot) {
+        let tptype: ResolvedType = ResolvedType.createInvalid();
+        let fptype: ResolvedType = ResolvedType.createInvalid();
+
+        if(literal.exp instanceof LiteralNoneExpression || literal.exp instanceof LiteralNothingExpression) {
+            const tsplit = this.splitTypes(oftype, ltype);
+            this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+            tptype = tsplit.fp as ResolvedType;
+            fptype = ltype;
+        }
+        else {
+            tptype = oftype;
+            fptype = oftype;
+        }
+
+        this.raiseErrorIf(exp.sinfo, tptype.isInvalidType() || fptype.isInvalidType(), `Test is always true/false`);
+        return { testexp: new TIRIsNotEqualToLiteralExpression(exp.sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
+    }
+    else {
+        let tptype: ResolvedType = ResolvedType.createInvalid();
+        let fptype: ResolvedType = ResolvedType.createInvalid();
+
+        if(literal.exp instanceof LiteralNoneExpression || literal.exp instanceof LiteralNothingExpression) {
+            const tsplit = this.splitTypes(oftype, ltype);
+            this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+            tptype = ltype;
+            fptype = tsplit.fp as ResolvedType;
+        }
+        else {
+            tptype = oftype;
+            fptype = oftype;
+        }
+
+        this.raiseErrorIf(sinfo, tptype.isInvalidType() || fptype.isInvalidType(), `Test is always true/false`);
+        return { testexp: new TIRIsEqualToLiteralExpression(exp.sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
+    }
+}
+
+private processITestAsConvert_Type(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): {asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType} {
+    const tsplit = this.splitTypes(oftype, oftype);
+    this.raiseErrorIf(sinfo, tsplit.fp === undefined || tsplit.tp === undefined, `Test is always true/false`);
+
+    if(isnot) {
+        if(oftype.options.length === 1 && ResolvedType.isUniqueType(oftype.options[0])) {
+            if(oftype.isNoneType()) {
+                return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            }
+            else if(oftype.isNothingType()) {
+                return { testexp: new TIRIsSomethingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            }
+            else {
+                return { testexp: new TIRIsNotTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            }
+        }
+        else {
+            if(oftype.isSomeType()) {
+                return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            }
+            else {
+                return { testexp: new TIRIsNotSubTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.fp as ResolvedType, falseflow: tsplit.tp as ResolvedType };
+            }
+        }
+    }
+    else {
+        if(oftype.options.length === 1 && ResolvedType.isUniqueType(oftype.options[0])) {
+            if(oftype.isNoneType()) {
+                return { testexp: new TIRIsNoneSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            }
+            else if(oftype.isNothingType()) {
+                return { testexp: new TIRIsNothingSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            }
+            else {
+                return { testexp: new TIRIsTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            }
+        }
+        else {
+            if(oftype.isSomeType()) {
+                return { testexp: new TIRIsSomeSpecialExpression(exp.sinfo, tirexp), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            }
+            else {
+                return { testexp: new TIRIsSubTypeExpression(exp.sinfo, tirexp, this.toTIRTypeKey(oftype)), trueflow: tsplit.tp as ResolvedType, falseflow: tsplit.fp as ResolvedType };
+            }
+        }
+    }
+}
+/////////////////////////////////////////////////////////////////////////
+
+    private processITestAsConvert(sinfo: SourceInfo, exp: Expression, oftype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType, falseflow: ResolvedType } {
+
     }
 
     getDerivedTypeProjection(fromtype: ResolvedType, oftype: ResolvedType): ResolvedType | undefined {
@@ -2288,6 +2497,14 @@ class TypeChecker {
         }
 
         return env.setResultExpressionInfo(new TIRCoerceSafeExpression(sinfo, env.expressionResult, this.toTIRTypeKey(env.trepr), this.toTIRTypeKey(trgttype)), trgttype);
+    }
+
+    private generateCoerceExpForITestConv(exp: TIRExpression, oftype: ResolvedType, sinfo: SourceInfo, trgttype: ResolvedType): TIRExpression {
+        if(oftype.isSameType(trgttype)) {
+            return exp;
+        }
+
+        return new TIRCoerceSafeExpression(sinfo, exp, this.toTIRTypeKey(oftype), this.toTIRTypeKey(trgttype));
     }
 
     private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], giventerms: TypeSignature[], typescope: TemplateBindScope) {
