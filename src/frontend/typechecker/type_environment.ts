@@ -88,6 +88,15 @@ class ExpressionTypeEnvironment {
     setResultExpressionInfo(exp: TIRExpression, trepr: ResolvedType): ExpressionTypeEnvironment {
        return new ExpressionTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, this.locals, exp, trepr);
     }
+
+    pushBinderFrame(binder: string, btype: ResolvedType): ExpressionTypeEnvironment {
+        const nframe = new Map<string, VarInfo>([[binder, new VarInfo(btype, true, false, true)]]);
+        return new ExpressionTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, [...this.locals, nframe], new TIRInvalidExpression(SourceInfo.implicitSourceInfo(), "None"), ResolvedType.createInvalid());
+    }
+
+    popBinderFrame() {
+        return new ExpressionTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, this.locals.slice(0, this.locals.length - 1), this.expressionResult, this.trepr);
+    }
 }
 
 class StatementTypeEnvironment {

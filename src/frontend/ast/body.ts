@@ -884,9 +884,9 @@ class IfTest {
 
 class IfExpression extends Expression {
     readonly condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[];
-    readonly elseflow: Expression;
+    readonly elseflow: { value: Expression, binderinfo: string | undefined };
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[], elseflow: Expression) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[], elseflow: { value: Expression, binderinfo: string | undefined }) {
         super(ExpressionTag.IfExpression, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;

@@ -2595,9 +2595,9 @@ class Parser {
         }
 
         this.ensureAndConsumeToken(KW_else, "if expression else value");
-        const elsebody = this.parseExpression();
+        const [elsebind, elsebody] = this.parseExpressionWithBinder();
 
-        return new IfExpression(sinfo, conds, elsebody);
+        return new IfExpression(sinfo, conds, {value: elsebody, binderinfo: elsebind ? bindername : undefined});
     }
 
     private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
