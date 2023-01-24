@@ -1140,28 +1140,28 @@ class TIRMapEntryConstructorExpression extends TIRExpression {
 }
 
 class TIRIfExpression extends TIRExpression {
-    readonly ifentry: {test: TIRExpression, value: TIRExpression};
-    readonly elifentries: {test: TIRExpression, value: TIRExpression}[];
-    readonly elseentry: TIRExpression;
+    readonly ifentry: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined};
+    readonly elifentries: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[];
+    readonly elseentry: {value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined};
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, ifentry: {test: TIRExpression, value: TIRExpression}, elifentries: {test: TIRExpression, value: TIRExpression}[], elseentry: TIRExpression) {
-        super(TIRExpressionTag.IfExpression, sinfo, etype, `if(${ifentry.test.expstr}) then ${ifentry.value.expstr} ${elifentries.map((efi) => `elif(${efi.test.expstr}) then ${efi.value.expstr}`)} else ${elseentry.expstr}`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, ifentry: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}, elifentries: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[], elseentry: {value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}) {
+        super(TIRExpressionTag.IfExpression, sinfo, etype, `if(${ifentry.test.expstr}) then ${ifentry.value.expstr} ${elifentries.map((efi) => `elif(${efi.test.expstr}) then ${efi.value.expstr}`)} else ${elseentry.value.expstr}`);
         this.ifentry = ifentry;
         this.elifentries = elifentries;
         this.elseentry = elseentry;
     }
 
     isFailableOperation(): boolean {
-        return this.ifentry.test.isFailableOperation() || this.ifentry.value.isFailableOperation() ||
-            this.elifentries.some((ee) => ee.test.isFailableOperation() || ee.value.isFailableOperation()) ||
-            this.elseentry.isFailableOperation();
+        return this.ifentry.test.isFailableOperation() || (this.ifentry.binderinfo !== undefined && this.ifentry.binderinfo[0].isFailableOperation()) || this.ifentry.value.isFailableOperation() ||
+            this.elifentries.some((ee) => ee.test.isFailableOperation() || (ee.binderinfo !== undefined && ee.binderinfo[0].isFailableOperation()) || ee.value.isFailableOperation()) ||
+            this.elseentry.value.isFailableOperation() || (this.elseentry.binderinfo !== undefined && this.elseentry.binderinfo[0].isFailableOperation());
     }
 
     getUsedVars(): string[] {
         return TIRExpression.joinUsedVarInfo(
-            this.ifentry.test.getUsedVars(), this.ifentry.value.getUsedVars(),
-            ...this.elifentries.map((efi) => efi.test.getUsedVars()), ...this.elifentries.map((efi) => efi.value.getUsedVars()),
-            this.elseentry.getUsedVars()
+            this.ifentry.test.getUsedVars(), (this.ifentry.binderinfo !== undefined ? this.ifentry.binderinfo[0].getUsedVars() : []), this.ifentry.value.getUsedVars(),
+            ...this.elifentries.map((efi) => efi.test.getUsedVars()), ...this.elifentries.map((efi) => (efi.binderinfo !== undefined ? efi.binderinfo[0].getUsedVars() : [])),  ...this.elifentries.map((efi) => efi.value.getUsedVars()),
+            this.elseentry.value.getUsedVars(), (this.elseentry.binderinfo !== undefined ? this.elseentry.binderinfo[0].getUsedVars() : [])
         );
     }
 }

@@ -4076,12 +4076,12 @@ class TypeChecker {
         let results: {test: ExpressionTypeEnvironment, value: ExpressionTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
 
         let testflowtypes = new Map<string, ResolvedType>();
-        let elsebind: string | undefined = undefined;
+        let elsebind: TIRExpression | undefined | null = undefined;
 
         for (let i = 0; i < exp.condflow.length; ++i) {
             if(exp.condflow[i].cond.itestopt === undefined) {
                 const tenv = this.emitCoerceIfNeeded(this.checkExpression(env, exp.condflow[i].cond.exp, this.getSpecialBoolType()), exp.condflow[i].cond.exp.sinfo, this.getSpecialBoolType());
-                elsebind = "!";
+                elsebind = null;
 
                 this.raiseErrorIf(exp.condflow[i].value.sinfo, exp.condflow[i].binderinfo !== undefined, "Binder doesn't make sense here -- will be bound to true");
                 let resenv = this.checkExpression(env, exp.condflow[i].value, desiredtype);
@@ -4094,11 +4094,14 @@ class TypeChecker {
             else {
                 const eenv = this.checkExpression(env, exp.condflow[i].cond.exp, undefined);
                 
-                if(elsebind === undefined) {
-                    elsebind = eenv.expressionResult.expstr;
+                if(elsebind === null) {
+                    elsebind = null;
+                }
+                else if(elsebind === undefined) {
+                    elsebind = eenv.expressionResult;
                 }
                 else {
-                    elsebind = (elsebind === eenv.expressionResult.expstr) ? elsebind : "!";
+                    elsebind = (elsebind.expstr === eenv.expressionResult.expstr) ? elsebind : null;
                 }
 
                 if(exp.condflow[i].binderinfo === undefined) {
@@ -4113,37 +4116,59 @@ class TypeChecker {
                         resenv = this.emitCoerceIfNeeded(resenv, exp.condflow[i].value.sinfo, desiredtype);
                     }
 
-                    testflowtypes.set(eenv.expressionResult.expstr, rtypes.fp as ResolvedType);
-
+                    testflowtypes.set(eenv.expressionResult.expstr, (exp.condflow[i].cond.itestopt as ITest).isnot ? rtypes.tp as ResolvedType : rtypes.fp as ResolvedType);
                     results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: undefined });
                 }
                 else {
                     const scratchidx = this.m_scratchCtr++;
                     const testinfo = this.processITestAsTest(exp.condflow[i].cond.exp.sinfo, eenv.trepr, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds);
                     const asinfo = this.processITestAsConvert(exp.condflow[i].value.sinfo, eenv.trepr, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds, true);
-                
+                    const bindtype = asinfo.trueflow as ResolvedType;
+
                     this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
                     this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
 
                     const rtypes = this.splitAtomTypes(testflowtypes.has(eenv.expressionResult.expstr) ? testflowtypes.get(eenv.expressionResult.expstr) as ResolvedType : eenv.trepr, testinfo.trueflow as ResolvedType);
-                    const bindtype = rtypes.tp as ResolvedType;
 
                     const flowenv = eenv.pushBinderFrame(exp.condflow[i].binderinfo as string, bindtype);
                     const resenv = this.checkExpression(flowenv, exp.condflow[i].value, desiredtype);
 
-                    testflowtypes.set(eenv.expressionResult.expstr, rtypes.fp as ResolvedType);
+                    testflowtypes.set(eenv.expressionResult.expstr, (exp.condflow[i].cond.itestopt as ITest).isnot ? rtypes.tp as ResolvedType : rtypes.fp as ResolvedType);
                     results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp, exp.condflow[i].binderinfo as string]});
                 }
             }
         }
-        const aenv = this.checkExpression(cenv, exp.elseflow, desiredtype);
 
-        const iftype = this.normalizeUnionList(results.map((eev) => this.envExpressionGetInferType(eev.value)));
+        if(exp.elseflow.binderinfo === undefined) {
+            let resenv = this.checkExpression(env, exp.elseflow.value, desiredtype);
+            if (desiredtype !== undefined) {
+                resenv = this.emitCoerceIfNeeded(resenv, exp.elseflow.value.sinfo, desiredtype);
+            }
+
+            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: undefined});
+        }
+        else {
+            this.raiseErrorIf(exp.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
+
+            const scratchidx = this.m_scratchCtr++;
+            const bindtype = testflowtypes.get((elsebind as TIRExpression).expstr) as ResolvedType;
+            const flowenv = env.pushBinderFrame(exp.elseflow.binderinfo as string, bindtype);
+            const resenv = this.checkExpression(flowenv, exp.elseflow.value, desiredtype);
+
+            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: [elsebind as TIRExpression, scratchidx, new TIRAccessScratchSingleValueExpression(exp.elseflow.value.sinfo, this.toTIRTypeKey(bindtype), scratchidx), exp.elseflow.binderinfo as string]});
+        }
+        const iftype = this.normalizeUnionList(results.map((eev) => eev.value.trepr));
         
-        const renv = env.createFreshFlowEnvExpressionFrom(this.envExpressionSimplifyFlowInfos(([] as FlowTypeInfoOption[]).concat(...results.map((ff) => ff.value.flowinfo))));
-        const rexp = new TIRIfExpression(exp.sinfo, this.toTIRTypeKey(iftype), {test: results[0].test.expressionResult, value: this.emitSafeCoerceIfNeeded(results[0].value, results[0].value.expressionResult.sinfo, iftype).expressionResult}, results.slice(1).map((ffp) => {return {test: ffp.test.expressionResult, value: this.emitSafeCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, iftype).expressionResult };}), this.emitSafeCoerceIfNeeded(aenv, exp.elseflow.sinfo, iftype).expressionResult);
+        const ifcl = {test: results[0].test.expressionResult, value: this.emitCoerceIfNeeded(results[0].value, results[0].value.expressionResult.sinfo, iftype).expressionResult, binderinfo: results[0].binderinfo};
 
-        return this.setResultExpression(renv, rexp, iftype, FlowTypeTruthOps.join(...results.map((ff) => this.envExpressionGetInferTruth(ff.value))));
+        const elifcl = results.slice(1, results.length - 1).map((rr) => {
+            return {test: rr.test.expressionResult, value: this.emitCoerceIfNeeded(rr.value, rr.value.expressionResult.sinfo, iftype).expressionResult, binderinfo: rr.binderinfo};
+        });
+        
+        const elsecl = {value: this.emitCoerceIfNeeded(results[results.length - 1].value, results[results.length - 1].value.expressionResult.sinfo, iftype).expressionResult, binderinfo: results[results.length - 1].binderinfo};
+
+        const rexp = new TIRIfExpression(exp.sinfo, this.toTIRTypeKey(iftype), ifcl, elifcl, elsecl);
+        return env.setResultExpressionInfo(rexp, iftype);
     }
 
     private checkSwitchExpression(env: ExpressionTypeEnvironment, exp: SwitchExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
