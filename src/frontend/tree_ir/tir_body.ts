@@ -1168,13 +1168,15 @@ class TIRIfExpression extends TIRExpression {
 
 class TIRSwitchExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRExpression}[];
-    readonly edefault: TIRExpression | undefined;
+    readonly scratchidx: number;
+    readonly clauses: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}[];
+    readonly edefault: {value: TIRExpression, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
-        super(TIRExpressionTag.SwitchExpression, sinfo, etype, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.litval.litstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRExpression, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+        super(TIRExpressionTag.SwitchExpression, sinfo, etype, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.expstr : ""}`);
         this.exp = exp;
+        this.scratchidx = scratchidx;
         this.clauses = clauses;
         this.edefault = edefault;
         this.isexhaustive = isexhaustive;
@@ -1183,7 +1185,7 @@ class TIRSwitchExpression extends TIRExpression {
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
             this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation()) ||
-            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.value.isFailableOperation()) ||
             !this.isexhaustive;
     }
 
@@ -1191,20 +1193,22 @@ class TIRSwitchExpression extends TIRExpression {
         return TIRExpression.joinUsedVarInfo(
             this.exp.getUsedVars(),
             ...this.clauses.map((ci) => ci.match.getUsedVars()), ...this.clauses.map((ci) => ci.value.getUsedVars()),
-            (this.edefault !== undefined ? this.edefault.getUsedVars() : [])
+            (this.edefault !== undefined ? this.edefault.value.getUsedVars() : [])
         );
     }
 }
 
 class TIRMatchExpression extends TIRExpression {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRExpression}[];
-    readonly edefault: TIRExpression | undefined;
+    readonly scratchidx: number;
+    readonly clauses: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}[];
+    readonly edefault: {value: TIRExpression, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRExpression}[], edefault: TIRExpression | undefined, isexhaustive: boolean) {
-        super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.mtype} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.expstr : ""}`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRExpression, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+        super(TIRExpressionTag.MatchExpression, sinfo, etype, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.expstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.expstr : ""}`);
         this.exp = exp;
+        this.scratchidx = scratchidx;
         this.clauses = clauses;
         this.edefault = edefault;
         this.isexhaustive = isexhaustive;
@@ -1214,7 +1218,7 @@ class TIRMatchExpression extends TIRExpression {
         return this.exp.isFailableOperation() || 
             this.clauses.some((cc) => cc.match.isFailableOperation()) ||
             this.clauses.some((cc) => cc.value.isFailableOperation()) ||
-            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            (this.edefault !== undefined && this.edefault.value.isFailableOperation()) ||
             !this.isexhaustive;
     }
 
@@ -1222,7 +1226,7 @@ class TIRMatchExpression extends TIRExpression {
         return TIRExpression.joinUsedVarInfo(
             this.exp.getUsedVars(),
             ...this.clauses.map((ci) => ci.value.getUsedVars()),
-            (this.edefault !== undefined ? this.edefault.getUsedVars() : [])
+            (this.edefault !== undefined ? this.edefault.value.getUsedVars() : [])
         );
     }
 }
@@ -1398,14 +1402,20 @@ class TIRIsSomethingSpecialExpression extends TIRITestIsSpecialExpression {
 }
 
 class TIRIsOkSpecialExpression  extends TIRITestIsSpecialExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+    readonly oktype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, oktype: TIRTypeKey) {
         super(TIRExpressionTag.IsOkSpecialExpression, sinfo, exp, `${exp.expstr}?ok`);
+        this.oktype = oktype;
     }
 }
 
 class TIRIsErrSpecialExpression extends TIRITestIsSpecialExpression {
-    constructor(sinfo: SourceInfo, exp: TIRExpression) {
+    readonly errtype: TIRTypeKey;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, errtype: TIRTypeKey) {
         super(TIRExpressionTag.IsErrSpecialExpression, sinfo, exp, `${exp.expstr}?err`);
+        this.errtype = errtype;
     }
 }
 
