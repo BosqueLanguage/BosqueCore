@@ -1636,10 +1636,12 @@ class TIRCallMemberFunctionDynamicExpression extends TIRIMemberFunctionExpressio
 }
 
 class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpression {
+    readonly scidx: number;
     readonly thisref: string;
 
-    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisref: string, thisarg: TIRExpression, args: TIRExpression[]) {
+    constructor(sinfo: SourceInfo, scidx: number, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisref: string, thisarg: TIRExpression, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberFunctionSelfRefExpression, sinfo, tkey, fname, fkey, rtype, thisarg, args, `ref ${thisref}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.scidx = scidx;
         this.thisref = thisref;
     }
 }
@@ -1675,14 +1677,20 @@ class TIRCallMemberFunctionTaskExpression extends TIRFunctionTaskExpression {
 }
 
 class TIRCallMemberFunctionTaskSelfRefExpression extends TIRFunctionTaskExpression {
-    constructor(sinfo: SourceInfo, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
+    readonly scidx: number;
+
+    constructor(sinfo: SourceInfo, scidx: number, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression, sinfo, fname, fkey, rtype, tsktype, args, `ref self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.scidx = scidx;
     }
 }
 
 class TIRCallMemberActionExpression extends TIRFunctionTaskExpression {
-    constructor(sinfo: SourceInfo, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
+    readonly scidx: number;
+
+    constructor(sinfo: SourceInfo, scidx: number, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberActionExpression, sinfo, fname, fkey, rtype, tsktype, args, `self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+        this.scidx = scidx;
     }
 }
 
@@ -1705,8 +1713,12 @@ enum TIRStatementTag {
     VarDeclareStatement = "VarDeclareStatement",
     VarAssignStatement = "VarAssignStatement",
     VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
+    VarRefAssignFromScratch = "VarRefAssignFromScratch",
+    TaskRefAssignFromScratch = "TaskRefAssignFromScratch",
 
     CallWRefStatement = "CallWRefStatememt",
+    CallStatementWTaskRef = "CallStatementWTaskRef",
+    CallStatementWTaskAction = "CallStatementWTaskAction",
 
     VariableRetypeStatement = "VariableRetypeStatement",
     VariableSCRetypeStatement = "VariableSCRetypeStatement",
@@ -1885,16 +1897,50 @@ class TIRVarAssignStatement extends TIRStatement {
     }
 }
 
-class TIRCallWRefStatement extends TIRStatement {
+class TIRVarRefAssignFromScratch extends TIRStatement {
+    readonly vname: string;
+    readonly vtype: TIRTypeKey;
+    readonly scidx: number;
+
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, scidx: number) {
+        super(TIRStatementTag.VarRefAssignFromScratch, sinfo, `${vname} = $$scratch<${scidx}, ${vtype}>[0];`);
+        this.vname = vname;
+        this.vtype = vtype;
+        this.scidx = scidx;
+    }
+
+    getDirectlyModVars(): string[] {
+        return [this.vname];
+    }
+}
+
+class TIRTaskRefAssignFromScratch extends TIRStatement {
+    readonly vtype: TIRTypeKey;
+    readonly scidx: number;
+
+    constructor(sinfo: SourceInfo, vtype: TIRTypeKey, scidx: number) {
+        super(TIRStatementTag.TaskRefAssignFromScratch, sinfo, `self = $$scratch<${scidx}, ${vtype}>[0];`);
+        this.vtype = vtype;
+        this.scidx = scidx;
+    }
+
+    getDirectlyModVars(): string[] {
+        return ["self"];
+    }
+}
+
+abstract class TIRCallWRefStatementGeneral extends TIRStatement {
     readonly vexp: TIRExpression;
     readonly restype: TIRTypeKey;
+    readonly reftype: TIRTypeKey;
     readonly sidx: number;
     //always stores to scratch location as a EList
 
-    constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, sidx: number) {
-        super(TIRStatementTag.CallWRefStatement, sinfo, `${vexp.expstr};`);
+    constructor(tag: TIRStatementTag, sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
+        super(tag, sinfo, `${vexp.expstr};`);
         this.vexp = vexp;
         this.restype = restype;
+        this.reftype = reftype;
         this.sidx = sidx;
     }
 
@@ -1904,6 +1950,24 @@ class TIRCallWRefStatement extends TIRStatement {
 
     getDirectlyUsedVars(): string[] {
         return this.vexp.getUsedVars();
+    }
+}
+
+class TIRCallStatementWRef extends TIRCallWRefStatementGeneral {
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
+        super(TIRStatementTag.CallWRefStatement, sinfo, vexp, restype, reftype, sidx);
+    }
+}
+
+class TIRCallStatementWTaskRef extends TIRCallWRefStatementGeneral {
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
+        super(TIRStatementTag.CallStatementWTaskRef, sinfo, vexp, restype, reftype, sidx);
+    }
+}
+
+class TIRCallStatementWAction extends TIRCallWRefStatementGeneral {
+    constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
+        super(TIRStatementTag.CallStatementWTaskAction, sinfo, vexp, restype, reftype, sidx);
     }
 }
 
@@ -2404,7 +2468,8 @@ export {
     TIRStatement,
     TIRNopStatement, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement,
     TIRVarDeclareStatement, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement,
-    TIRCallWRefStatement,
+    TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch,
+    TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction,
     TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction,
     TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,
     TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket,

@@ -987,7 +987,7 @@ enum StatementTag {
     VariableAssignmentStatement = "VariableAssignmentStatement",
 
     VariableRetypeStatement = "VariableRetypeStatement",
-    ExpressionSCReturnStatement = "VariableSCReturnStatement",
+    ExpressionSCReturnStatement = "ExpressionSCReturnStatement",
     VariableSCRetypeStatement = "VariableSCRetypeStatement",
 
     ReturnStatement = "ReturnStatement",
