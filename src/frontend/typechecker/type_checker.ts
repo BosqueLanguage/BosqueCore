@@ -4626,6 +4626,8 @@ class TypeChecker {
         this.raiseErrorIf(stmt.sinfo, env.getLocalVarInfo(stmt.name) === undefined, `variable ${stmt.name} not previously declared`);
         let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, (env.getLocalVarInfo(stmt.name) as VarInfo).declaredType);
 
+        assert(stmt.scinfo === undefined, "NOT IMPLEMENTED -- short-circuit return on assignment in type checker");
+
         let nstmt: TIRStatement[] = [];
         let nenv: StatementTypeEnvironment | undefined = undefined;
         if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
@@ -4633,25 +4635,46 @@ class TypeChecker {
 
             const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
             const refv = rhs.expressionResult.thisref;
-            const rhsconv = this.emitRefCallCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
+            const refvinfo = env.lookupVar(refv) as VarInfo;
+            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(stmt.name) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
 
-            nstmt = [new TIRVarAssignStatementWRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, refv)];
+            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
+
+            nstmt = [
+                new TIRCallStatementWRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
+                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
+                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
+            ];
         }
         else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
             const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
-            const rhsconv = this.emitTaskRefCallCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
+            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
+            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
-            nstmt = [new TIRVarAssignStatementWTaskRef(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, rhs.expressionResult.tsktype)];
+            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
+
+            nstmt = [
+                new TIRCallStatementWTaskRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
+                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
+            ];
         }
         else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
             const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
-            const rhsconv = this.emitActionCallCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
+            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
+            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
-            nstmt = [new TIRVarAssignStatementWAction(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, rhs.expressionResult.tsktype)];
+            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
+
+            nstmt = [
+                new TIRCallStatementWAction(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
+                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
+            ];
         }
         else {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
@@ -4681,7 +4704,8 @@ class TypeChecker {
         const ee = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.call, undefined);
 
         if (ee.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            return [env, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.thisref)]];
+            const refvtype = (env.lookupVar(ee.expressionResult.thisref) as VarInfo).declaredType;
+            return [env, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, this.toTIRTypeKey(refvtype), this.m_scratchCtr++)]];
         }
         else if (ee.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             return [env, [new TIRCallStatementWTaskRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.tsktype)]];
