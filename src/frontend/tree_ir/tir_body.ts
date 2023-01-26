@@ -1975,9 +1975,9 @@ class TIRVariableRetypeStatement extends TIRStatement {
     readonly vname: string;
     readonly origtype: TIRTypeKey;
     readonly newtype: TIRTypeKey;
-    readonly asconv: TIRAsExpression
+    readonly asconv: TIRExpression
 
-    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, newtype: TIRTypeKey, asconv: TIRAsExpression) {
+    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, newtype: TIRTypeKey, asconv: TIRExpression) {
         super(TIRStatementTag.VariableRetypeStatement, sinfo, `${vname} = ${asconv.expstr}`);
         this.vname = vname;
         this.origtype = origtype;
@@ -2001,11 +2001,11 @@ class TIRVariableRetypeStatement extends TIRStatement {
 class TIRVariableSCRetypeStatement extends TIRStatement {
     readonly vname: string;
     readonly origtype: TIRTypeKey;
-    readonly test: TIRTestIsExpression;
-    readonly asconv: TIRAsExpression;
+    readonly test: TIRExpression;
+    readonly asconv: TIRExpression;
     readonly resexp: TIRExpression;
 
-    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression) {
+    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, test: TIRExpression, asconv: TIRExpression, resexp: TIRExpression) {
         super(TIRStatementTag.VariableSCRetypeStatement, sinfo, `${vname} ?? ${test.expstr} -- ${vname} = safe ${asconv.expstr} : ${resexp.expstr}`);
         this.vname = vname;
         this.origtype = origtype;
@@ -2034,13 +2034,13 @@ class TIRExpressionSCReturnDefineAndAssignStatement extends TIRStatement {
     readonly isconst: boolean;
     
     readonly fromtype: TIRTypeKey;
-    readonly test: TIRTestIsExpression | TIRExpression;
+    readonly test: TIRExpression;
     readonly asconv: TIRExpression;
     readonly resexp: TIRExpression;
 
     readonly sidx: number;
 
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, isconst: boolean, fromtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, isconst: boolean, fromtype: TIRTypeKey, test: TIRExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
         super(TIRStatementTag.ExpressionSCReturnDefineAndAssignStatement, sinfo, `${isconst ? "let" : "var"} ${vname}: ${vtype} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
         this.vname = vname;
         this.vtype = vtype;
@@ -2060,13 +2060,13 @@ class TIRExpressionSCReturnAssignStatement extends TIRStatement {
     readonly vtype: TIRTypeKey;
     
     readonly fromtype: TIRTypeKey;
-    readonly test: TIRTestIsExpression | TIRExpression;
+    readonly test: TIRExpression;
     readonly asconv: TIRExpression;
     readonly resexp: TIRExpression;
 
     readonly sidx: number;
 
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, fromtype: TIRTypeKey, test: TIRTestIsExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
+    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, fromtype: TIRTypeKey, test: TIRExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
         super(TIRStatementTag.ExpressionSCReturnAssignStatement, sinfo, `${vname} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
         this.vname = vname;
         this.vtype = vtype;

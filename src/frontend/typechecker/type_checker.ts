@@ -9,7 +9,7 @@ import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceCo
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIRVariableRetypeStatement } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
@@ -4569,7 +4569,7 @@ class TypeChecker {
                 const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
                 const refv = rhs.expressionResult.thisref;
                 const refvinfo = env.lookupVar(refv) as VarInfo;
-                this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(stmt.name) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+                this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
 
                 const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
 
@@ -4636,7 +4636,7 @@ class TypeChecker {
             const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
             const refv = rhs.expressionResult.thisref;
             const refvinfo = env.lookupVar(refv) as VarInfo;
-            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(stmt.name) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
 
             const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
 
@@ -4689,7 +4689,13 @@ class TypeChecker {
     }
 
     private checkVariableRetypeStatement(env: StatementTypeEnvironment, stmt: VariableRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        xxxx;
+        const vinfo = env.lookupVar(stmt.name) as VarInfo;
+        const asinfo = this.processITestAsConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
+
+        return [
+            env.setVarFlowType(),
+            [new TIRVariableRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), this.toTIRTypeKey(asinfo.trueflow as ResolvedType), asinfo.asexp)]
+        ]
     }
 
     private checkExpressionSCReturnStatement(env: StatementTypeEnvironment, stmt: ExpressionSCReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
@@ -4708,10 +4714,10 @@ class TypeChecker {
             return [env, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, this.toTIRTypeKey(refvtype), this.m_scratchCtr++)]];
         }
         else if (ee.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-            return [env, [new TIRCallStatementWTaskRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.tsktype)]];
+            return [env, [new TIRCallStatementWTaskRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, ee.expressionResult.tsktype, this.m_scratchCtr++)]];
         }
         else if (ee.expressionResult instanceof TIRCallMemberActionExpression) {
-            return [env, [new TIRCallStatementWAction(stmt.sinfo, ee.expressionResult, ee.expressionResult.tsktype)]];
+            return [env, [new TIRCallStatementWAction(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, ee.expressionResult.tsktype, this.m_scratchCtr++)]];
         }
         else {
             this.raiseError(stmt.sinfo, `Unknown op kind ${ee.expressionResult.tag}`);
@@ -4720,29 +4726,54 @@ class TypeChecker {
     } 
 
     private checkReturnStatement(env: StatementTypeEnvironment, stmt: ReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const rval = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, this.m_rtype), stmt.value.sinfo, this.m_rtype);
+        const rval = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, this.m_rtype);
 
-        let rexp: TIRStatement | undefined = undefined;
+        let rexp: TIRStatement[] | undefined = undefined;
         if (rval.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            this.raiseErrorIf(stmt.sinfo, rval.expressionResult.thisref !== "this", "return on ref call not using this as reciever");
-            const rhsconv = this.emitRefCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
+            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
 
-            rexp = new TIRReturnStatementWRef(stmt.sinfo, rhsconv.expressionResult);
+            const refv = rval.expressionResult.thisref;
+            const refvinfo = env.lookupVar(refv) as VarInfo;
+            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+
+            rexp = [
+                new TIRCallStatementWRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
+                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
+                new TIRReturnStatementWRef(stmt.sinfo, tirda.expressionResult)
+            ];
         }
         else if (rval.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-            const rhsconv = this.emitTaskRefCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = new TIRReturnStatementWTaskRef(stmt.sinfo, rhsconv.expressionResult);
+            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
+            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
+
+            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
+
+            rexp = [
+                new TIRCallStatementWTaskRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
+                new TIRReturnStatementWTaskRef(stmt.sinfo, tirda.expressionResult)
+            ];
         }
         else if (rval.expressionResult instanceof TIRCallMemberActionExpression) {
-            const rhsconv = this.emitActionCallCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = new TIRReturnStatementWAction(stmt.sinfo, rhsconv.expressionResult);
+            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
+            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
+
+            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
+
+            rexp = [
+                new TIRCallStatementWAction(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
+                new TIRReturnStatementWAction(stmt.sinfo, tirda.expressionResult)
+            ];
         }
         else {
             const rhsconv = this.emitCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = new TIRReturnStatement(stmt.sinfo, rhsconv.expressionResult);
+            rexp = [
+                new TIRReturnStatement(stmt.sinfo, rhsconv.expressionResult)
+            ];
         }
 
-        return [env.endOfExecution(), [rexp as TIRStatement]];
+        return [env.endOfExecution(), rexp as TIRStatement[]];
     }
 
     private checkAbortStatement(env: StatementTypeEnvironment, stmt: AbortStatement): [StatementTypeEnvironment, TIRStatement[]] {
@@ -5341,7 +5372,7 @@ class TypeChecker {
             return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
         });
 
-        const cond = this.emitActionCallCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.cond, this.getSpecialBoolType()), stmt.cond.sinfo, this.getSpecialBoolType());
+        const cond = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.cond, this.getSpecialBoolType()), stmt.cond.sinfo, this.getSpecialBoolType());
 
         return [env, [new TIRLoggerEmitConditionalStatement(stmt.sinfo, stmt.level, cond.expressionResult, stmt.msg, args)]];
     }
