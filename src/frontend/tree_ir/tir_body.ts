@@ -2123,9 +2123,10 @@ class TIRSwitchStatement extends TIRStatement {
     readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
-        super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.litval.litstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+        super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.stmtstr : ""}`);
         this.exp = exp;
+        this.scratchidx = scratchidx;
         this.clauses = clauses;
         this.edefault = edefault;
         this.isexhaustive = isexhaustive;
@@ -2133,8 +2134,8 @@ class TIRSwitchStatement extends TIRStatement {
 
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation()) ||
-            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation() || (cc.binderinfo !== undefined && cc.binderinfo[0].isFailableOperation())) ||
+            (this.edefault !== undefined && (this.edefault.value.isFailableOperation() || (this.edefault.binderinfo !== undefined && this.edefault.binderinfo[0].isFailableOperation()))) ||
             !this.isexhaustive;
     }
 }
@@ -2146,9 +2147,10 @@ class TIRMatchStatement extends TIRStatement {
     readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
-        super(TIRStatementTag.MatchStatement, sinfo, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.mtype} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.stmtstr : ""}`);
+    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+        super(TIRStatementTag.MatchStatement, sinfo, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.stmtstr : ""}`);
         this.exp = exp;
+        this.scratchidx = scratchidx;
         this.clauses = clauses;
         this.edefault = edefault;
         this.isexhaustive = isexhaustive;
@@ -2156,9 +2158,8 @@ class TIRMatchStatement extends TIRStatement {
 
     isFailableOperation(): boolean {
         return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.isFailableOperation()) ||
-            this.clauses.some((cc) => cc.value.isFailableOperation()) ||
-            (this.edefault !== undefined && this.edefault.isFailableOperation()) ||
+            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation() || (cc.binderinfo !== undefined && cc.binderinfo[0].isFailableOperation())) ||
+            (this.edefault !== undefined && (this.edefault.value.isFailableOperation() || (this.edefault.binderinfo !== undefined && this.edefault.binderinfo[0].isFailableOperation()))) ||
             !this.isexhaustive;
     }
 }

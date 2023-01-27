@@ -589,42 +589,42 @@ class TypeChecker {
         return {tp: this.normalizeUnionList(tp), fp: this.normalizeUnionList(fp)};
     }
 
-    private processITestAsTest_None(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_None(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         const tsplit = this.splitTypes(flowtype, this.getSpecialNoneType());
 
         if(isnot) {
-            return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
         else {
-            return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
     }
 
-    private processITestAsTest_Nothing(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Nothing(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         this.raiseErrorIf(sinfo, !flowtype.isOptionType() && !flowtype.isNothingType() && !flowtype.isSomethingType(), "Special nothing test is only valid on Option<T> types (not part of a union etc.)");
         const tsplit = this.splitTypes(flowtype, this.getSpecialNothingType());
 
         if(isnot) {
-            return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
         else {
-            return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
     }
 
-    private processITestAsTest_Something(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Something(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         this.raiseErrorIf(sinfo, !flowtype.isOptionType() && !flowtype.isNothingType() && !flowtype.isSomethingType(), "Special something test is only valid on Option<T> types (not part of a union etc.)");
         const tsplit = this.splitTypes(flowtype, this.getSpecialNothingType());
 
         if(isnot) {
-            return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
         else {
-            return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
     }
 
-    private processITestAsTest_Ok(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Ok(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         this.raiseErrorIf(sinfo, !flowtype.isResultType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         const binds = flowtype.isResultType() ? (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds : (flowtype.options[0] as ResolvedConstructableEntityAtomType).getBinds();
         const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
@@ -632,29 +632,29 @@ class TypeChecker {
         const tsplit = this.splitTypes(flowtype, oktype);
 
         if(isnot) {
-            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
         else {
-            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
     }
 
-    private processITestAsTest_Err(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Err(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         this.raiseErrorIf(sinfo, !flowtype.isResultType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         const binds = flowtype.isResultType() ? (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds : (flowtype.options[0] as ResolvedConstructableEntityAtomType).getBinds();
         const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
         const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-        const tsplit = this.splitTypes(flowtype, oktype);
+        const tsplit = this.splitTypes(flowtype, errtype);
 
         if(isnot) {
-            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
         else {
-            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
     }
 
-    private processITestAsTest_Literal(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, literal: LiteralExpressionValue, literaltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Literal(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, literal: LiteralExpressionValue, literaltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         if(isnot) {
             let tptype: ResolvedType | undefined = undefined;
             let fptype: ResolvedType | undefined = undefined;
@@ -670,7 +670,7 @@ class TypeChecker {
                 fptype = flowtype;
             }
 
-            return { testexp: new TIRIsNotEqualToLiteralExpression(sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
+            return { testexp: new TIRIsNotEqualToLiteralExpression(sinfo, tirexp, tirliteral), falseflow: fptype, hastrueflow: tptype !== undefined  };
         }
         else {
             let tptype: ResolvedType | undefined = undefined;
@@ -687,58 +687,58 @@ class TypeChecker {
                 fptype = flowtype;
             }
 
-            return { testexp: new TIRIsEqualToLiteralExpression(sinfo, tirexp, tirliteral), trueflow: tptype, falseflow: fptype };
+            return { testexp: new TIRIsEqualToLiteralExpression(sinfo, tirexp, tirliteral), falseflow: fptype, hastrueflow: tptype !== undefined };
         }
     }
 
-    private processITestAsTest_Type(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, intotype: ResolvedType, isnot: boolean): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTest_Type(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, intotype: ResolvedType, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         const tsplit = this.splitTypes(flowtype, intotype);
 
         if(isnot) {
             if(intotype.options.length === 1 && ResolvedType.isUniqueType(intotype.options[0])) {
                 if(intotype.isNoneType()) {
-                    return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
                 }
                 else if(intotype.isNothingType()) {
-                    return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { testexp: new TIRIsSomethingSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
                 }
                 else {
-                    return { testexp: new TIRIsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { testexp: new TIRIsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
                 }
             }
             else {
                 if(intotype.isSomeType()) {
-                    return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
                 }
                 else {
-                    return { testexp: new TIRIsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { testexp: new TIRIsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
                 }
             }
         }
         else {
             if(intotype.options.length === 1 && ResolvedType.isUniqueType(intotype.options[0])) {
                 if(intotype.isNoneType()) {
-                    return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
                 }
                 else if(intotype.isNothingType()) {
-                    return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { testexp: new TIRIsNothingSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
                 }
                 else {
-                    return { testexp: new TIRIsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { testexp: new TIRIsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
                 }
             }
             else {
                 if(intotype.isSomeType()) {
-                    return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
                 }
                 else {
-                    return { testexp: new TIRIsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { testexp: new TIRIsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
                 }
             }
         }
     }
     
-    private processITestAsTestOp(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+    private processITestAsTestOp(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         if(tt instanceof ITestType) {
             const intotype = this.normalizeTypeOnly(tt.ttype, binds);
             return this.processITestAsTest_Type(sinfo, ltype, flowtype, tirexp, intotype, tt.isnot);
@@ -776,16 +776,16 @@ class TypeChecker {
         if (issafe) {
             if (isnot) {
                 return { 
-                    asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), 
-                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), 
+                    asexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined, 
+                    asnotexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined, 
                     trueflow: tsplit.fp, 
                     falseflow: tsplit.tp 
                 };
             }
             else {
                 return { 
-                    asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), 
-                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), 
+                    asexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined, 
+                    asnotexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined, 
                     trueflow: tsplit.tp, 
                     falseflow: tsplit.fp 
                 };
@@ -794,7 +794,7 @@ class TypeChecker {
         else {
             if (isnot) {
                 return { 
-                    asexp: new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType())), 
+                    asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
                     asnotexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
                     trueflow: tsplit.fp, 
                     falseflow: tsplit.tp 
@@ -803,7 +803,7 @@ class TypeChecker {
             else {
                 return { 
                     asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
-                    asnotexp: new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType())), 
+                    asnotexp: tsplit.tp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp)) : undefined, 
                     trueflow: tsplit.tp, 
                     falseflow: tsplit.fp 
                 };
@@ -815,6 +815,119 @@ class TypeChecker {
         this.raiseErrorIf(sinfo, !flowtype.isOptionType() && !flowtype.isSomethingType() && !flowtype.isNothingType(), "Special nothing test is only valid on Option<T> types (not part of a union etc.)");
         if (flowtype.isNothingType()) {
             if (isnot) {
+                //(nothing)@!nothing -- x, nothing, x, Nothing
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                    trueflow: undefined,
+                    falseflow: this.getSpecialNothingType()
+                };
+            }
+            else {
+                //(nothing)@nothing -- nothing, x, Nothing, x
+                return {
+                    asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                    asnotexp: undefined,
+                    trueflow: this.getSpecialNothingType(),
+                    falseflow: undefined
+                };
+            }
+        }
+        else if(flowtype.isSomethingType()) {
+            const typet = (flowtype.options[0] as ResolvedSomethingEntityAtomType).typeT;
+            if (isnot) {
+                //(something(t))@!nothing -- t, x, T, x
+                return {
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, flowtype), this.toTIRTypeKey(typet)),
+                    asnotexp: undefined,
+                    trueflow: typet,
+                    falseflow: undefined
+                };
+            }
+            else {
+                //(something(t))@nothing -- x, something(t), x, Something<T>
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, flowtype),
+                    trueflow: undefined,
+                    falseflow: flowtype
+                };
+            }
+        }
+        else {
+            const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
+            const typet = binds.get("T") as ResolvedType;
+            const somethingtype = this.getSomethingType(typet);
+
+            if (issafe) {
+                if (isnot) {
+                    //(option t)@!nothing -- t, nothing, T, Nothing
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, somethingtype), this.toTIRTypeKey(typet)), 
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                        trueflow: typet, 
+                        falseflow: this.getSpecialNothingType() 
+                    };
+                }
+                else {
+                    //(option t)@nothing -- nothing, something(t), Nothing, Something<T>
+                    return { 
+                        asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, somethingtype),
+                        trueflow: this.getSpecialNothingType(), 
+                        falseflow: somethingtype 
+                    };
+                }
+            }
+            else {
+                if (isnot) {
+                    //(option t)@!nothing -- t, nothing, T, Nothing
+                    return {
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)), this.toTIRTypeKey(typet)),
+                        asnotexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        trueflow: typet,
+                        falseflow: this.getSpecialNothingType()
+                    };
+                }
+                else {
+                    //(option t)@nothing -- nothing, something(t), Nothing, Something<T>
+                    return {
+                        asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        asnotexp: new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)),
+                        trueflow: this.getSpecialNothingType(),
+                        falseflow: somethingtype
+                    };
+                }
+            }
+        }
+    }
+
+    private processITestAsConvert_Something(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        this.raiseErrorIf(sinfo, !flowtype.isOptionType() && !flowtype.isSomethingType() && !flowtype.isNothingType(), "Special something test is only valid on Option<T> types (not part of a union etc.)");
+        if (flowtype.isNothingType()) {
+            if (isnot) {
+                //(nothing)@!something -- nothing, x, Nothing, x
+                return {
+                    asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                    asnotexp: undefined,
+                    trueflow: this.getSpecialNothingType(),
+                    falseflow: undefined
+                };
+            }
+            else {
+                //(nothing)@something -- x, nothing, x, Nothing
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                    trueflow: undefined,
+                    falseflow: this.getSpecialNothingType()
+                };
+            }
+        }
+        else if(flowtype.isSomethingType()) {
+            const typet = (flowtype.options[0] as ResolvedSomethingEntityAtomType).typeT;
+            if (isnot) {
+                //(something(t))@!something -- x, something(t), x, Something<T>
                 return {
                     asexp: undefined,
                     asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, flowtype),
@@ -823,124 +936,266 @@ class TypeChecker {
                 };
             }
             else {
+                //(something(t))@somethng -- t, x, T, x
                 return {
-                    asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, flowtype),
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, flowtype), this.toTIRTypeKey(typet)),
                     asnotexp: undefined,
-                    trueflow: flowtype,
+                    trueflow: typet,
                     falseflow: undefined
                 };
             }
         }
-        else if(flowtype.isSomethingType()) {
-            xxxx;
-        }
         else {
             const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
-            const somethingtype = this.getSomethingType(binds.get("T") as ResolvedType);
-
-            const tsplit = this.splitTypes(flowtype, this.getSpecialNothingType());
-            issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
+            const typet = binds.get("T") as ResolvedType;
+            const somethingtype = this.getSomethingType(typet);
 
             if (issafe) {
                 if (isnot) {
-                    return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    //(option t)@!something -- nothing, something(t), Nothing, Something<T>
+                    return { 
+                        asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, somethingtype),
+                        trueflow: this.getSpecialNothingType(), 
+                        falseflow: somethingtype
+                    };
                 }
                 else {
-                    return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    //(option t)@something -- t, nothing, T, Nothing
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, somethingtype), this.toTIRTypeKey(typet)), 
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, this.getSpecialNothingType()),
+                        trueflow: typet, 
+                        falseflow: this.getSpecialNothingType() 
+                    };
                 }
             }
             else {
                 if (isnot) {
-                    return { asexp: new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    //(option t)@!something -- nothing, something(t), Nothing, Something<T>
+                    return { 
+                        asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        asnotexp: new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)),
+                        trueflow: this.getSpecialNothingType(), 
+                        falseflow: somethingtype
+                    };
                 }
                 else {
-                    return { asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    //(option t)@something -- t, nothing, T, Nothing
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)), this.toTIRTypeKey(typet)), 
+                        asnotexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        trueflow: typet, 
+                        falseflow: this.getSpecialNothingType() 
+                    };
                 }
             }
         }
     }
 
-    private processITestAsConvert_Something(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
-        this.raiseErrorIf(sinfo, !flowtype.isOptionType(), "Special something test is only valid on Option<T> types (not part of a union etc.)");
-        const binds = flowtype.isOptionType() ? (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds : (flowtype.options[0] as ResolvedConstructableEntityAtomType).getBinds();
-        const somethingtype = this.getSomethingType(binds.get("T") as ResolvedType);
-
-        const tsplit = this.splitTypes(flowtype, somethingtype);
-        issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
-
-        if (issafe) {
+    private processITestAsConvert_Ok(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+        if (flowtype.isErrType()) {
+            const typet = (flowtype.options[0] as ResolvedErrEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedErrEntityAtomType).typeE;
+            const errtype = this.getErrType(typet, typee);
+        
             if (isnot) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                //(err(e))@!ok -- e, x, E, x
+                return {
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), this.toTIRTypeKey(typee)),
+                    asnotexp: undefined,
+                    trueflow: typee,
+                    falseflow: undefined
+                };
             }
             else {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                //(err)@ok -- x, err, x, Err
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype),
+                    trueflow: undefined,
+                    falseflow: errtype
+                };
+            }
+        }
+        else if(flowtype.isOkType()) {
+            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+            const oktype = this.getOkType(typet, typee);
+
+            if (isnot) {
+                //(ok(t))@!ok -- x, ok(t), x, Ok<T>
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype),
+                    trueflow: undefined,
+                    falseflow: oktype
+                };
+            }
+            else {
+                //(ok(t))@ok -- t, x, T, x
+                return {
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), this.toTIRTypeKey(typet)),
+                    asnotexp: undefined,
+                    trueflow: typet,
+                    falseflow: undefined
+                };
             }
         }
         else {
-            if (isnot) {
-                return { asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
+            const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+            const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+
+            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+
+            if (issafe) {
+                if (isnot) {
+                    //result(t, e)@!ok -- e, ok(t), E, Ok<T>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), this.toTIRTypeKey(typee)),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype),
+                        trueflow: typee, 
+                        falseflow: oktype 
+                    };
+                }
+                else {
+                    //result(t, e)@ok -- t, err(e), T, Err<E>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), this.toTIRTypeKey(typet)),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype),
+                        trueflow: typet, 
+                        falseflow: errtype 
+                    };
+                }
             }
             else {
-                return { asexp: new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(somethingtype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                if (isnot) {
+                    //result(t, e)@!ok -- e, ok(t), E, Ok<T>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), this.toTIRTypeKey(typee)),
+                        asnotexp: new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)),
+                        trueflow: typee, 
+                        falseflow: oktype 
+                    };
+                }
+                else {
+                    //result(t, e)@ok -- t, err(e), T, Err<E>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), this.toTIRTypeKey(typet)),
+                        asnotexp: new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)),
+                        trueflow: typet, 
+                        falseflow: errtype 
+                    };
+                }
             }
         }
     }
 
-    private processITestAsConvert_Ok(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
-        this.raiseErrorIf(sinfo, !flowtype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
-        const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
-        const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-        const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-
-        const tsplit = this.splitTypes(flowtype, oktype);
-        issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
-
-        if (issafe) {
+    private processITestAsConvert_Err(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+        if (flowtype.isErrType()) {
+            const typet = (flowtype.options[0] as ResolvedErrEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedErrEntityAtomType).typeE;
+            const errtype = this.getErrType(typet, typee);
+        
             if (isnot) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                //(err(e))@!err -- x, err, x, Err
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype),
+                    trueflow: undefined,
+                    falseflow: errtype
+                };
             }
             else {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                //(err)@err -- e, x, E, x
+                return {
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), this.toTIRTypeKey(typee)),
+                    asnotexp: undefined,
+                    trueflow: typee,
+                    falseflow: undefined
+                };
+            }
+        }
+        else if(flowtype.isOkType()) {
+            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+            const oktype = this.getOkType(typet, typee);
+
+            if (isnot) {
+                //(ok(t))@!err -- t, x, T, x
+                return {
+                    asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), this.toTIRTypeKey(typet)),
+                    asnotexp: undefined,
+                    trueflow: typet,
+                    falseflow: undefined
+                };
+            }
+            else {
+                //(ok(t))@err -- x, ok(t), x, Ok<T>
+                return {
+                    asexp: undefined,
+                    asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype),
+                    trueflow: undefined,
+                    falseflow: oktype
+                };
             }
         }
         else {
-            if (isnot) {
-                return { asexp: new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+            const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
+            const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+            const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
+
+            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
+            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+
+            if (issafe) {
+                if (isnot) {
+                    //result(t, e)@!err -- t, err(e), T, Err<E>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), this.toTIRTypeKey(typet)),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype),
+                        trueflow: typet, 
+                        falseflow: errtype
+                    };
+                }
+                else {
+                    //result(t, e)@err -- e, ok(t), E, Ok<T>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), this.toTIRTypeKey(typee)),
+                        asnotexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype),
+                        trueflow: typee, 
+                        falseflow: oktype 
+                    };
+                }
             }
             else {
-                return { asexp: new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                if (isnot) {
+                    //result(t, e)@!err -- t, err(e), T, Err<E>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), this.toTIRTypeKey(typet)),
+                        asnotexp: new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)),
+                        trueflow: typet, 
+                        falseflow: errtype 
+                    };
+                }
+                else {
+                    //result(t, e)@err -- e, ok(t), E, Ok<T>
+                    return { 
+                        asexp: new TIRExtractExpression(sinfo, new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), this.toTIRTypeKey(typee)),
+                        asnotexp: new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)),
+                        trueflow: typee, 
+                        falseflow: oktype
+                    };
+                }
             }
         }
     }
 
-    private processITestAsConvert_Err(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
-        this.raiseErrorIf(sinfo, !flowtype.isOkType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
-        const binds = (flowtype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds;
-        const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-        const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
-
-        const tsplit = this.splitTypes(flowtype, errtype);
-        issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
-
-        if (issafe) {
-            if (isnot) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, oktype), trueflow: tsplit.fp, falseflow: tsplit.tp };
-            }
-            else {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, errtype), trueflow: tsplit.tp, falseflow: tsplit.fp };
-            }
-        }
-        else {
-            if (isnot) {
-                return { asexp: new TIRAsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
-            }
-            else {
-                return { asexp: new TIRAsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
-            }
-        }
-    }
-
-    private processITestAsConvert_Literal(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, literal: LiteralExpressionValue, literaltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+    private processITestAsConvert_Literal(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, literal: LiteralExpressionValue, literaltype: ResolvedType, tirexp: TIRExpression, tirliteral: TIRLiteralValue, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
         if (isnot) {
             let tptype: ResolvedType | undefined = undefined;
             let fptype: ResolvedType | undefined = undefined;
@@ -958,10 +1213,20 @@ class TypeChecker {
             }
 
             if (issafe) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tptype !== undefined ? tptype : this.getSpecialAnyConceptType()), trueflow: tptype, falseflow: fptype };
+                return { 
+                    asexp: tptype !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tptype) : undefined,
+                    asnotexp: fptype !==  undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, fptype) : undefined,
+                    trueflow: tptype, 
+                    falseflow: fptype 
+                };
             }
             else {
-                return { asexp: new TIRAsNotEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(tptype !== undefined ? tptype : this.getSpecialAnyConceptType())), trueflow: tptype, falseflow: fptype };
+                return { 
+                    asexp: tptype !== undefined ? new TIRAsNotEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(tptype)) : undefined, 
+                    asnotexp: fptype !== undefined ? new TIRAsEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(fptype)) : undefined,
+                    trueflow: tptype, 
+                    falseflow: fptype 
+                };
             }
         }
         else {
@@ -981,65 +1246,135 @@ class TypeChecker {
             }
 
             if (issafe) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tptype !== undefined ? tptype : this.getSpecialAnyConceptType()), trueflow: tptype, falseflow: fptype };
+                return { 
+                    asexp: tptype !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tptype) : undefined, 
+                    asnotexp: fptype !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, fptype) : undefined, 
+                    trueflow: tptype, 
+                    falseflow: fptype 
+                };
             }
             else {
-                return { asexp: new TIRAsEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(tptype !== undefined ? tptype : this.getSpecialAnyConceptType())), trueflow: tptype, falseflow: fptype };
+                return { 
+                    asexp: tptype !== undefined ? new TIRAsEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(tptype)) : undefined, 
+                    asnotexp: fptype !== undefined ? new TIRAsNotEqualToLiteralExpression(sinfo, tirexp, tirliteral, this.toTIRTypeKey(fptype)) : undefined, 
+                    trueflow: tptype, 
+                    falseflow: fptype 
+                };
             }
         }
     }
 
-    private processITestAsConvert_Type(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, intotype: ResolvedType, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+    private processITestAsConvert_Type(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, intotype: ResolvedType, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
         const tsplit = this.splitTypes(flowtype, intotype);
         issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
 
         if (isnot) {
             if(issafe) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                return { 
+                    asexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined,
+                    asnotexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined,
+                    trueflow: tsplit.fp, 
+                    falseflow: tsplit.tp 
+                };
             }
 
             if (intotype.options.length === 1 && ResolvedType.isUniqueType(intotype.options[0])) {
                 if (intotype.isNoneType()) {
-                    return { asexp: new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType())), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { 
+                        asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined,
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsNoneSpecialExpression(sinfo, tirexp) : undefined,
+                        trueflow: tsplit.fp, 
+                        falseflow: tsplit.tp 
+                    };
                 }
                 else if (intotype.isNothingType()) {
-                    return { asexp: new TIRAsSomethingSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType())), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { 
+                        asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp), 
+                        asnotexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        trueflow: tsplit.fp, 
+                        falseflow: tsplit.tp 
+                    };
                 }
                 else {
-                    return { asexp: new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), this.toTIRTypeKey(intotype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { 
+                        asexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined,
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
+                        trueflow: tsplit.fp, 
+                        falseflow: tsplit.tp 
+                    };
                 }
             }
             else {
                 if (intotype.isSomeType()) {
-                    return { asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { 
+                        asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp)) : undefined, 
+                        trueflow: tsplit.fp, 
+                        falseflow: tsplit.tp 
+                    };
                 }
                 else {
-                    return { asexp: new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType()), this.toTIRTypeKey(intotype)), trueflow: tsplit.fp, falseflow: tsplit.tp };
+                    return { 
+                        asexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined, 
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
+                        trueflow: tsplit.fp, 
+                        falseflow: tsplit.tp 
+                    };
                 }
             }
         }
         else {
             if (issafe) {
-                return { asexp: this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                return { 
+                    asexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined, 
+                    asnotexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined,
+                    trueflow: tsplit.tp, 
+                    falseflow: tsplit.fp 
+                };
             }
 
             if (intotype.options.length === 1 && ResolvedType.isUniqueType(intotype.options[0])) {
                 if (intotype.isNoneType()) {
-                    return { asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { 
+                        asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                        asnotexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
+                        trueflow: tsplit.tp, 
+                        falseflow: tsplit.fp 
+                    };
                 }
                 else if (intotype.isNothingType()) {
-                    return { asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { 
+                        asexp: new TIRAsNothingSpecialExpression(sinfo, tirexp), 
+                        asnotexp: new TIRAsNothingSpecialExpression(sinfo, tirexp),
+                        trueflow: tsplit.tp, 
+                        falseflow: tsplit.fp 
+                    };
                 }
                 else {
-                    return { asexp: new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), this.toTIRTypeKey(intotype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { 
+                        asexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
+                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined,
+                        trueflow: tsplit.tp, 
+                        falseflow: tsplit.fp 
+                    };
                 }
             }
             else {
                 if (intotype.isSomeType()) {
-                    return { asexp: new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp !== undefined ? tsplit.fp : this.getSpecialAnyConceptType())), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { 
+                        asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
+                        asnotexp: new TIRAsNoneSpecialExpression(sinfo, tirexp),
+                        trueflow: tsplit.tp, 
+                        falseflow: tsplit.fp 
+                    };
                 }
                 else {
-                    return { asexp: new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp !== undefined ? tsplit.tp : this.getSpecialAnyConceptType()), this.toTIRTypeKey(intotype)), trueflow: tsplit.tp, falseflow: tsplit.fp };
+                    return { 
+                        asexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined, 
+                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined, 
+                        trueflow: tsplit.tp, 
+                        falseflow: tsplit.fp 
+                    };
                 }
             }
         }
@@ -3548,18 +3883,19 @@ class TypeChecker {
     }
 
     private checkPostfixIs(env: ExpressionTypeEnvironment, op: PostfixIsTest): ExpressionTypeEnvironment {
-        const isr = this.processITestAsTest(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds);
-        this.raiseErrorIf(op.sinfo, isr.trueflow === undefined, `test always evaluates to true`);
-        this.raiseErrorIf(op.sinfo, isr.falseflow === undefined, `test always evaluates to false`);
+        const isr = this.processITestAsTestOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds);
+        this.raiseErrorIf(op.sinfo, isr.falseflow === undefined, `test always evaluates to true`);
+        this.raiseErrorIf(op.sinfo, !isr.hastrueflow, `test always evaluates to false`);
 
         return env.setResultExpressionInfo(isr.testexp, this.getSpecialBoolType());
     }
 
     private checkPostfixAs(env: ExpressionTypeEnvironment, op: PostfixAsConvert): ExpressionTypeEnvironment {
-        const isr = this.processITestAsConvert(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds, false);
-        
-        this.raiseErrorIf(op.sinfo, isr.trueflow === undefined, `conversion always fails`);
-        return env.setResultExpressionInfo(isr.asexp, isr.trueflow as ResolvedType);
+        const isr = this.processITestAsTestOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds);
+        this.raiseErrorIf(op.sinfo, !isr.hastrueflow, `conversion always fails`);
+
+        const csr = this.processITestAsConvertOp(op.sinfo, env.trepr, env.trepr, env.expressionResult, op.ttest, env.binds, false);
+        return env.setResultExpressionInfo(csr.asexp as TIRExpression, csr.trueflow as ResolvedType);
     }
 
     private checkInvoke(env: ExpressionTypeEnvironment, op: PostfixInvoke, refvar: string | undefined): ExpressionTypeEnvironment {
@@ -4110,29 +4446,29 @@ class TypeChecker {
                 }
 
                 if(exp.condflow[i].binderinfo === undefined) {
-                    const testinfo = this.processITestAsTest(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, exp.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
-
                     const resenv = this.checkExpression(env, exp.condflow[i].value, desiredtype);
-                    
-                    testflowtypes.set(eenv.expressionResult.expstr, (exp.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
+                    const testinfo = this.processITestAsTestOp(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, exp.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
+                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
+
+                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
+
                     results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: undefined });
                 }
                 else {
                     const scratchidx = this.m_scratchCtr++;
-                    const testinfo = this.processITestAsTest(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    const asinfo = this.processITestAsConvert(exp.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds, true);
-                    const bindtype = asinfo.trueflow as ResolvedType;
+                    const testinfo = this.processITestAsTestOp(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
+                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
 
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
+                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
+
+                    const asinfo = this.processITestAsConvertOp(exp.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds, true);
+                    const bindtype = asinfo.trueflow as ResolvedType;
 
                     const flowenv = eenv.pushBinderFrame(exp.condflow[i].binderinfo as string, bindtype);
                     const resenv = this.checkExpression(flowenv, exp.condflow[i].value, desiredtype);
-
-                    testflowtypes.set(eenv.expressionResult.expstr, (exp.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp, exp.condflow[i].binderinfo as string]});
+                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp as TIRExpression, exp.condflow[i].binderinfo as string]});
                 }
             }
         }
@@ -4194,17 +4530,17 @@ class TypeChecker {
             else {
                 const condsinfo = (exp.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo;
 
-                const test = this.processITestAsTest(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
-                this.raiseErrorIf(condsinfo, test.trueflow === undefined, "test is always false");
+                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
+                this.raiseErrorIf(condsinfo, !test.hastrueflow, `test always evaluates to false`);
                 this.raiseErrorIf(condsinfo, i !== exp.switchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
                 
-                const conv = this.processITestAsConvert(condsinfo, venv.trepr, test.trueflow as ResolvedType, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
+                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
                 ctype = test.falseflow as ResolvedType;
 
                 let senv = venv;
                 let binderinfo: [TIRExpression, string] | undefined = undefined;
                 if (exp.switchflow[i].bindername !== undefined) {
-                    binderinfo = [conv.asexp, exp.switchflow[i].bindername as string];
+                    binderinfo = [conv.asexp as TIRExpression, exp.switchflow[i].bindername as string];
                     senv = senv.pushBinderFrame(exp.switchflow[i].bindername as string, conv.trueflow as ResolvedType);
                 }
                 const trueenv = this.checkExpression(senv, exp.switchflow[i].value, desiredtype);
@@ -4254,17 +4590,17 @@ class TypeChecker {
             else {
                 const condsinfo = (exp.matchflow[i].mtype as TypeSignature).sinfo;
 
-                const test = this.processITestAsTest(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds);
-                this.raiseErrorIf(condsinfo, test.trueflow === undefined, "test is always false");
+                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds);
+                this.raiseErrorIf(condsinfo, !test.hastrueflow, `test always evaluates to false`);
                 this.raiseErrorIf(condsinfo, i !== exp.matchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
                 
-                const conv = this.processITestAsConvert(condsinfo, venv.trepr, test.trueflow as ResolvedType, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds, true);
+                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds, true);
                 ctype = test.falseflow as ResolvedType;
 
                 let senv = venv;
                 let binderinfo: [TIRExpression, string] | undefined = undefined;
                 if (exp.matchflow[i].bindername !== undefined) {
-                    binderinfo = [conv.asexp, exp.matchflow[i].bindername as string];
+                    binderinfo = [conv.asexp as TIRExpression, exp.matchflow[i].bindername as string];
                     senv = senv.pushBinderFrame(exp.matchflow[i].bindername as string, conv.trueflow as ResolvedType);
                 }
                 const trueenv = this.checkExpression(senv, exp.matchflow[i].value, desiredtype);
@@ -4734,12 +5070,13 @@ class TypeChecker {
         const vinfo = env.lookupVar(stmt.name) as VarInfo;
         this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
 
-        const asinfo = this.processITestAsConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
-        this.raiseErrorIf(stmt.sinfo, asinfo.trueflow === undefined, "variable retype operation will always fail");
+        const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
+        const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
+        this.raiseErrorIf(stmt.sinfo, !testinfo.hastrueflow, "variable retype operation will always fail");
 
         return [
             env.setVarFlowType(stmt.name, asinfo.trueflow as ResolvedType),
-            [new TIRVariableRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), this.toTIRTypeKey(asinfo.trueflow as ResolvedType), asinfo.asexp)]
+            [new TIRVariableRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), this.toTIRTypeKey(asinfo.trueflow as ResolvedType), asinfo.asexp as TIRExpression)]
         ]
     }
 
@@ -4752,7 +5089,7 @@ class TypeChecker {
         }
 
         //TODO: also see the SC return in assign code -- probably want common handling for eval expression + check flows in both cases
-        //---- see the TIRScratchSCRetypeStatement opcode for handling this -- assign result to scratch, process with SC opcode, and then do assign (or nothing) as needed
+        //---- see the TIRScratchSCRetypeStatement opcode for handling this -- assign result to var (or scratch in ref assign), process with SC opcode, and then do assign (or nothing) as needed
         return [env, [new TIRAbortStatement(stmt.sinfo, "Not implemented -- short-circuit")]];
     }
     
@@ -4760,16 +5097,16 @@ class TypeChecker {
         const vinfo = env.lookupVar(stmt.name) as VarInfo;
         this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
 
-        const testinfo = this.processITestAsTest(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
-        const asinfo = this.processITestAsConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
-        const asnotinfo = this.processITestAsSCNotConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, this.m_rtype);
+        const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
+        const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
         
-        this.raiseErrorIf(stmt.sinfo, asinfo.trueflow === undefined, "variable retype operation will always fail");
+        this.raiseErrorIf(stmt.sinfo, testinfo.falseflow === undefined, "variable retypr operation is always successful");
+        this.raiseErrorIf(stmt.sinfo, !testinfo.hastrueflow, "variable retype operation will always fail");
 
         let binderinfo: [TIRExpression, string] | undefined = undefined;
         let retflow: TIRExpression | undefined = undefined;
         if(stmt.res === undefined) {
-            retflow = this.emitCoerceIfNeeded(env.createInitialEnvForExpressionEval().setResultExpressionInfo(asnotinfo.asexp, asnotinfo.trueflow as ResolvedType), stmt.sinfo, this.m_rtype).expressionResult;
+            retflow = this.emitCoerceIfNeeded(env.createInitialEnvForExpressionEval().setResultExpressionInfo(asinfo.asnotexp as TIRExpression, asinfo.falseflow as ResolvedType), stmt.sinfo, this.m_rtype).expressionResult;
         }
         else {
             if(stmt.binderinfo === undefined) {
@@ -4777,16 +5114,16 @@ class TypeChecker {
                 retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
             }
             else {
-                binderinfo = [asnotinfo.asexp, stmt.binderinfo as string];
+                binderinfo = [asinfo.asnotexp as TIRExpression, stmt.binderinfo as string];
 
-                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval().pushBinderFrame(stmt.binderinfo, asnotinfo.trueflow as ResolvedType), stmt.res, this.m_rtype);
+                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval().pushBinderFrame(stmt.binderinfo, asinfo.falseflow as ResolvedType), stmt.res, this.m_rtype);
                 retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
             }
         }
 
         return [
-            env.setVarFlowType(stmt.name, testinfo.trueflow as ResolvedType),
-            [new TIRVariableSCRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), testinfo.testexp, asinfo.asexp, retflow as TIRExpression, binderinfo)]
+            env.setVarFlowType(stmt.name, asinfo.trueflow as ResolvedType),
+            [new TIRVariableSCRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), testinfo.testexp, asinfo.asexp as TIRExpression, retflow as TIRExpression, binderinfo)]
         ];
     }
 
@@ -4975,29 +5312,29 @@ class TypeChecker {
                 }
 
                 if(stmt.condflow[i].binderinfo === undefined) {
-                    const testinfo = this.processITestAsTest(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
+                    const testinfo = this.processITestAsTestOp(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);  
 
                     const [resenv, resblck] = this.checkScopedBlockStatement(env, stmt.condflow[i].value);
                     
-                    testflowtypes.set(eenv.expressionResult.expstr, (stmt.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
+                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
                     results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv, binderinfo: undefined });
                 }
                 else {
                     const scratchidx = this.m_scratchCtr++;
-                    const testinfo = this.processITestAsTest(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    const asinfo = this.processITestAsConvert(stmt.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds, true);
+                    const testinfo = this.processITestAsTestOp(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    const asinfo = this.processITestAsConvertOp(stmt.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds, true);
                     const bindtype = asinfo.trueflow as ResolvedType;
 
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
 
                     const flowenv = env.pushLocalScope().addVar(stmt.condflow[i].binderinfo as string, true, bindtype, true);
                     const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.condflow[i].value);
 
-                    testflowtypes.set(eenv.expressionResult.expstr, (stmt.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp, stmt.condflow[i].binderinfo as string]});
+                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
+                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp as TIRExpression, stmt.condflow[i].binderinfo as string]});
                 }
             }
         }
@@ -5072,17 +5409,17 @@ class TypeChecker {
             else {
                 const condsinfo = (stmt.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo;
 
-                const test = this.processITestAsTest(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
-                this.raiseErrorIf(condsinfo, test.trueflow === undefined, "test is always false");
+                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, stmt.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
+                this.raiseErrorIf(condsinfo, !test.hastrueflow, "test is always false");
                 this.raiseErrorIf(condsinfo, i !== stmt.switchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
                 
-                const conv = this.processITestAsConvert(condsinfo, venv.trepr, test.trueflow as ResolvedType, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
+                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, stmt.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
                 ctype = test.falseflow as ResolvedType;
 
                 let senv = env;
                 let binderinfo: [TIRExpression, string] | undefined = undefined;
                 if (stmt.switchflow[i].binderinfo !== undefined) {
-                    binderinfo = [conv.asexp, stmt.switchflow[i].binderinfo as string];
+                    binderinfo = [conv.asexp as TIRExpression, stmt.switchflow[i].binderinfo as string];
                     senv = senv.pushLocalScope().addVar(stmt.switchflow[i].binderinfo as string, true, conv.trueflow as ResolvedType, true);
                 }
                 const trueenv = this.checkScopedBlockStatement(senv, stmt.switchflow[i].value);
@@ -5090,150 +5427,93 @@ class TypeChecker {
                 results.push({test: test.testexp, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
             }
         }
+        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
 
-        const stype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
             .map((ffp) => {
-                return { match: ffp.test as TIRExpression, value: this.emitCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult, binderinfo: ffp.binderinfo };
+                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo};
             });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
+        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo} : undefined;
 
+        const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
 
-
-        /////////////////////////////////
-        const venv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined), stmt.sval.sinfo);
-        
-        let cenv: ExpressionTypeEnvironment = venv;
-        let exhaustive = false;
-        let results: {test: TIRExpression | undefined, litval: TIRLiteralValue | undefined, value: [StatementTypeEnvironment, TIRScopedBlockStatement]}[] = [];
-        for (let i = 0; i < stmt.switchflow.length; ++i) {
-            //it is a wildcard match
-            if(stmt.switchflow[i].condlit === undefined) {
-                this.raiseErrorIf(stmt.sinfo, i == stmt.switchflow.length - 1, `wildcard should be last option in switch statement but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
-
-                const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
-
-                results.push({test: undefined, litval: undefined, value: trueenv});
-                exhaustive = true;
-                break;
-            }
-            else {
-                const tvaltry = this.reduceLiteralValueToCanonicalForm((stmt.switchflow[i].condlit as LiteralExpressionValue).exp, env.binds);
-                this.raiseErrorIf((stmt.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo, tvaltry[0] === undefined, `could not resolve literal value`);
-                const tval = tvaltry[0] as TIRLiteralValue;
-
-                let fexp: ExpressionTypeEnvironment | undefined = undefined;
-                if(tval.exp instanceof TIRLiteralNoneExpression) {
-                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(this.getSpecialNoneType(), this.envExpressionGetInferType(cenv)), `switch argument is never "none" so this case is never possible`);
-
-                    if(this.envExpressionGetInferType(cenv).isNoneType()) {
-                        this.raiseErrorIf(stmt.sinfo, i == stmt.switchflow.length - 1, `exhaustive none check should be last option in switch statement but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
-
-                        const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
-                        results.push({test: undefined, litval: tval, value: trueenv});
-                        exhaustive = true;
-                        break;
-                    }
-
-                    fexp = this.processTypeIs(tval.exp.sinfo, cenv, this.getSpecialNoneType());
-                }
-                else if(tval.exp instanceof TIRLiteralNothingExpression) {
-                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(this.getSpecialNothingType(), this.envExpressionGetInferType(cenv)), `switch argument is never "nothing" so this case is never possible`);
-
-                    if(this.envExpressionGetInferType(cenv).isNothingType()) {
-                        this.raiseErrorIf(stmt.sinfo, i == stmt.switchflow.length - 1, `exhaustive nothing check should be last option in switch statement but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
-
-                        const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.switchflow[i].value);
-                        results.push({test: undefined, litval: tval, value: trueenv});
-                        exhaustive = true;
-                        break;
-                    }
-
-                    fexp = this.processTypeIs(tval.exp.sinfo, cenv, this.getSpecialNothingType());
-                }
-                else {
-                    this.raiseErrorIf(tval.exp.sinfo, !this.subtypeOf(tvaltry[1], this.envExpressionGetInferType(cenv)), `switch argument is never "${tvaltry[1].typeID}" so this case is never possible`);
-                    
-                    const eqop = new TIRBinKeyEqOneUniqueExpression(tval.exp.sinfo, tval.exp.etype, tval.exp, venv.expressionResult.etype, venv.expressionResult);
-                    fexp = this.processTypeIsFromEquality(tval.exp.sinfo, eqop, cenv, tvaltry[1]);
-                }
-                const cflow = this.convertToBoolFlowsOnResult(fexp);
-
-                const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cflow.tenvs).expInferInfo), stmt.switchflow[i].value);
-                results.push({test: fexp.expressionResult, litval: tval, value: trueenv});
-                
-                cenv = fexp.setResultExpressionInfo(venv.expressionResult, venv.trepr, cflow.fenvs);
-            }
-        }
-
-        const clauses = results
-            .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => { return { match: ffp.test as TIRExpression, litval: ffp.litval as TIRLiteralValue, value: ffp.value[1] };});
-        const edefault = results.find((ffp) => ffp.test === undefined) ? results[results.length - 1].value[1] : undefined;
-
-        const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, clauses, edefault, exhaustive);
-        const rflows = [...results.map((ff) => ff.value[0])].filter((es) => !es.isDeadFlow);
+        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
         if(rflows.length === 0) {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            return [env.setFlowInfo(this.envExpressionCollapseStatmentFlows(rflows.map((ff) => ff.flowinfo))), [rexp]];
+            const jenv = env.updateFlowAtJoin(mvinfo);
+            return [jenv, [rexp]];
         }
     }
 
     private checkMatchStatement(env: StatementTypeEnvironment, stmt: MatchStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const venv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined), stmt.sval.sinfo);
+        const venv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined);
         
-        let cenv: ExpressionTypeEnvironment = venv;
+        const scratchidx = this.m_scratchCtr++;
+        let ctype: ResolvedType = venv.trepr;
         let exhaustive = false;
-        let results: {test: TIRExpression | undefined, ttype: TIRTypeKey | undefined, value: [StatementTypeEnvironment, TIRScopedBlockStatement]}[] = [];
+        let results: {test: TIRExpression | undefined, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
+
         for (let i = 0; i < stmt.matchflow.length; ++i) {
             //it is a wildcard match
             if(stmt.matchflow[i].mtype === undefined) {
-                this.raiseErrorIf(stmt.sinfo, i == stmt.matchflow.length - 1, `wildcard should be last option in match statement but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+                this.raiseErrorIf(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
 
-                const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.matchflow[i].value);
+                let senv = env;
+                let binderinfo: [TIRExpression, string] | undefined = undefined;
+                if (stmt.matchflow[i].binderinfo !== undefined) {
+                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(stmt.matchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, stmt.matchflow[i].value.sinfo, ctype), stmt.matchflow[i].binderinfo as string];
+                    senv = senv.pushLocalScope().addVar(stmt.matchflow[i].binderinfo as string, true, ctype, true);
+                }
+                const trueenv = this.checkScopedBlockStatement(senv, stmt.matchflow[i].value);
 
-                results.push({test: undefined, ttype: undefined, value: trueenv});
+                results.push({test: undefined, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
+
                 exhaustive = true;
                 break;
             }
             else {
-                const testtype = this.normalizeTypeOnly(stmt.matchflow[i].mtype as TypeSignature, env.binds);
+                const condsinfo = (stmt.matchflow[i].mtype as TypeSignature).sinfo;
 
-                if(this.subtypeOf(this.envExpressionGetInferType(cenv), testtype)) {
-                    this.raiseErrorIf(stmt.sinfo, i == stmt.matchflow.length - 1, `exhaustive none check should be last option in match statement but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
-
-                    const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.matchflow[i].value);
-                    results.push({test: undefined, ttype: undefined, value: trueenv});
-                    exhaustive = true;
-                    break;
-                }
-                else {
-                    const fexp = this.processTypeIs((stmt.matchflow[i].mtype as TypeSignature).sinfo, cenv, testtype);
-                    const cflow = this.convertToBoolFlowsOnResult(fexp);
-
-                    const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cflow.tenvs).expInferInfo), stmt.matchflow[i].value);
-                    results.push({test: fexp.expressionResult, ttype: this.toTIRTypeKey(testtype), value: trueenv});
+                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, stmt.matchflow[i].mtype as TypeSignature), venv.binds);
+                this.raiseErrorIf(condsinfo, !test.hastrueflow, "test is always false");
+                this.raiseErrorIf(condsinfo, i !== stmt.matchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
                 
-                    cenv = fexp.setResultExpressionInfo(venv.expressionResult, venv.trepr, cflow.fenvs);
+                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, stmt.matchflow[i].mtype as TypeSignature), venv.binds, true);
+                ctype = test.falseflow as ResolvedType;
+
+                let senv = env;
+                let binderinfo: [TIRExpression, string] | undefined = undefined;
+                if (stmt.matchflow[i].binderinfo !== undefined) {
+                    binderinfo = [conv.asexp as TIRExpression, stmt.matchflow[i].binderinfo as string];
+                    senv = senv.pushLocalScope().addVar(stmt.matchflow[i].binderinfo as string, true, conv.trueflow as ResolvedType, true);
                 }
+                const trueenv = this.checkScopedBlockStatement(senv, stmt.matchflow[i].value);
+                
+                results.push({test: test.testexp, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
             }
         }
+        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
 
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => { return { match: ffp.test as TIRExpression, mtype: ffp.ttype as TIRTypeKey, value: ffp.value[1] };});
-        const edefault = results.find((ffp) => ffp.test === undefined) ? results[results.length - 1].value[1] : undefined;
+            .map((ffp) => {
+                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo};
+            });
+        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo} : undefined;
 
-        const rexp = new TIRMatchStatement(stmt.sinfo, venv.expressionResult, clauses, edefault, exhaustive);
-        const rflows = [...results.map((ff) => ff.value[0])].filter((es) => !es.isDeadFlow);
+
+        const rexp = new TIRMatchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
+        
+        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
         if(rflows.length === 0) {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            return [env.setFlowInfo(this.envExpressionCollapseStatmentFlows(rflows.map((ff) => ff.flowinfo))), [rexp]];
+            const jenv = env.updateFlowAtJoin(mvinfo);
+            return [jenv, [rexp]];
         }
     }
 
