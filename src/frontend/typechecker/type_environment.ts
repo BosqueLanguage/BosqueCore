@@ -10,12 +10,16 @@ class VarInfo {
     readonly isCaptured: boolean;
     readonly mustDefined: boolean;
 
-    constructor(dtype: ResolvedType,isConst: boolean, isCaptured: boolean, mustDefined: boolean) {
+    constructor(dtype: ResolvedType, isConst: boolean, isCaptured: boolean, mustDefined: boolean) {
         this.declaredType = dtype;
 
         this.isConst = isConst;
         this.isCaptured = isCaptured;
         this.mustDefined = mustDefined;
+    }
+
+    updateType(tt: ResolvedType): VarInfo {
+        return new VarInfo(tt, this.isConst, this.isCaptured, this.mustDefined);
     }
 }
 
@@ -143,6 +147,21 @@ class StatementTypeEnvironment {
         return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, localcopy, false);
     }
 
+    setVarFlowType(name: string, newtype: ResolvedType): StatementTypeEnvironment {
+        const oldv = this.lookupVar(name) as VarInfo;
+
+        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => {
+            let nf = new Map<string, VarInfo>(frame);
+            if(nf.has(name)) {
+                nf.set(name, new VarInfo(newtype, oldv.isConst, oldv.isCaptured, true));
+            }
+
+            return nf;
+        });
+           
+        return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, localcopy, false);
+    }
+
     endOfExecution(): StatementTypeEnvironment {
         return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, this.locals, true);
     }
@@ -186,6 +205,23 @@ class StatementTypeEnvironment {
     popLocalScope(): StatementTypeEnvironment {
         const localscopy = (this.locals as Map<string, VarInfo>[]).slice(0, -1);
         return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, this.args, localscopy, this.isDeadFlow);
+    }
+
+    updateFlowAtJoin(remap: Map<string, ResolvedType>): StatementTypeEnvironment {
+        let rargs = new Map<string, VarInfo>();
+        this.args.forEach((ai, an) => {
+            rargs.set(an, ai.updateType(remap.get(an) as ResolvedType));
+        });
+
+        const rlocals = this.locals.map((lf) => {
+            let nlf = new Map<string, VarInfo>();
+            lf.forEach((vi, vn) => {
+                nlf.set(vn, vi.updateType(remap.get(vn) as ResolvedType));
+            });
+            return nlf;
+        });
+
+        return new StatementTypeEnvironment(this.binds, this.pcodes, this.frozenVars, rargs, rlocals, false);
     }
 }
 

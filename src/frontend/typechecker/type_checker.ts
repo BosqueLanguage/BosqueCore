@@ -9,7 +9,7 @@ import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceCo
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./type_environment";
 
-import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIRVariableRetypeStatement } from "../tree_ir/tir_body";
+import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
@@ -769,6 +769,37 @@ class TypeChecker {
         }
     }
 
+    private processITestAsNotTest(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope): {testexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined} {
+        if(tt instanceof ITestType) {
+            const intotype = this.normalizeTypeOnly(tt.ttype, binds);
+            return this.processITestAsTest_Type(sinfo, ltype, flowtype, tirexp, intotype, !tt.isnot);
+        }
+        else if(tt instanceof ITestLiteral) {
+            const [tirliteral, ltype] = this.reduceLiteralValueToCanonicalForm(tt.literal.exp, binds);
+            this.raiseErrorIf(sinfo, tirliteral === undefined, `could not evaluate literal value`);
+
+            return this.processITestAsTest_Literal(sinfo, ltype, flowtype, tt.literal, ltype, tirexp, tirliteral as TIRLiteralValue, !tt.isnot);
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                return this.processITestAsTest_None(sinfo, ltype, flowtype, tirexp, !tt.isnot);
+            }
+            else if(tt instanceof ITestNothing) {
+                return this.processITestAsTest_Nothing(sinfo, ltype, flowtype, tirexp, !tt.isnot);
+            }
+            else if(tt instanceof ITestSomething) {
+                return this.processITestAsTest_Something(sinfo, ltype, flowtype, tirexp, !tt.isnot);
+            }
+            else if(tt instanceof ITestOk) {
+                return this.processITestAsTest_Ok(sinfo, ltype, flowtype, tirexp, !tt.isnot);
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                return this.processITestAsTest_Err(sinfo, ltype, flowtype, tirexp, !tt.isnot);
+            }
+        }
+    }
+
     private processITestAsConvert_None(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
         const tsplit = this.splitTypes(flowtype, this.getSpecialNoneType());
         issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
@@ -1029,6 +1060,37 @@ class TypeChecker {
             else {
                 assert(tt instanceof ITestErr, "missing case in ITest");
                 return this.processITestAsConvert_Err(sinfo, ltype, flowtype, tirexp, tt.isnot, issafe);
+            }
+        }
+    }
+
+    private processITestAsNotConvert(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, tt: ITest, binds: TemplateBindScope, issafe: boolean): { asexp: TIRExpression, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        if(tt instanceof ITestType) {
+            const intotype = this.normalizeTypeOnly(tt.ttype, binds);
+            return this.processITestAsConvert_Type(sinfo, ltype, flowtype, tirexp, intotype, !tt.isnot, issafe);
+        }
+        else if(tt instanceof ITestLiteral) {
+            const [tirliteral, ltype] = this.reduceLiteralValueToCanonicalForm(tt.literal.exp, binds);
+            this.raiseErrorIf(sinfo, tirliteral === undefined, `could not evaluate literal value`);
+
+            return this.processITestAsConvert_Literal(sinfo, ltype, flowtype, tt.literal, ltype, tirexp, tirliteral as TIRLiteralValue, !tt.isnot, issafe);
+        }
+        else {
+            if(tt instanceof ITestNone) {
+                return this.processITestAsConvert_None(sinfo, ltype, flowtype, tirexp, !tt.isnot, issafe);
+            }
+            else if(tt instanceof ITestNothing) {
+                return this.processITestAsConvert_Nothing(sinfo, ltype, flowtype, tirexp, !tt.isnot, issafe);
+            }
+            else if(tt instanceof ITestSomething) {
+                return this.processITestAsConvert_Something(sinfo, ltype, flowtype, tirexp, !tt.isnot, issafe);
+            }
+            else if(tt instanceof ITestOk) {
+                return this.processITestAsConvert_Ok(sinfo, ltype, flowtype, tirexp, !tt.isnot, issafe);
+            }
+            else {
+                assert(tt instanceof ITestErr, "missing case in ITest");
+                return this.processITestAsConvert_Err(sinfo, ltype, flowtype, tirexp, !tt.isnot, issafe);
             }
         }
     }
@@ -2746,8 +2808,7 @@ class TypeChecker {
                 this.raiseErrorIf(exp.sinfo, vinfo === null, `Could not resolve captured variable: ${v}`);
                 this.raiseErrorIf(exp.sinfo, (vinfo as VarInfo).declaredType instanceof ResolvedFunctionType, `Cannot capture function typed argument: ${v}`);
 
-                const envaccess = env.setResultExpressionInfo(new TIRAccessVariableExpression(exp.sinfo, v, this.toTIRTypeKey((vinfo as VarInfo).declaredType)), (vinfo as VarInfo).declaredType);
-                capturedVarMap.set(v, this.toTIRTypeKey(envaccess.trepr));
+                capturedVarMap.set(v, this.toTIRTypeKey((vinfo as VarInfo).declaredType));
             }
         });
 
@@ -4690,20 +4751,62 @@ class TypeChecker {
 
     private checkVariableRetypeStatement(env: StatementTypeEnvironment, stmt: VariableRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
         const vinfo = env.lookupVar(stmt.name) as VarInfo;
+        this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
+
         const asinfo = this.processITestAsConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
+        this.raiseErrorIf(stmt.sinfo, asinfo.trueflow === undefined, "variable retype operation will always fail");
 
         return [
-            env.setVarFlowType(),
+            env.setVarFlowType(stmt.name, asinfo.trueflow as ResolvedType),
             [new TIRVariableRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), this.toTIRTypeKey(asinfo.trueflow as ResolvedType), asinfo.asexp)]
         ]
     }
 
     private checkExpressionSCReturnStatement(env: StatementTypeEnvironment, stmt: ExpressionSCReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        xxxx;
+        if(stmt.ttest instanceof Expression) {
+            assert(false, "NOT IMPLEMENTED -- short-circuit return statement in type checker");
+        }
+        else {
+            assert(false, "NOT IMPLEMENTED -- short-circuit return statement in type checker");
+        }
+
+        //TODO: also see the SC return in assign code -- probably want common handling for eval expression + check flows in both cases
+        //---- see the TIRScratchSCRetypeStatement opcode for handling this -- assign result to scratch, process with SC opcode, and then do assign (or nothing) as needed
+        return [env, [new TIRAbortStatement(stmt.sinfo, "Not implemented -- short-circuit")]];
     }
     
     private checkVariableSCRetypeStatement(env: StatementTypeEnvironment, stmt: VariableSCRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        xxxx;
+        const vinfo = env.lookupVar(stmt.name) as VarInfo;
+        this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
+
+        const testinfo = this.processITestAsTest(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
+        const asinfo = this.processITestAsConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
+        const asnotinfo = this.processITestAsNotConvert(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
+        
+        this.raiseErrorIf(stmt.sinfo, asinfo.trueflow === undefined, "variable retype operation will always fail");
+
+        let binderinfo: [TIRExpression, string] | undefined = undefined;
+        let retflow: TIRExpression | undefined = undefined;
+        if(stmt.res === undefined) {
+            retflow = this.emitCoerceIfNeeded(env.createInitialEnvForExpressionEval().setResultExpressionInfo(asnotinfo.asexp, asnotinfo.trueflow as ResolvedType), stmt.sinfo, this.m_rtype).expressionResult;
+        }
+        else {
+            if(stmt.binderinfo === undefined) {
+                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.res, this.m_rtype);
+                retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
+            }
+            else {
+                binderinfo = [asnotinfo.asexp, stmt.binderinfo as string];
+
+                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval().pushBinderFrame(stmt.binderinfo, asnotinfo.trueflow as ResolvedType), stmt.res, this.m_rtype);
+                retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
+            }
+        }
+
+        return [
+            env.setVarFlowType(stmt.name, testinfo.trueflow as ResolvedType),
+            [new TIRVariableSCRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), testinfo.testexp, asinfo.asexp, retflow as TIRExpression, binderinfo)]
+        ];
     }
 
     private checkRefCallStatement(env: StatementTypeEnvironment, stmt: RefCallStatement): [StatementTypeEnvironment, TIRStatement[]] {
@@ -4801,34 +4904,223 @@ class TypeChecker {
         }
     }
 
+    private mergeVarTypeMaps(envs: StatementTypeEnvironment[]): Map<string, ResolvedType> {
+        let rrm = new Map<string, ResolvedType[]>();
+        envs.forEach((eev) => {
+            eev.args.forEach((ai, an) => {
+                if(!rrm.has(an)) {
+                    rrm.set(an, []);
+                }
+                if((rrm.get(an) as ResolvedType[]).find((tt) => tt.typeID === ai.declaredType.typeID) === undefined) {
+                    (rrm.get(an) as ResolvedType[]).push(ai.declaredType);
+                }
+            });
+
+            eev.locals.forEach((lf) => {
+                lf.forEach((vi, vn) => {
+                    if(!rrm.has(vn)) {
+                        rrm.set(vn, []);
+                    }
+                    if((rrm.get(vn) as ResolvedType[]).find((tt) => tt.typeID === vi.declaredType.typeID) === undefined) {
+                        (rrm.get(vn) as ResolvedType[]).push(vi.declaredType);
+                    }
+                });
+            });
+        });
+
+        let mrm = new Map<string, ResolvedType>();
+        rrm.forEach((tl, vn) => {
+            const tt = this.normalizeUnionList(tl);
+            mrm.set(vn, tt);
+        });
+
+        return mrm;
+    }
+
+    private emitVarRetypeAtFlowJoin(sinfo: SourceInfo, env: StatementTypeEnvironment, remap: Map<string, ResolvedType>): {vname: string, cast: TIRExpression}[] {
+        let vrl: {vname: string, vtype: ResolvedType}[] = [];
+        remap.forEach((tt, vn) => {
+            const vvinfo = env.lookupVar(vn) as VarInfo;
+            if(vvinfo.declaredType.typeID !== tt.typeID) {
+                vrl.push({vname: vn, vtype: tt});
+            }
+        });
+        vrl.sort((a, b) => a.vname.localeCompare(b.vname));
+
+        if(vrl.length === 0) {
+            return [];
+        }
+        else {
+            const rmps = vrl.map((rp) => {
+                const vvinfo = env.lookupVar(rp.vname) as VarInfo;
+                const varenv = env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRAccessVariableExpression(sinfo, rp.vname, this.toTIRTypeKey(vvinfo.declaredType)), vvinfo.declaredType);
+                const aswrk = this.emitCoerceIfNeeded_NoCheck(varenv, sinfo, rp.vtype).expressionResult;
+                    
+                return {vname: rp.vname, cast: aswrk};
+            });
+
+            return rmps;
+        }
+    }
+
     private checkIfStatement(env: StatementTypeEnvironment, stmt: IfStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        let cenv = env.createInitialEnvForExpressionEval();
-        let results: {test: ExpressionTypeEnvironment, value: [StatementTypeEnvironment, TIRScopedBlockStatement]}[] = [];
+        let results: {test: ExpressionTypeEnvironment, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
+
+        let testflowtypes = new Map<string, ResolvedType>();
+        let elsebind: TIRExpression | undefined | null = undefined;
 
         for (let i = 0; i < stmt.condflow.length; ++i) {
-            const testenv = this.emitCoerceIfNeeded(this.checkExpression(cenv, stmt.condflow[i].cond, undefined), stmt.condflow[i].cond.sinfo, this.getSpecialBoolType());
-            this.raiseErrorIf(stmt.sinfo, this.envExpressionGetInferTruth(testenv) !== FlowTypeTruthValue.Unknown, "Test is always true/false");
+            if(stmt.condflow[i].cond.itestopt === undefined) {
+                const tenv = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.condflow[i].cond.exp, this.getSpecialBoolType()), stmt.condflow[i].cond.exp.sinfo, this.getSpecialBoolType());
+                elsebind = null;
 
-            const cflow = this.convertToBoolFlowsOnResult(testenv);
-            
-            const trueenv = this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cflow.tenvs).expInferInfo), stmt.condflow[i].value);
-            results.push({test: testenv, value: trueenv});
+                this.raiseErrorIf(stmt.condflow[i].value.sinfo, stmt.condflow[i].binderinfo !== undefined, "Binder doesn't make sense here -- will be bound to true");
                 
-            cenv = testenv.createFreshFlowEnvExpressionFrom(cflow.fenvs);
-        }
-        const aenv = stmt.elseflow !== undefined ? this.checkScopedBlockStatement(env.setFlowInfo(this.envExpressionCollapseFlowInfos(cenv.flowinfo).expInferInfo), stmt.elseflow) : ([env.endOfExecution(), new TIRScopedBlockStatement([new TIRNopStatement(stmt.sinfo)], false)] as [StatementTypeEnvironment, TIRScopedBlockStatement]);
+                const [resenv, blck] = this.checkScopedBlockStatement(env, stmt.condflow[i].value);
+                results.push({ test: tenv, blck: blck, fenv: resenv, binderinfo: undefined });
+            }
+            else {
+                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.condflow[i].cond.exp, undefined);
+                const eenvflowtype = testflowtypes.get(eenv.expressionResult.expstr) || eenv.trepr;
 
-        const rexp = new TIRIfStatement(stmt.sinfo, {test: results[0].test.expressionResult, value: results[0].value[1]}, results.slice(1).map((ffp) => {return {test: ffp.test.expressionResult, value: ffp.value[1] };}), aenv[1]);
-        const rflows = [...results.map((ff) => ff.value[0]), aenv[0]].filter((es) => !es.isDeadFlow);
+                if(elsebind === null) {
+                    elsebind = null;
+                }
+                else if(elsebind === undefined) {
+                    elsebind = eenv.expressionResult;
+                }
+                else {
+                    elsebind = (elsebind.expstr === eenv.expressionResult.expstr) ? elsebind : null;
+                }
+
+                if(stmt.condflow[i].binderinfo === undefined) {
+                    const testinfo = this.processITestAsTest(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
+
+                    const [resenv, resblck] = this.checkScopedBlockStatement(env, stmt.condflow[i].value);
+                    
+                    testflowtypes.set(eenv.expressionResult.expstr, (stmt.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
+                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv, binderinfo: undefined });
+                }
+                else {
+                    const scratchidx = this.m_scratchCtr++;
+                    const testinfo = this.processITestAsTest(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
+                    const asinfo = this.processITestAsConvert(stmt.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds, true);
+                    const bindtype = asinfo.trueflow as ResolvedType;
+
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, "test is always true");
+                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.trueflow === undefined, "test is always false");
+
+                    const flowenv = env.pushLocalScope().addVar(stmt.condflow[i].binderinfo as string, true, bindtype, true);
+                    const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.condflow[i].value);
+
+                    testflowtypes.set(eenv.expressionResult.expstr, (stmt.condflow[i].cond.itestopt as ITest).isnot ? testinfo.trueflow as ResolvedType : testinfo.falseflow as ResolvedType);
+                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp, stmt.condflow[i].binderinfo as string]});
+                }
+            }
+        }
+
+        if (stmt.elseflow === undefined) {
+            results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: new TIRScopedBlockStatement([], false), fenv: env, binderinfo: undefined});
+        }
+        else {
+            if (stmt.elseflow.binderinfo === undefined) {
+                const [resenv, resblck] = this.checkScopedBlockStatement(env, stmt.elseflow.value);
+                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv, binderinfo: undefined });
+            }
+            else {
+                this.raiseErrorIf(stmt.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
+
+                const scratchidx = this.m_scratchCtr++;
+                const bindtype = testflowtypes.get((elsebind as TIRExpression).expstr) as ResolvedType;
+
+                const flowenv = env.pushLocalScope().addVar(stmt.elseflow.binderinfo as string, true, bindtype, true);
+                const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.elseflow.value);
+
+                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [elsebind as TIRExpression, scratchidx, new TIRAccessScratchSingleValueExpression(stmt.elseflow.value.sinfo, this.toTIRTypeKey(bindtype), scratchidx), stmt.elseflow.binderinfo as string] });
+            }
+        }
+        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
+
+        const ifcl = {test: results[0].test.expressionResult, value: results[0].blck, binderinfo: results[0].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[0].fenv, mvinfo)};
+
+        const elifcl = results.slice(1, results.length - 1).map((rr) => {
+            return {test: rr.test.expressionResult, value: rr.blck, binderinfo: rr.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, rr.fenv, mvinfo)};
+        });
+        
+        const elsecl = {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)};
+
+        const rexp = new TIRIfStatement(stmt.sinfo, ifcl, elifcl, elsecl);
+        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
         if(rflows.length === 0) {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            return [env.setFlowInfo(this.envExpressionCollapseStatmentFlows(rflows.map((ff) => ff.flowinfo))), [rexp]];
+            const jenv = env.updateFlowAtJoin(mvinfo);
+            return [jenv, [rexp]];
         }
     }
 
     private checkSwitchStatement(env: StatementTypeEnvironment, stmt: SwitchStatement): [StatementTypeEnvironment, TIRStatement[]] {
+        const venv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined);
+        
+        const scratchidx = this.m_scratchCtr++;
+        let ctype: ResolvedType = venv.trepr;
+        let exhaustive = false;
+        let results: {test: TIRExpression | undefined, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
+
+        for (let i = 0; i < stmt.switchflow.length; ++i) {
+            //it is a wildcard match
+            if(stmt.switchflow[i].condlit === undefined) {
+                this.raiseErrorIf(stmt.sinfo, i !== stmt.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
+
+                let senv = env;
+                let binderinfo: [TIRExpression, string] | undefined = undefined;
+                if (stmt.switchflow[i].binderinfo !== undefined) {
+                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(stmt.switchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, stmt.switchflow[i].value.sinfo, ctype), stmt.switchflow[i].binderinfo as string];
+                    senv = senv.pushLocalScope().addVar(stmt.switchflow[i].binderinfo as string, true, ctype, true);
+                }
+                const trueenv = this.checkScopedBlockStatement(senv, stmt.switchflow[i].value);
+
+                results.push({test: undefined, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
+
+                exhaustive = true;
+                break;
+            }
+            else {
+                const condsinfo = (stmt.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo;
+
+                const test = this.processITestAsTest(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
+                this.raiseErrorIf(condsinfo, test.trueflow === undefined, "test is always false");
+                this.raiseErrorIf(condsinfo, i !== stmt.switchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
+                
+                const conv = this.processITestAsConvert(condsinfo, venv.trepr, test.trueflow as ResolvedType, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
+                ctype = test.falseflow as ResolvedType;
+
+                let senv = env;
+                let binderinfo: [TIRExpression, string] | undefined = undefined;
+                if (stmt.switchflow[i].binderinfo !== undefined) {
+                    binderinfo = [conv.asexp, stmt.switchflow[i].binderinfo as string];
+                    senv = senv.pushLocalScope().addVar(stmt.switchflow[i].binderinfo as string, true, conv.trueflow as ResolvedType, true);
+                }
+                const trueenv = this.checkScopedBlockStatement(senv, stmt.switchflow[i].value);
+                
+                results.push({test: test.testexp, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
+            }
+        }
+
+        const stype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
+        const clauses = results
+            .filter((ffp) => ffp.test !== undefined)
+            .map((ffp) => {
+                return { match: ffp.test as TIRExpression, value: this.emitCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult, binderinfo: ffp.binderinfo };
+            });
+        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
+
+
+
+        /////////////////////////////////
         const venv = this.emitCoerceToInferTypeIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined), stmt.sval.sinfo);
         
         let cenv: ExpressionTypeEnvironment = venv;

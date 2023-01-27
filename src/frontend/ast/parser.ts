@@ -2743,14 +2743,16 @@ class Parser {
         }
     }
 
-    private parseSCAssignExpression(): [Expression, {sctest: ITest | Expression, scaction: Expression | undefined} | undefined] {
+    private parseSCAssignExpression(): [Expression, {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined] {
         const ee = this.parseExpression();
         if(this.testToken(SYM_questionquestion)) {
+            const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
+
             this.consumeToken();
             const sctest = this.parseSCReturnTest();
-            const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+            const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpressionWithBinder() : undefined;
 
-            return [ee, {sctest: sctest, scaction: scaction}];
+            return [ee, {sctest: sctest, scaction: scaction !== undefined ? scaction[1] : undefined, binderinfo: (scaction !== undefined && scaction[0]) ? bindername : undefined}];
         }
         else {
             return [ee, undefined];
@@ -2963,7 +2965,7 @@ class Parser {
                 }
 
                 let exp: Expression | undefined = undefined;
-                let sccinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined = undefined;
+                let sccinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined = undefined;
                 if (hasassign) {
                     [exp, sccinfo] = this.parseSCAssignExpression();
                 }
@@ -3007,17 +3009,18 @@ class Parser {
                 const isconvert = this.testToken(SYM_atat);
                 this.consumeToken();
 
+                const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
                 if(isconvert) {
                     const sctest = this.parseITest();
-                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpressionWithBinder() : undefined;
 
-                    return new VariableSCRetypeStatement(sinfo, name, sctest, scaction);
+                    return new VariableSCRetypeStatement(sinfo, name, sctest, scaction !== undefined ? scaction[1] : undefined, (scaction !== undefined && scaction[0]) ? bindername : undefined);
                 }
                 else {
                     const sctest = this.parseSCReturnTest();
-                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpression() : undefined;
+                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpressionWithBinder() : undefined;
 
-                    return new ExpressionSCReturnStatement(sinfo, new AccessVariableExpression(sinfo, name), sctest, scaction);
+                    return new ExpressionSCReturnStatement(sinfo, new AccessVariableExpression(sinfo, name), sctest, scaction !== undefined ? scaction[1] : undefined, (scaction !== undefined && scaction[0]) ? bindername : undefined);
                 }
             }
             else {
@@ -3283,13 +3286,10 @@ class Parser {
             if(tsccinfo === undefined) {
                 this.raiseError(line, `expected short-circuit return guard but did not find it`);
             }
-            const sccinfo = tsccinfo as {sctest: ITest | Expression, scaction: Expression | undefined};
+            const sccinfo = tsccinfo as {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined};
 
             this.ensureAndConsumeToken(SYM_semicolon, "short-circuit return guard");
-            return new ExpressionSCReturnStatement(sinfo, exp, sccinfo.sctest, sccinfo.scaction);
-
-            this.raiseError(line, "Unknown statement structure");
-            return new InvalidStatement(sinfo);
+            return new ExpressionSCReturnStatement(sinfo, exp, sccinfo.sctest, sccinfo.scaction, sccinfo.binderinfo);
         }
     }
 
@@ -3387,8 +3387,8 @@ class Parser {
             return new IfStatement(sinfo, conds, undefined);
         }
         else {
-            const elsebody = this.parseScopedBlockStatement();
-            return new IfStatement(sinfo, conds, elsebody);
+            const [elsebind, elsebody] = this.parseScopedBlockStatementWithBinder();
+            return new IfStatement(sinfo, conds, {value: elsebody, binderinfo: elsebind ? bindername : undefined} );
         }
     }
 

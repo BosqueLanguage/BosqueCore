@@ -1722,8 +1722,7 @@ enum TIRStatementTag {
 
     VariableRetypeStatement = "VariableRetypeStatement",
     VariableSCRetypeStatement = "VariableSCRetypeStatement",
-    ExpressionSCReturnDefineAndAssignStatement = "ExpressionSCReturnDefineAndAssignStatement",
-    ExpressionSCReturnAssignStatement = "ExpressionSCReturnAssignStatement",
+    ScratchSCStatement = "ScratchSCStatement",
 
     ReturnStatement = "ReturnStatement",
     ReturnStatementWRef = "ReturnStatementWRef",
@@ -1975,7 +1974,7 @@ class TIRVariableRetypeStatement extends TIRStatement {
     readonly vname: string;
     readonly origtype: TIRTypeKey;
     readonly newtype: TIRTypeKey;
-    readonly asconv: TIRExpression
+    readonly asconv: TIRExpression;
 
     constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, newtype: TIRTypeKey, asconv: TIRExpression) {
         super(TIRStatementTag.VariableRetypeStatement, sinfo, `${vname} = ${asconv.expstr}`);
@@ -2004,14 +2003,16 @@ class TIRVariableSCRetypeStatement extends TIRStatement {
     readonly test: TIRExpression;
     readonly asconv: TIRExpression;
     readonly resexp: TIRExpression;
+    readonly binderinfo: [TIRExpression, string] | undefined;
 
-    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, test: TIRExpression, asconv: TIRExpression, resexp: TIRExpression) {
+    constructor(sinfo: SourceInfo, vname: string, origtype: TIRTypeKey, test: TIRExpression, asconv: TIRExpression, resexp: TIRExpression, binderinfo: [TIRExpression, string] | undefined) {
         super(TIRStatementTag.VariableSCRetypeStatement, sinfo, `${vname} ?? ${test.expstr} -- ${vname} = safe ${asconv.expstr} : ${resexp.expstr}`);
         this.vname = vname;
         this.origtype = origtype;
         this.test = test;
         this.asconv = asconv;
         this.resexp = resexp;
+        this.binderinfo = binderinfo;
     }
 
     isFailableOperation(): boolean {
@@ -2027,55 +2028,30 @@ class TIRVariableSCRetypeStatement extends TIRStatement {
     }
 }
 
-class TIRExpressionSCReturnDefineAndAssignStatement extends TIRStatement {
-    //always implicitly reads from scratch location
-    readonly vname: string;
-    readonly vtype: TIRTypeKey;
-    readonly isconst: boolean;
-    
-    readonly fromtype: TIRTypeKey;
-    readonly test: TIRExpression;
-    readonly asconv: TIRExpression;
-    readonly resexp: TIRExpression;
-
+class TIRScratchSCStatement extends TIRStatement {
     readonly sidx: number;
+    readonly pos: number | undefined;
+    readonly origtype: TIRTypeKey;
+    readonly test: TIRExpression;
+    readonly resexp: TIRExpression;
+    readonly binderinfo: [TIRExpression, string] | undefined;
 
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, isconst: boolean, fromtype: TIRTypeKey, test: TIRExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
-        super(TIRStatementTag.ExpressionSCReturnDefineAndAssignStatement, sinfo, `${isconst ? "let" : "var"} ${vname}: ${vtype} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
-        this.vname = vname;
-        this.vtype = vtype;
-        this.isconst = isconst;
-        this.fromtype = fromtype;
-        this.test = test;
-        this.asconv = asconv;
-        this.resexp = resexp;
-
+    constructor(sinfo: SourceInfo, sidx: number, pos: number | undefined, origtype: TIRTypeKey, test: TIRExpression, asconv: TIRExpression, resexp: TIRExpression, binderinfo: [TIRExpression, string] | undefined) {
+        super(TIRStatementTag.ScratchSCStatement, sinfo, `$$scratch<${sidx}>[${pos !== undefined ? pos : -1}] ?? ${test.expstr} -- $$scratch<${sidx}>[${pos !== undefined ? pos : -1}] = safe ${asconv.expstr} : ${resexp.expstr}`);
         this.sidx = sidx;
+        this.pos = pos;
+        this.origtype = origtype;
+        this.test = test;
+        this.resexp = resexp;
+        this.binderinfo = binderinfo;
     }
-}
 
-class TIRExpressionSCReturnAssignStatement extends TIRStatement {
-    //always implicitly reads from scratch location
-    readonly vname: string;
-    readonly vtype: TIRTypeKey;
-    
-    readonly fromtype: TIRTypeKey;
-    readonly test: TIRExpression;
-    readonly asconv: TIRExpression;
-    readonly resexp: TIRExpression;
+    isFailableOperation(): boolean {
+        return this.test.isFailableOperation() || this.resexp.isFailableOperation();
+    }
 
-    readonly sidx: number;
-
-    constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, fromtype: TIRTypeKey, test: TIRExpression, asconv: TIRAsExpression, resexp: TIRExpression, sidx: number) {
-        super(TIRStatementTag.ExpressionSCReturnAssignStatement, sinfo, `${vname} = ${test.expstr} then safe ${asconv.expstr} : ${resexp.expstr}`);
-        this.vname = vname;
-        this.vtype = vtype;
-        this.fromtype = fromtype;
-        this.test = test;
-        this.asconv = asconv;
-        this.resexp = resexp;
-
-        this.sidx = sidx;
+    getDirectlyUsedVars(): string[] {
+        return TIRExpression.joinUsedVarInfo(this.test.getUsedVars(), this.resexp.getUsedVars());
     }
 }
 
@@ -2121,29 +2097,30 @@ class TIRReturnStatementWAction extends TIRReturnStatementGeneral {
 }
 
 class TIRIfStatement extends TIRStatement {
-    readonly ifentry: {test: TIRExpression, value: TIRScopedBlockStatement};
-    readonly elifentries: {test: TIRExpression, value: TIRScopedBlockStatement}[];
-    readonly elseentry: TIRScopedBlockStatement;
+    readonly ifentry: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]};
+    readonly elifentries: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[];
+    readonly elseentry: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]};
 
-    constructor(sinfo: SourceInfo, ifentry: {test: TIRExpression, value: TIRScopedBlockStatement}, elifentries: {test: TIRExpression, value: TIRScopedBlockStatement}[], elseentry: TIRScopedBlockStatement) {
-        super(TIRStatementTag.IfStatement, sinfo, `if(${ifentry.test.expstr}) ${ifentry.value.stmtstr} ${elifentries.map((efi) => `elif(${efi.test.expstr}) ${efi.value.stmtstr}`)} else ${elseentry.stmtstr}`);
+    constructor(sinfo: SourceInfo, ifentry: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}, elifentries: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[], elseentry: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}) {
+        super(TIRStatementTag.IfStatement, sinfo, `if(${ifentry.test.expstr}) ${ifentry.value.stmtstr} ${elifentries.map((efi) => `elif(${efi.test.expstr}) ${efi.value.stmtstr}`)} else ${elseentry.value.stmtstr}`);
         this.ifentry = ifentry;
         this.elifentries = elifentries;
         this.elseentry = elseentry;
     }
 
     isFailableOperation(): boolean {
-        return this.ifentry.test.isFailableOperation() || this.ifentry.value.isFailableOperation() ||
-            this.elifentries.some((ee) => ee.test.isFailableOperation() || ee.value.isFailableOperation()) ||
-            this.elseentry.isFailableOperation();
+        return this.ifentry.test.isFailableOperation() || (this.ifentry.binderinfo !== undefined && this.ifentry.binderinfo[0].isFailableOperation()) || this.ifentry.value.isFailableOperation() ||
+            this.elifentries.some((ee) => ee.test.isFailableOperation() || (ee.binderinfo !== undefined && ee.binderinfo[0].isFailableOperation()) || ee.value.isFailableOperation()) ||
+            this.elseentry.value.isFailableOperation() || (this.elseentry.binderinfo !== undefined && this.elseentry.binderinfo[0].isFailableOperation());
     }
 }
 
 
 class TIRSwitchStatement extends TIRStatement {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRScopedBlockStatement}[];
-    readonly edefault: TIRScopedBlockStatement | undefined;
+    readonly scratchidx: number;
+    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[];
+    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
     constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, litval: TIRLiteralValue, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
@@ -2164,8 +2141,9 @@ class TIRSwitchStatement extends TIRStatement {
 
 class TIRMatchStatement extends TIRStatement {
     readonly exp: TIRExpression;
-    readonly clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRScopedBlockStatement}[];
-    readonly edefault: TIRScopedBlockStatement | undefined;
+    eadonly scratchidx: number;
+    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[];
+    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
 
     constructor(sinfo: SourceInfo, exp: TIRExpression, clauses: {match: TIRExpression, mtype: TIRTypeKey, value: TIRScopedBlockStatement}[], edefault: TIRScopedBlockStatement | undefined, isexhaustive: boolean) {
@@ -2460,7 +2438,7 @@ export {
     TIRAsSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomeSpecialExpression, TIRAsNothingSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsOkSpecialExpression, TIRAsErrSpecialExpression,
     TIRIAsLiteralEqExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression,
     TIRITestAsTypeExpression, TIRAsTypeExpression, TIRAsNotTypeExpression, TIRAsSubTypeExpression, TIRAsNotSubTypeExpression,
-    TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRExpressionSCReturnDefineAndAssignStatement, TIRExpressionSCReturnAssignStatement,
+    TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRScratchSCStatement,
     TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionSelfRefExpression,
     TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberActionExpression,
     TIRLiteralValue,

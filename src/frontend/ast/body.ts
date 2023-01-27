@@ -1063,9 +1063,9 @@ class VariableDeclarationStatement extends Statement {
     readonly isConst: boolean;
     readonly vtype: TypeSignature; //may be auto
     readonly exp: Expression | undefined; //may be undef
-    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined;
+    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, name: string, isConst: boolean, vtype: TypeSignature, exp: Expression | undefined, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined) {
+    constructor(sinfo: SourceInfo, name: string, isConst: boolean, vtype: TypeSignature, exp: Expression | undefined, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined) {
         super(StatementTag.VariableDeclarationStatement, sinfo);
         this.name = name;
         this.isConst = isConst;
@@ -1078,9 +1078,9 @@ class VariableDeclarationStatement extends Statement {
 class VariableAssignmentStatement extends Statement {
     readonly name: string;
     readonly exp: Expression;
-    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined;
+    readonly scinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, name: string, exp: Expression, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined} | undefined) {
+    constructor(sinfo: SourceInfo, name: string, exp: Expression, scinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined) {
         super(StatementTag.VariableAssignmentStatement, sinfo);
         this.name = name;
         this.exp = exp;
@@ -1103,12 +1103,14 @@ class ExpressionSCReturnStatement extends Statement {
     readonly exp: Expression;
     readonly ttest: ITest | Expression;
     readonly res: Expression | undefined;
+    readonly binderinfo: string | undefined;
 
-    constructor(sinfo: SourceInfo, exp: Expression, ttest: ITest | Expression, res: Expression | undefined) {
+    constructor(sinfo: SourceInfo, exp: Expression, ttest: ITest | Expression, res: Expression | undefined, binderinfo: string | undefined) {
         super(StatementTag.ExpressionSCReturnStatement, sinfo);
         this.exp = exp;
         this.ttest = ttest;
         this.res = res;
+        this.binderinfo = binderinfo;
     }
 }
 
@@ -1116,12 +1118,14 @@ class VariableSCRetypeStatement extends Statement {
     readonly name: string;
     readonly ttest: ITest;
     readonly res: Expression | undefined;
+    readonly binderinfo: string | undefined;
 
-    constructor(sinfo: SourceInfo, name: string, ttest: ITest, res: Expression | undefined) {
+    constructor(sinfo: SourceInfo, name: string, ttest: ITest, res: Expression | undefined, binderinfo: string | undefined) {
         super(StatementTag.VariableSCRetypeStatement, sinfo);
         this.name = name;
         this.ttest = ttest;
         this.res = res;
+        this.binderinfo = binderinfo;
     }
 }
 
@@ -1136,9 +1140,9 @@ class ReturnStatement extends Statement {
 
 class IfStatement extends Statement {
     readonly condflow: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined}[];
-    readonly elseflow: ScopedBlockStatement | undefined;
+    readonly elseflow: {value: ScopedBlockStatement, binderinfo: string | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined}[], elseflow: ScopedBlockStatement | undefined) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined}[], elseflow: {value: ScopedBlockStatement, binderinfo: string | undefined} | undefined) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
