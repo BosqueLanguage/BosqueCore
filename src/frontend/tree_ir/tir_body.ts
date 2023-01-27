@@ -2141,7 +2141,7 @@ class TIRSwitchStatement extends TIRStatement {
 
 class TIRMatchStatement extends TIRStatement {
     readonly exp: TIRExpression;
-    eadonly scratchidx: number;
+    readonly scratchidx: number;
     readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[];
     readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
     readonly isexhaustive: boolean;
