@@ -501,8 +501,8 @@ __universal concept Record provides Some {
 __universal concept IOption provides Some {
 }
 
-//<summary>Generic type for all Option<T> to inherit from.</summary>
-__universal concept Something provides IOption {
+//<summary>Generic type for all Something<T> to inherit from.</summary>
+__universal concept ISomething provides IOption {
 }
 
 //<summary>Type for representing the nothing option value.</summary>

@@ -513,7 +513,7 @@ class Lexer {
 
     //TODO: we need to make sure that someone doesn't name a local variable "_"
     private isIdentifierName(str: string): boolean {
-        return /^([$])|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+)))$/.test(str);
+        return /^(([$])|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
     }
 
     private isFormatName(str: string): boolean {
@@ -1521,10 +1521,10 @@ class Parser {
     ////
     //Expression parsing
     private parseITest(): ITest {
-        if(this.testToken(SYM_lbrack)) {
+        if(this.testToken(SYM_le)) {
             return this.parseITypeTest();
         }
-        else if(this.testToken(SYM_le)) {
+        else if(this.testToken(SYM_lbrack)) {
             return this.parseILiteralTest();
         }
         else {
@@ -1556,7 +1556,7 @@ class Parser {
         this.consumeToken();
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
         const ttype = this.parseTypeSignature();
-        this.ensureAndConsumeToken(SYM_rbrack, "itype test");
+        this.ensureAndConsumeToken(SYM_ge, "itype test");
 
         return new ITestType(isnot, ttype);
     }
@@ -1565,27 +1565,10 @@ class Parser {
         this.consumeToken();
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
 
-        if (this.testToken(KW_none)) {
-            return new ITestNone(isnot);
-        }
-        else if (this.testToken(KW_nothing)) {
-            return new ITestNothing(isnot);
-        }
-        else if (this.testToken(KW_something)) {
-            return new ITestSomething(isnot);
-        }
-        else if (this.testToken(KW_ok)) {
-            return new ITestOk(isnot);
-        }
-        else if (this.testAndConsumeTokenIf(KW_err)) {
-            return new ITestErr(isnot);
-        }
-        else {
-            const literal = this.parseLiteralExpression("itype test");
-            this.ensureAndConsumeToken(SYM_rbrack, "itype test");
+        const literal = this.parseLiteralExpression("itype test");
+        this.ensureAndConsumeToken(SYM_rbrack, "itype test");
 
-            return new ITestLiteral(isnot, literal);
-        }
+        return new ITestLiteral(isnot, literal);
     }
 
     private parseArguments(lparen: string, rparen: string): Expression[] {

@@ -385,19 +385,19 @@ class NamespaceEmitter {
     }
 
     emitNamespace(nsdeps: string[]): string {
-        let eexports: string[] = ["$Types", "$Functions"];
-
-        //TODO: right now we only check for exported functions
+        let eexports: string[] = [];
 
         let formats: string[] = [];
         this.m_decl.msgformats.forEach((mfd, nn) => {
             const mf = this.emitInfoFmt(mfd);
             formats.push(`const ${nn} = "${mf}";`);
+            eexports.push(nn);
         });
 
         this.m_decl.stringformats.forEach((sfd, nn) => {
             const sf = sfd.str;
             formats.push(`const ${nn} = "${sf}";`);
+            eexports.push(nn);
         });
 
         let itypes: string[] = [];
@@ -407,6 +407,7 @@ class NamespaceEmitter {
                 const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
                 if(!iskeyed) {
                     itypes.push(ccs);
+                    eexports.push("BSQ" + (this.m_assembly.typeMap.get(tk) as TIROOType).tname.name);
                 }
                 else {
                     ktypes.push(ccs);
@@ -419,6 +420,7 @@ class NamespaceEmitter {
                 const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
                 if(!iskeyed) {
                     itypes.push(ccs);
+                    eexports.push("BSQ" + (this.m_assembly.typeMap.get(tk) as TIROOType).tname.name);
                 }
                 else {
                     ktypes.push(ccs);
@@ -430,6 +432,7 @@ class NamespaceEmitter {
             const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(ttk) as TIRType);
             if (!iskeyed) {
                 itypes.push(ccs);
+                eexports.push("BSQ" + (this.m_assembly.typeMap.get(ttk) as TIROOType).tname.name);
             }
             else {
                 ktypes.push(ccs);
@@ -439,6 +442,7 @@ class NamespaceEmitter {
         let consts: string[] = []; 
         this.m_decl.consts.forEach((cdecl) => {
             consts.push(this.emitConst(cdecl));
+            eexports.push(cdecl.name);
         });
 
         let ifuncs: string[] = [];
@@ -448,10 +452,8 @@ class NamespaceEmitter {
                 if(ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0) {
                     const fstr = this.emitFunctionInline(ff);
                     ifuncs.push(fstr);
+                    eexports.push(ff.name);
 
-                    if(ff.attributes.includes("export")) {
-                        eexports.push(ff.name);
-                    }
                 }
                 else {
                     const fstr = this.emitFunctionKey(ff);
@@ -482,8 +484,16 @@ class NamespaceEmitter {
         const itypedecls = itypes.join("\n");
         const ktypedecls = ktypes.length !== 0 ? `const $Types = {\n    ${ktypes.join(",\n    ")}\n};\n` : "";
 
+        if(ktypes.length !== 0) {
+            eexports.push("$Types");
+        }
+
         const ifuncdecls = ifuncs.join("\n\n");
         const kfuncdecls = kfuncs.length !== 0 ? `const $Functions = {\n    ${kfuncs.join(",\n    ")}\n};\n` : "";
+
+        if(kfuncs.length !== 0) {
+            eexports.push("$Functions");
+        }
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
