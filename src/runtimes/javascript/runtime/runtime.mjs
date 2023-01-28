@@ -83,6 +83,11 @@ function raiseUserAssertIf(cond, msg) {
     }
 }
 
+function setScratchValue(scratch, sidx, value) {
+    scratch[sidx] = value;
+    return 0;
+}
+
 function safeMath(val, lb, ub) {
     raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
     return val;
@@ -238,6 +243,7 @@ export {
     bsqMarshalParse, bsqMarshalEmit,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
+    setScratchValue, 
     safeMath, safeMathDiv, safeMathUnderflow,
     BSQEnvironment,
     setloglevel, checkloglevel, log, pushlogprefix, poplogprefix

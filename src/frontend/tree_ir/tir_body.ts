@@ -1713,6 +1713,7 @@ enum TIRStatementTag {
     VarDeclareStatement = "VarDeclareStatement",
     VarAssignStatement = "VarAssignStatement",
     VarDeclareAndAssignStatement = "VarDeclareAndAssignStatement",
+    StoreToScratch = "StoreToScratch",
     VarRefAssignFromScratch = "VarRefAssignFromScratch",
     TaskRefAssignFromScratch = "TaskRefAssignFromScratch",
 
@@ -1893,6 +1894,23 @@ class TIRVarAssignStatement extends TIRStatement {
 
     getDirectlyModVars(): string[] {
         return [this.vname];
+    }
+}
+
+class TIRStoreToScratch extends TIRStatement {
+    readonly exp: TIRExpression;
+    readonly vtype: TIRTypeKey;
+    readonly scidx: number;
+
+    constructor(sinfo: SourceInfo, exp: TIRExpression, vtype: TIRTypeKey, scidx: number) {
+        super(TIRStatementTag.StoreToScratch, sinfo, `$scratch<${scidx}, ${vtype}>[0] = ${exp.expstr};`);
+        this.exp = exp;
+        this.vtype = vtype;
+        this.scidx = scidx;
+    }
+
+    getDirectlyUsedVars(): string[] {
+        return this.exp.getUsedVars();
     }
 }
 
@@ -2114,7 +2132,6 @@ class TIRIfStatement extends TIRStatement {
             this.elseentry.value.isFailableOperation() || (this.elseentry.binderinfo !== undefined && this.elseentry.binderinfo[0].isFailableOperation());
     }
 }
-
 
 class TIRSwitchStatement extends TIRStatement {
     readonly exp: TIRExpression;
@@ -2447,7 +2464,7 @@ export {
     TIRStatement,
     TIRNopStatement, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement,
     TIRVarDeclareStatement, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement,
-    TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch,
+    TIRStoreToScratch, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch,
     TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStatementWAction,
     TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction,
     TIRIfStatement, TIRSwitchStatement, TIRMatchStatement,

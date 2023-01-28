@@ -1,6 +1,6 @@
 import { extractLiteralStringValue } from "../../../frontend/build_decls";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessVariableExpression, TIRAsNoneExpression, TIRAsNothingExpression, TIRAsNotNoneExpression, TIRAssertCheckStatement, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeActionCallResultExpression, TIRCoerceSafeExpression, TIRCoerceSafeRefCallResultExpression, TIRCoerceSafeTaskRefCallResultExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsNoneExpression, TIRIsNothingExpression, TIRIsNotNoneExpression, TIRIsNotNothingExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarAssignStatementWAction, TIRVarAssignStatementWRef, TIRVarDeclareAndAssignStatement, TIRVarDeclareAndAssignStatementWAction, TIRVarDeclareAndAssignStatementWRef, TIRVarDeclareAndAssignStatementWTaskRef, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
+import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessScratchIndexExpression, TIRAccessScratchSingleValueExpression, TIRAccessVariableExpression, TIRAsNoneSpecialExpression, TIRAssertCheckStatement, TIRAsSomeSpecialExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsEqualToLiteralExpression, TIRIsErrSpecialExpression, TIRIsNoneSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsNothingSpecialExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsOkSpecialExpression, TIRIsSomeSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarDeclareAndAssignStatement, TIRVarDeclareStatement } from "../../../frontend/tree_ir/tir_body";
 
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
@@ -27,6 +27,7 @@ class BodyEmitter {
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
 
+    private m_hasScratch = false;
     private m_varCtr = 0;
 
     constructor(assembly: TIRAssembly, file: string, ns: string) {
@@ -257,6 +258,16 @@ class BodyEmitter {
         return `$CodePack.${exp.name}`;
     }
 
+    private emitAccessScratchSingleValueExpression(exp: TIRAccessScratchSingleValueExpression): string {
+        this.m_hasScratch = true;
+        return `$$scratch[${exp.sidx}]`;
+    }
+
+    private emitAccessScratchIndexExpression(exp: TIRAccessScratchIndexExpression): string {
+        this.m_hasScratch = true;
+        return `$$scratch[${exp.sidx}][${exp.index}]`
+    }
+
     private emitLoadIndexExpression(exp: TIRLoadIndexExpression): string {
         return `${this.emitExpression(exp.exp)}[${exp.index}]`;
     }
@@ -454,38 +465,38 @@ class BodyEmitter {
     }
 
     private emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): string {
-        return `($KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyEqOneUniqueExpression(exp: TIRBinKeyEqOneUniqueExpression): string {
-        return `$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
+        return `$CoreLibs.$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
     }
     
     private emitBinKeyEqGeneralExpression(exp: TIRBinKeyEqGeneralExpression): string {
-        return `$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression, toplevel: boolean): string {
-        const rr = `($KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression, toplevel: boolean): string {
-        const rr = `$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
+        const rr = `$CoreLibs.$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
     
     private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression, toplevel: boolean): string {
-        const rr = `$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyUniqueLessExpression(exp: TIRBinKeyUniqueLessExpression): string {
-        return `($KeyLessOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `($CoreLibs.$KeyLessOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyGeneralLessExpression(exp: TIRBinKeyGeneralLessExpression): string {
-        return `$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$CoreLibs.$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: TIRNumericEqExpression, toplevel: boolean): string {
@@ -652,11 +663,40 @@ class BodyEmitter {
     }
 
     private emitIfExpression(exp: TIRIfExpression, toplevel: boolean): string {
-        let rstr = `${this.emitExpression(exp.ifentry.test)} ? ${this.emitExpression(exp.ifentry.value)} : `;
-        for(let i = 0; i < exp.elifentries.length; ++i){
-            rstr += `${this.emitExpression(exp.elifentries[i].test)} ? ${this.emitExpression(exp.elifentries[i].value)} : `
+        let rstr = "";
+        if(exp.ifentry.binderinfo === undefined) {
+            rstr = `${this.emitExpression(exp.ifentry.test)} ? ${this.emitExpression(exp.ifentry.value)} : `;
         }
-        rstr += this.emitExpression(exp.elseentry);
+        else {
+            this.m_hasScratch = true;
+            const tstr = `($Runtime.setScratchValue($$scratch, ${exp.ifentry.binderinfo[1]}, ${this.emitExpression(exp.ifentry.binderinfo[0])}) || ${this.emitExpression(exp.ifentry.test)})`;
+            const texp = `((${exp.ifentry.binderinfo[3]}) => ${this.emitExpression(exp.ifentry.value)})(${this.emitExpression(exp.ifentry.binderinfo[2])})`;
+            rstr = `${tstr} ? ${texp} : `;
+        } 
+
+        for(let i = 0; i < exp.elifentries.length; ++i){
+            const eii = exp.elifentries[i];
+
+            if(eii.binderinfo === undefined) {
+                rstr += `${this.emitExpression(eii.test)} ? ${this.emitExpression(eii.value)} : `
+            }
+            else {
+                this.m_hasScratch = true;
+                const tstr = `($Runtime.setScratchValue($$scratch, ${eii.binderinfo[1]}, ${this.emitExpression(eii.binderinfo[0])}) || ${this.emitExpression(eii.test)})`;
+                const texp = `((${eii.binderinfo[3]}) => ${this.emitExpression(eii.value)})(${this.emitExpression(eii.binderinfo[2])})`;
+                rstr = `${tstr} ? ${texp} : `;
+            }
+        }
+
+        if(exp.elseentry.binderinfo === undefined) {
+            rstr += this.emitExpression(exp.elseentry.value);
+        }
+        else {
+            this.m_hasScratch = true;
+            const tstr = `$Runtime.setScratchValue($$scratch, ${exp.elseentry.binderinfo[1]}, ${this.emitExpression(exp.elseentry.binderinfo[0])})`;
+            const texp = `((${exp.elseentry.binderinfo[3]}) => ${this.emitExpression(exp.elseentry.value)})(${this.emitExpression(exp.elseentry.binderinfo[2])})`;
+            rstr = `(${tstr} || ${texp})`;
+        }
 
         return toplevel ? rstr : "(" + rstr + ")";
     }
@@ -698,57 +738,6 @@ class BodyEmitter {
         }
     }
 
-    private emitCoerceRefCallResultExpression(exp: TIRCoerceSafeRefCallResultExpression, toplevel: boolean): string {
-        const srcunion = this.typeEncodedAsUnion(exp.exp.etype);
-        const trgtunion = this.typeEncodedAsUnion(exp.totype);
-
-        if(srcunion === trgtunion) {
-            return this.emitExpression(exp.exp, toplevel);
-        }
-        else if(trgtunion) {
-            const bval = `((__expval__) => [__expval__[0], new UnionValue("${exp.fromtype}", __expval__[1])])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-        else {
-            const bval = `((__expval__) => [__expval__[0], __expval__[1].value])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-    }
-
-    private emitCoerceTaskRefCallResultExpression(exp: TIRCoerceSafeTaskRefCallResultExpression, toplevel: boolean): string {
-        const srcunion = this.typeEncodedAsUnion(exp.exp.etype);
-        const trgtunion = this.typeEncodedAsUnion(exp.totype);
-
-        if(srcunion === trgtunion) {
-            return this.emitExpression(exp.exp, toplevel);
-        }
-        else if(trgtunion) {
-            const bval = `((__expval__) => [__expval__[0], new UnionValue("${exp.fromtype}", __expval__[1])])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-        else {
-            const bval = `((__expval__) => [__expval__[0], __expval__[1].value])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-    }
-
-    private emitCoerceActionCallResultExpression(exp: TIRCoerceSafeActionCallResultExpression, toplevel: boolean): string {
-        const srcunion = this.typeEncodedAsUnion(exp.exp.etype);
-        const trgtunion = this.typeEncodedAsUnion(exp.totype);
-
-        if(srcunion === trgtunion) {
-            return this.emitExpression(exp.exp, toplevel);
-        }
-        else if(trgtunion) {
-            const bval = `((__expval__) => [__expval__[0], new UnionValue("${exp.fromtype}", __expval__[1])])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-        else {
-            const bval = `((__expval__) => [__expval__[0], __expval__[1].value])(${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
-        }
-    }
-
     private emitInjectExpression(exp: TIRInjectExpression, toplevel: boolean): string {
        return this.emitExpression(exp.exp, toplevel);
     }
@@ -766,78 +755,114 @@ class BodyEmitter {
         return `{${[...capturevvdirect, ...capturevvindirect, ...capturepcdirect, ...capturepcindirect].join(", ")}}`;
     }
 
-    private emitIsNoneExpression(exp: TIRIsNoneExpression, toplevel: boolean): string {
+    private emitIsNoneSpecialExpression(exp: TIRIsNoneSpecialExpression, toplevel: boolean): string {
        assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
        const bval = `${this.emitExpression(exp.exp)}.tkey === "None"`;
        return toplevel ? bval : "(" + bval + ")";
     }
 
-    private emitIsNotNoneExpression(exp: TIRIsNotNoneExpression, toplevel: boolean): string {
+    private emitIsSomeSpecialExpression(exp: TIRIsSomeSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
         const bval = `${this.emitExpression(exp.exp)}.tkey !== "None"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
-    private emitIsNothingExpression(exp: TIRIsNothingExpression, toplevel: boolean): string {
+    private emitIsNothingSpecialExpression(exp: TIRIsNothingSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
         const bval = `${this.emitExpression(exp.exp)}.tkey === "Nothing"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
-    private emitIsNotNothingExpression(exp: TIRIsNotNothingExpression, toplevel: boolean): string {
+    private emitIsSomethingSpecialExpression(exp: TIRIsSomethingSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
         const bval = `${this.emitExpression(exp.exp)}.tkey !== "Nothing"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
+    private emitIsOkSpecialExpression(exp: TIRIsOkSpecialExpression, toplevel: boolean): string {
+        assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
+
+        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.oktype}"`;
+        return toplevel ? bval : "(" + bval + ")";
+    }
+
+    private emitIsErrSpecialExpression(exp: TIRIsErrSpecialExpression, toplevel: boolean): string {
+        assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
+
+        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.errtype}"`;
+        return toplevel ? bval : "(" + bval + ")";
+    }
+
+    private emitIsEqualToLiteralExpression(exp: TIRIsEqualToLiteralExpression, toplevel: boolean): string {
+        if(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?") {
+            const rr = `$CoreLibs.$KeyEqualMixed("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            return toplevel ? rr : "(" + rr + ")";
+        }
+        else {
+            const rr = `$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            return toplevel ? rr : "(" + rr + ")";
+        }
+    }
+
+    private emitIsNotEqualToLiteralExpression(exp: TIRIsNotEqualToLiteralExpression, toplevel: boolean): string {
+        if(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?") {
+            const rr = `!$CoreLibs.$KeyEqualMixed("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            return toplevel ? rr : "(" + rr + ")";
+        }
+        else {
+            const rr = `!$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            return toplevel ? rr : "(" + rr + ")";
+        }
+    }
+
     private emitIsTypeExpression(exp: TIRIsTypeExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
-        assert(!this.typeEncodedAsUnion(exp.oftype), "this should be a subtype then");
+        assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `${this.emitExpression(exp.exp)}.tkey === "${exp.oftype}"`;
+        const bval = `${this.emitExpression(exp.exp)}.tkey === "${exp.ttype}"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitIsNotTypeExpression(exp: TIRIsNotTypeExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
-        assert(!this.typeEncodedAsUnion(exp.oftype), "this should be a subtype then");
+        assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.oftype}"`;
+        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.ttype}"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitIsSubTypeExpression(exp: TIRIsSubTypeExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
-        assert(this.typeEncodedAsUnion(exp.oftype), "this should be a oftype then");
+        assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `($Runtime.subtypeMap.get("${exp.oftype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
+        const bval = `($Runtime.subtypeMap.get("${exp.ttype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitIsNotSubTypeExpression(exp: TIRIsNotSubTypeExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
-        assert(this.typeEncodedAsUnion(exp.oftype), "this should be a oftype then");
+        assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `!($Runtime.subtypeMap.get("${exp.oftype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
+        const bval = `!($Runtime.subtypeMap.get("${exp.ttype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
-    private emitAsNoneExpression(exp: TIRAsNoneExpression, toplevel: boolean): string {
+    private emitAsNoneSpecialExpression(exp: TIRAsNoneSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
         const bval = `(${this.emitExpression(exp.exp)}.tkey === "None") ? undefined : raiseRuntimeError("cannot convert value to None")`;
         return toplevel ? bval : "(" + bval + ")";
     }
     
-    private emitAsNotNoneExpression(exp: TIRAsNotNoneExpression, toplevel: boolean): string {
+    private emitAsSomeSpecialExpression(exp: TIRAsSomeSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
         let bval = "[NOT SET]";
-        if(this.typeEncodedAsUnion(exp.oftype)) {
+        if(this.typeEncodedAsUnion(exp.etype)) {
             bval = `((__expval__) => (__expval__.tkey !== "None") ? __expval__ : raiseRuntimeError("cannot convert value to Some"))(${this.emitExpression(exp.exp)})`;
         }
         else {
