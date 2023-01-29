@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
@@ -289,21 +289,6 @@ class NamespaceEmitter {
         return "[NOT IMPLEMENTED]";
     }
 
-    private emitCodePackFunction(pcode: TIRCodePack): string {
-        const invk = this.m_assembly.invokeMap.get(pcode.invk) as TIRInvoke;
-        assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
-
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns); 
-
-        const args = invk.params.map((pp) => pp.name).join(", ");            
-        const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
-
-        if(body === undefined) {
-            return "";
-        }
-        return `"${pcode.invk}": function(${args}) ${body}`;
-    }
-
     private emitType(ttype: TIRType): [boolean, string] {
         if(ttype instanceof TIREnumEntityType) {
             return [false, this.emitTIREnumEntityType(ttype)];
@@ -548,6 +533,156 @@ class AssemblyEmitter {
         this.nsdeps = nsdeps;
     }
 
+    private emitTIREnumEntityType_ParseEmit(ttype: TIREnumEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRTypedeclEntityType_ParseEmit(ttype: TIRTypedeclEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRObjectEntityType_ParseEmit(ttype: TIRObjectEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRStringOfEntityType_ParseEmit(ttype: TIRStringOfEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRASCIIStringOfEntityType_ParseEmit(ttype: TIRASCIIStringOfEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRPathEntityType_ParseEmit(ttype: TIRPathEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRPathFragmentEntityType_ParseEmit(ttype: TIRPathFragmentEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRPathGlobEntityType_ParseEmit(ttype: TIRPathGlobEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRListEntityType_ParseEmit(ttype: TIRListEntityType): { parse: string, emit: string } {
+        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.strinfigy(jv))} else { return jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv)); } }`
+        const emit = `nv.map((vv) => ioMarshalMap.get("${ttype.typeT}").emit(vv))`;
+
+        return {parse: parse, emit: emit};
+    }
+
+    private emitTIRStackEntityType_ParseEmit(ttype: TIRStackEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRQueueEntityType_ParseEmit(ttype: TIRQueueEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRSetEntityType_ParseEmit(ttype: TIRSetEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRMapEntityType_ParseEmit(ttype: TIRMapEntityType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRConceptType_ParseEmit(ttype: TIRConceptType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitIRConceptSetType_ParseEmit(ttype: TIRConceptSetType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRTupleType_ParseEmit(ttype: TIRTupleType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRRecordType_ParseEmit(ttype: TIRRecordType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRUnionType_ParseEmit(ttype: TIRUnionType): { parse: string, emit: string } {
+        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+    }
+
+    private emitTIRType_ParseEmit(ttype: TIRType): { parse: string, emit: string } | undefined {
+        if (ttype instanceof TIREnumEntityType) {
+            return this.emitTIREnumEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRTypedeclEntityType) {
+            return this.emitTIRTypedeclEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRObjectEntityType) {
+            return this.emitTIRObjectEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRStringOfEntityType) {
+            return this.emitTIRStringOfEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRASCIIStringOfEntityType) {
+            return this.emitTIRASCIIStringOfEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRPathEntityType) {
+            return this.emitTIRPathEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRPathFragmentEntityType) {
+            return this.emitTIRPathFragmentEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRPathGlobEntityType) {
+            return this.emitTIRPathGlobEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRListEntityType) {
+            return this.emitTIRListEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRStackEntityType) {
+            return this.emitTIRStackEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRQueueEntityType) {
+            return this.emitTIRQueueEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRSetEntityType) {
+            return this.emitTIRSetEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRMapEntityType) {
+            return this.emitTIRMapEntityType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRConceptType) {
+            return this.emitTIRConceptType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRConceptSetType) {
+            return this.emitIRConceptSetType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRTupleType) {
+            return this.emitTIRTupleType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRRecordType) {
+            return this.emitTIRRecordType_ParseEmit(ttype);
+        }
+        else if (ttype instanceof TIRUnionType) {
+            return this.emitTIRUnionType_ParseEmit(ttype);
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    private emitCodePackFunction(pcode: TIRCodePack): string {
+        const invk = this.assembly.invokeMap.get(pcode.invk) as TIRInvoke;
+        assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
+
+        const bemitter = new BodyEmitter(this.assembly, path.basename(invk.srcFile), "_LAMBDA_"); 
+
+        const args = invk.params.map((pp) => pp.name).join(", ");            
+        const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
+
+        if(body === undefined) {
+            return "";
+        }
+        return `"${pcode.invk}": function(${args}) ${body}`;
+    }
+
     private processAssembly() {
         this.assembly.namespaceMap.forEach((nsd, ns) => {
             const nsemit = new NamespaceEmitter(this.assembly, ns, nsd);
@@ -597,11 +732,17 @@ class AssemblyEmitter {
             }
 
             if(tt.isexportable && !(tt instanceof TIRPrimitiveInternalEntityType)) {
-                const parsef = "[NOT IMPLEMENTED]";
-                const emitf = "[NOT IMPLEMENTED]";
-                this.marshalinfo.set(tt.tkey, {parse: parsef, emit: emitf});
+                const per = this.emitTIRType_ParseEmit(tt);
+                if(per !== undefined) {
+                    this.marshalinfo.set(tt.tkey, {parse: per.parse, emit: per.emit});
+                } 
             }
         });
+
+        xxx;
+        this.assembly.pcodemap.forEach((pc, pn) => {
+            xxxx;
+        })
     };
 
     generateJSCode(corecode: string, runtimecode: string): {nsname: string, contents: string}[] {
