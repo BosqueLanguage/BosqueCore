@@ -24,7 +24,7 @@ function codegen(srcdir, dstdir) {
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...args]);
+    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "\"" + JSON.stringify(vv) + "\""))]);
     return JSON.parse(rr);
 }
 
@@ -55,8 +55,8 @@ describe('Readme allPositive', function () {
     after(function () { fsextra.removeSync(dstdir); });
 
     describe('allPositive([1, 3, 4])', function () {
-        it('expected 7', function () {
-            expect(invokeExecutionOn(jsmain, 1, 3, 4)).to.eql(true);
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, [1, 3, 4])).to.eql(true);
         });
     });
 });
