@@ -37,6 +37,9 @@ ioMarshalMap.set("SHAContentHash", {parse: (jv) => assert(false), emit: (nv) => 
 ioMarshalMap.set("LatLongCoordinate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 //--GENERATED_$iomarshalsetup--
 
+const lambdas = new Map();
+//--GENERATED_$lambdas--
+
 function isSubtype(tkey, ofkey) {
     if(tkey === ofkey) {
         return true;
@@ -240,6 +243,7 @@ function poplogprefix() {
 export {
     UnionValue, isSubtype,
     vtablemap,
+    lambdas,
     bsqMarshalParse, bsqMarshalEmit,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
