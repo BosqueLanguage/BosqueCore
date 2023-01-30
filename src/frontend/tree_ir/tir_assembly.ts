@@ -731,12 +731,6 @@ class TIREListType extends TIRType {
     }
 }
 
-class TIRCodePackType extends TIRType {
-    constructor(tkey: TIRTypeKey) {
-        super(tkey, undefined, false);
-    }
-}
-
 class TIRNamespaceConstDecl {
     readonly ns: string;
     readonly name: string;
@@ -831,8 +825,6 @@ class TIRCodePack {
     readonly invk: TIRInvokeKey;
     readonly recursive: boolean;
 
-    readonly ptype: TIRTypeKey; //code pack type
-
     readonly terms: TIRTypeKey[]; //Implicit template terms that this is bound with (e.g. if it uses type T from outer scope bound to Int then we need to specialize on whatever T is specialized to)
     readonly pcodes: TIRPCodeKey[]; //Implicit "template" pcode that is bound with this (e.g. if it uses afun from argument to enclosing method we need to specialize on whatever afun is specialized to) 
     
@@ -840,12 +832,11 @@ class TIRCodePack {
     readonly capturedValues: {cname: string, ctype: TIRTypeKey}[];
     readonly capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[];
 
-    constructor(ns: string, codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, ptype: TIRTypeKey, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[]) {
+    constructor(ns: string, codekey: TIRPCodeKey, invk: TIRInvokeKey, recursive: boolean, terms: TIRTypeKey[], pcodes: TIRTypeKey[], capturedValues: {cname: string, ctype: TIRTypeKey}[], capturedCodePacks: {cpname: string, cpval: TIRPCodeKey}[]) {
         this.ns = ns;
         this.codekey = codekey;
         this.invk = invk;
         this.recursive = recursive;
-        this.ptype = ptype;
         this.terms = terms;
         this.pcodes = pcodes;
         this.capturedValues = capturedValues;
@@ -1003,7 +994,7 @@ export {
     TIRTaskType,
     TIRConceptType, TIRConceptSetType,
     TIRTupleType, TIRRecordType,
-    TIREListType, TIRCodePackType,
+    TIREListType,
     TIRUnionType,
     TIRInfoTemplate, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateValue,
     TIRStringTemplate,

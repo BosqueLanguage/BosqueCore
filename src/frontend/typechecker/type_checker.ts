@@ -10,7 +10,7 @@ import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalType
 import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./type_environment";
 
 import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement } from "../tree_ir/tir_body";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRCodePackType, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRHavocEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
 import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo, BuildLevel, isBuildLevelEnabled, PackageConfig } from "../build_decls";
@@ -176,7 +176,7 @@ class TypeChecker {
     private m_pendingMethodMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     private m_lambdaCtr = 0;
-    private m_pendingCodeDecls: {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
+    private m_pendingCodeDecls: {cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
 
     private m_scratchCtr = 0;
 
@@ -3027,7 +3027,7 @@ class TypeChecker {
             return true;
         }
         else if (e instanceof AccessVariableExpression) {
-            return env.pcodes.has(e.name);
+            return env.argpcodes.has(e.name) || env.capturedpcodes.has(e.name);
         }
         else {
             return false;
@@ -3107,62 +3107,54 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, exp.invoke.params.length !== ltype.params.length, "Mismatch in expected parameter count and provided function parameter count");
         this.raiseErrorIf(exp.sinfo, expectedFunction !== undefined && !this.functionSubtypeOf(ltype, expectedFunction), "Mismatch in expected and provided function signature");
 
-        let capturedVarMap = new Map<string, TIRTypeKey>();
-        let capturedPCodeMap = new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
-
         let captures: string[] = [];
         exp.invoke.captureVarSet.forEach((v) => captures.push(v));
         captures.sort();
 
-        captures.forEach((v) => {
-            if (env.pcodes.has(v)) {
-                const pcc = env.pcodes.get(v) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType};
-                capturedPCodeMap.set(v, {iscapture: true, pcode: pcc.pcode, ftype: pcc.ftype});
-            }
-            else {
-                const vinfo = env.lookupVar(v);
-                this.raiseErrorIf(exp.sinfo, vinfo === null, `Could not resolve captured variable: ${v}`);
-                this.raiseErrorIf(exp.sinfo, (vinfo as VarInfo).declaredType instanceof ResolvedFunctionType, `Cannot capture function typed argument: ${v}`);
-
-                capturedVarMap.set(v, this.toTIRTypeKey((vinfo as VarInfo).declaredType));
-            }
-        });
-
-        const pcterms = [...bodybinds].map((bb) => this.toTIRTypeKey(bb[1])).sort();
-        const pclcaptures = [...capturedPCodeMap].map((pm) => pm[1].pcode.codekey).sort();
-
-        const pcvarinfo = [...capturedVarMap].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cname: cv[0], ctype: cv[1]}; });
-        const pclinfo = [...capturedPCodeMap].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
-
-        const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
-        const cpacktype = new TIRCodePackType(lcodekey);
-        const cpack = new TIRCodePack(this.m_ns, lcodekey, linvkey, exp.invoke.recursive === "yes", lcodekey, pcterms, pclcaptures, pcvarinfo, pclinfo);
-
-        this.m_pendingCodeDecls.push({cptype: cpacktype, cpdata: cpack, cpdecl: exp.invoke, desiredfunc: ltype, declbinds: env.binds, bodybinds: bodybinds, pcodes: capturedPCodeMap});
+        let capturedpcodes = new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
+        let capturedvars = new Map<string, {vname: string, vtype: ResolvedType}>();
 
         let capturedirect: string[] = [];
         let captureindirect: string[] = [];
         let capturepackdirect: string[] = [];
         let capturepackindirect: string[] = [];
+
         captures.forEach((v) => {
-            if (env.pcodes.has(v)) {
-                if((env.pcodes.get(v) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).iscapture) {
-                    capturepackindirect.push(v);
-                }
-                else {
-                    capturepackdirect.push(v);
-                }
+            if(env.lookupLocalVar(v) !== null) {
+                capturedirect.push(v);
+                capturedvars.set(v, {vname: v, vtype: (env.lookupLocalVar(v) as VarInfo).declaredType});
+            }
+            else if(env.lookupCapturedVar(v) !== null) {
+                captureindirect.push(v);
+                capturedvars.set(v, {vname: v, vtype: (env.lookupLocalVar(v) as VarInfo).declaredType});
+            }
+            else if(env.lookupArgPCode(v) !== null) {
+                capturepackdirect.push(v);
+                capturedpcodes.set(v, (env.lookupArgPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
             }
             else {
-                const vinfo = env.lookupVar(v) as VarInfo;
-                if(vinfo.isCaptured) {
-                    capturedirect.push(v);
-                }
-                else {
-                    captureindirect.push(v);
-                }
+                capturepackindirect.push(v);
+                capturedpcodes.set(v, (env.lookupCapturedPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
             }
         });
+
+        let argpcodes = new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
+        expectedFunction.params.forEach((ff) => {
+            if (ff.type instanceof ResolvedFunctionType) {
+                argpcodes.set(ff.name, env.argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType});
+            }
+        });
+
+        const pcterms = [...bodybinds].map((bb) => this.toTIRTypeKey(bb[1])).sort();
+        const pclcaptures = [...capturedpcodes].map((pm) => pm[1].pcode.codekey).sort();
+
+        const pcvarinfo = [...capturedvars].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cname: cv[0], ctype: this.toTIRTypeKey(cv[1].vtype)}; });
+        const pclinfo = [...capturedpcodes].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
+
+        const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
+        const cpack = new TIRCodePack(this.m_ns, lcodekey, linvkey, exp.invoke.recursive === "yes", pcterms, pclcaptures, pcvarinfo, pclinfo);
+
+        this.m_pendingCodeDecls.push({cpdata: cpack, cpdecl: exp.invoke, desiredfunc: ltype, declbinds: env.binds, bodybinds: bodybinds, capturedpcodes: capturedpcodes, capturedvars: capturedvars, argpcodes: argpcodes});
 
         return [new TIRCreateCodePackExpression(exp.sinfo, cpack, lcodekey, capturedirect, captureindirect, capturepackdirect, capturepackindirect), ltype];
     }
@@ -3417,14 +3409,17 @@ class TypeChecker {
     }
 
     private checkAccessVariable(env: ExpressionTypeEnvironment, exp: AccessVariableExpression): ExpressionTypeEnvironment {
-        const vinfo = env.lookupVar(exp.name) as VarInfo;
-        this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, "Var may not have been assigned a value");
-xxx;
-        if(vinfo.isCaptured) {
-            return env.setResultExpressionInfo(new TIRAccessCapturedVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType)), vinfo.declaredType);
+        const vinfo = env.lookupLocalVar(exp.name);
+
+        if(vinfo !== null) {
+            this.raiseErrorIf(exp.sinfo, !vinfo.mustDefined, `${exp.name} may not have been assigned a value`);
+            return env.setResultExpressionInfo(new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType)), vinfo.declaredType);
         }
         else {
-            return env.setResultExpressionInfo(new TIRAccessVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey(vinfo.declaredType)), vinfo.declaredType);
+            let cvinfo = env.lookupCapturedVar(exp.name);
+            this.raiseErrorIf(exp.sinfo, cvinfo === null, `${exp.name} is not defined`);
+
+            return env.setResultExpressionInfo(new TIRAccessCapturedVariableExpression(exp.sinfo, exp.name, this.toTIRTypeKey((cvinfo as VarInfo).declaredType)), (cvinfo as VarInfo).declaredType);
         }
     }
 
@@ -3674,14 +3669,25 @@ xxx;
     }
 
     private checkPCodeInvokeExpression(env: ExpressionTypeEnvironment, exp: PCodeInvokeExpression): ExpressionTypeEnvironment {
-        const pco = env.pcodes.get(exp.pcode);
-        this.raiseErrorIf(exp.sinfo, pco === undefined, "Code name not defined");
-        const pcode = pco as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType};
-       
-        const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pcode.ftype.params[ii].type as ResolvedType), arg.sinfo, pcode.ftype.params[ii].type as ResolvedType).expressionResult);
-        const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pcode.ftype.resultType), pcode.pcode, args);
+        const pco = env.argpcodes.get(exp.pcode);
+        if (pco !== undefined) {
+            const pcload = new TIRAccessVariableExpression(exp.sinfo, exp.pcode, pco.pcode.codekey);
+            const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pco.ftype.params[ii].type as ResolvedType), arg.sinfo, pco.ftype.params[ii].type as ResolvedType).expressionResult);
+            const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pco.ftype.resultType), pco.pcode, [pcload, ...args]);
 
-        return env.setResultExpressionInfo(pci, pcode.ftype.resultType);
+            return env.setResultExpressionInfo(pci, pco.ftype.resultType);
+        }
+        else {
+            const pcotry = env.capturedpcodes.get(exp.pcode);
+            this.raiseErrorIf(exp.sinfo, pcotry === undefined, `missing binding for lambda invoke -- ${exp.pcode}`);
+            const pco = pcotry as { pcode: TIRCodePack, ftype: ResolvedFunctionType };
+
+            const pcload = new TIRAccessCapturedVariableExpression(exp.sinfo, exp.pcode, pco.pcode.codekey);
+            const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pco.ftype.params[ii].type as ResolvedType), arg.sinfo, pco.ftype.params[ii].type as ResolvedType).expressionResult);
+            const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pco.ftype.resultType), pco.pcode, [pcload, ...args]);
+
+            return env.setResultExpressionInfo(pci, pco.ftype.resultType);
+        }
     }
 
     private checkCallNamespaceFunctionOrOperatorExpression(env: ExpressionTypeEnvironment, exp: CallNamespaceFunctionOrOperatorExpression): ExpressionTypeEnvironment {
@@ -4897,7 +4903,7 @@ xxx;
     }
 
     private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), `${vname} cannot shadow previous definition`);
+        this.raiseErrorIf(sinfo, env.lookupLocalVar(vname) !== null, `${vname} cannot shadow previous definition`);
 
         const infertype = rhs !== undefined ? rhs.trepr : undefined;
         this.raiseErrorIf(sinfo, infertype === undefined && isConst, "must define const var at declaration site");
@@ -4910,7 +4916,7 @@ xxx;
     }
 
     private checkAssignSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
-        const vinfo = env.lookupVar(vname);
+        const vinfo = env.lookupLocalVar(vname);
         this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vname} was not previously defined`);
         this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vname} is defined as const`);
 
@@ -4927,7 +4933,7 @@ xxx;
         if(stmt.exp === undefined) {
             const declenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, undefined);
 
-            return [declenv, [new TIRVarDeclareStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((declenv.lookupVar(stmt.name) as VarInfo).declaredType))]];
+            return [declenv, [new TIRVarDeclareStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((declenv.lookupLocalVar(stmt.name) as VarInfo).declaredType))]];
         }
         else {
             const itype = !(stmt.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(stmt.vtype, env.binds) : undefined;
@@ -4940,10 +4946,11 @@ xxx;
             if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
-                const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
                 const refv = rhs.expressionResult.thisref;
-                const refvinfo = env.lookupVar(refv) as VarInfo;
-                this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+                const refvinfotry = env.lookupLocalVar(refv);
+                this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
+                const refvinfo = refvinfotry as VarInfo;
 
                 const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
 
@@ -4956,7 +4963,7 @@ xxx;
             else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
-                const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
                 const taskinfo = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
                 const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
@@ -4971,7 +4978,7 @@ xxx;
             else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
-                const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
                 const taskinfo = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
                 const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
@@ -4986,7 +4993,7 @@ xxx;
             else {
                 nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
 
-                const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
                 const rhsconv = this.emitCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
 
                 nstmt = [new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst)];
@@ -4997,8 +5004,8 @@ xxx;
     }
 
     private checkVariableAssignStatement(env: StatementTypeEnvironment, stmt: VariableAssignmentStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, env.getLocalVarInfo(stmt.name) === undefined, `variable ${stmt.name} not previously declared`);
-        let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, (env.getLocalVarInfo(stmt.name) as VarInfo).declaredType);
+        this.raiseErrorIf(stmt.sinfo, env.lookupLocalVar(stmt.name) === null, `variable ${stmt.name} not previously declared`);
+        let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, (env.lookupLocalVar(stmt.name) as VarInfo).declaredType);
 
         assert(stmt.scinfo === undefined, "NOT IMPLEMENTED -- short-circuit return on assignment in type checker");
 
@@ -5007,10 +5014,11 @@ xxx;
         if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
-            const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
             const refv = rhs.expressionResult.thisref;
-            const refvinfo = env.lookupVar(refv) as VarInfo;
-            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+            const refvinfotry = env.lookupLocalVar(refv);
+            this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
+            const refvinfo = refvinfotry as VarInfo;
 
             const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
 
@@ -5023,7 +5031,7 @@ xxx;
         else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
-            const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
             const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
             const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
@@ -5038,7 +5046,7 @@ xxx;
         else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
-            const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
             const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
             const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
 
@@ -5053,7 +5061,7 @@ xxx;
         else {
             nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
 
-            const dvtype = (nenv.lookupVar(stmt.name) as VarInfo).declaredType;
+            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
             const rhsconv = this.emitCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
 
             nstmt = [new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult)];
@@ -5063,8 +5071,9 @@ xxx;
     }
 
     private checkVariableRetypeStatement(env: StatementTypeEnvironment, stmt: VariableRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const vinfo = env.lookupVar(stmt.name) as VarInfo;
-        this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
+        const vinfotry = env.lookupLocalVar(stmt.name);
+        this.raiseErrorIf(stmt.sinfo, vinfotry !== null, "cannot retype captured variables");
+        const vinfo = vinfotry as VarInfo;
 
         const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
         const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
@@ -5090,8 +5099,9 @@ xxx;
     }
     
     private checkVariableSCRetypeStatement(env: StatementTypeEnvironment, stmt: VariableSCRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const vinfo = env.lookupVar(stmt.name) as VarInfo;
-        this.raiseErrorIf(stmt.sinfo, vinfo.isCaptured, "cannot retype captured variables");
+        const vinfotry = env.lookupLocalVar(stmt.name);
+        this.raiseErrorIf(stmt.sinfo, vinfotry === null, "cannot retype captured variables");
+        const vinfo = vinfotry as VarInfo;
 
         const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
         const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
@@ -5127,7 +5137,7 @@ xxx;
         const ee = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.call, undefined);
 
         if (ee.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            const refvtype = (env.lookupVar(ee.expressionResult.thisref) as VarInfo).declaredType;
+            const refvtype = (env.lookupLocalVar(ee.expressionResult.thisref) as VarInfo).declaredType;
             return [env, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, this.toTIRTypeKey(refvtype), this.m_scratchCtr++)]];
         }
         else if (ee.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
@@ -5150,8 +5160,9 @@ xxx;
             const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
 
             const refv = rval.expressionResult.thisref;
-            const refvinfo = env.lookupVar(refv) as VarInfo;
-            this.raiseErrorIf(stmt.sinfo, env.frozenVars.has(refv) || refvinfo.isConst, `cannot modify variable ${refv} as ref`);
+            const refvinfotry = env.lookupLocalVar(refv) ;
+            this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
+            const refvinfo = refvinfotry as VarInfo;
 
             rexp = [
                 new TIRCallStatementWRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
@@ -5254,7 +5265,7 @@ xxx;
     private emitVarRetypeAtFlowJoin(sinfo: SourceInfo, env: StatementTypeEnvironment, remap: Map<string, ResolvedType>): {vname: string, cast: TIRExpression}[] {
         let vrl: {vname: string, vtype: ResolvedType}[] = [];
         remap.forEach((tt, vn) => {
-            const vvinfo = env.lookupVar(vn) as VarInfo;
+            const vvinfo = env.lookupLocalVar(vn) as VarInfo;
             if(vvinfo.declaredType.typeID !== tt.typeID) {
                 vrl.push({vname: vn, vtype: tt});
             }
@@ -5266,7 +5277,7 @@ xxx;
         }
         else {
             const rmps = vrl.map((rp) => {
-                const vvinfo = env.lookupVar(rp.vname) as VarInfo;
+                const vvinfo = env.lookupLocalVar(rp.vname) as VarInfo;
                 const varenv = env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRAccessVariableExpression(sinfo, rp.vname, this.toTIRTypeKey(vvinfo.declaredType)), vvinfo.declaredType);
                 const aswrk = this.emitCoerceIfNeeded_NoCheck(varenv, sinfo, rp.vtype).expressionResult;
                     
@@ -5564,7 +5575,7 @@ xxx;
     }
 
     private checkDeclareSingleVariableFromTaskExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, infertype: ResolvedType): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.isVarNameDefined(vname), `${vname} cannot shadow previous definition`);
+        this.raiseErrorIf(sinfo, env.lookupLocalVar(vname) !== null, `${vname} cannot shadow previous definition`);
 
         const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
         this.raiseErrorIf(sinfo, infertype.typeID !== vtype.typeID, `expression is not of (no conversion) declared type ${vtype.typeID}`);
@@ -5573,7 +5584,7 @@ xxx;
     }
 
     private checkAssignSingleVariableFromTaskExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, infertype: ResolvedType): StatementTypeEnvironment {
-        const vinfo = env.lookupVar(vname);
+        const vinfo = env.lookupLocalVar(vname);
         this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vname} was not previously defined`);
         this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vname} is defined as const`);
 
@@ -6125,7 +6136,7 @@ xxx;
         const chkinvsaa = decltypes.map((idp) => {
             const args = new Map<string, VarInfo>();
             fargs.forEach((ff) => {
-                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, false, true));
+                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, true));
             });
             const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
 
@@ -6152,7 +6163,7 @@ xxx;
         const chkinvsaa = decltypes.map((idp) => {
             const args = new Map<string, VarInfo>();
             fargs.forEach((ff) => {
-                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, false, true));
+                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, true));
             });
             const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
 
@@ -6174,7 +6185,7 @@ xxx;
         const chkinvsaa = decltypes.map((idp) => {
             const vm = idp[1].memberMethods.find((mm) => mm.name === "value");
             const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(idp[2])) : this.getSpecialAnyConceptType();
-            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, false, true));
+            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
             const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
 
             let invs = idp[1].invariants.filter((ie) => isBuildLevelEnabled(ie.level, this.m_buildLevel));
@@ -6192,7 +6203,7 @@ xxx;
     private processTypedeclInvariantsConsCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRTypedeclInvariantDecl[] {
         const vm = tdecl.memberMethods.find((mm) => mm.name === "value");
         const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(binds)) : this.getSpecialAnyConceptType();
-        const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, false, true));
+        const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
         const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(binds), args);
         
         let invs = tdecl.invariants.filter((ie) => isBuildLevelEnabled(ie.level, this.m_buildLevel));
@@ -6210,7 +6221,7 @@ xxx;
         const chkinvsaa = decltypes.map((idp) => {
             const vm = idp[1].memberMethods.find((mm) => mm.name === "value");
             const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(idp[2])) : this.getSpecialAnyConceptType();
-            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, false, true));
+            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
             const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
 
             return idp[1].validates.map((inv) => {
@@ -6224,34 +6235,31 @@ xxx;
         return ([] as TIRTypedeclInvariantDecl[]).concat(...chkinvsaa);
     }
 
-    private processPrecondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, exps: PreConditionDecl[]): TIRPreConditionDecl[] {
+    private processPrecondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, exps: PreConditionDecl[]): TIRPreConditionDecl[] {
         try {
-            let fargs = new Map<string, VarInfo>();
-            let args: TIRFunctionParameter[] = [];
+            let fargs: TIRFunctionParameter[] = [];
 
             if (optthistype !== undefined) {
-                fargs.set("this", new VarInfo(optthistype, true, false, true));
-                args.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
+                fargs.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
             }
 
             invk.params.forEach((ff, fname) => {
                 const ptype = this.normalizeTypeGeneral(ff.type, binds);
                 if (ptype instanceof ResolvedFunctionType) {
-                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                    fargs.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
                 }
                 else {
-                    fargs.set(ff.name, new VarInfo(ptype, true, false, true));
-                    args.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
+                    fargs.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
                 }
             });
 
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsPCodes(binds, pcodes, fargs);
+            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, args);
             const clauses = exps
                 .filter((cev) => isBuildLevelEnabled(cev.level, this.m_buildLevel))
                 .map((cev) => {
                     const exp = this.emitCoerceIfNeeded(this.checkExpression(env, cev.exp, this.getSpecialBoolType()), cev.exp.sinfo, this.getSpecialBoolType());
 
-                    return new TIRPreConditionDecl(exp.expressionResult, args);
+                    return new TIRPreConditionDecl(exp.expressionResult, fargs);
                 });
 
             return clauses;
@@ -6261,39 +6269,35 @@ xxx;
         }
     }
 
-    private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
+    private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
         try {
-            let fargs = new Map<string, VarInfo>();
-            let args: TIRFunctionParameter[] = [];
+            let fargs: TIRFunctionParameter[] = [];
 
             if (optthistype !== undefined) {
-                fargs.set("this", new VarInfo(optthistype, true, false, true));
-                args.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
+                fargs.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
             }
 
             invk.params.forEach((ff, fname) => {
                 const ptype = this.normalizeTypeGeneral(ff.type, binds);
                 if (ptype instanceof ResolvedFunctionType) {
-                    args.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                    fargs.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
                 }
                 else {
-                    fargs.set(ff.name, new VarInfo(ptype, true, false, true));
-                    args.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
+                    fargs.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
                 }
             });
 
             if(optthistype !== undefined && invk.isThisRef) {
-                fargs.set("$this", new VarInfo(optthistype, true, false, true));
-                args.push(new TIRFunctionParameter("$this", this.toTIRTypeKey(optthistype)));
+                fargs.push(new TIRFunctionParameter("$this", this.toTIRTypeKey(optthistype)));
             }
 
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsPCodes(binds, pcodes, fargs);
+            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, args);
             const clauses = exps
                 .filter((cev) => isBuildLevelEnabled(cev.level, this.m_buildLevel))
                 .map((cev) => {
                     const exp = this.emitCoerceIfNeeded(this.checkExpression(env, cev.exp, this.getSpecialBoolType()), cev.exp.sinfo, this.getSpecialBoolType());
 
-                    return new TIRPostConditionDecl(exp.expressionResult, args);
+                    return new TIRPostConditionDecl(exp.expressionResult, fargs);
                 });
 
             return clauses;
@@ -6485,10 +6489,10 @@ xxx;
         }
     }
 
-    private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6501,20 +6505,20 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), pcodes, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), pcodes, invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs, invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs, invoke.postconditions);
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(ibinds), pcodes, new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)), false, "no");
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, body);
 
@@ -6522,10 +6526,10 @@ xxx;
         return inv;
     }
 
-    private processNamespaceFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
+    private processNamespaceFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6537,8 +6541,8 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
@@ -6564,7 +6568,7 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeOnly(ff.type, TemplateBindScope.createEmptyBindScope());
             
-            fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+            fargs.set(ff.name, new VarInfo(ptype, true, true));
             params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
         });
 
@@ -6578,7 +6582,7 @@ xxx;
             return inv;
         }
         else {
-            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), fargs, []);
+            const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs);
             const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
             const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], body);
 
@@ -6597,14 +6601,14 @@ xxx;
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeOnly(ff.type, TemplateBindScope.createEmptyBindScope());
-            fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+            fargs.set(ff.name, new VarInfo(ptype, true, true));
             params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
         });
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
         this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions not supported on operators yet");
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], body);
 
@@ -6612,10 +6616,10 @@ xxx;
         return inv;
     }
 
-    private processMemberFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processMemberFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6628,20 +6632,20 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, "no");
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, body);
 
@@ -6649,10 +6653,10 @@ xxx;
         return inv;
     }
 
-    private processMemberFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
+    private processMemberFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6664,8 +6668,8 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
@@ -6681,10 +6685,10 @@ xxx;
         return inv;
     }
 
-    private processMemberMethodPureDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeAbstractDeclaration {
+    private processMemberMethodPureDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeAbstractDeclaration {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6697,20 +6701,20 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, false, true));
+        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
 
         const inv = new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, params, false, restype, preconds, postconds);
 
@@ -6718,10 +6722,10 @@ xxx;
         return inv;
     }
 
-    private processMemberMethodVirtualDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processMemberMethodVirtualDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6734,22 +6738,22 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, false, true));
+        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, body);
 
@@ -6757,10 +6761,10 @@ xxx;
         return inv;
     }
 
-    private processMemberMethodVirtualImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], declaredecl: [ResolvedType, InvokeDecl, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processMemberMethodVirtualImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], declaredecl: [ResolvedType, InvokeDecl, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6773,22 +6777,22 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, false, true));
+        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, declaredecl[1].preconditions.length !== 0 ? declaredecl[0] : enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, declaredecl[1].preconditions.length !== 0 ? declaredecl[1].preconditions : invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, declaredecl[1].postconditions.length !== 0 ? declaredecl[0] : enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, declaredecl[1].postconditions.length !== 0 ? declaredecl[1].postconditions : invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, declaredecl[1].preconditions.length !== 0 ? declaredecl[0] : enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, declaredecl[1].preconditions.length !== 0 ? declaredecl[1].preconditions : invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, declaredecl[1].postconditions.length !== 0 ? declaredecl[0] : enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, declaredecl[1].postconditions.length !== 0 ? declaredecl[1].postconditions : invoke.postconditions);
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, body);
 
@@ -6796,10 +6800,10 @@ xxx;
         return inv;
     }
 
-    private processMemberMethodImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processMemberMethodImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkInvokeDecl(invoke.startSourceLocation, invoke);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...ibinds].forEach((bb) => {
@@ -6812,22 +6816,22 @@ xxx;
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
             if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (pcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.ptype));
+                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
+                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
             }
             else {
-                fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+                fargs.set(ff.name, new VarInfo(ptype, true, true));
                 params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
             }
         });
 
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, false, true));
+        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
         
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, invoke.postconditions);
+        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
+        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
 
-        const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), pcodes, new Set<string>(), fargs, []);
+        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
         const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), this.m_taskOpsOk, this.m_taskSelfOk);
         const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, false, false, params, invoke.isThisRef, restype, preconds, postconds, body);
 
@@ -6835,15 +6839,18 @@ xxx;
         return inv;
     }
 
-    private processPCodeInvokeInfo(invkey: TIRInvokeKey, invoke: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
+    private processPCodeInvokeInfo(codepack: TIRCodePack, invoke: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
         this.checkPCodeDecl(invoke.startSourceLocation, invoke, declbinds);
 
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...pcodes].some((pc) => pc[1].pcode.recursive));
+        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
 
         const tbinds = new Map<string, TIRTypeKey>();
         [...bodybinds].forEach((bb) => {
             tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
         });
+
+        let cvars = new Map<string, VarInfo>();
+        capturedvars.forEach((cv) => cvars.set(cv.vname, new VarInfo(cv.vtype, true, true)));
 
         let tirpcodes = new Map<string, TIRPCodeKey>();
         let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
@@ -6851,7 +6858,7 @@ xxx;
         invoke.params.forEach((ff, ii) => {
             const ptype = desiredfunc.params[ii].type as ResolvedType;
            
-            fargs.set(ff.name, new VarInfo(ptype, true, false, true));
+            fargs.set(ff.name, new VarInfo(ptype, true, true));
             params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
         });
 
@@ -6860,17 +6867,17 @@ xxx;
         let body: TIRStatement[] = [];
         let bimpl = (invoke.body as BodyImplementation).body;
         if(bimpl instanceof Expression) {
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsPCodes(TemplateBindScope.createBaseBindScope(bodybinds), pcodes, fargs);
+            const env = ExpressionTypeEnvironment.createInitialEnvForExpressionEval(TemplateBindScope.createBaseBindScope(bodybinds), capturedpcodes, cvars, argpcodes, fargs, []);
             body = this.checkBodyExpression(invoke.srcFile, env, bimpl, desiredfunc.resultType, "no");
         }
         else {
-            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(bodybinds), pcodes, invoke.captureVarSet, fargs, []);
+            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(bodybinds), capturedpcodes, cvars, argpcodes, fargs, []);
             body = this.checkBodyStatement(invoke.srcFile, env, bimpl as ScopedBlockStatement, desiredfunc.resultType, false, "no");
         }
 
-        const inv = new TIRInvokeImplementation(invkey, "lambda", invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, true, params, false, restype, [], [], body);
+        const inv = new TIRInvokeImplementation(codepack.invk, "lambda", invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, true, params, false, restype, [], [], body);
 
-        this.m_tirInvokeMap.set(invkey, inv);
+        this.m_tirInvokeMap.set(codepack.invk, inv);
         return inv;
     }
 
@@ -7006,7 +7013,7 @@ xxx;
         }
     }
 
-    private processLambdaFunction(cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
+    private processLambdaFunction(cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
         const tirns = this.ensureTIRNamespaceDecl(cpdecl.namespace);
         if(tirns.lambdas.has(cpdata.invk)) {
             return;
@@ -7021,7 +7028,7 @@ xxx;
             this.m_taskType = undefined;
             this.m_scratchCtr = 0;
 
-            const iinv = this.processPCodeInvokeInfo(cpdata.invk, cpdecl, desiredfunc, declbinds, bodybinds, pcodes);
+            const iinv = this.processPCodeInvokeInfo(cpdata, cpdecl, desiredfunc, declbinds, bodybinds, capturedpcodes, capturedvars, argpcodes);
 
             tirns.lambdas.set(cpdata.invk, new TIRNamespaceLambdaDecl(cpdata.codekey, cpdecl.startSourceLocation, cpdecl.srcFile, iinv));
             tirns.codepacks.set(cpdata.codekey, cpdata);
@@ -7477,8 +7484,8 @@ xxx;
                 }
             }
             else if(tchecker.m_pendingCodeDecls.length !== 0) {
-                const lmd = tchecker.m_pendingCodeDecls.shift() as {cptype: TIRCodePackType, cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                tchecker.processLambdaFunction(lmd.cptype, lmd.cpdata, lmd.cpdecl, lmd.desiredfunc, lmd.declbinds, lmd.bodybinds, lmd.pcodes);
+                const lmd = tchecker.m_pendingCodeDecls.shift() as {cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
+                tchecker.processLambdaFunction(lmd.cpdata, lmd.cpdecl, lmd.desiredfunc, lmd.declbinds, lmd.bodybinds, lmd.capturedpcodes, lmd.capturedvars, lmd.argpcodes);
             }
             else {
                 tchecker.updateVirtualPending(virtualmemberdecls);
