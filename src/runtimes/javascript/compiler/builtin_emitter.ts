@@ -8,7 +8,11 @@ function resolveCodePack(asm: TIRAssembly, inv: TIRInvoke, pcname: string): TIRC
 }
 
 function resolveCapturedPackArgs(pcname: string, pcc: TIRCodePack): string[] {
-    return [pcname, ...pcc.capturedCodePacks.map((pcc) => pcc.cpname)];
+    return [...pcc.capturedCodePacks.map((pcc) => pcc.cpname)];
+}
+
+function generatePCodeInvokeName(pc: TIRCodePack): string {
+    return `($Runtime.lambdas.get("${pc.invk}"))`;
 }
 
 function emitBuiltinNamespaceFunction(asm: TIRAssembly, func: TIRNamespaceFunctionDecl, bemitter: BodyEmitter): string | undefined {
@@ -35,7 +39,8 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_list_has_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
-            const pred = `($$vv) => ${pcode.invk}(${[...resolveCapturedPackArgs("p", pcode), "$$vv"].join(", ")})`
+            const pcodeinvk = generatePCodeInvokeName(pcode);
+            const pred = `($$vv) => ${pcodeinvk}(${[...resolveCapturedPackArgs("p", pcode), "$$vv"].join(", ")})`
             return `{ return ${func.invoke.params[0].name}.findIndex(${pred}) !== -1; }`;
         }
         default: {

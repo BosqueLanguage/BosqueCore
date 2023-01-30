@@ -322,7 +322,7 @@ class BodyEmitter {
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
         const sccp = this.m_islambda ? "lambdas" : "$Runtime.lambdas";
-        return `${sccp}["${exp.cpack.invk}"](${[exp.packarg.argn, ...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
+        return `(${sccp}.get("${exp.cpack.invk}"))(${[...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
     }
 
     private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression, toplevel: boolean): string {

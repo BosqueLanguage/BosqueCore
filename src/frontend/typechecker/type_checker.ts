@@ -3680,10 +3680,8 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, pco === undefined, "Code name not defined");
         const pcode = pco as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType};
        
-        const packarg = {argn: exp.pcode, iscapture: pcode.iscapture};
         const args = exp.args.map((arg, ii) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, pcode.ftype.params[ii].type as ResolvedType), arg.sinfo, pcode.ftype.params[ii].type as ResolvedType).expressionResult);
-
-        const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pcode.ftype.resultType), pcode.pcode, packarg, args);
+        const pci = new TIRCodePackInvokeExpression(exp.sinfo, this.toTIRTypeKey(pcode.ftype.resultType), pcode.pcode, args);
 
         return env.setResultExpressionInfo(pci, pcode.ftype.resultType);
     }

@@ -564,13 +564,11 @@ class TIRConstructorMapExpression extends TIRConstructorExpression {
 
 class TIRCodePackInvokeExpression extends TIRExpression {
     readonly cpack: TIRCodePack;
-    readonly packarg: {argn: string, iscapture: boolean};
     readonly args: TIRExpression[];
 
-    constructor(sinfo: SourceInfo, etype: TIRTypeKey, cpack: TIRCodePack, packarg: {argn: string, iscapture: boolean}, args: TIRExpression[]) {
-        super(TIRExpressionTag.CodePackInvokeExpression, sinfo, etype, `${cpack.invk}(${[packarg.argn, ...args.map((arg) => arg.expstr)].join(", ")})`);
+    constructor(sinfo: SourceInfo, etype: TIRTypeKey, cpack: TIRCodePack, args: TIRExpression[]) {
+        super(TIRExpressionTag.CodePackInvokeExpression, sinfo, etype, `${cpack.invk}(${[...args.map((arg) => arg.expstr)].join(", ")})`);
         this.cpack = cpack;
-        this.packarg = packarg;
         this.args = args;
     }
 
