@@ -70,3 +70,28 @@ describe('Readme allPositive', function () {
         });
     });
 });
+
+
+describe('Readme sign', function () {
+    const testopt = ["readme", "sign"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('sign(5)', function () {
+        it('expected 1', function () {
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(1);
+        });
+    });
+    describe('sign(-5)', function () {
+        it('expected 1', function () {
+            expect(invokeExecutionOn(jsmain, -5)).to.eql(-1);
+        });
+    });
+    describe('sign(0)', function () {
+        it('expected 1', function () {
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(1);
+        });
+    });
+});
