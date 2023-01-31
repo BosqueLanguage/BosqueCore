@@ -1850,7 +1850,7 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
     readonly isConst: boolean;
 
     constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression, isConst: boolean) {
-        super(TIRStatementTag.VarAssignStatement, sinfo, `${isConst ? "let" : "var"} ${vname}: ${vtype} = ${vexp.expstr};`);
+        super(TIRStatementTag.VarDeclareAndAssignStatement, sinfo, `${isConst ? "let" : "var"} ${vname}: ${vtype} = ${vexp.expstr};`);
         this.vname = vname;
         this.vtype = vtype;
         this.vexp = vexp;

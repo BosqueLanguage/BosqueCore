@@ -670,7 +670,6 @@ class AssemblyEmitter {
 
         const bemitter = new BodyEmitter(this.assembly, path.basename(invk.srcFile), "_LAMBDA_", true); 
 
-        const cpcargs = [...pcode.capturedCodePacks].sort((a, b) => a.cpname.localeCompare(b.cpname)).map((cpc) => cpc.cpname);
         const args = invk.params.map((pp) => pp.name);            
         const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
 
@@ -678,7 +677,7 @@ class AssemblyEmitter {
             return "";
         }
 
-        return `(${[...cpcargs, ...args].join(", ")}) => ${body}`;
+        return `(${["$CodePack", ...args].join(", ")}) => ${body}`;
     }
 
     private processAssembly() {
