@@ -1,6 +1,7 @@
 "use strict";
 
 import * as assert from "assert";
+import { List as IList, Map as IMap } from "immutable";
 
 function UnionValue(tkey, value) {
     this.tkey = tkey;

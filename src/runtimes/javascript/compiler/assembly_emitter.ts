@@ -562,7 +562,7 @@ class AssemblyEmitter {
     }
 
     private emitTIRListEntityType_ParseEmit(ttype: TIRListEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return $CoreLibs.$ListOps.create(jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
+        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return IList(jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
         const emit = `nv.map((vv) => ioMarshalMap.get("${ttype.typeT}").emit(vv)).toArray()`;
 
         return {parse: parse, emit: emit};

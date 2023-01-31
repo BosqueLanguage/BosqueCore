@@ -24,7 +24,7 @@ function codegen(srcdir, dstdir) {
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "\"" + JSON.stringify(vv) + "\""))]);
+    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]);
     return JSON.parse(rr);
 }
 
@@ -57,6 +57,16 @@ describe('Readme allPositive', function () {
     describe('allPositive([1, 3, 4])', function () {
         it('expected true', function () {
             expect(invokeExecutionOn(jsmain, [1, 3, 4])).to.eql(true);
+        });
+    });
+    describe('allPositive([])', function () {
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, [])).to.eql(true);
+        });
+    });
+    describe('allPositive([1, -3, 4])', function () {
+        it('expected false', function () {
+            expect(invokeExecutionOn(jsmain, [1, 3, -4])).to.eql(false);
         });
     });
 });

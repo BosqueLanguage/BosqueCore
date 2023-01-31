@@ -2,6 +2,7 @@
 
 import * as assert from "assert";
 import { List as IList, Map as IMap } from "immutable";
+import { raiseRuntimeError } from "./runtime.mjs";
 
 const $KeyEqualOps = new Map();
 $KeyEqualOps.set("None", (a, b) => (a === undefined && b === undefined));
@@ -82,10 +83,16 @@ $ListOps.create = function(...args) {
 
 function $MapOps() {
 }
-$MapOps.create = function(...args) {
+$MapOps.create = function(tkey, ...args) {
     const minit = IMap();
+    const kcmp = $KeyEqualOps.get(tkey);
     const mres = minit.withMutations(map => {
         for(let i = 0; i < args.length; ++i) {
+            //TODO: I think Bosque key equality and immutable.js equality are the same so -- just go for it here
+            if(map.has(args[i][0])) {
+                raiseRuntimeError("duplicate keys in Map construction");
+            }
+            
             map = map.set(args[i][0], args[i][1]);
         }
     });
