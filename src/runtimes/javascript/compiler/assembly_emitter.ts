@@ -369,6 +369,22 @@ class NamespaceEmitter {
         }
     }
 
+    private emitCodePackFunction(pcode: TIRCodePack): string {
+        const invk = this.m_assembly.invokeMap.get(pcode.invk) as TIRInvoke;
+        assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
+
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns, true); 
+
+        const args = invk.params.map((pp) => pp.name);            
+        const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
+
+        if(body === undefined) {
+            return "";
+        }
+
+        return `(${["$CodePack", ...args].join(", ")}) => ${body}`;
+    }
+
     emitNamespace(nsdeps: string[]): string {
         let eexports: string[] = [];
 
@@ -475,9 +491,16 @@ class NamespaceEmitter {
             eexports.push("$Functions");
         }
 
+        const lambdas = [...this.m_decl.lambdas].map((lfd) => {
+            const lf = this.emitCodePackFunction(this.m_decl.codepacks.get(lfd[1].pcid) as TIRCodePack);
+            return `$Runtime.lambdas.set("${lfd[0]}", ${lf})`;
+        }).join("\n");
+                    
+        [...this.m_decl.alltypes]
+
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl]
+        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl, lambdas]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
@@ -490,8 +513,7 @@ class AssemblyEmitter {
     readonly namespacedecls: Map<string, string> = new Map<string, string>();
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
     readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
-    readonly lambdas: Map<TIRInvokeKey, string> = new Map<TIRInvokeKey, string>();
-
+    
     readonly keyeqinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
     readonly keylessinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
 
@@ -664,31 +686,10 @@ class AssemblyEmitter {
         }
     }
 
-    private emitCodePackFunction(pcode: TIRCodePack): string {
-        const invk = this.assembly.invokeMap.get(pcode.invk) as TIRInvoke;
-        assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
-
-        const bemitter = new BodyEmitter(this.assembly, path.basename(invk.srcFile), "_LAMBDA_", true); 
-
-        const args = invk.params.map((pp) => pp.name);            
-        const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
-
-        if(body === undefined) {
-            return "";
-        }
-
-        return `(${["$CodePack", ...args].join(", ")}) => ${body}`;
-    }
-
     private processAssembly() {
         this.assembly.namespaceMap.forEach((nsd, ns) => {
             const nsemit = new NamespaceEmitter(this.assembly, ns, nsd);
             const tirns = nsemit.emitNamespace(this.nsdeps.get(ns) as string[]);
-
-            nsd.lambdas.forEach((lfd) => {
-                const lf = this.emitCodePackFunction(nsd.codepacks.get(lfd.pcid) as TIRCodePack);
-                this.lambdas.set(lfd.ikey, lf);
-            });
 
             this.namespacedecls.set(ns, tirns);
         });
@@ -757,9 +758,12 @@ class AssemblyEmitter {
                 contents: runtimecode
                     .replace("//--GENERATED_$subtypesetup--", [...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", new Set(${sti[1].map((st) => "\"" + st + "\"").join(", ")}));`).join("\n"))
                     .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map(${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}));`).join("\n"))
-                    .replace("//--GENERATED_$lambdas--", [...this.lambdas].map((li) => `lambdas.set("${li[0]}", ${li[1]})`).join("\n"))
-                    .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
-
+            },
+            {   
+                nsname: "api.mjs",
+                contents: runtimecode
+                .replace("//--GENERATED_$usermodules--", [...this.namespacedecls].map((nsi) => `import * as ${nsi[0]} from "./${nsi[0]}.mjs";`).join("\n"))
+                .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
             }
         ];
 
