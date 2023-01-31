@@ -4284,7 +4284,7 @@ class TypeChecker {
         const renv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} == ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} == ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return env.setResultExpressionInfo(new TIRNumericEqExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -4297,7 +4297,7 @@ class TypeChecker {
         const renv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
 
-        this.raiseErrorIf(exp.sinfo, lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} != ${renv.trepr.typeID}`);
+        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} != ${renv.trepr.typeID}`);
         const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
 
         return env.setResultExpressionInfo(new TIRNumericNeqExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
@@ -5382,7 +5382,7 @@ class TypeChecker {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            const jenv = env.updateFlowAtJoin(mvinfo);
+            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
             return [jenv, [rexp]];
         }
     }
@@ -5450,7 +5450,7 @@ class TypeChecker {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            const jenv = env.updateFlowAtJoin(mvinfo);
+            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
             return [jenv, [rexp]];
         }
     }
@@ -5519,7 +5519,7 @@ class TypeChecker {
             return [env.endOfExecution(), [rexp]];
         }
         else {
-            const jenv = env.updateFlowAtJoin(mvinfo);
+            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
             return [jenv, [rexp]];
         }
     }

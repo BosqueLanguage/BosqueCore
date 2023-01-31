@@ -16,8 +16,8 @@ class VarInfo {
         this.mustDefined = mustDefined;
     }
 
-    updateType(tt: ResolvedType): VarInfo {
-        return new VarInfo(tt, this.isConst, this.mustDefined);
+    updateTypeAndDef(tt: ResolvedType, mustdef: boolean): VarInfo {
+        return new VarInfo(tt, this.isConst, mustdef);
     }
 }
 
@@ -142,12 +142,20 @@ class StatementTypeEnvironment {
     }
 
     setVar(name: string): StatementTypeEnvironment {
-        const oldv = this.lookupLocalVar(name) as VarInfo;
+        if (this.getLocalVarInfo(name) !== undefined) {
+            const oldv = this.lookupLocalVar(name) as VarInfo;
+            const nv = new VarInfo(oldv.declaredType, oldv.isConst, true);
 
-        let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => new Map<string, VarInfo>(frame));
-        localcopy[localcopy.length - 1].set(name, new VarInfo(oldv.declaredType, false, true));
-           
-        return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, this.args, localcopy, false);
+            let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => frame.has(name) ? new Map<string, VarInfo>(frame).set(name, nv) : new Map<string, VarInfo>(frame));
+            return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, this.args, localcopy, false);
+        }
+        else {
+            const oldv = this.args.get(name) as VarInfo;
+            const nv = new VarInfo(oldv.declaredType, oldv.isConst, true);
+
+            const argscopy = new Map<string, VarInfo>(this.args as Map<string, VarInfo>).set(name, nv);
+            return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, argscopy, this.locals, false);
+        }
     }
 
     setVarFlowType(name: string, newtype: ResolvedType): StatementTypeEnvironment {
@@ -222,16 +230,17 @@ class StatementTypeEnvironment {
         return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, this.args, localscopy, this.isDeadFlow);
     }
 
-    updateFlowAtJoin(remap: Map<string, ResolvedType>): StatementTypeEnvironment {
+    updateFlowAtJoin(remap: Map<string, ResolvedType>, rflows: StatementTypeEnvironment[]): StatementTypeEnvironment {
         let rargs = new Map<string, VarInfo>();
         this.args.forEach((ai, an) => {
-            rargs.set(an, ai.updateType(remap.get(an) as ResolvedType));
+            rargs.set(an, ai.updateTypeAndDef(remap.get(an) as ResolvedType, true));
         });
 
         const rlocals = this.locals.map((lf) => {
             let nlf = new Map<string, VarInfo>();
             lf.forEach((vi, vn) => {
-                nlf.set(vn, vi.updateType(remap.get(vn) as ResolvedType));
+                const mustdef = vi.mustDefined || rflows.every((ff) => (ff.lookupLocalVar(vn) as VarInfo).mustDefined);
+                nlf.set(vn, vi.updateTypeAndDef(remap.get(vn) as ResolvedType, mustdef));
             });
             return nlf;
         });

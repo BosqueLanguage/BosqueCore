@@ -3010,8 +3010,8 @@ class Parser {
                 const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), undefined);
                 const vvar = { name: assign.name, vtype: assign.vtype };
 
-                if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                    this.raiseError(line, "Variable name is already defined");
+                if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
+                    this.raiseError(line, "Variable name not defined");
                 }
                 this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name, assign.name, false);
 

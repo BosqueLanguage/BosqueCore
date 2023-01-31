@@ -1,5 +1,14 @@
 namespace Main;
 
-export function main(x: Nat, y: Nat): Nat {
-    return x + y;
+export function main(x: Int): Int {
+    var y: Int;
+
+    if(x == 0i) {
+        y = 0i;
+    }
+    else {
+        y = if (x > 0i) then 1i else -1i;
+    }
+
+    return y;
 }

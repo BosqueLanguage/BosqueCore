@@ -90,8 +90,8 @@ describe('Readme sign', function () {
         });
     });
     describe('sign(0)', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql(1);
+        it('expected 0', function () {
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(0);
         });
     });
 });

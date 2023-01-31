@@ -112,7 +112,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
         assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
         const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
 
-        const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse(actual_args[${ii}].slice(1, actual_args[${ii}].length - 1)))`).join(", ") + "]";
+        const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1)))`).join(", ") + "]";
         const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
 
         const mainf = Path.join(into, "_main_.mjs");
@@ -120,6 +120,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             + `import * as $API from "./api.mjs";\n`
             + `import * as $Main from "./Main.mjs";\n\n`
             + `const actual_args = process.argv.slice(2);\n`
+            + `if(actual_args.length !== ${epf.params.length}) $Runtime.raiseRuntimeError("expected ${epf.params.length} args but got " + actual_args.length + " args")\n\n`
             + `const bsq_args = ${loadlogic};\n`
             + `const res_val = $Main.main(...bsq_args);\n`
             + `const jres_val = ${emitlogic};\n`

@@ -1876,7 +1876,7 @@ class TIRVarAssignStatement extends TIRStatement {
     readonly vexp: TIRExpression;
 
     constructor(sinfo: SourceInfo, vname: string, vtype: TIRTypeKey, vexp: TIRExpression) {
-        super(TIRStatementTag.VarDeclareAndAssignStatement, sinfo, `${vname} = ${vexp.expstr};`);
+        super(TIRStatementTag.VarAssignStatement, sinfo, `${vname} = ${vexp.expstr};`);
         this.vname = vname;
         this.vtype = vtype;
         this.vexp = vexp;
