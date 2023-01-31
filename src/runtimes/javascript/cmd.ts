@@ -12,9 +12,11 @@ import { AssemblyEmitter } from "./compiler/assembly_emitter";
 const bosque_dir: string = Path.join(__dirname, "../../../");
 const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
 const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
+const api_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/api.mjs");
 
 const core_code = FS.readFileSync(core_path).toString();
 const runtime_code = FS.readFileSync(runtime_path).toString();
+const api_code = FS.readFileSync(api_path).toString();
 
 const fullargs = process.argv;
 
@@ -81,19 +83,19 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
     return [tasm as TIRAssembly, depsmap];
 }
 
-function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, corecode: string, runtimecode: string): {nsname: string, contents: string}[] {
+function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
     const jsemittier = new AssemblyEmitter(tasm, depsmap);
-    return jsemittier.generateJSCode(corecode, runtimecode)
+    return jsemittier.generateJSCode(corecode, runtimecode, apicode)
 }
 
 
-function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
         const [tasm, deps] = generateTASM(usercode, buildlevel, istestbuild, entrypoints);
 
         process.stdout.write("emitting JS code...\n");
-        const jscode = generateJSFiles(tasm, deps, corecode, runtimecode);
+        const jscode = generateJSFiles(tasm, deps, corecode, runtimecode, apicode);
         
         process.stdout.write(`writing JS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
@@ -104,26 +106,24 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             const ppth = Path.join(into, jscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
-
-            if(jscode[i].nsname !== "Main.mjs") {
-                FS.writeFileSync(ppth, jscode[i].contents);
-            }
-            else {
-                assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
-                const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
-
-                const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse(actual_args[${ii}].slice(1, actual_args[${ii}].length - 1)))`).join(", ") + "]";
-                const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
-
-                FS.writeFileSync(ppth, jscode[i].contents + "\n\n"
-                + `import * as $API from "./api.mjs;\n` 
-                + `const actual_args = process.argv.slice(2);\n`
-                + `const bsq_args = ${loadlogic};\n`
-                + `const res_val = main(...bsq_args);\n`
-                + `const jres_val = ${emitlogic};\n`
-                + `console.log(JSON.stringify(jres_val));\n`);
-            }
+            FS.writeFileSync(ppth, jscode[i].contents);
         }
+
+        assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
+        const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
+
+        const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse(actual_args[${ii}].slice(1, actual_args[${ii}].length - 1)))`).join(", ") + "]";
+        const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
+
+        const mainf = Path.join(into, "_main_.mjs");
+        FS.writeFileSync(mainf, `"use strict";\n`
+            + `import * as $API from "./api.mjs";\n`
+            + `import * as $Main from "./Main.mjs";\n\n`
+            + `const actual_args = process.argv.slice(2);\n`
+            + `const bsq_args = ${loadlogic};\n`
+            + `const res_val = $Main.main(...bsq_args);\n`
+            + `const jres_val = ${emitlogic};\n`
+            + `console.log(JSON.stringify(jres_val));\n`);
 
     } catch(e) {
         process.stderr.write(`JS emit error -- ${e}\n`);
@@ -136,7 +136,7 @@ function buildJSDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, "test", false, [{ns: "Main", fname: "main"}]);
+    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: "Main", fname: "main"}]);
 
     process.stdout.write("done!\n");
 }

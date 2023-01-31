@@ -24,12 +24,12 @@ class NamespaceEmitter {
     }
 
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns, false); 
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
         return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!$CF_${cdecl.name}) { $CF_${cdecl.name} = true; $CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return $CV_${cdecl.name}; }`;
     }
 
     private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns, false); 
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns); 
 
         const args = fdecl.invoke.params.map((pp) => pp.name).join(", ");
 
@@ -51,7 +51,7 @@ class NamespaceEmitter {
     }
 
     private emitMemberMethod(ootype: TIROOType, mdecl: TIRMemberMethodDecl, indent: string): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(mdecl.srcFile), this.m_ns, false); 
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(mdecl.srcFile), this.m_ns); 
 
         const args = [(ootype instanceof TIRTaskType ? "self" : "$_this"), ...mdecl.invoke.params.map((pp) => pp.name)].join(", ");
 
@@ -94,7 +94,7 @@ class NamespaceEmitter {
     }
 
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns, false);
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const entries = ttype.enums.map((ee) => `${ee}: ${bemitter.emitExpression((ttype.litvals.get(ee) as TIRLiteralValue).exp)}`);
         const funcs = this.emitOOTypeFunctions(ttype);
@@ -104,7 +104,7 @@ class NamespaceEmitter {
     }
 
     private emitTIRTypedeclEntityType(ttype: TIRTypedeclEntityType): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns, false);
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
         const funcs = this.emitOOTypeFunctions(ttype);
@@ -124,7 +124,7 @@ class NamespaceEmitter {
     }
 
     private emitTIRObjectEntityType(ttype: TIRObjectEntityType): [boolean, string] {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns, false);
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
         const funcs = this.emitOOTypeFunctions(ttype);
@@ -250,12 +250,12 @@ class NamespaceEmitter {
     }
 
     private emitConst(nsconst: TIRNamespaceConstDecl): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns, false);
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns);
         return `let $CF_${nsconst.name} = false; let $CV_${nsconst.name} = undefined; function ${nsconst.name}() { if(!$CF_${nsconst.name}) { $CF_${nsconst.name} = true; $CV_${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)}; } return $CV_${nsconst.name}; }`;
     }
 
     private emitNamespaceFunction(fdecl: TIRNamespaceFunctionDecl, indent: string): string {
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns, false); 
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(fdecl.srcFile), this.m_ns); 
 
         const args = fdecl.invoke.params.map((pp) => pp.name).join(", ");
 
@@ -373,7 +373,7 @@ class NamespaceEmitter {
         const invk = this.m_assembly.invokeMap.get(pcode.invk) as TIRInvoke;
         assert(invk instanceof TIRInvokeImplementation, "should not be doing this!!");
 
-        const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns, true); 
+        const bemitter = new BodyEmitter(this.m_assembly, path.basename(invk.srcFile), this.m_ns); 
 
         const args = invk.params.map((pp) => pp.name);            
         const body = bemitter.emitBodyStatementList((invk as TIRInvokeImplementation).body, [], [], "        ", pcode.codekey, false);
@@ -493,14 +493,14 @@ class NamespaceEmitter {
 
         const lambdas = [...this.m_decl.lambdas].map((lfd) => {
             const lf = this.emitCodePackFunction(this.m_decl.codepacks.get(lfd[1].pcid) as TIRCodePack);
-            return `$Runtime.lambdas.set("${lfd[0]}", ${lf})`;
+            return `$Runtime.lambdas.set("${lfd[0]}", ${lf});`;
         }).join("\n");
                     
         [...this.m_decl.alltypes]
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, exportdecl, lambdas]
+        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, exportdecl]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
@@ -584,7 +584,7 @@ class AssemblyEmitter {
     }
 
     private emitTIRListEntityType_ParseEmit(ttype: TIRListEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return IList(jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
+        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return $CoreLibs.$ListOps.create(...jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
         const emit = `nv.map((vv) => ioMarshalMap.get("${ttype.typeT}").emit(vv)).toArray()`;
 
         return {parse: parse, emit: emit};
@@ -743,7 +743,7 @@ class AssemblyEmitter {
         });
     };
 
-    generateJSCode(corecode: string, runtimecode: string): {nsname: string, contents: string}[] {
+    generateJSCode(corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
         this.processAssembly();
 
         let outmodules: {nsname: string, contents: string}[] = [
@@ -761,7 +761,7 @@ class AssemblyEmitter {
             },
             {   
                 nsname: "api.mjs",
-                contents: runtimecode
+                contents: apicode
                 .replace("//--GENERATED_$usermodules--", [...this.namespacedecls].map((nsi) => `import * as ${nsi[0]} from "./${nsi[0]}.mjs";`).join("\n"))
                 .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
             }

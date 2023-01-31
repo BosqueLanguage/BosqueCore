@@ -14,7 +14,7 @@ function generatePaths(testopt) {
     return {
         srcfile: path.join(proj_root, "test/bsqsrc", ...testopt) + ".bsq",
         dstdir: path.join(proj_root, "build/test", ...testopt),
-        jsmain: path.join(proj_root, "build/test", ...testopt, "Main.mjs")
+        jsmain: path.join(proj_root, "build/test", ...testopt, "_main_.mjs")
     }
 }
 
@@ -66,7 +66,7 @@ describe('Readme allPositive', function () {
     });
     describe('allPositive([1, -3, 4])', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain, [1, 3, -4])).to.eql(false);
+            expect(invokeExecutionOn(jsmain, [1, -3, 4])).to.eql(false);
         });
     });
 });

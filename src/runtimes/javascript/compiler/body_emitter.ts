@@ -23,7 +23,6 @@ class BodyEmitter {
 
     private readonly m_file: string;
     private readonly m_ns: string;
-    private readonly m_islambda: boolean;
     private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
@@ -31,11 +30,10 @@ class BodyEmitter {
     private m_hasScratch = false;
     private m_varCtr = 0;
 
-    constructor(assembly: TIRAssembly, file: string, ns: string, islambda: boolean) {
+    constructor(assembly: TIRAssembly, file: string, ns: string) {
         this.m_assembly = assembly;
         this.m_file = file;
         this.m_ns = ns;
-        this.m_islambda = islambda;
     }
 
     typeEncodedAsUnion(tt: TIRTypeKey): boolean {
@@ -321,8 +319,7 @@ class BodyEmitter {
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {
-        const sccp = this.m_islambda ? "lambdas" : "$Runtime.lambdas";
-        return `(${sccp}.get("${exp.cpack.invk}"))(${[...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
+        return `($Runtime.lambdas.get("${exp.cpack.invk}"))(${[...exp.args.map((arg) => this.emitExpression(arg, true))].join(", ")})`;
     }
 
     private emitResultOkConstructorExpression(exp: TIRResultOkConstructorExpression, toplevel: boolean): string {
