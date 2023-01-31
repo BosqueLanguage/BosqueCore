@@ -56,7 +56,7 @@ allPositive([])         //true
 allPositive([1, 3, -4]) //false
 ```
 
-**Sign (with default argument):**
+**Sign (with blocks and assignment):**
 
 ```none
 function sign(x: Int): Int {
