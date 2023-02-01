@@ -2473,24 +2473,20 @@ class TypeChecker {
             return ResolveResultFlag.failure;
         }
 
-        if(options.includes(ResolveResultFlag.notfound)) {
-            if(mdecl === undefined) {
-                return ResolveResultFlag.notfound;
-            }
-            else {
-                if(!mdecl.hasAttribute("override")) {
-                    return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
-                }
-                else {
-                    this.raiseError(ooptype.sourceLocation, `Found override impl but no virtual/abstract declaration for ${name}`)
-                    return ResolveResultFlag.failure;
-                }
+        if (options.includes(ResolveResultFlag.notfound)) {
+            if (mdecl !== undefined && !mdecl.hasAttribute("override")) {
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
             }
         }
 
+        const ropts = options.filter((opt) => opt !== ResolveResultFlag.failure && opt !== ResolveResultFlag.notfound) as OOMemberLookupInfo<T>[][];
+        if(ropts.length === 0) {
+            return ResolveResultFlag.notfound;
+        }
+
         let decls: OOMemberLookupInfo<T>[] = [];
-        for(let i = 0; i < options.length; ++i) {
-            const newopts = (options[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+        for(let i = 0; i < ropts.length; ++i) {
+            const newopts = ropts[i].filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
             decls.push(...newopts);
         }
 
@@ -2516,8 +2512,8 @@ class TypeChecker {
             decls.push(...newopts);
         }
 
-        if (decls.length !== 0) {
-            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
             return ResolveResultFlag.failure;
         }
 
@@ -2563,6 +2559,11 @@ class TypeChecker {
             return ResolveResultFlag.failure;
         }
 
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
         if (decls.length > 1) {
             this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
             return ResolveResultFlag.failure;
@@ -2592,6 +2593,11 @@ class TypeChecker {
         }
 
         if(decls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
             return ResolveResultFlag.failure;
         }
 
@@ -3952,10 +3958,10 @@ class TypeChecker {
                 this.raiseErrorIf(op.sinfo, mresolve.decl.decl.invoke.isThisRef && !(mresolve.impl[0].ootype instanceof EntityTypeDecl), `self call with ref can only be done on non-virtual methods defined on entities but got ${mresolve.impl[0].ttype.typeID}`);
 
                 if (mresolve.decl.decl.invoke.isThisRef) {
-                    return env.setResultExpressionInfo(new TIRCallMemberFunctionSelfRefExpression(op.sinfo, this.m_scratchCtr++, tkey, op.name, fkey, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
+                    return env.setResultExpressionInfo(new TIRCallMemberFunctionSelfRefExpression(op.sinfo, this.m_scratchCtr++, tkey, op.name, fkey, tirdecltype, tirrtype, refvar as string, rcvrexp.expressionResult, argexps), rtype);
                 }
                 else {
-                    return env.setResultExpressionInfo(new TIRCallMemberFunctionExpression(op.sinfo, tkey, op.name, fkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+                    return env.setResultExpressionInfo(new TIRCallMemberFunctionExpression(op.sinfo, tkey, op.name, fkey, tirdecltype, tirrtype, rcvrexp.expressionResult, argexps), rtype);
                 }
             }
         }
@@ -3965,16 +3971,18 @@ class TypeChecker {
             const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
             this.m_pendingMethodMemberDecls.push({fkey: declkey, decl: mresolve.decl, declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
 
-            const inferthistype = this.toTIRTypeKey(env.trepr);
-            let inferfkey: TIRInvokeKey | undefined = undefined;
             if(mresolve.impl.length === 1) {
-                const tirimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
-                inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(tirimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
+                const inferfimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
+                const inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(inferfimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
                 this.m_pendingMethodMemberDecls.push({fkey: inferfkey, decl: mresolve.impl[0], declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
-            }
 
-            const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
-            return env.setResultExpressionInfo(new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, op.name, declkey, inferthistype, inferfkey, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+                const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.impl[0].ttype);
+                return env.setResultExpressionInfo(new TIRCallMemberFunctionExpression(op.sinfo, inferfimpltype, op.name, inferfkey, inferfimpltype, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+            }
+            else {
+                const rcvrexp = this.emitCoerceIfNeeded(env, op.sinfo, mresolve.decl.ttype);
+                return env.setResultExpressionInfo(new TIRCallMemberFunctionDynamicExpression(op.sinfo, tkey, op.name, declkey, tirdecltype, tirrtype, rcvrexp.expressionResult, argexps), rtype);
+            }
         }
     }
 
@@ -4160,20 +4168,20 @@ class TypeChecker {
         }
         else {
             if (action === "stdkeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                 const eqop = new TIRBinKeyEqBothUniqueExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, tirlhstype);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
             }
             else if (action === "lhssomekeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
 
                 const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirlhstype, lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
             }
             else if (action === "rhssomekeywithunique") {
-                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                 const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirrhstype, rhsenv.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
@@ -4182,18 +4190,18 @@ class TypeChecker {
                 const eqop = new TIRBinKeyEqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
                 if (action === "lhssomekey") {
-                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }
                 else if (action === "rhssomekey") {
-                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }
                 else {
-                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }
@@ -4236,20 +4244,20 @@ class TypeChecker {
         }
         else {
             if (action === "stdkeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                 const eqop = new TIRBinKeyNeqBothUniqueExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, tirlhstype);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
             }
             else if (action === "lhssomekeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
 
                 const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirlhstype, lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
             }
             else if (action === "rhssomekeywithunique") {
-                this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                 const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirrhstype, rhsenv.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
                 return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
@@ -4258,18 +4266,18 @@ class TypeChecker {
                 const eqop = new TIRBinKeyNeqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
 
                 if (action === "lhssomekey") {
-                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }
                 else if (action === "rhssomekey") {
-                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }
                 else {
-                    this.raiseErrorIf(lhsarg.sinfo, this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                    this.raiseErrorIf(rhsarg.sinfo, this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
+                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
+                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
 
                     return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
                 }

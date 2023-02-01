@@ -76,7 +76,7 @@ sign(5i)    //1
 sign(-5i)   //-1
 ```
 
-**Nominal Types with Data Invariants and Ref Methods:**
+**Nominal Types with Data Invariants:**
 
 ```
 concept WithName {
@@ -111,8 +111,22 @@ GenericGreeting{}.sayHello()          //"hello world"
 GenericGreeting::instance.sayHello()  //"hello world"
 
 NamedGreeting{}.sayHello()           //type error no value provided for "name" field
-NamedGreeting{name=""}.sayHello()    //invariant error
+NamedGreeting{""}.sayHello()         //invariant error
 NamedGreeting{"bob"}.sayHello()      //"hello bob"
+```
+
+
+**Ref Methods:**
+
+```
+xxxx
+```
+
+
+**Flow and Binders:**
+
+```
+xxxx
 ```
 
 **(Algebraic Data Types)++ and Union Types**

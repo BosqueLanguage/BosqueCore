@@ -1595,14 +1595,16 @@ abstract class TIRIMemberFunctionExpression extends TIRExpression {
     readonly tkey: TIRTypeKey;
     readonly fname: string;
     readonly fkey: TIRInvokeKey;
+    readonly fdecltype: TIRTypeKey;
     readonly thisarg: TIRExpression;
     readonly args: TIRExpression[]; 
 
-    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[], exprstr: string) {
+    constructor(tag: TIRExpressionTag, sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[], exprstr: string) {
         super(tag, sinfo, rtype, exprstr);
         this.tkey = tkey;
         this.fname = fname;
         this.fkey = fkey;
+        this.fdecltype = fdecltype;
         this.thisarg = thisarg;
         this.args = args;
     }
@@ -1617,19 +1619,14 @@ abstract class TIRIMemberFunctionExpression extends TIRExpression {
 }
 
 class TIRCallMemberFunctionExpression extends TIRIMemberFunctionExpression {
-    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
-        super(TIRExpressionTag.CallMemberFunctionExpression, sinfo, tkey, fname, fkey, rtype, thisarg, args, `${thisarg.expstr}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberFunctionExpression, sinfo, tkey, fname, fkey, fdecltype, rtype, thisarg, args, `${thisarg.expstr}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
     }
 }
 
 class TIRCallMemberFunctionDynamicExpression extends TIRIMemberFunctionExpression {
-    readonly inferthistype: TIRTypeKey;
-    readonly inferfkey: TIRInvokeKey | undefined;
-    
-    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, declkey: TIRInvokeKey, inferthistype: TIRTypeKey, inferfkey: TIRInvokeKey | undefined, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
-        super(TIRExpressionTag.CallMemberFunctionDynamicExpression, sinfo, tkey, fname, declkey, rtype, thisarg, args, `${thisarg.expstr}.${declkey}(${args.map((arg) => arg.expstr).join(", ")})`);
-        this.inferthistype = inferthistype;
-        this.inferfkey = inferfkey;
+    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, declkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberFunctionDynamicExpression, sinfo, tkey, fname, declkey, fdecltype, rtype, thisarg, args, `${thisarg.expstr}.${declkey}(${args.map((arg) => arg.expstr).join(", ")})`);
     }
 }
 
@@ -1637,8 +1634,8 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
     readonly scidx: number;
     readonly thisref: string;
 
-    constructor(sinfo: SourceInfo, scidx: number, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, thisref: string, thisarg: TIRExpression, args: TIRExpression[]) {
-        super(TIRExpressionTag.CallMemberFunctionSelfRefExpression, sinfo, tkey, fname, fkey, rtype, thisarg, args, `ref ${thisref}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
+    constructor(sinfo: SourceInfo, scidx: number, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisref: string, thisarg: TIRExpression, args: TIRExpression[]) {
+        super(TIRExpressionTag.CallMemberFunctionSelfRefExpression, sinfo, tkey, fname, fkey, fdecltype, rtype, thisarg, args, `ref ${thisref}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
         this.scidx = scidx;
         this.thisref = thisref;
     }

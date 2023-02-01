@@ -979,72 +979,41 @@ class BodyEmitter {
         return toplevel ? eexp : "(" + eexp + ")";
     }
 
-    private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
-        const thisarg = this.emitExpression(exp.thisarg, true);
-        
-        const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
-        const declunion = this.typeEncodedAsUnion(exp.tkey);
-        let thisargas = "[NOT SET]";
-        if (declunion) {
-            if (thisunion === declunion) {
-                thisargas = "__expval__";
-            }
-            else {
-                if (thisunion) {
-                    thisargas = "__expval__.value";
-                }
-                else {
-                    thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
-                }
-            }
+    private generateThisArgAs(thistype: TIRTypeKey, decltype: TIRTypeKey, thisarg: string): string {
+        const thisunion = this.typeEncodedAsUnion(thistype);
+        const declunion = this.typeEncodedAsUnion(decltype);
+
+        if(thisunion === declunion) {
+            return thisarg;
         }
         else {
-            if (thisunion === declunion) {
-                thisargas = "__expval__";
+            if(!thisunion && declunion) {
+                return `new $Runtime.UnionValue("${thistype}", ${thisarg})`;
             }
             else {
-                if (thisunion) {
-                    thisargas = "__expval__.value";
-                }
-                else {
-                    thisargas = `new UnionValue("${exp.thisarg.etype}", __expval__)`;
-                }
+                return `(${thisarg}).value`;
             }
         }
+    }
+
+    private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
+        const thisarg = this.emitExpression(exp.thisarg, true);
+        const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
 
         const aargs = exp.args.map((arg) => this.emitExpression(arg, true));
 
-        if(exp.inferfkey !== undefined) {
-            const ttype = this.m_assembly.typeMap.get(exp.tkey) as TIROOType;
-            const invk = ttype.memberMethods.find((mm) => mm.ikey === exp.fkey);
-            assert(invk !== undefined, "emitCallMemberFunctionExpression");
-
-            const fexp = `${this.resolveTypeMemberAccess(exp.tkey)}`;
-            let meexp = "[NOT SET]";
-            if ((invk as TIRMemberMethodDecl).invoke.tbinds.size === 0 && (invk as TIRMemberMethodDecl).invoke.pcodes.size === 0) {
-                meexp = `.${exp.fname}`;
-            }
-            else {
-                meexp = `.$Methods["${exp.fkey}"]`;
-            }
-
-            const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
-
-            return toplevel ? eexp : "(" + eexp + ")";
+        let vtable = "[NOT SET]";
+        if (thisunion) {
+            vtable = `$Runtime.vtablemap.get(__expval__.tkey).$VTable["${exp.fkey}"]`
         }
         else {
-            let vtable = "[NOT SET]";
-            if(thisunion) {
-                vtable = `$Runtime.vtablemap.get(__expval__.tkey).$VTable["${exp.fkey}"]`
-            }
-            else {
-                vtable = `${this.resolveTypeMemberAccess(exp.thisarg.etype)}.$VTable["${exp.fkey}"]`;
-            }
-            
-            const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
-
-            return toplevel ? eexp : "(" + eexp + ")";
+            vtable = `${this.resolveTypeMemberAccess(exp.thisarg.etype)}.$VTable["${exp.fkey}"]`;
         }
+
+        const thisargas = this.generateThisArgAs(exp.thisarg.etype, exp.fdecltype, "__expval__");
+        const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
+
+        return toplevel ? eexp : "(" + eexp + ")";
     }
     
     private emitCallMemberFunctionSelfRefExpression(exp: TIRCallMemberFunctionSelfRefExpression, toplevel: boolean): string {

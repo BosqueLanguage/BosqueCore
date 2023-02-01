@@ -85,13 +85,56 @@ describe('Readme sign', function () {
         });
     });
     describe('sign(-5)', function () {
-        it('expected 1', function () {
+        it('expected -1', function () {
             expect(invokeExecutionOn(jsmain, -5)).to.eql(-1);
         });
     });
     describe('sign(0)', function () {
         it('expected 0', function () {
             expect(invokeExecutionOn(jsmain, 0)).to.eql(0);
+        });
+    });
+});
+
+describe('Readme nominal generic', function () {
+    const testopt = ["readme", "nominal_inv_generic"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('GenericGreeting', function () {
+        it('expected ["hello world", "hello world"]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql(["hello world", "hello world"]);
+        });
+    });
+});
+
+describe('Readme nominal named', function () {
+    const testopt = ["readme", "nominal_inv_named"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('NamedGreeting', function () {
+        it('expected "hello bob"', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql("hello bob");
+        });
+    });
+});
+
+
+describe('Readme nominal err', function () {
+    const testopt = ["readme", "nominal_inv_err"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('Greeting Err', function () {
+        it('expected invariant failure -- throw', function () {
+            expect(invokeExecution(jsmain)).to.throw();
         });
     });
 });

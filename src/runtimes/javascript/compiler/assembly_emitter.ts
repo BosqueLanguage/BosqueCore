@@ -25,7 +25,7 @@ class NamespaceEmitter {
 
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
-        return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!$CF_${cdecl.name}) { $CF_${cdecl.name} = true; $CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return $CV_${cdecl.name}; }`;
+        return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!this.$CF_${cdecl.name}) { this.$CF_${cdecl.name} = true; this.$CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return this.$CV_${cdecl.name}; }`;
     }
 
     private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string {
@@ -64,8 +64,10 @@ class NamespaceEmitter {
     }
 
     private emitOOTypeFunctions(ootype: TIROOType): string[] {
-        const finline = ootype.staticFunctions.filter((ff) => ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
-        const fkey = ootype.staticFunctions.filter((ff) => ff.invoke.tbinds.size !== 0 || ff.invoke.pcodes.size !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
+        const oofuncs = ootype.staticFunctions.filter((ff) => !ff.attributes.includes("abstract"));
+
+        const finline = oofuncs.filter((ff) => ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
+        const fkey = oofuncs.filter((ff) => ff.invoke.tbinds.size !== 0 || ff.invoke.pcodes.size !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
 
         const finlinestr = finline.length !== 0 ? ("\n    " + finline.join(",\n    ")) : "";
         const fkeystr = fkey.length !== 0 ? (`$Functions: {\n        ${fkey.join(",\n        ")}\n    }`) : "";
@@ -74,8 +76,10 @@ class NamespaceEmitter {
     }
 
     private emitOOTypeMethods(ootype: TIROOType): string[] {
-        const minline = ootype.memberMethods.filter((mm) => mm.invoke.tbinds.size === 0 && mm.invoke.pcodes.size === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
-        const mkey = ootype.memberMethods.filter((mm) => mm.invoke.tbinds.size !== 0 || mm.invoke.pcodes.size !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
+        const oomethods = ootype.memberMethods.filter((ff) => !ff.attributes.includes("abstract"));
+
+        const minline = oomethods.filter((mm) => mm.invoke.tbinds.size === 0 && mm.invoke.pcodes.size === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
+        const mkey = oomethods.filter((mm) => mm.invoke.tbinds.size !== 0 || mm.invoke.pcodes.size !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
 
         const minlinestr = minline.length !== 0 ? ("\n    " + minline.join(",\n    ")) : "";
         const mkeystr = mkey.length !== 0 ? (`$Methods: {\n        ${mkey.join(",\n        ")}\n    }`) : "";
@@ -615,7 +619,13 @@ class AssemblyEmitter {
     }
 
     private emitTIRTupleType_ParseEmit(ttype: TIRTupleType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const parseops = ttype.types.map((tt, ii) => `ioMarshalMap.get("${tt}").parse(jv[${ii}])`);
+        const parse = `{ if(!Array.isArray(jv) || jv.length !== ${ttype.types.length}) {raiseRuntimeError("Failed in Tuple parse " + JSON.stringify(jv))} else { return [ ${parseops.join(", ")} ]; } }`
+
+        const emitops = ttype.types.map((tt, ii) => `ioMarshalMap.get("${tt}").emit(nv[${ii}])`);
+        const emit = `[ ${emitops.join(", ")} ]`;
+
+        return { parse: parse, emit: emit };
     }
 
     private emitTIRRecordType_ParseEmit(ttype: TIRRecordType): { parse: string, emit: string } {
