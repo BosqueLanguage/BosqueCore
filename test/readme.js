@@ -24,18 +24,12 @@ function codegen(srcdir, dstdir) {
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]);
-    return JSON.parse(rr);
-}
-
-
-function invokeExecutionExpectFailure(jsmain, msgop, ...args) {
-    try {
-        execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]);
-        return false;
+    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]).toString();
+    if(rr.startsWith("error -- ")) {
+        return rr;
     }
-    catch(ex) {
-        return true;
+    else {
+        return JSON.parse(rr);
     }
 }
 
@@ -144,8 +138,8 @@ describe('Readme nominal err', function () {
     after(function () { fsextra.removeSync(dstdir); });
 
     describe('Greeting Err', function () {
-        it('expected invariant failure -- throw', function () {
-            expect(invokeExecutionExpectFailure(jsmain, "Failed invariant")).to.eql(true);
+        it('expected invariant failure', function () {
+            expect(invokeExecutionOn(jsmain)).to.contain("Failed invariant");
         });
     });
 });

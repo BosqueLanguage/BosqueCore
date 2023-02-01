@@ -120,11 +120,15 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             + `import * as $API from "./api.mjs";\n`
             + `import * as $Main from "./Main.mjs";\n\n`
             + `const actual_args = process.argv.slice(2);\n`
-            + `if(actual_args.length !== ${epf.params.length}) $Runtime.raiseRuntimeError("expected ${epf.params.length} args but got " + actual_args.length + " args")\n\n`
+            + `if(actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args but got " + actual_args.length + " args\\n"); process.exit(0); }\n\n`
             + `const bsq_args = ${loadlogic};\n`
-            + `const res_val = $Main.main(...bsq_args);\n`
-            + `const jres_val = ${emitlogic};\n`
-            + `console.log(JSON.stringify(jres_val));\n`);
+            + `try {\n`
+            + `    const res_val = $Main.main(...bsq_args);\n`
+            + `    const jres_val = ${emitlogic};\n`
+            + `    console.log(JSON.stringify(jres_val));\n`
+            + `} catch(ex) {\n`
+            + `    process.stdout.write("error -- " + ex.msg + "\\n")`
+            + `}`);
 
     } catch(e) {
         process.stderr.write(`JS emit error -- ${e}\n`);
