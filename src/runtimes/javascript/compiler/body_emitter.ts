@@ -346,11 +346,13 @@ class BodyEmitter {
         const invks = this.m_assembly.getNamespace(exp.ns).functions.get(exp.fname) as TIRNamespaceFunctionDecl[];
         const invk = invks.find((ii) => ii.ikey === exp.fkey) as TIRNamespaceFunctionDecl;
 
+        const ins = (invk.ns !== this.m_ns) ? `${invk.ns}.` : "";
+
         if(invk.invoke.tbinds.size === 0 && invk.invoke.pcodes.size === 0) {
-            return `${invk.ns}.${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${ins}${invk.name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
-            return `${invk.ns}.$Functions["${invk.ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${ins}$Functions["${invk.ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
     }
 

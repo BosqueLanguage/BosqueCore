@@ -152,3 +152,22 @@ describe('Readme percentage', function () {
         });
     });
 });
+
+describe('Readme temp', function () {
+    const testopt = ["readme", "typedecl_temp"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('isFrezing 5', function () {
+        it('expected false', function () {
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(false);
+        });
+    });
+    describe('isFrezing -5', function () {
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, -5)).to.eql(true);
+        });
+    });
+});
