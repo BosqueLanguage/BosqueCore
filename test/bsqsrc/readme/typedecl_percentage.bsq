@@ -1,0 +1,9 @@
+namespace Main;
+
+typedecl Percentage = Nat & {
+    invariant $value <= 100n;
+}
+
+export function main(pv: Nat): Percentage {
+    return Percentage{pv};
+}

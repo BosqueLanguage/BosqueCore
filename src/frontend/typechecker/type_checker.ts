@@ -3308,7 +3308,7 @@ class TypeChecker {
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
         const constype = this.normalizeTypeOnly(exp.constype, env.binds);
         const lexp = this.reduceLiteralValueToCanonicalForm(exp.value, env.binds);
-        this.raiseErrorIf(exp.sinfo, lexp !== undefined, "Not a literal expression");
+        this.raiseErrorIf(exp.sinfo, lexp === undefined, "Not a literal expression");
 
         this.raiseErrorIf(exp.sinfo, !(constype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType), `${constype.typeID} is not a typedecl type`)
         const ccdecl = constype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;

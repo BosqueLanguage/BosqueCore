@@ -305,13 +305,6 @@ const AttributeStrings = [
     "__universal"
 ];
 
-const UnsafeFieldNames = [
-    "is", 
-    "as", 
-    "isNone", 
-    "isSome"
-];
-
 const LoggerActions = [
     "fatal",
     "error",
@@ -1443,10 +1436,6 @@ class Parser {
                 this.ensureToken(TokenStrings.Identifier, "record type entry property name");
 
                 const name = this.consumeTokenAndGetValue();
-                if(UnsafeFieldNames.includes(name)) {
-                    this.raiseError(this.getCurrentLine(), `Property name "${name}" is ambigious with the methods that record may provide`);
-                }
-
                 if(pnames.has(name)) {
                     this.raiseError(this.getCurrentLine(), `Duplicate property name "${name}" in record declaration`);
                 }

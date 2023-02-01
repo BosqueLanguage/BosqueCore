@@ -127,8 +127,8 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             + `    const jres_val = ${emitlogic};\n`
             + `    console.log(JSON.stringify(jres_val));\n`
             + `} catch(ex) {\n`
-            + `    process.stdout.write("error -- " + ex.msg + "\\n")`
-            + `}`);
+            + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
+            + `}\n`);
 
     } catch(e) {
         process.stderr.write(`JS emit error -- ${e}\n`);

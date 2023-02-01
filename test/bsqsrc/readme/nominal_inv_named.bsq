@@ -28,6 +28,6 @@ entity NamedGreeting provides WithName, Greeting {
     }
 }
 
-export function main(): String {
-    return NamedGreeting{"bob"}.sayHello();
+export function main(name: String): String {
+    return NamedGreeting{name}.sayHello();
 }

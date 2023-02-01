@@ -116,12 +116,12 @@ class NamespaceEmitter {
 
         let consfuncs: string[] = [];
         if(ttype.consinvariantsall.length !== 0) {
-            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n    ") + "\n    ";
-            consfuncs.push(`$constructorWithChecks_basetype: function($value) {${checks}return $value;\n    }`);
+            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            consfuncs.push(`$constructorWithChecks_basetype: function($value) {\n        ${checks}return $value;\n    }`);
         }
         if(ttype.consinvariantsexplicit.length !== 0) {
-            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n    ") + "\n    ";
-            consfuncs.push(`$constructorWithChecks: function($value) {${checks}return $value;\n    }`);
+            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            consfuncs.push(`$constructorWithChecks: function($value) {\n        ${checks}return $value;\n    }`);
         }
 
         return `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs])}};`;
@@ -140,8 +140,8 @@ class NamespaceEmitter {
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")}) { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; }`);
 
         if(ttype.consinvariants.length !== 0) {
-            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n    ") + "\n    ";
-            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {${checks}return {${fnames.map((fn) => fn + ": $" + fn).join(", ")}};\n    }`);
+            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n        ${checks}return {${fnames.map((fn) => fn + ": $" + fn).join(", ")}};\n    }`);
         }
 
         if(ttype.binds.size === 0) {
@@ -560,7 +560,20 @@ class AssemblyEmitter {
     }
 
     private emitTIRTypedeclEntityType_ParseEmit(ttype: TIRTypedeclEntityType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const rparse = `ioMarshalMap.get("${ttype.representation}").parse(jv)`;
+        const remit = `ioMarshalMap.get("${ttype.representation}").emit(nv)`;
+
+        if (ttype.apivalidates.length === 0) {
+            return { parse: rparse, emit: remit };
+        }
+        else {
+            const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), ttype.tname.ns);
+            const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
+
+            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return $value; }`;
+
+            return { parse: parse, emit: remit };
+        }
     }
 
     private emitTIRObjectEntityType_ParseEmit(ttype: TIRObjectEntityType): { parse: string, emit: string } {

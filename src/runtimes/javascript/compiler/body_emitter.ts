@@ -387,81 +387,108 @@ class BodyEmitter {
         return toplevel ? nexp : ("(" + nexp + ")");
     }
 
+    private processArithOpResult(restype: TIRTypeKey, dataop: string): string {
+        const ttype = this.m_assembly.typeMap.get(restype);
+        if(ttype instanceof TIRTypedeclEntityType) {
+            if(ttype.consinvariantsall.length === 0) {
+                return dataop;
+            }
+            else {
+                return `${this.resolveTypeMemberAccess(restype)}.$constructorWithChecks_basetype(${dataop})`;
+            }
+        }
+        else {
+            return dataop;
+        }
+    }
+
     private emitPrefixNegateOpExpression(exp: TIRPrefixNegateExpression, toplevel: boolean): string {
         const nexp = `-${this.emitExpression(exp.exp)}`;
-        return toplevel ? nexp : ("(" + nexp + ")");
+        return this.processArithOpResult(exp.etype, toplevel ? nexp : ("(" + nexp + ")"));
     }
 
     private emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): string {
         const bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`
 
+        let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else {
-            return toplevel ? bexp : ("(" + bexp + ")");
+            dataop = toplevel ? bexp : ("(" + bexp + ")");
         }
+
+        return this.processArithOpResult(exp.etype, dataop);
     }
 
     private emitBinSubExpression(exp: TIRBinSubExpression, toplevel: boolean): string {
         const bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`
         
+        let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "BigNat") {
-            return `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
+            dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
         }
         else {
-            return toplevel ? bexp : ("(" + bexp + ")");
+            dataop = toplevel ? bexp : ("(" + bexp + ")");
         }
+
+        return this.processArithOpResult(exp.etype, dataop);
     }
 
     private emitBinMultExpression(exp: TIRBinMultExpression, toplevel: boolean): string {
         const bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`
         
+        let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
         }
         else {
-            return toplevel ? bexp : ("(" + bexp + ")");
+            dataop = toplevel ? bexp : ("(" + bexp + ")");
         }
+
+        return this.processArithOpResult(exp.etype, dataop);
     }
 
     private emitBinDivExpression(exp: TIRBinDivExpression, toplevel: boolean): string {
         const lexp = this.emitExpression(exp.lhs);
         const rexp = this.emitExpression(exp.rhs);
 
+        let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            return `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Int") {
-            return `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "BigNat") {
-            return `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "BigInt") {
-            return `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Rational") {
-            return NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            dataop = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
         }
         else if(exp.optype === "Decimal") {
-            return NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decimal");
+            dataop = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decimal");
         }
         else {
-            return `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0.0, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0.0, ${lexp}, ${rexp})`;
         }
+
+        return this.processArithOpResult(exp.etype, dataop);
     }
 
     private emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): string {

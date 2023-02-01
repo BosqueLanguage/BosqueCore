@@ -76,7 +76,7 @@ sign(5i)    //1
 sign(-5i)   //-1
 ```
 
-**Nominal Types with Data Invariants:**
+**Nominal Types with Multi-Inheritance & Data Invariants:**
 
 ```
 concept WithName {
@@ -115,11 +115,51 @@ NamedGreeting{""}.sayHello()         //invariant error
 NamedGreeting{"bob"}.sayHello()      //"hello bob"
 ```
 
+**Typedecl Types**
+
+```
+typedecl Fahrenheit = Int;
+typedecl Celsius = Int;
+
+typedecl Percentage = Nat & {
+    invariant $value <= 100n;
+}
+
+32i_Fahrenheit + 0i_Celsius //type error different numeric types
+30n_Percentage              //valid percentage
+101n_Percentage             //invariant error
+
+function isFreezing(temp: Celsius): Bool {
+    return temp <= 0i_Celsius;
+}
+
+isFreezing(5i)           //type error not a celsius number
+isFreezing(5i_Celsius)  //false
+isFreezing(-5i_Celsius) //true
+
+```
 
 **Ref Methods:**
 
 ```
-xxxx
+entity Counter {
+    field ctr: Nat;
+
+    function create(): Counter {
+        return Counter{0};
+    }
+
+    ref method generateNextID(): ID {
+        const id = this.ctr;
+        this = Counter{this.ctr + 1};
+
+        return id;
+    }
+} 
+
+var ctr = Counter.create();         //create a Counter 
+let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
+let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
 ```
 
 
@@ -186,28 +226,6 @@ is3pt('3pt'_CSSpt) //true
 is3pt('4pt'_CSSpt) //false
 ```
 
-**Typedecl Types**
-
-```
-typedecl Fahrenheit = Int;
-typedecl Celsius = Int;
-
-typedecl Percentage = Nat & {
-    invariant $value <= 100n;
-}
-
-32_Fahrenheit + 0_Celsius //type error different numeric types
-101_Percentage            //invariant error
-
-function isFreezing(temp: Celsius): Bool {
-    return temp <= 0_Celsius;
-}
-
-isFreezing(5)          //type error not a celsius number
-isFreezing(5_Celsius)  //false
-isFreezing(-5_Celsius) //true
-
-```
 # Installing the Bosque Language (Development)
 
 In order to install/build the project the following are needed:

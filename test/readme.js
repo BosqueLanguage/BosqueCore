@@ -124,22 +124,31 @@ describe('Readme nominal named', function () {
 
     describe('NamedGreeting', function () {
         it('expected "hello bob"', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql("hello bob");
+            expect(invokeExecutionOn(jsmain, "bob")).to.eql("hello bob");
+        });
+    });
+    describe('NamedGreeting Err', function () {
+        it('expected invariant failure', function () {
+            expect(invokeExecutionOn(jsmain, "")).to.contain("Failed invariant");
         });
     });
 });
 
-
-describe('Readme nominal err', function () {
-    const testopt = ["readme", "nominal_inv_err"];
+describe('Readme percentage', function () {
+    const testopt = ["readme", "typedecl_percentage"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
     after(function () { fsextra.removeSync(dstdir); });
 
-    describe('Greeting Err', function () {
+    describe('Percentage 30%', function () {
+        it('expected 30', function () {
+            expect(invokeExecutionOn(jsmain, 30)).to.eql(30);
+        });
+    });
+    describe('Percentage 101 Err', function () {
         it('expected invariant failure', function () {
-            expect(invokeExecutionOn(jsmain)).to.contain("Failed invariant");
+            expect(invokeExecutionOn(jsmain, 101)).to.contain("Failed invariant");
         });
     });
 });
