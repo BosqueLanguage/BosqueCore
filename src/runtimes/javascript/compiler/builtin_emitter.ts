@@ -7,10 +7,6 @@ function resolveCodePack(asm: TIRAssembly, inv: TIRInvoke, pcname: string): TIRC
     return asm.pcodemap.get(inv.pcodes.get(pcname) as TIRPCodeKey) as TIRCodePack;
 }
 
-function resolveCapturedPackArgs(pcname: string, pcc: TIRCodePack): string[] {
-    return [...pcc.capturedCodePacks.map((pcc) => pcc.cpname)];
-}
-
 function generatePCodeInvokeName(pc: TIRCodePack): string {
     return `($Runtime.lambdas.get("${pc.invk}"))`;
 }
@@ -57,8 +53,8 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_has_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv) => ${pcodeinvk}(${[...resolveCapturedPackArgs("p", pcode), "$$vv"].join(", ")})`
-            return `{ return ${func.invoke.params[0].name}.some(${pred}); }`;
+            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
         }
         case "s_list_push_back": {
             return `{ return ${func.invoke.params[0].name}.push(${func.invoke.params[1].name}); }`;
@@ -71,6 +67,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_list_pop_front": {
             return `{ return ${func.invoke.params[0].name}.shift(); }`;
+        }
+        case "s_list_reduce": {
+            const pcode = resolveCodePack(asm, func.invoke, "f");
+            const pcodeinvk = generatePCodeInvokeName(pcode);
+            const op = `($$uu, $$vv) => $$pcf(${["f", "$$uu", "$$vv"].join(", ")})`
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
         }
 
         default: {

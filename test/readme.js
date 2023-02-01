@@ -28,6 +28,17 @@ function invokeExecutionOn(jsmain, ...args) {
     return JSON.parse(rr);
 }
 
+
+function invokeExecutionExpectFailure(jsmain, msgop, ...args) {
+    try {
+        execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]);
+        return false;
+    }
+    catch(ex) {
+        return true;
+    }
+}
+
 describe('Readme add2', function () {
     const testopt = ["readme", "add"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
@@ -134,7 +145,7 @@ describe('Readme nominal err', function () {
 
     describe('Greeting Err', function () {
         it('expected invariant failure -- throw', function () {
-            expect(invokeExecution(jsmain)).to.throw();
+            expect(invokeExecutionExpectFailure(jsmain, "Failed invariant")).to.eql(true);
         });
     });
 });

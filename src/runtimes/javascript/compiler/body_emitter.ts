@@ -74,7 +74,7 @@ class BodyEmitter {
             taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
         }
         else if(ttype instanceof TIRPrimitiveInternalEntityType) {
-            taccess = `BSQ${ttype.tname.name}`;
+            taccess =  samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
         }
         else if (ttype instanceof TIRValidatorEntityType) {
             if (samens) {
@@ -477,17 +477,17 @@ class BodyEmitter {
     }
 
     private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression, toplevel: boolean): string {
-        const rr = `($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression, toplevel: boolean): string {
-        const rr = `$CoreLibs.$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
+        const rr = `!$CoreLibs.$KeyEqualMixed("${exp.oftype}", ${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
     
     private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression, toplevel: boolean): string {
-        const rr = `$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
@@ -1713,7 +1713,7 @@ class BodyEmitter {
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string, prestr?: string | undefined, poststr?: string | undefined): string {
         const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
 
-        return indent + "{\n" + (prestr !== undefined ? `${indent}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent}${poststr}\n` : "") + indent + "}";
+        return " {\n" + (prestr !== undefined ? `${indent}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent}${poststr}\n` : "") + indent + "}";
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {

@@ -6377,7 +6377,16 @@ class TypeChecker {
     }
 
     processOOConceptType(tkey: TIRTypeKey, rtype: ResolvedConceptAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
-        ; //nothing else to do
+        //nothing else to do but make sure we register the fields
+
+        tdecl.memberFields.forEach((mf) => {
+            const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
+            const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createEmptyBindScope()));
+
+            const tirmf = new TIRMemberFieldDecl(fkey, tkey, mf.name, mf.sourceLocation, mf.srcFile, mf.attributes, decltype);
+            this.m_tirFieldMap.set(fkey, tirmf);
+        });
+
     }
 
     private processTaskType(tkey: TIRTypeKey, rtype: ResolvedTaskAtomType, tdecl: TaskTypeDecl) {
