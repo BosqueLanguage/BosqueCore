@@ -183,8 +183,8 @@ __internal __typedeclable __typebase __numeric entity Decimal provides Some, API
 
 //<summary>Primitive string value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType, APIType {
-    __safe private function s_empty(s: String): Bool = string_empty;
-    __assume_safe private function s_concat2(s1: String, s2: String): String = string_append;
+    __safe private function s_empty(s: String): Bool = s_string_empty;
+    __assume_safe private function s_concat2(s1: String, s2: String): String = s_string_append;
 
     function concat(sl: List<String>): String {
         return StringOps::s_strconcat(sl);
@@ -269,8 +269,8 @@ __internal __constructable __enumable __litvaluetype __typedeclable entity Strin
 
 //<summary>Primitive string value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIString provides Some, KeyType, APIType {
-    __safe private function s_empty(s: ASCIIString): Bool = string_empty;
-    __assume_safe private function s_concat2(s1: ASCIIString, s2: ASCIIString): ASCIIString = string_append;
+    __safe private function s_empty(s: ASCIIString): Bool = s_ascii_string_empty;
+    __assume_safe private function s_concat2(s1: ASCIIString, s2: ASCIIString): ASCIIString = s_ascii_string_append;
 
     function concat(sl: List<ASCIIString>): ASCIIString {
         return ASCIIStringOps::s_strconcat(sl);

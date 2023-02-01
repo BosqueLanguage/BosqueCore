@@ -34,15 +34,45 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "special_inject": {
             return undefined;
         }
+
+        case "s_string_append": {
+            return `{ return ${func.invoke.params[0].name} + ${func.invoke.params[1].name}; }`;
+        }
+
         case "s_list_empty": {
-            return `{ return  ${func.invoke.params[0].name}.size === 0; }`;
+            return `{ return ${func.invoke.params[0].name}.size === 0; }`;
+        }
+        case "s_list_size": {
+            return `{ return ${func.invoke.params[0].name}.size; }`;
+        }
+        case "s_list_get": {
+            return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
+        }
+        case "s_list_back": {
+            return `{ return ${func.invoke.params[0].name}.last(); }`;
+        }
+        case "s_list_front": {
+            return `{ return ${func.invoke.params[0].name}.first(); }`;
         }
         case "s_list_has_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv) => ${pcodeinvk}(${[...resolveCapturedPackArgs("p", pcode), "$$vv"].join(", ")})`
-            return `{ return ${func.invoke.params[0].name}.findIndex(${pred}) !== -1; }`;
+            return `{ return ${func.invoke.params[0].name}.some(${pred}); }`;
         }
+        case "s_list_push_back": {
+            return `{ return ${func.invoke.params[0].name}.push(${func.invoke.params[1].name}); }`;
+        }
+        case "s_list_push_front": {
+            return `{ return ${func.invoke.params[0].name}.unshift(${func.invoke.params[1].name}); }`;
+        }
+        case "s_list_pop_back": {
+            return `{ return ${func.invoke.params[0].name}.pop(); }`;
+        }
+        case "s_list_pop_front": {
+            return `{ return ${func.invoke.params[0].name}.shift(); }`;
+        }
+
         default: {
             assert(false, `Unknown primitive member function -- ${(func.invoke as TIRInvokePrimitive).body}`);
             return "[UNKNOWN PRIMITIVE FUNCTION]";

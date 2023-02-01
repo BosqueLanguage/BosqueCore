@@ -42,6 +42,9 @@ internal entity ListOps provides Some {
     __assume_safe internal function s_list_insert<T>(l: List<T>, idx: Nat, v: T): List<T> = s_list_insert;
 
 
+    __conditional_safe internal recursive? function s_list_reduce<T, U>(l: List<T>, iv: U, f: recursive? fn(U, T) -> U): U = s_list_reduce;
+    __conditional_safe internal recursive? function s_list_reduce_idx<T, U>(l: List<T>, iv: U, f: recursive? fn(U, T, Nat) -> U): U = s_list_reduce_idx;
+
     /*
     __safe internal function s_list_index_int(start: Int, end: Int, len: Int): List<Int> = s_list_range_int;
     __safe internal function s_list_index_nat(start: Nat, end: Nat, len: Nat): List<Nat> = s_list_range_nat;
