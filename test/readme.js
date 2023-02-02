@@ -185,3 +185,27 @@ describe('Ref Methods', function () {
         });
     });
 });
+
+describe('Binders & Flow (flowit)', function () {
+    const testopt = ["readme", "flowit"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('flowit(none)', function () {
+        it('expected 0', function () {
+            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+        });
+    });
+    describe('flowit(0)', function () {
+        it('expected 10', function () {
+            expect(invokeExecutionOn(jsmain, ["Nat", 0])).to.eql(10);
+        });
+    });
+    describe('flowit(7)', function () {
+        it('expected 17', function () {
+            expect(invokeExecutionOn(jsmain, ["Nat", 7])).to.eql(17);
+        });
+    });
+});
