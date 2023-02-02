@@ -5083,7 +5083,7 @@ class TypeChecker {
 
     private checkVariableRetypeStatement(env: StatementTypeEnvironment, stmt: VariableRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
         const vinfotry = env.lookupLocalVar(stmt.name);
-        this.raiseErrorIf(stmt.sinfo, vinfotry !== null, "cannot retype captured variables");
+        this.raiseErrorIf(stmt.sinfo, vinfotry === null, "cannot retype captured variables");
         const vinfo = vinfotry as VarInfo;
 
         const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);

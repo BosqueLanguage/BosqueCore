@@ -161,6 +161,11 @@ class StatementTypeEnvironment {
     setVarFlowType(name: string, newtype: ResolvedType): StatementTypeEnvironment {
         const oldv = this.lookupLocalVar(name) as VarInfo;
 
+        let argscopy = new Map<string, VarInfo>(this.args);
+        if(argscopy.has(name)) {
+            argscopy.set(name, new VarInfo(newtype, oldv.isConst, true));
+        }
+
         let localcopy = (this.locals as Map<string, VarInfo>[]).map((frame) => {
             let nf = new Map<string, VarInfo>(frame);
             if(nf.has(name)) {
@@ -170,7 +175,7 @@ class StatementTypeEnvironment {
             return nf;
         });
            
-        return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, this.args, localcopy, false);
+        return new StatementTypeEnvironment(this.binds, this.capturedpcodes, this.capturedvars, this.argpcodes, argscopy, localcopy, false);
     }
 
     endOfExecution(): StatementTypeEnvironment {

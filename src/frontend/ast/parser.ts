@@ -2990,8 +2990,8 @@ class Parser {
             if(this.peekToken(1) === SYM_at) {
                 const name = this.consumeTokenAndGetValue();
                 this.consumeToken();
+                
                 const ttest = this.parseITest()
-                this.ensureAndConsumeToken(SYM_rbrack, "variable retype");
                 this.ensureAndConsumeToken(SYM_semicolon, "variable retype");
 
                 return new VariableRetypeStatement(sinfo, name, ttest);
