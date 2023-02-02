@@ -180,7 +180,7 @@ function restrict(x: Nat?): Nat {
     if none (x) {
         return 0n;
     }
-    x@@<Nat>; //assert that x is a Nat here (error otherwise) and type infer
+    x@<Nat>; //assert that x is a Nat here (error otherwise) and type infer
 
     return x + 10n;
 }
