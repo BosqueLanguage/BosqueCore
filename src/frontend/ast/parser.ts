@@ -894,6 +894,7 @@ class ParseError extends Error {
 enum InvokableKind {
     Basic,
     Member,
+    SelfMember,
     PCodeFn,
     PCodePred,
     DynamicOperator
@@ -1204,6 +1205,13 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
+        if(ikind === InvokableKind.Member) {
+            argNames.add("this");
+        }
+        if(ikind === InvokableKind.SelfMember) {
+            argNames.add("self");
+        }
+
         let preconds: PreConditionDecl[] = [];
         let postconds: PostConditionDecl[] = [];
         let body: BodyImplementation | undefined = undefined;
@@ -3831,7 +3839,7 @@ class Parser {
         memberFields.push(new MemberFieldDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, stype));
     }
 
-    private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
+    private parseMemberMethod(istask: boolean, thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] method ref NAME<T where C...>(params): type [requires...] [ensures...] { ... }
@@ -3846,7 +3854,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr);
+        const sig = this.parseInvokableCommon(istask ? InvokableKind.SelfMember : InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr);
 
         allMemberNames.add(mname);
 
@@ -3865,7 +3873,7 @@ class Parser {
         this.ensureToken(TokenStrings.Identifier, "task action");
         const mname = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
-        const sig = this.parseInvokableCommon(InvokableKind.Member, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true);
+        const sig = this.parseInvokableCommon(InvokableKind.SelfMember, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true);
 
         allMemberNames.add(mname);
 
@@ -3983,7 +3991,7 @@ class Parser {
         this.ensureAndConsumeToken(SYM_semicolon, "effect notation");
     }
 
-    private parseOOPMembersCommon(sinfo: SourceInfo, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
+    private parseOOPMembersCommon(sinfo: SourceInfo, istask: boolean, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
         nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], 
@@ -4019,7 +4027,7 @@ class Parser {
                 this.parseMemberField(memberFields, allMemberNames, attributes);
             }
             else if(this.testToken(KW_method)) {
-                this.parseMemberMethod(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
+                this.parseMemberMethod(istask, thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
             }
             else if(this.testToken(KW_action)) {
                 this.parseMemberAction(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name))
@@ -4063,7 +4071,7 @@ class Parser {
             const statuseffect = new TaskStatusEffect([]);
             const eventeffect = new TaskEventEffect([]);
             const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [cname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [cname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
 
@@ -4124,7 +4132,7 @@ class Parser {
             const statuseffect = new TaskStatusEffect([]);
             const eventeffect = new TaskEventEffect([]);
             const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             this.ensureAndConsumeToken(SYM_rbrace, "entity declaration");
 
@@ -4243,7 +4251,7 @@ class Parser {
             const eventeffect = new TaskEventEffect([]);
             const enveffect = new TaskEnvironmentEffect([]);
             const resourceeffects: TaskResourceEffect[] = [];
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
+            this.parseOOPMembersCommon(sinfo, true, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
 
             if(invariants.length !== 0) {
                 this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
@@ -4346,7 +4354,7 @@ class Parser {
                 const statuseffect = new TaskStatusEffect([]);
                 const eventeffect = new TaskEventEffect([]);
                 const enveffect = new TaskEnvironmentEffect([]);
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+                this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
     
                 if(invariants.length !== 0 || validates.length !== 0) {
                     this.raiseError(sinfo.line, "cannot declare invariants on enum");
@@ -4681,7 +4689,7 @@ class Parser {
                 const statuseffect = new TaskStatusEffect([]);
                 const eventeffect = new TaskEventEffect([]);
                 const enveffect = new TaskEnvironmentEffect([]);
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+                this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
 
                 this.ensureAndConsumeToken(SYM_rbrace, "typedecl");
 
@@ -4763,7 +4771,7 @@ class Parser {
                 const statuseffect = new TaskStatusEffect([]);
                 const eventeffect = new TaskEventEffect([]);
                 const enveffect = new TaskEnvironmentEffect([]);
-                this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
+                this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
             }
         }
 
@@ -4808,7 +4816,7 @@ class Parser {
                     const statuseffect = new TaskStatusEffect([]);
                     const eventeffect = new TaskEventEffect([]);
                     const enveffect = new TaskEnvironmentEffect([]);
-                    this.parseOOPMembersCommon(esinfo, thisType, currentDecl, [ename], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+                    this.parseOOPMembersCommon(esinfo, false, thisType, currentDecl, [ename], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
                 }
             }
 
@@ -4835,7 +4843,7 @@ class Parser {
             const statuseffect = new TaskStatusEffect([]);
             const eventeffect = new TaskEventEffect([]);
             const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
+            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
 
             if (cusing.length !== 0 && memberFields.length !== 0) {
                 this.raiseError(this.getCurrentLine(), "Cannot define fields in multiple places in ADT++ decl");

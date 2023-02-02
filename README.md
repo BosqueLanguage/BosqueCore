@@ -146,27 +146,44 @@ entity Counter {
     field ctr: Nat;
 
     function create(): Counter {
-        return Counter{0};
+        return Counter{0n};
     }
 
-    ref method generateNextID(): ID {
-        const id = this.ctr;
-        this = Counter{this.ctr + 1};
+    method ref generateNextID(): Nat {
+        let id = this.ctr;
+        this = Counter{this.ctr + 1n};
 
         return id;
     }
 } 
 
-var ctr = Counter.create();         //create a Counter 
+var ctr = Counter::create();         //create a Counter 
 let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
 let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
 ```
 
-
 **Flow and Binders:**
 
 ```
-xxxx
+function flowit(x: Nat?): Nat {
+    //ITest for none as special
+    if none (x) {
+        return 0n;
+    }
+    else {
+        //ITest allows binder for $ to value of x (with type inference)
+        return $ + 10n;
+    }
+}
+
+function restrict(x: Nat?): Nat {
+    if none (x) {
+        return 0n;
+    }
+    x@@<Nat>; //assert that x is a Nat here (error otherwise) and type infer
+
+    return x + 10n;
+}
 ```
 
 **(Algebraic Data Types)++ and Union Types**

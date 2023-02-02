@@ -1469,7 +1469,12 @@ class BodyEmitter {
     }
 
     private emitVarAssignStatement(stmt: TIRVarAssignStatement): string {
-        return `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+        if(stmt.vname !== "this") {
+            return `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+        }
+        else {
+            return `$_this = ${this.emitExpression(stmt.vexp, true)};`;
+        }
     }
 
     private emitStoreToScratch(stmt: TIRStoreToScratch): string {
@@ -1478,7 +1483,12 @@ class BodyEmitter {
     }
 
     private emitVarRefAssignFromScratch(stmt: TIRVarRefAssignFromScratch): string {
-        return `${stmt.vname} = $$scratch[${stmt.scidx}];`;
+        if(stmt.vname !== "this") {
+            return `${stmt.vname} = $$scratch[${stmt.scidx}][0];`;
+        }
+        else {
+            return `$_this = $$scratch[${stmt.scidx}][0];`;
+        }
     }
 
     private emitTaskRefAssignFromScratch(stmt: TIRTaskRefAssignFromScratch): string {
@@ -1866,22 +1876,22 @@ class BodyEmitter {
 
     emitBodyStatementList(body: TIRStatement[], preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], indent: string, fname: string, extractres: boolean): string {
         const bodyindent = indent + "    ";
+        const wbodyindent = bodyindent + "    ";
         let rconds = "";
 
         if(preconds.length !== 0) {
             rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
         }
 
+        const bstmts = body.map((stmt) => this.emitStatement(stmt, postconds.length === 0 ? bodyindent : wbodyindent));
+        const scratch = this.m_hasScratch ? `${bodyindent}let $$scratch = [];\n` : "";
+
         if(postconds.length === 0) {
-            return `{\n${rconds}${bodyindent}${body.map((stmt) => this.emitStatement(stmt, bodyindent)).join("\n" + bodyindent)}\n${indent}}`;
+            return `{\n${scratch}${rconds}${bodyindent}${bstmts.join("\n" + bodyindent)}\n${indent}}`;
         }
         else {
-            const wbodyindent = bodyindent + "    ";
-            const bstr = `{\n${body.map((stmt) => this.emitStatement(stmt, wbodyindent)).join("\n" + wbodyindent)}\n${bodyindent}}`;
-
+            const bstr = `{\n${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
             const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
-
-            const scratch = this.m_hasScratch ? `${bodyindent}let $$scratch = [];\n` : "";
 
             return `{\n${scratch}${rconds}const $$return" = (() => ${bstr})();\n${bodyindent}$return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
         }

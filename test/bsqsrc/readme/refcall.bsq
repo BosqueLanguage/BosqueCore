@@ -1,0 +1,25 @@
+namespace Main;
+
+
+entity Counter {
+    field ctr: Nat;
+
+    function create(): Counter {
+        return Counter{0n};
+    }
+
+    method ref generateNextID(): Nat {
+        let id = this.ctr;
+        this = Counter{this.ctr + 1n};
+
+        return id;
+    }
+} 
+
+function main(): [Nat, Nat] {
+    var ctr = Counter::create();         //create a Counter 
+    let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
+    let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
+
+    return [id1, id2];
+}

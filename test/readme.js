@@ -171,3 +171,17 @@ describe('Readme temp', function () {
         });
     });
 });
+
+describe('Ref Methods', function () {
+    const testopt = ["readme", "refcall"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('ctrs', function () {
+        it('expected [0, 1]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql([0, 1]);
+        });
+    });
+});

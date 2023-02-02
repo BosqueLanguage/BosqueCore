@@ -131,6 +131,13 @@ class TIRIDGenerator {
     }
 }
 
+enum ReturnMode {
+    Standard,
+    MemberRef,
+    MemberSelf,
+    MemberAction
+}
+
 class TypeChecker {
     private readonly m_assembly: Assembly;
     private m_buildLevel: BuildLevel;
@@ -140,6 +147,7 @@ class TypeChecker {
     private m_file: string;
     private m_ns: string;
     private m_rtype: ResolvedType;
+    private m_returnMode: ReturnMode;
     private m_taskOpsOk: boolean;
     private m_taskSelfOk: "no" | "read" | "write";
     private m_taskType: {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>} | undefined;
@@ -190,21 +198,13 @@ class TypeChecker {
         this.m_file = "[No File]";
         this.m_ns = "[NOT SET]";
         this.m_rtype = this.getSpecialNoneType();
+        this.m_returnMode = ReturnMode.Standard;
         this.m_taskOpsOk = false;
         this.m_taskSelfOk = "no";
         this.m_scratchCtr = 0;
         this.m_errors = [];
         
         TIRExpression.OverflowIsFailure = overflowisfailure;
-    }
-
-    initializeForBody(file: string, ns: string, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write") {
-        this.m_file = file;
-        this.m_ns = ns;
-        this.m_rtype = rtype;
-        this.m_taskOpsOk = taskok;
-        this.m_taskSelfOk = selfok;
-        this.m_scratchCtr = 0;
     }
 
     private raiseError(sinfo: SourceInfo, msg?: string) {
@@ -5161,9 +5161,9 @@ class TypeChecker {
     } 
 
     private checkReturnStatement(env: StatementTypeEnvironment, stmt: ReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const rval = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, this.m_rtype);
-
         let rexp: TIRStatement[] | undefined = undefined;
+        let rval = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, this.m_rtype);
+
         if (rval.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
             const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
 
@@ -5174,9 +5174,9 @@ class TypeChecker {
 
             rexp = [
                 new TIRCallStatementWRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
-                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
-                new TIRReturnStatementWRef(stmt.sinfo, tirda.expressionResult)
+                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx)
             ];
+            rval = tirda;
         }
         else if (rval.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
             const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
@@ -5186,9 +5186,9 @@ class TypeChecker {
 
             rexp = [
                 new TIRCallStatementWTaskRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRReturnStatementWTaskRef(stmt.sinfo, tirda.expressionResult)
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx)
             ];
+            rval = tirda;
         }
         else if (rval.expressionResult instanceof TIRCallMemberActionExpression) {
             const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
@@ -5198,15 +5198,26 @@ class TypeChecker {
 
             rexp = [
                 new TIRCallStatementWAction(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRReturnStatementWAction(stmt.sinfo, tirda.expressionResult)
+                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx)
             ];
+            rval = tirda;
         }
         else {
-            const rhsconv = this.emitCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-            rexp = [
-                new TIRReturnStatement(stmt.sinfo, rhsconv.expressionResult)
-            ];
+            rexp = [];
+            rval = this.emitCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
+        }
+
+        if(this.m_returnMode === ReturnMode.Standard) {
+            rexp.push(new TIRReturnStatement(stmt.sinfo, rval.expressionResult));
+        }
+        else if(this.m_returnMode === ReturnMode.MemberRef) {
+            rexp.push(new TIRReturnStatementWRef(stmt.sinfo, rval.expressionResult));
+        }
+        else if(this.m_returnMode === ReturnMode.MemberSelf) {
+            rexp.push(new TIRReturnStatementWTaskRef(stmt.sinfo, rval.expressionResult));
+        }
+        else {
+            rexp.push(new TIRReturnStatementWAction(stmt.sinfo, rval.expressionResult));
         }
 
         return [env.endOfExecution(), rexp as TIRStatement[]];
@@ -6118,8 +6129,6 @@ class TypeChecker {
     }
 
     private checkBodyExpression(srcFile: string, env: ExpressionTypeEnvironment, body: Expression, rtype: ResolvedType, selfok: "no" | "read"): TIRStatement[] {
-        this.initializeForBody(srcFile, this.m_ns, rtype, false, selfok);
-
         const evalue = this.emitCoerceIfNeeded(this.checkExpression(env, body, rtype), body.sinfo, rtype);
         const sblck = new TIRScopedBlockStatement([new TIRReturnStatement(body.sinfo, evalue.expressionResult)], true);
 
@@ -6127,8 +6136,6 @@ class TypeChecker {
     }
 
     private checkBodyStatement(srcFile: string, env: StatementTypeEnvironment, body: ScopedBlockStatement, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write"): TIRStatement[] {
-        this.initializeForBody(srcFile, this.m_ns, rtype, taskok, selfok);
-
         const sblck = this.checkScopedBlockStatement(env, body);
         return sblck[1].ops;
     }
@@ -6842,7 +6849,7 @@ class TypeChecker {
             }
         });
 
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
+        fargs.set("this", new VarInfo(enclosingdecl[0], !invoke.isThisRef, true));
         
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
         const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
@@ -6923,6 +6930,7 @@ class TypeChecker {
             this.m_file = cdcl.srcFile;
             this.m_ns = cdcl.ns;
             this.m_rtype = this.getSpecialNoneType();
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -6952,6 +6960,7 @@ class TypeChecker {
             this.m_file = invoke.srcFile;
             this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -6985,6 +6994,7 @@ class TypeChecker {
             this.m_file = invoke.srcFile;
             this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7013,6 +7023,7 @@ class TypeChecker {
             this.m_file = invoke.srcFile;
             this.m_ns = ns;
             this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7040,6 +7051,7 @@ class TypeChecker {
             this.m_file = cpdecl.srcFile;
             this.m_ns = cpdecl.namespace;
             this.m_rtype = desiredfunc.resultType;
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7067,7 +7079,8 @@ class TypeChecker {
         try {
             this.m_file = decl[2].srcFile;
             this.m_ns = decl[1].ns;
-            this.m_rtype = this.getSpecialNoneType();
+            this.m_rtype = this.normalizeTypeOnly(decl[2].declaredType, TemplateBindScope.createBaseBindScope(decl[3]));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7097,6 +7110,7 @@ class TypeChecker {
             this.m_file = decl.decl.srcFile;
             this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7122,6 +7136,7 @@ class TypeChecker {
             this.m_file = decl.decl.srcFile;
             this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7145,6 +7160,7 @@ class TypeChecker {
         try {
             this.m_file = decl.decl.srcFile;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = false;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7169,6 +7185,13 @@ class TypeChecker {
             this.m_file = decl.decl.srcFile;
             this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            if(!decl.decl.invoke.isThisRef) {
+                this.m_returnMode = ReturnMode.Standard;
+            }
+            else {
+                this.m_returnMode = (decl.ootype instanceof TaskTypeDecl) ? ReturnMode.MemberSelf : ReturnMode.MemberRef;
+            }
+
             this.m_taskOpsOk = decl.ootype instanceof TaskTypeDecl;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7198,6 +7221,7 @@ class TypeChecker {
             this.m_file = decl.decl.srcFile;
             this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_returnMode = ReturnMode.MemberAction;
             this.m_taskOpsOk = true;
             this.m_taskSelfOk = "no";
             this.m_taskType = undefined;
@@ -7226,6 +7250,7 @@ class TypeChecker {
             this.m_file = decl.decl.srcFile;
             this.m_ns = decl.ootype.ns;
             this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
+            this.m_returnMode = ReturnMode.Standard;
             this.m_taskOpsOk = true;
             this.m_taskSelfOk = "write";
             this.m_taskType = {taskdecl: decl.ootype as TaskTypeDecl, taskbinds: binds};
