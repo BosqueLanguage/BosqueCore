@@ -29,6 +29,17 @@ ioMarshalMap.set("SHAContentHash", {parse: (jv) => assert(false), emit: (nv) => 
 ioMarshalMap.set("LatLongCoordinate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 //--GENERATED_$iomarshalsetup--
 
+function tryParseUnion(jv) {
+    $Runtime.raiseRuntimeErrorIf(!Array.isArray(jv) || jv.length !== 2, `${jv} is not a valid union representation`);
+    $Runtime.raiseRuntimeErrorIf(typeof(jv[0]) !== "string" || ioMarshalMap.get(jv[0]) === undefined `${jv} is not a valid union representation`);
+
+    return ioMarshalMap.get(jv[0]).parse(jv[1]);
+}
+
+function tryEmitUnion(nv) {
+    return [nv.tkey, ioMarshalMap.get(jv[nv.tkey]).emit(nv.value)];
+}
+
 function bsqMarshalParse(tt, jv) {
     return ioMarshalMap.get(tt).parse(jv);
 }

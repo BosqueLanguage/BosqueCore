@@ -4429,7 +4429,7 @@ class TypeChecker {
         let results: {test: ExpressionTypeEnvironment, value: ExpressionTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
 
         let testflowtypes = new Map<string, ResolvedType>();
-        let elsebind: TIRExpression | undefined | null = undefined;
+        let elsebind: [TIRExpression, ResolvedType] | undefined | null = undefined;
 
         for (let i = 0; i < exp.condflow.length; ++i) {
             if(exp.condflow[i].cond.itestopt === undefined) {
@@ -4449,10 +4449,10 @@ class TypeChecker {
                     elsebind = null;
                 }
                 else if(elsebind === undefined) {
-                    elsebind = eenv.expressionResult;
+                    elsebind = [eenv.expressionResult, eenv.trepr];
                 }
                 else {
-                    elsebind = (elsebind.expstr === eenv.expressionResult.expstr) ? elsebind : null;
+                    elsebind = (elsebind[0].expstr === eenv.expressionResult.expstr) ? elsebind : null;
                 }
 
                 if(exp.condflow[i].binderinfo === undefined) {
@@ -4491,11 +4491,14 @@ class TypeChecker {
             this.raiseErrorIf(exp.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
 
             const scratchidx = this.m_scratchCtr++;
-            const bindtype = testflowtypes.get((elsebind as TIRExpression).expstr) as ResolvedType;
+            const [elseexpr, elsetype] = elsebind as [TIRExpression, ResolvedType];
+            const bindtype = testflowtypes.get(elseexpr.expstr) as ResolvedType;
+            const bindexp = this.emitCoerceIfNeeded_NoCheck(env.setResultExpressionInfo(new TIRAccessScratchSingleValueExpression(exp.elseflow.value.sinfo, this.toTIRTypeKey(elsetype), scratchidx), elsetype), exp.elseflow.value.sinfo, bindtype).expressionResult;
+            
             const flowenv = env.pushBinderFrame(exp.elseflow.binderinfo as string, bindtype);
             const resenv = this.checkExpression(flowenv, exp.elseflow.value, desiredtype);
 
-            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: [elsebind as TIRExpression, scratchidx, new TIRAccessScratchSingleValueExpression(exp.elseflow.value.sinfo, this.toTIRTypeKey(bindtype), scratchidx), exp.elseflow.binderinfo as string]});
+            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: [elseexpr as TIRExpression, scratchidx, bindexp, exp.elseflow.binderinfo as string]});
         }
         const iftype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
         
@@ -5311,7 +5314,7 @@ class TypeChecker {
         let results: {test: ExpressionTypeEnvironment, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
 
         let testflowtypes = new Map<string, ResolvedType>();
-        let elsebind: TIRExpression | undefined | null = undefined;
+        let elsebind: [TIRExpression, ResolvedType] | undefined | null = undefined;
 
         for (let i = 0; i < stmt.condflow.length; ++i) {
             if(stmt.condflow[i].cond.itestopt === undefined) {
@@ -5331,10 +5334,10 @@ class TypeChecker {
                     elsebind = null;
                 }
                 else if(elsebind === undefined) {
-                    elsebind = eenv.expressionResult;
+                    elsebind = [eenv.expressionResult, eenv.trepr];
                 }
                 else {
-                    elsebind = (elsebind.expstr === eenv.expressionResult.expstr) ? elsebind : null;
+                    elsebind = (elsebind[0].expstr === eenv.expressionResult.expstr) ? elsebind : null;
                 }
 
                 if(stmt.condflow[i].binderinfo === undefined) {
@@ -5377,12 +5380,14 @@ class TypeChecker {
                 this.raiseErrorIf(stmt.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
 
                 const scratchidx = this.m_scratchCtr++;
-                const bindtype = testflowtypes.get((elsebind as TIRExpression).expstr) as ResolvedType;
+                const [elseexpr, elsetype] = elsebind as [TIRExpression, ResolvedType];
+                const bindtype = testflowtypes.get(elseexpr.expstr) as ResolvedType;
 
                 const flowenv = env.pushLocalScope().addVar(stmt.elseflow.binderinfo as string, true, bindtype, true);
                 const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.elseflow.value);
 
-                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [elsebind as TIRExpression, scratchidx, new TIRAccessScratchSingleValueExpression(stmt.elseflow.value.sinfo, this.toTIRTypeKey(bindtype), scratchidx), stmt.elseflow.binderinfo as string] });
+                const bindexp = this.emitCoerceIfNeeded_NoCheck(env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRAccessScratchSingleValueExpression(stmt.elseflow.value.sinfo, this.toTIRTypeKey(elsetype), scratchidx), elsetype), stmt.elseflow.value.sinfo, bindtype).expressionResult;
+                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [elseexpr as TIRExpression, scratchidx, bindexp, stmt.elseflow.binderinfo as string] });
             }
         }
         const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));

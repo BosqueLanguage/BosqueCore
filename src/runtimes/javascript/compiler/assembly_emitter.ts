@@ -646,7 +646,7 @@ class AssemblyEmitter {
     }
 
     private emitTIRUnionType_ParseEmit(ttype: TIRUnionType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        return { parse: "tryParseUnion(jv)", emit: "tryEmitUnion(nv)" };
     }
 
     private emitTIRType_ParseEmit(ttype: TIRType): { parse: string, emit: string } | undefined {

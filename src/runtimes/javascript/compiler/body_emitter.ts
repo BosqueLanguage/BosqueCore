@@ -758,7 +758,7 @@ class BodyEmitter {
             return this.emitExpression(exp.exp, toplevel);
         }
         else if(trgtunion) {
-            const bval = `new UnionValue("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
+            const bval = `new $Runtime.UnionValue("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
@@ -1540,20 +1540,20 @@ class BodyEmitter {
     private emitIfStatement(stmt: TIRIfStatement, indent: string): string {
         let sstr = "";
         if(stmt.ifentry.binderinfo === undefined) {
-            const poststr = stmt.ifentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ");
+            const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.ifentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
             sstr = `if(${this.emitExpression(stmt.ifentry.test, true)}) ${this.emitScopedBlock(stmt.ifentry.value, indent, undefined, poststr)}\n`;
         }
         else {
             this.m_hasScratch = true;
             const tstr = `($Runtime.setScratchValue($$scratch, ${stmt.ifentry.binderinfo[1]}, ${this.emitExpression(stmt.ifentry.binderinfo[0])}) || ${this.emitExpression(stmt.ifentry.test)})`;
             const prestr = `${stmt.ifentry.binderinfo[3]} = ${this.emitExpression(stmt.ifentry.binderinfo[2])};`
-            const poststr = stmt.ifentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ");
+            const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.ifentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
             sstr = `if(${tstr}) ${this.emitScopedBlock(stmt.ifentry.value, indent, prestr, poststr)}\n`;
         } 
 
         for (let i = 0; i < stmt.elifentries.length; ++i) {
             const eei = stmt.elifentries[i];
-            const poststr = eei.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ");
+            const poststr = stmt.ifentry.recasttypes.length !== 0 ? eei.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
 
             if (eei.binderinfo === undefined) {
                 sstr += indent + `else if(${this.emitExpression(eei.test, true)}) ${this.emitScopedBlock(eei.value, indent, undefined, poststr)}\n`;
@@ -1567,13 +1567,13 @@ class BodyEmitter {
         }
 
         if(stmt.elseentry.binderinfo === undefined) {
-            const poststr = stmt.elseentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ");
+            const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.elseentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
             sstr += indent + `else ${this.emitScopedBlock(stmt.elseentry.value, indent, undefined, poststr)}\n`;
         }
         else {
             this.m_hasScratch = true;
-            const poststr = stmt.elseentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ");
-            const prestr = `$Runtime.setScratchValue($$scratch, ${stmt.elseentry.binderinfo[1]}, ${this.emitExpression(stmt.elseentry.binderinfo[0])}); ${stmt.elseentry.binderinfo[3]} = ${this.emitExpression(stmt.elseentry.binderinfo[2])};`
+            const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.elseentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+            const prestr = `$Runtime.setScratchValue($$scratch, ${stmt.elseentry.binderinfo[1]}, ${this.emitExpression(stmt.elseentry.binderinfo[0])}); var ${stmt.elseentry.binderinfo[3]} = ${this.emitExpression(stmt.elseentry.binderinfo[2])};`
             sstr += indent + `else ${this.emitScopedBlock(stmt.elseentry.value, indent, prestr, poststr)}\n`;
         }
 
@@ -1752,7 +1752,7 @@ class BodyEmitter {
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string, prestr?: string | undefined, poststr?: string | undefined): string {
         const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
 
-        return " {\n" + (prestr !== undefined ? `${indent}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent}${poststr}\n` : "") + indent + "}";
+        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent}${poststr}\n` : "") + indent + "}";
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {

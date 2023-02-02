@@ -506,7 +506,7 @@ class Lexer {
 
     //TODO: we need to make sure that someone doesn't name a local variable "_"
     private isIdentifierName(str: string): boolean {
-        return /^(([$])|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
+        return /^([$]|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
     }
 
     private isFormatName(str: string): boolean {
@@ -715,7 +715,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_nameRe = /(recursive\?)|([$]?\w+)/y;
+    private static readonly _s_nameRe = /(recursive\?)|([$]?\w*)/y;
     private tryLexName(): boolean {
         Lexer._s_nameRe.lastIndex = this.m_cpos;
         const m = Lexer._s_nameRe.exec(this.m_input);
