@@ -2026,7 +2026,7 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
 
-            const revalidator = this.processValidatorRegex(rtype.object.sourceLocation, rtype.typeID);
+            const revalidator = this.processValidatorRegex(rtype.object.sourceLocation, rtype.validatortype.typeID);
             
             tirtype = new TIRStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, revalidator);
         }
@@ -2035,7 +2035,7 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [validator]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", ResolvedType.createSingle(rtype.validatortype))).map((rr) => this.toTIRTypeKey(rr));
 
-            const revalidator = this.processValidatorRegex(rtype.object.sourceLocation, rtype.typeID);
+            const revalidator = this.processValidatorRegex(rtype.object.sourceLocation, rtype.validatortype.typeID);
             
             tirtype = new TIRASCIIStringOfEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, revalidator);
         }
