@@ -233,3 +233,57 @@ describe('Binders & Flow (restrict)', function () {
         });
     });
 });
+
+describe('Datatype (evaluate)', function () {
+    const testopt = ["readme", "datatype_evaluate"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('evaluate (and)', function () {
+        it('expected false', function () {
+            expect(invokeExecutionOn(jsmain, ["Main::AndOp", {
+                line: 2, 
+                larg: ["Main::LConst", {line: 1, val: true}], 
+                rarg: ["Main::LConst", {line: 1, val: false}]
+            }]
+            )).to.eql(false);
+        });
+    });
+    describe('evaluate (or)', function () {
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, ["Main::OrOp", {
+                line: 2, 
+                larg: ["Main::LConst", {line: 1, val: true}], 
+                rarg: ["Main::LConst", {line: 1, val: false}]
+            }]
+            )).to.eql(true);
+        });
+    });
+});
+
+
+describe('Union (print)', function () {
+    const testopt = ["readme", "union_print"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('print (bool)', function () {
+        it('expected "b"', function () {
+            expect(invokeExecutionOn(jsmain, ["Bool", true])).to.eql("b");
+        });
+    });
+    describe('print (none)', function () {
+        it('expected "n"', function () {
+            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql("n");
+        });
+    });
+    describe('print (int)', function () {
+        it('expected "i"', function () {
+            expect(invokeExecutionOn(jsmain, ["Int", 7])).to.eql("i");
+        });
+    });
+});

@@ -200,7 +200,7 @@ LConst { val: Bool }
 AndOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]() //false
 OrOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]()  //true
 
-function printType(x: Bool | Int | String | None ): String {
+function printType(x: Bool | Int | String | None): String {
     return match(x) {
         Bool     => "b"
         | Int    => "i"

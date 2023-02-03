@@ -567,10 +567,10 @@ class AssemblyEmitter {
             return { parse: rparse, emit: remit };
         }
         else {
-            const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), ttype.tname.ns);
+            const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), "[API TYPE PARSING]");
             const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
 
-            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return ${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorWithChecks_basetype($value); }`;
+            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return ${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorWithChecks_basetype($value); }`;
 
             return { parse: parse, emit: remit };
         }
@@ -593,15 +593,15 @@ class AssemblyEmitter {
         });
         const remit = `{ ${emitops.join(", ")} }`;
 
-        const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), ttype.tname.ns);
+        const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), "[API TYPE PARSING]");
         if (ttype.apivalidates.length === 0) {
-            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorDirect(${parseops.join(", ")})`;
+            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorDirect(${parseops.join(", ")})`;
             return { parse: `{ ${rparse} else { return ${pcons}; } }`, emit: remit };
         }
         else {
             const vassigns = props.map((ff, ii) => `const $${ff} = ${parseops[ii]};`).join(" ");
             const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
-            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorDirect(${props.map((ff) => `$${ff}`).join(", ")})`;
+            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorDirect(${props.map((ff) => `$${ff}`).join(", ")})`;
 
             const parse = `{ ${rparse} ${vassigns} if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } else { return ${pcons}; } }`;
 

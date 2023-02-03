@@ -7,7 +7,7 @@ import * as $Runtime from "./runtime.mjs";
 
 const ioMarshalMap = new Map();
 ioMarshalMap.set("None", {parse: (jv) => null, emit: (nv) => null});
-ioMarshalMap.set("Bool", {parse: (jv) => jv === "true", emit: (nv) => nv});
+ioMarshalMap.set("Bool", {parse: (jv) => jv, emit: (nv) => nv});
 ioMarshalMap.set("Nat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("Int", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("BigNat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
