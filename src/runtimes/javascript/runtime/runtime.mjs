@@ -2,6 +2,8 @@
 
 import * as assert from "assert";
 
+import { JS, NFA, Words } from "refa";
+
 function UnionValue(tkey, value) {
     this.tkey = tkey;
     this.value = value;
@@ -80,6 +82,16 @@ function BSQEnvironment(env, ...args) {
     for(let i = 0; i < args.length; ++i) {
         this.args.set(args[i][0], args[i][1]);
     }
+}
+
+function acceptsString(re) {
+    //Do I need to add the "^" and "$" anchors or does test do that?
+    const jsre = RegExp(re);
+
+    const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
+    const nfa = NFA.fromRegex(expression, { maxCharacter });
+
+    return nfa.test(Words.fromStringToUnicode(str));
 }
 
 BSQEnvironment.push = function(env) {
@@ -216,6 +228,7 @@ export {
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     setScratchValue, 
     safeMath, safeMathDiv, safeMathUnderflow,
+    acceptsString,
     BSQEnvironment,
     setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
 };

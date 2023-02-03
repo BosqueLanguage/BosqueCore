@@ -1,4 +1,5 @@
 import * as assert from "assert";
+import { BSQRegex } from "../../../frontend/bsqregex";
 
 import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl } from "../../../frontend/tree_ir/tir_assembly";
 import { BodyEmitter } from "./body_emitter";
@@ -29,6 +30,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "special_extract":
         case "special_inject": {
             return undefined;
+        }
+
+        case "validator_accepts": {
+            const vre = asm.validatorRegexs.get(ttype.tkey) as BSQRegex;
+            const jsre = vre.re.compileToJS()
+            return `{ return $Runtime.acceptsString(/${jsre}/); }`
         }
 
         case "s_string_append": {
