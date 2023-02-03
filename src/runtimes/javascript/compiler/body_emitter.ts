@@ -735,7 +735,41 @@ class BodyEmitter {
     }
     
     private emitMatchExpression(exp: TIRMatchExpression, toplevel: boolean): string {
-        return NOT_IMPLEMENTED_EXPRESSION(exp.tag);
+        this.m_hasScratch = true;
+        let sstr = `$Runtime.setScratchValue($$scratch, ${exp.scratchidx}, ${this.emitExpression(exp.exp, true)}) || `;
+
+        if(exp.clauses[0].binderinfo === undefined) {
+            sstr += `${this.emitExpression(exp.clauses[0].match, false)} ? ${this.emitExpression(exp.clauses[0].value, false)} : `;
+        }
+        else {
+            sstr += `${this.emitExpression(exp.clauses[0].match, false)} ? ((${exp.clauses[0].binderinfo[1]}) => ${this.emitExpression(exp.clauses[0].value, true)})(${this.emitExpression(exp.clauses[0].binderinfo[0], true)}) : `;
+        }
+
+        for(let i = 1; i < exp.clauses.length; ++i) {
+            if(exp.clauses[i].binderinfo === undefined) {
+                sstr += `${this.emitExpression(exp.clauses[i].match, false)} ? ${this.emitExpression(exp.clauses[i].value, false)} : `;
+            }
+            else {
+                const binfo = exp.clauses[i].binderinfo as [TIRExpression, string];
+                sstr += `${this.emitExpression(exp.clauses[i].match, false)} ? ((${binfo[1]}) => ${this.emitExpression(exp.clauses[i].value, true)})(${this.emitExpression(binfo[0], true)}) : `;
+            }
+        }
+
+        if(exp.edefault !== undefined) {
+            if(exp.edefault.binderinfo === undefined) {
+                sstr += `${this.emitExpression(exp.edefault.value, false)}\n`;
+            }
+            else {
+                sstr += `((${exp.edefault.binderinfo[1]}) => ${this.emitExpression(exp.edefault.value, true)})(${this.emitExpression(exp.edefault.binderinfo[0], true)})`;
+            }
+        }
+        else {
+            if(!exp.isexhaustive) {
+                sstr += ` || $Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ line ${exp.sinfo.line}")`;
+            }
+        }
+
+        return toplevel ? sstr : ("(" + sstr + ")");
     }
 
     private emitTaskSelfFieldExpression(exp: TIRTaskSelfFieldExpression): string {

@@ -585,7 +585,9 @@ class AssemblyEmitter {
             const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
             return `"${fdecl.name}"`;
         });
-        const rparse = `if(!checkIsObjectWithKeys(jv, [${props.join(", ")}])) {raiseRuntimeError("Failed in Object parse " + JSON.stringify(jv))} `
+
+        const unwrap = `if(Array.isArray(jv) && jv.length === 2 && jv[0] === "${ttype.tkey}") { jv = jv[1]; } `
+        const rparse = `${unwrap} if(!checkIsObjectWithKeys(jv, [${props.join(", ")}])) {raiseRuntimeError("Failed in Object parse " + JSON.stringify(jv))} `
 
         const emitops = ttype.allfields.map((ff) => {
             const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;

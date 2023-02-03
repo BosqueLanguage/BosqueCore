@@ -4570,7 +4570,7 @@ class TypeChecker {
             });
         const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
 
-        const rexp = new TIRSwitchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
+        const rexp = new TIRSwitchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
         return env.setResultExpressionInfo(rexp, stype);
     }
 
@@ -4630,7 +4630,7 @@ class TypeChecker {
             });
         const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.matchflow[exp.matchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
 
-        const rexp = new TIRMatchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
+        const rexp = new TIRMatchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
         return env.setResultExpressionInfo(rexp, stype);
     }
 
@@ -5467,7 +5467,7 @@ class TypeChecker {
             });
         const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)} : undefined;
 
-        const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
+        const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
 
         const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
         if(rflows.length === 0) {
