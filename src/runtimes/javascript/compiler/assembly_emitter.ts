@@ -570,14 +570,43 @@ class AssemblyEmitter {
             const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), ttype.tname.ns);
             const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
 
-            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return $value; }`;
+            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return ${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorWithChecks_basetype($value); }`;
 
             return { parse: parse, emit: remit };
         }
     }
 
     private emitTIRObjectEntityType_ParseEmit(ttype: TIRObjectEntityType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const parseops = ttype.allfields.map((ff) => {
+            const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
+            return `ioMarshalMap.get("${fdecl.declaredType}").parse(jv["${fdecl.name}"])`;
+        });
+        const props = ttype.allfields.map((ff) => {
+            const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
+            return `"${fdecl.name}"`;
+        });
+        const rparse = `if(!checkIsObjectWithKeys(jv, [${props.join(", ")}])) {raiseRuntimeError("Failed in Object parse " + JSON.stringify(jv))} `
+
+        const emitops = ttype.allfields.map((ff) => {
+            const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
+            return `ioMarshalMap.get("${fdecl.declaredType}").emit(nv["${fdecl.name}"])`;
+        });
+        const remit = `{ ${emitops.join(", ")} }`;
+
+        const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), ttype.tname.ns);
+        if (ttype.apivalidates.length === 0) {
+            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorDirect(${parseops.join(", ")})`;
+            return { parse: `{ ${rparse} else { return ${pcons}; } }`, emit: remit };
+        }
+        else {
+            const vassigns = props.map((ff, ii) => `const $${ff} = ${parseops[ii]};`).join(" ");
+            const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
+            const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.constructorDirect(${props.map((ff) => `$${ff}`).join(", ")})`;
+
+            const parse = `{ ${rparse} ${vassigns} if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } else { return ${pcons}; } }`;
+
+            return { parse: parse, emit: remit };
+        }
     }
 
     private emitTIRStringOfEntityType_ParseEmit(ttype: TIRStringOfEntityType): { parse: string, emit: string } {
@@ -624,11 +653,11 @@ class AssemblyEmitter {
     }
 
     private emitTIRConceptType_ParseEmit(ttype: TIRConceptType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        return { parse: "tryParseConcept(jv)", emit: "tryEmitConcept(nv)" };
     }
 
     private emitIRConceptSetType_ParseEmit(ttype: TIRConceptSetType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        return { parse: "tryParseConcept(jv)", emit: "tryEmitConcept(nv)" };
     }
 
     private emitTIRTupleType_ParseEmit(ttype: TIRTupleType): { parse: string, emit: string } {
@@ -642,7 +671,14 @@ class AssemblyEmitter {
     }
 
     private emitTIRRecordType_ParseEmit(ttype: TIRRecordType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const parseops = ttype.entries.map((ee) => `${ee.pname}: ioMarshalMap.get("${ee.ptype}").parse(jv["${ee.pname}"])`);
+        const props = ttype.entries.map((ee) => `"${ee.pname}"`).join(", ");
+        const parse = `{ if(!checkIsObjectWithKeys(jv, [${props}])) {raiseRuntimeError("Failed in Record parse " + JSON.stringify(jv))} else { return { ${parseops.join(", ")} }; } }`
+
+        const emitops = ttype.entries.map((ee) => `${ee.pname}: ioMarshalMap.get("${ee.ptype}").emit(nv["${ee.pname}"])`);
+        const emit = `{ ${emitops.join(", ")} }`;
+
+        return { parse: parse, emit: emit };
     }
 
     private emitTIRUnionType_ParseEmit(ttype: TIRUnionType): { parse: string, emit: string } {

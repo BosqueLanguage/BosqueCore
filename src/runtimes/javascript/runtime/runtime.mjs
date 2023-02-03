@@ -25,8 +25,9 @@ function isSubtype(tkey, ofkey) {
     }
 }
 
-const FIXED_NUMBER_MAX = 9223372036854775808n; 
-const FIXED_NUMBER_MIN = -9223372036854775808n; 
+//2^63 - 1 ## this way (1) negation and conversion MInt<->MNat is always safe (2) we can steal the top bit for tagging on Int/Nat later
+const FIXED_NUMBER_MAX = 9223372036854775807n;
+const FIXED_NUMBER_MIN = -9223372036854775807n; 
 
 function Unwind(kind, msg) {
     this.kind = kind;

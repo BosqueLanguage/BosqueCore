@@ -30,6 +30,17 @@ ioMarshalMap.set("LatLongCoordinate", {parse: (jv) => assert(false), emit: (nv) 
 ioMarshalMap.set("Nothing", {parse: (jv) => undefined, emit: (nv) => undefined});
 //--GENERATED_$iomarshalsetup--
 
+function tryParseConcept(jv) {
+    $Runtime.raiseRuntimeErrorIf(!Array.isArray(jv) || jv.length !== 2, `${jv} is not a valid union representation`);
+    $Runtime.raiseRuntimeErrorIf(typeof(jv[0]) !== "string" || ioMarshalMap.get(jv[0]) === undefined, `${jv} is not a valid union representation`);
+
+    return new $Runtime.UnionValue(jv[0], ioMarshalMap.get(jv[0]).parse(jv[1]));
+}
+
+function tryEmitConcept(nv) {
+    return [nv.tkey, ioMarshalMap.get(jv[nv.tkey]).emit(nv.value)];
+}
+
 function tryParseUnion(jv) {
     $Runtime.raiseRuntimeErrorIf(!Array.isArray(jv) || jv.length !== 2, `${jv} is not a valid union representation`);
     $Runtime.raiseRuntimeErrorIf(typeof(jv[0]) !== "string" || ioMarshalMap.get(jv[0]) === undefined, `${jv} is not a valid union representation`);
@@ -39,6 +50,26 @@ function tryParseUnion(jv) {
 
 function tryEmitUnion(nv) {
     return [nv.tkey, ioMarshalMap.get(jv[nv.tkey]).emit(nv.value)];
+}
+
+function checkIsObjectWithKeys(obj, keyarray) {
+    if(obj === null || Array.isArray(obj) || typeof(obj) !== "object") {
+        return false;
+    }
+
+    const ka = [...keyarray].sort();
+    const keys = Object.keys(obj).sort();
+
+    if(ka.length !== keys.length) {
+        return false;
+    }
+
+    for(let i = 0; i < ka.length; ++i) {
+        if(ka[i] !== keys[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function bsqMarshalParse(tt, jv) {
