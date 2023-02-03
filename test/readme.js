@@ -263,7 +263,6 @@ describe('Datatype (evaluate)', function () {
     });
 });
 
-
 describe('Union (print)', function () {
     const testopt = ["readme", "union_print"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
@@ -284,6 +283,25 @@ describe('Union (print)', function () {
     describe('print (int)', function () {
         it('expected "i"', function () {
             expect(invokeExecutionOn(jsmain, ["Int", 7])).to.eql("i");
+        });
+    });
+});
+
+describe('Validator (zipcode)', function () {
+    const testopt = ["readme", "zipcode"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('accepts (98052)', function () {
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, "98052")).to.eql(true);
+        });
+    });
+    describe('accepts (1234)', function () {
+        it('expected false', function () {
+            expect(invokeExecutionOn(jsmain, "1234")).to.eql(false);
         });
     });
 });
