@@ -2131,11 +2131,11 @@ class TIRIfStatement extends TIRStatement {
 class TIRSwitchStatement extends TIRStatement {
     readonly exp: TIRExpression;
     readonly scratchidx: number;
-    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[];
-    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
+    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[];
+    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]} | undefined, isexhaustive: boolean) {
         super(TIRStatementTag.SwitchStatement, sinfo, `switch(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.stmtstr : ""}`);
         this.exp = exp;
         this.scratchidx = scratchidx;
@@ -2155,11 +2155,11 @@ class TIRSwitchStatement extends TIRStatement {
 class TIRMatchStatement extends TIRStatement {
     readonly exp: TIRExpression;
     readonly scratchidx: number;
-    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[];
-    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined;
+    readonly clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[];
+    readonly edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]} | undefined;
     readonly isexhaustive: boolean;
 
-    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined} | undefined, isexhaustive: boolean) {
+    constructor(sinfo: SourceInfo, exp: TIRExpression, scratchidx: number, clauses: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}[], edefault: {value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]} | undefined, isexhaustive: boolean) {
         super(TIRStatementTag.MatchStatement, sinfo, `match(${exp.expstr}) ${clauses.map((ci) => `(${ci.match.expstr} => ${ci.value.stmtstr})`)}${edefault !== undefined ? "(_ => " + edefault.value.stmtstr : ""}`);
         this.exp = exp;
         this.scratchidx = scratchidx;

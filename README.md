@@ -9,13 +9,11 @@
 
 Bosque is an open-source project developing a new Programming Language and Development Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the features that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.
 
-Features in the **_Bosque Programming Language_** include typed strings and paths [TODO], block-syntax [TODO], functor-libs [TODO], dynamic operator multi-dispatch [TODO], ref methods [TODO], typedecls & datatypes [TODO], task-flows [TODO], and extensive logical assertion integration [TODO]. Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
+Features in the **_Bosque Programming Language_** include typed strings and paths [TODO], block-syntax [TODO], functor-libs [TODO], dynamic operator multi-dispatch [TODO], ref methods [TODO], explicit-flow typing/binding [TODO], typedecls & datatypes [TODO], task-flows [TODO], and extensive logical assertion integration [TODO]. Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
 
 The **_Bosque Development Stack_** provides state of the art observability and debugging features (including time-travel debugging) [TODO], a novel symbolic testing framework [TODO], and, with the introduction of APITypes [TODO], a new way to version and validate package behaviors. These features provide a developers with the ability to generate tests for an API before a line of code is even written, test against imported code (or external services) using auto-generated mocks and, check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs! The testing tools allow for deep analysis of code flows in an appliction and can find compact debuggable inputs that trigger and error or failing test *or* prove that there is no small input that will trigger the error! For any bugs that do make it into the wild the ability to record and then locally replay the exact error accelerates their diagnosis resolution as well as makes _non-repro_ and _intermitent_ issues a thing of the past. 
 
-<!---
-The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using slower but stable log time persistent structures). 
---->
+The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector [TODO] that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using slower but stable log time persistent structures [TODO]). Depending on the application Bosque supports transpilation/compilation to JavaScript [TODO], Morphir [TODO], and an AOT compiler [TODO]. The semantics of the language also open interesting compiler work on eliminating cache conflicts, trusted computation offloading, and compilation for accelerator (e.g. FPGA or dataflow) architectures.
 
 # Documentation
 
@@ -31,7 +29,6 @@ Detailed Documentation, Tutorials, and Technical Information:
 ## Code Snippets
 
 **Add 2 numbers:**
-
 ```none
 function add2(x: Nat, y: Nat): Nat {
     return x + y;
@@ -45,7 +42,6 @@ add2(3, 4)   //type error -- all numeric literals must have kind specifier
 ```
 
 **All positive check using rest parameters and lambda:**
-
 ```none
 function allPositive(args: List<Int>): Bool {
     return args.allOf(fn(x) => x >= 0i);
@@ -57,7 +53,6 @@ allPositive([1, 3, -4]) //false
 ```
 
 **Sign (with blocks and assignment):**
-
 ```none
 function sign(x: Int): Int {
     var y: Int;
@@ -77,7 +72,6 @@ sign(-5i)   //-1
 ```
 
 **Nominal Types with Multi-Inheritance & Data Invariants:**
-
 ```
 concept WithName {
     invariant $name !== "";
@@ -116,7 +110,6 @@ NamedGreeting{"bob"}.sayHello()      //"hello bob"
 ```
 
 **Typedecl Types**
-
 ```
 typedecl Fahrenheit = Int;
 typedecl Celsius = Int;
@@ -140,7 +133,6 @@ isFreezing(-5i_Celsius) //true
 ```
 
 **Ref Methods:**
-
 ```
 entity Counter {
     field ctr: Nat;
@@ -163,7 +155,6 @@ let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
 ```
 
 **Flow and Binders:**
-
 ```
 function flowit(x: Nat?): Nat {
     //ITest for none as special
@@ -188,7 +179,7 @@ function restrict(x: Nat?): Nat {
 
 **(Algebraic Data Types)++ and Union Types**
 ```
-datatype BoolOp provides APIType using {
+datatype BoolOp using {
     line: Nat
 } of
 LConst { val: Bool }
@@ -198,10 +189,10 @@ LConst { val: Bool }
 & {
     recursive method evaluate(): Bool {
         match(this) {
-            LConst                  => return this.val;
-            | NotOp                 => return !this.arg.evaluate[recursive]();
-            | AndOp{_, larg, rarg} => return larg.evaluate[recursive]() && rarg.evaluate[recursive]();
-            | OrOp{_, larg, rarg}  => return larg.evaluate[recursive]() || rarg.evaluate[recursive]();
+            LConst  => return $.val;
+            | NotOp => return !$.arg.evaluate[recursive]();
+            | AndOp => return $.larg.evaluate[recursive]() && $.rarg.evaluate[recursive]();
+            | OrOp  => return $.larg.evaluate[recursive]() || $.rarg.evaluate[recursive]();
         }
     } 
 }
@@ -210,12 +201,12 @@ AndOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]() //false
 OrOp{2, LConst{1, true}, LConst{1, false}}.evaluate[recursive]()  //true
 
 function printType(x: Bool | Int | String | None ): String {
-    return match(x) {|
+    return match(x) {
         Bool     => "b"
         | Int    => "i"
         | String => "s"
-        | _        => "n"
-    |};
+        | _      => "n"
+    };
 }
 
 printType(1.0f) //type error
@@ -241,6 +232,11 @@ is3pt('98052'_ZipcodeUS) //type error not a StringOf<CSSpt>
 
 is3pt('3pt'_CSSpt) //true
 is3pt('4pt'_CSSpt) //false
+```
+
+**Tasks:**
+```
+[TODO]
 ```
 
 # Installing the Bosque Language (Development)

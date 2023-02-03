@@ -1546,7 +1546,7 @@ class BodyEmitter {
         else {
             this.m_hasScratch = true;
             const tstr = `($Runtime.setScratchValue($$scratch, ${stmt.ifentry.binderinfo[1]}, ${this.emitExpression(stmt.ifentry.binderinfo[0])}) || ${this.emitExpression(stmt.ifentry.test)})`;
-            const prestr = `${stmt.ifentry.binderinfo[3]} = ${this.emitExpression(stmt.ifentry.binderinfo[2])};`
+            const prestr = `var ${stmt.ifentry.binderinfo[3]} = ${this.emitExpression(stmt.ifentry.binderinfo[2], true)};`
             const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.ifentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
             sstr = `if(${tstr}) ${this.emitScopedBlock(stmt.ifentry.value, indent, prestr, poststr)}\n`;
         } 
@@ -1560,8 +1560,8 @@ class BodyEmitter {
             }
             else {
                 this.m_hasScratch = true;
-                const tstr = `($Runtime.setScratchValue($$scratch, ${eei.binderinfo[1]}, ${this.emitExpression(eei.binderinfo[0])}) || ${this.emitExpression(eei.test)})`;
-                const prestr = `${eei.binderinfo[3]} = ${this.emitExpression(eei.binderinfo[2])};`
+                const tstr = `($Runtime.setScratchValue($$scratch, ${eei.binderinfo[1]}, ${this.emitExpression(eei.binderinfo[0], true)}) || ${this.emitExpression(eei.test)})`;
+                const prestr = `var ${eei.binderinfo[3]} = ${this.emitExpression(eei.binderinfo[2], true)};`
                 sstr += `if(${tstr}) ${this.emitScopedBlock(eei.value, indent, prestr, poststr)}\n`;
             }
         }
@@ -1573,7 +1573,7 @@ class BodyEmitter {
         else {
             this.m_hasScratch = true;
             const poststr = stmt.ifentry.recasttypes.length !== 0 ? stmt.elseentry.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
-            const prestr = `$Runtime.setScratchValue($$scratch, ${stmt.elseentry.binderinfo[1]}, ${this.emitExpression(stmt.elseentry.binderinfo[0])}); var ${stmt.elseentry.binderinfo[3]} = ${this.emitExpression(stmt.elseentry.binderinfo[2])};`
+            const prestr = `$Runtime.setScratchValue($$scratch, ${stmt.elseentry.binderinfo[1]}, ${this.emitExpression(stmt.elseentry.binderinfo[0], true)}); var ${stmt.elseentry.binderinfo[3]} = ${this.emitExpression(stmt.elseentry.binderinfo[2], true)};`
             sstr += indent + `else ${this.emitScopedBlock(stmt.elseentry.value, indent, prestr, poststr)}\n`;
         }
 
@@ -1610,18 +1610,43 @@ class BodyEmitter {
     }
 
     private emitMatchStatement(stmt: TIRMatchStatement, indent: string): string {
-        assert(false, "NOT IMPLEMENTED -- TIRMatchStatement");
-        return "NOT IMPLEMENTED -- TIRMatchStatement";
-        
-        /*
-        let sstr = `if(${this.emitExpression(stmt.clauses[0].match, true)}) ${this.emitScopedBlock(stmt.clauses[0].value, indent)}\n`;
+        this.m_hasScratch = true;
+        let sstr = `$Runtime.setScratchValue($$scratch, ${stmt.scratchidx}, ${this.emitExpression(stmt.exp, true)});\n\n`;
+
+        if(stmt.clauses[0].binderinfo === undefined) {
+            const poststr = stmt.clauses[0].recasttypes.length !== 0 ? stmt.clauses[0].recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+            sstr += indent + `if(${this.emitExpression(stmt.clauses[0].match, true)}) ${this.emitScopedBlock(stmt.clauses[0].value, indent, undefined, poststr)}\n`;
+        }
+        else {
+            const prestr = `var ${stmt.clauses[0].binderinfo[1]} = ${this.emitExpression(stmt.clauses[0].binderinfo[0], true)};`
+            const poststr = stmt.clauses[0].recasttypes.length !== 0 ? stmt.clauses[0].recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+            sstr += indent + `if(${this.emitExpression(stmt.clauses[0].match, true)}) ${this.emitScopedBlock(stmt.clauses[0].value, indent, prestr, poststr)}\n`;
+        }
 
         for(let i = 1; i < stmt.clauses.length; ++i) {
-            sstr += indent + `else if(${this.emitExpression(stmt.clauses[i].match, true)}) ${this.emitScopedBlock(stmt.clauses[i].value, indent)}\n`;
+            if(stmt.clauses[i].binderinfo === undefined) {
+                const poststr = stmt.clauses[i].recasttypes.length !== 0 ? stmt.clauses[i].recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+                sstr += indent + `else if(${this.emitExpression(stmt.clauses[i].match, true)}) ${this.emitScopedBlock(stmt.clauses[i].value, indent, undefined, poststr)}\n`;
+            }
+            else {
+                const binfo = stmt.clauses[i].binderinfo as [TIRExpression, string];
+
+                const prestr = `var ${binfo[1]} = ${this.emitExpression(binfo[0], true)};`
+                const poststr = stmt.clauses[i].recasttypes.length !== 0 ? stmt.clauses[i].recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+                sstr += indent + `else if(${this.emitExpression(stmt.clauses[i].match, true)}) ${this.emitScopedBlock(stmt.clauses[i].value, indent, prestr, poststr)}\n`;
+            }
         }
 
         if(stmt.edefault !== undefined) {
-            sstr += indent + `else ${this.emitScopedBlock(stmt.edefault, indent)}\n`;
+            if(stmt.edefault.binderinfo === undefined) {
+                const poststr = stmt.edefault.recasttypes.length !== 0 ? stmt.edefault.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+                sstr += indent + `else ${this.emitScopedBlock(stmt.edefault.value, indent, undefined, poststr)}\n`;
+            }
+            else {
+                const prestr = `var ${stmt.edefault.binderinfo[1]} = ${this.emitExpression(stmt.edefault.binderinfo[0], true)};`
+                const poststr = stmt.edefault.recasttypes.length !== 0 ? stmt.edefault.recasttypes.map((rct) => `${rct.vname} = ${this.emitExpression(rct.cast, true)};`).join(" ") : undefined;
+                sstr += indent + `else ${this.emitScopedBlock(stmt.edefault.value, indent, prestr, poststr)}\n`;
+            }
         }
         else {
             sstr += indent + "else {\n"
@@ -1635,7 +1660,6 @@ class BodyEmitter {
         }
 
         return sstr;
-        */
     }
 
     private emitEnvironmentFreshStatement(stmt: TIREnvironmentFreshStatement): string {

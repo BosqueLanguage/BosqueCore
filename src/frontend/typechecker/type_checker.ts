@@ -2536,7 +2536,7 @@ class TypeChecker {
 
         let impls: OOMemberLookupInfo<T>[] = [];
         for (let i = 0; i < implopts.length; ++i) {
-            const newopts = (implopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            const newopts = (implopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));
             impls.push(...newopts);
         }
 
@@ -2989,7 +2989,7 @@ class TypeChecker {
             this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified bounds -- not subtype of ${termconstraint.typeID}`);
 
             if (terminfo.isunique) {
-                this.raiseErrorIf(sinfo, termtype.options.length !== 0 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
+                this.raiseErrorIf(sinfo, termtype.options.length !== 1 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
             }
 
             if(terminfo.isgrounded) {
@@ -5463,9 +5463,9 @@ class TypeChecker {
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
             .map((ffp) => {
-                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo};
+                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, ffp.fenv, mvinfo)};
             });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo} : undefined;
+        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)} : undefined;
 
         const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
 
@@ -5531,12 +5531,11 @@ class TypeChecker {
         const clauses = results
             .filter((ffp) => ffp.test !== undefined)
             .map((ffp) => {
-                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo};
+                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, ffp.fenv, mvinfo)};
             });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo} : undefined;
+        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)} : undefined;
 
-
-        const rexp = new TIRMatchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive);
+        const rexp = new TIRMatchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
         
         const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
         if(rflows.length === 0) {

@@ -1165,7 +1165,7 @@ class MatchStatement extends Statement {
     readonly matchflow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[];
 
     constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: ScopedBlockStatement, binderinfo: string | undefined}[]) {
-        super(StatementTag.ScopedBlockStatement, sinfo);
+        super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
         this.matchflow = flow;
     }
