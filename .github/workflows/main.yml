@@ -1,0 +1,25 @@
+name: nodeci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        lfs: 'true'
+    - name: Setup
+      uses: actions/setup-node@v1
+      with:
+        node-version: '16.x'
+    - name: Install
+      run: npm install
+    - name: Run Tests
+      run: npm test
+    
