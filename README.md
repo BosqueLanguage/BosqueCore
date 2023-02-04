@@ -2,7 +2,7 @@
 
 [![Licensed under the MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/BosqueLanguage/BosqueCore/blob/master/LICENSE.txt)
 [![PR's Welcome](https://img.shields.io/badge/PRs%20-welcome-brightgreen.svg)](#contribute)
-[![Build Health](https://img.shields.io/github/workflow/status/BosqueLanguage/BosqueCore/nodeci)](https://github.com/BosqueLanguage/BosqueCore/actions) 
+[![Build Health](https://img.shields.io/github/actions/workflow/status/BosqueLanguage/BosqueCore/main.yml?branch=main)](https://github.com/BosqueLanguage/BosqueCore/actions) 
 
 
 # The Bosque Project
