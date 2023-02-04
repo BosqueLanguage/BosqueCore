@@ -2,10 +2,10 @@
     "name": "bosque-stack",
     "description": "Bosque programming language and tooling stack (Core).",
     "author": {
-        "name": "Mark Marron <marron@microsoft.com>"
+        "name": "Mark Marron <mark.marron@protonmail.com>"
     },
     "license": "MIT",
-    "version": "0.9.4-Palaeocene",
+    "version": "0.9.5",
     "repository": {
         "type": "git",
         "url": "https://github.com/BosqueLanguage/BosqueCore"
