@@ -1,0 +1,609 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+//The core namespace implements the primitive types used in the Bosque language
+namespace Core;
+
+//<summary>Special type which all values are instances of.</summary>
+__universal concept Any {
+}
+
+//<summary>Special type for representing all non-none values.</summary>
+__universal concept Some provides Any {
+}
+
+//<summary>Special type for indicating a value can be used as a key in a collection.</summary>
+__universal concept KeyType provides Any {
+    function equal<T grounded KeyType>(a: T, b: T): Bool = special_method;
+    function less<T grounded KeyType>(a: T, b: T): Bool = special_method;
+}
+
+//<summary>Type for indicating that a datatype is a Validator.</summary>
+__universal concept Validator provides Any {
+}
+
+//<summary>Type for indicating that a datatype can be use as an input on a test method.</summary>
+__universal concept Testable provides Any {
+}
+
+//<summary>Type for indicating that a datatype can be exported as part of a stable API.</summary>
+__universal concept APIType provides Testable {
+}
+
+//<summary>Type for representing the none value.</summary>
+__internal entity None provides KeyType, APIType {
+}
+
+//<summary>Primitive boolean value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase entity Bool provides Some, KeyType, APIType {
+}
+
+//<summary>Primitive integer value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Int provides Some, KeyType, APIType {
+    method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
+    method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
+    method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
+    method toFloat(): Float { return NumericOps::s_bigIntToFloat(NumericOps::s_intToBigInt(this)); }
+    method toDecimal(): Decimal { return NumericOps::s_bigIntToDecimal(NumericOps::s_intToBigInt(this)); }
+    method toRational(): Decimal { return NumericOps::s_bigIntToRational(NumericOps::s_intToBigInt(this)); }
+
+    function min(a: Int, b: Int): Int {if(a < b) { return a; } else { return b; }}
+    function max(a: Int, b: Int): Int {if(a > b) { return a; } else { return b; }}
+}
+
+//<summary>Primitive natural number value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Nat provides Some, KeyType, APIType {
+    method toBigNat(): BigNat { return NumericOps::s_natToBigNat(this); }
+    method toInt(): Int { return NumericOps::s_natToInt(this); }
+    method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(NumericOps::s_natToBigNat(this)); }
+    method toFloat(): Float { return NumericOps::s_bigNatToFloat(NumericOps::s_natToBigNat(this)); }
+    method toDecimal(): Decimal { return NumericOps::s_bigNatToDecimal(NumericOps::s_natToBigNat(this)); }
+    method toRational(): Decimal { return NumericOps::s_bigNatToRational(NumericOps::s_natToBigNat(this)); }
+
+    function min(a: Nat, b: Nat): Nat {if(a < b) { return a; } else { return b; }}
+    function max(a: Nat, b: Nat): Nat {if(a > b) { return a; } else { return b; }}
+}
+
+//<summary>Primitive big-integer value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigInt provides Some, KeyType, APIType {
+    method toNat(): Nat { assert(this >= 0I); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(this)); }
+    method toBigNat(): BigNat { assert(this >= 0I); return NumericOps::s_bigIntToBigNat(this); }
+    method toInt(): Int { return NumericOps::s_bigIntToInt(this); }
+    method toFloat(): Float { return NumericOps::s_bigIntToFloat(this); }
+    method toDecimal(): Decimal { return NumericOps::s_bigIntToDecimal(this); }
+    method toRational(): Decimal { return NumericOps::s_bigIntToRational(this); }
+
+    function min(a: BigInt, b: BigInt): BigInt {if(a < b) { return a; } else { return b; }}
+    function max(a: BigInt, b: BigInt): BigInt {if(a > b) { return a; } else { return b; }}
+}
+
+//<summary>Primitive big-integer value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigNat provides Some, KeyType, APIType {
+    method toNat(): Nat { return NumericOps::s_bigNatToNat(this); }
+    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_bigNatToBigInt(this)); }
+    method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(this); }
+    method toFloat(): Float { return NumericOps::s_bigNatToFloat(this); }
+    method toDecimal(): Decimal { return NumericOps::s_bigNatToDecimal(this); }
+    method toRational(): Decimal { return NumericOps::s_bigNatToRational(this); }
+
+    function min(a: BigNat, b: BigNat): BigNat {if(a < b) { return a; } else { return b; }}
+    function max(a: BigNat, b: BigNat): BigNat {if(a > b) { return a; } else { return b; }}
+}
+
+//<summary>Primitive rational value.</summary>
+__internal __typedeclable __typebase __numeric entity Rational provides Some, APIType {
+    method toNat(): Nat { assert(this >= Rational::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this))); }
+    method toBigNat(): BigNat { assert(this >= Rational::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this)); }
+    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_rationalToBigInt(this)); }
+    method toBigInt(): BigInt { return NumericOps::s_rationalToBigInt(this); }
+    method toFloat(): Float { return NumericOps::s_rationalToFloat(this); }
+    method toDecimal(): Decimal { return NumericOps::s_rationalToDecimal(this); }
+
+    function min(a: Rational, b: Rational): Rational {if(a < b) { return a; } else { return b; }}
+    function max(a: Rational, b: Rational): Rational {if(a > b) { return a; } else { return b; }}
+}
+
+//<summary>Primitive float value defaults to 64bit.</summary>
+__internal __typedeclable __typebase __numeric entity Float provides Some, APIType {
+    const pi: Float = 3.1415926535897931f;
+    const e: Float = 2.7182818284590451f;
+
+    method toNat(): Nat { assert(this >= Float::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_floatToBigInt(this))); }
+    method toBigNat(): BigNat { assert(this >= Float::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_floatToBigInt(this)); }
+    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_floatToBigInt(this)); }
+    method toBigInt(): BigInt { return NumericOps::s_floatToBigInt(this); }
+    method toDecimal(): Decimal { return NumericOps::s_floatToDecimal(this); }
+    method toRational(): Rational { return NumericOps::s_floatToRational(this); }
+
+    function min(a: Float, b: Float): Float {if(a < b) { return a; } else { return b; }}
+    function max(a: Float, b: Float): Float {if(a > b) { return a; } else { return b; }}
+
+    method floor(): Float { return NumericOps::s_floatFloor(this); }
+    method ceiling(): Float { return NumericOps::s_floatCeil(this); }
+    method truncate(): Float { return NumericOps::s_floatTruncate(this); }
+
+    method pow(x: Float): Float {
+        return NumericOps::s_floatPower(this, x);
+    }
+
+    method square(): Float {
+        return this * this;
+    }
+
+    method cube(): Float {
+        return this * this * this;
+    }
+
+    method sqrt(): Float
+        requires this >= 0.0f;
+    {
+        return NumericOps::s_floatSqrt(this);
+    }
+}
+
+//<summary>Primitive float decimal value.</summary>
+__internal __typedeclable __typebase __numeric entity Decimal provides Some, APIType {
+    const pi: Decimal = 3.1415926535897931d;
+    const e: Decimal = 2.7182818284590451d;
+
+    method toNat(): Nat { assert(this >= Decimal::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_decimalToBigInt(this))); }
+    method toBigNat(): BigNat { assert(this >= Decimal::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_decimalToBigInt(this)); }
+    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_decimalToBigInt(this)); }
+    method toBigInt(): BigInt { return NumericOps::s_decimalToBigInt(this); }
+    method toFloat(): Float { return NumericOps::s_decimalToFloat(this); }
+    method toRational(): Rational { return NumericOps::s_decimalToRational(this); }
+
+    function min(a: Decimal, b: Decimal): Decimal {if(a < b) { return a; } else { return b; }}
+    function max(a: Decimal, b: Decimal): Decimal {if(a > b) { return a; } else { return b; }}
+
+    method floor(): Decimal { return NumericOps::s_decimalFloor(this); }
+    method ceiling(): Decimal { return NumericOps::s_decimalCeil(this); }
+    method truncate(): Decimal { return NumericOps::s_decimalTruncate(this); }
+
+    method pow(x: Decimal): Decimal {
+        return NumericOps::s_decimalPower(this, x);
+    }
+
+    method square(): Decimal {
+        return this * this;
+    }
+
+    method cube(): Decimal {
+        return this * this * this;
+    }
+
+    method sqrt(): Decimal
+        requires this >= 0.0d;
+    {
+        return NumericOps::s_decimalSqrt(this);
+    }
+}
+
+//<summary>Primitive string value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType, APIType {
+    __safe private function s_empty(s: String): Bool = s_string_empty;
+    __assume_safe private function s_concat2(s1: String, s2: String): String = s_string_append;
+
+    function concat(sl: List<String>): String {
+        return StringOps::s_strconcat(sl);
+    }
+
+    function join(sep: String, sl: List<String>): String {
+        return StringOps::s_strjoin(sl, sep);
+    }
+
+    method empty(): Bool {
+        return String::s_empty(this);
+    }
+
+    method append(s: String): String {
+        return String::s_concat2(this, s);
+    }
+
+    method prepend(s: String): String {
+        return String::s_concat2(s, this);
+    }
+
+    function interpolate(): String = special_method;
+
+    /*
+    method startsWith(v: String | Regex): Bool {
+        use RE(.*)
+    }
+
+    method endsWith(v: String | Regex): Bool {
+        use (.*)RE
+    }
+
+    method includes(v: String | Regex): Bool {
+        use (.*)RE(.*)
+    }
+
+    method extractFront(v: String | Regex): String, String {
+        use search on RE(.*) -- take maximal slice
+    }
+
+    method extractEnd(v: String | Regex): String, String {
+        use search on (.*)RE -- take maximal slice
+    }
+
+    method removeFront(v: String | Regex): String, String {
+        use search on RE(.*) -- take maximal slice
+    }
+
+    method removeEnd(v: String | Regex): String, String {
+        use search on (.*)RE -- take maximal slice
+    }
+
+    method splitAtFirst(v: String | Regex): String, String, String {
+        use search on min position of RE(.*)
+    }
+
+    method splitAll(...seps: List<String>): List<String> {
+        split on every sep provided
+    }
+    */
+}
+
+//<summary>Primitive safe string value.</summary>
+__internal __constructable __enumable __litvaluetype __typedeclable entity StringOf<T unique Validator> provides Some, KeyType, APIType {
+    private function s_into(s: String): StringOf<T> = special_inject;
+    method value(): String = special_extract;
+
+    function coerce(s: String): StringOf<T> {
+        assert T::accepts(s);
+        return StringOf<T>::s_into(s);
+    } 
+
+    function tryCoerce(s: String): StringOf<T>? {
+        if(!T::accepts(s)) {
+            return none;
+        } 
+        else {
+            return StringOf<T>::s_into(s);
+        }
+    }
+}
+
+//<summary>Primitive string value.</summary>
+__internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIString provides Some, KeyType, APIType {
+    __safe private function s_empty(s: ASCIIString): Bool = s_ascii_string_empty;
+    __assume_safe private function s_concat2(s1: ASCIIString, s2: ASCIIString): ASCIIString = s_ascii_string_append;
+
+    function concat(sl: List<ASCIIString>): ASCIIString {
+        return ASCIIStringOps::s_strconcat(sl);
+    }
+
+    function join(sep: ASCIIString, sl: List<ASCIIString>): ASCIIString {
+        return ASCIIStringOps::s_strjoin(sl, sep);
+    }
+
+    method empty(): Bool {
+        return ASCIIString::s_empty(this);
+    }
+
+    method append(s: ASCIIString): ASCIIString {
+        return ASCIIString::s_concat2(this, s);
+    }
+
+    method prepend(s: ASCIIString): ASCIIString {
+        return ASCIIString::s_concat2(s, this);
+    }
+
+    function interpolate(): ASCIIString = special_method;
+
+    /*
+    method startsWith(v: String | Regex): Bool {
+        use RE(.*)
+    }
+
+    method endsWith(v: String | Regex): Bool {
+        use (.*)RE
+    }
+
+    method includes(v: String | Regex): Bool {
+        use (.*)RE(.*)
+    }
+
+    method extractFront(v: String | Regex): String, String {
+        use search on RE(.*) -- take slice -- max or min
+                             -- enforce regex is "monotone" in that there is one valid match length only -- no overlapping unbounded fragments like [a-z]+[a-z]{2,3}
+                             -- | is ok (maybe only at top-level) since we can expand paths/anchors and then pick maximal/minimal -- maybe want to do this generally
+    }
+
+    method extractEnd(v: String | Regex): String, String {
+        use search on (.*)RE -- take maximal slice
+    }
+
+    method removeFront(v: String | Regex): String, String {
+        use search on RE(.*) -- take maximal slice
+    }
+
+    method removeEnd(v: String | Regex): String, String {
+        use search on (.*)RE -- take maximal slice
+    }
+
+    method splitAtFirst(v: String | Regex): String, String, String {
+        use search on min position of RE(.*)
+    }
+
+    method splitAll(...seps: List<String>): List<String> {
+        split on every sep provided
+    }
+    */
+}
+
+//<summary>Primitive safe string value.</summary>
+__internal __constructable __enumable __litvaluetype __typedeclable entity ASCIIStringOf<T unique Validator> provides Some, KeyType, APIType {
+    private function s_into(s: ASCIIString): ASCIIStringOf<T> = special_inject;
+    method value(): ASCIIString = special_extract;
+
+    function coerce(s: ASCIIString): ASCIIStringOf<T> {
+        assert T::accepts(s);
+        return ASCIIStringOf<T>::s_into(s);
+    } 
+
+    function tryCoerce(s: ASCIIString): ASCIIStringOf<T>? {
+        if(!T::accepts(s)) {
+            return none;
+        } 
+        else {
+            return ASCIIStringOf<T>::s_into(s);
+        }
+    }
+}
+
+//<summary>An efficient byte buffer for data.</summary>
+__internal entity ByteBuffer provides Some, APIType {
+}
+
+//<summary>Validator for TimeZone</summary>
+typedecl ValidTimeZoneName = /[A-Z]{2,5}/;
+typedecl TimeZoneCode = StringOf<ValidTimeZoneName>;
+
+//<summary>Primitive DateTime value.</summary>
+__internal __typedeclable __typebase entity DateTime provides Some, APIType {
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime = datetime_create;
+
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+        requires hour < 24n;
+        requires min < 60n;
+        requires sec < 61n;
+    {
+        return DateTime::s_create(year, month, day, hour, min, sec, tzdata);
+    }
+}
+
+__internal __typedeclable __typebase entity UTCDateTime provides Some, APIType, KeyType {
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime = utcdatetime_create;
+
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+        requires hour < 24n;
+        requires min < 60n;
+        requires sec < 61n;
+    {
+        return UTCDateTime::s_create(year, month, day, hour, min, sec);
+    }
+}
+
+__internal __typedeclable __typebase entity PlainDate provides Some, APIType, KeyType {
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): PlainDate = plaindate_create;
+
+    function create(year: Nat, month: Nat, day: Nat): PlainDate
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+    {
+        return PlainDate::s_create(year, month, day);
+    }
+}
+
+__internal __typedeclable __typebase entity PlainTime provides Some, APIType, KeyType {
+    __assume_safe internal function s_create(hour: Nat, min: Nat, sec: Nat): PlainTime = plaintime_create;
+
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): PlainTime
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+        requires hour < 24n;
+        requires min < 60n;
+        requires sec < 61n;
+    {
+        return PlainTime::s_create(day, hour, min, sec);
+    }
+}
+
+//<summary>Primitive TickTime value (TIA time).</summary>
+__internal __typedeclable __typebase entity TickTime provides Some, KeyType APIType {
+}
+
+//<summary>Primitive LogicalTime value.</summary>
+__internal __typedeclable __typebase entity LogicalTime provides Some, KeyType, APIType {
+    __safe internal function s_zero(): LogicalTime = logicaltime_zero;
+    __safe internal function s_increment(t: LogicalTime): LogicalTime = logicaltime_increment;
+
+    const zero: LogicalTime = LogicalTime::s_zero();
+
+    method increment(): LogicalTime {
+        return LogicalTime::s_increment(this);
+    }
+}
+
+__internal __typedeclable __typebase entity ISOTimeStamp provides Some, KeyType, APIType {
+    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp = isotimestamp_create;
+
+    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp
+        requires 1900n <= year && year <= 2200n;
+        requires month < 12n;
+        requires DateOps::s_check_DayInMonth(day, month, year);
+        requires hour < 24n;
+        requires min < 60n;
+        requires sec < 61n;
+        requires millis < 1000n;
+    {
+        return ISOTimeStamp::s_create(year, month, day, hour, min, sec, millis);
+    }
+}
+
+//<summary>Primitive UUID4 value.</summary>
+__internal __typedeclable __typebase entity UUID4 provides Some, KeyType, APIType {
+}
+
+//<summary>Primitive UUID7 value.</summary>
+__internal __typedeclable __typebase entity UUID7 provides Some, KeyType, APIType {
+}
+
+//<summary>Primitive hash value suitable for content addressable operations or crypto secure digests.</summary>
+__internal __typedeclable __typebase entity SHAContentHash provides Some, KeyType, APIType {
+}
+
+//<summary>Primitive Lat/Long</summary>
+__internal __typedeclable __typebase entity LatLongCoordinate provides Some, APIType {
+    __assume_safe internal function s_create(lat: Float, long: Float): LatLongCoordinate = latlongcoordinate_create;
+
+    function create(lat: Float, long: Float): LatLongCoordinate
+        requires -90.0f <= lat && lat <= 90.0f;
+        requires -180.0f < long && long <= 180.0f;
+    {
+        return LatLongCoordinate::s_create(lat, long);
+    }
+}
+
+//<summary>Primitive regex value.</summary>
+__internal entity Regex provides Some {
+    __safe internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;
+
+    method accepts(s: String): Bool {
+        return Regex::s_accepts(this, s);
+    }
+}
+
+//<summary>Primitive type for task identifiers</summary>
+typedecl TaskID = UUID4;
+
+//<summary>Static methods for Tuples.</summary>
+__universal concept Tuple provides Some {
+}
+
+//<summary>Static methods for Records.</summary>
+__universal concept Record provides Some {
+}
+
+//<summary>Generic type for all Option<T> to inherit from.</summary>
+__universal concept IOption provides Some {
+}
+
+//<summary>Generic type for all Something<T> to inherit from.</summary>
+__universal concept ISomething provides IOption {
+}
+
+//<summary>Type for representing the nothing option value.</summary>
+__internal entity Nothing provides IOption, APIType {
+}
+
+//<summary>Type for representing the nothing option value.</summary>
+__internal __constructable entity Something<T> provides ISomething, Option<T>, APIType when T grounded APIType, Testable when T grounded Testable {
+    method value(): T = special_extract;
+}
+
+//<summary>Type for flagging T projection from Option -- kludge that has no other purpose.</summary>
+__universal concept IOptionT provides Some {
+}
+
+concept Option<T> provides IOption, APIType when T grounded APIType, Testable when T grounded Testable {
+    method data(): T {
+        return this@<Something<T>>.value();
+    }
+
+    method convert<V>(): Option<V> {
+        if(this === nothing) {
+            return nothing;
+        }
+        else {
+            return Something{this.data()@<V>};
+        }
+    }
+}
+
+//<summary>Generic type for all Result<T, E> to inherit from.</summary>
+__universal concept IResult provides Some {
+}
+
+//<summary>Generic type for all Result<T, E>::Ok to inherit from.</summary>
+__universal concept IOk provides Some {
+}
+
+//<summary>Generic type for all Result<T, E>::Err to inherit from.</summary>
+__universal concept IErr provides Some {
+}
+
+//<summary>Type for flagging T projection from Result -- kludge that has no other purpose.</summary>
+__universal concept IResultT provides Some {
+}
+
+//<summary>Type for flagging E projection from Result -- kludge that has no other purpose.</summary>
+__universal concept IResultE provides Some {
+}
+
+//<summary>Result type.</summary>
+concept Result<T, E> provides IResult, APIType when T grounded APIType && E grounded APIType, Testable when T grounded Testable && E grounded Testable {
+    __internal __constructable entity Ok provides IOk, Result<T, E> {
+        method getv(): T = special_extract;
+    }
+
+    __internal __constructable entity Err provides IErr, Result<T, E> {
+        method gete(): E = special_extract;
+    }
+
+    method isOk(): Bool {
+        return this@<Result<T, E>::Ok>;
+    }
+
+    method isErr(): Bool {
+        return this@<Result<T, E>::Err>;
+    }
+
+    method value(): T {
+        return this@<Result<T, E>::Ok>.getv();
+    }
+
+    method error(): E {
+        return this@<Result<T, E>::Err>.gete();
+    }
+
+    method convert<U, V>(): Result<U, V> {
+        if(this?<Result<T, E>::Ok>) {
+            return Result<U, V>::Ok{this.value()@<U>};
+        }
+        else {
+            return Result<U, V>::Err{this.error()@<V>};
+        }
+    }
+}
+
+//<summary>All actual entities/concepts implicitly provide this concept.</summary>
+__universal concept Object provides Some {
+}
+
+#if CHECK_LIBS
+__internal entity HavocSequence provides Some {
+}
+
+internal function s_blockingfailure<T>(): T = s_blockingfailure;
+
+internal function s_reshavoc<T>(): T = s_reshavoc;
+#endif
+
+//<summary>All collections provide this concept so we can expand them with spread operators.</summary>
+__universal concept Expandoable<T> provides Some {
+}
+
+__assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;

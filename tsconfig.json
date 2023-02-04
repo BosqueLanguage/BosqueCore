@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "alwaysStrict": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "strictNullChecks": true,
+        "target": "es2020",
+        "sourceMap": true,
+        "outDir": "bin"
+    },
+    "include": [
+        "src/frontend/*.ts", 
+        "src/frontend/ast/*.ts", 
+        "src/frontend/tree_ir/*.ts",
+        "src/frontend/typechecker/*.ts",
+        "src/runtimes/javascript/*.ts",
+        "src/runtimes/javascript/compiler/*.ts"
+    ]
+}

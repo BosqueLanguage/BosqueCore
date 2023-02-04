@@ -1,7 +1,9 @@
-impl/node_modules/
-**/.vscode/
+/node_modules
+/bin
+/.vscode
+/build/test/**
+*.xml
+*.dgml
 
 **/.DS_Store
-
 **/output/*
-**/*.pdb

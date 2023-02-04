@@ -1,0 +1,37 @@
+//-------------------------------------------------------------------------------------------------------
+// Copyright (C) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
+//-------------------------------------------------------------------------------------------------------
+
+//The core namespace implements the primitive types used in the Bosque language
+namespace Core;
+
+internal entity DateOps provides Some {
+    internal function s_check_DayInMonth(d: Nat, m: Nat, y: Nat): Bool {
+        if(m == 1n) {
+            if(DateOps::isLeapYear(y)) {
+                return d <= 29n;
+            }
+            else {
+                return d <= 28n;
+            }
+        }
+        else {
+            if(\/(m == 3n, m == 5n, m == 8n, m == 10n)) {
+                return d <= 30n;
+            }
+            else {
+                return d <= 31n;
+            }
+        }
+    }
+
+    function isLeapYear(y: Nat): Bool {
+        if(\/(y == 1900n, y == 2100n, y == 2200n)) {
+            return false;
+        }
+        else {
+            return NumericOps::s_modNat(y, 4n) == 0n;
+        }
+    }
+}

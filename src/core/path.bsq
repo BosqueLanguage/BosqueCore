@@ -1,0 +1,77 @@
+//The core namespace implements the primitive types used in the Bosque language
+namespace Core;
+
+//<summary>Type for indicating that a datatype is a Validator.</summary>
+__universal concept PathValidator provides Any {
+}
+
+//Implementations should have the following -- in all cases regex can be a literal string or a union of literal strings
+    //- scheme as single string (optional)
+    //- userinfo as regex (optional but must have host if we have this)
+    //- host as regex (optional)
+    //- port as Nat (optional but must have host)
+    //- path
+    //-- pathprefix as a regex (optional)
+    //-- pathgeneral as a regex per segment (optional -- say the resource is a UUID or timecode)
+    //-- pathfile as a regex (optional)
+    //-- pathext as a regex (optional but needs path also must be .xxx or defaults to empty string and anything else is in pathfile)
+    //- query as map of string -> regex
+    //- fragment as regex
+
+    //if just the path then can just do those sub-fields without the other stuff
+
+/*
+validator ThingInfo = {
+    scheme="file",
+    userinfo=/[a-z]/,
+    //no host
+    //no port
+    path={
+        prefix="files" | "docs/tmp",
+        dirs=/[a-z0-9]/,
+        file="temp"
+    },
+    query=[
+        time=/[0-9]{2}:[0-9]{2}/
+    ]
+};
+*/
+
+//Validator -> defines Path
+//Path<T> is actual type associated with Path
+
+//<summary>Primitive path value.</summary>
+__internal __constructable __enumable __litvaluetype __typedeclable entity Path<T unique PathValidator> provides Some, KeyType, APIType {
+    private function s_into(s: String): Path<T> = special_inject;
+    method value(): String = special_extract;
+}
+
+/*
+Implicitly augments the PathValidator description path component with "./" and "../" where legal.
+May be any contigious substring of the that is a contained in the Validator (must end on boundaries of component)
+*/
+//<summary>Primitive path fragment value.</summary>
+__internal __constructable __litvaluetype __typedeclable entity PathFragment<T unique PathValidator> provides Some, KeyType, APIType {
+    private function s_into(s: String): PathFragment<T> = special_inject;
+    method value(): String = special_extract;
+
+    private function s_isPrefix(): Boolean = pathfragment_isprefix;
+    private function s_isSuffix(): Boolean = pathfragment_issuffix;
+
+    method isPrefix(): Boolean {
+        return PathFragment<T>::s_isPrefix(this);
+    }
+
+    method isPrefix(): Boolean {
+        return PathFragment<T>::s_isSuffix(this);
+    }
+}
+
+//<summary>Primitive safe string value.</summary>
+__internal __constructable __litvaluetype  __typedeclable entity PathGlob<T unique PathValidator> provides Some, KeyType, APIType {
+    private function s_into(s: String): PathGlob<T> = special_inject;
+    method value(): String = special_extract;
+
+    //can have *, **, ? (a dot), [a-b]*+{x-y}, (A | B) in each component otherwise must match PathValidator path components
+    //any parameters must be in a top-level position (i.e. not nested in a repitition contruct or range)
+}

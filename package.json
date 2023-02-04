@@ -1,0 +1,40 @@
+{
+    "name": "bosque-stack",
+    "description": "Bosque programming language and tooling stack (Core).",
+    "author": {
+        "name": "Mark Marron <mark.marron@protonmail.com>"
+    },
+    "license": "MIT",
+    "version": "0.9.5",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/BosqueLanguage/BosqueCore"
+    },
+    "dependencies": {
+        "@types/node": "~16.0.3",
+        "typescript": "~4.8.2",
+        "refa":"0.10.0"
+    },
+    "devDependencies": {
+        "fs-extra": "11.1.0",
+        "mocha": "10.2.0",
+        "chai": "4.3.7",
+        "decimal.js": "10.4.2",
+        "fraction.js": "4.2.0",
+        "immutable": "4.2.1",
+        "uuidv4": "6.2.13"
+    },
+    "scripts": {
+        "build": "node ./build/build_all.js",
+        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js"
+    },
+    "files": [
+        "bin/*"
+    ],
+    "bin": {
+        "bosque": "./impl/bin/cmd/bosque.js"
+    },
+    "engines": {
+        "node": ">=16.0"
+    }
+}

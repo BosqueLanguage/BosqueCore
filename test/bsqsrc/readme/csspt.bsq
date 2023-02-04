@@ -1,0 +1,11 @@
+namespace Main;
+
+typedecl CSSpt = /[0-9]+pt/;
+
+function is3pt(s1: StringOf<CSSpt>): Bool {
+    return s1.value() === "3pt";
+}
+
+function main(str: StringOf<CSSpt>): Bool {
+    return is3pt(str);
+}

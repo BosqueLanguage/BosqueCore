@@ -1,0 +1,14 @@
+namespace Main;
+
+function printType(x: Bool | Int | String | None): String {
+    return match(x) {
+        Bool     => "b"
+        | Int    => "i"
+        | String => "s"
+        | _      => "n"
+    };
+}
+
+function main(x: Bool | Int | String | None): String {
+    return printType(x);
+}

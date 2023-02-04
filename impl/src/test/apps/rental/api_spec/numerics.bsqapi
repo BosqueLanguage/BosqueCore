@@ -1,5 +1,0 @@
-namespace Numerics;
-
-orderable algebraic typedecl Percent = Float & {
-    invariant 0.0f <= $value && $value <= 100.0f;
-}
