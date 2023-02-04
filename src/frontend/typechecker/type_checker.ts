@@ -5,7 +5,7 @@
 
 import { Assembly, ConceptTypeDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, OOMemberDecl, OOPTypeDecl, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, TaskTypeDecl, TemplateTermDecl, TypeConditionRestriction } from "../ast/assembly";
 import { ResolvedASCIIStringOfEntityAtomType, ResolvedAtomType, ResolvedConceptAtomType, ResolvedConceptAtomTypeEntry, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType, ResolvedEntityAtomType, ResolvedEnumEntityAtomType, ResolvedFunctionType, ResolvedHavocEntityAtomType, ResolvedListEntityAtomType, ResolvedMapEntityAtomType, ResolvedObjectEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType, ResolvedPathValidatorEntityAtomType, ResolvedPrimitiveInternalEntityAtomType, ResolvedQueueEntityAtomType, ResolvedRecordAtomType, ResolvedSetEntityAtomType, ResolvedStackEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedTaskAtomType, ResolvedTupleAtomType, ResolvedType, ResolvedTypedeclEntityAtomType, ResolvedValidatorEntityAtomType, TemplateBindScope, ResolvedFunctionTypeParam, ResolvedConstructableEntityAtomType, ResolvedPrimitiveCollectionEntityAtomType } from "./resolved_type";
-import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestErr, ITestNone, ITestNothing, ITestSomething, ITestOk, ExpressionSCReturnStatement, VariableSCRetypeStatement } from "../ast/body";
+import { AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, IfExpression, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOpTag, PrefixNegateOp, PrefixNotOp, SpecialConstructorExpression, SwitchExpression, TaskSelfFieldExpression, TaskSelfActionExpression, TaskGetIDExpression, Statement, EmptyStatement, VariableDeclarationStatement, VariableAssignmentStatement, ReturnStatement, AbortStatement, AssertStatement, DebugStatement, IfStatement, UnscopedBlockStatement, SwitchStatement, MatchStatement, RefCallStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement, TaskSelfControlExpression, TaskCallWithStatement, TaskResultWithStatement, TaskSetStatusStatement, TaskSetSelfFieldStatement, TaskEventEmitStatement, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement, StatementTag, ScopedBlockStatement, BodyImplementation, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestErr, ITestNone, ITestNothing, ITestSomething, ITestOk, ExpressionSCReturnStatement, VariableSCRetypeStatement, ITestSome } from "../ast/body";
 import { AndTypeSignature, AutoTypeSignature, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "../ast/type";
 import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./type_environment";
 
@@ -600,6 +600,17 @@ class TypeChecker {
         }
     }
 
+    private processITestAsTest_Some(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
+        const tsplit = this.splitTypes(flowtype, this.getSpecialSomeConceptType());
+
+        if(isnot) {
+            return { testexp: new TIRIsNoneSpecialExpression(sinfo, tirexp), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
+        }
+        else {
+            return { testexp: new TIRIsSomeSpecialExpression(sinfo, tirexp), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
+        }
+    }
+
     private processITestAsTest_Nothing(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
         this.raiseErrorIf(sinfo, !flowtype.isOptionType() && !flowtype.isNothingType() && !flowtype.isSomethingType(), "Special nothing test is only valid on Option<T> types (not part of a union etc.)");
         const tsplit = this.splitTypes(flowtype, this.getSpecialNothingType());
@@ -753,6 +764,9 @@ class TypeChecker {
             if(tt instanceof ITestNone) {
                 return this.processITestAsTest_None(sinfo, ltype, flowtype, tirexp, tt.isnot);
             }
+            else if(tt instanceof ITestSome) {
+                return this.processITestAsTest_Some(sinfo, ltype, flowtype, tirexp, tt.isnot);
+            }
             else if(tt instanceof ITestNothing) {
                 return this.processITestAsTest_Nothing(sinfo, ltype, flowtype, tirexp, tt.isnot);
             }
@@ -771,6 +785,48 @@ class TypeChecker {
 
     private processITestAsConvert_None(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
         const tsplit = this.splitTypes(flowtype, this.getSpecialNoneType());
+        issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
+
+        if (issafe) {
+            if (isnot) {
+                return { 
+                    asexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined, 
+                    asnotexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined, 
+                    trueflow: tsplit.fp, 
+                    falseflow: tsplit.tp 
+                };
+            }
+            else {
+                return { 
+                    asexp: tsplit.tp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.tp) : undefined, 
+                    asnotexp: tsplit.fp !== undefined ? this.generateCoerceExpForITestConv(tirexp, ltype, sinfo, tsplit.fp) : undefined, 
+                    trueflow: tsplit.tp, 
+                    falseflow: tsplit.fp 
+                };
+            }
+        }
+        else {
+            if (isnot) {
+                return { 
+                    asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
+                    asnotexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                    trueflow: tsplit.fp, 
+                    falseflow: tsplit.tp 
+                };
+            }
+            else {
+                return { 
+                    asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                    asnotexp: tsplit.tp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp)) : undefined, 
+                    trueflow: tsplit.tp, 
+                    falseflow: tsplit.fp 
+                };
+            }
+        }
+    }
+
+    private processITestAsConvert_Some(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
+        const tsplit = this.splitTypes(flowtype, this.getSpecialSomeConceptType());
         issafe = issafe || (isnot ? tsplit.tp === undefined : tsplit.fp === undefined);
 
         if (issafe) {
@@ -1394,6 +1450,9 @@ class TypeChecker {
         else {
             if(tt instanceof ITestNone) {
                 return this.processITestAsConvert_None(sinfo, ltype, flowtype, tirexp, tt.isnot, issafe);
+            }
+            else if(tt instanceof ITestSome) {
+                return this.processITestAsConvert_Some(sinfo, ltype, flowtype, tirexp, tt.isnot, issafe);
             }
             else if(tt instanceof ITestNothing) {
                 return this.processITestAsConvert_Nothing(sinfo, ltype, flowtype, tirexp, tt.isnot, issafe);
@@ -3647,7 +3706,7 @@ class TypeChecker {
             }
         }
         else {
-            this.raiseErrorIf(exp.sinfo, desiredtype === undefined || (desiredtype.options.length !== 1 || !(desiredtype as ResolvedType).typeID.startsWith("Result<")), "ok/err shorthand constructors only valid with Result typed expressions");
+            this.raiseErrorIf(exp.sinfo, desiredtype === undefined || (desiredtype.options.length !== 1 || !(desiredtype as ResolvedType).typeID.startsWith("Result<")), "ok/err/result shorthand constructors only valid with Result typed expressions");
             const T = ((desiredtype as ResolvedType).options[0] as ResolvedConceptAtomType).getTBind();
             const E = ((desiredtype as ResolvedType).options[0] as ResolvedConceptAtomType).getEBind();
 
@@ -3661,7 +3720,7 @@ class TypeChecker {
                 const consenv = tcast.setResultExpressionInfo(new TIRResultOkConstructorExpression(exp.sinfo, tirokconstype, tcast.expressionResult), rokconstype);
                 return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
             }
-            else {
+            else if(exp.rop === "err") {
                 const okenv = this.checkExpression(env, exp.arg, E);
                 const tcast = this.emitCoerceIfNeeded(okenv, exp.sinfo, E);
 
@@ -3670,6 +3729,12 @@ class TypeChecker {
 
                 const consenv = tcast.setResultExpressionInfo(new TIRResultErrConstructorExpression(exp.sinfo, tirerrconstype, tcast.expressionResult), rerrconstype);
                 return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
+            }
+            else {
+                this.raiseError(exp.sinfo, "TODO: result special constructor is not supported yet");
+                //TODO: this should best effort (1) convert Result<T, E> into Result<U, V> + coearce T values into Ok<T> and E values into Err<E> Results -- as possible
+
+                return env.setResultExpressionInfo(new TIRInvalidExpression(exp.sinfo, this.toTIRTypeKey(this.getSpecialNoneType())), ResolvedType.createInvalid());
             }
         }
     }

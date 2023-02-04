@@ -128,7 +128,7 @@ class ResolvedStringOfEntityAtomType extends ResolvedInternalEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedStringOfEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + `<${validatortype.typeID}>`;
         return new ResolvedStringOfEntityAtomType(name, object, validatortype);
     }
 
@@ -147,7 +147,7 @@ class ResolvedASCIIStringOfEntityAtomType extends ResolvedInternalEntityAtomType
     }
 
     static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedASCIIStringOfEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + `<${validatortype.typeID}>`;
         return new ResolvedASCIIStringOfEntityAtomType(name, object, validatortype);
     }
 
@@ -178,7 +178,7 @@ class ResolvedPathEntityAtomType extends ResolvedInternalEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + `<${validatortype.typeID}>`;
         return new ResolvedPathEntityAtomType(name, object, validatortype);
     }
 
@@ -197,7 +197,7 @@ class ResolvedPathFragmentEntityAtomType extends ResolvedInternalEntityAtomType 
     }
 
     static create(object: EntityTypeDecl, validatortype: ResolvedPathValidatorEntityAtomType): ResolvedPathFragmentEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + `<${validatortype.typeID}>`;
         return new ResolvedPathFragmentEntityAtomType(name, object, validatortype);
     }
 
@@ -215,7 +215,7 @@ class ResolvedPathGlobEntityAtomType extends ResolvedInternalEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, validatortype: ResolvedValidatorEntityAtomType): ResolvedPathGlobEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + `<${validatortype.typeID}>`;
         return new ResolvedPathGlobEntityAtomType(name, object, validatortype);
     }
 

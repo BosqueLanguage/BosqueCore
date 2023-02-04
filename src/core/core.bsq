@@ -556,11 +556,11 @@ __universal concept IResultE provides Some {
 //<summary>Result type.</summary>
 concept Result<T, E> provides IResult, APIType when T grounded APIType && E grounded APIType, Testable when T grounded Testable && E grounded Testable {
     __internal __constructable entity Ok provides IOk, Result<T, E> {
-        method value(): T = special_extract;
+        method getv(): T = special_extract;
     }
 
     __internal __constructable entity Err provides IErr, Result<T, E> {
-        method value(): E = special_extract;
+        method gete(): E = special_extract;
     }
 
     method isOk(): Bool {
@@ -571,17 +571,17 @@ concept Result<T, E> provides IResult, APIType when T grounded APIType && E grou
         return this@<Result<T, E>::Err>;
     }
 
-    method result(): T {
-        return this@<Result<T, E>::Ok>.value();
+    method value(): T {
+        return this@<Result<T, E>::Ok>.getv();
     }
 
     method error(): E {
-        return this@<Result<T, E>::Err>.value();
+        return this@<Result<T, E>::Err>.gete();
     }
 
     method convert<U, V>(): Result<U, V> {
         if(this?<Result<T, E>::Ok>) {
-            return Result<U, V>::Ok{this.result()@<U>};
+            return Result<U, V>::Ok{this.value()@<U>};
         }
         else {
             return Result<U, V>::Err{this.error()@<V>};

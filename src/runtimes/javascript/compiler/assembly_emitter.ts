@@ -612,7 +612,13 @@ class AssemblyEmitter {
     }
 
     private emitTIRStringOfEntityType_ParseEmit(ttype: TIRStringOfEntityType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const jsre = ttype.revalidator.re.compileToJS()
+
+        const parse = `{ if(typeof(jv) !== "string" || !$Runtime.acceptsString(/${jsre}/, jv)) { raiseRuntimeError("Failed StringOf validation " + JSON.stringify(jv)); } else { return ioMarshalMap.get("String").parse(jv); } }`;
+
+        const emit = `ioMarshalMap.get("String").emit(nv)`;
+
+        return { parse: parse, emit: emit };
     }
 
     private emitTIRASCIIStringOfEntityType_ParseEmit(ttype: TIRASCIIStringOfEntityType): { parse: string, emit: string } {

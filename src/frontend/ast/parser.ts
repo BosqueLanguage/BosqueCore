@@ -5,7 +5,7 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome } from "./body";
 import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { BuildLevel, SourceInfo } from "../build_decls";
@@ -53,9 +53,11 @@ const KW_ref = "ref";
 const KW_release = "release";
 const KW_resultwith = "resultwith";
 const KW_return = "return";
+const KW_result = "result";
 const KW_requires = "requires";
 const KW_something = "something";
 const KW_spec = "spec";
+const KW_some = "some";
 const KW_switch = "switch";
 const KW_task = "task";
 const KW_test = "test";
@@ -118,8 +120,10 @@ const KeywordStrings = [
     KW_release,
     KW_resultwith,
     KW_return,
+    KW_result,
     KW_requires,
     KW_something,
+    KW_some,
     KW_spec,
     KW_switch,
     KW_task,
@@ -341,8 +345,6 @@ const TokenStrings = {
     
     String: "[LITERAL_STRING]",
     ASCIIString: "[LITERAL_ASCII_STRING]",
-    TypedString: "[LITERAL_TYPED_STRING]",
-    ASCIITypedString: "[LITERAL_ASCII_TYPED_STRING]",
 
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
     TemplateASCIIString: "[LITERAL_TEMPLATE_ASCII_STRING]",
@@ -636,11 +638,8 @@ class Lexer {
 
     private static readonly _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
     private static readonly _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
-    private static readonly _s_typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
-    private static readonly _s_ascii_typedStringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
-
-    private static readonly _s_template_stringRe = /[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
-    private static readonly _s_ascii_template_stringRe = /ascii\{[$]"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
+    private static readonly _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
+    private static readonly _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
     private tryLexString() {
         Lexer._s_template_stringRe.lastIndex = this.m_cpos;
@@ -668,20 +667,6 @@ class Lexer {
         const mas = Lexer._s_ascii_stringRe.exec(this.m_input);
         if (mas !== null) {
             this.recordLexTokenWData(this.m_cpos + mas[0].length, TokenStrings.ASCIIString, mas[0]);
-            return true;
-        }
-
-        Lexer._s_typedStringRe.lastIndex = this.m_cpos;
-        const mts = Lexer._s_typedStringRe.exec(this.m_input);
-        if (mts !== null) {
-            this.recordLexTokenWData(this.m_cpos + mts[0].length, TokenStrings.TypedString, mts[0]);
-            return true;
-        }
-
-        Lexer._s_ascii_typedStringRe.lastIndex = this.m_cpos;
-        const mti = Lexer._s_typedStringRe.exec(this.m_input);
-        if (mti !== null) {
-            this.recordLexTokenWData(this.m_cpos + mti[0].length, TokenStrings.ASCIITypedString, mti[0]);
             return true;
         }
 
@@ -1531,6 +1516,10 @@ class Parser {
                 this.consumeToken();
                 return new ITestNone(isnot);
             }
+            else if(this.testToken(KW_some)) {
+                this.consumeToken();
+                return new ITestSome(isnot);
+            }
             else if(this.testToken(KW_nothing)) {
                 this.consumeToken();
                 return new ITestNothing(isnot);
@@ -1896,26 +1885,22 @@ class Parser {
         }
         else if (tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return [new LiteralStringExpression(sinfo, sstr), false];
-        }
-        else if (tk === TokenStrings.ASCIIString) {
-            const sstr = this.consumeTokenAndGetValue(); //keep in original format
-            return [new LiteralASCIIStringExpression(sinfo, sstr), false];
-        }
-        else if (tk === TokenStrings.TypedString) {
-            const sstr = this.consumeTokenAndGetValue(); //keep in original format
+
             if (this.testToken(TokenStrings.FollowTypeSep)) {
                 const ttype = this.parseFollowTypeTag("typed primitive", true);
 
                 const asstr = "\"" + sstr.slice(1, sstr.length - 1) + "\"";
                 return [new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralStringExpression(sinfo, asstr), ttype), false];
             }
-            else {
-                const ttype = this.parseFollowTypeTag("typed string", false);
+            else if(this.testToken(TokenStrings.Namespace) || this.testToken(TokenStrings.Type)) {
+                const ttype = this.parseNominalType();
                 return [new LiteralTypedStringExpression(sinfo, sstr, ttype), false];
             }
+            else {
+                return [new LiteralStringExpression(sinfo, sstr), false];
+            }
         }
-        else if (tk === TokenStrings.ASCIITypedString) {
+        else if (tk === TokenStrings.ASCIIString) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
             if (this.testToken(TokenStrings.FollowTypeSep)) {
                 const ttype = this.parseFollowTypeTag("typed primitive", true);
@@ -1923,9 +1908,12 @@ class Parser {
                 const asstr = "\"" + sstr.slice("ascii{".length + 1, sstr.length - (1 + "}".length)) + "\"";
                 return [new LiteralTypedPrimitiveConstructorExpression(sinfo, new LiteralASCIIStringExpression(sinfo, asstr), ttype), false];
             }
-            else {
-                const ttype = this.parseFollowTypeTag("ascii typed string", false);
+            else if(this.testToken(TokenStrings.Namespace) || this.testToken(TokenStrings.Type)) {
+                const ttype = this.parseNominalType();
                 return [new LiteralASCIITypedStringExpression(sinfo, sstr, ttype), false];
+            }
+            else {
+                return [new LiteralASCIIStringExpression(sinfo, sstr), false];
             }
         }
         else if (tk === TokenStrings.TemplateString) {
@@ -1946,7 +1934,7 @@ class Parser {
             this.m_penv.assembly.addLiteralRegex(re as BSQRegex);
             return [new LiteralRegexExpression(sinfo, re as BSQRegex), false];
         }
-        else if (tk === KW_ok || tk === KW_err || tk === KW_something) {
+        else if (tk === KW_ok || tk === KW_err || tk === KW_something || tk === KW_result) {
             this.consumeToken();
             this.ensureAndConsumeToken("(", tk + " constructor");
             let arg = new LiteralNoneExpression(this.getCurrentSrcInfo());
@@ -2695,6 +2683,11 @@ class Parser {
                 const isnot = this.testAndConsumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestNone(isnot);
+            }
+            else if(this.testToken(KW_some) || this.testFollows(SYM_bang, KW_some)) {
+                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeToken();
+                return new ITestSome(isnot);
             }
             else if(this.testToken(KW_nothing) || this.testFollows(SYM_bang, KW_nothing)) {
                 const isnot = this.testAndConsumeTokenIf(SYM_bang);

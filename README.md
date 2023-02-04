@@ -228,10 +228,10 @@ ZipcodeUS::accepts("98052-0000") //true
 ZipcodeUS::accepts("1234")       //false
 
 is3pt("12")              //type error not a StringOf<CSSpt>
-is3pt('98052'ZipcodeUS) //type error not a StringOf<CSSpt>
+is3pt("98052"ZipcodeUS) //type error not a StringOf<CSSpt>
 
-is3pt('3pt'CSSpt) //true
-is3pt('4pt'CSSpt) //false
+is3pt("3pt"CSSpt) //true
+is3pt("4pt"CSSpt) //false
 ```
 
 **Tasks:**

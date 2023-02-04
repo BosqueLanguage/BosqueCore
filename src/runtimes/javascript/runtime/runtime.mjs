@@ -85,7 +85,6 @@ function BSQEnvironment(env, ...args) {
 }
 
 function acceptsString(re, str) {
-    //Do I need to add the "^" and "$" anchors or does test do that?
     const jsre = RegExp(re);
 
     const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();

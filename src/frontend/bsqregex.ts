@@ -267,7 +267,6 @@ class BSQRegex {
     }
 
     acceptsString(str: string): boolean {
-        //Do I need to add the "^" and "$" anchors or does test do that?
         const jsre = RegExp(this.re.compileToJS());
 
         const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();

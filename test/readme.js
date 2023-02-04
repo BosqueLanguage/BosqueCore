@@ -305,3 +305,23 @@ describe('Validator (zipcode)', function () {
         });
     });
 });
+
+
+describe('StringOf (csspt)', function () {
+    const testopt = ["readme", "csspt"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { fsextra.removeSync(dstdir); });
+
+    describe('is3pt (3pt)', function () {
+        it('expected true', function () {
+            expect(invokeExecutionOn(jsmain, "3pt")).to.eql(true);
+        });
+    });
+    describe('is3pt (4pt)', function () {
+        it('expected false', function () {
+            expect(invokeExecutionOn(jsmain, "4pt")).to.eql(false);
+        });
+    });
+});

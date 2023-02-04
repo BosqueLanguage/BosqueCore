@@ -41,6 +41,12 @@ class ITestNone extends ITest {
     }
 }
 
+class ITestSome extends ITest {
+    constructor(isnot: boolean) {
+        super(isnot);
+    }
+}
+
 class ITestNothing extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
@@ -530,10 +536,10 @@ class PCodeInvokeExpression extends Expression {
 }
 
 class SpecialConstructorExpression extends Expression {
-    readonly rop: "ok" | "err" | "something";
+    readonly rop: "ok" | "err" | "something" | "result";
     readonly arg: Expression;
 
-    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "something", arg: Expression) {
+    constructor(sinfo: SourceInfo, rop: "ok" | "err" | "something" | "result", arg: Expression) {
         super(ExpressionTag.SpecialConstructorExpression, sinfo);
         this.rop = rop;
         this.arg = arg;
@@ -1555,7 +1561,7 @@ class BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
     LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
