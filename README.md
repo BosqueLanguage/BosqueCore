@@ -235,8 +235,12 @@ is3pt("4pt"CSSpt) //false
 ```
 
 **Tasks:**
+[WORK IN PROGRESS]
 ```
-[TODO]
+const timestamp = Task::run<SyncronizedTime::Timestamp>[timeout=100i_Milliseconds](SyncronizedTime::Protocol::NTP) ?? err;
+
+const msg = String::concat(List<String>{"hello world", " @ ", timestamp.toString()});
+return Task::run<Scratch::Write>("/hello.txt", msg);
 ```
 
 # Installing the Bosque Language (Development)

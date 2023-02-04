@@ -2776,6 +2776,8 @@ class Parser {
     private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature} | undefined): Statement {
         this.ensureTaskOpOk();
         
+        //TODO: need to cleanup so that SC return and assign work with this as well 
+
         let allvvs: {name: string, vtype: TypeSignature}[] = [];
         if (vv !== undefined) {
             allvvs.push(vv);
