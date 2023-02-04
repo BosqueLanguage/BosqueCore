@@ -7,23 +7,23 @@
 
 # The Bosque Project
 
-Bosque is an open-source project developing a new Programming Language and Development Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the features that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.
+Bosque is an open-source project focused on developing a new Programming Language and Development Tooling Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the ideas that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.
 
 Features in the **_Bosque Programming Language_** include typed strings and paths [TODO], block-syntax [TODO], functor-libs [TODO], dynamic operator multi-dispatch [TODO], ref methods [TODO], explicit-flow typing/binding [TODO], typedecls & datatypes [TODO], task-flows [TODO], and extensive logical assertion integration [TODO]. Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
 
 The **_Bosque Development Stack_** provides state of the art observability and debugging features (including time-travel debugging) [TODO], a novel symbolic testing framework [TODO], and, with the introduction of APITypes [TODO], a new way to version and validate package behaviors. These features provide a developers with the ability to generate tests for an API before a line of code is even written, test against imported code (or external services) using auto-generated mocks and, check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs! The testing tools allow for deep analysis of code flows in an appliction and can find compact debuggable inputs that trigger and error or failing test *or* prove that there is no small input that will trigger the error! For any bugs that do make it into the wild the ability to record and then locally replay the exact error accelerates their diagnosis resolution as well as makes _non-repro_ and _intermitent_ issues a thing of the past. 
 
-The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector [TODO] that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using slower but stable log time persistent structures [TODO]). Depending on the application Bosque supports transpilation/compilation to JavaScript [TODO], Morphir [TODO], and an AOT compiler [TODO]. The semantics of the language also open interesting compiler work on eliminating cache conflicts, trusted computation offloading, and compilation for accelerator (e.g. FPGA or dataflow) architectures.
+The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector [TODO] that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using stable log-time persistent structures [TODO]). Depending on the application Bosque supports transpilation/compilation to JavaScript/Node.js [TODO], Morphir [TODO], and an AOT compiler [TODO]. The semantics of the language also open interesting compiler work on eliminating cache conflicts, trusted computation offloading, and compilation for accelerator (e.g. FPGA or dataflow) architectures.
 
 # Documentation
 
-Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and [Tooling](#Tooling) sections. Complete documenation for the language and standard libraries are on the [Language](docs/language/overview.md) and [Libraries](docs/libraries/overview.md) doc pages respectively.
+Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and Tooling [TODO] sections. Complete documenation for the language and standard libraries are on the [Language](docs/language/overview.md) and [Libraries](docs/libraries/overview.md) doc pages respectively.
 
 Detailed Documentation, Tutorials, and Technical Information:
 * [Language Docs](docs/language/overview.md)
 * [Library Docs](docs/libraries/overview.md)
 * Runtime and GC Docs -- !TODO!
-* Checkers -- !TODO!
+* Tooling -- !TODO!
 * [Technical Papers](docs/papers/publist.md)
 
 ## Code Snippets
@@ -247,8 +247,8 @@ return Task::run<Scratch::Write>("/hello.txt", msg);
 
 In order to install/build the project the following are needed:
 
-- 64 bit Operating System
-- The LTS version of [node.js](https://nodejs.org/en/download/) ( According to your OS )
+- 64 bit Operating System (Ubuntu or MacOS)
+- Version 16+ of [node.js](https://nodejs.org/en/download/) ( According to your OS )
 - Typescript (install with: `npm i typescript -g`)
 - Git and [git-lfs](https://git-lfs.github.com/) setup
 
