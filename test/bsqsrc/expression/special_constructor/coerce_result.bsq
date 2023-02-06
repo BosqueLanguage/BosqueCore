@@ -1,0 +1,17 @@
+namespace Main;
+
+function process(x: Nat): Result<Nat | Bool, None> {
+    if(x === 0n) {
+        return err(none);
+    }
+    elif(x === 1n) {
+        return ok(true);
+    }
+    else {
+        return ok(x);
+    }
+} 
+
+export function main(x: Nat): Result<Nat | Bool, None> {
+    return process(x);
+}

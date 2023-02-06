@@ -242,7 +242,7 @@ class ResolvedOkEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedOkEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
         return new ResolvedOkEntityAtomType(name, object, typeT, typeE);
     }
 
@@ -262,7 +262,7 @@ class ResolvedErrEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedErrEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + "," + typeE.typeID + ">";
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
         return new ResolvedErrEntityAtomType(name, object, typeT, typeE);
     }
 
@@ -300,7 +300,7 @@ class ResolvedMapEntryEntityAtomType extends ResolvedConstructableEntityAtomType
     }
 
     static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntryEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeK.typeID + "," + typeV.typeID + ">";
+        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeK.typeID + ", " + typeV.typeID + ">";
         return new ResolvedMapEntryEntityAtomType(name, object, typeK, typeV);
     }
 
@@ -416,7 +416,7 @@ class ResolvedMapEntityAtomType extends ResolvedPrimitiveCollectionEntityAtomTyp
     }
 
     static create(object: EntityTypeDecl, typeK: ResolvedType, typeV: ResolvedType): ResolvedMapEntityAtomType {
-        let name = "Map<" + typeK.typeID + "," + typeV.typeID + ">";
+        let name = "Map<" + typeK.typeID + ", " + typeV.typeID + ">";
         return new ResolvedMapEntityAtomType(name, object, typeK, typeV);
     }
 
@@ -652,7 +652,7 @@ class ResolvedType {
         }
         else {
             const atoms = types.sort((a, b) => a.typeID.localeCompare(b.typeID));
-            const name = atoms.map((arg) => arg.typeID).join(" | ");
+            const name = atoms.map((arg) => arg.typeID).join("|");
 
             return new ResolvedType(name, atoms);
         }

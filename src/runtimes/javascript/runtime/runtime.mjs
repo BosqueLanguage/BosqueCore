@@ -182,7 +182,7 @@ function setloglevel(level) {
 }
 
 function checkloglevel(level) {
-    return level === "fatal" || level === "error" || level === "warn" || level === "info";
+    return level === "fatal" || level === "error" || level === "warn" || level === "info"; //we are stuck at "info" so "debug" is off
 }
 
 function log(level, tag, fmt, ...args) {

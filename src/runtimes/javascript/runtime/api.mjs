@@ -38,7 +38,7 @@ function tryParseConcept(jv) {
 }
 
 function tryEmitConcept(nv) {
-    return [nv.tkey, ioMarshalMap.get(jv[nv.tkey]).emit(nv.value)];
+    return [nv.tkey, ioMarshalMap.get(nv.tkey).emit(nv.value)];
 }
 
 function tryParseUnion(jv) {
@@ -49,7 +49,7 @@ function tryParseUnion(jv) {
 }
 
 function tryEmitUnion(nv) {
-    return [nv.tkey, ioMarshalMap.get(jv[nv.tkey]).emit(nv.value)];
+    return [nv.tkey, ioMarshalMap.get(nv.tkey).emit(nv.value)];
 }
 
 function checkIsObjectWithKeys(obj, keyarray) {

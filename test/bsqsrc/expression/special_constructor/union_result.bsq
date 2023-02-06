@@ -1,0 +1,14 @@
+namespace Main;
+
+function process(x: Nat): Nat? {
+    if(x === 0n) {
+        return none;
+    }
+    else {
+        return x;
+    }
+} 
+
+export function main(x: Nat): Nat? {
+    return process(x);
+}
