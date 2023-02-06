@@ -2,43 +2,14 @@
 
 const expect = require("chai").expect;
 
-const path = require("path");
-const fsextra = require("fs-extra");
-const { json } = require("stream/consumers");
-const execFileSync = require("child_process").execFileSync;
-
-const proj_root = path.join(__dirname, "../");
-const genbin = path.join(proj_root, "bin/runtimes/javascript/cmd.js")
-
-function generatePaths(testopt) {
-    return {
-        srcfile: path.join(proj_root, "test/bsqsrc", ...testopt) + ".bsq",
-        dstdir: path.join(proj_root, "build/test", ...testopt),
-        jsmain: path.join(proj_root, "build/test", ...testopt, "_main_.mjs")
-    }
-}
-
-function codegen(srcdir, dstdir) {
-    fsextra.ensureDirSync(dstdir);
-    execFileSync(`node`, [genbin, "--outdir", dstdir, srcdir]);
-}
-
-function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]).toString();
-    if(rr.startsWith("error -- ")) {
-        return rr;
-    }
-    else {
-        return JSON.parse(rr);
-    }
-}
+const {generatePaths, codegen, invokeExecutionOn, cleanTest} = require("./codeproc.js");
 
 describe('Readme add2', function () {
     const testopt = ["readme", "add"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('add2(3n, 4n)', function () {
         it('expected 7', function () {
@@ -57,7 +28,7 @@ describe('Readme allPositive', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('allPositive([1, 3, 4])', function () {
         it('expected true', function () {
@@ -82,7 +53,7 @@ describe('Readme sign', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('sign(5)', function () {
         it('expected 1', function () {
@@ -106,7 +77,7 @@ describe('Readme nominal generic', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('GenericGreeting', function () {
         it('expected ["hello world", "hello world"]', function () {
@@ -120,7 +91,7 @@ describe('Readme nominal named', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('NamedGreeting', function () {
         it('expected "hello bob"', function () {
@@ -139,7 +110,7 @@ describe('Readme percentage', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('Percentage 30%', function () {
         it('expected 30', function () {
@@ -158,7 +129,7 @@ describe('Readme temp', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('isFrezing 5', function () {
         it('expected false', function () {
@@ -177,7 +148,7 @@ describe('Ref Methods', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('ctrs', function () {
         it('expected [0, 1]', function () {
@@ -191,7 +162,7 @@ describe('Binders & Flow (flowit)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('flowit(none)', function () {
         it('expected 0', function () {
@@ -215,7 +186,7 @@ describe('Binders & Flow (restrict)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('restrict(none)', function () {
         it('expected 0', function () {
@@ -239,7 +210,7 @@ describe('Datatype (evaluate)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('evaluate (and)', function () {
         it('expected false', function () {
@@ -268,7 +239,7 @@ describe('Union (print)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('print (bool)', function () {
         it('expected "b"', function () {
@@ -292,7 +263,7 @@ describe('Validator (zipcode)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('accepts (98052)', function () {
         it('expected true', function () {
@@ -312,7 +283,7 @@ describe('StringOf (csspt)', function () {
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
     before(function () { codegen(srcfile, dstdir); });
-    after(function () { fsextra.removeSync(dstdir); });
+    after(function () { cleanTest(dstdir); });
 
     describe('is3pt (3pt)', function () {
         it('expected true', function () {

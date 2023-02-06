@@ -88,7 +88,7 @@ class TIRIDGenerator {
             return "";
         }
 
-        return `<${terms.join(",")}>`;
+        return `<${terms.join(", ")}>`;
     }
 
     static generatePCodeBinds(pcodes: TIRPCodeKey[]): string {
@@ -96,7 +96,7 @@ class TIRIDGenerator {
             return "";
         }
 
-        return `[${pcodes.join(",")}]`;
+        return `[${pcodes.join(", ")}]`;
     }
 
     static generatePCodeIDInfoForLambda(srcfile: string, sinfo: SourceInfo, lambdaid: number, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]): [TIRPCodeKey, TIRInvokeKey] {
@@ -2133,7 +2133,7 @@ class TypeChecker {
         }
         else if(rtype instanceof ResolvedOkEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
-            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeE));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
             
@@ -2141,7 +2141,7 @@ class TypeChecker {
         }
         else if(rtype instanceof ResolvedErrEntityAtomType) {
             const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
-            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeE));
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
 
@@ -3721,10 +3721,10 @@ class TypeChecker {
                 return this.emitCoerceIfNeeded(consenv, exp.sinfo, desiredtype as ResolvedType);
             }
             else if(exp.rop === "err") {
-                const okenv = this.checkExpression(env, exp.arg, E);
-                const tcast = this.emitCoerceIfNeeded(okenv, exp.sinfo, E);
+                const errenv = this.checkExpression(env, exp.arg, E);
+                const tcast = this.emitCoerceIfNeeded(errenv, exp.sinfo, E);
 
-                const rerrconstype = this.getOkType(T, E);
+                const rerrconstype = this.getErrType(T, E);
                 const tirerrconstype = this.toTIRTypeKey(rerrconstype);
 
                 const consenv = tcast.setResultExpressionInfo(new TIRResultErrConstructorExpression(exp.sinfo, tirerrconstype, tcast.expressionResult), rerrconstype);
