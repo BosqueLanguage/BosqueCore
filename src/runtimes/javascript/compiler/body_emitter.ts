@@ -150,6 +150,7 @@ class BodyEmitter {
     private emitLiteralNothingExpression(exp: TIRLiteralNothingExpression): string {
         return "undefined";
     }
+    
     private emitLiteralBoolExpression(exp: TIRLiteralBoolExpression): string {
         return exp.value ? "true" : "false";
     }

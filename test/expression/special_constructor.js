@@ -65,3 +65,46 @@ describe('Result coerce', function () {
         });
     });
 });
+
+describe('Option direct', function () {
+    const testopt = ["expression/special_constructor", "direct_option"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { cleanTest(dstdir); });
+
+    describe('process(0n)', function () {
+        it('expected nothing', function () {
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(["Nothing", null]);
+        });
+    });
+    describe('process(5n)', function () {
+        it('expected something(5n)', function () {
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(["Something<Nat>", 5]);
+        });
+    });
+});
+
+describe('Option coerce', function () {
+    const testopt = ["expression/special_constructor", "coerce_option"];
+    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
+
+    before(function () { codegen(srcfile, dstdir); });
+    after(function () { cleanTest(dstdir); });
+
+    describe('process(0n)', function () {
+        it('expected nothing', function () {
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(["Nothing", null]);
+        });
+    });
+    describe('process(1n)', function () {
+        it('expected something(true)', function () {
+            expect(invokeExecutionOn(jsmain, 1)).to.eql(["Something<Bool|Nat>", ["Bool", true]]);
+        });
+    });
+    describe('process(5n)', function () {
+        it('expected ok(5n)', function () {
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(["Something<Bool|Nat>", ["Nat", 5]]);
+        });
+    });
+});
