@@ -1,0 +1,14 @@
+namespace Main;
+
+function process(x: Nat): Option<Nat> {
+    if(x === 0n) {
+        return nothing;
+    }
+    else {
+        return something(x);
+    }
+} 
+
+export function main(x: Nat): Option<Nat> {
+    return process(x);
+}
