@@ -1,4 +1,4 @@
-import { extractLiteralStringValue } from "../../../frontend/build_decls";
+import { extractLiteralASCIIStringValue, extractLiteralStringValue } from "../../../frontend/build_decls";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessScratchIndexExpression, TIRAccessScratchSingleValueExpression, TIRAccessVariableExpression, TIRAsEqualToLiteralExpression, TIRAsErrSpecialExpression, TIRAsNoneSpecialExpression, TIRAsNotEqualToLiteralExpression, TIRAsNothingSpecialExpression, TIRAsNotSubTypeExpression, TIRAsNotTypeExpression, TIRAsOkSpecialExpression, TIRAssertCheckStatement, TIRAsSomeSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsEqualToLiteralExpression, TIRIsErrSpecialExpression, TIRIsNoneSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsNothingSpecialExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsOkSpecialExpression, TIRIsSomeSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRScratchSCStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRStoreToScratch, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRefAssignFromScratch, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarDeclareAndAssignStatement, TIRVarDeclareStatement, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRVarRefAssignFromScratch } from "../../../frontend/tree_ir/tir_body";
 
@@ -172,7 +172,7 @@ class BodyEmitter {
     }
 
     private emitLiteralRationalExpression(exp: TIRLiteralRationalExpression): string {
-        return `new Fraction("${exp.value.slice(0, exp.value.length - 1)}")`;
+        return `new $Runtime.Fraction("${exp.value.slice(0, exp.value.length - 1)}")`;
     }
 
     private emitLiteralFloatPointExpression(exp: TIRLiteralFloatPointExpression): string {
@@ -181,7 +181,7 @@ class BodyEmitter {
         }
         else {
             assert(exp.etype === "Decimal", "Unknown type TIRLiteralFloatPointExpression");
-            return `new Decimal(${exp.value.slice(0, exp.value.length - 1)})`;
+            return `new $Runtime.Decimal(${exp.value.slice(0, exp.value.length - 1)})`;
         }
     }
 
@@ -194,7 +194,7 @@ class BodyEmitter {
     }
 
     private emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
     }
     
     private emitLiteralTypedStringExpression(exp: TIRLiteralTypedStringExpression): string {
@@ -202,7 +202,7 @@ class BodyEmitter {
     }
 
     private emitLiteralASCIITypedStringExpression(exp: TIRLiteralASCIITypedStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
     }
     
     private emitLiteralTemplateStringExpression(exp: TIRLiteralTemplateStringExpression): string {
@@ -210,7 +210,7 @@ class BodyEmitter {
     }
 
     private emitLiteralASCIITemplateStringExpression(exp: TIRLiteralASCIITemplateStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
     }
     
     private emitLiteralTypedPrimitiveDirectExpression(exp: TIRLiteralTypedPrimitiveDirectExpression, toplevel: boolean): string {

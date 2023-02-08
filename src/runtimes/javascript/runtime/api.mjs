@@ -12,10 +12,11 @@ ioMarshalMap.set("Nat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.M
 ioMarshalMap.set("Int", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("BigNat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("BigInt", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
-ioMarshalMap.set("Rational", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("Float", {parse: (jv) => jv, emit: (nv) => nv});
-ioMarshalMap.set("Rational", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("Decimal", {parse: (jv) => new $Runtime.Decimal(jv), emit: (nv) => nv.toString()});
+ioMarshalMap.set("Rational", {parse: (jv) => new $Runtime.Fraction(jv), emit: (nv) => nv.toFraction()});
 ioMarshalMap.set("String", {parse: (jv) => jv, emit: (nv) => nv});
+ioMarshalMap.set("ASCIIString", {parse: (jv) => jv, emit: (nv) => nv});
 ioMarshalMap.set("DateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("UTCDateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("PlainDate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});

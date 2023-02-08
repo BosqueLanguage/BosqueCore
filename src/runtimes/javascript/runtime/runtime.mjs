@@ -3,6 +3,8 @@
 import * as assert from "assert";
 
 import { JS, NFA, Words } from "refa";
+import {Decimal} from "decimal.js";
+import Fraction from "fraction.js";
 
 function UnionValue(tkey, value) {
     this.tkey = tkey;
@@ -73,7 +75,7 @@ function safeMathUnderflow(val, zero) {
 
 function safeMathDiv(op, chk, v1, v2) {
     raiseRuntimeErrorIf(!chk(v2), `division by 0`);
-    return val;
+    return op(v1, v2);
 }
 
 function BSQEnvironment(env, ...args) {
@@ -229,5 +231,6 @@ export {
     safeMath, safeMathDiv, safeMathUnderflow,
     acceptsString,
     BSQEnvironment,
-    setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
+    setloglevel, checkloglevel, log, pushlogprefix, poplogprefix,
+    Decimal, Fraction
 };
