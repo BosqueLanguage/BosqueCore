@@ -1,0 +1,14 @@
+namespace Main;
+
+concept Foo {
+    const c1: Int = 1i;
+}
+
+entity Bar provides Foo {
+    const c2: Int = 3i + Bar::c1;
+    const c3: Int = Foo::c1;
+}
+
+export function main(): [Int, Int, Int, Int] {
+    return [Foo::c1, Bar::c1, Bar::c2, Bar::c3];
+}
