@@ -595,9 +595,9 @@ class AssemblyEmitter {
 
         const emitops = ttype.allfields.map((ff) => {
             const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
-            return `ioMarshalMap.get("${fdecl.declaredType}").emit(nv["${fdecl.name}"])`;
+            return `${fdecl.name}: ioMarshalMap.get("${fdecl.declaredType}").emit(nv["${fdecl.name}"])`;
         });
-        const remit = `{ ${emitops.join(", ")} }`;
+        const remit = `{ return {${emitops.join(", ")}}; }`;
 
         const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), "[API TYPE PARSING]");
         if (ttype.apivalidates.length === 0) {

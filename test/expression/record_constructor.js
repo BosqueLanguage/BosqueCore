@@ -56,7 +56,6 @@ describe('Nested record', function () {
     });
 });
 
-
 describe('Infer record', function () {
     const testopt = ["expression/record_constructor", "record_infer"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);

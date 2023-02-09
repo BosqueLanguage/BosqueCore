@@ -148,6 +148,79 @@ function foo(): {f: Int, g: Boolean?} {
 ```
 
 ## Entity Constructors
+Object-oriented programming in Bosque is centered around _Concepts_ and _Entities_ (see [Types](types.md)) which roughly correspond to objects and abstract classes/interfaces in other languages. These types can be defined explicitly using `entity` or `concept` declarations and are also implicitly created via `typedecl` or `datatype` declarations. Examples of simple OO construction are:
+```none
+entity Foo {
+    field f: Int;
+}
+Foo{3i} //constructs a Foo where field f has value 3i
+
+concept Bar {
+    field g: Int;
+}
+entity Baz provides Bar {
+    field h: Nat;
+}
+Baz{3i, 4n} //constructs a Baz where field g has value 3i and field h has value 4n
+
+concept Named {
+    field name: String;
+}
+entity Qux provides Named, Bar {
+}
+Qux{"bob", 3i} //constructs a Qux where field name has value "bob" and field g has value 3i
+```
+
+Similarly object-oriented types can be defined as `typedecls` or `datatypes` and constructed using the same syntax. For example:
+```none
+typedecl Fahrenheit = Int;
+Fahrenheit{32i} //constructs a Fahrenheit value for freezing
+
+typedecl SystemID = /[A-Z]{3}-[0-9]+/;
+typedecl PartID = StringOf<SystemID>;
+
+PartID{"X-52"}    //fails the invariant on the string
+PartID{"ABC-123"} //constructs a PartID value with the value ABC-123
+
+datatype BoolOp using {
+    line: Nat
+} of
+LConst { val: Bool }
+| NotOp { arg: BoolOp }
+| AndOp { larg: BoolOp, rarg: BoolOp }
+| OrOp { larg: BoolOp, rarg: BoolOp }
+;
+
+NotOp{5n LConst{1n, false}} //constructs a NotOp value
+```
+
+In all cases they support the use of _data invariants_ of various types (mostly using the `invariant` [member](types.md)). The invariants are checked on construction and result in an error when violated.
+```none
+concept Bar {
+    field g: Int;
+
+    invariant $g > 0i;
+}
+concept Named {
+    field name: String;
+
+    invariant $name !== "";
+}
+entity Qux provides Named, Bar {
+    invariant $g < $name.length();
+}
+Qux{"", 3i} //fails invariant $name !== ""
+Qux{"bob", 0i} //fails invariant $g > 0
+Qux{"bob", 4i} //fails invariant $g < $name.length()
+Qux{"bob", 1i} //ok
+
+typedecl Percentage = Nat & {
+    invariant $value <= 100n;
+}
+Percentage{101n} //fails invariant $value <= 100n
+Percentage{99n}  //ok
+``` 
+
 ## Special Constructors
 
 # Bosque Expression Components

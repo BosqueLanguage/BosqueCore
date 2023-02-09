@@ -1,0 +1,17 @@
+namespace Main;
+
+
+concept Bar {
+    field g: Int;
+}
+
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar, APIType {
+}
+
+export function main(): Qux{
+    return Qux{"bob", 3i};
+}
