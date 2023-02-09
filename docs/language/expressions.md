@@ -113,6 +113,22 @@ Bar::c3 //1i and a literal expression as well (transitively)
 ```
 
 ## Tuple Constructors
+Bosque tuples are constructed using a basic syntax of `[e1, e2, ..., em]` where the `ei` are expressions. The type of the tuple is implied by the types of the `ei` expressions. Tuples cannot be subtypes of each other (see [tuple types](types.md)). Instead the [type inference system](types.md) will coerce the individual `ei` expressions to the needed types before constructing the tuple if it can.
+
+Basic Tuples:
+```none
+[] //empty tuple
+[1i, 2i, 3i] //tuple of 3 Ints
+[1i, [true]] //tuple of Int and another tuple
+```
+
+Tuples with Inference:
+```none
+function foo(): [Int, Boolean?] {
+    return [3, true]; //expression types are Int and Boolean but inference converts to Int and Boolean?
+}
+```
+
 ## Record Constructors
 ## Entity Constructors
 ## Special Constructors
