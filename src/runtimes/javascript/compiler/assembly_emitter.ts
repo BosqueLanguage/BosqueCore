@@ -779,9 +779,10 @@ class AssemblyEmitter {
     }
 
     private processAssembly() {
+        const allns = [...this.assembly.namespaceMap.keys()].sort();
         this.assembly.namespaceMap.forEach((nsd, ns) => {
             const nsemit = new NamespaceEmitter(this.assembly, ns, nsd);
-            const tirns = nsemit.emitNamespace(this.nsdeps.get(ns) as string[]);
+            const tirns = nsemit.emitNamespace(allns); //(this.nsdeps.get(ns) as string[]);
 
             this.namespacedecls.set(ns, tirns);
         });

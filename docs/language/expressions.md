@@ -179,8 +179,9 @@ Fahrenheit{32i} //constructs a Fahrenheit value for freezing
 typedecl SystemID = /[A-Z]{3}-[0-9]+/;
 typedecl PartID = StringOf<SystemID>;
 
-PartID{"X-52"}    //fails the invariant on the string
-PartID{"ABC-123"} //constructs a PartID value with the value ABC-123
+"X-52"_PartID    //fails the invariant on the string
+"ABC-123"_PartID //constructs a literal PartID value with the value ABC-123
+PartID{SystemID::from("ABC-123")} //constructs a PartID value with the value ABC-123
 
 datatype BoolOp using {
     line: Nat

@@ -1,0 +1,7 @@
+namespace Main;
+
+typedecl Fahrenheit = Int;
+
+export function main(): Fahrenheit {
+    return Fahrenheit{32i};
+}
