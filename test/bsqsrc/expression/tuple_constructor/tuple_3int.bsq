@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(x: Int): [Int, Int, Int] {
+    return [1i, x, 3i];
+}

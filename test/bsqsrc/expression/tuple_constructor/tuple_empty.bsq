@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(): [] {
+    return [];
+}
