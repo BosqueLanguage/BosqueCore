@@ -1,0 +1,23 @@
+namespace Main;
+
+concept Bar {
+    field g: Int;
+
+    invariant $g > 0i;
+}
+
+concept Named {
+    field name: String;
+
+    invariant $name !== "";
+}
+
+entity Qux provides Named, Bar, APIType {
+    field h: Int;
+
+    invariant $g < $h;
+}
+
+export function main(name: String, gv: Int, hv: Int): Qux {
+    return Qux{name, gv, hv};
+}

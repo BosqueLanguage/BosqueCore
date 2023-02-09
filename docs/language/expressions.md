@@ -208,12 +208,14 @@ concept Named {
     invariant $name !== "";
 }
 entity Qux provides Named, Bar {
-    invariant $g < $name.length();
+    field h: Int;
+
+    invariant $g < $h;
 }
-Qux{"", 3i} //fails invariant $name !== ""
-Qux{"bob", 0i} //fails invariant $g > 0
-Qux{"bob", 4i} //fails invariant $g < $name.length()
-Qux{"bob", 1i} //ok
+Qux{"", 3i, 10i} //fails invariant $name !== ""
+Qux{"bob", 0i, 10i} //fails invariant $g > 0
+Qux{"bob", 4i, 2i} //fails invariant $g < $h
+Qux{"bob", 4i, 10i} //ok
 
 typedecl Percentage = Nat & {
     invariant $value <= 100n;
