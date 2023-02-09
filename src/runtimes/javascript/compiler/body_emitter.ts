@@ -236,7 +236,12 @@ class BodyEmitter {
     }
 
     private emitAccessNamespaceConstantExpression(exp: TIRAccessNamespaceConstantExpression): string {
-        return `${exp.ns}.${exp.cname}()`;
+        if(exp.ns === this.m_ns) {
+            return `${exp.cname}()`;
+        }
+        else {
+            return `${exp.ns}.${exp.cname}()`;
+        }
     }
 
     private emitAccessConstMemberFieldExpression(exp: TIRAccessConstMemberFieldExpression): string {
