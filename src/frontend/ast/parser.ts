@@ -1425,7 +1425,7 @@ class Parser {
             this.setRecover(this.scanMatchingParens(SYM_lbrace, SYM_rbrace));
 
             let pnames = new Set<string>();
-            entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_lbrace, SYM_coma, () => {
+            entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 this.ensureToken(TokenStrings.Identifier, "record type entry property name");
 
                 const name = this.consumeTokenAndGetValue();

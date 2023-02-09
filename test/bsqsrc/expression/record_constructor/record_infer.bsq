@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(x: Int): {f: Int, g: Bool?} {
+    if(x == 0i) {
+        return {f=x, g=none};
+    }
+    else {
+        return {f=x, g=true};
+    }
+}

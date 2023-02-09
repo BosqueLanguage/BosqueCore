@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(x: Int): {f: Int, g: {h: Bool}} {
+    return {f=x, g={h=true}};
+}
