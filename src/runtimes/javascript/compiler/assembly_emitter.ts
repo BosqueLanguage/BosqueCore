@@ -700,7 +700,7 @@ class AssemblyEmitter {
         const parse = `{ if(!checkIsObjectWithKeys(jv, [${props}])) {raiseRuntimeError("Failed in Record parse " + JSON.stringify(jv))} else { return { ${parseops.join(", ")} }; } }`
 
         const emitops = ttype.entries.map((ee) => `${ee.pname}: ioMarshalMap.get("${ee.ptype}").emit(nv["${ee.pname}"])`);
-        const emit = `{ ${emitops.join(", ")} }`;
+        const emit = `{return { ${emitops.join(", ")} }; }`;
 
         return { parse: parse, emit: emit };
     }

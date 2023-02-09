@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(x: Int): {f: Int, g: Int, h: Int} {
+    return {f=1i, g=x, h=3i};
+}

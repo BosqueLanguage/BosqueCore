@@ -312,7 +312,7 @@ class BodyEmitter {
 
     private emitConstructorRecordExpression(exp: TIRConstructorRecordExpression): string {
         const tt = this.m_assembly.getTypeAs<TIRRecordType>(exp.oftype);
-        const entries = exp.args.map((arg, ii) => `${tt.entries[ii].pname}: ${this.emitExpression(arg, true)})`);
+        const entries = exp.args.map((arg, ii) => `${tt.entries[ii].pname}: ${this.emitExpression(arg, true)}`);
         return `{${entries.join(", ")}}`;
     }
 

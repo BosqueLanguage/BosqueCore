@@ -15,8 +15,9 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     8. Record Constructors
     9. Entity Constructors
     10. Special Constructors
-    11. Namespace and Member Functions
-    12. Namespace Operators
+    11. Collection Constructors
+    12. Namespace and Member Functions
+    13. Namespace Operators
 - Bosque Expression Components
     1. ITests
     2. Arguments
@@ -122,7 +123,7 @@ Basic Tuples:
 [1i, [true]] //tuple of Int and another tuple
 ```
 
-Tuples with Inference:
+Tuple with Inference:
 ```none
 function foo(): [Int, Boolean?] {
     return [3, true]; //expression types are Int and Boolean but inference converts to Int and Boolean?
@@ -130,6 +131,22 @@ function foo(): [Int, Boolean?] {
 ```
 
 ## Record Constructors
+Bosque records are constructed using a basic syntax of `{p1=e1, p2=e2, ..., pm=em}` where the `pi=ei` are property/expression bindings. The type of the record is implied by the types of the `pi=ei` expressions. Records cannot be subtypes of each other (see [record types](types.md)). Instead the [type inference system](types.md) will coerce the individual `ei` expressions to the needed types before constructing the record if it can.
+
+Basic Records:
+```none
+{} //empty record
+{f=1i, g=2i} //record of 2 Ints (f and g)
+{f=1i, g={h=true}} //record of Int and another record
+```
+
+Record with Inference:
+```none
+function foo(): {f: Int, g: Boolean?} {
+    return {f=3, g=true}; //expression types are Int and Boolean but inference converts to Int and Boolean?
+}
+```
+
 ## Entity Constructors
 ## Special Constructors
 
