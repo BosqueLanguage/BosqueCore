@@ -1958,7 +1958,7 @@ class TypeChecker {
             return declinvs;
         }
 
-        if (!(ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType)) {
+        if (ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType) {
             const ccdecl = ttype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
             const oftype = ResolvedType.createSingle(ccdecl.valuetype);
 
@@ -5302,7 +5302,7 @@ class TypeChecker {
             return [env, []];
         }
         else {
-            const astmt = new TIRAssertCheckStatement(stmt.sinfo, test.expressionResult, `Assertion failed -- ${this.m_file} : ${stmt.sinfo}`);
+            const astmt = new TIRAssertCheckStatement(stmt.sinfo, test.expressionResult, `Assertion failed -- ${this.m_file} : ${stmt.sinfo.line}`);
             return [env, [astmt]];
         }
     }

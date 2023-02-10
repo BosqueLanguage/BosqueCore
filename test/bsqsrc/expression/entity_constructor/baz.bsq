@@ -1,0 +1,13 @@
+namespace Main;
+
+concept Bar {
+    field g: Int;
+}
+
+entity Baz provides Bar, APIType {
+    field h: Nat;
+}
+
+export function main(): Baz{
+    return Baz{3i, 4n};
+}

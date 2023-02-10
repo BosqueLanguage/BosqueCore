@@ -1,0 +1,9 @@
+namespace Main;
+
+entity Foo provides APIType {
+    field f: Int;
+}
+
+export function main(): Foo {
+    return Foo{3i};
+}

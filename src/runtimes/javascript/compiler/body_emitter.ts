@@ -1489,11 +1489,11 @@ class BodyEmitter {
     }
 
     private emitAbortStatement(stmt: TIRAbortStatement): string {
-        return `$Runtime.raiseUserAssert("${stmt.msg}" + "-- ${this.m_file}@${stmt.sinfo.line}");`;
+        return `$Runtime.raiseUserAssert("${stmt.msg}");`;
     }
 
     private emitAssertCheckStatement(stmt: TIRAssertCheckStatement): string {
-        return `$Runtime.raiseUserAssertIf(!${this.emitExpression(stmt.cond, true)}, "${stmt.msg}" + "-- ${this.m_file}@${stmt.sinfo.line}");`;
+        return `$Runtime.raiseUserAssertIf(!${this.emitExpression(stmt.cond, true)}, "${stmt.msg}");`;
     }
 
     private emitDebugStatement(stmt: TIRDebugStatement): string {

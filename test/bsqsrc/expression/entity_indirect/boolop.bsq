@@ -1,0 +1,14 @@
+namespace Main;
+
+datatype BoolOp provides APIType using {
+    line: Nat
+} of
+LConst { val: Bool }
+| NotOp { arg: BoolOp }
+| AndOp { larg: BoolOp, rarg: BoolOp }
+| OrOp { larg: BoolOp, rarg: BoolOp }
+;
+
+export function main(): BoolOp {
+    return NotOp{5n, LConst{1n, false}};
+}
