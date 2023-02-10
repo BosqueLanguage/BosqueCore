@@ -263,8 +263,31 @@ Map<Int, String>{1i => "one", 2i => "two"} //constructs a Map<Int, String> with 
 ```
 
 ## Namespace and Member Functions
+Bosque supports simple functions defined at a namespace scope or within a type scope. Namespace functions can be called with or without a namespace qualifier (for functions defined in ths same namespace where they are use). Functions defined in a type scope must always be called with the type qualifier (even within the same type scope).
+
+```none
+namespace Main;
+
+function f(x: Int, y: Int): Int {
+    return x + y;
+}
+
+f(1i, 2i) //returns 3i
+Main::f(1i, 2i) //returns 3i
+
+entity Foo {
+    function f(x: Int, y: Int): Int {
+        return x - y;
+    }
+}
+
+Foo::f(1i, 2i) //returns -1i
+```
 
 ## Namespace Operators
+[TODO] Operators allow multiple dynamic dispatch functions to be defined. They are currently partially implemented (see issue #13). 
+
+The declaration of an operator is a virtual or abstract definition which may have Concept or Union typed arguments. Each dispatch implementation must have only unique (non-entity and non-union) typed arguments and must be defined in the same namespace as the operator (this prevents resolution ambiguity and accidental overloading). Arguments may also use literal value dispatch on one argument in the operator. If these are used then each dispatch implementation must provide a literal value for this argument.
 
 # Bosque Expression Components
 

@@ -1,0 +1,20 @@
+namespace Main;
+
+function f(x: Int, y: Int): Int {
+    return x + y;
+}
+
+entity Foo {
+    function f(x: Int, y: Int): Int {
+        return x - y;
+    }
+}
+
+export function main(usetype: Bool): Int {
+    if(usetype) {
+        return Foo::f(1i, 2i);
+    }
+    else {
+        return Main::f(1i, 2i);
+    }
+}
