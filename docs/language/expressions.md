@@ -18,6 +18,17 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     11. Collection Constructors
     12. Namespace and Member Functions
     13. Namespace Operators
+    14. Logical And/Or 
+    15. Tuple Index Access
+    16. Record Property Access
+    17. Field Access
+    18. ITest Check
+    19. ITest As and Conversion
+    20. Method Call
+    21. Method Call with Ref
+    22. Method Call Virtual
+    23. Prefix Boolean Not
+    24. Prefix Negation
 - Bosque Expression Components
     1. ITests
     2. Arguments
@@ -289,7 +300,46 @@ Foo::f(1i, 2i) //returns -1i
 
 The declaration of an operator is a virtual or abstract definition which may have Concept or Union typed arguments. Each dispatch implementation must have only unique (non-entity and non-union) typed arguments and must be defined in the same namespace as the operator (this prevents resolution ambiguity and accidental overloading). Arguments may also use literal value dispatch on one argument in the operator. If these are used then each dispatch implementation must provide a literal value for this argument.
 
+## Logical And/Or 
+Bosque provides pure logical and/or as expressions of the form `/\(e1, ..., ek)` and `\/(e1, ..., ek)`. These evaluate all arguments *before* computing the logical result, e.g. they do not short circuit evaluation. 
+
+Examples include:
+```none
+/\(true) //error -- should not be empty or have single argument
+/\(true, 1i == 1i, 2i == 2i) //returns true
+/\(true, false) //returns false
+
+\/(true) //error -- should not be empty or have single argument
+\/(false, 1i == 1i, 2i == 3i) //returns true
+\/(false, 2i == 3i) //returns false
+```
+
+## Tuple Index Access
+Tuples are indexed using the syntax `e.i` where `i` is a literal integer value. 
+
+[TODO] Currently only expressions with a unique tuple type can be accessed. Adding virtual tuple access is an open issue and also impacts spread arguments.
+
+Examples of tuple access include:
+```none
+[1n, 2i].0 //returns 1n
+[1n, 2i].1 //returns 2i
+
+[1n, 2i].2 //error tuple has no index 2
+```
+
+## Record Property Access
+## Field Access
+## ITest Check
+## ITest As and Conversion
+## Method Call
+## Method Call with Ref
+## Method Call Virtual
+## Prefix Boolean Not
+## Prefix Negation
+
 # Bosque Expression Components
+
+## ITests
 
 # Bosque Task Expressions
 
