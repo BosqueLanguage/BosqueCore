@@ -3555,7 +3555,7 @@ class TypeChecker {
 
                 return env.setResultExpressionInfo(new TIRSomethingConstructorExpression(exp.sinfo, tiroftype, ecast.expressionResult), roftype);
             }
-            else if(oftype instanceof ResolvedMapEntityAtomType) {
+            else if(oftype instanceof ResolvedMapEntryEntityAtomType) {
                 const tirktype = this.toTIRTypeKey(oftype.typeK);
                 const tirvtype = this.toTIRTypeKey(oftype.typeV);
 

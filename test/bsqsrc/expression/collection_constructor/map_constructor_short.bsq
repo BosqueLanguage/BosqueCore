@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(error: Bool): Map<Int, String> {
+    if(error) {
+        return Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{1i, "two"}};
+    }
+    else {
+        return Map<Int, String>{1i => "one", 2i => "two"};
+    }
+}

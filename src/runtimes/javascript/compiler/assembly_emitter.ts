@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
@@ -529,6 +529,13 @@ class AssemblyEmitter {
 
     private m_subtypeCache: Map<TIRTypeKey, Map<TIRTypeKey, boolean>> = new Map<TIRTypeKey, Map<TIRTypeKey, boolean>>();
     
+    typeEncodedAsUnion(tt: TIRTypeKey): boolean {
+        assert(this.assembly.typeMap.has(tt), `missing type name entry ${tt}`);
+
+        const ttype = this.assembly.typeMap.get(tt) as TIRType;
+        return (ttype instanceof TIRConceptType) || (ttype instanceof TIRUnionType);
+    }
+
     private isSubtype(t: TIRTypeKey, oftype: TIRTypeKey): boolean {
         if(!this.m_subtypeCache.has(oftype)) {
             this.m_subtypeCache.set(oftype, new Map<TIRTypeKey, boolean>());
@@ -653,6 +660,13 @@ class AssemblyEmitter {
         return { parse: `ioMarshalMap.get("${ttype.typeT}").parse(jv)`, emit: `ioMarshalMap.get("${ttype.typeT}").emit(nv)` };
     }
 
+    private emitTIRMapEntryEntityType_ParseEmit(ttype: TIRMapEntryEntityType): { parse: string, emit: string } {
+        const parse = `{ if(!Array.isArray(jv) || jv.length !== 2) {raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(jv))} else { return [ioMarshalMap.get("${ttype.typeK}").parse(jv[0]), ioMarshalMap.get("${ttype.typeV}").parse(jv[1])] } }`;
+        const emit = `[ioMarshalMap.get("${ttype.typeK}").emit(nv[0]), ioMarshalMap.get("${ttype.typeV}").emit(nv[1])]`;
+
+        return { parse: parse, emit: emit };
+    }
+
     private emitTIRListEntityType_ParseEmit(ttype: TIRListEntityType): { parse: string, emit: string } {
         const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return $CoreLibs.$ListOps.create(...jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
         const emit = `nv.map((vv) => ioMarshalMap.get("${ttype.typeT}").emit(vv)).toArray()`;
@@ -673,7 +687,12 @@ class AssemblyEmitter {
     }
 
     private emitTIRMapEntityType_ParseEmit(ttype: TIRMapEntityType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in Map<K, V> parse " + JSON.stringify(jv))} else { return $CoreLibs.$MapOps.create(...jv.map((vv) => { if(!Array.isArray(vv) || vv.length !== 2) {raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(vv))} else { return [ioMarshalMap.get("${ttype.typeK}").parse(vv[0]), ioMarshalMap.get("${ttype.typeV}").parse(vv[1])] } })); } }`
+        
+        const cmpcall = this.typeEncodedAsUnion(ttype.typeK) ? `$CoreLibs.$KeyLessGeneral` : `($CoreLibs.$KeyLessOps.get("${ttype.typeK}"))`;
+        const emit = `nv.map((vv, kk) => [ioMarshalMap.get("${ttype.typeK}").emit(kk), ioMarshalMap.get("${ttype.typeV}").emit(vv)]).toArray().sort((a, b) => ${cmpcall}(a[0], b[0])).map((vv) => vv[1])`;
+
+        return {parse: parse, emit: emit};
     }
 
     private emitTIRConceptType_ParseEmit(ttype: TIRConceptType): { parse: string, emit: string } {
@@ -742,6 +761,9 @@ class AssemblyEmitter {
         }
         else if(ttype instanceof TIRSomethingEntityType) {
             return this.emitTIRSomethingEntityType_ParseEmit(ttype);
+        }
+        else if(ttype instanceof TIRMapEntryEntityType) {
+            return this.emitTIRMapEntryEntityType_ParseEmit(ttype);
         }
         else if (ttype instanceof TIRListEntityType) {
             return this.emitTIRListEntityType_ParseEmit(ttype);

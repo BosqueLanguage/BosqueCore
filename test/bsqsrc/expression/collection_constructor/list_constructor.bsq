@@ -1,0 +1,9 @@
+namespace Main;
+
+export function main(empty: Bool): List<Int> {
+    if(empty) {
+        return List<Int>{};
+    } else {
+        return List<Int>{1i, 2i, 3i};
+    }
+}
