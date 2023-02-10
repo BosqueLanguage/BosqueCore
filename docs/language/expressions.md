@@ -244,6 +244,28 @@ function baz(): Result<Int, String?> {
 }
 ```
 
+## Collection Constructors
+Bosque provides a range of standard collections, including `List<T>`, `Stack<T>`, `Queue<T>`, `Set<T>`, and `Map<K, V>` (more details are available in the collections docs).These collections can be constructed using syntax similar to the entity constructors (but generalized since they may have many elements). For example:
+```none
+List<Bool>{} //constructs an empty List<Bool>
+List<Int>{1i, 2i, 3i} //constructs a List<Int> with values 1i, 2i, 3i
+
+Map<Int, String>{} //constructs an empty Map<Int, String>
+Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}} //constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
+```
+
+Map (Set) constructors must have `KeyType` values as keys (see [types](types.md)) also do validity checking that there are no duplicate keys. Maps also provide a shorthand syntax for constructing `MapEntry` values:
+```none
+Map<[Int, Int], String>{} //Type error [Int, Int] is not a KeyType
+Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{1i, "two"}} //Error duplicate key values
+
+Map<Int, String>{1i => "one", 2i => "two"} //constructs a Map<Int, String> with entries 1i->"one" and 2i->"two"
+```
+
+## Namespace and Member Functions
+
+## Namespace Operators
+
 # Bosque Expression Components
 
 # Bosque Task Expressions

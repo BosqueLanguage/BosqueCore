@@ -17,11 +17,11 @@ The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on pred
 
 # Documentation
 
-Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and Tooling [TODO] sections. Complete documenation for the language and standard libraries are on the [Language](docs/language/overview.md) and [Libraries](docs/libraries/overview.md) doc pages respectively.
+Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and Tooling [TODO] sections. Complete documenation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively.
 
 Detailed Documentation, Tutorials, and Technical Information:
-* [Language Docs](docs/language/overview.md)
-* [Library Docs](docs/libraries/overview.md)
+* [Language Docs](docs/overview.md)
+* [Library Docs](docs/overview.md)
 * Runtime and GC Docs -- !TODO!
 * Tooling -- !TODO!
 * [Technical Papers](docs/papers/publist.md)
