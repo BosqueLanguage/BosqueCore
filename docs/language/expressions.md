@@ -305,10 +305,11 @@ Bosque provides pure logical and/or as expressions of the form `/\(e1, ..., ek)`
 
 Examples include:
 ```none
-/\(true) //returns true
+/\(true) //error -- should not be empty or have single argument
 /\(true, 1i == 1i, 2i == 2i) //returns true
 /\(true, false) //returns false
 
+\/(true) //error -- should not be empty or have single argument
 \/(false, 1i == 1i, 2i == 3i) //returns true
 \/(false, 2i == 3i) //returns false
 ```

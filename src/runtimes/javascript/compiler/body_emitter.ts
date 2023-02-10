@@ -381,12 +381,12 @@ class BodyEmitter {
     }
 
     private emitLogicActionAndExpression(exp: TIRLogicActionAndExpression, toplevel: boolean): string {
-       const lexp = exp.args.map((arg) => this.emitExpression(arg)).join(" && ");
+       const lexp = "[" + exp.args.map((arg) => this.emitExpression(arg)).join(", ") + "].every((arg) => arg)";
        return toplevel ? lexp : ("(" + lexp + ")");
     }
 
     private emitLogicActionOrExpression(exp: TIRLogicActionOrExpression, toplevel: boolean): string {
-        const lexp = exp.args.map((arg) => this.emitExpression(arg)).join(" || ");
+        const lexp = "[" + exp.args.map((arg) => this.emitExpression(arg)).join(", ") + "].some((arg) => arg)";
         return toplevel ? lexp : ("(" + lexp + ")");
     }
 

@@ -3895,12 +3895,18 @@ class TypeChecker {
     }
 
     private checkLogicActionAndExpression(env: ExpressionTypeEnvironment, exp: LogicActionAndExpression): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, exp.args.length === 0, "expected at least 1 argument");
+        this.raiseErrorIf(exp.sinfo, exp.args.length < 2, "should test single value directly");
+
         const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
         
         return env.setResultExpressionInfo(new TIRLogicActionAndExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
     }
 
     private checkLogicActionOrExpression(env: ExpressionTypeEnvironment, exp: LogicActionOrExpression): ExpressionTypeEnvironment {
+        this.raiseErrorIf(exp.sinfo, exp.args.length === 0, "expected at least 1 argument");
+        this.raiseErrorIf(exp.sinfo, exp.args.length < 2, "should test single value directly");
+        
         const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
     
         return env.setResultExpressionInfo(new TIRLogicActionOrExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());

@@ -12,8 +12,8 @@ describe('Logical /\\', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('and flavors', function () {
-        it('expected [true, true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, true, false]);
+        it('expected [true, false]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql([true, false]);
         });
     });
 });
