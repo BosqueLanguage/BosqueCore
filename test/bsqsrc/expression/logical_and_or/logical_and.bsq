@@ -1,0 +1,9 @@
+namespace Main;
+
+export function main(): [Bool, Bool, Bool] {
+  return [
+    /\(true),
+    /\(true, 1i == 1i, 2i == 2i),
+    /\(true, false)
+  ];
+}
