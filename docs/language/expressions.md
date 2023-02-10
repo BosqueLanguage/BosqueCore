@@ -225,6 +225,24 @@ Percentage{99n}  //ok
 ``` 
 
 ## Special Constructors
+The `Option<T>` and `Result<T, E>` types have special constructor support. In addition to the regular `Something<Int>{3i}` constructor forms they provide short and type inferred forms with the syntax `some(e)`, `ok(e)`, `err(e)` and `result(e)` where `e` is an expression. These forms will infer the appropriate template types and convert the expressions as needed. The `result(e)` type will also insert conversions between compatible result types and construction of result objects from values (see issue #1).
+
+Examples of these special forms include:
+```none
+let x: Option<Int> = some(3i); //x is a Some<Int> with value 3i
+let y: Option<Int?> = some(5i); //y is a Some<Int?> with value 5i
+
+function foo(): Result<Int, String> {
+    return ok(3i); //returns a Result<Int, String> with value 3i
+}
+
+function bar(): Result<Int, String> {
+    return err("error"); //returns a Result<Int, String> with error "error"
+}
+function baz(): Result<Int, String?> {
+    return result(bar()); //returns a Result<Int, String?> by converting the return of bar into the correct type
+}
+```
 
 # Bosque Expression Components
 
