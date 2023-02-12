@@ -323,11 +323,25 @@ Examples of tuple access include:
 ```none
 [1n, 2i].0 //returns 1n
 [1n, 2i].1 //returns 2i
+[[1n, 2i], 3i].0.1 //returns 2i
 
 [1n, 2i].2 //error tuple has no index 2
 ```
 
 ## Record Property Access
+Records properties are accessed using the syntax `e.p` where `p` is a property name. 
+
+[TODO] Currently only expressions with a unique record type can be accessed. Adding virtual record access is an open issue and also impacts spread arguments.
+
+Examples of record access include:
+```none
+{f=1n, g=2i}.f //returns 1n
+{f=1n, g=2i}.g //returns 2i
+{f={g=1n, h=2i}, q=3i}.f.h //returns 2i
+
+{f=1n, g=2i}.h //error record has no property h
+```
+
 ## Field Access
 ## ITest Check
 ## ITest As and Conversion
