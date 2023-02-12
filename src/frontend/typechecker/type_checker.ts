@@ -3913,7 +3913,7 @@ class TypeChecker {
     }
 
     private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex): ExpressionTypeEnvironment {
-        this.raiseErrorIf(op.sinfo, !env.trepr.options.some((atom) => !(atom instanceof ResolvedTupleAtomType)), "Base of index expression must be of Tuple type");
+        this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => !(atom instanceof ResolvedTupleAtomType)), "Base of index expression must be of Tuple type");
         this.raiseErrorIf(op.sinfo, op.index < 0, "Index cannot be negative");
         this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => (atom as ResolvedTupleAtomType).types.length <= op.index), "Index may not be defined for tuple");
 
@@ -3927,10 +3927,10 @@ class TypeChecker {
     }
 
     private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName): ExpressionTypeEnvironment {
-        const isrecord = env.trepr.options.every((atom) => atom instanceof TIRRecordType);
+        const isrecord = env.trepr.options.every((atom) => atom instanceof ResolvedRecordAtomType);
         const isobj = env.trepr.options.every((atom) => atom instanceof ResolvedEntityAtomType);
 
-        this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${env.trepr}`);
+        this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${env.trepr.typeID}`);
         const tiroftype = this.toTIRTypeKey(env.trepr);
 
         if (isrecord) {

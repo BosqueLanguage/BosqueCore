@@ -1,0 +1,11 @@
+namespace Main;
+
+export function main(opt: Bool): Int {
+    let t = [[1i, 2i], 3i];
+    if(opt) {
+        return t.0.1;
+    }
+    else {
+        return t.1;
+    }
+}

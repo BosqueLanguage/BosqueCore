@@ -1,0 +1,11 @@
+namespace Main;
+
+export function main(opt: Bool): Int {
+    let r = {f=1i, g=2i};
+    if(opt) {
+        return r.f;
+    }
+    else {
+        return r.g;
+    }
+}
