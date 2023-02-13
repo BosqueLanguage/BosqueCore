@@ -1,0 +1,21 @@
+namespace Main;
+
+concept Bar {
+    field g: Int;
+}
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar {
+    field h: Int;
+}
+entity Qaz provides Named, Bar {
+    field h: Int;
+}
+
+export function main(): [Int, Int] {
+    let v1 = Qux{"bob", 1i, 2i};
+    let v2 = Qaz{"alice", 3i, 4i};
+    return [v1.g, v2.g];
+}
