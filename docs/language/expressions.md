@@ -25,10 +25,9 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     18. ITest Check
     19. ITest As and Conversion
     20. Method Call
-    21. Method Call with Ref
-    22. Method Call Virtual
-    23. Prefix Boolean Not
-    24. Prefix Negation
+    21. Method Call Virtual
+    22. Prefix Boolean Not
+    23. Prefix Negation
 - Bosque Expression Components
     1. ITests
     2. Arguments
@@ -343,10 +342,42 @@ Examples of record access include:
 ```
 
 ## Field Access
+Fields in Object-Oriented types are accessed using the notation `e.f` where `f` is a field name. Fields accesses can be done on expressions of concrete and abstract types (virtual accesses). These virtual accesses can be on Concepts or Unions -- however all possible resolutions must be to the same definition!
+
+Examples of field access include:
+```none
+concept Bar {
+    field g: Int;
+}
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar {
+    field h: Int;
+}
+entity Qaz provides Named, Bar {
+    field h: Int;
+}
+
+let v1 = Qux{"bob", 1i, 2i};
+let v2 = Qaz{"alice", 3i, 4i};
+
+v1.g //concrete field lookup -- 1i
+v2.g //concrete field lookup -- 3i
+
+let x: Named = ...;
+x.name //virtual field lookup
+x.h //error -- Named does not have field h
+
+let y: Qux | Qaz = ...;
+y.g //virtual field lookup
+y.h //error -- Qux, Qaz both have h fields but different declarations
+```
+
 ## ITest Check
 ## ITest As and Conversion
 ## Method Call
-## Method Call with Ref
 ## Method Call Virtual
 ## Prefix Boolean Not
 ## Prefix Negation

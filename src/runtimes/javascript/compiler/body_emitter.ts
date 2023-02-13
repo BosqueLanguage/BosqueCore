@@ -289,7 +289,9 @@ class BodyEmitter {
 
     private emitLoadFieldVirtualExpression(exp: TIRLoadFieldVirtualExpression): string {
         const fname = (this.m_assembly.fieldMap.get(exp.field) as TIRMemberFieldDecl).name;
-        return `${this.emitExpression(exp.exp)}.${fname}`;
+        const bexp = (this.typeEncodedAsUnion(exp.exp.etype) ? `${this.emitExpression(exp.exp)}.value` : this.emitExpression(exp.exp));
+
+        return `${bexp}.${fname}`;
     }
 
     private emitConstructorPrimaryDirectExpression(exp: TIRConstructorPrimaryDirectExpression): string {

@@ -3928,7 +3928,7 @@ class TypeChecker {
 
     private checkAccessFromName(env: ExpressionTypeEnvironment, op: PostfixAccessFromName): ExpressionTypeEnvironment {
         const isrecord = env.trepr.options.every((atom) => atom instanceof ResolvedRecordAtomType);
-        const isobj = env.trepr.options.every((atom) => atom instanceof ResolvedEntityAtomType);
+        const isobj = env.trepr.options.every((atom) => atom instanceof ResolvedEntityAtomType || atom instanceof ResolvedConceptAtomType);
 
         this.raiseErrorIf(op.sinfo, !isrecord && !isobj, `Cannot load the named location ${op.name} from type ${env.trepr.typeID}`);
         const tiroftype = this.toTIRTypeKey(env.trepr);
