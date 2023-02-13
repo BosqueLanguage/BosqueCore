@@ -24,8 +24,13 @@ function isSubtype(tkey, ofkey) {
         return true;
     }
     else {
-        assert(subtypeMap.has(ofkey), "Internal error -- missing subtype entry");
-        return subtypeMap.get(ofkey).includes(tkey);
+        const chkinfo = subtypeMap.get(ofkey);
+        if(chkinfo.direct.has(tkey)) {
+            return true;
+        }
+        else {
+            return chkinfo.indirect.some((iid) => isSubtype(tkey, iid));
+        }
     }
 }
 

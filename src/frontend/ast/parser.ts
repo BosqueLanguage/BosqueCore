@@ -1503,15 +1503,15 @@ class Parser {
     ////
     //Expression parsing
     private parseITest(): ITest {
+        const isnot = this.testAndConsumeTokenIf(SYM_bang);
+
         if(this.testToken(SYM_le)) {
-            return this.parseITypeTest();
+            return this.parseITypeTest(isnot);
         }
         else if(this.testToken(SYM_lbrack)) {
-            return this.parseILiteralTest();
+            return this.parseILiteralTest(isnot);
         }
         else {
-            const isnot = this.testAndConsumeTokenIf(SYM_bang);
-
             if(this.testToken(KW_none)) {
                 this.consumeToken();
                 return new ITestNone(isnot);
@@ -1543,19 +1543,16 @@ class Parser {
         }
     }
 
-    private parseITypeTest(): ITest {
+    private parseITypeTest(isnot: boolean): ITest {
         this.consumeToken();
-        const isnot = this.testAndConsumeTokenIf(SYM_bang);
         const ttype = this.parseTypeSignature();
         this.ensureAndConsumeToken(SYM_ge, "itype test");
 
         return new ITestType(isnot, ttype);
     }
 
-    private parseILiteralTest(): ITest {
+    private parseILiteralTest(isnot: boolean): ITest {
         this.consumeToken();
-        const isnot = this.testAndConsumeTokenIf(SYM_bang);
-
         const literal = this.parseLiteralExpression("itype test");
         this.ensureAndConsumeToken(SYM_rbrack, "itype test");
 
@@ -2672,40 +2669,44 @@ class Parser {
     }
 
     private parseSCReturnTest(): ITest | Expression {
-        if(this.testToken(SYM_lbrack)) {
-            return this.parseITypeTest();
+        const isnot = this.testToken(SYM_bang);
+
+        if(this.testToken(SYM_lbrack) || this.testFollows(SYM_bang, SYM_lbrack)) {
+            this.consumeTokenIf(SYM_bang);
+            return this.parseITypeTest(isnot);
         }
-        else if(this.testToken(SYM_le)) {
-            return this.parseILiteralTest();
+        else if(this.testToken(SYM_le) || this.testFollows(SYM_bang, SYM_le)) {
+            this.consumeTokenIf(SYM_bang);
+            return this.parseILiteralTest(isnot);
         }
         else {
             if(this.testToken(KW_none) || this.testFollows(SYM_bang, KW_none)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestNone(isnot);
             }
             else if(this.testToken(KW_some) || this.testFollows(SYM_bang, KW_some)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestSome(isnot);
             }
             else if(this.testToken(KW_nothing) || this.testFollows(SYM_bang, KW_nothing)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestNothing(isnot);
             }
             else if(this.testToken(KW_something) || this.testFollows(SYM_bang, KW_something)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestSomething(isnot);
             }
             else if(this.testToken(KW_ok) || this.testFollows(SYM_bang, KW_ok)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestOk(isnot);
             }
             else if(this.testAndConsumeTokenIf(KW_err) || this.testFollows(SYM_bang, KW_err)) {
-                const isnot = this.testAndConsumeTokenIf(SYM_bang);
+                this.consumeTokenIf(SYM_bang);
                 this.consumeToken();
                 return new ITestErr(isnot);
             }

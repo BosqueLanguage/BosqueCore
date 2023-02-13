@@ -57,22 +57,4 @@ describe('Field virtual union', function () {
     });
 });
 
-describe('Record nested', function () {
-    const testopt = ["expression/record_access", "access_nested"];
-    const { srcfile, dstdir, jsmain } = generatePaths(testopt);
-
-    before(function () { codegen(srcfile, dstdir); });
-    after(function () { cleanTest(dstdir); });
-
-    describe('r.f.g', function () {
-        it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(2);
-        });
-    });
-    describe('r.q', function () {
-        it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
-        });
-    });
-});
 

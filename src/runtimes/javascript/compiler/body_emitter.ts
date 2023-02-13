@@ -910,7 +910,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `($Runtime.subtypeMap.get("${exp.ttype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
+        const bval = `$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -918,7 +918,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `!($Runtime.subtypeMap.get("${exp.ttype}")).has(${this.emitExpression(exp.exp)}.tkey)`;
+        const bval = `!$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1001,7 +1001,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__.value : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__.value : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1009,7 +1009,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
     
@@ -1017,7 +1017,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.subtypeMap.get("${exp.ttype}")).has(__expval__.tkey) ? __expval__ : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__ : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1025,7 +1025,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.subtypeMap.get("${exp.ttype}")).has(__expval__.tkey) ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
