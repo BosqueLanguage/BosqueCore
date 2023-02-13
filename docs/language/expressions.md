@@ -376,8 +376,73 @@ y.h //error -- Qux, Qaz both have h fields but different declarations
 ```
 
 ## ITest Check
+Bosque provides a unique form of test operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e?ITest` where `ITest` is an ITest expression. 
+
+Some examples of these tests include:
+```none
+concept Bar {
+    field g: Int;
+}
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar {
+    field h: Int;
+}
+entity Qaz provides Named, Bar {
+    field h: Int;
+}
+
+let x: Named = ...;
+x?<Qux> //true if x is a Qux
+x?!<Qux> //true if x is a not a Qux
+
+let y: Qux | Qaz | None = ...;
+y?<Qux | Qaz> //true if y is a Qux or Qaz
+y?<None> //true if y is None
+y?none //true y is none
+y?!none //true if y is none
+y?some //true if y is a subtype of Some
+```
+ 
 ## ITest As and Conversion
+Bosque provides a unique form of conversion operators for types/values that generalizes simple type-relations checks. These operators are also used to implement the explicit flow-typing and binding in the language. The full syntax/semantics for these operators are covered in the *ITests* section. Their use for postfix tests uses the following syntax `e@ITest` where `ITest` is an ITest expression. 
+
+Some examples of these tests include:
+```none
+concept Bar {
+    field g: Int;
+}
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar {
+    field h: Int;
+}
+entity Qaz provides Named, Bar {
+    field h: Int;
+}
+
+let x: Named = ...;
+x@<Qux> //fails if x is not a Qux and result type is Qux
+x@!<Qux> //fail if x is a not a Qux and result type is Named
+
+let y: Qux | Qaz | None = ...;
+y@<Qux | Qaz> //fails if y is not a Qux or Qaz and result type is Qux | Qaz
+y@!<Qux> //fails if y is a Qux and result type is Qaz | None
+y@!<None> //fails if y is None and result type is Qux | Qaz
+y@some //fails if y is none and result type is Qux | Qaz
+
+let z: Result<Int, String> = ...;
+z@ok //fails if z is err and result type is Int
+z@err //fails if z is ok and result type is String
+```
+
 ## Method Call
+Bosque Object-Oriented types support member method definitions. These may be direct (no virtual definitions or dispatch) or virtual. The 
+
 ## Method Call Virtual
 ## Prefix Boolean Not
 ## Prefix Negation
@@ -385,6 +450,23 @@ y.h //error -- Qux, Qaz both have h fields but different declarations
 # Bosque Expression Components
 
 ## ITests
+The Bosque language type checker uses a novel _explicit flow-sensitive_ typing algorithm. Instead of relying on a set of heuristics and implicit rules in the checker logic Bosque makes the flow typing an explicit part of the language syntax. Inference introduction is limited to function/method arguments, `let`/`var` bindings and `return` statements where the type of the binding or return value is used to infer type of the expression (or vice a versa). These introductions are then pushed down the expression tree to the leaves or propagated up to roots. Otherwise flow and inference are explicitly stated with Itests and Binders.
+
+There are three flavors of ITests in bosque:
+1. **Type ITests** - These are used to test if an expression is of a specific type in a classic subtyping sense. The syntax for these is `<Type>` where `Type` is a type expression and `!<Type>` is an negated version of the test.
+2. **Value ITests** - These are used to test if an expression is a specific value, which must be a literal comparable with the `===` or `!==` operator.The syntax for these is `[Literal]` where `Literal` is a literal expression and `![Literal]` is a negated version that uses the `!==` semantics.
+3. **Special Constructor ITests** - These are used to test if an expression is a specific special constructor and then, depending, on the context will also extract and bind values. The syntax for these is:
+    - `none` - tests if the expression is `none` and converts the result to a none
+    - `some` - tests if the expression is `some` and converts the result to a some
+    - `nothing` - tests if the expression is `nothing` and converts the result to a nothing
+    - `something` - tests if the expression is `something` and converts the result to `T` corresponding to the `Something<T>` type value
+    - `ok` - tests if the expression is `ok` and converts the result to `T` corresponding to the `Result<T, E>::Ok` type value
+    - `err` - tests if the expression is `err` and converts the result to `E` corresponding to the `Result<T, E>::Err` type value
+    - `result` - tests if the expression is `result` and converts the result to `Result<U, V>` corresponding to the contextual Result type value
+
+## Arguments
+
+## Binders
 
 # Bosque Task Expressions
 

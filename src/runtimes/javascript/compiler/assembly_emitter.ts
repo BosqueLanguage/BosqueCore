@@ -520,6 +520,7 @@ class AssemblyEmitter {
 
     readonly namespacedecls: Map<string, string> = new Map<string, string>();
     readonly subtypeinfo: Map<TIRTypeKey, TIRTypeKey[]> = new Map<TIRTypeKey, TIRTypeKey[]>();
+    readonly unionsubtypeinfo: Map<TIRTypeKey, {simpletypes: TIRTypeKey[], concepts: TIRTypeKey[]}> = new Map<TIRTypeKey, {simpletypes: TIRTypeKey[], concepts: TIRTypeKey[]}>();
     readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
     
     readonly keyeqinfo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
@@ -822,6 +823,22 @@ class AssemblyEmitter {
                 this.subtypeinfo.set(tt.tkey, subt);
             }
 
+            if(tt instanceof TIRUnionType) {
+                const simpletypes: TIRTypeKey[] = [];
+                const concepts: TIRTypeKey[] = [];
+                tt.options.forEach((tother) => {
+                    const ttodecl = this.assembly.typeMap.get(tother) as TIRType;
+                    if(ttodecl instanceof TIRConceptType) {
+                        concepts.push(tother);
+                    }
+                    else {
+                        simpletypes.push(tother);
+                    }
+                });
+
+                this.unionsubtypeinfo.set(tt.tkey, {simpletypes: simpletypes, concepts: concepts});
+            }
+
             if(tt instanceof TIROOType && tt.iskeytype) {
                 if(tt instanceof TIREnumEntityType) {
                     this.keyeqinfo.set(tt.tkey, "(a, b) => (a === b)");
@@ -871,7 +888,11 @@ class AssemblyEmitter {
             {   
                 nsname: "runtime.mjs",
                 contents: runtimecode
-                    .replace("//--GENERATED_$subtypesetup--", [...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", new Set(${sti[1].map((st) => "\"" + st + "\"").join(", ")}));`).join("\n"))
+                    .replace("//--GENERATED_$subtypesetup--", [
+                        ...[...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", {direct: new Set([${sti[1].map((st) => "\"" + st + "\"").join(", ")}]), indirect: [] });`),
+                        ...[...this.unionsubtypeinfo].map((usi) => `subtypeMap.set("${usi[0]}", {direct: new Set([${usi[1].simpletypes.map((st) => "\"" + st + "\"").join(", ")}]), indirect: [${usi[1].concepts.map((st) => "\"" + st + "\"").join(", ")}] });`)
+                        ].join("\n")
+                    )
                     .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map(${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}));`).join("\n"))
             },
             {   
