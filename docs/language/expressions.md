@@ -441,9 +441,89 @@ z@err //fails if z is ok and result type is String
 ```
 
 ## Method Call
-Bosque Object-Oriented types support member method definitions. These may be direct (no virtual definitions or dispatch) or virtual. The 
+Bosque Object-Oriented types support member method definitions. These may be direct (no virtual definitions or dispatch) or virtual. Direct methods are defined on a single type and called directly when the receiver is of that type or a subtype. As with field accesses, if there are multiple types in a union, a method may be invoked provided all possible resolutions are to the same definition.
+
+Examples of direct method calls include:
+```none
+concept Bar {
+    field g: Int;
+
+    method get_g(): Int {
+        return this.g;
+    }
+}
+entity Qux provides Bar {
+    field h: Int;
+
+    method get_h(): Int {
+        return this.h;
+    }
+}
+entity Qaz provides Bar {
+    field h: Int;
+
+    method get_h(): Int {
+        return this.h;
+    }
+}
+
+let v1 = Qux{"bob", 1i, 2i};
+let v2 = Qaz{"alice", 3i, 4i};
+
+v1.get_h() //1i
+v2.get_h() //3i
+
+let x: Bar = ...;
+x.get_g() //call to Bar get_g
+x.get_h() //error -- Bar does not have method get_h
+
+let y: Qux | Qaz = ...;
+y.get_g() //call to Bar get_g
+y.get_h() //error -- differing declarations of get_h
+```
 
 ## Method Call Virtual
+Bosque Object-Oriented types support virtual methods are defined on a single `concept` type using the `abstract` or `virtual` attribute. A virtual method may be defined again in subtypes using the `override` attribute. Virtual methods are dispatched based on the type of the receiver. However, if the receiver is a union type, all the possible resolutions must be to the same definition (although the implementations may differ).
+
+Examples of virtual method calls include:
+```none
+concept Bar {
+    field g: Int;
+
+    virtual method get_g(): Int {
+        return this.g;
+    }
+
+    abstract method get_h(): Int;
+}
+entity Qux provides Bar {
+    field h: Int;
+
+    override method get_h(): Int {
+        return this.h;
+    }
+}
+entity Qaz provides Bar {
+    field h: Int;
+
+    override method get_h(): Int {
+        return this.h;
+    }
+
+    override method get_g(): Int {
+        return this.g + 1i;
+    }
+}
+
+let x: Bar = ...;
+x.get_g() //call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
+x.get_h() //abstract in Bar so dispatches to Qux or Qaz
+
+let y: Qux | Qaz = ...;
+y.get_g() //call to Qux get_g (goes to Bar impl) or Qaz get_g (goes to Qaz override impl)
+y.get_h() //abstract in Bar so dispatches to Qux or Qaz
+```
+
 ## Prefix Boolean Not
 ## Prefix Negation
 
