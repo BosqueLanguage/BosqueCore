@@ -850,16 +850,16 @@ class TypeChecker {
         else {
             if (isnot) {
                 return { 
-                    asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
-                    asnotexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                    asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
+                    asnotexp: tsplit.tp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp)) : undefined, 
                     trueflow: tsplit.fp, 
                     falseflow: tsplit.tp 
                 };
             }
             else {
                 return { 
-                    asexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
-                    asnotexp: tsplit.tp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp)) : undefined, 
+                    asexp: tsplit.fp !== undefined ? new TIRAsSomeSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp)) : undefined, 
+                    asnotexp: new TIRAsNoneSpecialExpression(sinfo, tirexp), 
                     trueflow: tsplit.tp, 
                     falseflow: tsplit.fp 
                 };
@@ -1050,7 +1050,7 @@ class TypeChecker {
     }
 
     private processITestAsConvert_Ok(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
-        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isErrType() && !flowtype.isResultType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         if (flowtype.isErrType()) {
             const typet = (flowtype.options[0] as ResolvedErrEntityAtomType).typeT;
             const typee = (flowtype.options[0] as ResolvedErrEntityAtomType).typeE;
@@ -1104,8 +1104,8 @@ class TypeChecker {
             const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
             const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
 
-            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
-            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+            const typet = binds.get("T") as ResolvedType;
+            const typee = binds.get("E") as ResolvedType;
 
             if (issafe) {
                 if (isnot) {
@@ -1151,7 +1151,7 @@ class TypeChecker {
     }
 
     private processITestAsConvert_Err(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean, issafe: boolean): { asexp: TIRExpression | undefined, asnotexp: TIRExpression | undefined, trueflow: ResolvedType | undefined, falseflow: ResolvedType | undefined } {
-        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isOkType() && !flowtype.isErrType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
+        this.raiseErrorIf(sinfo, !flowtype.isOkType() && !flowtype.isErrType() && !flowtype.isResultType(), "Special ok test is only valid on Result<T, E> types (not part of a union etc.)");
         if (flowtype.isErrType()) {
             const typet = (flowtype.options[0] as ResolvedErrEntityAtomType).typeT;
             const typee = (flowtype.options[0] as ResolvedErrEntityAtomType).typeE;
@@ -1205,8 +1205,8 @@ class TypeChecker {
             const oktype = this.getOkType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
             const errtype = this.getErrType(binds.get("T") as ResolvedType, binds.get("E") as ResolvedType);
 
-            const typet = (flowtype.options[0] as ResolvedOkEntityAtomType).typeT;
-            const typee = (flowtype.options[0] as ResolvedOkEntityAtomType).typeE;
+            const typet = binds.get("T") as ResolvedType;
+            const typee = binds.get("E") as ResolvedType;
 
             if (issafe) {
                 if (isnot) {

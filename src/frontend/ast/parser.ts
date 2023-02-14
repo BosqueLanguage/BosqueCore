@@ -1532,7 +1532,7 @@ class Parser {
                 this.consumeToken();
                 return new ITestOk(isnot);
             }
-            else if(this.testAndConsumeTokenIf(KW_err)) {
+            else if(this.testToken(KW_err)) {
                 this.consumeToken();
                 return new ITestErr(isnot);
             }

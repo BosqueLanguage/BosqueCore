@@ -1,0 +1,29 @@
+namespace Main;
+
+concept Bar {
+    field g: Int;
+}
+concept Named {
+    field name: String;
+}
+
+entity Qux provides Named, Bar {
+    field h: Int;
+}
+entity Qaz provides Named, Bar {
+    field h: Int;
+}
+
+function select(b: Bool): Bar | None {
+    if(b) {
+        return Qux{"bob", 1i, 2i};
+    }
+    else {
+        return Qaz{"alice", 3i, 4i};
+    }
+}
+
+export function main(b: Bool): Int {
+    let x = select(b);
+    return x@<Qux>.h;
+}

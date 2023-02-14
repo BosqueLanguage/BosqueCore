@@ -857,14 +857,14 @@ class BodyEmitter {
     private emitIsOkSpecialExpression(exp: TIRIsOkSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.oktype}"`;
+        const bval = `${this.emitExpression(exp.exp)}.tkey === "${exp.oktype}"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitIsErrSpecialExpression(exp: TIRIsErrSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.errtype}"`;
+        const bval = `${this.emitExpression(exp.exp)}.tkey === "${exp.errtype}"`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -925,7 +925,7 @@ class BodyEmitter {
     private emitAsNoneSpecialExpression(exp: TIRAsNoneSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `(${this.emitExpression(exp.exp)}.tkey === "None") ? undefined : raiseRuntimeError("cannot convert value to None")`;
+        const bval = `(${this.emitExpression(exp.exp)}.tkey === "None") ? undefined : $Runtime.raiseRuntimeError("cannot convert value to None")`;
         return toplevel ? bval : "(" + bval + ")";
     }
     
@@ -934,10 +934,10 @@ class BodyEmitter {
 
         let bval = "[NOT SET]";
         if(this.typeEncodedAsUnion(exp.etype)) {
-            bval = `((__expval__) => (__expval__.tkey !== "None") ? __expval__ : raiseRuntimeError("cannot convert value to Some"))(${this.emitExpression(exp.exp)})`;
+            bval = `((__expval__) => (__expval__.tkey !== "None") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to Some"))(${this.emitExpression(exp.exp)})`;
         }
         else {
-            bval = `((__expval__) => (__expval__.tkey !== "None") ? __expval__.value : raiseRuntimeError("cannot convert value to Some"))(${this.emitExpression(exp.exp)})`;
+            bval = `((__expval__) => (__expval__.tkey !== "None") ? __expval__.value : $Runtime.raiseRuntimeError("cannot convert value to Some"))(${this.emitExpression(exp.exp)})`;
         }
 
         return toplevel ? bval : "(" + bval + ")";
@@ -946,40 +946,40 @@ class BodyEmitter {
     private emitAsNothingSpecialExpression(exp: TIRAsNothingSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `(${this.emitExpression(exp.exp)}.tkey === "Nothing") ? null : raiseRuntimeError("cannot convert value to Nothing")`;
+        const bval = `(${this.emitExpression(exp.exp)}.tkey === "Nothing") ? null : $Runtime.raiseRuntimeError("cannot convert value to Nothing")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitAsSomethingSpecialExpression(exp: TIRAsSomethingSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `((__expval__) => (__expval__.tkey !== "${exp.etype}") ? __expval__.value : raiseRuntimeError("cannot convert value to Something"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => (__expval__.tkey !== "Nothing") ? __expval__.value : $Runtime.raiseRuntimeError("cannot convert value to Something"))(${this.emitExpression(exp.exp)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitAsOkSpecialExpression(exp: TIRAsOkSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `((__expval__) => (__expval__.tkey !== "${exp.etype}") ? __expval__.value : raiseRuntimeError("cannot convert value to Something"))(${this.emitExpression(exp.exp)})`;
+        const bval = `((__expval__) => (${this.emitExpression(exp.exp)}.tkey === "${exp.etype}") ? __expval__.value : $Runtime.raiseRuntimeError("cannot convert value to ok"))(${this.emitExpression(exp.exp)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitAsErrSpecialExpression(exp: TIRAsErrSpecialExpression, toplevel: boolean): string {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
 
-        const bval = `${this.emitExpression(exp.exp)}.tkey !== "${exp.etype}"`;
+        const bval = `((__expval__) => (${this.emitExpression(exp.exp)}.tkey === "${exp.etype}") ? __expval__.value : $Runtime.raiseRuntimeError("cannot convert value to err"))(${this.emitExpression(exp.exp)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
     private emitAsEqualToLiteralExpression(exp: TIRAsEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
             const rr = `$CoreLibs.$KeyEqualMixed("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
-            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
+            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
             const rr = `$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
-            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
+            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
     }
@@ -987,12 +987,12 @@ class BodyEmitter {
     private emitAsNotEqualToLiteralExpression(exp: TIRAsNotEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
             const rr = `!$CoreLibs.$KeyEqualMixed("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
-            const bval = `((__expval__) => ${rr} ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
+            const bval = `((__expval__) => ${rr} ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
             const rr = `!$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
-            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
+            const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
     }
@@ -1001,7 +1001,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__.value : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__.value : $Runtime.raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1009,7 +1009,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(!this.typeEncodedAsUnion(exp.ttype), "this should be a subtype then");
 
-        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => (__expval__.tkey === "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.etype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
     
@@ -1017,7 +1017,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__ : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1025,7 +1025,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 

@@ -464,6 +464,8 @@ There are three flavors of ITests in bosque:
     - `err` - tests if the expression is `err` and converts the result to `E` corresponding to the `Result<T, E>::Err` type value
     - `result` - tests if the expression is `result` and converts the result to `Result<U, V>` corresponding to the contextual Result type value
 
+[TODO] the `result` case has missing support in some of the positions.
+
 ## Arguments
 
 ## Binders
