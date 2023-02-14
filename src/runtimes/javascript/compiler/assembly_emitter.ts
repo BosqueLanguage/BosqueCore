@@ -582,7 +582,7 @@ class AssemblyEmitter {
             const bemitter = new BodyEmitter(this.assembly, path.basename(ttype.srcFile), "[API TYPE PARSING]");
             const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
 
-            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return ${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorWithChecks_basetype($value); }`;
+            const parse = `{ const $value = ${rparse}; if(!(${vcalls.join(" && ")})) { $Runtime.raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } return ${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorWithChecks_basetype($value); }`;
 
             return { parse: parse, emit: remit };
         }
@@ -599,7 +599,7 @@ class AssemblyEmitter {
         });
 
         const unwrap = `if(Array.isArray(jv) && jv.length === 2 && jv[0] === "${ttype.tkey}") { jv = jv[1]; } `
-        const rparse = `${unwrap} if(!checkIsObjectWithKeys(jv, [${props.join(", ")}])) {raiseRuntimeError("Failed in Object parse " + JSON.stringify(jv))} `
+        const rparse = `${unwrap} if(!checkIsObjectWithKeys(jv, [${props.join(", ")}])) { $Runtime.raiseRuntimeError("Failed in Object parse " + JSON.stringify(jv)); } `
 
         const emitops = ttype.allfields.map((ff) => {
             const fdecl = this.assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl;
@@ -617,7 +617,7 @@ class AssemblyEmitter {
             const vcalls = ttype.apivalidates.map((vv) => bemitter.emitExpression(vv.exp));
             const pcons = `${bemitter.resolveTypeMemberAccess(ttype.tkey)}.$constructorDirect(${props.map((ff) => `$${ff}`).join(", ")})`;
 
-            const parse = `{ ${rparse} ${vassigns} if(!(${vcalls.join(" && ")})) { raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } else { return ${pcons}; } }`;
+            const parse = `{ ${rparse} ${vassigns} if(!(${vcalls.join(" && ")})) { $Runtime.raiseRuntimeError("Failed typedecl validation " + JSON.stringify(jv)); } else { return ${pcons}; } }`;
 
             return { parse: parse, emit: remit };
         }
@@ -626,7 +626,7 @@ class AssemblyEmitter {
     private emitTIRStringOfEntityType_ParseEmit(ttype: TIRStringOfEntityType): { parse: string, emit: string } {
         const jsre = ttype.revalidator.re.compileToJS()
 
-        const parse = `{ if(typeof(jv) !== "string" || !$Runtime.acceptsString(/${jsre}/, jv)) { raiseRuntimeError("Failed StringOf validation " + JSON.stringify(jv)); } else { return ioMarshalMap.get("String").parse(jv); } }`;
+        const parse = `{ if(typeof(jv) !== "string" || !$Runtime.acceptsString(/${jsre}/, jv)) { $Runtime.raiseRuntimeError("Failed StringOf validation " + JSON.stringify(jv)); } else { return ioMarshalMap.get("String").parse(jv); } }`;
 
         const emit = `ioMarshalMap.get("String").emit(nv)`;
 
@@ -662,14 +662,14 @@ class AssemblyEmitter {
     }
 
     private emitTIRMapEntryEntityType_ParseEmit(ttype: TIRMapEntryEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv) || jv.length !== 2) {raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(jv))} else { return [ioMarshalMap.get("${ttype.typeK}").parse(jv[0]), ioMarshalMap.get("${ttype.typeV}").parse(jv[1])] } }`;
+        const parse = `{ if(!Array.isArray(jv) || jv.length !== 2) { $Runtime.raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(jv)); } else { return [ioMarshalMap.get("${ttype.typeK}").parse(jv[0]), ioMarshalMap.get("${ttype.typeV}").parse(jv[1])] } }`;
         const emit = `[ioMarshalMap.get("${ttype.typeK}").emit(nv[0]), ioMarshalMap.get("${ttype.typeV}").emit(nv[1])]`;
 
         return { parse: parse, emit: emit };
     }
 
     private emitTIRListEntityType_ParseEmit(ttype: TIRListEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv))} else { return $CoreLibs.$ListOps.create(...jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
+        const parse = `{ if(!Array.isArray(jv)) { $Runtime.raiseRuntimeError("Failed in List<T> parse " + JSON.stringify(jv)); } else { return $CoreLibs.$ListOps.create(...jv.map((vv) => ioMarshalMap.get("${ttype.typeT}").parse(vv))); } }`
         const emit = `nv.map((vv) => ioMarshalMap.get("${ttype.typeT}").emit(vv)).toArray()`;
 
         return {parse: parse, emit: emit};
@@ -688,7 +688,7 @@ class AssemblyEmitter {
     }
 
     private emitTIRMapEntityType_ParseEmit(ttype: TIRMapEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv)) {raiseRuntimeError("Failed in Map<K, V> parse " + JSON.stringify(jv))} else { return $CoreLibs.$MapOps.create(...jv.map((vv) => { if(!Array.isArray(vv) || vv.length !== 2) {raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(vv))} else { return [ioMarshalMap.get("${ttype.typeK}").parse(vv[0]), ioMarshalMap.get("${ttype.typeV}").parse(vv[1])] } })); } }`
+        const parse = `{ if(!Array.isArray(jv)) { $Runtime.raiseRuntimeError("Failed in Map<K, V> parse " + JSON.stringify(jv)); } else { return $CoreLibs.$MapOps.create(...jv.map((vv) => { if(!Array.isArray(vv) || vv.length !== 2) { $Runtime.raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(vv)); } else { return [ioMarshalMap.get("${ttype.typeK}").parse(vv[0]), ioMarshalMap.get("${ttype.typeV}").parse(vv[1])] } })); } }`
         
         const cmpcall = this.typeEncodedAsUnion(ttype.typeK) ? `$CoreLibs.$KeyLessGeneral` : `($CoreLibs.$KeyLessOps.get("${ttype.typeK}"))`;
         const emit = `nv.map((vv, kk) => [ioMarshalMap.get("${ttype.typeK}").emit(kk), ioMarshalMap.get("${ttype.typeV}").emit(vv)]).toArray().sort((a, b) => ${cmpcall}(a[0], b[0])).map((vv) => vv[1])`;
@@ -706,7 +706,7 @@ class AssemblyEmitter {
 
     private emitTIRTupleType_ParseEmit(ttype: TIRTupleType): { parse: string, emit: string } {
         const parseops = ttype.types.map((tt, ii) => `ioMarshalMap.get("${tt}").parse(jv[${ii}])`);
-        const parse = `{ if(!Array.isArray(jv) || jv.length !== ${ttype.types.length}) {raiseRuntimeError("Failed in Tuple parse " + JSON.stringify(jv))} else { return [ ${parseops.join(", ")} ]; } }`
+        const parse = `{ if(!Array.isArray(jv) || jv.length !== ${ttype.types.length}) { $Runtime.raiseRuntimeError("Failed in Tuple parse " + JSON.stringify(jv)); } else { return [ ${parseops.join(", ")} ]; } }`
 
         const emitops = ttype.types.map((tt, ii) => `ioMarshalMap.get("${tt}").emit(nv[${ii}])`);
         const emit = `[ ${emitops.join(", ")} ]`;
@@ -717,7 +717,7 @@ class AssemblyEmitter {
     private emitTIRRecordType_ParseEmit(ttype: TIRRecordType): { parse: string, emit: string } {
         const parseops = ttype.entries.map((ee) => `${ee.pname}: ioMarshalMap.get("${ee.ptype}").parse(jv["${ee.pname}"])`);
         const props = ttype.entries.map((ee) => `"${ee.pname}"`).join(", ");
-        const parse = `{ if(!checkIsObjectWithKeys(jv, [${props}])) {raiseRuntimeError("Failed in Record parse " + JSON.stringify(jv))} else { return { ${parseops.join(", ")} }; } }`
+        const parse = `{ if(!checkIsObjectWithKeys(jv, [${props}])) { $Runtime.raiseRuntimeError("Failed in Record parse " + JSON.stringify(jv)); } else { return { ${parseops.join(", ")} }; } }`
 
         const emitops = ttype.entries.map((ee) => `${ee.pname}: ioMarshalMap.get("${ee.ptype}").emit(nv["${ee.pname}"])`);
         const emit = `{return { ${emitops.join(", ")} }; }`;

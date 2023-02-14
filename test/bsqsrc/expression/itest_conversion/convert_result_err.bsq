@@ -1,0 +1,15 @@
+namespace Main;
+
+function select(b: Bool): Result<Int, Bool> {
+    if(b) {
+        return ok(3i);
+    }
+    else {
+        return err(false);
+    }
+}
+
+export function main(): Bool {
+    let x = select(false);
+    return x@err;
+}
