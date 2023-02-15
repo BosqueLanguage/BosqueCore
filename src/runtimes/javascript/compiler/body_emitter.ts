@@ -413,12 +413,31 @@ class BodyEmitter {
     }
 
     private emitPrefixNegateOpExpression(exp: TIRPrefixNegateExpression, toplevel: boolean): string {
-        const nexp = `-${this.emitExpression(exp.exp)}`;
+        let nexp = "[NOT SET]";
+        if(exp.etype === "Rational") {
+            nexp = `${this.emitExpression(exp.exp)}.neg()`;
+        }
+        else if(exp.etype === "Decimal") {
+            nexp = `${this.emitExpression(exp.exp)}.neg()`;
+        }
+        else {
+            nexp = `-${this.emitExpression(exp.exp)}`;
+        }
+
         return this.processArithOpResult(exp.etype, toplevel ? nexp : ("(" + nexp + ")"));
     }
 
     private emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): string {
-        const bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`
+        let bexp = "[NOT SET]";
+        if(exp.etype === "Rational") {
+            bexp = `${this.emitExpression(exp.lhs)}.add(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(exp.etype === "Decimal") {
+            bexp = `${this.emitExpression(exp.lhs)}.plus(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`;
+        }
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
@@ -435,7 +454,16 @@ class BodyEmitter {
     }
 
     private emitBinSubExpression(exp: TIRBinSubExpression, toplevel: boolean): string {
-        const bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`
+        let bexp = "[NOT SET]";
+        if(exp.etype === "Rational") {
+            bexp = `${this.emitExpression(exp.lhs)}.sub(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(exp.etype === "Decimal") {
+            bexp = `${this.emitExpression(exp.lhs)}.minus(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`;
+        }
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
@@ -455,7 +483,16 @@ class BodyEmitter {
     }
 
     private emitBinMultExpression(exp: TIRBinMultExpression, toplevel: boolean): string {
-        const bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`
+        let bexp = "[NOT SET]";
+        if(exp.etype === "Rational") {
+            bexp = `${this.emitExpression(exp.lhs)}.mul(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else if(exp.etype === "Decimal") {
+            bexp = `${this.emitExpression(exp.lhs)}.times(${this.emitExpression(exp.rhs, true)})`;
+        }
+        else {
+            bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`;
+        }
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
@@ -489,10 +526,10 @@ class BodyEmitter {
             dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Rational") {
-            dataop = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            dataop = `$Runtime.safeMathDiv((a, b) => a.div(b), (b) => b.equals(new $Runtime.Fraction(0.0)), ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Decimal") {
-            dataop = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decimal");
+            dataop = `$Runtime.safeMathDiv((a, b) => a.dividedBy(b), (b) => b.equals(new $Runtime.Decimal(0.0)), ${lexp}, ${rexp})`;
         }
         else {
             dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0.0, ${lexp}, ${rexp})`;

@@ -28,9 +28,9 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     21. Method Call Virtual
     22. Prefix `!` operator
     23. Prefix numeric `-` operator
-    24. Binary numeric `+`/`-`/`*`/`/` operators
-    25. Binary numeric `==`/`!=`/`<`/`<=`/`>`/`>=` operators
-    26. Binary KeyType `===`/`!==` operators
+    24. Binary numeric arithmetic, `+`/`-`/`*`/`/` operators
+    25. Binary numeric comparison `==`/`!=`/`<`/`<=`/`>`/`>=` operators
+    26. Binary KeyType equality `===`/`!==` operators
 - Bosque Expression Components
     1. ITests
     2. Arguments
@@ -529,7 +529,26 @@ y.get_h() //abstract in Bar so dispatches to Qux or Qaz
 ```
 
 ## Prefix Boolean Not
+The `!` operator is used to perform a boolean _not_ operation on a boolean expression. 
+
+```none
+!true //false
+!false //true
+```
+
 ## Prefix Negation
+In Bosque the `-` operator is used to perform a negation operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for Int is symmetric from -(2^63 - 1) to (2^63 - 1)! 
+
+```none 
+-(-1i) // 1i
+-(3/2R) // -3/2R
+```
+
+## Binary numeric arithmetic operators
+
+## Binary numeric comparison operators
+
+## Binary KeyType equality operators
 
 # Bosque Expression Components
 
