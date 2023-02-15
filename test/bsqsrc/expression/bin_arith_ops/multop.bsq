@@ -1,0 +1,7 @@
+namespace Main;
+
+typedecl Foo = BigNat;
+
+export function main(i: Int, f: Float, r: Rational, x: Foo): [Int, Float, Rational, Foo] {
+    return [i * 2i, f * -3.0f, r * 1/2R, x * 2N];
+}

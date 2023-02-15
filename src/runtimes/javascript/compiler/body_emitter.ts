@@ -585,13 +585,13 @@ class BodyEmitter {
             cmp = `${lexp} === ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `${lexp}.equals(${rexp})`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} === ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `${lexp}.equals(${rexp})`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";
@@ -609,13 +609,13 @@ class BodyEmitter {
             cmp = `${lexp} !== ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `!(${lexp}.equals(${rexp}))`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} !== ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `!(${lexp}.equals(${rexp}))`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";
@@ -633,13 +633,13 @@ class BodyEmitter {
             cmp = `${lexp} < ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `(${lexp}.compare(${rexp}) < 0)`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} < ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `${lexp}.lessThan(${rexp})`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";
@@ -657,13 +657,13 @@ class BodyEmitter {
             cmp = `${lexp} <= ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `(${lexp}.compare(${rexp}) <= 0)`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} <= ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `${lexp}.lessThanOrEqualTo(${rexp})`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";
@@ -681,13 +681,13 @@ class BodyEmitter {
             cmp = `${lexp} > ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `(${lexp}.compare(${rexp}) > 0)`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} > ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `${lexp}.greaterThan(${rexp})`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";
@@ -705,13 +705,13 @@ class BodyEmitter {
             cmp = `${lexp} >= ${rexp}`;
         }
         else if(exp.optype === "Rational") {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Rational");
+            cmp = `(${lexp}.compare(${rexp}) >= 0)`;
         }
         else if(exp.optype === "Float") {
             cmp = `${lexp} >= ${rexp}`;
         }
         else {
-            cmp = NOT_IMPLEMENTED_EXPRESSION(exp.tag + "--Decmial");
+            cmp = `${lexp}.greaterThanOrEqualTo(${rexp})`;
         }
 
         return toplevel ? cmp : "(" + cmp + ")";

@@ -4,7 +4,7 @@ const expect = require("chai").expect;
 
 const {generatePaths, codegen, invokeExecutionOn, cleanTest} = require("../codeproc.js");
 
-describe('Logical /\\', function () {
+describe('Negation', function () {
     const testopt = ["expression/negation", "simpleneg"];
     const { srcfile, dstdir, jsmain } = generatePaths(testopt);
 
