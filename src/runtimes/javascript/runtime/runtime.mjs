@@ -80,7 +80,7 @@ function safeMathUnderflow(val, zero) {
 }
 
 function safeMathDiv(op, chk, v1, v2) {
-    raiseRuntimeErrorIf(!chk(v2), `division by 0`);
+    raiseRuntimeErrorIf(chk(v2), `division by 0`);
     return op(v1, v2);
 }
 

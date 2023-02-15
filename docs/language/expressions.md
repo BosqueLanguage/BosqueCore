@@ -545,10 +545,46 @@ In Bosque the `-` operator is used to perform a negation operation on a numeric 
 ```
 
 ## Binary numeric arithmetic operators
+Bosque supports the standard set of binary numeric arithmetic operators of `+`, `-`, `*`, and `/`. These are defined for all numeric types and automatically for any `typedecl` of a numeric type. The fixed size `Int` and `Nat` types are checked for overflows while the `Nat` and `BigNat` types are checked for underflow on subtraction. All types are checked for division by zero. 
+
+Types are not implicitly converted for arithmetic operations and, if needed, must be explicitly coerced to the same types.
+
+```none
+typedecl Foo = Nat;
+
+1i + 2i //3i
+3.5f + 2.5f //6.0f
+
+2n - 1n //1n
+2n - 3n //error Nat underflow
+3.0f / 0.0f //error division by zero
+
+2n_Foo + 1n_Foo //3n_Foo
+2n_Foo * 3n_Foo //error Foo^2 is not well defined
+2n_Foo * 3n //6n_Foo
+```
 
 ## Binary numeric comparison operators
+Bosque supports the standard set of binary numeric comparison operators of `==`, `!=`, `<`, `<=`, `>`, and `>=`. These are defined for all numeric types and automatically for any `typedecl` of a numeric type. 
+
+Types are not implicitly converted for comparison operations and, if needed, must be explicitly coerced to the same types.
+
+```none
+typedecl Foo = Nat;
+
+1i == 2i //false
+1i != 2i //true
+3.5f <= 2.5f //false
+
+2/3R == 4/6R //true
+1/3R < 1/2R //true
+
+2n_Foo > 1n_Foo //true
+2n_Foo !== 3n_Foo //true
+```
 
 ## Binary KeyType equality operators
+
 
 # Bosque Expression Components
 

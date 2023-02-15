@@ -4165,7 +4165,7 @@ class TypeChecker {
             return env.setResultExpressionInfo(new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnb)), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnb));
         }
         else {
-            this.raiseErrorIf(exp.sinfo, (lnt instanceof ResolvedTypedeclEntityAtomType) || (rnt instanceof ResolvedTypedeclEntityAtomType), `multiplication requires at least on unit typed value but got ${lnt.typeID} * ${rnt.typeID}`);
+            this.raiseErrorIf(exp.sinfo, !((lnt instanceof ResolvedTypedeclEntityAtomType) || (rnt instanceof ResolvedTypedeclEntityAtomType)), `multiplication requires at least on unit typed value but got ${lnt.typeID} * ${rnt.typeID}`);
 
             if(lnt instanceof ResolvedTypedeclEntityAtomType) {
                 return env.setResultExpressionInfo(new TIRBinMultExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(lenv.trepr), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
