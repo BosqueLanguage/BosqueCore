@@ -26,14 +26,19 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     19. ITest As and Conversion
     20. Method Call
     21. Method Call Virtual
-    22. Prefix Boolean Not
-    23. Prefix Negation
+    22. Prefix `!` operator
+    23. Prefix numeric `-` operator
+    24. Binary numeric `+`/`-`/`*`/`/` operators
+    25. Binary numeric `==`/`!=`/`<`/`<=`/`>`/`>=` operators
+    26. Binary KeyType `===`/`!==` operators
 - Bosque Expression Components
     1. ITests
     2. Arguments
     3. Binders
     4. Lambdas
     5. Direct Literals
+    6. Regular Expressions
+    7. Path Expressions
 - Bosque Task Expressions
     1. Format Arguments
     2. Environment Variables
@@ -64,7 +69,6 @@ ascii{"ok"} //ascii string literal
 ```
 
 Most of these literal expressions are familiar from other languages. The numeric literals are strongly typed for each of the numeric types in the language (including BigInt/BigNat and Rationals). Bosque also differentiates string types and literals with the String type and regular quoted strings representing unicode strings. The ASCIIString type and `ascii{...}` enclosed literals are for strings made of only ASCII characters.
-
 
 ## Parameters/Variables/Captures
 Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are 

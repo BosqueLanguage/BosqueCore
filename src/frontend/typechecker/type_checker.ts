@@ -4042,7 +4042,7 @@ class TypeChecker {
             const declkey = TIRIDGenerator.generateInvokeForMemberMethod(tirdecltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
             this.m_pendingMethodMemberDecls.push({fkey: declkey, decl: mresolve.decl, declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
 
-            if(mresolve.impl.length === 1) {
+            if(resolvefrom.options.length === 1 && ResolvedType.isUniqueType(resolvefrom.options[0])) {
                 const inferfimpltype = this.toTIRTypeKey(mresolve.impl[0].ttype);
                 const inferfkey = TIRIDGenerator.generateInvokeForMemberMethod(inferfimpltype, op.name, mresolve.decl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(binds.get(tt.name) as ResolvedType)), argexps.filter((ee) => ee instanceof TIRCreateCodePackExpression).map((ee) => (ee as TIRCreateCodePackExpression).pcodepack.codekey));
                 this.m_pendingMethodMemberDecls.push({fkey: inferfkey, decl: mresolve.impl[0], declaredecl: mresolve.decl, binds: binds, pcodes: pcodes});
@@ -7615,11 +7615,15 @@ class TypeChecker {
                     tchecker.processMemberMethodDirect(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
                 }
             }
-            else if(tchecker.m_pendingCodeDecls.length !== 0) {
+            else if (tchecker.m_pendingCodeDecls.length !== 0) {
                 const lmd = tchecker.m_pendingCodeDecls.shift() as {cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
                 tchecker.processLambdaFunction(lmd.cpdata, lmd.cpdecl, lmd.desiredfunc, lmd.declbinds, lmd.bodybinds, lmd.capturedpcodes, lmd.capturedvars, lmd.argpcodes);
             }
             else {
+                ;
+            }
+
+            if(!tchecker.anyPending()) {
                 tchecker.updateVirtualPending(virtualmemberdecls);
             }
         }

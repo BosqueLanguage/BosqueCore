@@ -1050,23 +1050,6 @@ class BodyEmitter {
         return toplevel ? eexp : "(" + eexp + ")";
     }
 
-    private generateThisArgAs(thistype: TIRTypeKey, decltype: TIRTypeKey, thisarg: string): string {
-        const thisunion = this.typeEncodedAsUnion(thistype);
-        const declunion = this.typeEncodedAsUnion(decltype);
-
-        if(thisunion === declunion) {
-            return thisarg;
-        }
-        else {
-            if(!thisunion && declunion) {
-                return `new $Runtime.UnionValue("${thistype}", ${thisarg})`;
-            }
-            else {
-                return `(${thisarg}).value`;
-            }
-        }
-    }
-
     private emitCallMemberFunctionDynamicExpression(exp: TIRCallMemberFunctionDynamicExpression, toplevel: boolean): string {
         const thisarg = this.emitExpression(exp.thisarg, true);
         const thisunion = this.typeEncodedAsUnion(exp.thisarg.etype);
@@ -1075,13 +1058,20 @@ class BodyEmitter {
 
         let vtable = "[NOT SET]";
         if (thisunion) {
-            vtable = `$Runtime.vtablemap.get(__expval__.tkey).$VTable["${exp.fkey}"]`
+            vtable = `$Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).op`
         }
         else {
-            vtable = `${this.resolveTypeMemberAccess(exp.thisarg.etype)}.$VTable["${exp.fkey}"]`;
+            vtable = `$Runtime.invmap.get($Runtime.vtablemap.get("${exp.thisarg.etype}").get("${exp.fname}")).op`;
         }
 
-        const thisargas = this.generateThisArgAs(exp.thisarg.etype, exp.fdecltype, "__expval__");
+        let thisargas = "[NOT SET]";
+        if(thisunion) {
+            thisargas = `($Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).isatom ? __expval__.value : __expval__)`;
+        }
+        else {
+            thisargas = `($Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).isatom ? __expval__ : new $Runtime.UnionValue("${exp.thisarg.etype}", ${thisarg}))`;
+        }
+
         const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;
 
         return toplevel ? eexp : "(" + eexp + ")";
