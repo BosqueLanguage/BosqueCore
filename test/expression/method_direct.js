@@ -12,12 +12,12 @@ describe('Method direct concept', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('call Qux', function () {
-        it('expected []', function () {
+        it('expected [2i, 4i, 1i, 1i]', function () {
             expect(invokeExecutionOn(jsmain, true)).to.eql([2, 4, 1, 1]);
         });
     });
     describe('call Qax', function () {
-        it('expected []', function () {
+        it('expected [2i, 4i, 1i, 3i]', function () {
             expect(invokeExecutionOn(jsmain, false)).to.eql([2, 4, 1, 3]);
         });
     });
@@ -31,12 +31,12 @@ describe('Method direct union', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('call Qux', function () {
-        it('expected []', function () {
+        it('expected [2i, 4i, 1i, 1i]', function () {
             expect(invokeExecutionOn(jsmain, true)).to.eql([2, 4, 1, 1]);
         });
     });
     describe('call Qax', function () {
-        it('expected []', function () {
+        it('expected [2i, 4i, 1i, 3i]', function () {
             expect(invokeExecutionOn(jsmain, false)).to.eql([2, 4, 1, 3]);
         });
     });

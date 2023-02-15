@@ -1,0 +1,46 @@
+namespace Main;
+
+concept Bar {
+    field g: Int;
+
+    virtual method get_g(): Int {
+        return this.g;
+    }
+
+    abstract method get_h(): Int;
+}
+entity Qux provides Bar {
+    field h: Int;
+
+    override method get_h(): Int {
+        return this.h;
+    }
+}
+entity Qaz provides Bar {
+    field h: Int;
+
+    override method get_h(): Int {
+        return this.h;
+    }
+
+    override method get_g(): Int {
+        return this.g + 1i;
+    }
+}
+
+function select(b: Bool): Qux | Qaz {
+    if(b) {
+        return Qux{1i, 2i};
+    }
+    else {
+        return Qaz{3i, 4i};
+    }
+}
+
+export function main(b: Bool): [Int, Int, Int, Int, Int] {
+    let v1 = Qux{1i, 2i};
+    let v2 = Qaz{3i, 4i};
+
+    let x = select(b);
+    return [v1.get_h(), v2.get_h(), v1.get_g(), x.get_g(), x.get_h()];
+}

@@ -17,6 +17,7 @@ const subtypeMap = new Map();
 const vtablemap = new Map();
 //--GENERATED_$vtablesetup--
 
+const invmap = new Map();
 const lambdas = new Map();
 
 function isSubtype(tkey, ofkey) {
@@ -228,7 +229,7 @@ function poplogprefix() {
 
 export {
     UnionValue, isSubtype,
-    vtablemap,
+    vtablemap, invmap,
     lambdas,
     FIXED_NUMBER_MAX, FIXED_NUMBER_MIN,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,

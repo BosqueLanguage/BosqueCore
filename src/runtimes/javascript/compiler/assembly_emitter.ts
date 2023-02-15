@@ -405,6 +405,8 @@ class NamespaceEmitter {
             eexports.push(nn);
         });
 
+        let invdecls: string[] = [];
+
         let itypes: string[] = [];
         let ktypes: string[] = [];
         this.m_decl.concepts.forEach((ttk) => {
@@ -419,6 +421,14 @@ class NamespaceEmitter {
                         ktypes.push(ccs);
                     }
                 }
+
+                const ootype = this.m_assembly.typeMap.get(tk) as TIROOType;
+                ootype.memberMethods.forEach((mm) => {
+                    if(mm.attributes.includes("virtual") || mm.attributes.includes("override")) {
+                        const bemitter = new BodyEmitter(this.m_assembly, mm.srcFile, this.m_ns);
+                        invdecls.push(`$Runtime.invmap.set("${mm.ikey}", {op: ${bemitter.resolveTypeMemberAccess(tk)}.${mm.name}, isatom: false});`);
+                    }
+                });
             });
         });
     
@@ -434,6 +444,14 @@ class NamespaceEmitter {
                         ktypes.push(ccs);
                     }
                 }
+
+                const ootype = this.m_assembly.typeMap.get(tk) as TIROOType;
+                ootype.memberMethods.forEach((mm) => {
+                    if(mm.attributes.includes("override")) {
+                        const bemitter = new BodyEmitter(this.m_assembly, mm.srcFile, this.m_ns);
+                        invdecls.push(`$Runtime.invmap.set("${mm.ikey}", {op: ${bemitter.resolveTypeMemberAccess(tk)}.${mm.name}, isatom: true});`);
+                    }
+                });
             });
         });
 
@@ -504,11 +522,13 @@ class NamespaceEmitter {
             return `$Runtime.lambdas.set("${lfd[0]}", ${lf});`;
         }).join("\n");
                     
+        const iidm = invdecls.join("\n");
+
         [...this.m_decl.alltypes]
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, exportdecl]
+        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
@@ -893,7 +913,7 @@ class AssemblyEmitter {
                         ...[...this.unionsubtypeinfo].map((usi) => `subtypeMap.set("${usi[0]}", {direct: new Set([${usi[1].simpletypes.map((st) => "\"" + st + "\"").join(", ")}]), indirect: [${usi[1].concepts.map((st) => "\"" + st + "\"").join(", ")}] });`)
                         ].join("\n")
                     )
-                    .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map(${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}));`).join("\n"))
+                    .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map([${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}]));`).join("\n"))
             },
             {   
                 nsname: "api.mjs",
