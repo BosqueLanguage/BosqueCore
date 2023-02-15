@@ -1,0 +1,7 @@
+namespace Main;
+
+typedecl Foo = BigInt;
+
+export function main(i: Int, f: Float, r: Rational, x: Foo): [Int, Float, Rational, Foo] {
+    return [-i, -f, -r, -x];
+}
