@@ -5,7 +5,8 @@ import { List as IList, Map as IMap } from "immutable";
 import { raiseRuntimeError } from "./runtime.mjs";
 
 const $KeyEqualOps = new Map();
-$KeyEqualOps.set("None", (a, b) => (a === undefined && b === undefined));
+$KeyEqualOps.set("Nothing", (a, b) => (a === undefined && b === undefined)); //not a keytype but comparable with ===
+$KeyEqualOps.set("None", (a, b) => (a === null && b === null));
 $KeyEqualOps.set("Bool", (a, b) => (a === b));
 $KeyEqualOps.set("Nat", (a, b) => (a === b));
 $KeyEqualOps.set("Int", (a, b) => (a === b));

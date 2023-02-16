@@ -646,6 +646,51 @@ Map<Int, String>{1i => "one", 2i => "two"}; //Map<Int, String>{MapEntry<Int, Str
 ```
 
 ## If-Then-Else Expression
+Bosque supports _if-then-elif*-else_ syntax for expressions. The type of the expression is the union of all the branch expressions (and type inference is applied to each expression if possible). The test conditions include the standard boolean expression form _and_ any _ITest_ expression! When using the ITest expression form it is also possible to use _Binder_ syntax (the `$` variable) in the branch expression which is bound to the value of the expression if the test passes. 
+
+Examples of simple if-then-else expressions:
+```none
+if (x < 0i) then -x else x //Int
+if (x == 0i) then 0i elif (x < 0i) then -1i else 1i //Int
+
+let yy: Int? = if (x == 0i) then none else x //Inferred as Int? in each branch expression
+```
+
+Examples of if-then-else expressions with ITest expressions:
+```none
+let x: {f: Int?, g: String} = ...;
+
+if !none (x.f) then //special none ITest form
+    1i 
+else 
+    0i
+
+if <None> (x.f) then //typeof form ITest 
+    0i 
+else 
+    1i
+
+if [none] (x.f) then //literal equality form ITest
+    0i 
+else 
+    1i
+```
+
+Examples of if-then-else expressions with ITest expressions and binders:
+```none
+let x: {f: Int?, g: String} = ...;
+
+if !none (x.f) then 
+    $ //$ is bound to x.f@!none in the branch expression
+else 
+    0i 
+
+if none (x.f) then 
+    0i 
+else 
+    $ //$ is bound to false flow (x.f@!none) in the else branch expression
+```
+
 ## Switch Expression
 ## Match Expression
 

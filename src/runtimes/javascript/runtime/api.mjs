@@ -5,18 +5,20 @@ import * as $CoreLibs from "./corelibs.mjs";
 import * as $Runtime from "./runtime.mjs";
 //--GENERATED_$usermodules--
 
+//TODO: we need to validate a bit more aggressively in the primitives -- e.g. better errors with checks for like number string format, ascii strings are acsii, etc.
+
 const ioMarshalMap = new Map();
-ioMarshalMap.set("None", {parse: (jv) => null, emit: (nv) => null});
-ioMarshalMap.set("Bool", {parse: (jv) => jv, emit: (nv) => nv});
-ioMarshalMap.set("Nat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
-ioMarshalMap.set("Int", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
-ioMarshalMap.set("BigNat", {parse: (jv) => BigInt(jv), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
-ioMarshalMap.set("BigInt", {parse: (jv) => BigInt(jv), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("None", {parse: (jv) => jv !== null ? $Runtime.raiseRuntimeError(`expected None got ${jv}`) : null, emit: (nv) => null});
+ioMarshalMap.set("Bool", {parse: (jv) => (jv === true || jv === false) ? jv : $Runtime.raiseRuntimeError(`expected Bool got ${jv}`), emit: (nv) => nv});
+ioMarshalMap.set("Nat", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected Nat got ${jv}`), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("Int", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected Int got ${jv}`), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("BigNat", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected BigNat got ${jv}`), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("BigInt", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected BigInt got ${jv}`), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("Float", {parse: (jv) => jv, emit: (nv) => nv});
 ioMarshalMap.set("Decimal", {parse: (jv) => new $Runtime.Decimal(jv), emit: (nv) => nv.toString()});
 ioMarshalMap.set("Rational", {parse: (jv) => new $Runtime.Fraction(jv), emit: (nv) => nv.toFraction()});
-ioMarshalMap.set("String", {parse: (jv) => jv, emit: (nv) => nv});
-ioMarshalMap.set("ASCIIString", {parse: (jv) => jv, emit: (nv) => nv});
+ioMarshalMap.set("String", {parse: (jv) => typeof(jv) === "string" ? jv : $Runtime.raiseRuntimeError(`expected String got ${jv}`), emit: (nv) => nv});
+ioMarshalMap.set("ASCIIString", {parse: (jv) => typeof(jv) === "string" ? jv :  $Runtime.raiseRuntimeError(`expected ASCIIString got ${jv}`), emit: (nv) => nv});
 ioMarshalMap.set("DateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("UTCDateTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("PlainDate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
@@ -81,6 +83,17 @@ function bsqMarshalEmit(tt, nv) {
     return ioMarshalMap.get(tt).emit(nv);
 }
 
+function cmdunescape(str) {
+    return str.replace(/&amp;|&lt;|&gt;|&#39;|&quot;/g, 
+    tag => ({
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&#39;': "'",
+        '&quot;': '"'
+      }[tag]));
+}
+
 export {
-    bsqMarshalParse, bsqMarshalEmit,
+    bsqMarshalParse, bsqMarshalEmit, cmdunescape
 };
