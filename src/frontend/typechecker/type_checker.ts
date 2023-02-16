@@ -2132,31 +2132,31 @@ class TypeChecker {
             tirtype = new TIRPathGlobEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, validator, pthvalidator);
         }
         else if(rtype instanceof ResolvedOkEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
-            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeE));
+            const typet = this.toTIRTypeKey(rtype.typeT);
+            const typee = this.toTIRTypeKey(rtype.typeE);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIROkEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee, isexportable);
         }
         else if(rtype instanceof ResolvedErrEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
-            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeE));
+            const typet = this.toTIRTypeKey(rtype.typeT);
+            const typee = this.toTIRTypeKey(rtype.typeE);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
 
             tirtype = new TIRErrEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee, isexportable);
         }
         else if(rtype instanceof ResolvedSomethingEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIRSomethingEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
         }
         else if(rtype instanceof ResolvedMapEntryEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeK));
-            const typee = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeV));
+            const typet = this.toTIRTypeKey(rtype.typeK);
+            const typee = this.toTIRTypeKey(rtype.typeV);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
@@ -2167,36 +2167,36 @@ class TypeChecker {
             tirtype = new TIRHavocEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes);
         }
         else if(rtype instanceof ResolvedListEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIRListEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
         }
         else if(rtype instanceof ResolvedStackEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIRStackEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
         }
         else if(rtype instanceof ResolvedQueueEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIRQueueEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
         }
         else if(rtype instanceof ResolvedSetEntityAtomType) {
-            const typet = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeT));
+            const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
             tirtype = new TIRSetEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
         }
         else if(rtype instanceof ResolvedMapEntityAtomType) {
-            const typek = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeK));
-            const typev = this.toTIRTypeKey(ResolvedType.createSingle(rtype.typeV));
+            const typek = this.toTIRTypeKey(rtype.typeK);
+            const typev = this.toTIRTypeKey(rtype.typeV);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typek, typev]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
@@ -4460,7 +4460,7 @@ class TypeChecker {
 
     private checkMapEntryConstructorExpression(env: ExpressionTypeEnvironment, exp: MapEntryConstructorExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
         let itype: ResolvedMapEntityAtomType | undefined = undefined;
-        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedMapEntityAtomType) {
+        if(desiredtype !== undefined && desiredtype.options.length === 1 && desiredtype.options[0] instanceof ResolvedMapEntryEntityAtomType) {
             itype = desiredtype.options[0]
         }
 
