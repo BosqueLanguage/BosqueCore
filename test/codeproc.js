@@ -20,8 +20,19 @@ function codegen(srcdir, dstdir) {
     execFileSync(`node`, [genbin, "--outdir", dstdir, srcdir]);
 }
 
+function cmdescape(str) {
+    return str.replace(/[&<>'"]/g, 
+    tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;'
+      }[tag]));
+}
+
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + JSON.stringify(vv) + "'"))]).toString();
+    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + cmdescape(JSON.stringify(vv)) + "'"))]).toString();
     if(rr.startsWith("error -- ")) {
         return rr;
     }

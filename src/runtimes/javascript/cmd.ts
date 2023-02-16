@@ -112,7 +112,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
         assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
         const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
 
-        const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1)))`).join(", ") + "]";
+        const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse($API.cmdunescape(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1))))`).join(", ") + "]";
         const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
 
         const mainf = Path.join(into, "_main_.mjs");

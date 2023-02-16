@@ -1,0 +1,11 @@
+namespace Main;
+
+export function main(v: Int?): [Int, Int, Int] {
+    let x: {f: Int?, g: String} = {f=v, g="hello"};
+
+    let v1 = if !none (x.f) then 1i else 0i;
+    let v2 = if <None> (x.f) then 0i else 1i;
+    let v3 = if [none] (x.f) then 0i else 1i;
+
+    return [v1, v2, v3];
+}
