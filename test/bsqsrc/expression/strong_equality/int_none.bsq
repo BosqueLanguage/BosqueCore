@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(): [Bool, Bool, Bool] {
+    let x: Int | None = 1i;
+    return [x === none, x === 1i, x === 2i];
+}

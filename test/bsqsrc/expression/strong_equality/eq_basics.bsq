@@ -1,0 +1,7 @@
+namespace Main;
+
+typedecl Foo = String;
+
+export function main(): [Bool, Bool, Bool] {
+    return [1i === 1i, "hello" !== "goodbye", "ok"_Foo !== "ok"_Foo];
+}

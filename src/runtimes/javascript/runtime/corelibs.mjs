@@ -47,7 +47,7 @@ function $KeyEqualMixed(uval, gval, oftype) {
         return false;
     }
 
-    return ($KeyEqualOps.get(oftype))(uval, garg.value);
+    return ($KeyEqualOps.get(oftype))(uval, gval.value);
 }
 
 function $KeyEqualGeneral(lval, rval) {
