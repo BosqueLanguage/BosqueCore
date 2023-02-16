@@ -1,0 +1,12 @@
+namespace Main;
+
+function makeme(k: Int, v: Int): MapEntry<Int, Int?> {
+  return k => v;
+}
+
+export function main(): [MapEntry<Int, Int>, MapEntry<Int, Int?>] {
+  let e1 = 1i => 2i;
+  let e2 = makeme(3i, 4i);
+
+  return [e1, e2];
+}
