@@ -31,6 +31,12 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     24. Binary numeric arithmetic, `+`/`-`/`*`/`/` operators
     25. Binary numeric comparison `==`/`!=`/`<`/`<=`/`>`/`>=` operators
     26. Binary KeyType equality `===`/`!==` operators
+    27. Binary Logic `&&`/`||`/`==>` operators
+    28. MapEntry Constructor `=>` operator
+    29. If-Then-Else Expression
+    30. Switch Expression
+    31. Match Expression
+    32. [TODO] Task Expressions
 - Bosque Expression Components
     1. ITests
     2. Arguments
@@ -584,7 +590,64 @@ typedecl Foo = Nat;
 ```
 
 ## Binary KeyType equality operators
+`KeyType` values play a critical role in Bosque. They are used as keys in `Set<T>` and `Map<K, V>` containers and they are also used for strong equality testing with the `===` and `!==` operators. These operators allow for testing of values when (at least) one of the arguments is a `KeyType` value. The types on the two sides of the operator do not need to be the same but one must be a subtype of the other.
 
+Examples of `KeyType` equality operator usage includes:
+
+```none 
+1i === 1i //true (identical to 1i == 1i)
+"hello" !== "goodbye" //false
+true === none //false
+
+let x: Int | None = 1i;
+x === none //false
+x === 1i //true
+x === 2i //false
+
+let y: Option<String> = some("hello");
+y === none //error types don't overlap
+y === nothing //true
+
+let p: String | Int = "hello";
+let q: String | Int | None = "hello";
+p === q //true
+
+entity Foo {}
+let f: Foo? = Foo{};
+let g: Foo? = none;
+
+f === g //error at least one type must be a KeyType
+f === none //false
+g === none //true
+```
+
+## Binary Logic `&&`/`||`/`==>` operators
+Bosque provides the standard short-circuiting boolean operators of `&&` and `||`. Bosque also has a logical implication operator `==>` which is short-circuited on the left side when it is `false`. 
+
+```none
+true && true //true
+true && false //false
+false && (1i / 0i == 1i) //false -- short-circuited
+
+true || false //true -- short-circuited
+false || false //false
+
+true ==> true //true
+true ==> false //false
+false ==> (1i / 0i == 1i) //true -- short-circuited
+```
+
+## MapEntry Constructor `=>` operator
+The `Map<K, V>` container in Bosque holds values of type `MapEntry<K, V>`. The Map entry constructor `=>` is a shorthand notation for creating `MapEntry` values from a key and value expression. The type of the entry is inferred from the context. 
+
+```none
+1i => 2i; //MapEntry<Int, Int>{1i, 2i}
+Map<Int, String>{1i => "one", 2i => "two"}; //Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}
+```
+
+## If-Then-Else Expression
+## Switch Expression
+## Match Expression
 
 # Bosque Expression Components
 

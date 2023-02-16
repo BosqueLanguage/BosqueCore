@@ -1,0 +1,9 @@
+namespace Main;
+
+export function main(qstr: String?): [Bool, Bool] {
+    let p: String | Int = "hello";
+    let q: String | Int | None = qstr;
+
+    return [p === q, p !== q];
+}
+

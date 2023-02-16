@@ -3139,7 +3139,7 @@ class TypeChecker {
         }
         else {
             if(this.subtypeOf(lhs, rhs)) {
-                if(ResolvedType.isUniqueType(lhs)) {
+                if(lhs.options.length === 1 && ResolvedType.isUniqueType(lhs.options[0])) {
                     return "lhssomekeywithunique";
                 }
                 else {
@@ -3147,7 +3147,7 @@ class TypeChecker {
                 }
             }
             else {
-                if(ResolvedType.isUniqueType(rhs)) {
+                if(rhs.options.length === 1 && ResolvedType.isUniqueType(rhs.options[0])) {
                     return "rhssomekeywithunique";
                 }
                 else {

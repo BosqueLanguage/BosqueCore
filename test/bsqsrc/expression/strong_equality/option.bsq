@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(): Bool {
+    let y: Option<String> = something("hello");
+    return y === nothing;
+}
