@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(x: Int?): Int? {
+    let z: Int? = match(x) {
+        None  => 0i
+        | Int => 1i
+    };
+
+    return z;
+}

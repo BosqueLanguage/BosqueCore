@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(v: Nat?): Nat {
+    let x: {f: Nat?, g: Int} = {f=v, g=0i};
+
+    return match (x.f) {
+        None => 0n
+        | _  => $ + 1n
+    };
+}
