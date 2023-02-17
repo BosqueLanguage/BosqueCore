@@ -1,0 +1,7 @@
+namespace Main;
+
+export function main(x: Nat?): Nat {
+    x@!none; //assert that x is not none here (error otherwise) and type infer
+
+    return x + 10n;
+}
