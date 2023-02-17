@@ -1,0 +1,13 @@
+namespace Main;
+
+export function main(): [Int, [Int?, String], Nat] {
+    var x = 1i;
+    var y: [Int?, String] = [1i, "hello"];
+
+    var z: Nat;
+
+    x = 2i;
+    z = 5n;
+
+    return [x, y, z];
+}
