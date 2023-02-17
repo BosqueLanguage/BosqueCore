@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(x: Int?): Int? {
+    let z: Int? = switch(x) {
+        none => 0i
+        | _  => 1i
+    };
+
+    return z;
+}

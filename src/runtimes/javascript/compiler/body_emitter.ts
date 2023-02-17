@@ -776,7 +776,41 @@ class BodyEmitter {
     }
 
     private emitSwitchExpression(exp: TIRSwitchExpression, toplevel: boolean): string {
-        return NOT_IMPLEMENTED_EXPRESSION(exp.tag);
+        this.m_hasScratch = true;
+        let sstr = `$Runtime.setScratchValue($$scratch, ${exp.scratchidx}, ${this.emitExpression(exp.exp, true)}) || `;
+
+        if(exp.clauses[0].binderinfo === undefined) {
+            sstr += `${this.emitExpression(exp.clauses[0].match, false)} ? ${this.emitExpression(exp.clauses[0].value, false)} : `;
+        }
+        else {
+            sstr += `${this.emitExpression(exp.clauses[0].match, false)} ? ((${exp.clauses[0].binderinfo[1]}) => ${this.emitExpression(exp.clauses[0].value, true)})(${this.emitExpression(exp.clauses[0].binderinfo[0], true)}) : `;
+        }
+
+        for(let i = 1; i < exp.clauses.length; ++i) {
+            if(exp.clauses[i].binderinfo === undefined) {
+                sstr += `${this.emitExpression(exp.clauses[i].match, false)} ? ${this.emitExpression(exp.clauses[i].value, false)} : `;
+            }
+            else {
+                const binfo = exp.clauses[i].binderinfo as [TIRExpression, string];
+                sstr += `${this.emitExpression(exp.clauses[i].match, false)} ? ((${binfo[1]}) => ${this.emitExpression(exp.clauses[i].value, true)})(${this.emitExpression(binfo[0], true)}) : `;
+            }
+        }
+
+        if(exp.edefault !== undefined) {
+            if(exp.edefault.binderinfo === undefined) {
+                sstr += `${this.emitExpression(exp.edefault.value, false)}\n`;
+            }
+            else {
+                sstr += `((${exp.edefault.binderinfo[1]}) => ${this.emitExpression(exp.edefault.value, true)})(${this.emitExpression(exp.edefault.binderinfo[0], true)})`;
+            }
+        }
+        else {
+            if(!exp.isexhaustive) {
+                sstr += `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
+            }
+        }
+
+        return toplevel ? sstr : ("(" + sstr + ")");
     }
     
     private emitMatchExpression(exp: TIRMatchExpression, toplevel: boolean): string {
@@ -810,7 +844,7 @@ class BodyEmitter {
         }
         else {
             if(!exp.isexhaustive) {
-                sstr += ` || $Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ line ${exp.sinfo.line}")`;
+                sstr += `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
             }
         }
 
@@ -911,7 +945,7 @@ class BodyEmitter {
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
@@ -922,7 +956,7 @@ class BodyEmitter {
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `!$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
@@ -1015,7 +1049,7 @@ class BodyEmitter {
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
@@ -1028,7 +1062,7 @@ class BodyEmitter {
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `!$CoreLibs.$KeyEqual("${exp.literal.exp.etype}", ${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
@@ -1669,7 +1703,7 @@ class BodyEmitter {
                 sstr += indent + "    ;\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + -- "${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1723,7 +1757,7 @@ class BodyEmitter {
                 sstr += indent + "    ;\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + -- "${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
