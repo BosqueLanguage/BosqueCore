@@ -431,22 +431,7 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedErrEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
         }
         else if(this.atomSubtypeOf(withe, ofc)) {
-            if(ofc.conceptTypes.length === 1 && ofc.conceptTypes[0].concept.attributes.includes("__adt_concept_type")) {
-                const splits = [...this.m_assembly.getAllEntities()]
-                    .filter((tt) => tt.terms.length === 0)
-                    .map((tt) => ResolvedObjectEntityAtomType.create(tt, new Map<string, ResolvedType>()))
-                    .filter((tt) => { 
-                        const issubtype = this.atomSubtypeOf(tt, ofc);
-                        const notwithe = tt.typeID !== withe.typeID;
-
-                        return issubtype && notwithe;
-                    });
-                
-                return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.create(splits) };
-            }
-            else {
-                return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ofc) };
-            }
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ofc) };
         }
         else {
             return { tp: undefined, fp: ResolvedType.createSingle(ofc) };

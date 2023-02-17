@@ -53,10 +53,63 @@ let z = y + 1i; //ok: y is initialized
 
 
 ## Variable Assignment
+Variables in Bosque can be declared as modifiable (using the `var` keyword). These variables can be assigned to later using the `=` assignment operator (also see `ref` calls and -- later -- bulk assignment).
 
-    4. Variable Re-Type
-    5. RefCall Statement
-    6. Return Statement
+```none
+var x: Int = 0i; //x has type of Int and value 0i
+var y: Int; //y has type Int but is not initialized
+
+if(x != 0i) {
+    y = x;
+}
+else {
+    y = 1i;
+}
+//now y is initialized
+
+x = 2i; //ok: x is modifiable
+
+let z = y + x; //ok: y is initialized and result of y + x is 3i
+```
+
+## Variable Re-Type
+In many programs variables are declared with a type that is general and then later processed in blocks where they are known to have a more specific type. Bosque supports this with explicit re-typing of variables using the `e@ITest` syntax. This is a compile-time only operation that does not change the runtime type of the variable. Instead it dynamically asserts that the variable is of the specified type and then uses that type for type inference in the following flow scope.
+
+```none
+function fsimple(x: Nat?): Nat {
+    x@!none; //assert that x is not none here (error otherwise) and type infer
+
+    return x + 10n;
+}
+
+function fsplit(x: Nat?): Nat {
+    if none (x) {
+        return 0n;
+    }
+    x@<Nat>; //assert that x is a Nat here (error otherwise) and type infer
+
+    return x + 10n;
+}
+
+function fjoin(x: Nat?): Nat {
+    var y = x;
+
+    if none (x) {
+        y = 0n;
+        y@<Nat>;
+    }
+    else {
+        y@some;
+    }
+    //y is reflowed to be a nat
+
+    return y + 10n;
+}
+```
+
+## RefCall Statement
+## Return Statement
+
     7. Short-Circuit Return
     8. Variable Short-Circuit Re-Type
     9. If-Else Statement
