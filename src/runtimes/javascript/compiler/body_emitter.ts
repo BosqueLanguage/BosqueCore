@@ -805,9 +805,8 @@ class BodyEmitter {
             }
         }
         else {
-            if(!exp.isexhaustive) {
-                sstr += `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
-            }
+            //we just ignore exp.isexhaustive -- maybe want to be more optimized in the future
+            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
         }
 
         return toplevel ? sstr : ("(" + sstr + ")");
@@ -843,9 +842,8 @@ class BodyEmitter {
             }
         }
         else {
-            if(!exp.isexhaustive) {
-                sstr += `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
-            }
+            //we just ignore exp.isexhaustive -- maybe want to be more optimized in the future
+            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
         }
 
         return toplevel ? sstr : ("(" + sstr + ")");
