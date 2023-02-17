@@ -692,7 +692,85 @@ else
 ```
 
 ## Switch Expression
+Bosque provides a `switch` expression for matching against a set of literal cases. The matches in a switch expression can be literals or the special `_` wildcard match. As with if expressions the branch expressions are unioned to determine the type of the switch expression, type inference is applied if possible, and binders can be used in the branch expressions (bound to the switch expression and type refined according to matched/unmatched tests). 
+
+Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
+
+Examples of simple switch expressions include:
+```none
+let x: Int? = ...;
+
+switch (x) {
+    none => 0i
+    | 0i => 1i
+    | _  => 2i
+} //Int
+
+let y: Bool = ...;
+switch (y) {
+    true    => 0n
+    | false => 1n
+} //Nat
+
+let z: Int? = switch(x) {
+    none => 0i
+    | _  => 1i
+}; //Int?
+```
+
+Examples of switch expressions with binders include:
+```none
+let x: {f: Nat?, g: Int} = ...;
+
+switch (x.f) {
+    none => 0n
+    | _  => $ + 1n
+} //Int
+
+let y: Option<Nat> = ...;
+switch (y) {
+    nothing => 0n
+    | _  => $.value() + 1n
+} //Nat
+```
+
 ## Match Expression
+The Bosque `match` statement is similar to the switch statement but uses type tests instead of literal tests. The match expression is a union of the branch expressions and type inference is applied if possible. Binders can be used in the branch expressions (bound to the match expression and type refined according to matched/unmatched tests).
+
+
+Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
+
+Examples of simple match expressions include:
+```none
+let x: Int | Nat | None = ...;
+
+match (x) {
+    None  => 0i
+    | Int => 1i
+    | _   => 2i
+} //Int
+
+let z: Int? = match(x) {
+    None  => 0i
+    | Int => 1i
+}; //Int?
+```
+
+Examples of match expressions with binders include:
+```none
+let x: {f: Nat?, g: Int} = ...;
+
+match (x.f) {
+    None => 0n
+    | _  => $ + 1n
+} //Int
+
+let y: Option<Nat> = ...;
+match (y) {
+    Nothing          => 0n
+    | Something<Nat> => $.value() + 1n
+} //Nat
+```
 
 # Bosque Expression Components
 
