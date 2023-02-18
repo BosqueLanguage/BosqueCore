@@ -108,16 +108,72 @@ function fjoin(x: Nat?): Nat {
 ```
 
 ## RefCall Statement
-## Return Statement
+In addition to the `=` assignment operator, Bosque supports a `ref` operator that can be used to call a function on a variable *and* rebind the variable to the receiver of the called `ref` method. This is useful for working with code that has an environment or object-like behavior where the state needs to be updated along with computing a value in each processing step. Ref methods/calls cannot be virtual (otherwise they are parametric in the receiver type) and must be declared/invoked with the `ref` keyword.
 
-    7. Short-Circuit Return
-    8. Variable Short-Circuit Re-Type
-    9. If-Else Statement
-    10. Switch Statement
-    11. Match Statement
-    12. Abort Statement
-    13. Assert Statement
-    14. Debug Statement
+An example of this feature is:
+```none
+entity Counter {
+    field ctr: Nat;
+
+    function create(): Counter {
+        return Counter{0n};
+    }
+
+    method ref generateNextID(): Nat {
+        let id = this.ctr;
+        this = Counter{this.ctr + 1n};
+
+        return id; //the current value of this is also returned implicitly and assigned at call site
+    }
+} 
+
+var ctr = Counter::create();         //create a Counter 
+let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
+let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
+```
+
+## Return Statement
+The return statement in Bosque is used to return a single value from a function. 
+
+## Short-Circuit Return
+The short-circuit return statement in Bosque is used to conditionally return from a function when a value matches an ITest result. This allows for concise checking/handling of error and other early return cases.
+
+[TODO] we do not fully support short-circuit return expressions on variable declaration yet. Need to thread this through things.
+
+## Variable Short-Circuit Re-Type
+The basic variable retype statement results in a runtime failure when the test fails. The short-circuit retype statement variation `v @@ ITest [: action];` allows for an ITest to be used which (1) if successful will retype the variable (just like the `v@ITest` form) and (2) if unsuccessful will execute a return with the ITest coerced value _or_ the result of the optionally specified action (which may use the `$` binder).
+
+[TODO] tests are needed for this feature.
+
+## If-Else Statement
+## Switch Statement
+## Match Statement
+
+## Abort Statement
+The abort statement immediately results in a runtime failure. This is useful for debugging and error handling.
+
+```none
+abort; //abort with failure
+```
+
+## Assert Statement
+The assert statement provides a way to specify and check program conditions at runtime (and for static tooling). It can be configured with a level flag to control when it is compiled (so expensive checks are not included in production).
+
+If the condition evaluates to false then the assert will result in a runtime failure (and the message emitted to the logger at the failure level). If the condition evaluation itself results in an error then the assert will not trigger *but* a message will be emitted to the logger at the warn level.
+
+```none
+assert x == 0i; //assert that x is zero -- default level is release
+assert debug (x + 1i == 0i); //assert -- only in debug mode
+
+assert (1i / 0i == 1i); //assert expression fails -- this will not trigger but a warning will be emitted
+```
+
+## Debug Statement
+The debug statement is used to output a value to the designated diagnostics dump sink -- this is disabled unless the application is built in debug mode. It is useful for debugging and logging.
+
+```none
+__debug("hello world"); //output "hello world" to the diagnostics dump sink
+```
 
 - Bosque Statement Components
     

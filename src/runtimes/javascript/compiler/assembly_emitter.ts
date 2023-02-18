@@ -116,11 +116,11 @@ class NamespaceEmitter {
 
         let consfuncs: string[] = [];
         if(ttype.consinvariantsall.length !== 0) {
-            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
             consfuncs.push(`$constructorWithChecks_basetype: function($value) {\n        ${checks}return $value;\n    }`);
         }
         if(ttype.consinvariantsexplicit.length !== 0) {
-            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
             consfuncs.push(`$constructorWithChecks: function($value) {\n        ${checks}return $value;\n    }`);
         }
 
@@ -140,7 +140,7 @@ class NamespaceEmitter {
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")}) { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; }`);
 
         if(ttype.consinvariants.length !== 0) {
-            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!${bemitter.emitExpression(cc.exp)}, "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
+            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
             consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n        ${checks}return {${fnames.map((fn) => fn + ": $" + fn).join(", ")}};\n    }`);
         }
 

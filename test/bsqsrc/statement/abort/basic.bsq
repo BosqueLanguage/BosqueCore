@@ -1,0 +1,9 @@
+namespace Main;
+
+export function main(b: Bool): Bool {
+    if(!b) {
+        abort;
+    }
+
+    return b;
+}

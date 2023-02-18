@@ -1554,7 +1554,7 @@ class BodyEmitter {
     }
 
     private emitAssertCheckStatement(stmt: TIRAssertCheckStatement): string {
-        return `$Runtime.raiseUserAssertIf(!${this.emitExpression(stmt.cond, true)}, "${stmt.msg}");`;
+        return `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(stmt.cond, true)}; } catch (ex) { $Runtime.log("warn", "AssertEvalFailure", "condition failure"); return true; } })()), "${stmt.msg}");`;
     }
 
     private emitDebugStatement(stmt: TIRDebugStatement): string {
@@ -2005,7 +2005,7 @@ class BodyEmitter {
         let rconds = "";
 
         if(preconds.length !== 0) {
-            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
+            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
         }
 
         const bstmts = body.map((stmt) => this.emitStatement(stmt, postconds.length === 0 ? bodyindent : wbodyindent));
@@ -2016,7 +2016,7 @@ class BodyEmitter {
         }
         else {
             const bstr = `{\n${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
-            const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!${this.emitExpression(pc.exp)}, "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
+            const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
 
             return `{\n${scratch}${rconds}const $$return" = (() => ${bstr})();\n${bodyindent}$return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
         }
