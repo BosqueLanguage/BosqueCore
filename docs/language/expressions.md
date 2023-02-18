@@ -735,8 +735,7 @@ switch (y) {
 ```
 
 ## Match Expression
-The Bosque `match` statement is similar to the switch statement but uses type tests instead of literal tests. The match expression is a union of the branch expressions and type inference is applied if possible. Binders can be used in the branch expressions (bound to the match expression and type refined according to matched/unmatched tests).
-
+The Bosque `match` expression is similar to the switch expression but uses type tests instead of literal tests. The match expression is a union of the branch expressions and type inference is applied if possible. Binders can be used in the branch expressions (bound to the match expression and type refined according to matched/unmatched tests).
 
 Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
 

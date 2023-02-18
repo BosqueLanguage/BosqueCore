@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(y: Int): String {
+    if(y < 0i) {
+        return "negative";
+    }
+    else {
+        return "positive";
+    }
+}
