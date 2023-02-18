@@ -1877,7 +1877,7 @@ class BodyEmitter {
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string, prestr?: string | undefined, poststr?: string | undefined): string {
         const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
 
-        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent}${poststr}\n` : "") + indent + "}";
+        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + "    "}${poststr}\n` : "") + indent + "}";
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {

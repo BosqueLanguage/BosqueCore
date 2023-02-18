@@ -1,0 +1,13 @@
+namespace Main;
+
+export function main(x: Int | Nat | None): Int {
+    var k: Int;
+    
+    match (x) {
+        None  => k = 0i;
+        | Int => k = 1i;
+        | _   => k = 2i;
+    }
+
+    return k;
+}

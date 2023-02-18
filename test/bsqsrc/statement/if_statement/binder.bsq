@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(z: Int?): Int {
+    if !none (z) {
+        return $ - 1i;
+    }
+    else {
+        return 0i;
+    }
+}

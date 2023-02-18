@@ -1,0 +1,13 @@
+namespace Main;
+
+export function main(y: Int?): Int? {
+    var x = y;
+
+    if some (x) {
+        x@<Int>;
+
+        x = x + 1i;
+    }
+
+    return x;
+}

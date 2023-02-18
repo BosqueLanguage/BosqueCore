@@ -146,8 +146,70 @@ The basic variable retype statement results in a runtime failure when the test f
 [TODO] tests are needed for this feature.
 
 ## If-Else Statement
+Bosque provides a standard if-elif-else statement. As with the if-then-else expression the conditions in the statement can be simple expressions or ITests. The branch bodies can use binder expressions, when using ITests, and the Bosque type checker is aware of terminal branches and re-typings when control flow rejoins after the statement.
+
+Examples of simple if-else statements include:
+```none
+var x: Int = ...;
+if(x < 0) {
+    x = -x;
+}
+
+let y: Int = ...;
+if(y < 0) {
+    return "negative";
+}
+else {
+    return "positive";
+}
+
+let z: Int? = ...;
+if !none (z) {
+    return $ - 1;
+}
+```
+
 ## Switch Statement
+The Bosque `switch` expression matches against a set of literal cases. The matches in a switch expression can be literals or the special `_` wildcard match. Binders can be used in the branch expressions (bound to the switch expression and type refined according to matched/unmatched tests). 
+
+Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
+
+[TODO] need to finish the emitter implementation and do tests.
+
+Examples of simple switch expressions include:
+```none
+let x: Int? = ...;
+
+switch (x) {
+    none => return 0i;
+    | _  => return 2i;
+}
+
+let y: Bool = ...;
+var k: Nat;
+switch (y) {
+    true    => k = 0n;
+    | false => k = 1n;
+} //Nat
+
+```
+
 ## Match Statement
+
+The Bosque `match` expression is similar to the switch expression but uses type tests instead of literal tests. The match expression is a union of the branch expressions and type inference is applied if possible. Binders can be used in the branch expressions (bound to the match expression and type refined according to matched/unmatched tests).
+
+Non-exhaustiveness is not checked from the values but a runtime error will be raised if there is no matching case.
+
+Examples of simple match expressions include:
+```none
+let x: Int | Nat | None = ...;
+var k: Int;
+match (x) {
+    None  => k = 0i;
+    | Int => k = 1i;
+    | _   => k = 2i;
+}
+```
 
 ## Abort Statement
 The abort statement immediately results in a runtime failure. This is useful for debugging and error handling.
