@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Nat>): [Nat, Bool] {
+    return [l.size(), l.empty()];
+}
