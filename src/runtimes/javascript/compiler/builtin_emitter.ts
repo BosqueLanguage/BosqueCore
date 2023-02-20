@@ -49,7 +49,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size; }`;
         }
         case "s_list_get": {
-            return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
+            return `{ return ${func.invoke.params[0].name}.get(Number(${func.invoke.params[1].name})); }`;
         }
         case "s_list_back": {
             return `{ return ${func.invoke.params[0].name}.last(); }`;

@@ -42,3 +42,21 @@ let l2 = List<Nat>{1n, 2n, 3n};
 l2.size() //3
 l2.empty() //false
 ```
+
+## get/front/back
+The `get`, `front` and `back` operators return the element at the specified index, the first element and the last element respectively. Index out of bounds or calling `front`/`back` on an empty list will result in a runtime error.
+
+```none
+let l1 = List<Nat>{1n, 2n, 3n};
+l1.get(0n) //1n
+l1.get(1n) //2n
+l1.get(2n) //3n
+
+l1.front() //1n
+l1.back() //3n
+
+let l2 = List<Nat>{};
+l2.get(0n) //error
+l2.front() //error
+l2.back() //error
+```
