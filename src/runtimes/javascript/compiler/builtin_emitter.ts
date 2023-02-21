@@ -63,6 +63,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
         }
+        case "s_list_has_pred_idx": {
+            const pcode = resolveCodePack(asm, func.invoke, "p");
+            const pcodeinvk = generatePCodeInvokeName(pcode);
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
+        }
         case "s_list_push_back": {
             return `{ return ${func.invoke.params[0].name}.push(${func.invoke.params[1].name}); }`;
         }

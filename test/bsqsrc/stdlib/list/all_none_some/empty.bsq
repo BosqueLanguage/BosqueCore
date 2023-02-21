@@ -1,0 +1,10 @@
+namespace Main;
+
+export function main(): [Bool, Bool, Bool] {
+    let l = List<Int>{};
+    return [
+        l.allOf(pred(e) => e > 0i),
+        l.noneOf(pred(e) => e > 0i),
+        l.someOf(pred(e) => e > 0i)
+    ];
+}
