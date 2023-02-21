@@ -1,0 +1,9 @@
+namespace Main;
+
+export function main(l: List<Nat>): [Bool, Bool, Bool] {
+    return [
+        l.allOf(pred(e) => e > 0n),
+        l.noneOf(pred(e) => e > 0n),
+        l.someOf(pred(e) => e > 0n)
+    ];
+} 

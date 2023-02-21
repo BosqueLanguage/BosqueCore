@@ -60,3 +60,21 @@ l2.get(0n) //error
 l2.front() //error
 l2.back() //error
 ```
+
+## allOf/noneOf/someOf
+Bosque provides the `allOf`, `noneOf` and `someOf` operators to test whether all, none, or some of the elements in the list satisfy a predicate. The predicate is a function that takes an element of the list and returns a `Bool`. There are 2 flavors of these methods. In one flavor the predicate is a single argument function that just takes the element. The other flavors, `allOfIdx`, `noneOfIdx`, and `someOfIdx`, the predicate is a 2 argument function that takes the element and the index of the element in the list. 
+
+```none
+let l1 = List<Nat>{1n, 2n, 3n};
+l1.allOf(pred(e) => e > 0n) //true
+l1.noneOf(pred(e) => e > 0n) //false
+
+let l2 = List<Nat>{3n, 2n, 1n};
+l1.someOfIdx(pred(e, i) => e > 0n && i == 1n) //true
+l1.someOfIdx(pred(e, i) => e == l2.get(i)) //true
+
+let l3 = List<Nat>{};
+l3.allOf(pred(e) => e > 0n) //true
+l3.noneOf(pred(e) => e > 0n) //true
+l3.someOf(pred(e) => e > 0n) //false
+```
