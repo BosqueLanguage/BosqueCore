@@ -427,10 +427,10 @@ class TypeChecker {
             return { tp: ResolvedType.createSingle(withe), fp: this.getSpecialNothingType() };
         }
         else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Ok<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedOkEntityAtomType.create(errdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedErrEntityAtomType.create(errdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
         }
         else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Err<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedErrEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
+            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedOkEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
         }
         else if(this.atomSubtypeOf(withe, ofc)) {
             return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ofc) };
@@ -3456,18 +3456,24 @@ class TypeChecker {
 
         const cdecl = (cmf as OOMemberLookupInfo<StaticMemberDecl>);
         this.raiseErrorIf(exp.sinfo, (cdecl.decl.value as ConstantExpressionValue).captured.size !== 0, "Expression uses unbound variables");
-        const cexp = this.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.binds);
+
+        const tirdecltype = this.toTIRTypeKey(cdecl.ttype);
         const rtype = this.normalizeTypeOnly(cdecl.decl.declaredType, TemplateBindScope.createBaseBindScope(cdecl.oobinds));
         
-        if (cexp !== undefined) {
-            return this.emitCoerceIfNeeded(this.checkExpression(env, cexp, rtype), exp.sinfo, rtype);
+        if (cdecl.ootype.attributes.includes("__enum_type")) {
+            this.m_pendingConstMemberDecls.push(cdecl);
+            return env.setResultExpressionInfo(new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, this.toTIRTypeKey(rtype)), rtype);
         }
         else {
-            const tirdecltype = this.toTIRTypeKey(cdecl.ttype);
-            const tirrtype = this.toTIRTypeKey(rtype);
+            const cexp = this.compileTimeReduceConstantExpression((cdecl.decl.value as ConstantExpressionValue).exp, env.binds);
 
-            this.m_pendingConstMemberDecls.push(cdecl);
-            return env.setResultExpressionInfo(new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, tirrtype), rtype);
+            if (cexp !== undefined) {
+                return this.emitCoerceIfNeeded(this.checkExpression(env, cexp, rtype), exp.sinfo, rtype);
+            }
+            else {
+                this.m_pendingConstMemberDecls.push(cdecl);
+                return env.setResultExpressionInfo(new TIRAccessConstMemberFieldExpression(exp.sinfo, tirdecltype, exp.name, this.toTIRTypeKey(rtype)), rtype);
+            }
         }
     }
 
