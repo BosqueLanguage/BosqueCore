@@ -43,6 +43,10 @@ class FunctionScope {
         return this.m_args.has(name) || this.m_locals.some((frame) => frame.vars.some((nn) => nn.name === name));
     }
 
+    isVarScopeResolvedNameDefined(name: string): boolean {
+        return this.m_args.has(name) || this.m_locals.some((frame) => frame.vars.some((nn) => nn.scopedname === name));
+    }
+
     isTemplateNameDefined(name: string): boolean {
         return this.m_boundtemplates.has(name);
     }
@@ -216,7 +220,7 @@ class ParserEnvironment {
                 }
             }
 
-            if (!cscope.isVarNameDefined(name) && cscope.isPCodeEnv()) {
+            if (!cscope.isVarScopeResolvedNameDefined(name) && cscope.isPCodeEnv()) {
                 cscope.getCaptureVars().add(name);
             }
         }

@@ -153,6 +153,15 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
+    method {when T grounded KeyType} contains(v: T): Bool {
+        if(ListOps::s_list_empty<T>(this)) {
+            return false;
+        }
+        else {
+            return ListOps::s_list_has<T>(this, v);
+        }
+    }
+
     recursive? method find(p: recursive? pred(T) -> Bool): T
         requires !ListOps::s_list_empty<T>(this);
     {

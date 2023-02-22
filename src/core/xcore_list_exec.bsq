@@ -20,6 +20,8 @@ internal entity ListOps provides Some {
     __conditional_safe internal recursive? function s_list_has_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): Bool = s_list_has_pred;
     __conditional_safe internal recursive? function s_list_has_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): Bool = s_list_has_pred_idx;
 
+    __safe internal function s_list_has<T grounded KeyType>(l: List<T>, v: T): Bool = s_list_has; 
+
     __conditional_safe internal recursive? function s_list_find_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): Int = s_list_find_pred;
     __conditional_safe internal recursive? function s_list_find_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): Int = s_list_find_pred_idx;
     
@@ -55,7 +57,6 @@ internal entity ListOps provides Some {
 
     __conditional_safe internal recursive? function s_list_single_index_of<T>(l: List<T>, p: recursive? pred(_: T) -> Bool): Int = s_list_single_index_of;
 
-    __safe internal function s_list_has<T grounded KeyType>(l: List<T>, v: T): Bool = s_list_has; 
     __safe internal function s_list_indexof<T grounded KeyType>(l: List<T>, v: T): Int = s_list_indexof; 
     __safe internal function s_list_last_indexof<T grounded KeyType>(l: List<T>, v: T): Int = s_list_last_indexof; 
 
