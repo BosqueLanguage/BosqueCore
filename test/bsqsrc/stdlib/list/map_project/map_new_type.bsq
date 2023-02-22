@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l: List<Int>): List<Int?> {
+    return l.map<Int?>(fn(e) => if (e != 2i) then e else none);
+}
+

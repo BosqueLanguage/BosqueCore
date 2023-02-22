@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import { BSQRegex } from "../../../frontend/bsqregex";
 
-import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { BodyEmitter } from "./body_emitter";
 
 function resolveCodePack(asm: TIRAssembly, inv: TIRInvoke, pcname: string): TIRCodePack {
@@ -71,61 +71,66 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_has_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
+            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
         }
         case "s_list_has_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
+        }
+        case "s_list_has": {
+            const oftype = func.invoke.tbinds.get("T") as TIRTypeKey;
+            const cmp = bemitter.typeEncodedAsUnion(oftype) ? `$CoreLibs.$KeyEqualGeneral` : `($CoreLibs.$KeyEqualOps.get("${oftype}"))`;
+            return `{ return ${func.invoke.params[0].name}.some((e) => ${cmp}(e, ${func.invoke.params[1].name})); }`;
         }
         case "s_list_find_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
+            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1n; }`;
         }
         case "s_list_find_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1n; }`;
         }
         case "s_list_filter_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
+            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.filter(${pred}); }`;
         }
         case "s_list_filter_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.filter(${pred}); }`;
         }
         case "s_list_filter_map_fn": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`
+            const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
 
             const fcode = resolveCodePack(asm, func.invoke, "f");
             const fcodeinvk = generatePCodeInvokeName(fcode);
-            const fn = `($$vv) => $$fcf(${["f", "$$vv"].join(", ")})`
+            const fn = `($$vv) => $$fcf(${["f", "$$vv"].join(", ")})`;
 
             return `{ const $$pcf = ${pcodeinvk}; const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.filter(${pred}).map(${fn}); }`;
         }
         case "s_list_map": {
             const fcode = resolveCodePack(asm, func.invoke, "f");
             const fcodeinvk = generatePCodeInvokeName(fcode);
-            const fn = `($$vv) => $$fcf(${["f", "$$vv"].join(", ")})`
+            const fn = `($$vv) => $$fcf(${["f", "$$vv"].join(", ")})`;
 
             return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.map(${fn}); }`;
         }
         case "s_list_map_idx": {
             const fcode = resolveCodePack(asm, func.invoke, "f");
             const fcodeinvk = generatePCodeInvokeName(fcode);
-            const fn = `($$vv, $$ii) => $$fcf(${["f", "$$vv", "$$ii"].join(", ")})`
+            const fn = `($$vv, $$ii) => $$fcf(${["f", "$$vv", "BigInt($$ii)"].join(", ")})`;
 
             return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.map(${fn}); }`;
         }
@@ -144,8 +149,21 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_reduce": {
             const pcode = resolveCodePack(asm, func.invoke, "f");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const op = `($$uu, $$vv) => $$pcf(${["f", "$$uu", "$$vv"].join(", ")})`
+            const op = `($$uu, $$vv) => $$pcf(${["f", "$$uu", "$$vv"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
+        }
+
+        case "s_map_empty": {
+            return `{ return ${func.invoke.params[0].name}.size === 0; }`;
+        }
+        case "s_map_count": {
+            return `{ return ${func.invoke.params[0].name}.size; }`;
+        }
+        case "s_map_has": {
+            return `{ return ${func.invoke.params[0].name}.has(${func.invoke.params[1].name}); }`;
+        }
+        case "s_map_get": {
+            return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
         }
 
         default: {

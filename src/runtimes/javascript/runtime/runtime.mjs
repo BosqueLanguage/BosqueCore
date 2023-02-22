@@ -1,7 +1,5 @@
 "use strict";
 
-import * as assert from "assert";
-
 import { JS, NFA, Words } from "refa";
 import {Decimal} from "decimal.js";
 import Fraction from "fraction.js";
@@ -9,6 +7,42 @@ import Fraction from "fraction.js";
 function UnionValue(tkey, value) {
     this.tkey = tkey;
     this.value = value;
+}
+UnionValue.prototype.hashCode = function () {
+    if(this.value === null || this.value === undefined) {
+        return 1;
+    }
+    else {
+        const ttype = typeof this.value;
+        if(ttype === "boolean") {
+            return this.value ? 2 : 3;
+        }
+        else if(ttype === "bigint") {
+            BigInt.asUintN(31, this.value);
+        }
+        else if(ttype === "string") {
+            //TODO: not the best string hashcode
+
+            if(this.value.length === 0) {
+                return 0;
+            }
+            else if(this.value.length === 1) {
+                return this.value.charCodeAt(0) | 0;
+            }
+            else {
+                return (this.value.length * 5 * this.value.charCodeAt(0) * this.value.charCodeAt(this.value.length - 1)) | 0;
+            }
+        }
+        else {
+            return 6535;
+        }
+    }
+}
+UnionValue.prototype.equals = function (other) {
+    return this.tkey === other.tkey && this.value === other.value;
+}
+UnionValue.create = function(tkey, value) {
+    return Object.freeze(new UnionValue(tkey, value));
 }
 
 const subtypeMap = new Map();
@@ -135,15 +169,15 @@ BSQEnvironment.getOrNoneUV = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
         if(vv === undefined) {
-           return new UnionValue("BSQNone", undefined); //tombstone
+           return UnionValue.create("BSQNone", undefined); //tombstone
         }
 
         raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
-        return new UnionValue(vv.tkey, vv.value);
+        return UnionValue.create(vv.tkey, vv.value);
     }
 
     if(env.parent === undefined) {
-        return new UnionValue("BSQNone", undefined);
+        return UnionValue.create("BSQNone", undefined);
     }
     else {
         return BSQEnvironment.getOrNoneUV(env.parent, key, oftype);
@@ -154,7 +188,7 @@ BSQEnvironment.getOrNoneDV = function(env, key, oftype) {
     if(env.args.has(key)) {
         const vv = env.args.get(key);
         if(vv === undefined) {
-           return new UnionValue("BSQNone", undefined); //tombstone
+           return UnionValue.create("BSQNone", undefined); //tombstone
         }
 
         raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
@@ -162,7 +196,7 @@ BSQEnvironment.getOrNoneDV = function(env, key, oftype) {
     }
 
     if(env.parent === undefined) {
-        return new UnionValue("BSQNone", undefined);
+        return UnionValue.create("BSQNone", undefined);
     }
     else {
         return BSQEnvironment.get(env.parent, key, oftype);

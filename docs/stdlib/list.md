@@ -12,15 +12,17 @@ As Bosque does not have an iteration operator (such as for or while) the `List<T
     1. size/empty
     2. get/front/back
     3. allOf/noneOf/someOf
-    4. find/findIndexOf
-    5. filter/filterType
-    6. castType
-    7. map/project
-    8. append/prepend
-    9. pushBack/pushFront
-    10. popBack/popFront
-    11. set/insert/remove
-    12. reduce
+    4. contains
+    5. find/findIndexOf
+    6. filter/filterType
+    7. castType
+    8. map/project
+    9. append/prepend
+    10. pushBack/pushFront
+    11. popBack/popFront
+    12. set/insert/remove
+    13. zip/zipWith/join/joinGroup
+    14. reduce
 
 # List Type
 # List Global Functions
@@ -77,6 +79,16 @@ l3.noneOf(pred(e) => e > 0n) //true
 l3.someOf(pred(e) => e > 0n) //false
 ```
 
+## contains
+When the list contents type is a `KeyType` then the List supports a simplified `contains` method as well which returns true if the list contains the specified element (using the KeyType equals comparator).
+
+```none
+let l = List<Int?>{1i, none, 3i};
+l.contains(3i) //true
+l.contains(2i) //false
+l.contains(none) //true
+```
+
 ## find/findIndexOf
 The `find` and `findIndexOf` family of methods search a list for elements that satisfy a predicate. The `find` and `findIdx` methods return the first element in the list that satisfies the provided predicate (and result in a runtime error if no such element exists). The `findIndexOf` and `findIndexOfIdx` methods return the index of the first element in the list that satisfies the predicate (and result in a runtime error if no such element exists).
 
@@ -116,8 +128,52 @@ l2.castType<Int>() //error
 ```
 
 ## map/project
+The `map` and `project` families of methods provide ways to transform lists. The `map` families of operations take a function that maps elements of type `T` to elements of type `U`. The `project` families of operations take a `Map<T, V>` and use this to transform the elements in the list. If the map does not contain a key for an element in the list then the result is a runtime error.
+
+```none
+let l = List<Int>{1i, 2i, 3i};
+l.map<Int>(fn(e) => e + 1i) //List<Int>{2i, 3i, 4i}
+l.mapIdx<Int>(fn(e, i) => e + i.toInt()) //List<Int>{1i, 3i, 5i}
+l.map<Int?>(fn(e) => if (e != 2i) then e else none) //List<Int?>{1i, none, 3i}
+
+let m = Map<Int, Int?>{1i => 2i, 2i => none, 3i => 4i};
+l.project<Int?>(m) //List<Int?>{2i, none, 4i}
+
+let merr = Map<Int, Int?>{1i => 2i, 4i => 5i};
+l.project<Int>(merr) //error -- missing key 2i
+```
+
 ## append/prepend
+The `append` and `prepend` methods concatenate two lists together. The `append` method appends the second list to the first list. The `prepend` method prepends the second list to the first list.
+
+```none
+let l1 = List<Int>{1i, 2i, 3i};
+let l2 = List<Int>{4i, 5i, 6i};
+
+l1.append(l2) //List<Int>{1i, 2i, 3i, 4i, 5i, 6i}
+l1.prepend(l2) //List<Int>{4i, 5i, 6i, 1i, 2i, 3i}
+```
+
 ## pushBack/pushFront
+The `pushBack` and `pushFront` methods add an element to the end or beginning of a list. These methods return a new list and do not modify the original list.
+
+```none
+let l = List<Int>{1i, 2i, 3i};
+
+l.pushBack(4i) //List<Int>{1i, 2i, 3i, 4i}
+l.pushFront(0i) //List<Int>{0i, 1i, 2i, 3i}
+```
+
 ## popBack/popFront
+The `popBack` and `popFront` methods remove an element from the end or beginning of a list. These methods return a new list and do not modify the original list.
+
+```none
+let l = List<Int>{1i, 2i, 3i};
+
+l.popBack() //List<Int>{1i, 2i}
+l.popFront() //List<Int>{2i, 3i}
+```
+
 ## set/insert/remove
+## zip/zipWith/join/joinGroup
 ## reduce

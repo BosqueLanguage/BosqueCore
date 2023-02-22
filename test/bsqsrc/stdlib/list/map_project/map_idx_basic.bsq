@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l: List<Int>): List<Int> {
+    return l.mapIdx<Int>(fn(e, i) => e + i.toInt());
+}
+

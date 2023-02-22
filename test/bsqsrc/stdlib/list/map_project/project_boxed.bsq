@@ -1,0 +1,7 @@
+namespace Main;
+
+export function main(l: List<Int?>): List<String> {
+    let m = Map<Int?, String>{1i => "two", none => "none", 3i => "three"};
+    return l.project<String>(m);
+}
+
