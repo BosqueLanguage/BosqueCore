@@ -57,7 +57,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
         }
         case "s_list_size": {
-            return `{ return ${func.invoke.params[0].name}.size; }`;
+            return `{ return BigInt(${func.invoke.params[0].name}.size); }`;
         }
         case "s_list_get": {
             return `{ return ${func.invoke.params[0].name}.get(Number(${func.invoke.params[1].name})); }`;
@@ -89,13 +89,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1n; }`;
+            return `{ const $$pcf = ${pcodeinvk}; return BigInt(${func.invoke.params[0].name}.findKey(${pred}) || -1); }`;
         }
         case "s_list_find_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1n; }`;
+            return `{ const $$pcf = ${pcodeinvk}; return BigInt(${func.invoke.params[0].name}.findKey(${pred}) || -1); }`;
         }
         case "s_list_filter_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
@@ -134,6 +134,9 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
 
             return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.map(${fn}); }`;
         }
+        case "s_list_append": {
+            return `{ return ${func.invoke.params[0].name}.concat(${func.invoke.params[1].name}); }`;
+        }
         case "s_list_push_back": {
             return `{ return ${func.invoke.params[0].name}.push(${func.invoke.params[1].name}); }`;
         }
@@ -157,7 +160,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
         }
         case "s_map_count": {
-            return `{ return ${func.invoke.params[0].name}.size; }`;
+            return `{ return BigInt(${func.invoke.params[0].name}.size); }`;
         }
         case "s_map_has": {
             return `{ return ${func.invoke.params[0].name}.has(${func.invoke.params[1].name}); }`;
