@@ -228,8 +228,10 @@ class ParserEnvironment {
         if (this.isFunctionScopeActive()) {
             const cscope = this.getCurrentFunctionScope();
 
-            if (!cscope.isTemplateNameDefined(name) && cscope.isPCodeEnv()) {
-                cscope.getCaptureTemplates().add(name);
+            if (cscope.isPCodeEnv()) {
+                if (!cscope.isTemplateNameDefined(name)) {
+                    cscope.getCaptureTemplates().add(name);
+                }
             }
         }
 

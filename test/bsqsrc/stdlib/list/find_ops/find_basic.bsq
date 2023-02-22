@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Int>): Int {
+    return l.find(pred(x) => x > 1i);
+}

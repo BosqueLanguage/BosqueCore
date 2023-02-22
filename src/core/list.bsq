@@ -180,7 +180,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         return NumericOps::s_intToNat(idx);
     }
 
-    recursive? method findIndexOf(p: recursive? pred(T, Nat) -> Bool): Nat
+    recursive? method findIndexOfIdx(p: recursive? pred(T, Nat) -> Bool): Nat
         requires !ListOps::s_list_empty<T>(this);
     {
         let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
@@ -194,7 +194,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
             return List<T>{};
         }
         else {
-            return ListOps::s_filter_pred<T>[recursive?](this, p);
+            return ListOps::s_list_filter_pred<T>[recursive?](this, p);
         }
     }
 
@@ -203,7 +203,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
             return List<T>{};
         }
         else {
-            return ListOps::s_filter_pred_idx<T>[recursive?](this, p);
+            return ListOps::s_list_filter_pred_idx<T>[recursive?](this, p);
         }
     }
 

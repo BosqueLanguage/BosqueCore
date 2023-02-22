@@ -16,6 +16,8 @@ import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstC
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo, BuildLevel, isBuildLevelEnabled, PackageConfig } from "../build_decls";
 import { Parser } from "../ast/parser";
 
+import * as path from "path";
+
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
         throw new Error((msg || "error")  + " -- type_checker.ts");
@@ -5296,7 +5298,7 @@ class TypeChecker {
             return [env, []];
         }
         else {
-            const astmt = new TIRAssertCheckStatement(stmt.sinfo, test.expressionResult, `Assertion failed -- ${this.m_file} : ${stmt.sinfo.line}`);
+            const astmt = new TIRAssertCheckStatement(stmt.sinfo, test.expressionResult, `Assertion failed -- ${path.basename(this.m_file)} : ${stmt.sinfo.line}`);
             return [env, [astmt]];
         }
     }

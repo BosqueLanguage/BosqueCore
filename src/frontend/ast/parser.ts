@@ -1206,7 +1206,7 @@ class Parser {
             this.ensureAndConsumeToken(SYM_semicolon, "an abstract function declaration");
         }
         else {
-            const boundtemplates = new Set<string>([...terms.map((tt) => tt.name), ...implicitTemplates]);
+            const boundtemplates = new Set<string>(!(ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) ? [...terms.map((tt) => tt.name), ...implicitTemplates] : []);
 
             if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
                 this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
