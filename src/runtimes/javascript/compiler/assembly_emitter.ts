@@ -137,11 +137,11 @@ class NamespaceEmitter {
         const fnames = ttype.allfields.map((ff) => (this.m_assembly.fieldMap.get(ff.fkey) as TIRMemberFieldDecl).name);
 
         let consfuncs: string[] = [];
-        consfuncs.push(`$constructorDirect: function(${fnames.join(", ")}) { return {${fnames.map((fn) => fn + ": " + fn).join(", ")}}; }`);
+        consfuncs.push(`$constructorDirect: function(${fnames.join(", ")}) { return Object.freeze({${fnames.map((fn) => fn + ": " + fn).join(", ")}}); }`);
 
         if(ttype.consinvariants.length !== 0) {
             const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
-            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n        ${checks}return {${fnames.map((fn) => fn + ": $" + fn).join(", ")}};\n    }`);
+            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n        ${checks}return Object.freeze({${fnames.map((fn) => fn + ": $" + fn).join(", ")}});\n    }`);
         }
 
         if(ttype.binds.size === 0) {

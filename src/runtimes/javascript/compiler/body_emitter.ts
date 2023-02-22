@@ -869,7 +869,7 @@ class BodyEmitter {
             return this.emitExpression(exp.exp, toplevel);
         }
         else if(trgtunion) {
-            const bval = `new $Runtime.UnionValue("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
+            const bval = `$Runtime.UnionValue.create("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
@@ -1138,7 +1138,7 @@ class BodyEmitter {
             thisargas = `($Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).isatom ? __expval__.value : __expval__)`;
         }
         else {
-            thisargas = `($Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).isatom ? __expval__ : new $Runtime.UnionValue("${exp.thisarg.etype}", ${thisarg}))`;
+            thisargas = `($Runtime.invmap.get($Runtime.vtablemap.get(__expval__.tkey).get("${exp.fname}")).isatom ? __expval__ : $Runtime.UnionValue.create("${exp.thisarg.etype}", ${thisarg}))`;
         }
 
         const eexp = `((__expval__) => ${vtable}(${[thisargas, ...aargs].join(", ")}))(${thisarg})`;

@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Int>): List<Int> {
+    return l.map<Int>(fn(e) => e + 1i);
+}

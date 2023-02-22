@@ -37,7 +37,7 @@ function tryParseConcept(jv) {
     $Runtime.raiseRuntimeErrorIf(!Array.isArray(jv) || jv.length !== 2, `${jv} is not a valid union representation`);
     $Runtime.raiseRuntimeErrorIf(typeof(jv[0]) !== "string" || ioMarshalMap.get(jv[0]) === undefined, `${jv} is not a valid union representation`);
 
-    return new $Runtime.UnionValue(jv[0], ioMarshalMap.get(jv[0]).parse(jv[1]));
+    return $Runtime.UnionValue.create(jv[0], ioMarshalMap.get(jv[0]).parse(jv[1]));
 }
 
 function tryEmitConcept(nv) {
@@ -48,7 +48,7 @@ function tryParseUnion(jv) {
     $Runtime.raiseRuntimeErrorIf(!Array.isArray(jv) || jv.length !== 2, `${jv} is not a valid union representation`);
     $Runtime.raiseRuntimeErrorIf(typeof(jv[0]) !== "string" || ioMarshalMap.get(jv[0]) === undefined, `${jv} is not a valid union representation`);
 
-    return new $Runtime.UnionValue(jv[0], ioMarshalMap.get(jv[0]).parse(jv[1]));
+    return $Runtime.UnionValue.create(jv[0], ioMarshalMap.get(jv[0]).parse(jv[1]));
 }
 
 function tryEmitUnion(nv) {
