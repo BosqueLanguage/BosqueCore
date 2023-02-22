@@ -573,7 +573,7 @@ class TypeChecker {
         let tp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.tp));
         let fp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.fp));
 
-        return {tp: this.normalizeUnionList(tp), fp: this.normalizeUnionList(fp)};
+        return {tp: tp.length !== 0 ? this.normalizeUnionList(tp) : undefined, fp: fp.length !== 0 ? this.normalizeUnionList(fp) : undefined};
     }
 
     private processITestAsTest_None(sinfo: SourceInfo, ltype: ResolvedType, flowtype: ResolvedType, tirexp: TIRExpression, isnot: boolean): {testexp: TIRExpression, falseflow: ResolvedType | undefined, hastrueflow: boolean} {
@@ -630,10 +630,10 @@ class TypeChecker {
         const tsplit = this.splitTypes(flowtype, oktype);
 
         if(isnot) {
-            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
+            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
         else {
-            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
+            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
     }
 
@@ -645,10 +645,10 @@ class TypeChecker {
         const tsplit = this.splitTypes(flowtype, errtype);
 
         if(isnot) {
-            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
+            return { testexp: new TIRIsOkSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(oktype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
         }
         else {
-            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.tp, hastrueflow: tsplit.fp !== undefined };
+            return { testexp: new TIRIsErrSpecialExpression(sinfo, tirexp, this.toTIRTypeKey(errtype)), falseflow: tsplit.fp, hastrueflow: tsplit.tp !== undefined };
         }
     }
 

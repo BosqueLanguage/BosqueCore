@@ -8,7 +8,7 @@ enum PlayerMark {
 
 entity Board provides APIType {
     //Board is a map from cells to marks (or not in map if cell is unoccupied)
-    field cells: List<List<BoardPostion>>;
+    field cells: List<List<PlayerMark>>;
 
     invariant test $cells.size() == 3n;
     invariant test $cells.allOf(pred(row) => row.size() == 3n);
@@ -85,27 +85,29 @@ entity Board provides APIType {
 }
 
 export function main(moves: List<[Nat, Nat, PlayerMark]>): Result<[Board, PlayerMark?], String> {
-    const res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]) => {
+    let res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
             if err (state) {
                 return state;
             }
             else {
-                if($.hasWinner()) {
+                let bb = $@ok;
+                if(bb.hasWinner()) {
                     return state;
                 }
-                elif(!$.isCellEmpty(move[0], move[1])) {
+                elif(!bb.isCellEmpty(move.0, move.1)) {
                     return err("Cell is already occupied");
                 }
                 else {
-                    return ok($.setCellMark(move[0], move[1], move[2]));
+                    return ok($.setCellMark(move.0, move.1, move.2));
                 }
             }
         });
 
     if err (res) {
-        return err(res);
+        return err($);
     }
     else {
-        return ok([$, $.checkAnyWinner()]);
+        let bb = $@ok;
+        return ok([bb, bb.checkAnyWinner()]);
     }
 }
