@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l: List<Int>): Nat {
+    let l1 = List<Int>{1i, 2i, 3i};
+    return l.findIndexOfIdx(pred(e, i) => e == -l1.get(i));
+}

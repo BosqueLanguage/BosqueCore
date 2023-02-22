@@ -12,17 +12,15 @@ As Bosque does not have an iteration operator (such as for or while) the `List<T
     1. size/empty
     2. get/front/back
     3. allOf/noneOf/someOf
-    4. find
-    5. findIndexOf
-    6. filter/filterType
-    7. castType
-    8. map/project
-    9. append/prepend
-    10. pushBack/pushFront
-    11. popBack/popFront
-    12. set
-    13. insert/remove
-    14. reduce
+    4. find/findIndexOf
+    5. filter/filterType
+    6. castType
+    7. map/project
+    8. append/prepend
+    9. pushBack/pushFront
+    10. popBack/popFront
+    11. set/insert/remove
+    12. reduce
 
 # List Type
 # List Global Functions
@@ -78,3 +76,48 @@ l3.allOf(pred(e) => e > 0n) //true
 l3.noneOf(pred(e) => e > 0n) //true
 l3.someOf(pred(e) => e > 0n) //false
 ```
+
+## find/findIndexOf
+The `find` and `findIndexOf` family of methods search a list for elements that satisfy a predicate. The `find` and `findIdx` methods return the first element in the list that satisfies the provided predicate (and result in a runtime error if no such element exists). The `findIndexOf` and `findIndexOfIdx` methods return the index of the first element in the list that satisfies the predicate (and result in a runtime error if no such element exists).
+
+```none
+let l1 = List<Int>{1i, 2i, 3i};
+l1.find(pred(e) => e > 1i) //2i
+l1.findIndexOf(pred(e) => e > 1i) //1n
+
+l1.find(pred(e) => e > 10i) //error
+l1.findIndexOf(pred(e) => e > 10i) //error
+
+let l2 = List<Int>{0i, -2i, 0};
+l2.findIdx(pred(e, i) => e == -l1.get(i)) //1n
+```
+
+## filter/filterType
+The `filter`, `filterIdx`, and `FilterType` methods provide a way to filter a list based on a predicate. The `filter` and `filterIdx` methods return a new list that contains only the elements that satisfy the predicate. The `filterType` method returns a new list that contains only the elements that are of the specified type. 
+
+```none
+let l1 = List<Int>{1i, -2i, 3i};
+l1.filter(pred(e) => e > 1i) //List<Int>{1i, 3i}
+l1.filter(pred(e) => e > 10i) //List<Int>{}
+
+let l2 = List<Int?>{0i, none, 5i};
+l2.filterType<Int>() //List<Int>{0i, 5i}
+```
+
+## castType
+The `castType` method returns a new list that contains only the elements that are of the specified type. If an element is not of the specified type then the result is a runtime error.
+
+```none
+let l1 = List<Int?>{0i, 2i, 5i};
+l1.castType<Int>() //List<Int>{0i, 2i, 5i}
+
+let l2 = List<Int?>{0i, none, 5i};
+l2.castType<Int>() //error
+```
+
+## map/project
+## append/prepend
+## pushBack/pushFront
+## popBack/popFront
+## set/insert/remove
+## reduce

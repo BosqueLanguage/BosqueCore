@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Int>): List<Int> {
+    return l.filterIdx(pred(e, i) => e > 1i && i < 2n);
+}

@@ -45,9 +45,6 @@ __internal __enumable __litvaluetype __typedeclable __typebase __numeric entity 
     method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
     method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
     method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
-    method toFloat(): Float { return NumericOps::s_bigIntToFloat(NumericOps::s_intToBigInt(this)); }
-    method toDecimal(): Decimal { return NumericOps::s_bigIntToDecimal(NumericOps::s_intToBigInt(this)); }
-    method toRational(): Decimal { return NumericOps::s_bigIntToRational(NumericOps::s_intToBigInt(this)); }
 
     function min(a: Int, b: Int): Int {if(a < b) { return a; } else { return b; }}
     function max(a: Int, b: Int): Int {if(a > b) { return a; } else { return b; }}
@@ -58,9 +55,6 @@ __internal __enumable __litvaluetype __typedeclable __typebase __numeric entity 
     method toBigNat(): BigNat { return NumericOps::s_natToBigNat(this); }
     method toInt(): Int { return NumericOps::s_natToInt(this); }
     method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(NumericOps::s_natToBigNat(this)); }
-    method toFloat(): Float { return NumericOps::s_bigNatToFloat(NumericOps::s_natToBigNat(this)); }
-    method toDecimal(): Decimal { return NumericOps::s_bigNatToDecimal(NumericOps::s_natToBigNat(this)); }
-    method toRational(): Decimal { return NumericOps::s_bigNatToRational(NumericOps::s_natToBigNat(this)); }
 
     function min(a: Nat, b: Nat): Nat {if(a < b) { return a; } else { return b; }}
     function max(a: Nat, b: Nat): Nat {if(a > b) { return a; } else { return b; }}
@@ -68,39 +62,18 @@ __internal __enumable __litvaluetype __typedeclable __typebase __numeric entity 
 
 //<summary>Primitive big-integer value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigInt provides Some, KeyType, APIType {
-    method toNat(): Nat { assert(this >= 0I); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(this)); }
-    method toBigNat(): BigNat { assert(this >= 0I); return NumericOps::s_bigIntToBigNat(this); }
-    method toInt(): Int { return NumericOps::s_bigIntToInt(this); }
-    method toFloat(): Float { return NumericOps::s_bigIntToFloat(this); }
-    method toDecimal(): Decimal { return NumericOps::s_bigIntToDecimal(this); }
-    method toRational(): Decimal { return NumericOps::s_bigIntToRational(this); }
-
     function min(a: BigInt, b: BigInt): BigInt {if(a < b) { return a; } else { return b; }}
     function max(a: BigInt, b: BigInt): BigInt {if(a > b) { return a; } else { return b; }}
 }
 
 //<summary>Primitive big-integer value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigNat provides Some, KeyType, APIType {
-    method toNat(): Nat { return NumericOps::s_bigNatToNat(this); }
-    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_bigNatToBigInt(this)); }
-    method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(this); }
-    method toFloat(): Float { return NumericOps::s_bigNatToFloat(this); }
-    method toDecimal(): Decimal { return NumericOps::s_bigNatToDecimal(this); }
-    method toRational(): Decimal { return NumericOps::s_bigNatToRational(this); }
-
     function min(a: BigNat, b: BigNat): BigNat {if(a < b) { return a; } else { return b; }}
     function max(a: BigNat, b: BigNat): BigNat {if(a > b) { return a; } else { return b; }}
 }
 
 //<summary>Primitive rational value.</summary>
 __internal __typedeclable __typebase __numeric entity Rational provides Some, APIType {
-    method toNat(): Nat { assert(this >= Rational::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this))); }
-    method toBigNat(): BigNat { assert(this >= Rational::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_rationalToBigInt(this)); }
-    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_rationalToBigInt(this)); }
-    method toBigInt(): BigInt { return NumericOps::s_rationalToBigInt(this); }
-    method toFloat(): Float { return NumericOps::s_rationalToFloat(this); }
-    method toDecimal(): Decimal { return NumericOps::s_rationalToDecimal(this); }
-
     function min(a: Rational, b: Rational): Rational {if(a < b) { return a; } else { return b; }}
     function max(a: Rational, b: Rational): Rational {if(a > b) { return a; } else { return b; }}
 }
@@ -109,13 +82,6 @@ __internal __typedeclable __typebase __numeric entity Rational provides Some, AP
 __internal __typedeclable __typebase __numeric entity Float provides Some, APIType {
     const pi: Float = 3.1415926535897931f;
     const e: Float = 2.7182818284590451f;
-
-    method toNat(): Nat { assert(this >= Float::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_floatToBigInt(this))); }
-    method toBigNat(): BigNat { assert(this >= Float::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_floatToBigInt(this)); }
-    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_floatToBigInt(this)); }
-    method toBigInt(): BigInt { return NumericOps::s_floatToBigInt(this); }
-    method toDecimal(): Decimal { return NumericOps::s_floatToDecimal(this); }
-    method toRational(): Rational { return NumericOps::s_floatToRational(this); }
 
     function min(a: Float, b: Float): Float {if(a < b) { return a; } else { return b; }}
     function max(a: Float, b: Float): Float {if(a > b) { return a; } else { return b; }}
@@ -147,13 +113,6 @@ __internal __typedeclable __typebase __numeric entity Float provides Some, APITy
 __internal __typedeclable __typebase __numeric entity Decimal provides Some, APIType {
     const pi: Decimal = 3.1415926535897931d;
     const e: Decimal = 2.7182818284590451d;
-
-    method toNat(): Nat { assert(this >= Decimal::zero); return NumericOps::s_bigNatToNat(NumericOps::s_bigIntToBigNat(NumericOps::s_decimalToBigInt(this))); }
-    method toBigNat(): BigNat { assert(this >= Decimal::zero); return NumericOps::s_bigIntToBigNat(NumericOps::s_decimalToBigInt(this)); }
-    method toInt(): Int { return NumericOps::s_bigIntToInt(NumericOps::s_decimalToBigInt(this)); }
-    method toBigInt(): BigInt { return NumericOps::s_decimalToBigInt(this); }
-    method toFloat(): Float { return NumericOps::s_decimalToFloat(this); }
-    method toRational(): Rational { return NumericOps::s_decimalToRational(this); }
 
     function min(a: Decimal, b: Decimal): Decimal {if(a < b) { return a; } else { return b; }}
     function max(a: Decimal, b: Decimal): Decimal {if(a > b) { return a; } else { return b; }}
