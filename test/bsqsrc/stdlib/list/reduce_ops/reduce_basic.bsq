@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Int>): Int {
+    return l.reduce<Int>(0i, fn(r, e) => r + e);
+}

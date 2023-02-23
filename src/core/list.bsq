@@ -325,7 +325,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method joinGroup<U>(ol: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, List<U>]> {
+    recursive? method group<U>(ol: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, List<U>]> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<[T, List<U>]>{};
         }
@@ -334,25 +334,25 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
         else {
             return ListOps::s_list_map_fn<T, [T, List<U>]>(this, recursive? fn(v: T): [T, List<U>] => {
-                return [v, ListOps::s_filter_pred<U>[recursive?](ol, recursive? pred(u: U): Bool => p[recursive?](v, u))];
+                return [v, ListOps::s_list_filter_pred<U>[recursive?](ol, recursive? pred(u: U): Bool => p[recursive?](v, u))];
             });
         }
     }
 
     recursive? method join<U>(ol: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, U]> {
-        if(\/(ListOps::s_empty<T>(this), ListOps::s_empty<T>(ol))) {
+        if(\/(ListOps::s_list_empty<T>(this), ListOps::s_list_empty<T>(ol))) {
             return List<[T, U]>{};
         }
         else {
             return ListOps::s_list_reduce<T, List<[T, U]>>(this, List<[T, U]>{}, recursive? fn(acc: List<[T, U]>, v: T): List<[T, U]> => {
-                let ull = ListOps::s_filter_pred<U>[recursive?](ol, recursive? pred(u: U): Bool => p[recursive?](v, u));
+                let ull = ListOps::s_list_filter_pred<U>[recursive?](ol, recursive? pred(u: U): Bool => p[recursive?](v, u));
 
                 if(ListOps::s_list_empty<T>(ull)) {
                     return acc;
                 }
                 else {
                     let accp = ListOps::s_list_map_fn<U, [T, U]>(ull, fn(u: U): [T, U] => [v, u]);
-                    return List<[T, U]>::s_append_helper(acc, ull);
+                    return List<[T, U]>::s_append_helper(acc, accp);
                 }
             });
         }
@@ -367,7 +367,7 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
-    recursive? method reduce<U>(init: U, f: recursive? fn(U, T, Nat) -> U): U {
+    recursive? method reduceIdx<U>(init: U, f: recursive? fn(U, T, Nat) -> U): U {
         if(ListOps::s_list_empty<T>(this)) {
             return init;
         }

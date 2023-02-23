@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l1: List<Int>): List<[Int, List<Int>]> {
+    let l2 = List<Int>{2i, 3i, 4i};
+    return l1.group<Int>(l2, fn(e1, e2) => e1 >= e2);
+}
