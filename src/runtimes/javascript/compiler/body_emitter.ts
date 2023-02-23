@@ -245,7 +245,13 @@ class BodyEmitter {
     }
 
     private emitAccessConstMemberFieldExpression(exp: TIRAccessConstMemberFieldExpression): string {
-        return `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.cname}()`;
+        const ttype = this.m_assembly.typeMap.get(exp.tkey) as TIRType;
+        if(ttype instanceof TIREnumEntityType) {
+            return `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.cname}`;
+        }
+        else {
+            return `${this.resolveTypeMemberAccess(exp.tkey)}.${exp.cname}()`;
+        }
     }
 
     private emitAccessVariableExpression(exp: TIRAccessVariableExpression): string {

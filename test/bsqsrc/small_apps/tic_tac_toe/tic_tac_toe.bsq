@@ -84,7 +84,7 @@ entity Board provides APIType {
     }
 }
 
-export function main(moves: List<[Nat, Nat, PlayerMark]>): Result<[Board, PlayerMark?], String> {
+export function main(moves: List<[Nat, Nat, PlayerMark]>): Result<PlayerMark?, String> {
     let res = moves.reduce<Result<Board, String>>(Result<Board, String>::Ok{Board::createEmpty()}, fn(state: Result<Board, String>, move: [Nat, Nat, PlayerMark]): Result<Board, String> => {
             if err (state) {
                 return state;
@@ -92,7 +92,7 @@ export function main(moves: List<[Nat, Nat, PlayerMark]>): Result<[Board, Player
             else {
                 let bb = $@ok;
                 if(bb.hasWinner()) {
-                    return state;
+                    return err("A player already won");
                 }
                 elif(!bb.isCellEmpty(move.0, move.1)) {
                     return err("Cell is already occupied");
@@ -108,6 +108,6 @@ export function main(moves: List<[Nat, Nat, PlayerMark]>): Result<[Board, Player
     }
     else {
         let bb = $@ok;
-        return ok([bb, bb.checkAnyWinner()]);
+        return ok(bb.checkAnyWinner());
     }
 }
