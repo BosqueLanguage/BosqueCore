@@ -588,7 +588,11 @@ class AssemblyEmitter {
     }
 
     private emitTIREnumEntityType_ParseEmit(ttype: TIREnumEntityType): { parse: string, emit: string } {
-        return { parse: "[NOT IMPLEMENTED]", emit: "[NOT IMPLEMENTED]" };
+        const enumarr = "[" + ttype.enums.map((ee) => `"${ee}"`).join(", ") + "]";
+        const parse = `{ if(typeof(jv) !== "string" || !jv.startsWith("${ttype.tkey + "::"}")) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } const ename = jv.substr("${ttype.tkey}".length + 2); const eidx = ${enumarr}.indexOf(ename); if(eidx === -1) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } return BigInt(eidx); }`;
+        const emit = `"${ttype.tkey}::" + ${enumarr}[nv]`;
+
+        return { parse: parse, emit: emit };
     }
 
     private emitTIRTypedeclEntityType_ParseEmit(ttype: TIRTypedeclEntityType): { parse: string, emit: string } {
