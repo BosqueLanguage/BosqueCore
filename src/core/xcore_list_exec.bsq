@@ -28,6 +28,7 @@ internal entity ListOps provides Some {
     __conditional_safe internal recursive? function s_list_filter_pred<T>(l: List<T>, p: recursive? pred(T) -> Bool): List<T> = s_list_filter_pred;
     __conditional_safe internal recursive? function s_list_filter_pred_idx<T>(l: List<T>, p: recursive? pred(T, Nat) -> Bool): List<T> = s_list_filter_pred_idx;
 
+    __conditional_safe internal recursive? function s_list_map_fn_sync<T, U, V>(l1: List<T>, l2: List<U>, f: recursive? fn(T, U) -> V): List<V> = s_list_map_sync;
     __conditional_safe internal recursive? function s_list_filter_map_fn<T, U>(l: List<T>, p: recursive? pred(T) -> Bool, f: recursive? fn(T) -> U): List<U> = s_list_filter_map_fn;
 
     __conditional_safe internal recursive? function s_list_map_fn<T, U>(l: List<T>, f: recursive? fn(T) -> U): List<U> = s_list_map;
@@ -59,8 +60,6 @@ internal entity ListOps provides Some {
 
     __safe internal function s_list_indexof<T grounded KeyType>(l: List<T>, v: T): Int = s_list_indexof; 
     __safe internal function s_list_last_indexof<T grounded KeyType>(l: List<T>, v: T): Int = s_list_last_indexof; 
-
-    __conditional_safe internal recursive? function s_list_map_fn_sync<T, U, V>(l1: List<T>, l2: List<U>, f: recursive? fn(_: T, _: U) -> V): List<V> = s_list_map_sync;
 
     __assume_safe internal function s_list_slice_front<T>(l: List<T>, start: Nat): List<T> = s_list_slice_start;
     __assume_safe internal function s_list_slice_end<T>(l: List<T>, end: Nat): List<T> = s_list_slice_end;

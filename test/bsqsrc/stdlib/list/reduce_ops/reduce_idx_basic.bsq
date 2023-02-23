@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l: List<Int>): Int {
+    return l.reduceIdx<Int>(0i, fn(r, e, i) => r + e + i.toInt());
+}
+

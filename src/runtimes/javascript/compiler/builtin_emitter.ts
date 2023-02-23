@@ -134,6 +134,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
 
             return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.map(${fn}); }`;
         }
+        case "s_list_map_sync": {
+            const fcode = resolveCodePack(asm, func.invoke, "f");
+            const fcodeinvk = generatePCodeInvokeName(fcode);
+            const fn = `($$vv, $$uu) => $$fcf(${["f", "$$vv", "$$uu"].join(", ")})`;
+
+            return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.zipWith(${fn}, ${func.invoke.params[1].name}); }`;
+        }
         case "s_list_append": {
             return `{ return ${func.invoke.params[0].name}.concat(${func.invoke.params[1].name}); }`;
         }
@@ -149,10 +156,25 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_pop_front": {
             return `{ return ${func.invoke.params[0].name}.shift(); }`;
         }
+        case "s_list_set": {
+            return `{ return ${func.invoke.params[0].name}.set(Number(${func.invoke.params[1].name}), ${func.invoke.params[2].name}); }`;
+        }
+        case "s_list_insert": {
+            return `{ return ${func.invoke.params[0].name}.insert(Number(${func.invoke.params[1].name}), ${func.invoke.params[2].name}); }`;
+        }
+        case "s_list_remove": {
+            return `{ return ${func.invoke.params[0].name}.delete(Number(${func.invoke.params[1].name})); }`;
+        }
         case "s_list_reduce": {
             const pcode = resolveCodePack(asm, func.invoke, "f");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const op = `($$uu, $$vv) => $$pcf(${["f", "$$uu", "$$vv"].join(", ")})`;
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
+        }
+        case "s_list_reduce_idx": {
+            const pcode = resolveCodePack(asm, func.invoke, "f");
+            const pcodeinvk = generatePCodeInvokeName(pcode);
+            const op = `($$uu, $$vv, $$ii) => $$pcf(${["f", "$$uu", "$$vv", "BigInt($$ii)"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
         }
 

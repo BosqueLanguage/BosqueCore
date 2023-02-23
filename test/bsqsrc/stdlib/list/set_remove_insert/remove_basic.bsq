@@ -1,0 +1,5 @@
+namespace Main;
+
+export function main(l: List<Int>, i: Nat): List<Int> {
+    return l.remove(i);
+}

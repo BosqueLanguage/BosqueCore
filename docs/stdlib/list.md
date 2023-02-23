@@ -21,8 +21,9 @@ As Bosque does not have an iteration operator (such as for or while) the `List<T
     10. pushBack/pushFront
     11. popBack/popFront
     12. set/insert/remove
-    13. zip/zipWith/join/joinGroup
-    14. reduce
+    13. zip/zipWith
+    14. join/group
+    15. reduce
 
 # List Type
 # List Global Functions
@@ -175,5 +176,44 @@ l.popFront() //List<Int>{2i, 3i}
 ```
 
 ## set/insert/remove
-## zip/zipWith/join/joinGroup
+Bosque lists support `set`, `insert`, and `remove` operations that return new versions of the collections with the needed updates. The `set` operation replaces the element at the specified index with the specified element. The `insert` operation inserts the specified element at the specified index. The `remove` operation removes the element at the specified index. Index out-of-bounds are runtime errors.
+
+```none
+let l = List<Int>{1i, 2i, 3i};
+
+l.set(1n, 4i) //List<Int>{1i, 4i, 3i}
+l.insert(1n, 5i) //List<Int>{1i, 5i, 2i, 3i}
+l.remove(1n) //List<Int>{1i, 3i}
+```
+
+## zip/zipWith
+The `zip` and `zipWith` methods combine two lists (of equal length) into a single list of tuples. The `zip` method combines two lists into a list of tuples. The `zipWith` method combines two lists into a list of values using the specified function.
+
+```none
+let l1 = List<Int>{1i, 2i, 3i};
+let l2 = List<String>{"one", "two", "three"};
+
+l1.zip<String>(l2) //List<[Int, String]>{[1i, "one"], [2i, "two"], [3i, "three"]}
+l1.zipWith<String, Bool>(l2, fn(e1, e2) => e1 > 2 || e2 === "one") //List<Bool>{true, false, true}
+```
+
+## join/group
+The `join` and `group` methods combine two lists using algebraic products. The `join` method produces a list of tuples where the first element comes from the first list, the second element comes from the second list, and the predicate applied to them is true. The `group` method produces a list of tuples where the first element comes from the first list and the second element is a list of elements from the second list that satisfy the specified predicate.
+
+```none
+let l1 = List<Int>{1i, 2i, 3i};
+let l2 = List<Int>{2i, 3i, 4i};
+
+l1.join<Int>(l2, fn(e1, e2) => e1 >= e2) //List<[Int, Int]>{[2i, 2i], [3i, 2i], [3i, 3i]}
+l1.group<Int>(l2, fn(e1, e2) => e1 >= e2) //List<[Int, List<Int>]>{[1i, List<Int>{}], [2i, List<Int>{2i}], [3i, List<Int>{2i, 3i}]}
+```
+
 ## reduce
+The `reduce` operation applies a reduction function to the elements in the from left (min index) to right (max index) and returns the result. The reduction function takes the current result and the next element and returns the new result. The initial result is specified as the first argument to the `reduce` method.
+
+```none
+let l = List<Int>{1i, 2i, 3i};
+
+l.reduce<Int>(0i, fn(r, e) => r + e) //6i
+l.reduceIdx<Int>(0i, fn(r, e, i) => r + e + i.toInt()) //9i
+```

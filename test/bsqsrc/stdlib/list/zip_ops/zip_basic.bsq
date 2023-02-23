@@ -1,0 +1,6 @@
+namespace Main;
+
+export function main(l1: List<Int>): List<[Int, String]> {
+    let l2 = List<String>{"one", "two", "three"};
+    return l1.zip<String>(l2);
+}
