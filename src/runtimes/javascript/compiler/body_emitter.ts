@@ -895,7 +895,7 @@ class BodyEmitter {
     private emitCreateCodePackExpression(exp: TIRCreateCodePackExpression): string {
         const capturepcdirect = exp.capturepackdirect.map((pcc) => `${pcc}: ${pcc}`);
         const capturepcindirect = exp.capturepackindirect.map((pcc) => `${pcc}: $CodePack.${pcc}`);
-        const capturevvdirect = exp.capturedirect.map((pcc) => `${pcc}: ${pcc}`);
+        const capturevvdirect = exp.capturedirect.map((pcc) => `${pcc}: ${pcc === "this" ? "$_this" : pcc}`);
         const capturevvindirect = exp.captureindirect.map((pcc) => `${pcc}: $CodePack.${pcc}`);
 
         return `{${[...capturevvdirect, ...capturevvindirect, ...capturepcdirect, ...capturepcindirect].join(", ")}}`;

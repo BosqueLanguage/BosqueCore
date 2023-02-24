@@ -1,8 +1,3 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
 //The core namespace implements the primitive types used in the Bosque language
 namespace Core;
 
@@ -23,6 +18,7 @@ internal entity NumericOps provides Some {
     __safe function s_decimalFloor(d: Decimal): Decimal = decimal_floor;
     __safe function s_decimalCeil(d: Decimal): Decimal = decimal_ceil;
     __safe function s_decimalTruncate(f: Decimal): Decimal = decimal_truncate;
+*/
 
     //
     //TODO: there are some failure cases here we may want to include checks for (like x = 0, y = -2)
@@ -32,5 +28,4 @@ internal entity NumericOps provides Some {
 
     __assume_safe function s_floatSqrt(x: Float): Float = float_sqrt;
     __assume_safe function s_decimalSqrt(x: Decimal): Decimal = decimal_sqrt;
-*/
 }
