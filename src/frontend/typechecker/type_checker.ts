@@ -3178,7 +3178,7 @@ class TypeChecker {
             }
             else if(env.lookupCapturedVar(v) !== null) {
                 captureindirect.push(v);
-                capturedvars.set(v, {vname: v, vtype: (env.lookupLocalVar(v) as VarInfo).declaredType});
+                capturedvars.set(v, {vname: v, vtype: (env.lookupCapturedVar(v) as VarInfo).declaredType});
             }
             else if(env.lookupArgPCode(v) !== null) {
                 capturepackdirect.push(v);

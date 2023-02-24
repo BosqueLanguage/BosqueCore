@@ -1,0 +1,10 @@
+
+namespace Core;
+
+entity Flows provides Some {
+    internal recursive? function s_while<S>(istate: S, p: recursive? pred(S) -> Bool, op: recursive? fn(S) -> S): S = s_while;
+    
+    recursive? function while<S>(istate: S, p: recursive? pred(S) -> Bool, op: recursive? fn(S) -> S): S {
+        return Flows::s_while<S>[recursive?](istate, p, op);
+    }
+}

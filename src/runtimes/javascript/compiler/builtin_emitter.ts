@@ -49,6 +49,19 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}; }`;
         }
 
+        case "float_power": {
+            return `{ return Math.pow(${func.invoke.params[0].name}, ${func.invoke.params[1].name}); }`;
+        }
+        case "decimal_power": {
+            return `{ return Decimal.pow(${func.invoke.params[0].name}, ${func.invoke.params[1].name}); }`;
+        }
+        case "float_sqrt": {
+            return `{ return Math.sqrt(${func.invoke.params[0].name}); }`;
+        }
+        case "decimal_sqrt": {
+            return `{ return Decimal.sqrt(${func.invoke.params[0].name}); }`;
+        }
+
         case "s_string_append": {
             return `{ return ${func.invoke.params[0].name} + ${func.invoke.params[1].name}; }`;
         }
@@ -189,6 +202,16 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_map_get": {
             return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
+        }
+
+        case "s_while": {
+            const pcode = resolveCodePack(asm, func.invoke, "p");
+            const pcodeinvk = generatePCodeInvokeName(pcode);
+
+            const fcode = resolveCodePack(asm, func.invoke, "op");
+            const fcodeinvk = generatePCodeInvokeName(fcode);
+
+            return `{ var state = ${func.invoke.params[0].name}; const $$pcf = ${pcodeinvk}; const $$fcf = ${fcodeinvk}; while ($$pcf(p, state)) { state = $$fcf(op, state); } return state; }`;
         }
 
         default: {
