@@ -164,19 +164,14 @@ abstract class TIRExpression {
         this.expstr = expstr;
     }
 
-    static OverflowIsFailure: boolean = false;
-
-    isFailableOperation(): boolean {
-        return false;
+    bsqemit_exp(): any {
+        return {sinfo: this.sinfo.bsqemit(), etype: this.etype};
     }
 
-    getUsedVars(): string[] {
-        return [];
-    }
+    abstract bsqemit(): any;
 
-    static joinUsedVarInfo(...vars: string[][]): string[] {
-        const vflat = ([] as string[]).concat(...vars);
-        return [...new Set<string>(vflat)];
+    bsqparse(jv: any): TIRExpression {
+        xxxx;
     }
 }
 

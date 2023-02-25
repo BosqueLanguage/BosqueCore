@@ -1,0 +1,170 @@
+namespace TreeIR;
+
+concept Expression provides APIType {
+    field tag: ExpressionTag;
+    field sinfo: SourceInfo;
+
+    field etype: TypeKey;
+}
+
+entity LiteralNoneExpression provides Expression {
+}
+
+class TIRLiteralNothingExpression extends TIRExpression {
+    constructor(sinfo: SourceInfo) {
+        super(TIRExpressionTag.LiteralNothingExpression, sinfo, "Nothing", "nothing");
+    }
+}
+
+class TIRLiteralBoolExpression extends TIRExpression {
+    readonly value: boolean;
+
+    constructor(sinfo: SourceInfo, value: boolean) {
+        super(TIRExpressionTag.LiteralBoolExpression, sinfo, "Bool", value ? "true" : "false");
+        this.value = value;
+    }
+}
+
+class TIRLiteralIntegralExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, itype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralRationalExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralRationalExpression, sinfo, "Rational", value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralFloatPointExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, fptype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralStringExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralStringExpression, sinfo, "String", value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralRegexExpression extends TIRExpression {
+    readonly value: BSQRegex;
+
+    constructor(sinfo: SourceInfo, value: BSQRegex) {
+        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.regexstr);
+        this.value = value;
+    }
+}
+
+class TIRLiteralASCIIStringExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string) {
+        super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, "ASCIIString", value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralTypedStringExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, stringoftype: TIRTypeKey, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stringoftype, `${value}_${oftype}`);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class TIRLiteralASCIITypedStringExpression extends TIRExpression {
+    readonly oftype: TIRTypeKey;
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, astringoftype: TIRTypeKey, oftype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, astringoftype, `${value}_${oftype}`);
+        this.oftype = oftype;
+        this.value = value;
+    }
+}
+
+class TIRLiteralTemplateStringExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
+    readonly value: string;
+
+    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
+        this.value = value;
+    }
+}
+
+class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
+    readonly value: TIRExpression;
+
+    readonly constype: TIRTypeKey; //The type that is constructed
+    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
+
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, `${value.expstr}_${constype}`);
+        this.value = value;
+
+        this.constype = constype;
+        this.basetype = basetype;
+    }
+
+    isFailableOperation(): boolean {
+        return this.value.isFailableOperation();
+    }
+
+    getUsedVars(): string[] {
+        return this.value.getUsedVars();
+    }
+}
+
+class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
+    readonly value: TIRExpression;
+
+    readonly constype: TIRTypeKey; //The type that is constructed
+    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
+
+    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
+        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype}`);
+        this.value = value;
+
+        this.constype = constype;
+        this.basetype = basetype;
+    }
+
+    isFailableOperation(): boolean {
+        return true;
+    }
+
+    getUsedVars(): string[] {
+        return this.value.getUsedVars();
+    }
+
+    //
+    //TODO: compiler may want to treat this like a constant and precompute with a reference for any uses
+    //
+}

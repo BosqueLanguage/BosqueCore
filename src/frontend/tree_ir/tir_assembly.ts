@@ -11,6 +11,11 @@ function assert(cond: boolean, msg: string) {
     }
 } 
 
+type TIRTypeKey = string;
+type TIRInvokeKey = string;
+type TIRFieldKey = string;
+type TIRPCodeKey = string;
+
 class TIRTypeName {
     readonly ns: string;
     readonly name: string;
@@ -21,12 +26,14 @@ class TIRTypeName {
         this.name = name;
         this.templates = templates || [];
     }
-}
 
-type TIRTypeKey = string;
-type TIRInvokeKey = string;
-type TIRFieldKey = string;
-type TIRPCodeKey = string;
+    bsqemit(): any {
+        return {ns: this.ns, name: this.name, templates: this.templates};
+    }
+    static bsqparse(jv: any): TIRTypeName {
+        return new TIRTypeName(jv.ns, jv.name, jv.templates);
+    }
+}
 
 class TIRFunctionParameter {
     readonly name: string;
@@ -36,6 +43,13 @@ class TIRFunctionParameter {
     constructor(name: string, type: TIRTypeKey) {
         this.name = name;
         this.type = type;
+    }
+
+    bsqemit(): any {
+        return {name: this.name, type: this.type, ddlit: this.ddlit !== undefined ? this.ddlit.bsqemit() : null};
+    }
+    static bsqparse(jv: any): TIRFunctionParameter {
+        return new TIRTypeName(jv.name, jv.type, TIRLiteralValue.bsqparse(jv.ddlit));
     }
 }
 
@@ -47,6 +61,13 @@ class TIRPreConditionDecl {
         this.exp = exp;
         this.args = args;
     }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRPreConditionDecl {
+        return new TIRPreConditionDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    }
 }
 
 class TIRPostConditionDecl {
@@ -56,6 +77,13 @@ class TIRPostConditionDecl {
     constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
+    }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRPostConditionDecl {
+        return new TIRPostConditionDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
     }
 }
 
@@ -67,6 +95,13 @@ class TIRObjectInvariantDecl {
         this.exp = exp;
         this.args = args;
     }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRObjectInvariantDecl {
+        return new TIRObjectInvariantDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    }
 }
 
 class TIRObjectValidateDecl {
@@ -76,6 +111,13 @@ class TIRObjectValidateDecl {
     constructor(exp: TIRExpression, args: TIRFunctionParameter[]) {
         this.exp = exp;
         this.args = args;
+    }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRObjectValidateDecl {
+        return new TIRObjectValidateDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
     }
 }
 
@@ -87,6 +129,13 @@ class TIRTypedeclInvariantDecl {
         this.exp = exp;
         this.vtype = vtype;
     }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), vtype: this.vtype};
+    }
+    static bsqparse(jv: any): TIRTypedeclInvariantDecl {
+        return new TIRTypedeclInvariantDecl(TIRExpression.bsqparse(jv.exp), jv.vtype);
+    }
 }
 
 class TIRTypedeclValidateDecl {
@@ -97,6 +146,13 @@ class TIRTypedeclValidateDecl {
         this.exp = exp;
         this.vtype = vtype;
     }
+
+    bsqemit(): any {
+        return {exp: this.exp.bsqemit(), vtype: this.vtype)};
+    }
+    static bsqparse(jv: any): TIRTypedeclValidateDecl {
+        return new TIRTypedeclValidateDecl(TIRExpression.bsqparse(jv.exp), jv.vtype);
+    }
 }
 
 class TIRTaskStatusEffect {
@@ -105,6 +161,13 @@ class TIRTaskStatusEffect {
     constructor(statusinfo: TIRTypeKey[]) {
         this.statusinfo = statusinfo;
     }
+
+    bsqemit(): any {
+        return {statusinfo: this.statusinfo};
+    }
+    static bsqparse(jv: any): TIRTaskStatusEffect {
+        return new TIRTaskStatusEffect(jv.statusinfo);
+    }
 }
 
 class TIRTaskEventEffect {
@@ -112,6 +175,13 @@ class TIRTaskEventEffect {
 
     constructor(eventinfo: TIRTypeKey[]) {
         this.eventinfo = eventinfo;
+    }
+
+    bsqemit(): any {
+        return {eventinfo: this.eventinfo};
+    }
+    static bsqparse(jv: any): TIRTaskEventEffect {
+        return new TIRTaskEventEffect(jv.eventinfo);
     }
 }
 
@@ -122,6 +192,13 @@ class TIRTaskEnvironmentEffect {
     constructor(readvars: string[], writevars: string[]) {
         this.readvars = readvars;
         this.writevars = writevars;
+    }
+
+    bsqemit(): any {
+        return {readvars: this.readvars, writevars: this.writevars};
+    }
+    static bsqparse(jv: any): TIRTaskEnvironmentEffect {
+        return new TIRTaskEnvironmentEffect(jv.readvars, jv.writevars);
     }
 }
 
@@ -141,6 +218,13 @@ class TIRTaskResourceEffect {
         this.pathglob = pathglob;
         this.args = args;
     }
+
+    bsqemit(): any {
+        return {pathdescriptor: this.pathdescriptor, isread: this.isread, iswrite: this.iswrite, pathglob: this.pathglob !== undefined ? this.pathglob.bsqemit() : null, args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRTaskResourceEffect {
+        return new TIRTaskResourceEffect(jv.pathdescriptor, jv.isread, jv.iswrite, jv.pathglob !== null ? TIRExpression.bsqparse(jv.pathglob) : undefined, jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    }
 }
 
 class TIRTaskEnsures {
@@ -153,6 +237,13 @@ class TIRTaskEnsures {
         this.exp = exp;
         this.args = args;
     }
+
+    bsqemit(): any {
+        return {sinfo: this.sinfo.bsqemit(), exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    }
+    static bsqparse(jv: any): TIRTaskEnsures {
+        return new TIRTaskEnsures(SourceInfo.bsqparse(jv.sinfo), TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    }
 }
 
 abstract class TIRInvoke {
@@ -164,7 +255,7 @@ abstract class TIRInvoke {
     readonly srcFile: string;
 
     readonly attributes: string[];
-    readonly recursive: boolean;
+    readonly isrecursive: boolean;
 
     readonly tbinds: Map<string, TIRTypeKey>;
     readonly pcodes: Map<string, TIRPCodeKey>;
@@ -191,7 +282,7 @@ abstract class TIRInvoke {
         this.srcFile = srcFile;
 
         this.attributes = attributes;
-        this.recursive = recursive;
+        this.isrecursive = recursive;
 
         this.tbinds = tbinds;
         this.pcodes = pcodes;
@@ -209,11 +300,39 @@ abstract class TIRInvoke {
         this.preconditions = preconds;
         this.postconditions = postconds;
     }
+
+    bsqemit_inv(): any {
+        return {invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconds: this.preconditions.map((precond) => precond.bsqemit()), postconds: this.postconditions.map((postcond) => postcond.bsqemit())};
+    }
+
+    abstract bsqemit(): any;
+
+    static bsqparse(jv: any): TIRInvoke {
+        if(jv[0] === "InvokeAbstractDeclaration") {
+            return TIRInvokeAbstractDeclaration.bsqparse(jv);
+        }
+        else if(jv[0] === "InvokeImplementation") {
+            return TIRInvokeImplementation.bsqparse(jv);
+        }
+        else {
+            return TIRInvokePrimitive.bsqparse(jv);
+        }
+    }
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
     constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
         super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
+    }
+
+    bsqemit(): any {
+        return ["InvokeAbstractDeclaration", this.bsqemit_inv()];
+    }
+    static bsqparse(jv: any): TIRInvokeAbstractDeclaration {
+        assert(Array.isArray(jv) && jv[0] === "InvokeAbstractDeclaration", "InvokeAbstractDeclaration");
+        
+        jv = jv[1];
+        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)));
     }
 }
 
@@ -225,6 +344,17 @@ class TIRInvokeImplementation extends TIRInvoke {
 
         this.body = body;
     }
+
+    bsqemit(): any {
+        return ["InvokeImplementation", {...this.bsqemit_inv(), body: this.body.map((stmt) => stmt.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRInvokeImplementation {
+        assert(Array.isArray(jv) && jv[0] === "InvokeImplementation", "InvokeImplementation");
+        
+        jv = jv[1];
+        const body = jv.body.map((stmt: any) => TIRStatement.bsqparse(stmt));
+        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
+    }
 }
 
 class TIRInvokePrimitive extends TIRInvoke {
@@ -234,6 +364,17 @@ class TIRInvokePrimitive extends TIRInvoke {
         super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, false, false, false, false, params, false, resultType, [], []);
 
         this.body = body;
+    }
+
+    bsqemit(): any {
+        return ["InvokePrimitive", {...this.bsqemit_inv(), body: this.body}];
+    }
+    static bsqparse(jv: any): TIRInvokePrimitive {
+        assert(Array.isArray(jv) && jv[0] === "InvokePrimitive", "InvokePrimitive");
+        
+        jv = jv[1];
+        const body = jv.body;
+        return new TIRInvokePrimitive(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
     }
 }
 

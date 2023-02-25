@@ -205,8 +205,6 @@ class TypeChecker {
         this.m_taskSelfOk = "no";
         this.m_scratchCtr = 0;
         this.m_errors = [];
-        
-        TIRExpression.OverflowIsFailure = overflowisfailure;
     }
 
     private raiseError(sinfo: SourceInfo, msg?: string) {

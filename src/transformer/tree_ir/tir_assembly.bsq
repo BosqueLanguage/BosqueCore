@@ -1,0 +1,163 @@
+namespace TreeIR;
+
+typedecl TypeKeyIdentifierValidator = /[A-Z].+/;
+typedecl TypeKey = StringOf<TypeKeyIdentifierValidator>;
+
+typedecl InvokeKeyIdentifierValidator = /[a-z].*/;
+typedecl InvokeKey = StringOf<InvokeKeyIdentifierValidator>;
+
+typedecl FieldKeyIdentifierValidator = /[a-z].*/;
+typedecl FieldKey = StringOf<FieldKeyIdentifierValidator>;
+
+typedecl PCodeKeyIdentifierValidator = /[a-z].*/;
+typedecl PCodeKey = StringOf<PCodeKeyIdentifierValidator>;
+
+typedecl TypeNameNamespaceIdentifierValidator = /[A-Z][A-Za-z0-9_]+/;
+typedecl TypeNameNameIdentifierValidator = /[A-Za-z0-9_::]+/;
+
+entity TypeName provides APIType {
+    field ns: StringOf<NamespaceIdentifierValidator>;
+    field name: StringOf<TypeNameNameIdentifierValidator>;
+    field templates: List<TypeKey>?;
+}
+
+entity FunctionParameter provides APIType {
+    field name: string;
+    field type: TypeKey;
+    field ddlit: LiteralValue?;
+}
+
+entity PreConditionDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity PostConditionDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity ObjectInvariantDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity ObjectValidateDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity TypedeclInvariantDecl provides APIType {
+    field exp: Expression;
+    field vtype: TypeKey;
+}
+
+entity TypedeclValidateDecl provides APIType {
+    field exp: Expression;
+    field vtype: TypeKey;
+}
+
+entity TaskStatusEffect provides APIType {
+    field statusinfo: List<TypeKey>;
+}
+
+entity TaskEventEffect provides APIType {
+    field eventinfo: List<TypeKey>;
+}
+
+entity TaskEnvironmentEffect provides APIType {
+    field readvars: List<String>; //string "*" is wildcard
+    field writevars: List<String>; //string "*" is wildcard
+}
+
+entity TaskResourceEffect provides APIType {
+    field pathdescriptor: TypeKey; //the resource validator
+    field isread: Bool;
+    field iswrite: Bool;
+
+    field pathglob: Expression?; //returns a glob string of type PathGlob<pathdescriptor>
+    field args: List<FunctionParameter>;
+}
+
+entity TaskEnsures provides APIType {
+    field sinfo: SourceInfo;
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+concept Invoke provides APIType {
+    field invkey: TIRInvokeKey;
+    field name: String;
+
+    field startSourceLocation: SourceInfo;
+    field endSourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+    field isrecursive: Bool;
+
+    field tbinds: Map<String, TIRTypeKey>;
+    field pcodes: Map<String, TIRPCodeKey>;
+
+    field isMemberMethod: Bool;
+    field isVirtual: Bool;
+    field isDynamicOperator: Bool;
+    field isLambda: Bool;
+
+    field isThisRef: Bool;
+    field params: List<FunctionParameter>;
+    
+    field resultType: TypeKey;
+
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<TIRPostConditionDecl>;
+}
+
+entity InvokeAbstractDeclaration provides Invoke {
+}
+
+entity InvokeImplementation provides Invoke {
+    field body: TIRStatement[];
+}
+
+entity InvokePrimitive provides Invoke {
+    field body: string;
+}
+
+concept MemberDecl provides APIType {
+    field tkey: TypeKey;
+    field name: String;
+
+    field sourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+}
+
+entity ConstMemberDecl provides MemberDecl {
+    field declaredType: TypeKey;
+    field value: Expression;
+}
+
+entity StaticFunctionDecl provides MemberDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity MemberFieldDecl provides MemberDecl {
+    field fkey: FieldKey;
+    field declaredType: TypeKey;
+}
+
+entity MemberMethodDecl provides MemberDecl{
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+concept Type {
+    field tkey: TypeKey;
+
+    //direct suprertypes -- not saturated set
+    field supertypes: List<TypeKey>?;
+    field isexportable: Bool;
+}

@@ -16,6 +16,13 @@ class SourceInfo {
     static implicitSourceInfo(): SourceInfo {
         return new SourceInfo(-1, -1, -1, -1);
     }
+
+    bsqemit(): any {
+        return {line: this.line, column: this.column, pos: this.pos, span: this.span};
+    }
+    static bsqparse(jv: any): SourceInfo {
+        return new SourceInfo(jv.line, jv.column, jv.pos, jv.span);
+    }
 }
 
 type CodeFileInfo = { 
