@@ -378,7 +378,8 @@ class TIRInvokePrimitive extends TIRInvoke {
     }
 }
 
-class TIRConstMemberDecl {
+
+abstract class TIRMemberDecl {
     readonly tkey: TIRTypeKey;
     readonly name: string;
 
@@ -387,87 +388,121 @@ class TIRConstMemberDecl {
 
     readonly attributes: string[];
 
+    constructor(tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
+        this.tkey = tkey;
+        this.name = name;
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+    }
+
+    bsqemit_decl(): any {
+        return {tkey: this.tkey, name: this.name, sinfo: this.sourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes};
+    }
+
+    abstract bsqemit(): any;
+
+    static bsqparse(jv: any): TIRMemberDecl {
+        if(jv[0] === "ConstMemberDecl") {
+            return TIRConstMemberDecl.bsqparse(jv);
+        }
+        else if (jv[0] === "StaticFunctionDecl") {
+            return TIRStaticFunctionDecl.bsqparse(jv);
+        }
+        else if(jv[0] === "MemberFieldDecl") {
+            return TIRMemberFieldDecl.bsqparse(jv);
+        }
+        else {
+            assert(jv[0] === "MemberMethodDecl", "MemberMethodDecl");
+
+            return TIRMemberMethodDecl.bsqparse(jv);
+        }
+    }
+}
+
+class TIRConstMemberDecl extends TIRMemberDecl {
     readonly declaredType: TIRTypeKey;
     readonly value: TIRExpression;
 
     constructor(tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
-        this.tkey = tkey;
-        this.name = name;
-        this.sourceLocation = srcInfo;
-        this.srcFile = srcFile;
-        this.attributes = attributes;
+        super(tkey, name, srcInfo, srcFile, attributes);
         this.declaredType = declaredtype;
         this.value = value;
     }
-}
 
-class TIRStaticFunctionDecl {
-    readonly ikey: TIRInvokeKey;
-
-    readonly tkey: TIRTypeKey;
-    readonly name: string;
-
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
-    readonly invoke: TIRInvoke;
-
-    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
-        this.ikey = invoke.invkey;
-        this.tkey = tkey;
-        this.name = invoke.name;
-        this.sourceLocation = sinfo;
-        this.srcFile = srcFile;
-        this.attributes = invoke.attributes;
-        this.invoke = invoke;
+    bsqemit(): any {
+        return ["ConstMemberDecl", {...this.bsqemit_decl(), declaredType: this.declaredType, value: this.value.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRConstMemberDecl {
+        assert(Array.isArray(jv) && jv[0] === "ConstMemberDecl", "ConstMemberDecl");
+        
+        jv = jv[1];
+        const declaredType = jv.declaredType;
+        const value = TIRExpression.bsqparse(jv.value);
+        return new TIRConstMemberDecl(jv.tkey, jv.name, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, declaredType, value);
     }
 }
 
-class TIRMemberFieldDecl {
+class TIRStaticFunctionDecl extends TIRMemberDecl {
+    readonly ikey: TIRInvokeKey;
+    readonly invoke: TIRInvoke;
+
+    constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+        super(tkey, invoke.name, sinfo, srcFile, invoke.attributes);
+        this.ikey = invoke.invkey;
+        this.invoke = invoke;
+    }
+
+    bsqemit(): any {
+        return ["StaticFunctionDecl", {...this.bsqemit_decl(), invoke: this.invoke.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRStaticFunctionDecl {
+        assert(Array.isArray(jv) && jv[0] === "StaticFunctionDecl", "StaticFunctionDecl");
+        
+        jv = jv[1];
+        return new TIRStaticFunctionDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.invoke.bsqparse());
+    }
+}
+
+class TIRMemberFieldDecl extends TIRMemberDecl {
     readonly fkey: TIRFieldKey;
-
-    readonly tkey: TIRTypeKey;
-    readonly name: string;
-
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
-
     readonly declaredType: TIRTypeKey;
 
     constructor(fkey: TIRFieldKey, tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey) {
+        super(tkey, name, srcInfo, srcFile, attributes);
         this.fkey = fkey;
-        this.tkey = tkey;
-        this.name = name;
-        this.sourceLocation = srcInfo;
-        this.srcFile = srcFile;
-        this.attributes = attributes;
         this.declaredType = declaredtype;
+    }
+
+    bsqemit() {
+        return ["MemberFieldDecl", {...this.bsqemit_decl(), fkey: this.fkey, declaredType: this.declaredType}];
+    }
+    static bsqparse(jv: any): TIRMemberFieldDecl {
+        assert(Array.isArray(jv) && jv[0] === "MemberFieldDecl", "MemberFieldDecl");
+        
+        jv = jv[1];
+        return new TIRMemberFieldDecl(jv.fkey, jv.tkey, jv.name, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.declaredType);
     }
 }
 
-class TIRMemberMethodDecl {
+class TIRMemberMethodDecl extends TIRMemberDecl {
     readonly ikey: TIRInvokeKey;
-
-    readonly tkey: TIRTypeKey;
-    readonly name: string;
-
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
     constructor(tkey: TIRTypeKey, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+        super(tkey, invoke.name, sinfo, srcFile, invoke.attributes);
         this.ikey = invoke.invkey;
-        this.tkey = tkey;
-        this.name = invoke.name;
-        this.sourceLocation = sinfo;
-        this.srcFile = srcFile;
-        this.attributes = invoke.attributes;
         this.invoke = invoke;
+    }
+
+    bsqemit() {
+        return ["MemberMethodDecl", {...this.bsqemit_decl(), invoke: this.invoke.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRMemberMethodDecl {
+        assert(Array.isArray(jv) && jv[0] === "MemberMethodDecl", "MemberMethodDecl");
+        
+        jv = jv[1];
+        return new TIRMemberMethodDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.invoke.bsqparse());
     }
 }
 
@@ -482,6 +517,16 @@ abstract class TIRType {
         this.tkey = tkey;
         this.supertypes = supertypes !== undefined ? new Set<TIRTypeKey>(supertypes) : undefined;
         this.isexportable = isexportable;
+    }
+
+    bsqemit_type(): any {
+        return {tkey: this.tkey, supertypes: this.supertypes !== undefined ? [...this.supertypes] : null, isexportable: this.isexportable};
+    }
+
+    abstract bsqemit(): any;
+
+    static bsqparse(jv: any): TIRType {
+        xxxx;
     }
 }
 

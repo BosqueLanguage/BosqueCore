@@ -7,164 +7,196 @@ concept Expression provides APIType {
     field etype: TypeKey;
 }
 
-entity LiteralNoneExpression provides Expression {
+datatype LiteralExpression provides Expression
+of
+LiteralNoneExpression { }
+| LiteralNothingExpression { }
+| LiteralBoolExpression { value: Bool }
+| LiteralIntegralExpression { value: String }
+| LiteralRationalExpression { value: String }
+| LiteralFloatPointExpression { value: String }
+| LiteralStringExpression { value: String }
+| LiteralRegexExpression { value: BSQRegex }
+| LiteralASCIIStringExpression { value: String }
+| LiteralTypedStringExpression { oftype: TypeKey, value: String }
+| LiteralASCIITypedStringExpression { oftype: TypeKey, value: String }
+| LiteralTemplateStringExpression { value: String }
+| LiteralASCIITemplateStringExpression { value: String }
+| LiteralTypedPrimitiveDirectExpression { value: Expression, constype: TypeKey;, basetype: TypeKey }
+| LiteralTypedPrimitiveConstructorExpression { value: Expression, constype: TypeKey;, basetype: TypeKey }
+;
+
+entity AccessEnvValueExpression provides Expression {
+    field keyname: String;
+    field valtype: TypeKey;
+    field restype: TypeKey;
+    field orNoneMode: Bool;
 }
 
-class TIRLiteralNothingExpression extends TIRExpression {
-    constructor(sinfo: SourceInfo) {
-        super(TIRExpressionTag.LiteralNothingExpression, sinfo, "Nothing", "nothing");
-    }
+entity AccessNamespaceConstantExpression provides Expression {
+    field ns: String;
+    field cname: String;
 }
 
-class TIRLiteralBoolExpression extends TIRExpression {
-    readonly value: boolean;
-
-    constructor(sinfo: SourceInfo, value: boolean) {
-        super(TIRExpressionTag.LiteralBoolExpression, sinfo, "Bool", value ? "true" : "false");
-        this.value = value;
-    }
+entity AccessConstMemberFieldExpression provides Expression {
+    field tkey: TypeKey;
+    field cname: String;
 }
 
-class TIRLiteralIntegralExpression extends TIRExpression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string, itype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, value);
-        this.value = value;
-    }
+entity AccessVariableExpression provides Expression {
+    field name: String;
 }
 
-class TIRLiteralRationalExpression extends TIRExpression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string) {
-        super(TIRExpressionTag.LiteralRationalExpression, sinfo, "Rational", value);
-        this.value = value;
-    }
+entity AccessCapturedVariableExpression provides Expression {
+    field name: String;
 }
 
-class TIRLiteralFloatPointExpression extends TIRExpression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string, fptype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, value);
-        this.value = value;
-    }
+entity AccessScratchSingleValueExpression provides Expression {
+    field sidx: Nat;
 }
 
-class TIRLiteralStringExpression extends TIRExpression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string) {
-        super(TIRExpressionTag.LiteralStringExpression, sinfo, "String", value);
-        this.value = value;
-    }
+entity AccessScratchIndexExpression provides Expression {
+    field index: Nat;
+    field sidx: Nat;
 }
 
-class TIRLiteralRegexExpression extends TIRExpression {
-    readonly value: BSQRegex;
+datatype LoadSingleExpression provides Expression using {
+    tkey: TypeKey,
+    exp: Expression
+} of
+LoadIndexExpression { index: Nat }
+| LoadPropertyExpression { property: String }
+| LoadFieldExpression { field: FieldKey }
+| LoadFieldVirtualExpression { field: FieldKey }
+;
 
-    constructor(sinfo: SourceInfo, value: BSQRegex) {
-        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.regexstr);
-        this.value = value;
-    }
+datatype ConstructorExpression provides Expression using {
+    oftype: TypeKey,
+    args: List<Expression>
+} of
+ConstructorPrimaryDirectExpression { }
+| ConstructorPrimaryCheckExpression { }
+| ConstructorTupleExpression { }
+| ConstructorRecordExpression { }
+| ConstructorListExpression { }
+| ConstructorMapExpression { }
+;
+
+entity CodePackInvokeExpression provides Expression {
+    field cpack: CodePack;
+    field args: List<Expression>;
 }
 
-class TIRLiteralASCIIStringExpression extends TIRExpression {
-    readonly value: string;
+datatype ConstructorOfExpression provides Expression using {
+    oftype: TypeKey,
+    arg: Expression
+} of
+ResultOkConstructorExpression { }
+| ResultErrConstructorExpression { }
+| SomethingConstructorExpression { }
+| TypedeclDirectExpression { }
+| TypedeclConstructorExpression { }
+;
 
-    constructor(sinfo: SourceInfo, value: string) {
-        super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, "ASCIIString", value);
-        this.value = value;
-    }
+datatype CallFunctionExpression provides Expression using {
+    fkey: InvokeKey, 
+    args: List<Expression>
+} of
+CallNamespaceFunctionExpression { ns: String, fname: String }
+| CallNamespaceOperatorExpression { ns: String, oname: String }
+| CallStaticFunctionExpression { tkey: TypeKey, fname: String }
+;
+
+datatype LogicActionExpression provides Expression using {
+    args: List<Expression>
+} of
+LogicActionAndExpression { }
+| LogicActionOrExpression { }
+;
+
+datatype UnaryExpression provides Expression using {
+    exp: Expression
+} of
+PrefixNotExpression { }
+| PrefixNegateExpression { optype: TypeKey }
+;
+
+datatype BinOpExpression provides Expression using {
+    optype: TypeKey,
+    lhs: Expression,
+    rhs: Expression
+} of
+BinAddExpression { }
+| BinSubExpression { }
+| BinMultExpression { }
+| BinDivExpression { }
+;
+
+entity BinKeyEqBothUniqueExpression provides Expression {
+    field optype: TypeKey; //both must be the same unique key type
+    field lhs: Expression;
+    field rhs: Expression;
 }
 
-class TIRLiteralTypedStringExpression extends TIRExpression {
-    readonly oftype: TIRTypeKey;
-    readonly value: string;
+entity BinKeyEqOneUniqueExpression provides Expression {
+    field oftype: TypeKey; //the unique key type
+    field uarg: Expression; //the value that has the unique type
 
-    constructor(sinfo: SourceInfo, value: string, stringoftype: TIRTypeKey, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralTypedStringExpression, sinfo, stringoftype, `${value}_${oftype}`);
-        this.oftype = oftype;
-        this.value = value;
-    }
+    field gtype: TypeKey; //The type of the non-unique value
+    field garg: Expression; //The arg that has the non-unique type
 }
 
-class TIRLiteralASCIITypedStringExpression extends TIRExpression {
-    readonly oftype: TIRTypeKey;
-    readonly value: string;
+entity BinKeyEqGeneralExpression provides Expression {
+    field lhstype: TypeKey;
+    field lhs: Expression;
 
-    constructor(sinfo: SourceInfo, value: string, astringoftype: TIRTypeKey, oftype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralASCIITypedStringExpression, sinfo, astringoftype, `${value}_${oftype}`);
-        this.oftype = oftype;
-        this.value = value;
-    }
+    field rhstype: TypeKey;
+    field rhs: Expression;
 }
 
-class TIRLiteralTemplateStringExpression extends TIRExpression {
-    readonly value: string;
-
-    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
-        this.value = value;
-    }
+entity BinKeyNeqBothUniqueExpression provides Expression {
+    field optype: TypeKey; //both must be the same unique key type
+    field lhs: Expression;
+    field rhs: Expression;
 }
 
-class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
-    readonly value: string;
+entity BinKeyNeqOneUniqueExpression provides Expression {
+    field oftype: TypeKey; //the unique key type
+    field uarg: Expression; //the value that has the unique type
 
-    constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
-        this.value = value;
-    }
+    field gtype: TypeKey; //The type of the non-unique value
+    field garg: Expression; //The arg that has the non-unique type
 }
 
-class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
-    readonly value: TIRExpression;
+entity BinKeyNeqGeneralExpression provides Expression {
+    field lhstype: TypeKey;
+    field lhs: Expression;
 
-    readonly constype: TIRTypeKey; //The type that is constructed
-    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
-
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralTypedPrimitiveDirectExpression, sinfo, constype, `${value.expstr}_${constype}`);
-        this.value = value;
-
-        this.constype = constype;
-        this.basetype = basetype;
-    }
-
-    isFailableOperation(): boolean {
-        return this.value.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return this.value.getUsedVars();
-    }
+    field rhstype: TypeKey;
+    field rhs: Expression;
 }
 
-class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
-    readonly value: TIRExpression;
-
-    readonly constype: TIRTypeKey; //The type that is constructed
-    readonly basetype: TIRTypeKey; //The base representation of this (Bool, Int, String, ...) -- should be type of value expression
-
-    constructor(sinfo: SourceInfo, value: TIRExpression, constype: TIRTypeKey, basetype: TIRTypeKey) {
-        super(TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo, constype, `${value.expstr}_${constype}`);
-        this.value = value;
-
-        this.constype = constype;
-        this.basetype = basetype;
-    }
-
-    isFailableOperation(): boolean {
-        return true;
-    }
-
-    getUsedVars(): string[] {
-        return this.value.getUsedVars();
-    }
-
-    //
-    //TODO: compiler may want to treat this like a constant and precompute with a reference for any uses
-    //
+entity BinKeyUniqueLessExpression provides Expression {
+    field optype: TypeKey;
+    field lhs: Expression;
+    field rhs: Expression;
 }
+
+entity BinKeyGeneralLessExpression provides Expression {
+    field optype: TypeKey;
+    field lhs: Expression;
+    field rhs: Expression;
+}
+
+datatype NumericBinCmpExpression provides Expression using {
+    optype: TypeKey,
+    lhs: Expression,
+    rhs: Expression
+} of
+NumericEqExpression { }
+| NumericNeqExpression { }
+| NumericLessExpression { }
+| NumericLessEqExpression { }
+| NumericGreaterExpression { }
+| NumericGreaterEqExpression { }
+;

@@ -170,7 +170,7 @@ abstract class TIRExpression {
 
     abstract bsqemit(): any;
 
-    bsqparse(jv: any): TIRExpression {
+    static bsqparse(jv: any): TIRExpression {
         xxxx;
     }
 }
@@ -179,17 +179,38 @@ class TIRInvalidExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, etype: TIRTypeKey) {
         super(TIRExpressionTag.InvalidExpresion, sinfo, etype, "[INVALID]");
     }
+
+    bsqemit(): any {
+        return ["InvalidExpression", this.bsqemit_exp()];
+    }
+    static bsqparse(jv: any): TIRInvalidExpression {
+        return new TIRInvalidExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype);
+    }
 }
 
 class TIRLiteralNoneExpression extends TIRExpression {
     constructor(sinfo: SourceInfo) {
         super(TIRExpressionTag.LiteralNoneExpression, sinfo, "None", "none");
     }
+
+    bsqemit(): any {
+        return ["LiteralNoneExpression", this.bsqemit_exp()];
+    }
+    static bsqparse(jv: any): TIRLiteralNoneExpression {
+        return new TIRLiteralNoneExpression(SourceInfo.bsqparse(jv[1].sinfo));
+    }
 }
 
 class TIRLiteralNothingExpression extends TIRExpression {
     constructor(sinfo: SourceInfo) {
         super(TIRExpressionTag.LiteralNothingExpression, sinfo, "Nothing", "nothing");
+    }
+
+    bsqemit(): any {
+        return ["LiteralNothingExpression", this.bsqemit_exp()];
+    }
+    static bsqparse(jv: any): TIRLiteralNothingExpression {
+        return new TIRLiteralNothingExpression(SourceInfo.bsqparse(jv[1].sinfo));
     }
 }
 
@@ -200,6 +221,13 @@ class TIRLiteralBoolExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralBoolExpression, sinfo, "Bool", value ? "true" : "false");
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralBoolExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralBoolExpression {
+        return new TIRLiteralBoolExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    }
 }
 
 class TIRLiteralIntegralExpression extends TIRExpression {
@@ -208,6 +236,13 @@ class TIRLiteralIntegralExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, value: string, itype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralIntegralExpression, sinfo, itype, value);
         this.value = value;
+    }
+
+    bsqemit(): any {
+        return ["LiteralIntegralExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralIntegralExpression {
+        return new TIRLiteralIntegralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
     }
 }
 
@@ -218,6 +253,13 @@ class TIRLiteralRationalExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralRationalExpression, sinfo, "Rational", value);
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralRationalExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralRationalExpression {
+        return new TIRLiteralRationalExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    }
 }
 
 class TIRLiteralFloatPointExpression extends TIRExpression {
@@ -226,6 +268,13 @@ class TIRLiteralFloatPointExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, value: string, fptype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralFloatPointExpression, sinfo, fptype, value);
         this.value = value;
+    }
+
+    bsqemit(): any {
+        return ["LiteralFloatPointExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralFloatPointExpression {
+        return new TIRLiteralFloatPointExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
     }
 }
 
@@ -236,6 +285,13 @@ class TIRLiteralStringExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralStringExpression, sinfo, "String", value);
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralStringExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralStringExpression {
+        return new TIRLiteralStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    }
 }
 
 class TIRLiteralRegexExpression extends TIRExpression {
@@ -245,6 +301,13 @@ class TIRLiteralRegexExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.regexstr);
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralRegexExpression", {...this.bsqemit_exp(), value: this.}];
+    }
+    static bsqparse(jv: any): TIRLiteralRegexExpression {
+        return new TIRLiteralRegexExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    }
 }
 
 class TIRLiteralASCIIStringExpression extends TIRExpression {
@@ -253,6 +316,13 @@ class TIRLiteralASCIIStringExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, value: string) {
         super(TIRExpressionTag.LiteralASCIIStringExpression, sinfo, "ASCIIString", value);
         this.value = value;
+    }
+
+    bsqemit(): any {
+        return ["LiteralASCIIStringExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralASCIIStringExpression {
+        return new TIRLiteralASCIIStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
     }
 }
 
@@ -265,6 +335,13 @@ class TIRLiteralTypedStringExpression extends TIRExpression {
         this.oftype = oftype;
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralTypedStringExpression", {...this.bsqemit_exp(), oftype: this.oftype, value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralTypedStringExpression {
+        return new TIRLiteralTypedStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype, jv[1].oftype);
+    }
 }
 
 class TIRLiteralASCIITypedStringExpression extends TIRExpression {
@@ -276,6 +353,13 @@ class TIRLiteralASCIITypedStringExpression extends TIRExpression {
         this.oftype = oftype;
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralASCIITypedStringExpression", {...this.bsqemit_exp(), oftype: this.oftype, value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralASCIITypedStringExpression {
+        return new TIRLiteralASCIITypedStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype, jv[1].oftype);
+    }
 }
 
 class TIRLiteralTemplateStringExpression extends TIRExpression {
@@ -285,6 +369,13 @@ class TIRLiteralTemplateStringExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralTemplateStringExpression, sinfo, etype, value);
         this.value = value;
     }
+
+    bsqemit(): any {
+        return ["LiteralTemplateStringExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralTemplateStringExpression {
+        return new TIRLiteralTemplateStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
+    }
 }
 
 class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
@@ -293,6 +384,13 @@ class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, value: string, etype: TIRTypeKey) {
         super(TIRExpressionTag.LiteralASCIITemplateStringExpression, sinfo, etype, value);
         this.value = value;
+    }
+
+    bsqemit(): any {
+        return ["LiteralTemplateASCIIStringExpression", {...this.bsqemit_exp(), value: this.value}];
+    }
+    static bsqparse(jv: any): TIRLiteralASCIITemplateStringExpression {
+        return new TIRLiteralASCIITemplateStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
     }
 }
 
@@ -310,12 +408,11 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
         this.basetype = basetype;
     }
 
-    isFailableOperation(): boolean {
-        return this.value.isFailableOperation();
+    bsqemit(): any {
+        return ["LiteralTypedPrimitiveDirectExpression", {...this.bsqemit_exp(), value: this.value, constype: this.constype, basetype: this.basetype}];
     }
-
-    getUsedVars(): string[] {
-        return this.value.getUsedVars();
+    static bsqparse(jv: any): TIRLiteralTypedPrimitiveDirectExpression {
+        return new TIRLiteralTypedPrimitiveDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].constype, jv[1].basetype);
     }
 }
 
@@ -333,12 +430,11 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
         this.basetype = basetype;
     }
 
-    isFailableOperation(): boolean {
-        return true;
+    bsqemit(): any {
+        return ["LiteralTypedPrimitiveConstructorExpression", {...this.bsqemit_exp(), value: this.value, constype: this.constype, basetype: this.basetype}];
     }
-
-    getUsedVars(): string[] {
-        return this.value.getUsedVars();
+    static bsqparse(jv: any): TIRLiteralTypedPrimitiveConstructorExpression {
+        return new TIRLiteralTypedPrimitiveConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].constype, jv[1].basetype);
     }
 
     //
@@ -360,12 +456,11 @@ class TIRAccessEnvValueExpression extends TIRExpression {
         this.orNoneMode = orNoneMode;
     }
 
-    isTaskOperation(): boolean {
-        return true;
+    bsqemit(): any {
+        return ["AccessEnvValueExpression", {...this.bsqemit_exp(), keyname: this.keyname, valtype: this.valtype, restype: this.restype, orNoneMode: this.orNoneMode}];
     }
-
-    isFailableOperation(): boolean {
-        return !this.orNoneMode;
+    static bsqparse(jv: any): TIRAccessEnvValueExpression {
+        return new TIRAccessEnvValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].keyname, jv[1].valtype, jv[1].restype, jv[1].orNoneMode);
     }
 }
 
@@ -378,6 +473,13 @@ class TIRAccessNamespaceConstantExpression extends TIRExpression {
         this.ns = ns;
         this.cname = cname;
     }
+
+    bsqemit(): any {
+        return ["AccessNamespaceConstantExpression", {...this.bsqemit_exp(), ns: this.ns, cname: this.cname}];
+    }
+    static bsqparse(jv: any): TIRAccessNamespaceConstantExpression {
+        return new TIRAccessNamespaceConstantExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].cname, jv[1].etype);
+    }
 }
 
 class TIRAccessConstMemberFieldExpression extends TIRExpression {
@@ -389,6 +491,13 @@ class TIRAccessConstMemberFieldExpression extends TIRExpression {
         this.tkey = tkey;
         this.cname = cname;
     }
+
+    bsqemit(): any {
+        return ["AccessConstMemberFieldExpression", {...this.bsqemit_exp(), tkey: this.tkey, cname: this.cname}];
+    }
+    static bsqparse(jv: any): TIRAccessConstMemberFieldExpression {
+        return new TIRAccessConstMemberFieldExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].cname, jv[1].etype);
+    }
 }
 
 class TIRAccessVariableExpression extends TIRExpression {
@@ -399,8 +508,11 @@ class TIRAccessVariableExpression extends TIRExpression {
         this.name = name;
     }
 
-    getUsedVars(): string[] {
-        return [this.name];
+    bsqemit(): any {
+        return ["AccessVariableExpression", {...this.bsqemit_exp(), name: this.name}];
+    }
+    static bsqparse(jv: any): TIRAccessVariableExpression {
+        return new TIRAccessVariableExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].name, jv[1].etype);
     }
 }
 
@@ -412,8 +524,11 @@ class TIRAccessCapturedVariableExpression extends TIRExpression {
         this.name = name;
     }
 
-    getUsedVars(): string[] {
-        return [this.name];
+    bsqemit(): any {
+        return ["AccessCapturedVariableExpression", {...this.bsqemit_exp(), name: this.name}];
+    }
+    static bsqparse(jv: any): TIRAccessCapturedVariableExpression {
+        return new TIRAccessCapturedVariableExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].name, jv[1].etype);
     }
 }
 
@@ -423,6 +538,13 @@ class TIRAccessScratchSingleValueExpression extends TIRExpression {
     constructor(sinfo: SourceInfo, etype: TIRTypeKey, sidx: number) {
         super(TIRExpressionTag.AccessScratchSingleValueExpression, sinfo, etype, `$$scratch<${sidx}, ${etype}>[]`);
         this.sidx = sidx;
+    }
+
+    bsqemit(): any {
+        return ["AccessScratchSingleValueExpression", {...this.bsqemit_exp(), sidx: this.sidx}];
+    }
+    static bsqparse(jv: any): TIRAccessScratchSingleValueExpression {
+        return new TIRAccessScratchSingleValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].sidx, jv[1].etype);
     }
 }
 
@@ -434,6 +556,13 @@ class TIRAccessScratchIndexExpression extends TIRExpression {
         super(TIRExpressionTag.AccessScratchIndexExpression, sinfo, etype, `$$scratch<${sidx}, ${etype}>[${index}]`);
         this.index = index;
         this.sidx = sidx;
+    }
+
+    bsqemit(): any {
+        return ["AccessScratchIndexExpression", {...this.bsqemit_exp(), index: this.index, sidx: this.sidx}];
+    }
+    static bsqparse(jv: any): TIRAccessScratchIndexExpression {
+        return new TIRAccessScratchIndexExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].index, jv[1].etype, jv[1].sidx);
     }
 }
 
@@ -448,12 +577,8 @@ abstract class TIRLoadSingleExpression extends TIRExpression {
         this.exp = exp;
     }
 
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
+    bsqemit_loadsingle(): any {
+        return [this.tag, {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()}];
     }
 }
 
@@ -464,6 +589,13 @@ class TIRLoadIndexExpression extends TIRLoadSingleExpression {
         super(TIRExpressionTag.LoadIndexExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${index}`);
         this.index = index;
     }
+
+    bsqemit(): any {
+        return ["LoadIndexExpression", {...this.bsqemit_loadsingle(), index: this.index}];
+    }
+    static bsqparse(jv: any): TIRLoadIndexExpression {
+        return new TIRLoadIndexExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].tkey, jv[1].index, jv[1].etype);
+    }
 } 
 
 class TIRLoadPropertyExpression extends TIRLoadSingleExpression {
@@ -473,23 +605,44 @@ class TIRLoadPropertyExpression extends TIRLoadSingleExpression {
         super(TIRExpressionTag.LoadPropertyExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${property}`);
         this.property = property;
     }
+
+    bsqemit(): any {
+        return ["LoadPropertyExpression", {...this.bsqemit_loadsingle(), property: this.property}];
+    }
+    static bsqparse(jv: any): TIRLoadPropertyExpression {
+        return new TIRLoadPropertyExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].tkey, jv[1].property, jv[1].etype);
+    }
 }
 
 class TIRLoadFieldExpression extends TIRLoadSingleExpression {
-    readonly field: TIRFieldKey;
+    readonly fieldkey: TIRFieldKey;
 
-    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, exp: TIRExpression, field: TIRFieldKey, resultType: TIRTypeKey) {
-        super(TIRExpressionTag.LoadFieldExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${field}`);
-        this.field = field;
+    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, exp: TIRExpression, fieldkey: TIRFieldKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadFieldExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${fieldkey}`);
+        this.fieldkey = fieldkey;
+    }
+
+    bsqemit(): any {
+        return ["LoadFieldExpression", {...this.bsqemit_loadsingle(), fieldkey: this.fieldkey}];
+    }
+    static bsqparse(jv: any): TIRLoadFieldExpression {
+        return new TIRLoadFieldExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, TIRExpression.bsqparse(jv[1].exp), jv[1].fieldkey, jv[1].etype);
     }
 }
 
 class TIRLoadFieldVirtualExpression extends TIRLoadSingleExpression {
-    readonly field: TIRFieldKey;
+    readonly fieldkey: TIRFieldKey;
 
-    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, exp: TIRExpression, field: TIRFieldKey, resultType: TIRTypeKey) {
-        super(TIRExpressionTag.LoadFieldVirtualExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${field}`);
-        this.field = field;
+    constructor(sinfo: SourceInfo, tkey: TIRTypeKey, exp: TIRExpression, fieldkey: TIRFieldKey, resultType: TIRTypeKey) {
+        super(TIRExpressionTag.LoadFieldVirtualExpression, sinfo, tkey, exp, resultType, `${exp.expstr}.${fieldkey}`);
+        this.fieldkey = fieldkey;
+    }
+
+    bsqemit(): any {
+        return ["LoadFieldVirtualExpression", {...this.bsqemit_loadsingle(), fieldkey: this.fieldkey}];
+    }
+    static bsqparse(jv: any): TIRLoadFieldVirtualExpression {
+        return new TIRLoadFieldVirtualExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, TIRExpression.bsqparse(jv[1].exp), jv[1].fieldkey, jv[1].etype);
     }
 }
 
@@ -504,18 +657,21 @@ abstract class TIRConstructorExpression extends TIRExpression {
         this.args = args;
     }
 
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
+    bsqemit_consexp(): any {
+        return [this.tag, {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())}];
     }
 }
 
 class TIRConstructorPrimaryDirectExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorPrimaryDirectExpression, sinfo, oftype, args, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
+    }
+
+    bsqemit(): any {
+        return ["ConstructorPrimaryDirectExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorPrimaryDirectExpression {
+        return new TIRConstructorPrimaryDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -524,8 +680,11 @@ class TIRConstructorPrimaryCheckExpression extends TIRConstructorExpression {
         super(TIRExpressionTag.ConstructorPrimaryCheckExpression, sinfo, oftype, args, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
     }
 
-    isFailableOperation(): boolean {
-        return true;
+    bsqemit(): any {
+        return ["ConstructorPrimaryCheckExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorPrimaryCheckExpression {
+        return new TIRConstructorPrimaryCheckExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -533,17 +692,38 @@ class TIRConstructorTupleExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorTupleExpression, sinfo, oftype, args, `[${args.map((arg) => arg.expstr).join(", ")}]`);
     }
+
+    bsqemit(): any {
+        return ["ConstructorTupleExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorTupleExpression {
+        return new TIRConstructorTupleExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 class TIRConstructorRecordExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorRecordExpression, sinfo, oftype, args, `{${args.map((arg) => arg.expstr).join(", ")}}`);
     }
+
+    bsqemit(): any {
+        return ["ConstructorRecordExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorRecordExpression {
+        return new TIRConstructorRecordExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 class TIRConstructorListExpression  extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, args, `List{${args.map((arg) => arg.expstr).join(", ")}}`);
+    }
+
+    bsqemit(): any {
+        return ["ConstructorListExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorListExpression {
+        return new TIRConstructorListExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
     
@@ -552,8 +732,11 @@ class TIRConstructorMapExpression extends TIRConstructorExpression {
         super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, args, `Map{${args.map((arg) => arg.expstr).join(", ")}}`);
     }
 
-    isFailableOperation(): boolean {
-        return true;
+    bsqemit(): any {
+        return ["ConstructorMapExpression", {...this.bsqemit_consexp()}];
+    }
+    static bsqparse(jv: any): TIRConstructorMapExpression {
+        return new TIRConstructorMapExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -567,12 +750,11 @@ class TIRCodePackInvokeExpression extends TIRExpression {
         this.args = args;
     }
 
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
+    bsqemit(): any {
+        return ["CodePackInvokeExpression", {...this.bsqemit_exp(), cpack: this.cpack.bsqemit(), args: this.args.map((arg) => arg.bsqemit())}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
+    static bsqparse(jv: any): TIRCodePackInvokeExpression {
+        return new TIRCodePackInvokeExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype, TIRCodePack.bsqparse(jv[1].cpack), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -587,12 +769,8 @@ abstract class TIRConstructorOfExpression extends TIRExpression {
         this.arg = arg;
     }
 
-    isFailableOperation(): boolean {
-        return this.arg.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return this.arg.getUsedVars();
+    bsqemit_consof(): any {
+        return {...this.bsqemit_exp(), oftype: this.oftype, arg: this.arg.bsqemit()};
     }
 }
 
@@ -600,11 +778,25 @@ class TIRResultOkConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.ResultOkConstructorExpression, sinfo, oftype, arg, `cons_ok<${oftype}>{${arg.expstr}}`);
     }
+
+    bsqemit(): any {
+        return ["ResultOkConstructorExpression", {...this.bsqemit_consof()}];
+    }
+    static bsqparse(jv: any): TIRResultOkConstructorExpression {
+        return new TIRResultOkConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
+    }
 }
 
 class TIRResultErrConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.ResultErrConstructorExpression, sinfo, oftype, arg, `cons_err<${oftype}>{${arg.expstr}}`);
+    }
+
+    bsqemit(): any {
+        return ["ResultErrConstructorExpression", {...this.bsqemit_consof()}];
+    }
+    static bsqparse(jv: any): TIRResultErrConstructorExpression {
+        return new TIRResultErrConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -612,11 +804,25 @@ class TIRSomethingConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.SomethingConstructorExpression, sinfo, oftype, arg, `cons_something<${oftype}>{${arg.expstr}}`);
     }
+
+    bsqemit(): any {
+        return ["SomethingConstructorExpression", {...this.bsqemit_consof()}];
+    }
+    static bsqparse(jv: any): TIRSomethingConstructorExpression {
+        return new TIRSomethingConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
+    }
 }
 
 class TIRTypedeclDirectExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.TypedeclDirectExpression, sinfo, oftype, arg, `cons_typedecl<${oftype}>{${arg.expstr}}`);
+    }
+
+    bsqemit(): any {
+        return ["TypedeclDirectExpression", {...this.bsqemit_consof()}];
+    }
+    static bsqparse(jv: any): TIRTypedeclDirectExpression {
+        return new TIRTypedeclDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -627,6 +833,13 @@ class TIRTypedeclConstructorExpression extends TIRConstructorOfExpression {
 
     isFailableOperation(): boolean {
         return true;
+    }
+
+    bsqemit(): any {
+        return ["TypedeclConstructorExpression", {...this.bsqemit_consof()}];
+    }
+    static bsqparse(jv: any): TIRTypedeclConstructorExpression {
+        return new TIRTypedeclConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -641,12 +854,8 @@ abstract class TIRCallFunctionExpression extends TIRExpression {
         this.args = args;
     }
 
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
+    bsqemit_call(): any {
+        return {...this.bsqemit_exp(), fkey: this.fkey, args: this.args.map((arg) => arg.bsqemit())};
     }
 }
 
@@ -659,6 +868,13 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
         this.ns = ns;
         this.fname = fname;
     }
+
+    bsqemit(): any {
+        return ["CallNamespaceFunctionExpression", {...this.bsqemit_call(), ns: this.ns, fname: this.fname}];
+    }
+    static bsqparse(jv: any): TIRCallNamespaceFunctionExpression {
+        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
@@ -669,6 +885,13 @@ class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
         super(TIRExpressionTag.CallNamespaceOperatorExpression, sinfo, declkey, rtype, args, `${declkey}(${args.map((arg) => arg.expstr).join(", ")})`);
         this.ns = ns;
         this.oname = oname;
+    }
+
+    bsqemit(): any {
+        return ["CallNamespaceOperatorExpression", {...this.bsqemit_call(), ns: this.ns, oname: this.oname}];
+    }
+    static bsqparse(jv: any): TIRCallNamespaceOperatorExpression {
+        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -681,6 +904,13 @@ class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
         this.tkey = tkey;
         this.fname = fname;
     }
+
+    bsqemit(): any {
+        return ["CallStaticFunctionExpression", {...this.bsqemit_call(), tkey: this.tkey, fname: this.fname}];
+    }
+    static bsqparse(jv: any): TIRCallStaticFunctionExpression {
+        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 //abstract class for logic actions
@@ -692,12 +922,8 @@ abstract class TIRLogicActionExpression extends TIRExpression {
         this.args = args;
     }
 
-    isFailableOperation(): boolean {
-        return this.args.some((arg) => arg.isFailableOperation());
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(...this.args.map((arg) => arg.getUsedVars()));
+    bsqemit_laction(): any {
+        return {...this.bsqemit_exp(), args: this.args.map((arg) => arg.bsqemit())};
     }
 }
 
@@ -705,11 +931,25 @@ class TIRLogicActionAndExpression extends TIRLogicActionExpression {
     constructor(sinfo: SourceInfo, args: TIRExpression[]) {
         super(TIRExpressionTag.LogicActionAndExpression, sinfo, args, `/\\(${args.map((arg) => arg.expstr).join(", ")})`);
     }
+
+    bsqemit(): any {
+        return ["LogicActionAndExpression", this.bsqemit_laction()];
+    }
+    static bsqparse(jv: any): TIRLogicActionAndExpression {
+        return new TIRLogicActionAndExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 class TIRLogicActionOrExpression extends TIRLogicActionExpression {
     constructor(sinfo: SourceInfo, args: TIRExpression[]) {
         super(TIRExpressionTag.LogicActionOrExpression, sinfo, args, `\\/(${args.map((arg) => arg.expstr).join(", ")})`);
+    }
+
+    bsqemit(): any {
+        return ["LogicActionOrExpression", this.bsqemit_laction()];
+    }
+    static bsqparse(jv: any): TIRLogicActionOrExpression {
+        return new TIRLogicActionOrExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -722,18 +962,21 @@ abstract class TIRUnaryExpression extends TIRExpression {
         this.exp = exp;
     }
 
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return this.exp.getUsedVars();
+    bsqemit_unary(): any {
+        return {...this.bsqemit_exp(), exp: this.exp.bsqemit()};
     }
 }
 
 class TIRPrefixNotExpression extends TIRUnaryExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.PrefixNotExpression, sinfo, "Bool", exp, `!(${exp.expstr})`);
+    }
+
+    bsqemit(): any {
+        return ["PrefixNotExpression", this.bsqemit_unary()];
+    }
+    static bsqparse(jv: any): TIRPrefixNotExpression {
+        return new TIRPrefixNotExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
     }
 }
 
@@ -743,6 +986,13 @@ class TIRPrefixNegateExpression extends TIRUnaryExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
         super(TIRExpressionTag.PrefixNegateExpression, sinfo, exptype, exp, `-(${exp.expstr})`);
         this.optype = ntype;
+    }
+
+    bsqemit(): any {
+        return ["PrefixNegateExpression", {...this.bsqemit_unary(), optype: this.optype}];
+    }
+    static bsqparse(jv: any): TIRPrefixNegateExpression {
+        return new TIRPrefixNegateExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].exptype, jv[1].optype);
     }
 }
 
@@ -759,12 +1009,8 @@ abstract class TIRBinOpExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    bsqemit_binop(): any {
+        return {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()};
     }
 }
 
@@ -773,12 +1019,11 @@ class TIRBinAddExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
     }
 
-    isFailableOperation(): boolean {
-        if (TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
-            return true;
-        }
-        
-        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
+    bsqemit(): any {
+        return ["BinAddExpression", this.bsqemit_binop()];
+    }
+    static bsqparse(jv: any): TIRBinAddExpression {
+        return new TIRBinAddExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
     }
 }
 
@@ -787,17 +1032,11 @@ class TIRBinSubExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinSubExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} - ${rhs.expstr})`);
     }
 
-    isFailableOperation(): boolean {
-        if(TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
-            return true;
-        }
-
-        //unsigned underflow is a more dangerous issue that just overflows
-        if(this.optype === "Nat" || this.optype === "BigNat") {
-            return true;
-        }
-
-        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
+    bsqemit(): any {
+        return ["BinSubExpression", this.bsqemit_binop()];
+    }
+    static bsqparse(jv: any): TIRBinSubExpression {
+        return new TIRBinSubExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
     }
 }
 
@@ -806,12 +1045,11 @@ class TIRBinMultExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinMultExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} * ${rhs.expstr})`);
     }
 
-    isFailableOperation(): boolean {
-        if(TIRExpression.OverflowIsFailure && (this.optype === "Nat" || this.optype === "Int")) {
-            return true;
-        }
-
-        return (this.lhs.isFailableOperation() || this.rhs.isFailableOperation());
+    bsqemit(): any {
+        return ["BinMultExpression", this.bsqemit_binop()];
+    }
+    static bsqparse(jv: any): TIRBinMultExpression {
+        return new TIRBinMultExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
     }
 }
 
@@ -820,8 +1058,11 @@ class TIRBinDivExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinDivExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} / ${rhs.expstr})`);
     }
 
-    isFailableOperation(): boolean {
-        return true; //div 0
+    bsqemit(): any {
+        return ["BinDivExpression", this.bsqemit_binop()];
+    }
+    static bsqparse(jv: any): TIRBinDivExpression {
+        return new TIRBinDivExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
     }
 }
 
@@ -837,12 +1078,11 @@ class TIRBinKeyEqBothUniqueExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyEqBothUniqueExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyEqBothUniqueExpression {
+        return new TIRBinKeyEqBothUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -862,12 +1102,11 @@ class TIRBinKeyEqOneUniqueExpression extends TIRExpression {
         this.garg = garg;
     }
 
-    isFailableOperation(): boolean {
-        return this.uarg.isFailableOperation() || this.garg.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyEqOneUniqueExpression", {...this.bsqemit_exp(), oftype: this.oftype, uarg: this.uarg.bsqemit(), gtype: this.gtype, garg: this.garg.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.uarg.getUsedVars(), this.garg.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyEqOneUniqueExpression {
+        return new TIRBinKeyEqOneUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].uarg), jv[1].gtype, TIRExpression.bsqparse(jv[1].garg));
     }
 }
 
@@ -887,12 +1126,11 @@ class TIRBinKeyEqGeneralExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyEqGeneralExpression", {...this.bsqemit_exp(), lhstype: this.lhstype, lhs: this.lhs.bsqemit(), rhstype: this.rhstype, rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyEqGeneralExpression {
+        return new TIRBinKeyEqGeneralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].lhstype, TIRExpression.bsqparse(jv[1].lhs), jv[1].rhstype, TIRExpression.bsqparse(jv[1].rhs));
     }
 }
 
@@ -908,12 +1146,11 @@ class TIRBinKeyNeqBothUniqueExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyNeqBothUniqueExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyNeqBothUniqueExpression {
+        return new TIRBinKeyNeqBothUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -933,12 +1170,11 @@ class TIRBinKeyNeqOneUniqueExpression extends TIRExpression {
         this.garg = garg;
     }
 
-    isFailableOperation(): boolean {
-        return this.uarg.isFailableOperation() || this.garg.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyNeqOneUniqueExpression", {...this.bsqemit_exp(), oftype: this.oftype, uarg: this.uarg.bsqemit(), gtype: this.gtype, garg: this.garg.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.uarg.getUsedVars(), this.garg.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyNeqOneUniqueExpression {
+        return new TIRBinKeyNeqOneUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].uarg), jv[1].gtype, TIRExpression.bsqparse(jv[1].garg));
     }
 }
 
@@ -958,12 +1194,11 @@ class TIRBinKeyNeqGeneralExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyNeqGeneralExpression", {...this.bsqemit_exp(), lhstype: this.lhstype, lhs: this.lhs.bsqemit(), rhstype: this.rhstype, rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyNeqGeneralExpression {
+        return new TIRBinKeyNeqGeneralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].lhstype, TIRExpression.bsqparse(jv[1].lhs), jv[1].rhstype, TIRExpression.bsqparse(jv[1].rhs));
     }
 }
 
@@ -979,12 +1214,11 @@ class TIRBinKeyUniqueLessExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyUniqueLessExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyUniqueLessExpression {
+        return new TIRBinKeyUniqueLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1000,12 +1234,11 @@ class TIRBinKeyGeneralLessExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
+    bsqemit(): any {
+        return ["BinKeyGeneralLessExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
     }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    static bsqparse(jv: any): TIRBinKeyGeneralLessExpression {
+        return new TIRBinKeyGeneralLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1022,12 +1255,8 @@ abstract class TIRNumericBinCmpExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    isFailableOperation(): boolean {
-        return this.lhs.isFailableOperation() || this.rhs.isFailableOperation();
-    }
-
-    getUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.lhs.getUsedVars(), this.rhs.getUsedVars());
+    bsqemit_bincmp(): any {
+        return {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()};
     }
 }
 
@@ -1035,11 +1264,25 @@ class TIRNumericEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} == ${rhs.expstr})`);
     }
+
+    bsqemit(): any {
+        return ["NumericEqExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericEqExpression {
+        return new TIRNumericEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    }
 }
 
 class TIRNumericNeqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericNeqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} != ${rhs.expstr})`);
+    }
+
+    bsqemit(): any {
+        return ["NumericNeqExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericNeqExpression {
+        return new TIRNumericNeqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1047,11 +1290,25 @@ class TIRNumericLessExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericLessExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} < ${rhs.expstr})`);
     }
+
+    bsqemit(): any {
+        return ["NumericLessExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericLessExpression {
+        return new TIRNumericLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    }
 }
 
 class TIRNumericLessEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericLessEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} <= ${rhs.expstr})`);
+    }
+
+    bsqemit(): any {
+        return ["NumericLessEqExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericLessEqExpression {
+        return new TIRNumericLessEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1059,11 +1316,25 @@ class TIRNumericGreaterExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericGreaterExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} > ${rhs.expstr})`);
     }
+
+    bsqemit(): any {
+        return ["NumericGreaterExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericGreaterExpression {
+        return new TIRNumericGreaterExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    }
 }
 
 class TIRNumericGreaterEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericGreaterEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} >= ${rhs.expstr})`);
+    }
+
+    bsqemit(): any {
+        return ["NumericGreaterEqExpression", this.bsqemit_bincmp()];
+    }
+    static bsqparse(jv: any): TIRNumericGreaterEqExpression {
+        return new TIRNumericGreaterEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
