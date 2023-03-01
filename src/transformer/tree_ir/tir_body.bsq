@@ -200,3 +200,190 @@ NumericEqExpression { }
 | NumericGreaterExpression { }
 | NumericGreaterEqExpression { }
 ;
+
+datatype BinLogicExpression provides Expression using {
+    lhs: Expression,
+    rhs: Expression
+} of
+BinLogicAndExpression { }
+| BinLogicOrExpression { }
+| BinLogicImpliesExpression { }
+;
+
+entity MapEntryConstructorExpression provides Expression {
+    field ktype: TypeKey;
+    field vtype: TypeKey;
+    field oftype: TypeKey;
+
+    field kexp: Expression;
+    field vexp: Expression;
+}
+
+entity IfExpression provides Expression {
+    field ifentry: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, String]?};
+    field elifentries: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, String]?}[];
+    field elseentry: {value: Expression, binderinfo: [Expression, Nat, Expression, String]?};
+}
+
+entity SwitchExpression provides Expression {
+    field exp: Expression;
+    field scratchidx: Nat;
+    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, String]?}[];
+    field edefault: {value: Expression, binderinfo: [Expression, String]?}?;
+    field isexhaustive: Bool;
+}
+
+entity MatchExpression provides Expression {
+    field exp: Expression;
+    field scratchidx: Nat;
+    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, String]?}[];
+    field edefault: {value: Expression, binderinfo: [Expression, String]?}?;
+    field isexhaustive: Bool;
+}
+
+entity TaskSelfFieldExpression provides Expression {
+    field tasktype: TypeKey;
+    field fieldkey: FieldKey;
+    field fname: String;
+}
+
+entity TaskSelfControlExpression provides Expression {
+    field tasktype: TypeKey;
+}
+
+entity TaskGetIDExpression provides Expression {
+    field tasktype: TypeKey;
+}
+
+entity TIRCoerceSafeExpression provides Expression {
+    field exp: Expression;
+    field fromtype: TypeKey;
+    field totype: TypeKey;
+}
+
+datatype InjectExtractExpression provides Expression using {
+    exp: Expression,
+    totype: TypeKey
+} of
+InjectExpression { }
+| ExtractExpression { }
+;
+
+entity CreateCodePackExpression provides Expression {
+    field pcodepack: CodePack;
+
+    field capturedirect: List<String>;
+    field captureindirect: List<String>;
+    field capturepackdirect: List<String>;
+    field capturepackindirect: List<String>;
+}
+
+concept TestIsExpression provides Expression {
+    field exp: Expression;
+}
+
+datatype ITestIsSpecialExpression provides TestIsExpression 
+of 
+IsNoneSpecialExpression { }
+| IsSomeSpecialExpression { }
+| IsNothingSpecialExpression { }
+| IsSomethingSpecialExpression { }
+| IsOkSpecialExpression { }
+| IsErrSpecialExpression { }
+;
+
+datatype ITestIsLiteralEqExpression provides TestIsExpression using {
+    literal: LiteralValue
+} of
+IsEqualToLiteralExpression { }
+| IsNotEqualToLiteralExpression { }
+;
+
+datatype ITestIsTypeExpression provides TestIsExpression using {
+    ttype: TypeKey
+} of 
+IsTypeExpression { }
+| IsNotTypeExpression { }
+| IsSubTypeExpression { }
+| IsNotSubTypeExpression { }
+;
+
+
+concept AsExpression provides Expression {
+    field exp: Expression;
+}
+
+datatype AsSpecialExpression provides AsExpression using 
+of
+AsNoneSpecialExpression { }
+| AsSomeSpecialExpression { }
+| AsNothingSpecialExpression { }
+| AsSomethingSpecialExpression { }
+| AsOkSpecialExpression { }
+| AsErrSpecialExpression { }
+;
+
+datatype AsLiteralEqExpression provides AsExpression using {
+    literal: LiteralValue
+} of
+AsEqualToLiteralExpression { }
+| AsNotEqualToLiteralExpression { }
+;
+
+datatype TestAsTypeExpression provides AsExpression using {
+    ttype: TypeKey
+} of
+AsTypeExpression { }
+| AsNotTypeExpression { }
+| AsSubTypeExpression { }
+| AsNotSubTypeExpression { }
+;
+
+datatype MemberFunctionExpression provides Expression using {
+    tkey: TypeKey,
+    fname: String,
+    fkey: InvokeKey,
+    fdecltype: TypeKey,
+    thisarg: Expression,
+    args: List<Expression>
+} of
+CallMemberFunctionExpression { }
+| CallMemberFunctionDynamicExpression { }
+| CallMemberFunctionSelfRefExpression { }
+;
+
+datatype FunctionTaskExpression provides Expression using {
+    fname: String,
+    fkey: InvokeKey,
+    tsktype: TypeKey,
+    args: List<Expression>
+} of 
+CallMemberFunctionTaskExpression { }
+| CallMemberFunctionTaskSelfRefExpression { }
+| CallMemberActionExpression { }
+;
+
+entity LiteralValue {
+    field exp: Expression;
+    field litstr: String;
+}
+
+concept Statement {
+    field sinfo: SourceInfo;
+}
+
+entity NopStatement provides Statement {
+}
+
+entity AbortStatement provides Statement {
+    field msg: String;
+}
+
+entity AssertCheckStatement provides Statement {
+    field cond: Expression;
+    field msg: String;
+}
+
+entity DebugStatement provides Statement {
+    field value: Expression;
+}
