@@ -5982,8 +5982,8 @@ class TypeChecker {
     }
 
     private checkLoggerEmitStatement(env: StatementTypeEnvironment, stmt: LoggerEmitStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
@@ -6003,8 +6003,8 @@ class TypeChecker {
     }
 
     private checkLoggerEmitConditionalStatement(env: StatementTypeEnvironment, stmt: LoggerEmitConditionalStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
@@ -6034,8 +6034,8 @@ class TypeChecker {
     }
 
     private checkLoggerPrefixStatement(env: StatementTypeEnvironment, stmt: LoggerPrefixStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;

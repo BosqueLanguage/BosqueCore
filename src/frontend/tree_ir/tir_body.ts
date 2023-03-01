@@ -1,7 +1,7 @@
 
 import { TIRCodePack, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assembly";
 
-import { LoggerLevel, SourceInfo } from "../build_decls";
+import { LoggerLevel, logLevelName, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 enum TIRExpressionTag {
@@ -2146,7 +2146,7 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
     }
 
     bsqemit(): any {
-        return ["CallMemberFunctionSelfRefExpression", this.bsqemit_mf(), this.scidx, this.thisref];
+        return ["CallMemberFunctionSelfRefExpression", {...this.bsqemit_mf(), scidx: this.scidx, thisref: this.thisref}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionSelfRefExpression {
         return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].rtype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
@@ -2195,7 +2195,7 @@ class TIRCallMemberFunctionTaskSelfRefExpression extends TIRFunctionTaskExpressi
     }
 
     bsqemit(): any {
-        return ["CallMemberFunctionTaskSelfRefExpression", this.bsqemit_tf(), this.scidx];
+        return ["CallMemberFunctionTaskSelfRefExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionTaskSelfRefExpression {
         return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
@@ -2211,7 +2211,7 @@ class TIRCallMemberActionExpression extends TIRFunctionTaskExpression {
     }
 
     bsqemit(): any {
-        return ["CallMemberActionExpression", this.bsqemit_tf(), this.scidx];
+        return ["CallMemberActionExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberActionExpression {
         return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
@@ -2228,7 +2228,7 @@ class TIRLiteralValue {
     }
 
     bsqemit(): any {
-        return ["LiteralValue", this.exp.bsqemit(), this.litstr];
+        return ["LiteralValue", {exp: this.exp.bsqemit(), litstr: this.litstr}];
     }
     static bsqparse(jv: any): TIRLiteralValue {
         return new TIRLiteralValue(TIRExpression.bsqparse(jv[1].exp), jv[1].litstr);
@@ -2326,7 +2326,7 @@ class TIRAbortStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["AbortStatement", this.bsqemit_stmt(), this.msg];
+        return ["AbortStatement", {...this.bsqemit_stmt(), msg: this.msg}];
     }
     static bsqparse(jv: any): TIRAbortStatement {
         return new TIRAbortStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].msg);
@@ -2344,7 +2344,7 @@ class TIRAssertCheckStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["AssertCheckStatement", this.bsqemit_stmt(), this.cond.bsqemit(), this.msg];
+        return ["AssertCheckStatement", {...this.bsqemit_stmt(), cond: this.cond.bsqemit(), msg: this.msg}];
     }
     static bsqparse(jv: any): TIRAssertCheckStatement {
         return new TIRAssertCheckStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].cond), jv[1].msg);
@@ -2360,7 +2360,7 @@ class TIRDebugStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["DebugStatement", this.bsqemit_stmt(), this.value.bsqemit()];
+        return ["DebugStatement", {...this.bsqemit_stmt(), value: this.value.bsqemit()}];
     }
     static bsqparse(jv: any): TIRDebugStatement {
         return new TIRDebugStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
@@ -2377,8 +2377,11 @@ class TIRVarDeclareStatement extends TIRStatement {
         this.vtype = vtype;
     }
 
-    getDirectlyModVars(): string[] {
-        return [this.vname];
+    bsqemit(): any {
+        return ["VarDeclareStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype}];
+    }
+    static bsqparse(jv: any): TIRVarDeclareStatement {
+        return new TIRVarDeclareStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype);
     }
 }
 
@@ -2396,16 +2399,11 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
         this.isConst = isConst;
     }
 
-    isFailableOperation(): boolean {
-        return this.vexp.isFailableOperation();
+    bsqemit(): any {
+        return ["VarDeclareAndAssignStatement", {...this.bsqemit_stmt(), {vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit(), isConst: this.isConst}];
     }
-
-    getDirectlyUsedVars(): string[] {
-        return this.vexp.getUsedVars();
-    }
-
-    getDirectlyModVars(): string[] {
-        return [this.vname];
+    static bsqparse(jv: any): TIRVarDeclareAndAssignStatement {
+        return new TIRVarDeclareAndAssignStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, TIRExpression.bsqparse(jv[1].vexp), jv[1].isConst);
     }
 }
 
@@ -2421,16 +2419,11 @@ class TIRVarAssignStatement extends TIRStatement {
         this.vexp = vexp;
     }
 
-    isFailableOperation(): boolean {
-        return this.vexp.isFailableOperation();
+    bsqemit(): any {
+        return ["VarAssignStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit()}];
     }
-
-    getDirectlyUsedVars(): string[] {
-        return this.vexp.getUsedVars();
-    }
-
-    getDirectlyModVars(): string[] {
-        return [this.vname];
+    static bsqparse(jv: any): TIRVarAssignStatement {
+        return new TIRVarAssignStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, TIRExpression.bsqparse(jv[1].vexp));
     }
 }
 
@@ -2446,8 +2439,11 @@ class TIRStoreToScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    getDirectlyUsedVars(): string[] {
-        return this.exp.getUsedVars();
+    bsqemit(): any {
+        return ["StoreToScratch", {...this.bsqemit_stmt(), exp: this.exp.bsqemit(), vtype: this.vtype, scidx: this.scidx}];
+    }
+    static bsqparse(jv: any): TIRStoreToScratch {
+        return new TIRStoreToScratch(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].vtype, jv[1].scidx);
     }
 }
 
@@ -2463,8 +2459,11 @@ class TIRVarRefAssignFromScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    getDirectlyModVars(): string[] {
-        return [this.vname];
+    bsqemit(): any {
+        return ["VarRefAssignFromScratch", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, scidx: this.scidx}];
+    }
+    static bsqparse(jv: any): TIRVarRefAssignFromScratch {
+        return new TIRVarRefAssignFromScratch(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, jv[1].scidx);
     }
 }
 
@@ -2478,8 +2477,11 @@ class TIRTaskRefAssignFromScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    getDirectlyModVars(): string[] {
-        return ["self"];
+    bsqemit(): any {
+        return ["TaskRefAssignFromScratch", {...this.bsqemit_stmt(), vtype: this.vtype, scidx: this.scidx}];
+    }
+    static bsqparse(jv: any): TIRTaskRefAssignFromScratch {
+        return new TIRTaskRefAssignFromScratch(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vtype, jv[1].scidx);
     }
 }
 
@@ -2498,12 +2500,8 @@ abstract class TIRCallWRefStatementGeneral extends TIRStatement {
         this.sidx = sidx;
     }
 
-    isFailableOperation(): boolean {
-        return this.vexp.isFailableOperation();
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return this.vexp.getUsedVars();
+    bsqemit_cwr(): any {
+        return {...this.bsqemit_stmt(), vexp: this.vexp.bsqemit(), restype: this.restype, reftype: this.reftype, sidx: this.sidx};
     }
 }
 
@@ -2511,17 +2509,38 @@ class TIRCallStatementWRef extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallWRefStatement, sinfo, vexp, restype, reftype, sidx);
     }
+
+    bsqemit(): any {
+        return ["CallStatementWRef", this.bsqemit_cwr()];
+    }
+    static bsqparse(jv: any): TIRCallStatementWRef {
+        return new TIRCallStatementWRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
+    }
 }
 
 class TIRCallStatementWTaskRef extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallStatementWTaskRef, sinfo, vexp, restype, reftype, sidx);
     }
+
+    bsqemit(): any {
+        return ["CallStatementWTaskRef", this.bsqemit_cwr()];
+    }
+    static bsqparse(jv: any): TIRCallStatementWTaskRef {
+        return new TIRCallStatementWTaskRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
+    }
 }
 
 class TIRCallStatementWAction extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallStatementWTaskAction, sinfo, vexp, restype, reftype, sidx);
+    }
+
+    bsqemit(): any {
+        return ["CallStatementWAction", this.bsqemit_cwr()];
+    }
+    static bsqparse(jv: any): TIRCallStatementWAction {
+        return new TIRCallStatementWAction(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
     }
 }
 
@@ -2539,16 +2558,11 @@ class TIRVariableRetypeStatement extends TIRStatement {
         this.asconv = asconv;
     }
 
-    isFailableOperation(): boolean {
-        return this.asconv.isFailableOperation();
+    bsqemit(): any {
+        return ["VariableRetypeStatement", {...this.bsqemit_stmt(), vname: this.vname, origtype: this.origtype, newtype: this.newtype, asconv: this.asconv.bsqemit()}];
     }
-
-    getDirectlyModVars(): string[] {
-        return [this.vname];
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return this.asconv.getUsedVars();
+    static bsqparse(jv: any): TIRVariableRetypeStatement {
+        return new TIRVariableRetypeStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].origtype, jv[1].newtype, TIRExpression.bsqparse(jv[1].asconv));
     }
 }
 
@@ -2570,16 +2584,11 @@ class TIRVariableSCRetypeStatement extends TIRStatement {
         this.binderinfo = binderinfo;
     }
 
-    isFailableOperation(): boolean {
-        return this.test.isFailableOperation() || this.asconv.isFailableOperation() || this.resexp.isFailableOperation();
+    bsqemit(): any {
+        return ["VariableSCRetypeStatement", {...this.bsqemit_stmt(), vname: this.vname, origtype: this.origtype, vtest: this.test.bsqemit(), asconv: this.asconv.bsqemit(), resexp: this.resexp.bsqemit(), binderinfo: this.binderinfo !== undefined ? [this.binderinfo[0].bsqemit(), this.binderinfo[1]] : null}];
     }
-
-    getDirectlyModVars(): string[] {
-        return [this.vname];
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.asconv.getUsedVars(), this.asconv.getUsedVars(), this.resexp.getUsedVars());
+    static bsqparse(jv: any): TIRVariableSCRetypeStatement {
+        return new TIRVariableSCRetypeStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].origtype, TIRExpression.bsqparse(jv[1].vtest), TIRExpression.bsqparse(jv[1].asconv), TIRExpression.bsqparse(jv[1].resexp), jv[1].binderinfo !== null ? [TIRExpression.bsqparse(jv[1].binderinfo[0]), jv[1].binderinfo[1]] : undefined);
     }
 }
 
@@ -2601,16 +2610,15 @@ class TIRScratchSCStatement extends TIRStatement {
         this.binderinfo = binderinfo;
     }
 
-    isFailableOperation(): boolean {
-        return this.test.isFailableOperation() || this.resexp.isFailableOperation();
+    bsqemit(): any {
+        return ["ScratchSCStatement", {...this.bsqemit_stmt(), sidx: this.sidx, pos: this.pos !== undefined ? this.pos : null, origtype: this.origtype, vtest: this.test.bsqemit(), resexp: this.resexp.bsqemit(), binderinfo: this.binderinfo !== undefined ? [this.binderinfo[0].bsqemit(), this.binderinfo[1]] : null}];
     }
-
-    getDirectlyUsedVars(): string[] {
-        return TIRExpression.joinUsedVarInfo(this.test.getUsedVars(), this.resexp.getUsedVars());
+    static bsqparse(jv: any): TIRScratchSCStatement {
+        return new TIRScratchSCStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].sidx, jv[1].pos !== null ? jv[1].pos : undefined, jv[1].origtype, TIRExpression.bsqparse(jv[1].vtest), TIRExpression.bsqparse(jv[1].asconv), TIRExpression.bsqparse(jv[1].resexp), jv[1].binderinfo !== null ? [TIRExpression.bsqparse(jv[1].binderinfo[0]), jv[1].binderinfo[1]] : undefined);
     }
 }
 
-class TIRReturnStatementGeneral extends TIRStatement {
+abstract class TIRReturnStatementGeneral extends TIRStatement {
     readonly value: TIRExpression;
 
     constructor(tag: TIRStatementTag, sinfo: SourceInfo, value: TIRExpression, stmtstr: string) {
@@ -2618,12 +2626,8 @@ class TIRReturnStatementGeneral extends TIRStatement {
         this.value = value;
     }
 
-    isFailableOperation(): boolean {
-        return this.value.isFailableOperation();
-    }
-
-    getDirectlyUsedVars(): string[] {
-        return this.value.getUsedVars();
+    bsqemit_rg(): any {
+        return {...this.bsqemit_stmt(), value: this.value.bsqemit()};
     }
 }
 
@@ -2631,11 +2635,25 @@ class TIRReturnStatement extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatement, sinfo, value, `return ${value.expstr};`);
     }
+
+    bsqemit(): any {
+        return ["ReturnStatement", this.bsqemit_rg()];
+    }
+    static bsqparse(jv: any): TIRReturnStatement {
+        return new TIRReturnStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
+    }
 }
 
 class TIRReturnStatementWRef extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWRef, sinfo, value, `return ${value.expstr};`);
+    }
+
+    bsqemit(): any {
+        return ["ReturnStatementWRef", this.bsqemit_rg()];
+    }
+    static bsqparse(jv: any): TIRReturnStatementWRef {
+        return new TIRReturnStatementWRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
     }
 }
 
@@ -2643,11 +2661,25 @@ class TIRReturnStatementWTaskRef extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWTaskRef, sinfo, value, `return ${value.expstr};`);
     }
+
+    bsqemit(): any {
+        return ["ReturnStatementWTaskRef", this.bsqemit_rg()];
+    }
+    static bsqparse(jv: any): TIRReturnStatementWTaskRef {
+        return new TIRReturnStatementWTaskRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
+    }
 }
 
 class TIRReturnStatementWAction extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWAction, sinfo, value, `return ${value.expstr};`);
+    }
+
+    bsqemit(): any {
+        return ["ReturnStatementWAction", this.bsqemit_rg()];
+    }
+    static bsqparse(jv: any): TIRReturnStatementWAction {
+        return new TIRReturnStatementWAction(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
     }
 }
 
@@ -2663,10 +2695,21 @@ class TIRIfStatement extends TIRStatement {
         this.elseentry = elseentry;
     }
 
-    isFailableOperation(): boolean {
-        return this.ifentry.test.isFailableOperation() || (this.ifentry.binderinfo !== undefined && this.ifentry.binderinfo[0].isFailableOperation()) || this.ifentry.value.isFailableOperation() ||
-            this.elifentries.some((ee) => ee.test.isFailableOperation() || (ee.binderinfo !== undefined && ee.binderinfo[0].isFailableOperation()) || ee.value.isFailableOperation()) ||
-            this.elseentry.value.isFailableOperation() || (this.elseentry.binderinfo !== undefined && this.elseentry.binderinfo[0].isFailableOperation());
+    bsqemit(): any {
+        return ["IfStatement", {
+            ...this.bsqemit_stmt(), 
+            ifentry: {etest: this.ifentry.test.bsqemit(), value: this.ifentry.value.bsqemit(), binderinfo: this.ifentry.binderinfo !== undefined ? [this.ifentry.binderinfo[0].bsqemit(), this.ifentry.binderinfo[1], this.ifentry.binderinfo[2].bsqemit(), this.ifentry.binderinfo[3]] : null, recasttypes: this.ifentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}, 
+            elifentries: this.elifentries.map((efi) => ({etest: efi.test.bsqemit(), value: efi.value.bsqemit(), binderinfo: efi.binderinfo !== undefined ? [efi.binderinfo[0].bsqemit(), efi.binderinfo[1], efi.binderinfo[2].bsqemit(), efi.binderinfo[3]] : null, recasttypes: efi.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
+            elseentry: {value: this.elseentry.value.bsqemit(), binderinfo: this.elseentry.binderinfo !== undefined ? [this.elseentry.binderinfo[0].bsqemit(), this.elseentry.binderinfo[1], this.elseentry.binderinfo[2].bsqemit(), this.elseentry.binderinfo[3]] : null, recasttypes: this.elseentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}
+        }];
+    }
+    static bsqparse(jv: any): TIRIfStatement {
+        return new TIRIfStatement(
+            SourceInfo.bsqparse(jv[1].sinfo),
+            {test: TIRExpression.bsqparse(jv[1].ifentry.etest), value: TIRScopedBlockStatement.bsqparse(jv[1].ifentry.value), binderinfo: jv[1].ifentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].ifentry.binderinfo[0]), jv[1].ifentry.binderinfo[1], TIRExpression.bsqparse(jv[1].ifentry.binderinfo[2]), jv[1].ifentry.binderinfo[3]] : undefined, recasttypes: jv[1].ifentry.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))},
+            jv[1].elifentries.map((efi: any) => ({test: TIRExpression.bsqparse(efi.etest), value: TIRScopedBlockStatement.bsqparse(efi.value), binderinfo: efi.binderinfo !== null ? [TIRExpression.bsqparse(efi.binderinfo[0]), efi.binderinfo[1], TIRExpression.bsqparse(efi.binderinfo[2]), efi.binderinfo[3]] : undefined, recasttypes: efi.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
+            {value: TIRScopedBlockStatement.bsqparse(jv[1].elseentry.value), binderinfo: jv[1].elseentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].elseentry.binderinfo[0]), jv[1].elseentry.binderinfo[1], TIRExpression.bsqparse(jv[1].elseentry.binderinfo[2]), jv[1].elseentry.binderinfo[3]] : undefined, recasttypes: jv[1].elseentry.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))}
+        )
     }
 }
 
@@ -2686,11 +2729,24 @@ class TIRSwitchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation() || (cc.binderinfo !== undefined && cc.binderinfo[0].isFailableOperation())) ||
-            (this.edefault !== undefined && (this.edefault.value.isFailableOperation() || (this.edefault.binderinfo !== undefined && this.edefault.binderinfo[0].isFailableOperation()))) ||
-            !this.isexhaustive;
+    bsqemit(): any {
+        return ["SwitchStatement", {
+            ...this.bsqemit_stmt(), 
+            exp: this.exp.bsqemit(), 
+            scratchidx: this.scratchidx, 
+            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
+            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
+            isexhaustive: this.isexhaustive
+        }];
+    }
+    static bsqparse(jv: any): TIRSwitchStatement {
+        return new TIRSwitchStatement(
+            SourceInfo.bsqparse(jv[1].sinfo),
+            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
+            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
+            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].edefault.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
+            jv[1].isexhaustive
+        )
     }
 }
 
@@ -2710,11 +2766,24 @@ class TIRMatchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
-    isFailableOperation(): boolean {
-        return this.exp.isFailableOperation() || 
-            this.clauses.some((cc) => cc.match.isFailableOperation() || cc.value.isFailableOperation() || (cc.binderinfo !== undefined && cc.binderinfo[0].isFailableOperation())) ||
-            (this.edefault !== undefined && (this.edefault.value.isFailableOperation() || (this.edefault.binderinfo !== undefined && this.edefault.binderinfo[0].isFailableOperation()))) ||
-            !this.isexhaustive;
+    bsqemit(): any {
+        return ["MatchStatement", {
+            ...this.bsqemit_stmt(), 
+            exp: this.exp.bsqemit(), 
+            scratchidx: this.scratchidx, 
+            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
+            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
+            isexhaustive: this.isexhaustive
+        }];
+    }
+    static bsqparse(jv: any): TIRMatchStatement {
+        return new TIRMatchStatement(
+            SourceInfo.bsqparse(jv[1].sinfo),
+            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
+            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
+            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
+            jv[1].isexhaustive
+        )
     }
 }
 
@@ -2726,8 +2795,11 @@ class TIREnvironmentFreshStatement extends TIRStatement {
         this.assigns = assigns;
     }
 
-    isFailableOperation(): boolean {
-        return this.assigns.some((asgn) => asgn.valexp[1].isFailableOperation());
+    bsqemit(): any {
+        return ["EnvironmentFreshStatement", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: [asgn.valexp[0], asgn.valexp[1].bsqemit()]}))}];
+    }
+    static bsqparse(jv: any): TIREnvironmentFreshStatement {
+        return new TIREnvironmentFreshStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])]})))
     }
 }
 
@@ -2739,8 +2811,11 @@ class TIREnvironmentSetStatement extends TIRStatement {
         this.assigns = assigns;
     }
 
-    isFailableOperation(): boolean {
-        return this.assigns.some((asgn) => (asgn.valexp !== undefined && asgn.valexp[1].isFailableOperation()));
+    bsqemit(): any {
+        return ["EnvironmentSetStatement", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: asgn.valexp !== undefined ? [asgn.valexp[0], asgn.valexp[1].bsqemit()] : null}))}];
+    }
+    static bsqparse(jv: any): TIREnvironmentSetStatement {
+        return new TIREnvironmentSetStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: asgn.valexp !== null ? [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])] : undefined})))
     }
 }
 
@@ -2756,12 +2831,15 @@ class TIREnvironmentSetStatementBracket extends TIRStatement {
         this.isFresh = isFresh;
     }
 
-    isFailableOperation(): boolean {
-        return this.assigns.some((asgn) => (asgn.valexp !== undefined && asgn.valexp[1].isFailableOperation())) || this.block.isFailableOperation();
+    bsqemit(): any {
+        return ["EnvironmentSetStatementBracket", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: asgn.valexp !== undefined ? [asgn.valexp[0], asgn.valexp[1].bsqemit()] : null})), block: this.block.bsqemit(), isFresh: this.isFresh}];
+    }
+    static bsqparse(jv: any): TIREnvironmentSetStatementBracket {
+        return new TIREnvironmentSetStatementBracket(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: asgn.valexp !== null ? [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])] : undefined})), TIRUnscopedBlockStatement.bsqparse(jv[1].block), jv[1].isFresh)
     }
 }
 
-class TIRTaskExecStatment extends TIRStatement {
+abstract class TIRTaskExecStatment extends TIRStatement {
     readonly isdefine: boolean;
     readonly isconst: boolean;
 
@@ -2769,6 +2847,10 @@ class TIRTaskExecStatment extends TIRStatement {
         super(tag, sinfo, (isdefine ? (isconst ? "let " : "var ") : "") + stmtstr);
         this.isdefine= isdefine;
         this.isconst = isconst;
+    }
+
+    bsqemit_tes(): any {
+        return {...this.bsqemit_stmt(), isdefine: this.isdefine, isconst: this.isconst};
     }
 }
 
@@ -2788,8 +2870,11 @@ class TIRTaskRunStatement extends TIRTaskExecStatment {
         this.args = args;
     }
 
-    isFailableOperation(): boolean {
-        return this.args.some((aa) => aa.isFailableOperation()) || this.taskargs.some((aa) => aa.argv.isFailableOperation())
+    bsqemit(): any {
+        return ["TaskRunStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, consarg: this.consarg, args: this.args.map((arg) => arg.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRTaskRunStatement {
+        return new TIRTaskRunStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, jv[1].consarg, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2803,8 +2888,11 @@ class TIRTaskMultiStatement extends TIRTaskExecStatment {
         this.tasks = tasks;
     }
 
-    isFailableOperation(): boolean {
-        return this.tasks.some((tt) => tt.argexp.isFailableOperation() || tt.targs.some((aa) => aa.argv.isFailableOperation()));
+    bsqemit(): any {
+        return ["TaskMultiStatement", {...this.bsqemit_tes(), vtrgts: this.vtrgts, tasks: this.tasks.map((task) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: task.argexp.bsqemit()}))}];
+    }
+    static bsqparse(jv: any): TIRTaskMultiStatement {
+        return new TIRTaskMultiStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgts, jv[1].tasks.map((task: any) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: TIRExpression.bsqparse(task.argexp)})));
     }
 }
 
@@ -2818,8 +2906,11 @@ class TIRTaskDashStatement extends TIRTaskExecStatment {
         this.tasks = tasks;
     }
 
-    isFailableOperation(): boolean {
-        return this.tasks.some((tt) => tt.argexp.isFailableOperation() || tt.targs.some((aa) => aa.argv.isFailableOperation()));
+    bsqemit(): any {
+        return ["TaskDashStatement", {...this.bsqemit_tes(), vtrgts: this.vtrgts, tasks: this.tasks.map((task) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: task.argexp.bsqemit()}))}];
+    }
+    static bsqparse(jv: any): TIRTaskDashStatement {
+        return new TIRTaskDashStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgts, jv[1].tasks.map((task: any) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: TIRExpression.bsqparse(task.argexp)})));
     }
 }
 
@@ -2841,8 +2932,11 @@ class TIRTaskAllStatement extends TIRTaskExecStatment {
         this.argentrytype = argentrytype;
     }
 
-    isFailableOperation(): boolean {
-        return this.arg.isFailableOperation() || this.taskargs.some((aa) => aa.argv.isFailableOperation());
+    bsqemit(): any {
+        return ["TaskAllStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, arg: this.arg.bsqemit(), arglisttype: this.arglisttype, argentrytype: this.argentrytype}];
+    }
+    static bsqparse(jv: any): TIRTaskAllStatement {
+        return new TIRTaskAllStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, TIRExpression.bsqparse(jv[1].arg), jv[1].arglisttype, jv[1].argentrytype);
     }
 }
 
@@ -2864,8 +2958,11 @@ class TIRTaskRaceStatement extends TIRTaskExecStatment {
         this.argentrytype = argentrytype;
     }
 
-    isFailableOperation(): boolean {
-        return this.arg.isFailableOperation() || this.taskargs.some((aa) => aa.argv.isFailableOperation());
+    bsqemit(): any {
+        return ["TaskRaceStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, arg: this.arg.bsqemit(), arglisttype: this.arglisttype, argentrytype: this.argentrytype}];
+    }
+    static bsqparse(jv: any): TIRTaskRaceStatement {
+        return new TIRTaskRaceStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, TIRExpression.bsqparse(jv[1].arg), jv[1].arglisttype, jv[1].argentrytype);
     }
 }
 
@@ -2883,53 +2980,73 @@ class TIRTaskSetSelfFieldStatement extends TIRStatement {
         this.value = value;
     }
 
-    isFailableOperation(): boolean {
-        return this.value.isFailableOperation();
+    bsqemit(): any {
+        return ["TaskSetSelfFieldStatement", {sinfo: this.sinfo.bsqemit(), tasktype: this.tasktype, sfield: this.field, fname: this.fname, value: this.value.bsqemit()}];
     }
-
-    getDirectlyModVars(): string[] {
-        return ["self"];
+    static bsqparse(jv: any): TIRTaskSetSelfFieldStatement {
+        return new TIRTaskSetSelfFieldStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tasktype, jv[1].sfield, jv[1].fname, TIRExpression.bsqparse(jv[1].value));
     }
 }
 
 class TIRLoggerEmitStatement extends TIRStatement {
     readonly level: LoggerLevel;
-    readonly fmt: {namespace: string, keyname: string};
+    readonly fmt: {ns: string, keyname: string};
     readonly args: TIRExpression[];
 
-    constructor(sinfo: SourceInfo, level: LoggerLevel, fmt: {namespace: string, keyname: string}, args: TIRExpression[]) {
-        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${level}(${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
+    constructor(sinfo: SourceInfo, level: LoggerLevel, fmt: {ns: string, keyname: string}, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${logLevelName(level)}(${fmt.ns}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
         this.level = level;
         this.fmt = fmt;
         this.args = args;
+    }
+
+    bsqemit(): any {
+        return ["LoggerEmitStatement", {sinfo: this.sinfo.bsqemit(), level: this.level, fmt: this.fmt, args: this.args.map((arg) => arg.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRLoggerEmitStatement {
+        return new TIRLoggerEmitStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].level, jv[1].fmt, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
 class TIRLoggerEmitConditionalStatement extends TIRStatement {
     readonly level: LoggerLevel;
-    readonly fmt: {namespace: string, keyname: string};
+    readonly fmt: {ns: string, keyname: string};
     readonly cond: TIRExpression;
     readonly args: TIRExpression[];
 
-    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: TIRExpression, fmt: {namespace: string, keyname: string}, args: TIRExpression[]) {
-        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${level}If(${cond.expstr}, ${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
+    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: TIRExpression, fmt: {ns: string, keyname: string}, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerEmitStatement, sinfo, `Log::${logLevelName(level)}If(${cond.expstr}, ${fmt.ns}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")})`);
         this.level = level;
         this.fmt = fmt;
         this.cond = cond;
         this.args = args;
     }
+
+    bsqemit(): any {
+        return ["LoggerEmitConditionalStatement", {sinfo: this.sinfo.bsqemit(), level: this.level, fmt: this.fmt, cond: this.cond.bsqemit(), args: this.args.map((arg) => arg.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRLoggerEmitConditionalStatement {
+        return new TIRLoggerEmitConditionalStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].level, TIRExpression.bsqparse(jv[1].cond), jv[1].fmt, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    }
 }
 
 class TIRLoggerSetPrefixStatement extends TIRStatement {
-    readonly fmt: {namespace: string, keyname: string};
+    readonly fmt: {ns: string, keyname: string};
     readonly args: TIRExpression[];
     readonly block: TIRScopedBlockStatement | TIRUnscopedBlockStatement;
 
-    constructor(sinfo: SourceInfo, fmt: {namespace: string, keyname: string}, block: TIRScopedBlockStatement | TIRUnscopedBlockStatement, args: TIRExpression[]) {
-        super(TIRStatementTag.LoggerSetPrefixStatement, sinfo, `Logger::scope(${fmt.namespace}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")}) ${block.stmtstr}`);
+    constructor(sinfo: SourceInfo, fmt: {ns: string, keyname: string}, block: TIRScopedBlockStatement | TIRUnscopedBlockStatement, args: TIRExpression[]) {
+        super(TIRStatementTag.LoggerSetPrefixStatement, sinfo, `Logger::scope(${fmt.ns}::${fmt.keyname}${args.length !== 0 ? ", " : ""}${args.map((arg) => arg.expstr).join(", ")}) ${block.stmtstr}`);
         this.fmt = fmt;
         this.args = args;
         this.block = block;
+    }
+
+    bsqemit(): any {
+        return ["LoggerSetPrefixStatement", {sinfo: this.sinfo.bsqemit(), fmt: this.fmt, args: this.args.map((arg) => arg.bsqemit()), block: this.block.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRLoggerSetPrefixStatement {
+        return new TIRLoggerSetPrefixStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fmt, TIRScopedBlockStatement.bsqparse(jv[1].block), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2945,8 +3062,8 @@ class TIRBlockStatement {
         this.isterminal = isterminal;
     }
 
-    isFailableOperation(): boolean {
-        return this.ops.some((op) => op.isFailableOperation());
+    bsqemit_blck(): any {
+        return {ops: this.ops.map((op) => op.bsqemit()), isterminal: this.isterminal};
     }
 } 
 
@@ -2954,11 +3071,25 @@ class TIRUnscopedBlockStatement extends TIRBlockStatement {
     constructor(ops: TIRStatement[]) {
         super(ops, false);
     }
+
+    bsqemit(): any {
+        return ["UnscopedBlockStatement", this.bsqemit_blck()];
+    }
+    static bsqparse(jv: any): TIRUnscopedBlockStatement {
+        return new TIRUnscopedBlockStatement(jv[1].ops.map((op: any) => TIRStatement.bsqparse(op)));
+    }
 }
 
 class TIRScopedBlockStatement extends TIRBlockStatement {
     constructor(ops: TIRStatement[], isterminal: boolean,) {
         super(ops, isterminal);
+    }
+
+    bsqemit(): any {
+        return ["ScopedBlockStatement", this.bsqemit_blck()];
+    }
+    static bsqparse(jv: any): TIRScopedBlockStatement {
+        return new TIRScopedBlockStatement(jv[1].ops.map((op: any) => TIRStatement.bsqparse(op)), jv[1].isterminal);
     }
 }
 

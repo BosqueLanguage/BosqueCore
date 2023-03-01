@@ -387,3 +387,183 @@ entity AssertCheckStatement provides Statement {
 entity DebugStatement provides Statement {
     field value: Expression;
 }
+
+entity VarDeclareStatement provides Statement {
+    field vname: String;
+    field vtype: TypeKey;
+}
+
+entity VarDeclareAndAssignStatement provides Statement {
+    field vname: String;
+    field vtype: TypeKey;
+    field vexp: Expression;
+    field isConst: Bool;
+}
+
+entity VarAssignStatement provides Statement {
+    field vname: String;
+    field vtype: TypeKey;
+    field vexp: Expression;
+}
+
+entity StoreToScratch provides Statement {
+    field exp: Expression;
+    field vtype: TypeKey;
+    field scidx: Nat;
+}
+
+entity VarRefAssignFromScratch provides Statement {
+    field vname: String;
+    field vtype: TypeKey;
+    field scidx: Nat;
+}
+
+entity TaskRefAssignFromScratch provides Statement {
+    field vtype: TypeKey;
+    field scidx: Nat;
+}
+
+datatype CallWRefStatementGeneral provides Statement using {
+    vexp: Expression,
+    restype: TypeKey,
+    reftype: TypeKey,
+    sidx: Nat
+} of
+CallStatementWRef { }
+| CallStatementWTaskRef { }
+| CallStatementWAction { }
+;
+
+entity VariableRetypeStatement provides Statement {
+    field vname: String;
+    field origtype: TypeKey;
+    field newtype: TypeKey;
+    field asconv: Expression;
+}
+
+entity VariableSCRetypeStatement provides Statement {
+    field vname: String;
+    field origtype: TypeKey;
+    field vtest: Expression;
+    field asconv: Expression;
+    field resexp: Expression;
+    field binderinfo: [Expression, String]?;
+}
+
+entity ScratchSCStatement provides Statement {
+    field sidx: Nat;
+    field pos: Nat?;
+    field origtype: TypeKey;
+    field vtest: Expression;
+    field resexp: Expression;
+    field binderinfo: [Expression, String]?;
+}
+
+datatype ReturnStatementGeneral provides Statement using {
+    value: Expression
+} of
+ReturnStatement { }
+| ReturnStatementWRef { }
+| ReturnStatementWTaskRef { }
+| ReturnStatementWAction { }
+;
+
+entity IfStatement provides Statement {
+    field ifentry: {etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>};
+    field elifentries: List<{etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
+    field elseentry: {value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>};
+}
+
+entity SwitchStatement provides Statement {
+    field exp: Expression;
+    field scratchidx: Nat;
+    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
+    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}?;
+    field isexhaustive: Bool;
+}
+
+entity MatchStatement provides Statement {
+    field exp: Expression;
+    field scratchidx: Nat;
+    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
+    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}?;
+    field isexhaustive: Bool;
+}
+
+
+entity EnvironmentFreshStatement provides Statement {
+    field assigns: List<{keyname: String, valexp: [TypeKey, Expression]}>;
+}
+
+entity EnvironmentSetStatement provides Statement {
+    field assigns: List<{keyname: String, valexp: [TypeKey, Expression]?}>;
+}
+
+entity EnvironmentSetStatementBracket provides Statement {
+    field assigns: List<{keyname: String, valexp: [TypeKey, Expression]?}>;
+    field block: UnscopedBlockStatement | ScopedBlockStatement;
+    field isFresh: Bool;
+}
+
+typedecl TaskExecStatment provides Statement using {
+    isdefine: Bool,
+    isconst: Bool
+} of
+TaskRunStatement {
+    vtrgt: {name: String, vtype: TypeKey},
+    ttask: TypeKey,
+    taskargs: List<{argn: String, argv: Expression}>,
+    consarg: {rarg: Expression, rtype: TypeKey},
+    args: List<Expression>
+}
+| TaskMultiStatement {
+    vtrgts: List<{name: String, vtype: TypeKey}>,
+    tasks: List<{ttask: TypeKey, targs: List<{argn: String, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>,
+}
+| TaskDashStatement {
+    vtrgts: List<{name: String, vtype: TypeKey, restype: TypeKey}>,
+    tasks: List<{ttask: TypeKey, targs: List<{argn: String, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>
+}
+| TaskAllStatement {
+    vtrgt: {name: String, vtype: TypeKey, elemtype: TypeKey},
+    ttask: TypeKey,
+    taskargs: List<{argn: String, argv: Expression}>,
+    arg: Expression,
+    arglisttype: TypeKey,
+    argentrytype: TypeKey
+}
+| TaskRaceStatement {
+    vtrgt: {name: String, vtype: TypeKey, restype: TypeKey},
+    ttask: TypeKey,
+    taskargs: List<{argn: String, argv: Expression}>,
+    arg: Expression,
+    arglisttype: TypeKey,
+    argentrytype: TypeKey
+}
+;
+
+entity TaskSetSelfFieldStatement provides Statement {
+    field tasktype: TypeKey;
+    field sfield: FieldKey;
+    field fname: String;
+    field value: Expression;
+}
+
+entity LoggerEmitStatement provides Statement {
+    field level: LoggerLevel;
+    field fmt: {ns: String, keyname: String};
+    field args: List<Expression>;
+}
+
+entity LoggerEmitConditionalStatement provides Statement {
+    field level: LoggerLevel;
+    field fmt: {ns: String, keyname: String};
+    field cond: Expression;
+    field args: List<Expression>;
+}
+
+entity LoggerSetPrefixStatement provides Statement {
+    field fmt: {ns: String, keyname: String};
+    field args: List<TIRExpression>;
+    field block: ScopedBlockStatement | UnscopedBlockStatement;
+}

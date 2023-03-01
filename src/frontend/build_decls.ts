@@ -1,5 +1,4 @@
 
-
 class SourceInfo {
     readonly line: number;
     readonly column: number;
@@ -31,7 +30,18 @@ type CodeFileInfo = {
     contents: string
 };
 
-type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "trace";
+type LoggerLevel = number;
+const LoggerLevel_fatal = 1;
+const LoggerLevel_error = 2;
+const LoggerLevel_warn = 3;
+const LoggerLevel_info = 4;
+const LoggerLevel_detail = 5;
+const LoggerLevel_diagnostics = 6;
+const LoggerLevel_trace = 7;
+
+function logLevelName(ll: LoggerLevel): string {
+    return ["disabled", "fatal", "error", "warn", "info", "detail", "diagnostics", "trace"][ll];
+}
 
 function extractLiteralStringValue(str: string): string {
     //
@@ -96,7 +106,7 @@ class PackageConfig {
 export {
     BuildLevel, isBuildLevelEnabled,
     SourceInfo, CodeFileInfo, PackageConfig,
-    LoggerLevel,
+    LoggerLevel, LoggerLevel_fatal, LoggerLevel_error, LoggerLevel_warn, LoggerLevel_info, LoggerLevel_detail, LoggerLevel_diagnostics, LoggerLevel_trace, logLevelName,
     extractLiteralStringValue, extractLiteralASCIIStringValue,
     cleanCommentsStringsFromFileContents
 }
