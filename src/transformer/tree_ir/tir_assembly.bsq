@@ -159,7 +159,7 @@ entity MemberMethodDecl provides MemberDecl{
     field invoke: Invoke;
 }
 
-concept Type {
+concept Type provides APIType {
     field tkey: TypeKey;
 
     //direct suprertypes -- not saturated set
@@ -241,261 +241,227 @@ entity ASCIIStringOfEntityType provides InternalEntityType {
 }
 
 //class representing PathValidator types
-class TIRPathValidatorEntityType extends TIRInternalEntityType {
-    readonly pthvalidator: PathValidator;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
-        this.pthvalidator = pthvalidator;
-    }
+entity PathValidatorEntityType provides InternalEntityType {
+    field pthvalidator: PathValidator;
 }
 
 //class representing a Path<T> type
-class TIRPathEntityType extends TIRInternalEntityType {
-    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
-        this.validatortype = validatortype;
-        this.pthvalidator = pthvalidator;
-    }
+entity PathEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
 }
 
 //class representing a PathFragment<T> type
-class TIRPathFragmentEntityType extends TIRInternalEntityType {
-    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
-        this.validatortype = validatortype;
-        this.pthvalidator = pthvalidator;
-    }
+entity PathFragmentEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
 }
 
-class TIRPathGlobEntityType extends TIRInternalEntityType {
-    readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
-        this.validatortype = validatortype;
-        this.pthvalidator = pthvalidator;
-    }
+entity PathGlobEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
 }
 
 //class representing Ok, Err, Something types
-abstract class TIRConstructableEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
-    }
+concept ConstructableEntityType provides InternalEntityType {
 }
 
-class TIROkEntityType extends TIRConstructableEntityType {
-    readonly typeT: TIRTypeKey;
-    readonly typeE: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-        this.typeE = typeE;
-    }
+entity OkEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
+    field typeE: TypeKey;
 }
 
-class TIRErrEntityType extends TIRConstructableEntityType {
-    readonly typeT: TIRTypeKey;
-    readonly typeE: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-        this.typeE = typeE;
-    }
+entity ErrEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
+    field typeE: TypeKey;
 }
 
-class TIRSomethingEntityType extends TIRConstructableEntityType {
-    readonly typeT: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-    }
+entity SomethingEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
 }
 
-class TIRMapEntryEntityType extends TIRConstructableEntityType {
-    readonly typeK: TIRTypeKey;
-    readonly typeV: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeK = typeK;
-        this.typeV = typeV;
-    }
+entity MapEntryEntityType provides ConstructableEntityType {
+    field typeK: TypeKey;
+    field typeV: TypeKey;
 }
 
 //class representing special havoc type
-class TIRHavocEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, [], false, false);
-    }
+entity HavocEntityType provides InternalEntityType {
 }
 
 //abstract class for all the builtin collection types
-abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
-    }
+concept PrimitiveCollectionEntityType provides InternalEntityType {
 }
 
 //class representing List<T>
-class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
-    readonly typeT: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-    }
+concept ListEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
 }
 
 //class representing Stack<T>
-class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
-    readonly typeT: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-    }
+concept StackEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
 }
 
 //class representing Queue<T>
-class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
-    readonly typeT: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-    }
+concept QueueEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
 }
 
 //class representing Set<T>
-class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
-    readonly typeT: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeT = typeT;
-    }
+concept SetEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
 }
 
 //class representing Map<K, V>
-class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
-    readonly typeK: TIRTypeKey;
-    readonly typeV: TIRTypeKey;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
-        this.typeK = typeK;
-        this.typeV = typeV;
-    }
+concept MapEntityType provides PrimitiveCollectionEntityType {
+    field typeK: TypeKey;
+    field typeV: TypeKey;
 }
 
-class TIRTaskType extends TIROOType {
-    readonly binds: Map<string, TIRTypeKey>;
+entity TaskType provides OOType {
+    field binds: Map<String, TypeKey>;
 
-    readonly controls: {val: TIRLiteralValue | undefined, cname: string}[] = []; //control members
-    readonly actions: {akey: TIRInvokeKey, aname: string}[] = []; //methods
-    readonly mainfunc: {mkey: TIRInvokeKey, mname: string}; //a static function
-    readonly onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined };
-    readonly lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined };
+    field controls: List<{val: LiteralValue?, cname: Identifier}>; //control members
+    field actions: List<{akey: InvokeKey, aname: Identifier}>; //methods
+    field mainfunc: {mkey: InvokeKey, mname: Identifier}; //a static function
+    field onfuncs: { onCanel: InvokeKey?, onFailure: InvokeKey?, onTimeout: InvokeKey? };
+    field lfuncs: { logStart: InvokeKey?, logEnd: InvokeKey?, taskEnsures: InvokeKey?, taskWarns: TIRInvokeKey? };
 
 
-    readonly statuseffect: TIRTaskStatusEffect = new TIRTaskStatusEffect([]);
-    readonly eventeffect: TIRTaskEventEffect = new TIRTaskEventEffect([]);
-    readonly enveffect: TIRTaskEnvironmentEffect = new TIRTaskEnvironmentEffect([], []);
-    readonly resourceeffect: TIRTaskResourceEffect[] = [];
+    field statuseffect: TaskStatusEffect;
+    field eventeffect: TaskEventEffect;
+    field enveffect: TaskEnvironmentEffect;
+    field resourceeffect: List<TaskResourceEffect>;
 
-    readonly ensures: TIRTaskEnsures[] = [];
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], 
-        binds: Map<string, TIRTypeKey>, mainfunc: {mkey: TIRInvokeKey, mname: string}, 
-        onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined },
-        lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined }
-    ) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
-        this.binds = binds;
-        this.mainfunc = mainfunc;
-        this.onfuncs = onfuncs;
-        this.lfuncs = lfuncs;
-    }
+    field tskensures: List<TaskEnsures>;
 }
 
-class TIRConceptType extends TIROOType {
-    readonly binds: Map<string, TIRTypeKey>;
-
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
-        this.binds = binds;
-    }
-
-    isAnyConcept(): boolean {
-        return this.tkey === "Any";
-    }
-
-    isSomeConcept(): boolean {
-        return this.tkey === "Some";
-    }
-
-    isOptionConcept(): boolean {
-        return this.attributes.includes("__option_type");
-    }
-
-    isResultConcept(): boolean {
-        return this.attributes.includes("__result_type");
-    }
+entity ConceptType provides OOType {
+    field binds: Map<String, TypeKey>;
 }
 
-class TIRConceptSetType extends TIRType {
-    readonly conceptTypes: TIRTypeKey[]; //each is a TIRConceptType
-
-    constructor(tkey: TIRTypeKey, concepts: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, concepts, isexportable);
-        this.conceptTypes = concepts;
-    }
+entity ConceptSetType provides Type {
+    field conceptTypes: List<TypeKey>; //each is a TIRConceptType
 }
 
-class TIRTupleType extends TIRType {
-    readonly types: TIRTypeKey[];
-
-    constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, supertypes, isexportable);
-        this.types = types;
-    }
+entity TupleType provides Type {
+    field types: List<TIRTypeKey>;
 }
 
-class TIRRecordType extends TIRType {
-    readonly entries: {pname: string, ptype: TIRTypeKey}[];
-
-    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, supertypes, isexportable);
-        this.entries = entries;
-    }
+entity RecordType provides Type {
+    field entries: List<{pname: Identifier, ptype: TypeKey}>;
 }
 
-class TIRUnionType extends TIRType {
-    readonly options: TIRTypeKey[];
-
-    constructor(tkey: TIRTypeKey, options: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, undefined, isexportable);
-        this.options = options;
-    }
+entity UnionType provides Type {
+    field options: List<TypeKey>;
 }
 
-class TIREListType extends TIRType {
-    readonly types: TIRTypeKey[];
+entity EListType provides Type {
+    field types: List<TypeKey>;
+}
 
-    constructor(tkey: TIRTypeKey, types: TIRTypeKey[]) {
-        super(tkey, undefined, false);
-        this.types = types;
-    }
+concept NamespaceDecl provides APIType {
+    field ns: NamespaceIdentifier;
+    field name: Identifier;
+    field sinfo: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+}
+
+entity NamespaceConstDecl provides NamespaceDecl {
+    field declaredType: TypeKey;
+    field value: Expression;
+}
+
+entity NamespaceFunctionDecl provides NamespaceDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity NamespaceOperatorDecl provides NamespaceDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity NamespaceLambdaDecl provides APIType {
+    field ikey: InvokeKey;
+    field pcid: PCodeKey;
+
+    field sourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+    field invoke: Invoke;
+}
+
+entity CodePack provides APIType {
+    field ns: NamespaceIdentifier;
+    field codekey: PCodeKey;
+    field invk: InvokeKey;
+    field isrecursive: Bool;
+
+    field terms: List<TypeKey>; //Implicit template terms that this is bound with (e.g. if it uses type T from outer scope bound to Int then we need to specialize on whatever T is specialized to)
+    field pcodes: List<PCodeKey>; //Implicit "template" pcode that is bound with this (e.g. if it uses afun from argument to enclosing method we need to specialize on whatever afun is specialized to) 
+    
+    //Maps from captured variables to their captured values
+    field capturedValues: List<{cname: Identifier, ctype: TypeKey}>;
+    field capturedCodePacks: List<{cpname: Identifier, cpval: PCodeKey}>;
+}
+
+datatype InfoTemplate provides APIType
+of
+InfoTemplateRecord {
+    field entries: List<{ name: Identifier, value: InfoTemplate }>;
+}
+| InfoTemplateTuple {
+    field entries: List<InfoTemplate>;
+}
+| InfoTemplateConst {
+    field litexp: LiteralValue;
+}
+| InfoTemplateMacro {
+    field macro: String;
+}
+| InfoTemplateValue {
+    field argpos: number;
+    field argtype: TypeKey;
+}
+;
+
+entity StringTemplate provides APIType {
+    field str: String;
+}
+
+entity NamespaceDeclaration provides APIType {
+    field ns: NamespaceIdentifier;
+
+    field alltypes: List<TypeKey>;
+
+    field consts: Map<Identifier, NamespaceConstDecl>;
+    field functions: Map<Identifier, NamespaceFunctionDecl[]>;
+    field operators: Map<Identifier, NamespaceOperatorDecl[]>;
+    field concepts: Map<Identifier, TypeKey[]>;
+    field objects: Map<Identifier, TypeKey[]>;
+    
+    field tasks: Map<Identifier, TypeKey>;
+
+    field lambdas: Map<InvokeKey, NamespaceLambdaDecl>;
+    field codepacks: Map<PCodeKey, CodePack>;
+
+    field msgformats: Map<Identifier, InfoTemplate>;
+    field stringformats: Map<Identifier, StringTemplate>;
+}
+
+entity Assembly provides APIType {
+    field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
+    field typeMap: Map<TypeKey, Type>;
+    field fieldMap: Map<TypeKey, MemberFieldDecl>;
+    field invokeMap: Map<TypeKey, Invoke>;
+    field pcodemap: Map<PCodeKey, CodePack>;
+
+    field literalRegexs: List<BSQRegex>;
+    field validatorRegexs: Map<String, BSQRegex>;
+    field validatorPaths: Map<String, PathValidator>;
 }

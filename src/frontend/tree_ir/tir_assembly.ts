@@ -526,7 +526,94 @@ abstract class TIRType {
     abstract bsqemit(): any;
 
     static bsqparse(jv: any): TIRType {
-        xxxx;
+        if(jv[0] === "ObjectEntityType") {
+            return TIRObjectEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "EnumEntityType") {
+            return TIREnumEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "TypedeclEntityType") {
+            return TIRTypedeclEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "PrimitiveInternalEntityType") {
+            return TIRPrimitiveInternalEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "ValidatorEntityType") {
+            return TIRValidatorEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "StringOfEntityType") {
+            return TIRStringOfEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "ASCIIStringOfEntityType") {
+            return TIRASCIIStringOfEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "PathValidatorEntityType") {
+            return TIRPathValidatorEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "PathEntityType") {
+            return TIRPathEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "PathFragmentEntityType") {
+            return TIRPathFragmentEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "PathGlobEntityType") {
+            return TIRPathGlobEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "OkEntityType") {
+            return TIROkEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "ErrEntityType") {
+            return TIRErrEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "SomethingEntityType") {
+            return TIRSomethingEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "MapEntryEntityType") {
+            return TIRMapEntryEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "HavocEntityType") {
+            return TIRHavocEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "ListEntityType") {
+            return TIRListEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "StackEntityType") {
+            return TIRStackEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "QueueEntityType") {
+            return TIRQueueEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "SetEntityType") {
+            return TIRSetEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "MapEntityType") {
+            return TIRMapEntityType.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskType") {
+            return TIRTaskType.bsqparse(jv);
+        }
+        else if(jv[0] === "ConceptType") {
+            return TIRConceptType.bsqparse(jv);
+        }
+        else if(jv[0] === "ConceptSetType") {
+            return TIRConceptSetType.bsqparse(jv);
+        }
+        else if(jv[0] === "TupleType") {
+            return TIRTupleType.bsqparse(jv);
+        }
+        else if(jv[0] === "RecordType") {
+            return TIRRecordType.bsqparse(jv);
+        }
+        else if(jv[0] === "UnionType") {
+            return TIRUnionType.bsqparse(jv);
+        }
+        else if(jv[0] === "EListType") {
+            return TIREListType.bsqparse(jv);
+        }
+        else {
+            assert(false, "TIRType: " + jv[0]);
+            return (undefined as any) as TIRType;
+        }
     }
 }
 
@@ -553,11 +640,19 @@ abstract class TIROOType extends TIRType {
         this.attributes = attributes;
         this.iskeytype = iskeytype;
     }
+
+    bsqemit_ootype(): any {
+        return {...this.bsqemit_type(), tname: this.tname, sinfo: this.sourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, constMembers: this.constMembers.map((x) => x.bsqemit()), staticFunctions: this.staticFunctions.map((x) => x.bsqemit()), memberFields: this.memberFields.map((x) => x.bsqemit()), memberMethods: this.memberMethods.map((x) => x.bsqemit()), iskeytype: this.iskeytype};
+    }
 }
 
 abstract class TIREntityType extends TIROOType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
+    }
+
+    bsqemit_entitytype(): any {
+        return {...this.bsqemit_ootype()};
     }
 }
 
@@ -575,6 +670,26 @@ class TIRObjectEntityType extends TIREntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
         this.binds = binds;
     }
+
+    bsqemit(): any {
+        return ["ObjectEntityType", {...this.bsqemit_entitytype(), allfields: this.allfields, consinvariants: this.consinvariants.map((x) => x.bsqemit()), apivalidates: this.apivalidates.map((x) => x.bsqemit()), vtable: [...this.vtable], binds: [...this.binds]}];
+    }
+    static bsqparse(jv: any): TIRObjectEntityType {
+        assert(Array.isArray(jv) && jv[0] === "ObjectEntityType", "ObjectEntityType");
+        
+        jv = jv[1];
+        const rr = new TIRObjectEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, new Map<string, TIRTypeKey>(jv.binds), jv.isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        rr.allfields.push(...jv.allfields);
+        rr.consinvariants.push(...jv.consinvariants.map((x: any) => TIRObjectInvariantDecl.bsqparse(x)));
+        rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRObjectValidateDecl.bsqparse(x)));
+        jv.vtable.forEach((x: any) => rr.vtable.set(x[0], x[1]));
+
+        return rr;
+    }
 }
 
 //Represents enum types declared as entities in the code
@@ -585,6 +700,23 @@ class TIREnumEntityType extends TIREntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: string[]) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.enums = enums;
+    }
+
+    bsqemit(): any {
+        return ["EnumEntityType", {...this.bsqemit_entitytype(), enums: this.enums, litvals: [...this.litvals].map((x) => [x[0], x[1].bsqemit()])}];
+    }
+    static bsqparse(jv: any): TIREnumEntityType {
+        assert(Array.isArray(jv) && jv[0] === "EnumEntityType", "EnumEntityType");
+        
+        jv = jv[1];
+        const rr = new TIREnumEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.enums);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        jv.litvals.forEach((x: any) => rr.litvals.set(x[0], TIRLiteralValue.bsqparse(x[1])));
+
+        return rr;
     }
 }
 
@@ -607,6 +739,27 @@ class TIRTypedeclEntityType extends TIREntityType {
         this.strvalidator = strvalidator;
         this.pthvalidator = pthvalidator;
     }
+
+    bsqemit(): any {
+        return ["TypedeclEntityType", {...this.bsqemit_entitytype(), valuetype: this.valuetype, representation: this.representation, consinvariantsall: this.consinvariantsall.map((x) => x.bsqemit()), consinvariantsexplicit: this.consinvariantsexplicit.map((x) => x.bsqemit()), apivalidates: this.apivalidates.map((x) => x.bsqemit()), 
+            strvalidator: this.strvalidator !== undefined ? {vtype: this.strvalidator.vtype, vre: this.strvalidator.vre.jemit() } : null,
+            pthvalidator: this.pthvalidator !== undefined ? {vtype: this.pthvalidator, vpth: this.pthvalidator.vpth.jemit(), kind: this.pthvalidator.kind} : null}];
+    }
+    static bsqparse(jv: any): TIRTypedeclEntityType {
+        assert(Array.isArray(jv) && jv[0] === "TypedeclEntityType", "TypedeclEntityType");
+        
+        jv = jv[1];
+        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: PathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype, jv.isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        rr.consinvariantsall.push(...jv.consinvariantsall.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
+        rr.consinvariantsexplicit.push(...jv.consinvariantsexplicit.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
+        rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRTypedeclValidateDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //base class for all the primitive types that are defined
@@ -614,12 +767,30 @@ abstract class TIRInternalEntityType extends TIREntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
     }
+
+    bsqemit_internalentity(): any {
+        return {...this.bsqemit_entitytype()};
+    }
 } 
 
 //class representing all the primitive values (Int, Bool, String, ...). All of these are special implemented values
 class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, true);
+    }
+
+    bsqemit(): any {
+        return ["PrimitiveInternalEntityType", this.bsqemit_internalentity()];
+    }
+    static bsqparse(jv: any): TIRPrimitiveInternalEntityType {
+        assert(Array.isArray(jv) && jv[0] === "PrimitiveInternalEntityType", "PrimitiveInternalEntityType");
+        const rr = new TIRPrimitiveInternalEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].iskeytype);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 } 
 
@@ -630,6 +801,20 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], revalidator: BSQRegex) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.revalidator = revalidator;
+    }
+
+    bsqemit(): any {
+        return ["ValidatorEntityType", {...this.bsqemit_internalentity(), revalidator: this.revalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRValidatorEntityType {
+        assert(Array.isArray(jv) && jv[0] === "ValidatorEntityType", "ValidatorEntityType");
+        const rr = new TIRValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, BSQRegex.jparse(jv[1].revalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -643,6 +828,20 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
+
+    bsqemit(): any {
+        return ["StringOfEntityType", {...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRStringOfEntityType {
+        assert(Array.isArray(jv) && jv[0] === "StringOfEntityType", "StringOfEntityType");
+        const rr = new TIRStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing ASCIIStringOf<T> types
@@ -655,6 +854,20 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
+
+    bsqemit(): any {
+        return ["ASCIIStringOfEntityType", {...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRASCIIStringOfEntityType {
+        assert(Array.isArray(jv) && jv[0] === "ASCIIStringOfEntityType", "ASCIIStringOfEntityType");
+        const rr = new TIRASCIIStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing PathValidator types
@@ -664,6 +877,20 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: PathValidator) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.pthvalidator = pthvalidator;
+    }
+
+    bsqemit(): any {
+        return ["PathValidatorEntityType", {...this.bsqemit_internalentity(), pthvalidator: this.pthvalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRPathValidatorEntityType {
+        assert(Array.isArray(jv) && jv[0] === "PathValidatorEntityType", "PathValidatorEntityType");
+        const rr = new TIRPathValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, PathValidator.jparse(jv[1].pthvalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -677,6 +904,20 @@ class TIRPathEntityType extends TIRInternalEntityType {
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
+
+    bsqemit(): any {
+        return ["PathEntityType", {...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRPathEntityType {
+        assert(Array.isArray(jv) && jv[0] === "PathEntityType", "PathEntityType");
+        const rr = new TIRPathEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing a PathFragment<T> type
@@ -689,6 +930,20 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
+
+    bsqemit(): any {
+        return ["PathFragmentEntityType", {...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRPathFragmentEntityType {
+        assert(Array.isArray(jv) && jv[0] === "PathFragmentEntityType", "PathFragmentEntityType");
+        const rr = new TIRPathFragmentEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 class TIRPathGlobEntityType extends TIRInternalEntityType {
@@ -700,12 +955,30 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
+
+    bsqemit(): any {
+        return ["PathGlobEntityType", {...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit()}];
+    }
+    static bsqparse(jv: any): TIRPathGlobEntityType {
+        assert(Array.isArray(jv) && jv[0] === "PathGlobEntityType", "PathGlobEntityType");
+        const rr = new TIRPathGlobEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing Ok, Err, Something types
 abstract class TIRConstructableEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    }
+
+    bsqemit_constructable(): any {
+        return this.bsqemit_internalentity();
     }
 }
 
@@ -718,6 +991,20 @@ class TIROkEntityType extends TIRConstructableEntityType {
         this.typeT = typeT;
         this.typeE = typeE;
     }
+
+    bsqemit(): any {
+        return ["OkEntityType", {...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE}];
+    }
+    static bsqparse(jv: any): TIROkEntityType {
+        assert(Array.isArray(jv) && jv[0] === "OkEntityType", "OkEntityType");
+        const rr = new TIROkEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 class TIRErrEntityType extends TIRConstructableEntityType {
@@ -729,6 +1016,20 @@ class TIRErrEntityType extends TIRConstructableEntityType {
         this.typeT = typeT;
         this.typeE = typeE;
     }
+
+    bsqemit(): any {
+        return ["ErrEntityType", {...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE}];
+    }
+    static bsqparse(jv: any): TIRErrEntityType {
+        assert(Array.isArray(jv) && jv[0] === "ErrEntityType", "ErrEntityType");
+        const rr = new TIRErrEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 class TIRSomethingEntityType extends TIRConstructableEntityType {
@@ -737,6 +1038,20 @@ class TIRSomethingEntityType extends TIRConstructableEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
+    }
+
+    bsqemit(): any {
+        return ["SomethingEntityType", {...this.bsqemit_constructable(), typeT: this.typeT}];
+    }
+    static bsqparse(jv: any): TIRSomethingEntityType {
+        assert(Array.isArray(jv) && jv[0] === "SomethingEntityType", "SomethingEntityType");
+        const rr = new TIRSomethingEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -749,6 +1064,20 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
         this.typeK = typeK;
         this.typeV = typeV;
     }
+
+    bsqemit(): any {
+        return ["MapEntryEntityType", {...this.bsqemit_constructable(), typeK: this.typeK, typeV: this.typeV}];
+    }
+    static bsqparse(jv: any): TIRMapEntryEntityType {
+        assert(Array.isArray(jv) && jv[0] === "MapEntryEntityType", "MapEntryEntityType");
+        const rr = new TIRMapEntryEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing special havoc type
@@ -756,12 +1085,24 @@ class TIRHavocEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
         super(tkey, tname, srcInfo, srcFile, attributes, [], false, false);
     }
+
+    bsqemit(): any {
+        return ["HavocEntityType", this.bsqemit_internalentity()];
+    }
+    static bsqparse(jv: any): TIRHavocEntityType {
+        assert(Array.isArray(jv) && jv[0] === "HavocEntityType", "HavocEntityType");
+        return new TIRHavocEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes);
+    }
 }
 
 //abstract class for all the builtin collection types
 abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    }
+
+    bsqemit_collection(): any {
+        return this.bsqemit_internalentity();
     }
 }
 
@@ -773,6 +1114,20 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
+
+    bsqemit(): any {
+        return ["ListEntityType", {...this.bsqemit_collection(), typeT: this.typeT}];
+    }
+    static bsqparse(jv: any): TIRListEntityType {
+        assert(Array.isArray(jv) && jv[0] === "ListEntityType", "ListEntityType");
+        const rr = new TIRListEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing Stack<T>
@@ -782,6 +1137,20 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
+    }
+
+    bsqemit(): any {
+        return ["StackEntityType", {...this.bsqemit_collection(), typeT: this.typeT}];
+    }
+    static bsqparse(jv: any): TIRStackEntityType {
+        assert(Array.isArray(jv) && jv[0] === "StackEntityType", "StackEntityType");
+        const rr = new TIRStackEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -793,6 +1162,20 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
     }
+
+    bsqemit(): any {
+        return ["QueueEntityType", {...this.bsqemit_collection(), typeT: this.typeT}];
+    }
+    static bsqparse(jv: any): TIRQueueEntityType {
+        assert(Array.isArray(jv) && jv[0] === "QueueEntityType", "QueueEntityType");
+        const rr = new TIRQueueEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 //class representing Set<T>
@@ -802,6 +1185,20 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeT = typeT;
+    }
+
+    bsqemit(): any {
+        return ["SetEntityType", {...this.bsqemit_collection(), typeT: this.typeT}];
+    }
+    static bsqparse(jv: any): TIRSetEntityType {
+        assert(Array.isArray(jv) && jv[0] === "SetEntityType", "SetEntityType");
+        const rr = new TIRSetEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -814,6 +1211,20 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
         this.typeK = typeK;
         this.typeV = typeV;
+    }
+
+    bsqemit(): any {
+        return ["MapEntityType", {...this.bsqemit_collection(), typeK: this.typeK, typeV: this.typeV}];
+    }
+    static bsqparse(jv: any): TIRMapEntityType {
+        assert(Array.isArray(jv) && jv[0] === "MapEntityType", "MapEntityType");
+        const rr = new TIRMapEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 }
 
@@ -845,6 +1256,29 @@ class TIRTaskType extends TIROOType {
         this.onfuncs = onfuncs;
         this.lfuncs = lfuncs;
     }
+
+    bsqemit(): any {
+        return ["TaskType", {...this.bsqemit_ootype(), binds: [...this.binds], controls: this.controls.map((cc) => ({val: cc.val ? cc.val.bsqemit() : null, cname: cc.cname})), actions: this.actions, mainfunc: this.mainfunc, onfuncs: {onCancel: this.onfuncs.onCanel || null, onFailure: this.onfuncs.onFailure || null, onTimeout: this.onfuncs.onTimeout || null}, lfuncs: {logStart: this.lfuncs.logStart || null, logEnd: this.lfuncs.logEnd || null, taskEnsures: this.lfuncs.taskEnsures || null, taskWarns: this.lfuncs.taskWarns || null }, statuseffect: this.statuseffect.bsqemit(), eventeffect: this.eventeffect.bsqemit(), enveffect: this.enveffect.bsqemit(), resourceeffect: this.resourceeffect.map((eff) => eff.bsqemit()), tskensures: this.ensures.map((ee) => ee.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRTaskType {
+        assert(Array.isArray(jv) && jv[0] === "TaskType", "TaskType");
+        const rr = new TIRTaskType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), {mkey: jv[1].mainfunc.mkey, mname: jv[1].mainfunc.mname}, {onCanel: jv[1].onfuncs.onCancel || undefined, onFailure: jv[1].onfuncs.onFailure || undefined, onTimeout: jv[1].onfuncs.onTimeout || undefined}, {logStart: jv[1].lfuncs.logStart || undefined, logEnd: jv[1].lfuncs.logEnd || undefined, taskEnsures: jv[1].lfuncs.taskEnsures || undefined, taskWarns: jv[1].lfuncs.taskWarns || undefined});
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        rr.controls.push(...jv[1].controls.map((cc: any) => ({val: cc.val ? TIRLiteralValue.bsqparse(cc.val) : undefined, cname: cc.cname})));
+        rr.actions.push(...jv[1].actions);
+        rr.statuseffect.statusinfo.push(...TIRTaskStatusEffect.bsqparse(jv[1].statuseffect).statusinfo);
+        rr.eventeffect.eventinfo.push(...TIRTaskEventEffect.bsqparse(jv[1].eventeffect).eventinfo);
+        rr.enveffect.readvars.push(...TIRTaskEnvironmentEffect.bsqparse(jv[1].enveffect).readvars);
+        rr.enveffect.writevars.push(...TIRTaskEnvironmentEffect.bsqparse(jv[1].enveffect).writevars);
+        rr.resourceeffect.push(...jv[1].resourceeffect.map((x: any) => TIRTaskResourceEffect.bsqparse(x)));
+        rr.ensures.push(...jv[1].tskensures.map((x: any) => TIRTaskEnsures.bsqparse(x)));
+
+        return rr;
+    }
 }
 
 class TIRConceptType extends TIROOType {
@@ -853,6 +1287,20 @@ class TIRConceptType extends TIROOType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
         this.binds = binds;
+    }
+
+    bsqemit(): any {
+        return ["ConceptType", {...this.bsqemit_ootype(), binds: [...this.binds]}];
+    }
+    static bsqparse(jv: any): TIRConceptType {
+        assert(Array.isArray(jv) && jv[0] === "ConceptType", "ConceptType");
+        const rr = new TIRConceptType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), jv[1].isexportable);
+        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+
+        return rr;
     }
 
     isAnyConcept(): boolean {
@@ -879,6 +1327,14 @@ class TIRConceptSetType extends TIRType {
         super(tkey, concepts, isexportable);
         this.conceptTypes = concepts;
     }
+
+    bsqemit(): any {
+        return ["ConceptSetType", {...this.bsqemit_type(), conceptTypes: this.conceptTypes}];
+    }
+    static bsqparse(jv: any): TIRConceptSetType {
+        assert(Array.isArray(jv) && jv[0] === "ConceptSetType", "ConceptSetType");
+        return new TIRConceptSetType(jv[1].tkey, jv[1].conceptTypes, jv[1].isexportable);
+    }
 }
 
 class TIRTupleType extends TIRType {
@@ -887,6 +1343,14 @@ class TIRTupleType extends TIRType {
     constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[], isexportable: boolean) {
         super(tkey, supertypes, isexportable);
         this.types = types;
+    }
+
+    bsqemit(): any {
+        return ["TupleType", {...this.bsqemit_type(), types: this.types}];
+    }
+    static bsqparse(jv: any): TIRTupleType {
+        assert(Array.isArray(jv) && jv[0] === "TupleType", "TupleType");
+        return new TIRTupleType(jv[1].tkey, jv[1].types, jv[1].supertypes, jv[1].isexportable);
     }
 }
 
@@ -897,6 +1361,14 @@ class TIRRecordType extends TIRType {
         super(tkey, supertypes, isexportable);
         this.entries = entries;
     }
+
+    bsqemit(): any {
+        return ["RecordType", {...this.bsqemit_type(), entries: this.entries}];
+    }
+    static bsqparse(jv: any): TIRRecordType {
+        assert(Array.isArray(jv) && jv[0] === "RecordType", "RecordType");
+        return new TIRRecordType(jv[1].tkey, jv[1].entries, jv[1].supertypes, jv[1].isexportable);
+    }
 }
 
 class TIRUnionType extends TIRType {
@@ -905,6 +1377,14 @@ class TIRUnionType extends TIRType {
     constructor(tkey: TIRTypeKey, options: TIRTypeKey[], isexportable: boolean) {
         super(tkey, undefined, isexportable);
         this.options = options;
+    }
+
+    bsqemit(): any {
+        return ["UnionType", {...this.bsqemit_type(), options: this.options}];
+    }
+    static bsqparse(jv: any): TIRUnionType {
+        assert(Array.isArray(jv) && jv[0] === "UnionType", "UnionType");
+        return new TIRUnionType(jv[1].tkey, jv[1].options, jv[1].isexportable);
     }
 }
 
@@ -915,9 +1395,17 @@ class TIREListType extends TIRType {
         super(tkey, undefined, false);
         this.types = types;
     }
+
+    bsqemit(): any {
+        return ["EListType", {...this.bsqemit_type(), types: this.types}];
+    }
+    static bsqparse(jv: any): TIREListType {
+        assert(Array.isArray(jv) && jv[0] === "EListType", "EListType");
+        return new TIREListType(jv[1].tkey, jv[1].types);
+    }
 }
 
-class TIRNamespaceConstDecl {
+abstract class TIRNamespaceDecl {
     readonly ns: string;
     readonly name: string;
 
@@ -926,62 +1414,74 @@ class TIRNamespaceConstDecl {
 
     readonly attributes: string[];
 
-    readonly declaredType: TIRTypeKey;
-    readonly value: TIRExpression;
-
-    constructor(ns: string, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
+    constructor(ns: string, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
         this.ns = ns;
         this.name = name;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
+    }
+
+    bsqemit_nsdecl(): any {
+        return {ns: this.ns, name: this.name, sourceLocation: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes};
+    }
+}
+
+class TIRNamespaceConstDecl extends TIRNamespaceDecl {
+    readonly declaredType: TIRTypeKey;
+    readonly value: TIRExpression;
+
+    constructor(ns: string, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
+        super(ns, name, srcInfo, srcFile, attributes);
         this.declaredType = declaredtype;
         this.value = value;
     }
-}
 
-class TIRNamespaceFunctionDecl {
-    readonly ikey: TIRInvokeKey;
-
-    readonly ns: string;
-    readonly name: string;
-
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
-    readonly invoke: TIRInvoke;
-
-    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
-        this.ikey = invoke.invkey;
-        this.ns = ns;
-        this.name = invoke.name;
-        this.sourceLocation = sinfo;
-        this.srcFile = srcFile;
-        this.attributes = invoke.attributes;
-        this.invoke = invoke;
+    bsqemit(): any {
+        return ["NamespaceConstDecl", {...this.bsqemit_nsdecl(), declaredType: this.declaredType, value: this.value.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRNamespaceConstDecl {
+        assert(Array.isArray(jv) && jv[0] === "NamespaceConstDecl", "NamespaceConstDecl");
+        return new TIRNamespaceConstDecl(jv[1].ns, jv[1].name, jv[1].sourceLocation, jv[1].srcFile, jv[1].attributes, jv[1].declaredType, TIRExpression.bsqparse(jv[1].value));
     }
 }
 
-class TIRNamespaceOperatorDecl {
+class TIRNamespaceFunctionDecl extends TIRNamespaceDecl {
     readonly ikey: TIRInvokeKey;
-    readonly ns: string;
-    readonly name: string;
-
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
     readonly invoke: TIRInvoke;
 
     constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+        super(ns, invoke.name, sinfo, srcFile, invoke.attributes);
         this.ikey = invoke.invkey;
-        this.ns = ns;
-        this.name = invoke.name;
-        this.sourceLocation = sinfo;
-        this.srcFile = srcFile;
-        this.attributes = invoke.attributes;
         this.invoke = invoke;
+    }
+
+    bsqemit(): any {
+        return ["NamespaceFunctionDecl", {...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit()}];
+    }
+
+    static bsqparse(jv: any): TIRNamespaceFunctionDecl {
+        assert(Array.isArray(jv) && jv[0] === "NamespaceFunctionDecl", "NamespaceFunctionDecl");
+        return new TIRNamespaceFunctionDecl(jv[1].ns, jv[1].sourceLocation, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
+    }
+}
+
+class TIRNamespaceOperatorDecl extends TIRNamespaceDecl {
+    readonly ikey: TIRInvokeKey;
+    readonly invoke: TIRInvoke;
+
+    constructor(ns: string, sinfo: SourceInfo, srcFile: string, invoke: TIRInvoke) {
+        super(ns, invoke.name, sinfo, srcFile, invoke.attributes);
+        this.ikey = invoke.invkey;
+        this.invoke = invoke;
+    }
+
+    bsqemit(): any {
+        return ["NamespaceOperatorDecl", {...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRNamespaceOperatorDecl {
+        assert(Array.isArray(jv) && jv[0] === "NamespaceOperatorDecl", "NamespaceOperatorDecl");
+        return new TIRNamespaceOperatorDecl(jv[1].ns, jv[1].sourceLocation, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
     }
 }
 
@@ -1002,6 +1502,14 @@ class TIRNamespaceLambdaDecl {
         this.srcFile = srcFile;
         this.attributes = invoke.attributes;
         this.invoke = invoke;
+    }
+
+    bsqemit(): any {
+        return ["NamespaceLambdaDecl", {ikey: this.ikey, pcid: this.pcid, sourceLocation: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes, invoke: this.invoke.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRNamespaceLambdaDecl {
+        assert(Array.isArray(jv) && jv[0] === "NamespaceLambdaDecl", "NamespaceLambdaDecl");
+        return new TIRNamespaceLambdaDecl(jv[1].pcid, jv[1].sourceLocation, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
     }
 }
 
@@ -1028,9 +1536,40 @@ class TIRCodePack {
         this.capturedValues = capturedValues;
         this.capturedCodePacks = capturedCodePacks;
     }
+
+    bsqemit(): any {
+        return ["CodePack", {ns: this.ns, codekey: this.codekey, invk: this.invk, isrecursive: this.recursive, terms: this.terms, pcodes: this.pcodes, capturedValues: this.capturedValues, capturedCodePacks: this.capturedCodePacks}];
+    }
+    static bsqparse(jv: any): TIRCodePack {
+        assert(Array.isArray(jv) && jv[0] === "CodePack", "CodePack");
+        return new TIRCodePack(jv[1].ns, jv[1].codekey, jv[1].invk, jv[1].isrecursive, jv[1].terms, jv[1].pcodes, jv[1].capturedValues, jv[1].capturedCodePacks);
+    }
 }
 
-class TIRInfoTemplate {
+abstract class TIRInfoTemplate {
+    abstract bsqemit(): any;
+
+    static bsqparse(jv: any): TIRInfoTemplate {
+        if(jv[0] === "InfoTemplateRecord") {
+            return TIRInfoTemplateRecord.bsqparse(jv);
+        }
+        else if(jv[0] === "InfoTemplateTuple") {
+            return TIRInfoTemplateTuple.bsqparse(jv);
+        }
+        else if(jv[0] === "InfoTemplateConst") {
+            return TIRInfoTemplateConst.bsqparse(jv);
+        }
+        else if(jv[0] === "InfoTemplateMacro") {
+            return TIRInfoTemplateMacro.bsqparse(jv);
+        }
+        else if(jv[0] === "InfoTemplateValue") {
+            return TIRInfoTemplateValue.bsqparse(jv);
+        }
+        else {
+            assert(false, "Unknown info template type: " + jv[0]);
+            return (undefined as any) as TIRInfoTemplate;
+        }
+    }
 }
 
 class TIRInfoTemplateRecord extends TIRInfoTemplate {
@@ -1039,6 +1578,14 @@ class TIRInfoTemplateRecord extends TIRInfoTemplate {
     constructor(entries: { name: string, value: TIRInfoTemplate }[]) {
         super();
         this.entries = entries;
+    }
+
+    bsqemit(): any {
+        return ["InfoTemplateRecord", {entries: this.entries.map((e) => ({name: e.name, value: e.value.bsqemit()}))}];
+    }
+    static bsqparse(jv: any): TIRInfoTemplateRecord {
+        assert(Array.isArray(jv) && jv[0] === "InfoTemplateRecord", "InfoTemplateRecord");
+        return new TIRInfoTemplateRecord(jv[1].entries.map((e: any) => ({name: e.name, value: TIRInfoTemplate.bsqparse(e.value)})));
     }
 }
 
@@ -1049,6 +1596,14 @@ class TIRInfoTemplateTuple extends TIRInfoTemplate {
         super();
         this.entries = entries;
     }
+
+    bsqemit(): any {
+        return ["InfoTemplateTuple", {entries: this.entries.map((e) => e.bsqemit())}];
+    }
+    static bsqparse(jv: any): TIRInfoTemplateTuple {
+        assert(Array.isArray(jv) && jv[0] === "InfoTemplateTuple", "InfoTemplateTuple");
+        return new TIRInfoTemplateTuple(jv[1].entries.map((e: any) => TIRInfoTemplate.bsqparse(e)));
+    }
 }
 
 class TIRInfoTemplateConst extends TIRInfoTemplate {
@@ -1058,6 +1613,14 @@ class TIRInfoTemplateConst extends TIRInfoTemplate {
         super();
         this.litexp = litexp;
     }
+
+    bsqemit(): any {
+        return ["InfoTemplateConst", {litexp: this.litexp.bsqemit()}];
+    }
+    static bsqparse(jv: any): TIRInfoTemplateConst {
+        assert(Array.isArray(jv) && jv[0] === "InfoTemplateConst", "InfoTemplateConst");
+        return new TIRInfoTemplateConst(TIRLiteralValue.bsqparse(jv[1].litexp));
+    }
 }
 
 class TIRInfoTemplateMacro extends TIRInfoTemplate {
@@ -1066,6 +1629,14 @@ class TIRInfoTemplateMacro extends TIRInfoTemplate {
     constructor(macro: string) {
         super();
         this.macro = macro;
+    }
+
+    bsqemit(): any {
+        return ["InfoTemplateMacro", {macro: this.macro}];
+    }
+    static bsqparse(jv: any): TIRInfoTemplateMacro {
+        assert(Array.isArray(jv) && jv[0] === "InfoTemplateMacro", "InfoTemplateMacro");
+        return new TIRInfoTemplateMacro(jv[1].macro);
     }
 }
 
@@ -1078,6 +1649,14 @@ class TIRInfoTemplateValue extends TIRInfoTemplate {
         this.argpos = argpos;
         this.argtype = argtype;
     }
+
+    bsqemit(): any {
+        return ["InfoTemplateValue", {argpos: this.argpos, argtype: this.argtype}];
+    }
+    static bsqparse(jv: any): TIRInfoTemplateValue {
+        assert(Array.isArray(jv) && jv[0] === "InfoTemplateValue", "InfoTemplateValue");
+        return new TIRInfoTemplateValue(jv[1].argpos, jv[1].argtype);
+    }
 }
 
 class TIRStringTemplate {
@@ -1089,6 +1668,14 @@ class TIRStringTemplate {
 
     constructor(str: string) {
         this.str = str;
+    }
+
+    bsqemit(): any {
+        return ["StringTemplate", {str: this.str}];
+    }
+    static bsqparse(jv: any): TIRStringTemplate {
+        assert(Array.isArray(jv) && jv[0] === "StringTemplate", "StringTemplate");
+        return new TIRStringTemplate(jv[1].str);
     }
 }
 
@@ -1127,6 +1714,39 @@ class TIRNamespaceDeclaration {
         this.msgformats = new Map<string, TIRInfoTemplate>();
         this.stringformats = new Map<string, TIRStringTemplate>();
     }
+
+    bsqemit(): any {
+        return ["NamespaceDeclaration", {
+            ns: this.ns,
+            alltypes: this.alltypes,
+            consts: [...this.consts.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            functions: [...this.functions.entries()].map((e) => ({name: e[0], value: e[1].map((f) => f.bsqemit())})),
+            operators: [...this.operators.entries()].map((e) => ({name: e[0], value: e[1].map((f) => f.bsqemit())})),
+            concepts: [...this.concepts.entries()].map((e) => ({name: e[0], value: e[1]})),
+            objects: [...this.objects.entries()].map((e) => ({name: e[0], value: e[1]})),
+            tasks: [...this.tasks.entries()].map((e) => ({name: e[0], value: e[1]})),
+            lambdas: [...this.lambdas.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            codepacks: [...this.codepacks.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            msgformats: [...this.msgformats.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            stringformats: [...this.stringformats.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()}))
+        }];
+    }
+    static bsqparse(jv: any): TIRNamespaceDeclaration {
+        assert(Array.isArray(jv) && jv[0] === "NamespaceDeclaration", "NamespaceDeclaration");
+        const ns = new TIRNamespaceDeclaration(jv[1].ns);
+        ns.alltypes = jv[1].alltypes;
+        jv[1].consts.forEach((e: any) => ns.consts.set(e.name, TIRNamespaceConstDecl.bsqparse(e.value)));
+        jv[1].functions.forEach((e: any) => ns.functions.set(e.name, e.value.map((f: any) => TIRNamespaceFunctionDecl.bsqparse(f))));
+        jv[1].operators.forEach((e: any) => ns.operators.set(e.name, e.value.map((f: any) => TIRNamespaceOperatorDecl.bsqparse(f))));
+        jv[1].concepts.forEach((e: any) => ns.concepts.set(e.name, e.value));
+        jv[1].objects.forEach((e: any) => ns.objects.set(e.name, e.value));
+        jv[1].tasks.forEach((e: any) => ns.tasks.set(e.name, e.value));
+        jv[1].lambdas.forEach((e: any) => ns.lambdas.set(e.name, TIRNamespaceLambdaDecl.bsqparse(e.value)));
+        jv[1].codepacks.forEach((e: any) => ns.codepacks.set(e.name, TIRCodePack.bsqparse(e.value)));
+        jv[1].msgformats.forEach((e: any) => ns.msgformats.set(e.name, TIRInfoTemplate.bsqparse(e.value)));
+        jv[1].stringformats.forEach((e: any) => ns.stringformats.set(e.name, TIRStringTemplate.bsqparse(e.value)));
+        return ns;
+    }
 }
 
 class TIRAssembly {
@@ -1159,6 +1779,46 @@ class TIRAssembly {
         this.literalRegexs = literalRegexs;
         this.validatorRegexs = validatorRegexs;
         this.validatorPaths = validatorPaths;
+    }
+
+    bsqemit(): any {
+        return ["Assembly", {
+            namespaceMap: [...this.namespaceMap.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            typeMap: [...this.typeMap.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            fieldMap: [...this.fieldMap.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            invokeMap: [...this.invokeMap.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            pcodemap: [...this.pcodemap.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
+            literalRegexs: this.literalRegexs.map((r) => r.jemit()),
+            validatorRegexs: [...this.validatorRegexs.entries()].map((e) => ({name: e[0], value: e[1].jemit()})),
+            validatorPaths: [...this.validatorPaths.entries()].map((e) => ({name: e[0], value: e[1].jemit()}))
+        }];
+    }
+    static bsqparse(jv: any): TIRAssembly {
+        assert(Array.isArray(jv) && jv[0] === "Assembly", "Assembly");
+        const nsmap = new Map<string, TIRNamespaceDeclaration>();
+        jv[1].namespaceMap.forEach((e: any) => nsmap.set(e.name, TIRNamespaceDeclaration.bsqparse(e.value)));
+
+        const typemap = new Map<TIRTypeKey, TIRType>();
+        jv[1].typeMap.forEach((e: any) => typemap.set(e.name, TIRType.bsqparse(e.value)));
+
+        const fieldmap = new Map<TIRTypeKey, TIRMemberFieldDecl>();
+        jv[1].fieldMap.forEach((e: any) => fieldmap.set(e.name, TIRMemberFieldDecl.bsqparse(e.value)));
+
+        const invokemap = new Map<TIRTypeKey, TIRInvoke>();
+        jv[1].invokeMap.forEach((e: any) => invokemap.set(e.name, TIRInvoke.bsqparse(e.value)));
+
+        const pcodemap = new Map<TIRPCodeKey, TIRCodePack>();
+        jv[1].pcodemap.forEach((e: any) => pcodemap.set(e.name, TIRCodePack.bsqparse(e.value)));
+
+        const literalRegexs = jv[1].literalRegexs.map((r: any) => BSQRegex.jparse(r));
+
+        const validatorRegexs = new Map<string, BSQRegex>();
+        jv[1].validatorRegexs.forEach((e: any) => validatorRegexs.set(e.name, BSQRegex.jparse(e.value)));
+        
+        const validatorPaths = new Map<string, PathValidator>();
+        jv[1].validatorPaths.forEach((e: any) => validatorPaths.set(e.name, PathValidator.jparse(e.value)));
+        
+        return new TIRAssembly(nsmap, typemap, fieldmap, invokemap, pcodemap, literalRegexs, validatorRegexs, validatorPaths);
     }
 }
 
