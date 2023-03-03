@@ -40,16 +40,17 @@ class TIRFunctionParameter {
     readonly type: TIRTypeKey;
     readonly ddlit: TIRLiteralValue | undefined;
 
-    constructor(name: string, type: TIRTypeKey) {
+    constructor(name: string, type: TIRTypeKey, ddlit?: TIRLiteralValue | undefined) {
         this.name = name;
         this.type = type;
+        this.ddlit = ddlit;
     }
 
     bsqemit(): any {
         return {name: this.name, type: this.type, ddlit: this.ddlit !== undefined ? this.ddlit.bsqemit() : null};
     }
     static bsqparse(jv: any): TIRFunctionParameter {
-        return new TIRTypeName(jv.name, jv.type, TIRLiteralValue.bsqparse(jv.ddlit));
+        return new TIRFunctionParameter(jv.name, jv.type, jv.ddlit !== null ? TIRLiteralValue.bsqparse(jv.ddlit) : undefined);
     }
 }
 
@@ -148,7 +149,7 @@ class TIRTypedeclValidateDecl {
     }
 
     bsqemit(): any {
-        return {exp: this.exp.bsqemit(), vtype: this.vtype)};
+        return {exp: this.exp.bsqemit(), vtype: this.vtype};
     }
     static bsqparse(jv: any): TIRTypedeclValidateDecl {
         return new TIRTypedeclValidateDecl(TIRExpression.bsqparse(jv.exp), jv.vtype);
@@ -374,10 +375,9 @@ class TIRInvokePrimitive extends TIRInvoke {
         
         jv = jv[1];
         const body = jv.body;
-        return new TIRInvokePrimitive(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
+        return new TIRInvokePrimitive(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.resultType, body);
     }
 }
-
 
 abstract class TIRMemberDecl {
     readonly tkey: TIRTypeKey;

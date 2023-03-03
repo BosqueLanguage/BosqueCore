@@ -571,6 +571,9 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         }
     }
 
+    ///
+    //TODO: add isSingleton here!!!!
+
     method getSingleton(): T 
         requires ListOps::s_list_size<T>(this) == 1n;
     {

@@ -34,21 +34,21 @@ entity AccessEnvValueExpression provides Expression {
 }
 
 entity AccessNamespaceConstantExpression provides Expression {
-    field ns: String;
-    field cname: String;
+    field ns: NamespaceIdentifier;
+    field cname: Identifier;
 }
 
 entity AccessConstMemberFieldExpression provides Expression {
     field tkey: TypeKey;
-    field cname: String;
+    field cname: Identifier;
 }
 
 entity AccessVariableExpression provides Expression {
-    field name: String;
+    field name: Identifier;
 }
 
 entity AccessCapturedVariableExpression provides Expression {
-    field name: String;
+    field name: Identifier;
 }
 
 entity AccessScratchSingleValueExpression provides Expression {
@@ -61,18 +61,18 @@ entity AccessScratchIndexExpression provides Expression {
 }
 
 datatype LoadSingleExpression provides Expression using {
-    tkey: TypeKey,
-    exp: Expression
+    field tkey: TypeKey;
+    field exp: Expression;
 } of
 LoadIndexExpression { index: Nat }
 | LoadPropertyExpression { property: String }
-| LoadFieldExpression { field: FieldKey }
-| LoadFieldVirtualExpression { field: FieldKey }
+| LoadFieldExpression { fieldkey: FieldKey }
+| LoadFieldVirtualExpression { fieldkey: FieldKey }
 ;
 
 datatype ConstructorExpression provides Expression using {
-    oftype: TypeKey,
-    args: List<Expression>
+    field oftype: TypeKey;
+    field args: List<Expression>;
 } of
 ConstructorPrimaryDirectExpression { }
 | ConstructorPrimaryCheckExpression { }
@@ -88,8 +88,8 @@ entity CodePackInvokeExpression provides Expression {
 }
 
 datatype ConstructorOfExpression provides Expression using {
-    oftype: TypeKey,
-    arg: Expression
+    field oftype: TypeKey;
+    field arg: Expression;
 } of
 ResultOkConstructorExpression { }
 | ResultErrConstructorExpression { }
@@ -99,32 +99,32 @@ ResultOkConstructorExpression { }
 ;
 
 datatype CallFunctionExpression provides Expression using {
-    fkey: InvokeKey, 
-    args: List<Expression>
+    field fkey: InvokeKey;
+    field args: List<Expression>;
 } of
-CallNamespaceFunctionExpression { ns: String, fname: String }
-| CallNamespaceOperatorExpression { ns: String, oname: String }
-| CallStaticFunctionExpression { tkey: TypeKey, fname: String }
+CallNamespaceFunctionExpression { ns: NamespaceIdentifier, fname: Identifier }
+| CallNamespaceOperatorExpression { ns: NamespaceIdentifier, oname: Identifier }
+| CallStaticFunctionExpression { tkey: TypeKey, fname: Identifier }
 ;
 
 datatype LogicActionExpression provides Expression using {
-    args: List<Expression>
+    field args: List<Expression>;
 } of
 LogicActionAndExpression { }
 | LogicActionOrExpression { }
 ;
 
 datatype UnaryExpression provides Expression using {
-    exp: Expression
+    field exp: Expression;
 } of
 PrefixNotExpression { }
 | PrefixNegateExpression { optype: TypeKey }
 ;
 
 datatype BinOpExpression provides Expression using {
-    optype: TypeKey,
-    lhs: Expression,
-    rhs: Expression
+    field optype: TypeKey;
+    field lhs: Expression;
+    field rhs: Expression;
 } of
 BinAddExpression { }
 | BinSubExpression { }
@@ -189,9 +189,9 @@ entity BinKeyGeneralLessExpression provides Expression {
 }
 
 datatype NumericBinCmpExpression provides Expression using {
-    optype: TypeKey,
-    lhs: Expression,
-    rhs: Expression
+    field optype: TypeKey;
+    field lhs: Expression;
+    field rhs: Expression;
 } of
 NumericEqExpression { }
 | NumericNeqExpression { }
@@ -202,8 +202,8 @@ NumericEqExpression { }
 ;
 
 datatype BinLogicExpression provides Expression using {
-    lhs: Expression,
-    rhs: Expression
+    field lhs: Expression;
+    field rhs: Expression;
 } of
 BinLogicAndExpression { }
 | BinLogicOrExpression { }
@@ -220,31 +220,31 @@ entity MapEntryConstructorExpression provides Expression {
 }
 
 entity IfExpression provides Expression {
-    field ifentry: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, String]?};
-    field elifentries: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, String]?}[];
-    field elseentry: {value: Expression, binderinfo: [Expression, Nat, Expression, String]?};
+    field ifentry: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?};
+    field elifentries: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?}[];
+    field elseentry: {value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?};
 }
 
 entity SwitchExpression provides Expression {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, String]?}[];
-    field edefault: {value: Expression, binderinfo: [Expression, String]?}?;
+    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}[];
+    field edefault: {value: Expression, binderinfo: [Expression, Identifier]?}?;
     field isexhaustive: Bool;
 }
 
 entity MatchExpression provides Expression {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, String]?}[];
-    field edefault: {value: Expression, binderinfo: [Expression, String]?}?;
+    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}[];
+    field edefault: {value: Expression, binderinfo: [Expression, Identifier]?}?;
     field isexhaustive: Bool;
 }
 
 entity TaskSelfFieldExpression provides Expression {
     field tasktype: TypeKey;
     field fieldkey: FieldKey;
-    field fname: String;
+    field fname: Identifier;
 }
 
 entity TaskSelfControlExpression provides Expression {
@@ -262,8 +262,8 @@ entity TIRCoerceSafeExpression provides Expression {
 }
 
 datatype InjectExtractExpression provides Expression using {
-    exp: Expression,
-    totype: TypeKey
+    field exp: Expression;
+    field totype: TypeKey;
 } of
 InjectExpression { }
 | ExtractExpression { }
@@ -293,14 +293,14 @@ IsNoneSpecialExpression { }
 ;
 
 datatype ITestIsLiteralEqExpression provides TestIsExpression using {
-    literal: LiteralValue
+    field literal: LiteralValue;
 } of
 IsEqualToLiteralExpression { }
 | IsNotEqualToLiteralExpression { }
 ;
 
 datatype ITestIsTypeExpression provides TestIsExpression using {
-    ttype: TypeKey
+    field ttype: TypeKey;
 } of 
 IsTypeExpression { }
 | IsNotTypeExpression { }
@@ -308,12 +308,11 @@ IsTypeExpression { }
 | IsNotSubTypeExpression { }
 ;
 
-
 concept AsExpression provides Expression {
     field exp: Expression;
 }
 
-datatype AsSpecialExpression provides AsExpression using 
+datatype AsSpecialExpression provides AsExpression 
 of
 AsNoneSpecialExpression { }
 | AsSomeSpecialExpression { }
@@ -324,14 +323,14 @@ AsNoneSpecialExpression { }
 ;
 
 datatype AsLiteralEqExpression provides AsExpression using {
-    literal: LiteralValue
+    field literal: LiteralValue;
 } of
 AsEqualToLiteralExpression { }
 | AsNotEqualToLiteralExpression { }
 ;
 
 datatype TestAsTypeExpression provides AsExpression using {
-    ttype: TypeKey
+    fieldl ttype: TypeKey;
 } of
 AsTypeExpression { }
 | AsNotTypeExpression { }
@@ -340,12 +339,12 @@ AsTypeExpression { }
 ;
 
 datatype MemberFunctionExpression provides Expression using {
-    tkey: TypeKey,
-    fname: String,
-    fkey: InvokeKey,
-    fdecltype: TypeKey,
-    thisarg: Expression,
-    args: List<Expression>
+    field tkey: TypeKey;
+    field fname: Identifier;
+    field fkey: InvokeKey;
+    field fdecltype: TypeKey;
+    field thisarg: Expression;
+    field args: List<Expression>;
 } of
 CallMemberFunctionExpression { }
 | CallMemberFunctionDynamicExpression { }
@@ -353,10 +352,10 @@ CallMemberFunctionExpression { }
 ;
 
 datatype FunctionTaskExpression provides Expression using {
-    fname: String,
-    fkey: InvokeKey,
-    tsktype: TypeKey,
-    args: List<Expression>
+    field fname: Identifier;
+    field fkey: InvokeKey;
+    field tsktype: TypeKey;
+    field args: List<Expression>;
 } of 
 CallMemberFunctionTaskExpression { }
 | CallMemberFunctionTaskSelfRefExpression { }
@@ -389,19 +388,19 @@ entity DebugStatement provides Statement {
 }
 
 entity VarDeclareStatement provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field vtype: TypeKey;
 }
 
 entity VarDeclareAndAssignStatement provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field vtype: TypeKey;
     field vexp: Expression;
     field isConst: Bool;
 }
 
 entity VarAssignStatement provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field vtype: TypeKey;
     field vexp: Expression;
 }
@@ -413,7 +412,7 @@ entity StoreToScratch provides Statement {
 }
 
 entity VarRefAssignFromScratch provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field vtype: TypeKey;
     field scidx: Nat;
 }
@@ -435,19 +434,19 @@ CallStatementWRef { }
 ;
 
 entity VariableRetypeStatement provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field origtype: TypeKey;
     field newtype: TypeKey;
     field asconv: Expression;
 }
 
 entity VariableSCRetypeStatement provides Statement {
-    field vname: String;
+    field vname: Identifier;
     field origtype: TypeKey;
     field vtest: Expression;
     field asconv: Expression;
     field resexp: Expression;
-    field binderinfo: [Expression, String]?;
+    field binderinfo: [Expression, Identifier]?;
 }
 
 entity ScratchSCStatement provides Statement {
@@ -456,11 +455,11 @@ entity ScratchSCStatement provides Statement {
     field origtype: TypeKey;
     field vtest: Expression;
     field resexp: Expression;
-    field binderinfo: [Expression, String]?;
+    field binderinfo: [Expression, Identifier]?;
 }
 
 datatype ReturnStatementGeneral provides Statement using {
-    value: Expression
+    field value: Expression;
 } of
 ReturnStatement { }
 | ReturnStatementWRef { }
@@ -469,24 +468,24 @@ ReturnStatement { }
 ;
 
 entity IfStatement provides Statement {
-    field ifentry: {etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>};
-    field elifentries: List<{etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
-    field elseentry: {value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>};
+    field ifentry: {etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>};
+    field elifentries: List<{etest: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>}>;
+    field elseentry: {value: ScopedBlockStatement, binderinfo: [Expression, Nat, Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>};
 }
 
 entity SwitchStatement provides Statement {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
-    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}?;
+    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>}>;
+    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>}?;
     field isexhaustive: Bool;
 }
 
 entity MatchStatement provides Statement {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}>;
-    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, String]?, recasttypes: List<{vname: String, cast: Expression}>}?;
+    field clauses: List<{ematch: Expression, value: ScopedBlockStatement, binderinfo: [Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>}>;
+    field edefault: {value: ScopedBlockStatement, binderinfo: [Expression, Identifier]?, recasttypes: List<{vname: Identifier, cast: Expression}>}?;
     field isexhaustive: Bool;
 }
 
@@ -506,36 +505,36 @@ entity EnvironmentSetStatementBracket provides Statement {
 }
 
 typedecl TaskExecStatment provides Statement using {
-    isdefine: Bool,
-    isconst: Bool
+    field isdefine: Bool;
+    field isconst: Bool;
 } of
 TaskRunStatement {
-    vtrgt: {name: String, vtype: TypeKey},
+    vtrgt: {name: Identifier, vtype: TypeKey},
     ttask: TypeKey,
-    taskargs: List<{argn: String, argv: Expression}>,
+    taskargs: List<{argn: Identifier, argv: Expression}>,
     consarg: {rarg: Expression, rtype: TypeKey},
     args: List<Expression>
 }
 | TaskMultiStatement {
-    vtrgts: List<{name: String, vtype: TypeKey}>,
-    tasks: List<{ttask: TypeKey, targs: List<{argn: String, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>,
+    vtrgts: List<{name: Identifier, vtype: TypeKey}>,
+    tasks: List<{ttask: TypeKey, targs: List<{argn: Identifier, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>,
 }
 | TaskDashStatement {
-    vtrgts: List<{name: String, vtype: TypeKey, restype: TypeKey}>,
-    tasks: List<{ttask: TypeKey, targs: List<{argn: String, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>
+    vtrgts: List<{name: Identifier, vtype: TypeKey, restype: TypeKey}>,
+    tasks: List<{ttask: TypeKey, targs: List<{argn: Identifier, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>
 }
 | TaskAllStatement {
-    vtrgt: {name: String, vtype: TypeKey, elemtype: TypeKey},
+    vtrgt: {name: Identifier, vtype: TypeKey, elemtype: TypeKey},
     ttask: TypeKey,
-    taskargs: List<{argn: String, argv: Expression}>,
+    taskargs: List<{argn: Identifier, argv: Expression}>,
     arg: Expression,
     arglisttype: TypeKey,
     argentrytype: TypeKey
 }
 | TaskRaceStatement {
-    vtrgt: {name: String, vtype: TypeKey, restype: TypeKey},
+    vtrgt: {name: Identifier, vtype: TypeKey, restype: TypeKey},
     ttask: TypeKey,
-    taskargs: List<{argn: String, argv: Expression}>,
+    taskargs: List<{argn: Identifier, argv: Expression}>,
     arg: Expression,
     arglisttype: TypeKey,
     argentrytype: TypeKey
@@ -545,25 +544,35 @@ TaskRunStatement {
 entity TaskSetSelfFieldStatement provides Statement {
     field tasktype: TypeKey;
     field sfield: FieldKey;
-    field fname: String;
+    field fname: Identifier;
     field value: Expression;
 }
 
 entity LoggerEmitStatement provides Statement {
     field level: LoggerLevel;
-    field fmt: {ns: String, keyname: String};
+    field fmt: {ns: NamespaceIdentifier, keyname: Identifier};
     field args: List<Expression>;
 }
 
 entity LoggerEmitConditionalStatement provides Statement {
     field level: LoggerLevel;
-    field fmt: {ns: String, keyname: String};
+    field fmt: {ns: NamespaceIdentifier, keyname: Identifier};
     field cond: Expression;
     field args: List<Expression>;
 }
 
 entity LoggerSetPrefixStatement provides Statement {
-    field fmt: {ns: String, keyname: String};
+    field fmt: {ns: NamespaceIdentifier, keyname: Identifier};
     field args: List<TIRExpression>;
     field block: ScopedBlockStatement | UnscopedBlockStatement;
 }
+
+typedecl BlockStatement provides APIType using {
+    field stmtstr: String;
+    field ops: List<Statement>;
+    field isterminal: Bool;
+} of 
+UnscopedBlockStatement { }
+| ScopedBlockStatement { }
+;
+

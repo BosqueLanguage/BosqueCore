@@ -5,10 +5,10 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevel, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome } from "./body";
 import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PathValidator, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
-import { BuildLevel, SourceInfo } from "../build_decls";
+import { BuildLevel, logLevelNumber, SourceInfo } from "../build_decls";
 
 const KW_recursive_q = "recursive?";
 const KW_recursive = "recursive";
@@ -3248,7 +3248,7 @@ class Parser {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
-                return new LoggerEmitStatement(sinfo, op.slice(0, op.length - 2) as LoggerLevel, pfxargs[0] as AccessFormatInfoExpression, pfxargs.slice(1));
+                return new LoggerEmitStatement(sinfo, logLevelNumber(op.slice(0, op.length - 2)), pfxargs[0] as AccessFormatInfoExpression, pfxargs.slice(1));
             }
             else if(LoggerActions.includes(op)) {
                 const pfxargs = this.parseArguments(SYM_lparen, SYM_rparen);
@@ -3257,7 +3257,7 @@ class Parser {
                     this.raiseError(sinfo.line, "Missing format specifier");
                 }
 
-                return new LoggerEmitConditionalStatement(sinfo, op as LoggerLevel, pfxargs[0], pfxargs[1] as AccessFormatInfoExpression, pfxargs.slice(2));
+                return new LoggerEmitConditionalStatement(sinfo, logLevelNumber(op), pfxargs[0], pfxargs[1] as AccessFormatInfoExpression, pfxargs.slice(2));
             }
             else {
                 this.raiseError(sinfo.line, `Unknown logger operation ${op}`);
@@ -4753,12 +4753,12 @@ class Parser {
         const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [KW_of, KW_using]);
 
         let complexheader = false;
-        const cinvariants: InvariantDecl[] = [];
-        const cvalidates: ValidateDecl[] = [];
-        const cstaticMembers: StaticMemberDecl[] = [];
-        const cstaticFunctions: StaticFunctionDecl[] = [];
+        let cinvariants: InvariantDecl[] = [];
+        let cvalidates: ValidateDecl[] = [];
+        let cstaticMembers: StaticMemberDecl[] = [];
+        let cstaticFunctions: StaticFunctionDecl[] = [];
         let cusing: MemberFieldDecl[] = [];
-        const cmemberMethods: MemberMethodDecl[] = [];
+        let cmemberMethods: MemberMethodDecl[] = [];
         if (this.testAndConsumeTokenIf("using")) {
             if (this.testFollows(SYM_lbrace, TokenStrings.Identifier) && !Lexer.isAttributeKW(this.peekTokenData(1))) {
                 cusing = this.parseListOf<MemberFieldDecl>("datatype concept", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
@@ -4773,7 +4773,6 @@ class Parser {
                 });
             }
             else {
-                complexheader = true;
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
@@ -4781,6 +4780,8 @@ class Parser {
                 const eventeffect = new TaskEventEffect([]);
                 const enveffect = new TaskEnvironmentEffect([]);
                 this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
+
+                complexheader = cstaticMembers.length !== 0 || cstaticFunctions.length !== 0 || cmemberMethods.length !== 0;
             }
         }
 

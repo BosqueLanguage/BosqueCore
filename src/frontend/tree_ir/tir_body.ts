@@ -4,6 +4,12 @@ import { TIRCodePack, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assemb
 import { LoggerLevel, logLevelName, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
+function assert(cond: boolean, msg?: string) {
+    if(!cond) {
+        throw new Error((msg || "error")  + " -- body_emitter.ts");
+    }
+} 
+
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
     InvalidExpresion = "[INVALID]",
@@ -28,7 +34,6 @@ enum TIRExpressionTag {
     LiteralTypedPrimitiveDirectExpression = "LiteralTypedPrimitiveDirectExpression",
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
-    AccessFormatInfoExpression = "AccessFormatInfoExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
@@ -171,7 +176,331 @@ abstract class TIRExpression {
     abstract bsqemit(): any;
 
     static bsqparse(jv: any): TIRExpression {
-        xxxx;
+        if(jv[0] === "LiteralNoneExpression") {
+            return TIRLiteralNoneExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralNothingExpression") {
+            return TIRLiteralNothingExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralBoolExpression") {
+            return TIRLiteralBoolExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralIntegralExpression") {
+            return TIRLiteralIntegralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralRationalExpression") {
+            return TIRLiteralRationalExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralFloatExpression") {
+            return TIRLiteralFloatPointExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralRegexExpression") {
+            return TIRLiteralRegexExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralStringExpression") {
+            return TIRLiteralStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralASCIIStringExpression") {
+            return TIRLiteralASCIIStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralTypedStringExpression") {
+            return TIRLiteralTypedStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralASCIITypedStringExpression") {
+            return TIRLiteralASCIITypedStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralTemplateStringExpression") {
+            return TIRLiteralTemplateStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralASCIITemplateStringExpression") {
+            return TIRLiteralASCIITemplateStringExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralTypedPrimitiveDirectExpression") {
+            return TIRLiteralTypedPrimitiveDirectExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LiteralTypedPrimitiveConstructorExpression") {
+            return TIRLiteralTypedPrimitiveConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessEnvValueExpression") {
+            return TIRAccessEnvValueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessNamespaceConstantExpression") {
+            return TIRAccessNamespaceConstantExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessConstMemberFieldExpression") {
+            return TIRAccessConstMemberFieldExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessVariableExpression") {
+            return TIRAccessVariableExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessCapturedVariableExpression") {
+            return TIRAccessCapturedVariableExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessScratchSingleValueExpression") {
+            return TIRAccessScratchSingleValueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AccessScratchIndexExpression") {
+            return TIRAccessScratchIndexExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LoadIndexExpression") {
+            return TIRLoadIndexExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LoadPropertyExpression") {
+            return TIRLoadPropertyExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LoadFieldExpression") {
+            return TIRLoadFieldExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LoadFieldVirtualExpression") {
+            return TIRLoadFieldVirtualExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorPrimaryDirectExpression") {
+            return TIRConstructorPrimaryDirectExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorPrimaryCheckExpression") {
+            return TIRConstructorPrimaryCheckExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorTupleExpression") {
+            return TIRConstructorTupleExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorRecordExpression") {
+            return TIRConstructorRecordExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorListExpression") {
+            return TIRConstructorListExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ConstructorMapExpression") {
+            return TIRConstructorMapExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CodePackInvokeExpression") {
+            return TIRCodePackInvokeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ResultOkConstructorExpression") {
+            return TIRResultOkConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ResultErrConstructorExpression") {
+            return TIRResultErrConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "SomethingConstructorExpression") {
+            return TIRSomethingConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TypedeclDirectExpression") {
+            return TIRTypedeclDirectExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TypedeclConstructorExpression") {
+            return TIRTypedeclConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallNamespaceFunctionExpression") {
+            return TIRCallNamespaceFunctionExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallNamespaceOperatorExpression") {
+            return TIRCallNamespaceOperatorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallStaticFunctionExpression") {
+            return TIRCallStaticFunctionExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LogicActionAndExpression") {
+            return TIRLogicActionAndExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "LogicActionOrExpression") {
+            return TIRLogicActionOrExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "PrefixNotExpression") {
+            return TIRPrefixNotExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "PrefixNegateExpression") {
+            return TIRPrefixNegateExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinAddExpression") {
+            return TIRBinAddExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinSubExpression") {
+            return TIRBinSubExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinMultExpression") {
+            return TIRBinMultExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinDivExpression") {
+            return TIRBinDivExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyEqBothUniqueExpression") {
+            return TIRBinKeyEqBothUniqueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyEqOneUniqueExpression") {
+            return TIRBinKeyEqOneUniqueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyEqGeneralExpression") {
+            return TIRBinKeyEqGeneralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyNeqBothUniqueExpression") {
+            return TIRBinKeyNeqBothUniqueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyNeqOneUniqueExpression") {
+            return TIRBinKeyNeqOneUniqueExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyNeqGeneralExpression") {
+            return TIRBinKeyNeqGeneralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyUniqueLessExpression") {
+            return TIRBinKeyUniqueLessExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinKeyGeneralLessExpression") {
+            return TIRBinKeyGeneralLessExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericEqExpression") {
+            return TIRNumericEqExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericNeqExpression") {
+            return TIRNumericNeqExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericLessExpression") {
+            return TIRNumericLessExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericLessEqExpression") {
+            return TIRNumericLessEqExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericGreaterExpression") {
+            return TIRNumericGreaterExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "NumericGreaterEqExpression") {
+            return TIRNumericGreaterEqExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinLogicAndExpression") {
+            return TIRBinLogicAndExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinLogicOrExpression") {
+            return TIRBinLogicOrExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "BinLogicImpliesExpression") {
+            return TIRBinLogicImpliesExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "MapEntryConstructorExpression") {
+            return TIRMapEntryConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IfExpression") {
+            return TIRIfExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "SwitchExpression") {
+            return TIRSwitchExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "MatchExpression") {
+            return TIRMatchExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskSelfFieldExpression") {
+            return TIRTaskSelfFieldExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskSelfControlExpression") {
+            return TIRTaskSelfControlExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskGetIDExpression") {
+            return TIRTaskGetIDExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CoerceSafeExpression") {
+            return TIRCoerceSafeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "InjectExpression") {
+            return TIRInjectExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "ExtractExpression") {
+            return TIRExtractExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CreateCodePackExpression") {
+            return TIRCreateCodePackExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsNoneSpecialExpression") {
+            return TIRIsNoneSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsSomeSpecialExpression") {
+            return TIRIsSomeSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsNothingSpecialExpression") {
+            return TIRIsNothingSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsSomethingSpecialExpression") {
+            return TIRIsSomethingSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsOkSpecialExpression") {
+            return TIRIsOkSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsErrSpecialExpression") {
+            return TIRIsErrSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsEqualToLiteralExpression") {
+            return TIRIsEqualToLiteralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsNotEqualToLiteralExpression") {
+            return TIRIsNotEqualToLiteralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsTypeExpression") {
+            return TIRIsTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsNotTypeExpression") {
+            return TIRIsNotTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsSubTypeExpression") {
+            return TIRIsSubTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "IsNotSubTypeExpression") {
+            return TIRIsNotSubTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsNoneSpecialExpression") {
+            return TIRAsNoneSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsSomeSpecialExpression") {
+            return TIRAsSomeSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsNothingSpecialExpression") {
+            return TIRAsNothingSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsSomethingSpecialExpression") {
+            return TIRAsSomethingSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsOkSpecialExpression") {
+            return TIRAsOkSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsErrSpecialExpression") {
+            return TIRAsErrSpecialExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsEqualToLiteralExpression") {
+            return TIRAsEqualToLiteralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsNotEqualToLiteralExpression") {
+            return TIRAsNotEqualToLiteralExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsTypeExpression") {
+            return TIRAsTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsNotTypeExpression") {
+            return TIRAsNotTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsSubTypeExpression") {
+            return TIRAsSubTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "AsNotSubTypeExpression") {
+            return TIRAsNotSubTypeExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberFunctionExpression") {
+            return TIRCallMemberFunctionExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberFunctionDynamicExpression") {
+            return TIRCallMemberFunctionDynamicExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberFunctionSelfRefExpression") {
+            return TIRCallMemberFunctionSelfRefExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberFunctionTaskExpression") {
+            return TIRCallMemberFunctionTaskExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberFunctionTaskSelfRefExpression") {
+            return TIRCallMemberFunctionTaskSelfRefExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "CallMemberActionExpression") {
+            return TIRCallMemberActionExpression.bsqparse(jv);
+        }
+        else {
+            assert(false, "Unknown TIRExpression tag: " + jv[0]);
+            return (undefined as any) as TIRExpression;
+        }
     }
 }
 
@@ -303,7 +632,7 @@ class TIRLiteralRegexExpression extends TIRExpression {
     }
 
     bsqemit(): any {
-        return ["LiteralRegexExpression", {...this.bsqemit_exp(), value: this.}];
+        return ["LiteralRegexExpression", {...this.bsqemit_exp(), value: this.value.jemit()}];
     }
     static bsqparse(jv: any): TIRLiteralRegexExpression {
         return new TIRLiteralRegexExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
@@ -1890,7 +2219,7 @@ abstract class TIRAsExpression extends TIRExpression {
     }
     
     bsqemit_ae(): any {
-        return {...this.bsqemit_e(), exp: this.exp.bsqemit()};
+        return {...this.bsqemit_exp(), exp: this.exp.bsqemit()};
     }
 }
 
@@ -2300,7 +2629,116 @@ abstract class TIRStatement {
     abstract bsqemit(): any;
 
     static bsqparse(jv: any): TIRStatement {
-        xxxx;
+        if(jv[0] === "NopStatement") {
+            return TIRNopStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "AbortStatement") {
+            return TIRAbortStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "AssertCheckStatement") {
+            return TIRAssertCheckStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "DebugStatement") {
+            return TIRDebugStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "VarDeclareStatement") {
+            return TIRVarDeclareStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "VarAssignStatement") {
+            return TIRVarAssignStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "VarDeclareAndAssignStatement") {
+            return TIRVarDeclareAndAssignStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "StoreToScratch") {
+            return TIRStoreToScratch.bsqparse(jv);
+        }
+        else if(jv[0] === "VarRefAssignFromScratch") {
+            return TIRVarRefAssignFromScratch.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskRefAssignFromScratch") {
+            return TIRTaskRefAssignFromScratch.bsqparse(jv);
+        }
+        else if(jv[0] === "CallWRefStatememt") {
+            return TIRCallStatementWRef.bsqparse(jv);
+        }
+        else if(jv[0] === "CallStatementWTaskRef") {
+            return TIRCallStatementWTaskRef.bsqparse(jv);
+        }
+        else if(jv[0] === "CallStatementWTaskAction") {
+            return TIRCallStatementWAction.bsqparse(jv);
+        }
+        else if(jv[0] === "VariableRetypeStatement") {
+            return TIRVariableRetypeStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "VariableSCRetypeStatement") {
+            return TIRVariableSCRetypeStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "ScratchSCStatement") {
+            return TIRScratchSCStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "ReturnStatement") {
+            return TIRReturnStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "ReturnStatementWRef") {
+            return TIRReturnStatementWRef.bsqparse(jv);
+        }
+        else if(jv[0] === "ReturnStatementWTaskRef") {
+            return TIRReturnStatementWTaskRef.bsqparse(jv);
+        }
+        else if(jv[0] === "ReturnStatementWAction") {
+            return TIRReturnStatementWAction.bsqparse(jv);
+        }
+        else if(jv[0] === "IfStatement") {
+            return TIRIfStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "SwitchStatement") {
+            return TIRSwitchStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "MatchStatement") {
+            return TIRMatchStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "EnvironmentFreshStatement") {
+            return TIREnvironmentFreshStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "EnvironmentSetStatement") {
+            return TIREnvironmentSetStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "EnvironmentSetStatementBracket") {
+            return TIREnvironmentSetStatementBracket.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskRunStatement") {
+            return TIRTaskRunStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskMultiStatement") {
+            return TIRTaskMultiStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskDashStatement") {
+            return TIRTaskDashStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskAllStatement") {
+            return TIRTaskAllStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskRaceStatement") {
+            return TIRTaskRaceStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "TaskSetSelfFieldStatement") {
+            return TIRTaskSetSelfFieldStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "LoggerEmitStatement") {
+            return TIRLoggerEmitStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "LoggerEmitConditionalStatement") {
+            return TIRLoggerEmitConditionalStatement.bsqparse(jv);
+        }
+        else if(jv[0] === "LoggerSetPrefixStatement") {
+            return TIRLoggerSetPrefixStatement.bsqparse(jv);
+        }
+        else {
+            assert(false, "unhandled parse of TIRStatementTag: " + jv[0]);
+
+            return (undefined as any) as TIRStatement;
+        }
     }
 }
 
@@ -2400,7 +2838,7 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["VarDeclareAndAssignStatement", {...this.bsqemit_stmt(), {vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit(), isConst: this.isConst}];
+        return ["VarDeclareAndAssignStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit(), isConst: this.isConst}];
     }
     static bsqparse(jv: any): TIRVarDeclareAndAssignStatement {
         return new TIRVarDeclareAndAssignStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, TIRExpression.bsqparse(jv[1].vexp), jv[1].isConst);

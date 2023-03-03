@@ -136,13 +136,6 @@ class BodyEmitter {
         return taccess;
     }
 
-    private jsEncodeString(str: string): string {
-        //
-        //TODO: right now we assume there are not escaped values in the string
-        //
-        return `"${str}"`;
-    }
-
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
         return "null";
     }
@@ -190,27 +183,27 @@ class BodyEmitter {
     }
 
     private emitLiteralStringExpression(exp: TIRLiteralStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTypedStringExpression(exp: TIRLiteralTypedStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIITypedStringExpression(exp: TIRLiteralASCIITypedStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTemplateStringExpression(exp: TIRLiteralTemplateStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIITemplateStringExpression(exp: TIRLiteralASCIITemplateStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTypedPrimitiveDirectExpression(exp: TIRLiteralTypedPrimitiveDirectExpression, toplevel: boolean): string {

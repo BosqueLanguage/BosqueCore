@@ -1,0 +1,93 @@
+namespace TreeIR;
+
+entity BSQRegex provides APIType {
+    field regexstr: String;
+    field re: RegexComponent;
+
+    method compileASCIIPatternToSMT(): String {
+        return this.re.compileASCIIPatternToSMT(ascii);
+    }
+}
+
+datatype RegexComponent provides APIType
+of
+RegexLiteral {
+    restr: String,
+    escstr: String
+}
+| RegexCharRange {
+    compliment: Bool,
+    range: List<{lb: Nat, ub: Nat}>
+
+
+    compilePatternToSMT(ascii: boolean): string  {
+        assert(ascii);
+        assert(!this.compliment);
+        //
+        //TODO: probably need to do some escaping here as well
+        //
+        const rng = this.range.map((rr) => (rr.lb == rr.ub) ? `(str.to.re "${RegexCharRange.valToSStr(rr.lb)}")` : `(re.range "${RegexCharRange.valToSStr(rr.lb)}" "${RegexCharRange.valToSStr(rr.ub)}")`);
+        if(rng.length === 1) {
+            return rng[0];
+        }
+        else {
+            return `(re.union ${rng.join(" ")})`; 
+        }
+    }
+}
+| RegexDotCharClass {
+}
+| RegexStarRepeat {
+    repeat: RegexComponent
+}
+| RegexPlusRepeat {
+    repeat: RegexComponent
+}
+| RegexRangeRepeat {
+    repeat: RegexComponent,
+    min: Nat,
+    max: Nat
+}
+| RegexOptional {
+    opt: RegexComponent
+}
+| RegexAlternation {
+    opts: List<RegexComponent>
+}
+| RegexSequence {
+    elems: List<RegexComponent>
+}
+& {
+    recursive method compilePatternToSMT(): String {
+        match(this) {
+            RegexLiteral => {
+                return String::concat(List<String>{"(str.to.re ", $.escstr, ")"});
+            }
+            RegexCharRange => {
+                let rngopts = $.range.map<String>((rr) => if (rr.lb == rr.ub) then String::concat(List<String>{"(str.to.re ", String::fromCharCode(rr.lb), ")"}) else String::concat(List<String>{"(re.range ", String::fromCharCode(rr.lb), " ", String::fromCharCode(rr.ub), ")"}));
+                if rngopts.isSingleton() ? then rngopts.getSingleton() else String::concat(List<String>{"(re.union ", String::join(" ", rngopts), ")"});
+            }
+            RegexDotCharClass => {
+                return "re.allchar";
+            }
+            RegexStarRepeat => {
+                return String::concat(List<String>{"(re.* ", $.repeat.compilePatternToSMT(), ")"});
+            }
+            RegexPlusRepeat => {
+                return String::concat(List<String>{"(re.+ ", $.repeat.compilePatternToSMT(), ")"});
+            }
+            RegexRangeRepeat => {
+                return String::concat(List<String>{"(re.loop ", $.repeat.compilePatternToSMT(), " ", String::fromNat($.min), " ", String::fromNat($.max), ")"});
+            }
+            RegexOptional => {
+                return String::concat(List<String>{"(re.opt ", $.opt.compilePatternToSMT(), ")"});
+            }
+            RegexAlternation => {
+                return String::concat(List<String>{"(re.union ", String::join(" ", $.opts.map((opt) => opt.compilePatternToSMT())), ")"});
+            }
+            RegexSequence => {
+                return String::concat(List<String>{"(re.++ ", String::join(" ", $.elems.map((elem) => elem.compilePatternToSMT())), ")"});
+            }
+        }
+    } 
+}
