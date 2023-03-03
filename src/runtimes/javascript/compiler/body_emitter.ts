@@ -136,13 +136,6 @@ class BodyEmitter {
         return taccess;
     }
 
-    private jsEncodeString(str: string): string {
-        //
-        //TODO: right now we assume there are not escaped values in the string
-        //
-        return `"${str}"`;
-    }
-
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
         return "null";
     }
@@ -190,27 +183,27 @@ class BodyEmitter {
     }
 
     private emitLiteralStringExpression(exp: TIRLiteralStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTypedStringExpression(exp: TIRLiteralTypedStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIITypedStringExpression(exp: TIRLiteralASCIITypedStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTemplateStringExpression(exp: TIRLiteralTemplateStringExpression): string {
-        return this.jsEncodeString(extractLiteralStringValue(exp.value));
+        return extractLiteralStringValue(exp.value, false);
     }
 
     private emitLiteralASCIITemplateStringExpression(exp: TIRLiteralASCIITemplateStringExpression): string {
-        return this.jsEncodeString(extractLiteralASCIIStringValue(exp.value));
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
     private emitLiteralTypedPrimitiveDirectExpression(exp: TIRLiteralTypedPrimitiveDirectExpression, toplevel: boolean): string {
@@ -289,12 +282,12 @@ class BodyEmitter {
     }
 
     private emitLoadFieldExpression(exp: TIRLoadFieldExpression): string {
-        const fname = (this.m_assembly.fieldMap.get(exp.field) as TIRMemberFieldDecl).name;
+        const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
         return `${this.emitExpression(exp.exp)}.${fname}`;
     }
 
     private emitLoadFieldVirtualExpression(exp: TIRLoadFieldVirtualExpression): string {
-        const fname = (this.m_assembly.fieldMap.get(exp.field) as TIRMemberFieldDecl).name;
+        const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
         const bexp = (this.typeEncodedAsUnion(exp.exp.etype) ? `${this.emitExpression(exp.exp)}.value` : this.emitExpression(exp.exp));
 
         return `${bexp}.${fname}`;
@@ -1856,14 +1849,14 @@ class BodyEmitter {
     }
 
     private emitLoggerEmitStatement(stmt: TIRLoggerEmitStatement): string {
-        const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
+        const fmt = `${stmt.fmt.ns}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
 
         return `if($Runtime.checkloglevel(${stmt.level})) { try { $Runtime.log("${fmt}", ${stmt.level}, ${fmt}, ${args}); } catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } }`;
     }
 
     private emitLoggerEmitConditionalStatement(stmt: TIRLoggerEmitConditionalStatement): string {
-        const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
+        const fmt = `${stmt.fmt.ns}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
         
         const test = this.emitExpression(stmt.cond);
@@ -1871,7 +1864,7 @@ class BodyEmitter {
     }
 
     private emitLoggerSetPrefixStatement(stmt: TIRLoggerSetPrefixStatement, indent: string): string {
-        const fmt = `${stmt.fmt.namespace}.${stmt.fmt}`; 
+        const fmt = `${stmt.fmt.ns}.${stmt.fmt}`; 
         const args = stmt.args.map((arg) => this.emitExpression(arg)).join(", ")
         
         const bblock = (stmt.block instanceof TIRScopedBlockStatement) ? this.emitScopedBlock(stmt.block, indent) : this.emitUnscopedBlock(stmt.block, indent);

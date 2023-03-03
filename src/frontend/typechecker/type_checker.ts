@@ -205,8 +205,6 @@ class TypeChecker {
         this.m_taskSelfOk = "no";
         this.m_scratchCtr = 0;
         this.m_errors = [];
-        
-        TIRExpression.OverflowIsFailure = overflowisfailure;
     }
 
     private raiseError(sinfo: SourceInfo, msg?: string) {
@@ -3322,7 +3320,7 @@ class TypeChecker {
         const vv = this.processValidatorRegex(exp.sinfo, toftype.typeID);
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
-        const argstr = extractLiteralStringValue(exp.value);
+        const argstr = extractLiteralStringValue(exp.value, true);
         const accepts = (vv as BSQRegex).acceptsString(argstr);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
@@ -3340,7 +3338,7 @@ class TypeChecker {
         const vv = this.processValidatorRegex(exp.sinfo, toftype.typeID);
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
-        const argstr = extractLiteralASCIIStringValue(exp.value);
+        const argstr = extractLiteralASCIIStringValue(exp.value, true);
         const accepts = (vv as BSQRegex).acceptsString(argstr);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
@@ -3379,10 +3377,10 @@ class TypeChecker {
             const litval = (lexp[0] as TIRLiteralValue).exp;
             let accepts = false;
             if (litval instanceof TIRLiteralStringExpression) {
-                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralStringValue(litval.expstr));
+                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralStringValue(litval.expstr, true));
             }
             else {
-                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralASCIIStringValue(litval.expstr));
+                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralASCIIStringValue(litval.expstr, true));
             }
             this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy validator constraint");
         }
@@ -3391,13 +3389,13 @@ class TypeChecker {
             const litval = (lexp[0] as TIRLiteralValue).exp;
             let accepts = false;
             if (tirtypedecl.pthvalidator.kind === "path") {
-                accepts = tirtypedecl.pthvalidator.vpth.acceptsPath(extractLiteralStringValue(litval.expstr));
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPath(extractLiteralStringValue(litval.expstr, true));
             }
             else if (tirtypedecl.pthvalidator.kind === "pathfragment") {
-                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathFragment(extractLiteralStringValue(litval.expstr));
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathFragment(extractLiteralStringValue(litval.expstr, true));
             }
             else {
-                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr));
+                accepts = tirtypedecl.pthvalidator.vpth.acceptsPathGlob(extractLiteralASCIIStringValue(litval.expstr, true));
             }
             this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy path validator constraint");
         }
@@ -5984,8 +5982,8 @@ class TypeChecker {
     }
 
     private checkLoggerEmitStatement(env: StatementTypeEnvironment, stmt: LoggerEmitStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
@@ -6005,8 +6003,8 @@ class TypeChecker {
     }
 
     private checkLoggerEmitConditionalStatement(env: StatementTypeEnvironment, stmt: LoggerEmitConditionalStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
@@ -6036,8 +6034,8 @@ class TypeChecker {
     }
 
     private checkLoggerPrefixStatement(env: StatementTypeEnvironment, stmt: LoggerPrefixStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.namespace), `the namespace ${stmt.msg.namespace} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.namespace);
+        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
+        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
 
         this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
         const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
@@ -6706,8 +6704,16 @@ class TypeChecker {
         let params: TIRFunctionParameter[] = [];
         invoke.params.forEach((ff) => {
             const ptype = this.normalizeTypeOnly(ff.type, TemplateBindScope.createEmptyBindScope());
+            let plit: TIRLiteralValue | undefined = undefined;
+            if (ff.ddlit !== undefined) {
+                const ll = this.reduceLiteralValueToCanonicalForm(ff.ddlit.exp, TemplateBindScope.createEmptyBindScope());
+                this.raiseErrorIf(invoke.startSourceLocation, ll[0] === undefined, "literal value could not be resolved for parameter");
+
+                plit = ll[0];
+            }
+
             fargs.set(ff.name, new VarInfo(ptype, true, true));
-            params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
+            params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype), plit));
         });
 
         const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));

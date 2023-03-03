@@ -1,0 +1,18 @@
+namespace TreeIR;
+
+entity SourceInfo {
+    field line: Nat;
+    field column: Nat;
+    field pos: Nat;
+    field span: Nat;
+}
+
+enum LoggerLevel {
+    diabled,
+    fatal,
+    error,
+    warn,
+    info,
+    detail,
+    trace
+}

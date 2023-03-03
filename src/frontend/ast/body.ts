@@ -424,12 +424,12 @@ class LiteralTypedPrimitiveConstructorExpression extends Expression {
 }
 
 class AccessFormatInfoExpression extends Expression {
-    readonly namespace: string;
+    readonly ns: string;
     readonly keyname: string;
 
-    constructor(sinfo: SourceInfo, namespace: string, keyname: string) {
+    constructor(sinfo: SourceInfo, ns: string, keyname: string) {
         super(ExpressionTag.AccessFormatInfoExpression, sinfo);
-        this.namespace = namespace;
+        this.ns = ns;
         this.keyname = keyname;
     }
 }

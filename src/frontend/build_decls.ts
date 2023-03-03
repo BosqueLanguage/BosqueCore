@@ -1,5 +1,4 @@
 
-
 class SourceInfo {
     readonly line: number;
     readonly column: number;
@@ -16,6 +15,13 @@ class SourceInfo {
     static implicitSourceInfo(): SourceInfo {
         return new SourceInfo(-1, -1, -1, -1);
     }
+
+    bsqemit(): any {
+        return {line: this.line, column: this.column, pos: this.pos, span: this.span};
+    }
+    static bsqparse(jv: any): SourceInfo {
+        return new SourceInfo(jv.line, jv.column, jv.pos, jv.span);
+    }
 }
 
 type CodeFileInfo = { 
@@ -24,20 +30,64 @@ type CodeFileInfo = {
     contents: string
 };
 
-type LoggerLevel = "fatal" | "error" | "warn" | "info" | "detail" | "debug" | "trace";
+type LoggerLevel = number;
+const LoggerLevel_fatal = 1;
+const LoggerLevel_error = 2;
+const LoggerLevel_warn = 3;
+const LoggerLevel_info = 4;
+const LoggerLevel_detail = 5;
+const LoggerLevel_trace = 6;
 
-function extractLiteralStringValue(str: string): string {
-    //
-    //TODO: right now we assume there are not escaped values in the string
-    //
-    return str.substring(1, str.length - 1);
+function logLevelName(ll: LoggerLevel): string {
+    return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"][ll];
 }
 
-function extractLiteralASCIIStringValue(str: string): string {
-    //
-    //TODO: right now we assume there are not escaped values in the string
-    //
-    return str.substring("ascii{".length + 1, str.length - (1 + "}".length));
+
+function logLevelNumber(ll: string): LoggerLevel {
+    return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"].indexOf(ll);
+}
+
+function unescapeString(ll: string): string {
+    let ret = "";
+    for (let i = 0; i < ll.length; i++) {
+        if (ll[i] === "\\") {
+            i++;
+            if (ll[i] === "n") {
+                ret += "\n";
+            }
+            else if (ll[i] === "r") {
+                ret += "\r";
+            }
+            else if (ll[i] === "t") {
+                ret += "\t";
+            }
+            else if (ll[i] === "0") {
+                ret += "\0";
+            }
+            else if (ll[i] === "x") {
+                const hex = ll.substring(i + 1, i + 3);
+                ret += String.fromCharCode(parseInt(hex, 16));
+                i += 2;
+            }
+            else {
+                ret += ll[i];
+            }
+        }
+        else {
+            ret += ll[i];
+        }
+    }
+
+    return ret;
+}
+
+function extractLiteralStringValue(str: string, unescape: boolean): string {
+    return unescape ? unescapeString(str.substring(1, str.length - 1)) : str;
+}
+
+function extractLiteralASCIIStringValue(str: string, unescape: boolean): string {
+    const ll = str.substring("ascii{".length + 1, str.length - (1 + "}".length));
+    return unescape ? unescapeString(ll) : ("\"" + ll + "\"");
 }
 
 function cleanCommentsStringsFromFileContents(str: string): string {
@@ -89,7 +139,7 @@ class PackageConfig {
 export {
     BuildLevel, isBuildLevelEnabled,
     SourceInfo, CodeFileInfo, PackageConfig,
-    LoggerLevel,
+    LoggerLevel, LoggerLevel_fatal, LoggerLevel_error, LoggerLevel_warn, LoggerLevel_info, LoggerLevel_detail, LoggerLevel_trace, logLevelName, logLevelNumber,
     extractLiteralStringValue, extractLiteralASCIIStringValue,
     cleanCommentsStringsFromFileContents
 }

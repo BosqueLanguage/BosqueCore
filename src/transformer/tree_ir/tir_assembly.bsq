@@ -1,0 +1,467 @@
+namespace TreeIR;
+
+typedecl TypeKeyIdentifierValidator = /[A-Z].+/;
+typedecl TypeKey = StringOf<TypeKeyIdentifierValidator>;
+
+typedecl InvokeKeyIdentifierValidator = /[a-z].*/;
+typedecl InvokeKey = StringOf<InvokeKeyIdentifierValidator>;
+
+typedecl FieldKeyIdentifierValidator = /[a-z].*/;
+typedecl FieldKey = StringOf<FieldKeyIdentifierValidator>;
+
+typedecl PCodeKeyIdentifierValidator = /[a-z].*/;
+typedecl PCodeKey = StringOf<PCodeKeyIdentifierValidator>;
+
+typedecl NamespaceIdentifierValidator = /[A-Z][A-Za-z0-9_]+/;
+typedecl NamespaceIdentifier = StringOf<NamespaceIdentifierValidator>;
+
+typedecl IdentifierValidator /[$a-z_][A-Za-z0-9_]*/;
+typedecl Identifier = StringOf<IdentifierValidator>;
+
+typedecl Namespace
+
+entity TypeName provides APIType {
+    field ns: StringOf<NamespaceIdentifierValidator>;
+    field name: StringOf<TypeNameNameIdentifierValidator>;
+    field templates: List<TypeKey>?;
+}
+
+entity FunctionParameter provides APIType {
+    field name: string;
+    field type: TypeKey;
+    field ddlit: LiteralValue?;
+}
+
+entity PreConditionDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity PostConditionDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity ObjectInvariantDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity ObjectValidateDecl provides APIType {
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+entity TypedeclInvariantDecl provides APIType {
+    field exp: Expression;
+    field vtype: TypeKey;
+}
+
+entity TypedeclValidateDecl provides APIType {
+    field exp: Expression;
+    field vtype: TypeKey;
+}
+
+entity TaskStatusEffect provides APIType {
+    field statusinfo: List<TypeKey>;
+}
+
+entity TaskEventEffect provides APIType {
+    field eventinfo: List<TypeKey>;
+}
+
+entity TaskEnvironmentEffect provides APIType {
+    field readvars: List<String>; //string "*" is wildcard
+    field writevars: List<String>; //string "*" is wildcard
+}
+
+entity TaskResourceEffect provides APIType {
+    field pathdescriptor: TypeKey; //the resource validator
+    field isread: Bool;
+    field iswrite: Bool;
+
+    field pathglob: Expression?; //returns a glob string of type PathGlob<pathdescriptor>
+    field args: List<FunctionParameter>;
+}
+
+entity TaskEnsures provides APIType {
+    field sinfo: SourceInfo;
+    field exp: Expression;
+    field args: List<FunctionParameter>;
+}
+
+concept Invoke provides APIType {
+    field invkey: TIRInvokeKey;
+    field name: String;
+
+    field startSourceLocation: SourceInfo;
+    field endSourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+    field isrecursive: Bool;
+
+    field tbinds: Map<String, TIRTypeKey>;
+    field pcodes: Map<String, TIRPCodeKey>;
+
+    field isMemberMethod: Bool;
+    field isVirtual: Bool;
+    field isDynamicOperator: Bool;
+    field isLambda: Bool;
+
+    field isThisRef: Bool;
+    field params: List<FunctionParameter>;
+    
+    field resultType: TypeKey;
+
+    field preconditions: List<PreConditionDecl>;
+    field postconditions: List<TIRPostConditionDecl>;
+}
+
+entity InvokeAbstractDeclaration provides Invoke {
+}
+
+entity InvokeImplementation provides Invoke {
+    field body: TIRStatement[];
+}
+
+entity InvokePrimitive provides Invoke {
+    field body: string;
+}
+
+concept MemberDecl provides APIType {
+    field tkey: TypeKey;
+    field name: String;
+
+    field sourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+}
+
+entity ConstMemberDecl provides MemberDecl {
+    field declaredType: TypeKey;
+    field value: Expression;
+}
+
+entity StaticFunctionDecl provides MemberDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity MemberFieldDecl provides MemberDecl {
+    field fkey: FieldKey;
+    field declaredType: TypeKey;
+}
+
+entity MemberMethodDecl provides MemberDecl{
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+concept Type provides APIType {
+    field tkey: TypeKey;
+
+    //direct suprertypes -- not saturated set
+    field supertypes: List<TypeKey>?;
+    field isexportable: Bool;
+}
+
+concept OOType provides Type {
+    field tname: TypeName;
+
+    field sourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+
+    field constMembers: List<ConstMemberDecl>;
+    field staticFunctions: List<StaticFunctionDecl>;
+    field memberFields: List<MemberFieldDecl>;
+    field memberMethods: List<MemberMethodDecl>;
+
+    field iskeytype: boolean;
+}
+
+concept EntityType provides OOType {
+}
+
+entity ObjectEntityType provides EntityType {
+    field allfields: List<{fkey: FieldKey, ftype: TypeKey}>;
+
+    field consinvariants: List<ObjectInvariantDecl>; 
+    field apivalidates: List<ObjectValidateDecl>;
+
+    field vtable: Map<Identifier, InvokeKey>; 
+    field binds: Map<String, TypeKey>;
+}
+
+entity EnumEntityType provides EntityType {
+    field enums: List<Identifier>;
+    field litvals: Map<String, LiteralValue>;
+}
+
+typedecl PathKindValidator = /path|pathfragment|pathglob/;
+
+entity TypedeclEntityType provides EntityType {
+    field valuetype: TypeKey; //result of .value()
+    field representation: TypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
+
+    field consinvariantsall: List<TypedeclInvariantDecl>; 
+    field consinvariantsexplicit: List<TypedeclInvariantDecl>; 
+    field apivalidates: List<TypedeclValidateDecl>;
+
+    field strvalidator: {vtype: TypeKey, vre: BSQRegex}?; //TIRValidatorEntityType;
+    field pthvalidator: {vtype: TypeKey, vpth: PathValidator, kind: StringOf<PathKindValidator>}?; //TIRPathValidatorEntityType;
+}
+
+//base class for all the primitive types that are defined
+concept InternalEntityType provides EntityType {
+} 
+
+//class representing all the primitive values (Int, Bool, String, ...). All of these are special implemented values
+entity PrimitiveInternalEntityType provides InternalEntityType {
+} 
+
+//class representing Validator regex types
+entity ValidatorEntityType provides InternalEntityType {
+    field revalidator: BSQRegex;
+}
+
+//class representing StringOf<T> types
+entity StringOfEntityType provides InternalEntityType {
+    field validatortype: TypeKey; //TIRValidatorEntityType;
+    field revalidator: BSQRegex;
+}
+
+//class representing ASCIIStringOf<T> types
+entity ASCIIStringOfEntityType provides InternalEntityType {
+    field validatortype: TypeKey; //TIRValidatorEntityType;
+    field revalidator: BSQRegex;
+}
+
+//class representing PathValidator types
+entity PathValidatorEntityType provides InternalEntityType {
+    field pthvalidator: PathValidator;
+}
+
+//class representing a Path<T> type
+entity PathEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
+}
+
+//class representing a PathFragment<T> type
+entity PathFragmentEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
+}
+
+entity PathGlobEntityType provides InternalEntityType {
+    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field pthvalidator: PathValidator;
+}
+
+//class representing Ok, Err, Something types
+concept ConstructableEntityType provides InternalEntityType {
+}
+
+entity OkEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
+    field typeE: TypeKey;
+}
+
+entity ErrEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
+    field typeE: TypeKey;
+}
+
+entity SomethingEntityType provides ConstructableEntityType {
+    field typeT: TypeKey;
+}
+
+entity MapEntryEntityType provides ConstructableEntityType {
+    field typeK: TypeKey;
+    field typeV: TypeKey;
+}
+
+//class representing special havoc type
+entity HavocEntityType provides InternalEntityType {
+}
+
+//abstract class for all the builtin collection types
+concept PrimitiveCollectionEntityType provides InternalEntityType {
+}
+
+//class representing List<T>
+concept ListEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
+}
+
+//class representing Stack<T>
+concept StackEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
+}
+
+//class representing Queue<T>
+concept QueueEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
+}
+
+//class representing Set<T>
+concept SetEntityType provides PrimitiveCollectionEntityType {
+    field typeT: TypeKey;
+}
+
+//class representing Map<K, V>
+concept MapEntityType provides PrimitiveCollectionEntityType {
+    field typeK: TypeKey;
+    field typeV: TypeKey;
+}
+
+entity TaskType provides OOType {
+    field binds: Map<String, TypeKey>;
+
+    field controls: List<{val: LiteralValue?, cname: Identifier}>; //control members
+    field actions: List<{akey: InvokeKey, aname: Identifier}>; //methods
+    field mainfunc: {mkey: InvokeKey, mname: Identifier}; //a static function
+    field onfuncs: { onCanel: InvokeKey?, onFailure: InvokeKey?, onTimeout: InvokeKey? };
+    field lfuncs: { logStart: InvokeKey?, logEnd: InvokeKey?, taskEnsures: InvokeKey?, taskWarns: TIRInvokeKey? };
+
+
+    field statuseffect: TaskStatusEffect;
+    field eventeffect: TaskEventEffect;
+    field enveffect: TaskEnvironmentEffect;
+    field resourceeffect: List<TaskResourceEffect>;
+
+    field tskensures: List<TaskEnsures>;
+}
+
+entity ConceptType provides OOType {
+    field binds: Map<String, TypeKey>;
+}
+
+entity ConceptSetType provides Type {
+    field conceptTypes: List<TypeKey>; //each is a TIRConceptType
+}
+
+entity TupleType provides Type {
+    field types: List<TIRTypeKey>;
+}
+
+entity RecordType provides Type {
+    field entries: List<{pname: Identifier, ptype: TypeKey}>;
+}
+
+entity UnionType provides Type {
+    field options: List<TypeKey>;
+}
+
+entity EListType provides Type {
+    field types: List<TypeKey>;
+}
+
+concept NamespaceDecl provides APIType {
+    field ns: NamespaceIdentifier;
+    field name: Identifier;
+    field sinfo: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+}
+
+entity NamespaceConstDecl provides NamespaceDecl {
+    field declaredType: TypeKey;
+    field value: Expression;
+}
+
+entity NamespaceFunctionDecl provides NamespaceDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity NamespaceOperatorDecl provides NamespaceDecl {
+    field ikey: InvokeKey;
+    field invoke: Invoke;
+}
+
+entity NamespaceLambdaDecl provides APIType {
+    field ikey: InvokeKey;
+    field pcid: PCodeKey;
+
+    field sourceLocation: SourceInfo;
+    field srcFile: String;
+
+    field attributes: List<String>;
+    field invoke: Invoke;
+}
+
+entity CodePack provides APIType {
+    field ns: NamespaceIdentifier;
+    field codekey: PCodeKey;
+    field invk: InvokeKey;
+    field isrecursive: Bool;
+
+    field terms: List<TypeKey>; //Implicit template terms that this is bound with (e.g. if it uses type T from outer scope bound to Int then we need to specialize on whatever T is specialized to)
+    field pcodes: List<PCodeKey>; //Implicit "template" pcode that is bound with this (e.g. if it uses afun from argument to enclosing method we need to specialize on whatever afun is specialized to) 
+    
+    //Maps from captured variables to their captured values
+    field capturedValues: List<{cname: Identifier, ctype: TypeKey}>;
+    field capturedCodePacks: List<{cpname: Identifier, cpval: PCodeKey}>;
+}
+
+datatype InfoTemplate provides APIType
+of
+InfoTemplateRecord {
+    field entries: List<{ name: Identifier, value: InfoTemplate }>;
+}
+| InfoTemplateTuple {
+    field entries: List<InfoTemplate>;
+}
+| InfoTemplateConst {
+    field litexp: LiteralValue;
+}
+| InfoTemplateMacro {
+    field macro: String;
+}
+| InfoTemplateValue {
+    field argpos: number;
+    field argtype: TypeKey;
+}
+;
+
+entity StringTemplate provides APIType {
+    field str: String;
+}
+
+entity NamespaceDeclaration provides APIType {
+    field ns: NamespaceIdentifier;
+
+    field alltypes: List<TypeKey>;
+
+    field consts: Map<Identifier, NamespaceConstDecl>;
+    field functions: Map<Identifier, NamespaceFunctionDecl[]>;
+    field operators: Map<Identifier, NamespaceOperatorDecl[]>;
+    field concepts: Map<Identifier, TypeKey[]>;
+    field objects: Map<Identifier, TypeKey[]>;
+    
+    field tasks: Map<Identifier, TypeKey>;
+
+    field lambdas: Map<InvokeKey, NamespaceLambdaDecl>;
+    field codepacks: Map<PCodeKey, CodePack>;
+
+    field msgformats: Map<Identifier, InfoTemplate>;
+    field stringformats: Map<Identifier, StringTemplate>;
+}
+
+entity Assembly provides APIType {
+    field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
+    field typeMap: Map<TypeKey, Type>;
+    field fieldMap: Map<TypeKey, MemberFieldDecl>;
+    field invokeMap: Map<TypeKey, Invoke>;
+    field pcodemap: Map<PCodeKey, CodePack>;
+
+    field literalRegexs: List<BSQRegex>;
+    field validatorRegexs: Map<String, BSQRegex>;
+    field validatorPaths: Map<String, PathValidator>;
+}

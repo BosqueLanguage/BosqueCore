@@ -275,10 +275,6 @@ class BSQRegex {
         return nfa.test(Words.fromStringToUnicode(str));
     }
 
-    compileToPatternToSMT(ascii: boolean): string {
-        return this.re.compilePatternToSMT(ascii);
-    }
-
     static parse(currentns: string, rstr: string): BSQRegex | string {
         const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 1));
         const rep = reparser.parseComponent();
@@ -308,7 +304,6 @@ abstract class RegexComponent {
     abstract jemit(): any;
 
     abstract compileToJS(): string;
-    abstract compilePatternToSMT(ascii: boolean): string;
 
     static jparse(obj: any): RegexComponent {
         const tag = obj.tag;
@@ -363,12 +358,6 @@ class RegexLiteral extends RegexComponent {
     compileToJS(): string {
         return this.restr;
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        assert(ascii);
-
-        return `(str.to.re "${this.escstr}")`;
-    }
 }
 
 class RegexCharRange extends RegexComponent {
@@ -416,21 +405,6 @@ class RegexCharRange extends RegexComponent {
         const rng = this.range.map((rr) => (rr.lb == rr.ub) ? RegexCharRange.valToSStr(rr.lb) : `${RegexCharRange.valToSStr(rr.lb)}-${RegexCharRange.valToSStr(rr.ub)}`);
         return `[${this.compliment ? "^" : ""}${rng.join("")}]`;
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        assert(ascii);
-        assert(!this.compliment);
-        //
-        //TODO: probably need to do some escaping here as well
-        //
-        const rng = this.range.map((rr) => (rr.lb == rr.ub) ? `(str.to.re "${RegexCharRange.valToSStr(rr.lb)}")` : `(re.range "${RegexCharRange.valToSStr(rr.lb)}" "${RegexCharRange.valToSStr(rr.ub)}")`);
-        if(rng.length === 1) {
-            return rng[0];
-        }
-        else {
-            return `(re.union ${rng.join(" ")})`; 
-        }
-    }
 }
 
 class RegexDotCharClass extends RegexComponent {
@@ -448,10 +422,6 @@ class RegexDotCharClass extends RegexComponent {
 
     compileToJS(): string {
         return ".";
-    }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return "re.allchar";
     }
 }
 
@@ -478,11 +448,6 @@ class RegexConstClass extends RegexComponent {
         assert(false, `Should be replaced by const ${this.ns}::${this.ccname}`);
         return `${this.ns}::${this.ccname}`;
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        assert(false, `Should be replaced by const ${this.ns}::${this.ccname}`);
-        return `${this.ns}::${this.ccname}`;
-    }
 }
 
 class RegexStarRepeat extends RegexComponent {
@@ -505,10 +470,6 @@ class RegexStarRepeat extends RegexComponent {
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()})*` : `${this.repeat.compileToJS()}*`;
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.* ${this.repeat.compilePatternToSMT(ascii)})`;
-    }
 }
 
 class RegexPlusRepeat extends RegexComponent {
@@ -530,10 +491,6 @@ class RegexPlusRepeat extends RegexComponent {
 
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()})+` : `${this.repeat.compileToJS()}+`;
-    }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.+ ${this.repeat.compilePatternToSMT(ascii)})`;
     }
 }
 
@@ -561,10 +518,6 @@ class RegexRangeRepeat extends RegexComponent {
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()}){${this.min},${this.max}}` : `${this.repeat.compileToJS()}{${this.min},${this.max}}`;
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.loop ${this.repeat.compilePatternToSMT(ascii)} ${this.min} ${this.max})`;
-    }
 }
 
 class RegexOptional extends RegexComponent {
@@ -586,10 +539,6 @@ class RegexOptional extends RegexComponent {
 
     compileToJS(): string {
         return this.opt.useParens() ? `(${this.opt.compileToJS()})?` : `${this.opt.compileToJS()}?`;
-    }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.opt ${this.opt.compilePatternToSMT(ascii)})`;
     }
 }
 
@@ -617,10 +566,6 @@ class RegexAlternation extends RegexComponent {
     compileToJS(): string {
         return this.opts.map((opt) => opt.compileToJS()).join("|");
     }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.union ${this.opts.map((opt) => opt.compilePatternToSMT(ascii)).join(" ")})`;
-    }
 }
 
 class RegexSequence extends RegexComponent {
@@ -646,10 +591,6 @@ class RegexSequence extends RegexComponent {
 
     compileToJS(): string {
         return this.elems.map((elem) => elem.compileToJS()).join("");
-    }
-
-    compilePatternToSMT(ascii: boolean): string  {
-        return `(re.++ ${this.elems.map((elem) => elem.compilePatternToSMT(ascii)).join(" ")})`;
     }
 }
 
