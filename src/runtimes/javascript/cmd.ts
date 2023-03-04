@@ -9,6 +9,8 @@ import { TIRAssembly, TIRInvoke } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
+import { detailedDiff, diff } from "deep-object-diff";
+
 const bosque_dir: string = Path.join(__dirname, "../../../");
 const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
 const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
@@ -74,8 +76,12 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
 
     const stasm = (tasm as TIRAssembly).bsqemit();
     const rtasm = TIRAssembly.bsqparse(stasm);
-    if(JSON.stringify(stasm, undefined, 2) !== JSON.stringify(rtasm.bsqemit(), undefined, 2)) {
-       ;
+    const ertasm = rtasm.bsqemit();
+    if(JSON.stringify(stasm, undefined, 2) !== JSON.stringify(ertasm, undefined, 2)) {
+        process.stdout.write("ARGH\n\n");
+        process.stdout.write(JSON.stringify(detailedDiff(stasm, ertasm), undefined, 2) + "\n\n");
+        process.stdout.write(JSON.stringify(diff(stasm, ertasm), undefined, 2) + "\n\n");
+        process.exit(1);
     }
 
     return [tasm as TIRAssembly, depsmap];

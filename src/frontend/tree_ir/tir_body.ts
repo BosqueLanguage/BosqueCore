@@ -1202,7 +1202,7 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
         return ["CallNamespaceFunctionExpression", {...this.bsqemit_call(), ns: this.ns, fname: this.fname}];
     }
     static bsqparse(jv: any): TIRCallNamespaceFunctionExpression {
-        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1220,7 +1220,7 @@ class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
         return ["CallNamespaceOperatorExpression", {...this.bsqemit_call(), ns: this.ns, oname: this.oname}];
     }
     static bsqparse(jv: any): TIRCallNamespaceOperatorExpression {
-        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1238,7 +1238,7 @@ class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
         return ["CallStaticFunctionExpression", {...this.bsqemit_call(), tkey: this.tkey, fname: this.fname}];
     }
     static bsqparse(jv: any): TIRCallStaticFunctionExpression {
-        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2447,7 +2447,7 @@ class TIRCallMemberFunctionExpression extends TIRIMemberFunctionExpression {
         return ["CallMemberFunctionExpression", this.bsqemit_mf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionExpression {
-        return new TIRCallMemberFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].rtype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2460,7 +2460,7 @@ class TIRCallMemberFunctionDynamicExpression extends TIRIMemberFunctionExpressio
         return ["CallMemberFunctionDynamicExpression", this.bsqemit_mf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionDynamicExpression {
-        return new TIRCallMemberFunctionDynamicExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].declkey, jv[1].fdecltype, jv[1].rtype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionDynamicExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].declkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2478,7 +2478,7 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
         return ["CallMemberFunctionSelfRefExpression", {...this.bsqemit_mf(), scidx: this.scidx, thisref: this.thisref}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionSelfRefExpression {
-        return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].rtype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2511,7 +2511,7 @@ class TIRCallMemberFunctionTaskExpression extends TIRFunctionTaskExpression {
         return ["CallMemberFunctionTaskExpression", this.bsqemit_tf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionTaskExpression {
-        return new TIRCallMemberFunctionTaskExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionTaskExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2527,7 +2527,7 @@ class TIRCallMemberFunctionTaskSelfRefExpression extends TIRFunctionTaskExpressi
         return ["CallMemberFunctionTaskSelfRefExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionTaskSelfRefExpression {
-        return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2543,7 +2543,7 @@ class TIRCallMemberActionExpression extends TIRFunctionTaskExpression {
         return ["CallMemberActionExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberActionExpression {
-        return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
