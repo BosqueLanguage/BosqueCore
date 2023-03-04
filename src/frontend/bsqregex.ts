@@ -534,7 +534,7 @@ class RegexOptional extends RegexComponent {
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexOptional(RegexComponent.jparse(obj.repeat));
+        return new RegexOptional(RegexComponent.jparse(obj.opt));
     }
 
     compileToJS(): string {

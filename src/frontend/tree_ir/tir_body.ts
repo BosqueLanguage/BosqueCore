@@ -191,7 +191,7 @@ abstract class TIRExpression {
         else if(jv[0] === "LiteralRationalExpression") {
             return TIRLiteralRationalExpression.bsqparse(jv);
         }
-        else if(jv[0] === "LiteralFloatExpression") {
+        else if(jv[0] === "LiteralFloatPointExpression") {
             return TIRLiteralFloatPointExpression.bsqparse(jv);
         }
         else if(jv[0] === "LiteralRegexExpression") {
@@ -907,7 +907,7 @@ abstract class TIRLoadSingleExpression extends TIRExpression {
     }
 
     bsqemit_loadsingle(): any {
-        return [this.tag, {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()}];
+        return {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()};
     }
 }
 
@@ -987,7 +987,7 @@ abstract class TIRConstructorExpression extends TIRExpression {
     }
 
     bsqemit_consexp(): any {
-        return [this.tag, {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())}];
+        return {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())};
     }
 }
 
@@ -2659,7 +2659,7 @@ abstract class TIRStatement {
         else if(jv[0] === "TaskRefAssignFromScratch") {
             return TIRTaskRefAssignFromScratch.bsqparse(jv);
         }
-        else if(jv[0] === "CallWRefStatememt") {
+        else if(jv[0] === "CallStatementWRef") {
             return TIRCallStatementWRef.bsqparse(jv);
         }
         else if(jv[0] === "CallStatementWTaskRef") {
@@ -3219,7 +3219,7 @@ class TIRMatchStatement extends TIRStatement {
             SourceInfo.bsqparse(jv[1].sinfo),
             TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
             jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
-            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
+            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].edefault.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
             jv[1].isexhaustive
         )
     }

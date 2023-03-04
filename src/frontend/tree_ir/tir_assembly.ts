@@ -460,7 +460,7 @@ class TIRStaticFunctionDecl extends TIRMemberDecl {
         assert(Array.isArray(jv) && jv[0] === "StaticFunctionDecl", "StaticFunctionDecl");
         
         jv = jv[1];
-        return new TIRStaticFunctionDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.invoke.bsqparse());
+        return new TIRStaticFunctionDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, TIRInvoke.bsqparse(jv.invoke));
     }
 }
 
@@ -502,7 +502,7 @@ class TIRMemberMethodDecl extends TIRMemberDecl {
         assert(Array.isArray(jv) && jv[0] === "MemberMethodDecl", "MemberMethodDecl");
         
         jv = jv[1];
-        return new TIRMemberMethodDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.invoke.bsqparse());
+        return new TIRMemberMethodDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, TIRInvoke.bsqparse(jv.invoke));
     }
 }
 
@@ -644,6 +644,12 @@ abstract class TIROOType extends TIRType {
     bsqemit_ootype(): any {
         return {...this.bsqemit_type(), tname: this.tname, sinfo: this.sourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, constMembers: this.constMembers.map((x) => x.bsqemit()), staticFunctions: this.staticFunctions.map((x) => x.bsqemit()), memberFields: this.memberFields.map((x) => x.bsqemit()), memberMethods: this.memberMethods.map((x) => x.bsqemit()), iskeytype: this.iskeytype};
     }
+    static bsqparse_ooinfo(jv: any, tt: TIROOType) {
+        tt.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
+        tt.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
+        tt.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
+        tt.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+    }
 }
 
 abstract class TIREntityType extends TIROOType {
@@ -679,10 +685,8 @@ class TIRObjectEntityType extends TIREntityType {
         
         jv = jv[1];
         const rr = new TIRObjectEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, new Map<string, TIRTypeKey>(jv.binds), jv.isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv, rr);
+
         rr.allfields.push(...jv.allfields);
         rr.consinvariants.push(...jv.consinvariants.map((x: any) => TIRObjectInvariantDecl.bsqparse(x)));
         rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRObjectValidateDecl.bsqparse(x)));
@@ -710,10 +714,8 @@ class TIREnumEntityType extends TIREntityType {
         
         jv = jv[1];
         const rr = new TIREnumEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.enums);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv, rr);
+
         jv.litvals.forEach((x: any) => rr.litvals.set(x[0], TIRLiteralValue.bsqparse(x[1])));
 
         return rr;
@@ -750,10 +752,8 @@ class TIRTypedeclEntityType extends TIREntityType {
         
         jv = jv[1];
         const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: PathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype, jv.isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv, rr);
+        
         rr.consinvariantsall.push(...jv.consinvariantsall.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
         rr.consinvariantsexplicit.push(...jv.consinvariantsexplicit.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
         rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRTypedeclValidateDecl.bsqparse(x)));
@@ -785,10 +785,7 @@ class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRPrimitiveInternalEntityType {
         assert(Array.isArray(jv) && jv[0] === "PrimitiveInternalEntityType", "PrimitiveInternalEntityType");
         const rr = new TIRPrimitiveInternalEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].iskeytype);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -809,10 +806,7 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRValidatorEntityType {
         assert(Array.isArray(jv) && jv[0] === "ValidatorEntityType", "ValidatorEntityType");
         const rr = new TIRValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, BSQRegex.jparse(jv[1].revalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -835,10 +829,7 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRStringOfEntityType {
         assert(Array.isArray(jv) && jv[0] === "StringOfEntityType", "StringOfEntityType");
         const rr = new TIRStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -861,10 +852,7 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRASCIIStringOfEntityType {
         assert(Array.isArray(jv) && jv[0] === "ASCIIStringOfEntityType", "ASCIIStringOfEntityType");
         const rr = new TIRASCIIStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -885,10 +873,7 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRPathValidatorEntityType {
         assert(Array.isArray(jv) && jv[0] === "PathValidatorEntityType", "PathValidatorEntityType");
         const rr = new TIRPathValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, PathValidator.jparse(jv[1].pthvalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -911,10 +896,7 @@ class TIRPathEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRPathEntityType {
         assert(Array.isArray(jv) && jv[0] === "PathEntityType", "PathEntityType");
         const rr = new TIRPathEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -937,10 +919,7 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRPathFragmentEntityType {
         assert(Array.isArray(jv) && jv[0] === "PathFragmentEntityType", "PathFragmentEntityType");
         const rr = new TIRPathFragmentEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -962,10 +941,7 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
     static bsqparse(jv: any): TIRPathGlobEntityType {
         assert(Array.isArray(jv) && jv[0] === "PathGlobEntityType", "PathGlobEntityType");
         const rr = new TIRPathGlobEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -998,10 +974,7 @@ class TIROkEntityType extends TIRConstructableEntityType {
     static bsqparse(jv: any): TIROkEntityType {
         assert(Array.isArray(jv) && jv[0] === "OkEntityType", "OkEntityType");
         const rr = new TIROkEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1023,10 +996,7 @@ class TIRErrEntityType extends TIRConstructableEntityType {
     static bsqparse(jv: any): TIRErrEntityType {
         assert(Array.isArray(jv) && jv[0] === "ErrEntityType", "ErrEntityType");
         const rr = new TIRErrEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1046,10 +1016,7 @@ class TIRSomethingEntityType extends TIRConstructableEntityType {
     static bsqparse(jv: any): TIRSomethingEntityType {
         assert(Array.isArray(jv) && jv[0] === "SomethingEntityType", "SomethingEntityType");
         const rr = new TIRSomethingEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1071,10 +1038,7 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     static bsqparse(jv: any): TIRMapEntryEntityType {
         assert(Array.isArray(jv) && jv[0] === "MapEntryEntityType", "MapEntryEntityType");
         const rr = new TIRMapEntryEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1121,10 +1085,7 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
     static bsqparse(jv: any): TIRListEntityType {
         assert(Array.isArray(jv) && jv[0] === "ListEntityType", "ListEntityType");
         const rr = new TIRListEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1145,10 +1106,7 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     static bsqparse(jv: any): TIRStackEntityType {
         assert(Array.isArray(jv) && jv[0] === "StackEntityType", "StackEntityType");
         const rr = new TIRStackEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1169,10 +1127,7 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
     static bsqparse(jv: any): TIRQueueEntityType {
         assert(Array.isArray(jv) && jv[0] === "QueueEntityType", "QueueEntityType");
         const rr = new TIRQueueEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1193,10 +1148,7 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     static bsqparse(jv: any): TIRSetEntityType {
         assert(Array.isArray(jv) && jv[0] === "SetEntityType", "SetEntityType");
         const rr = new TIRSetEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1219,10 +1171,7 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     static bsqparse(jv: any): TIRMapEntityType {
         assert(Array.isArray(jv) && jv[0] === "MapEntityType", "MapEntityType");
         const rr = new TIRMapEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
@@ -1263,10 +1212,7 @@ class TIRTaskType extends TIROOType {
     static bsqparse(jv: any): TIRTaskType {
         assert(Array.isArray(jv) && jv[0] === "TaskType", "TaskType");
         const rr = new TIRTaskType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), {mkey: jv[1].mainfunc.mkey, mname: jv[1].mainfunc.mname}, {onCanel: jv[1].onfuncs.onCancel || undefined, onFailure: jv[1].onfuncs.onFailure || undefined, onTimeout: jv[1].onfuncs.onTimeout || undefined}, {logStart: jv[1].lfuncs.logStart || undefined, logEnd: jv[1].lfuncs.logEnd || undefined, taskEnsures: jv[1].lfuncs.taskEnsures || undefined, taskWarns: jv[1].lfuncs.taskWarns || undefined});
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         rr.controls.push(...jv[1].controls.map((cc: any) => ({val: cc.val ? TIRLiteralValue.bsqparse(cc.val) : undefined, cname: cc.cname})));
         rr.actions.push(...jv[1].actions);
@@ -1295,10 +1241,7 @@ class TIRConceptType extends TIROOType {
     static bsqparse(jv: any): TIRConceptType {
         assert(Array.isArray(jv) && jv[0] === "ConceptType", "ConceptType");
         const rr = new TIRConceptType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), jv[1].isexportable);
-        rr.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        rr.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        rr.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        rr.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+        TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
     }
