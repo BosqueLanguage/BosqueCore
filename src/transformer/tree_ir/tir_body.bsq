@@ -504,7 +504,7 @@ entity EnvironmentSetStatementBracket provides Statement {
     field isFresh: Bool;
 }
 
-typedecl TaskExecStatment provides Statement using {
+datatype TaskExecStatment provides Statement using {
     field isdefine: Bool;
     field isconst: Bool;
 } of
@@ -567,7 +567,7 @@ entity LoggerSetPrefixStatement provides Statement {
     field block: ScopedBlockStatement | UnscopedBlockStatement;
 }
 
-typedecl BlockStatement provides APIType using {
+datatype BlockStatement provides APIType using {
     field stmtstr: String;
     field ops: List<Statement>;
     field isterminal: Bool;

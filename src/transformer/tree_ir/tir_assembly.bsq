@@ -15,10 +15,8 @@ typedecl PCodeKey = StringOf<PCodeKeyIdentifierValidator>;
 typedecl NamespaceIdentifierValidator = /[A-Z][A-Za-z0-9_]+/;
 typedecl NamespaceIdentifier = StringOf<NamespaceIdentifierValidator>;
 
-typedecl IdentifierValidator /[$a-z_][A-Za-z0-9_]*/;
+typedecl IdentifierValidator = /[$a-z_][A-Za-z0-9_]*/;
 typedecl Identifier = StringOf<IdentifierValidator>;
-
-typedecl Namespace
 
 entity TypeName provides APIType {
     field ns: StringOf<NamespaceIdentifierValidator>;

@@ -109,6 +109,7 @@ class RegexParser {
 
     private parseCharClassOrEscapeComponent(): RegexComponent | string {
         if(this.isToken(".")) {
+            this.advance();
             return new RegexDotCharClass();
         }
         else if(this.isToken("\\")) {

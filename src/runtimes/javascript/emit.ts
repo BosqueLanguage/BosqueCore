@@ -15,7 +15,7 @@ const core_code = FS.readFileSync(core_path).toString();
 const runtime_code = FS.readFileSync(runtime_path).toString();
 const api_code = FS.readFileSync(api_path).toString();
 
-const fullargs = process.argv;
+let fullargs = process.argv;
 
 function workflowLoadUserSrc(files: string[]): CodeFileInfo[] {
     try {
@@ -95,9 +95,23 @@ function buildIRDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: "Main", fname: "main"}]);
+    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
+}
+
+let mainNamespace = "Main";
+const nfs = fullargs.find((e) => e.startsWith("--namespace="));
+if(nfs !== undefined) {
+    mainNamespace = nfs.slice("--namespace=".length);
+    fullargs = fullargs.filter((e) => e !== nfs);
+}
+
+let mainFunction = "main";
+const mfs = fullargs.find((e) => e.startsWith("--function="));
+if(mfs !== undefined) {
+    mainFunction = mfs.slice("--function=".length);
+    fullargs = fullargs.filter((e) => e !== mfs);
 }
 
 if(fullargs.length > 2 && fullargs[2] === "--outdir") {

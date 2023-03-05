@@ -18,22 +18,6 @@ RegexLiteral {
 | RegexCharRange {
     compliment: Bool,
     range: List<{lb: Nat, ub: Nat}>
-
-
-    compilePatternToSMT(ascii: boolean): string  {
-        assert(ascii);
-        assert(!this.compliment);
-        //
-        //TODO: probably need to do some escaping here as well
-        //
-        const rng = this.range.map((rr) => (rr.lb == rr.ub) ? `(str.to.re "${RegexCharRange.valToSStr(rr.lb)}")` : `(re.range "${RegexCharRange.valToSStr(rr.lb)}" "${RegexCharRange.valToSStr(rr.ub)}")`);
-        if(rng.length === 1) {
-            return rng[0];
-        }
-        else {
-            return `(re.union ${rng.join(" ")})`; 
-        }
-    }
 }
 | RegexDotCharClass {
 }
