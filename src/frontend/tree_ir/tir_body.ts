@@ -191,7 +191,7 @@ abstract class TIRExpression {
         else if(jv[0] === "LiteralRationalExpression") {
             return TIRLiteralRationalExpression.bsqparse(jv);
         }
-        else if(jv[0] === "LiteralFloatExpression") {
+        else if(jv[0] === "LiteralFloatPointExpression") {
             return TIRLiteralFloatPointExpression.bsqparse(jv);
         }
         else if(jv[0] === "LiteralRegexExpression") {
@@ -873,7 +873,7 @@ class TIRAccessScratchSingleValueExpression extends TIRExpression {
         return ["AccessScratchSingleValueExpression", {...this.bsqemit_exp(), sidx: this.sidx}];
     }
     static bsqparse(jv: any): TIRAccessScratchSingleValueExpression {
-        return new TIRAccessScratchSingleValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].sidx, jv[1].etype);
+        return new TIRAccessScratchSingleValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype, jv[1].sidx);
     }
 }
 
@@ -907,7 +907,7 @@ abstract class TIRLoadSingleExpression extends TIRExpression {
     }
 
     bsqemit_loadsingle(): any {
-        return [this.tag, {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()}];
+        return {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()};
     }
 }
 
@@ -987,7 +987,7 @@ abstract class TIRConstructorExpression extends TIRExpression {
     }
 
     bsqemit_consexp(): any {
-        return [this.tag, {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())}];
+        return {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())};
     }
 }
 
@@ -1202,7 +1202,7 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
         return ["CallNamespaceFunctionExpression", {...this.bsqemit_call(), ns: this.ns, fname: this.fname}];
     }
     static bsqparse(jv: any): TIRCallNamespaceFunctionExpression {
-        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1220,7 +1220,7 @@ class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
         return ["CallNamespaceOperatorExpression", {...this.bsqemit_call(), ns: this.ns, oname: this.oname}];
     }
     static bsqparse(jv: any): TIRCallNamespaceOperatorExpression {
-        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1238,7 +1238,7 @@ class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
         return ["CallStaticFunctionExpression", {...this.bsqemit_call(), tkey: this.tkey, fname: this.fname}];
     }
     static bsqparse(jv: any): TIRCallStaticFunctionExpression {
-        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1321,7 +1321,7 @@ class TIRPrefixNegateExpression extends TIRUnaryExpression {
         return ["PrefixNegateExpression", {...this.bsqemit_unary(), optype: this.optype}];
     }
     static bsqparse(jv: any): TIRPrefixNegateExpression {
-        return new TIRPrefixNegateExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].exptype, jv[1].optype);
+        return new TIRPrefixNegateExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1352,7 +1352,7 @@ class TIRBinAddExpression extends TIRBinOpExpression {
         return ["BinAddExpression", this.bsqemit_binop()];
     }
     static bsqparse(jv: any): TIRBinAddExpression {
-        return new TIRBinAddExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
+        return new TIRBinAddExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1365,7 +1365,7 @@ class TIRBinSubExpression extends TIRBinOpExpression {
         return ["BinSubExpression", this.bsqemit_binop()];
     }
     static bsqparse(jv: any): TIRBinSubExpression {
-        return new TIRBinSubExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
+        return new TIRBinSubExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1378,7 +1378,7 @@ class TIRBinMultExpression extends TIRBinOpExpression {
         return ["BinMultExpression", this.bsqemit_binop()];
     }
     static bsqparse(jv: any): TIRBinMultExpression {
-        return new TIRBinMultExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
+        return new TIRBinMultExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1391,7 +1391,7 @@ class TIRBinDivExpression extends TIRBinOpExpression {
         return ["BinDivExpression", this.bsqemit_binop()];
     }
     static bsqparse(jv: any): TIRBinDivExpression {
-        return new TIRBinDivExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].exptype, jv[1].optype);
+        return new TIRBinDivExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -2252,7 +2252,7 @@ class TIRAsSomeSpecialExpression extends TIRAsSpecialExpression {
         return ["AsSomeSpecialExpression", this.bsqemit_ae()];
     }
     static bsqparse(jv: any): TIRAsSomeSpecialExpression {
-        return new TIRAsSomeSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].oftype);
+        return new TIRAsSomeSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2278,7 +2278,7 @@ class TIRAsSomethingSpecialExpression extends TIRAsSpecialExpression {
         return ["AsSomethingSpecialExpression", this.bsqemit_ae()];
     }
     static bsqparse(jv: any): TIRAsSomethingSpecialExpression {
-        return new TIRAsSomethingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].oftype);
+        return new TIRAsSomethingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2291,7 +2291,7 @@ class TIRAsOkSpecialExpression extends TIRAsSpecialExpression {
         return ["AsOkSpecialExpression", this.bsqemit_ae()];
     }
     static bsqparse(jv: any): TIRAsOkSpecialExpression {
-        return new TIRAsOkSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].oftype);
+        return new TIRAsOkSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2304,7 +2304,7 @@ class TIRAsErrSpecialExpression extends TIRAsSpecialExpression {
         return ["AsErrSpecialExpression", this.bsqemit_ae()];
     }
     static bsqparse(jv: any): TIRAsErrSpecialExpression {
-        return new TIRAsErrSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].oftype);
+        return new TIRAsErrSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2331,7 +2331,7 @@ class TIRAsEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
         return ["AsEqualToLiteralExpression", this.bsqemit_ael()];
     }
     static bsqparse(jv: any): TIRAsEqualToLiteralExpression {
-        return new TIRAsEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].oftype);
+        return new TIRAsEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].etype);
     }
 }
 
@@ -2344,7 +2344,7 @@ class TIRAsNotEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
         return ["AsNotEqualToLiteralExpression", this.bsqemit_ael()];
     }
     static bsqparse(jv: any): TIRAsNotEqualToLiteralExpression {
-        return new TIRAsNotEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].oftype);
+        return new TIRAsNotEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].etype);
     }
 }
 
@@ -2371,7 +2371,7 @@ class TIRAsTypeExpression extends TIRITestAsTypeExpression {
         return ["AsTypeExpression", this.bsqemit_aet()];
     }
     static bsqparse(jv: any): TIRAsTypeExpression {
-        return new TIRAsTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].oftype);
+        return new TIRAsTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2384,7 +2384,7 @@ class TIRAsNotTypeExpression extends TIRITestAsTypeExpression {
         return ["AsNotTypeExpression", this.bsqemit_aet()];
     }
     static bsqparse(jv: any): TIRAsNotTypeExpression {
-        return new TIRAsNotTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].oftype);
+        return new TIRAsNotTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2397,7 +2397,7 @@ class TIRAsSubTypeExpression extends TIRITestAsTypeExpression {
         return ["AsSubTypeExpression", this.bsqemit_aet()];
     }
     static bsqparse(jv: any): TIRAsSubTypeExpression {
-        return new TIRAsSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].oftype);
+        return new TIRAsSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2410,7 +2410,7 @@ class TIRAsNotSubTypeExpression extends TIRITestAsTypeExpression {
         return ["AsNotSubTypeExpression", this.bsqemit_aet()];
     }
     static bsqparse(jv: any): TIRAsNotSubTypeExpression {
-        return new TIRAsNotSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].oftype);
+        return new TIRAsNotSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2447,7 +2447,7 @@ class TIRCallMemberFunctionExpression extends TIRIMemberFunctionExpression {
         return ["CallMemberFunctionExpression", this.bsqemit_mf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionExpression {
-        return new TIRCallMemberFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].rtype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2460,7 +2460,7 @@ class TIRCallMemberFunctionDynamicExpression extends TIRIMemberFunctionExpressio
         return ["CallMemberFunctionDynamicExpression", this.bsqemit_mf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionDynamicExpression {
-        return new TIRCallMemberFunctionDynamicExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].declkey, jv[1].fdecltype, jv[1].rtype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionDynamicExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2478,7 +2478,7 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
         return ["CallMemberFunctionSelfRefExpression", {...this.bsqemit_mf(), scidx: this.scidx, thisref: this.thisref}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionSelfRefExpression {
-        return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].rtype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2511,7 +2511,7 @@ class TIRCallMemberFunctionTaskExpression extends TIRFunctionTaskExpression {
         return ["CallMemberFunctionTaskExpression", this.bsqemit_tf()];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionTaskExpression {
-        return new TIRCallMemberFunctionTaskExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionTaskExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2527,7 +2527,7 @@ class TIRCallMemberFunctionTaskSelfRefExpression extends TIRFunctionTaskExpressi
         return ["CallMemberFunctionTaskSelfRefExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberFunctionTaskSelfRefExpression {
-        return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2543,7 +2543,7 @@ class TIRCallMemberActionExpression extends TIRFunctionTaskExpression {
         return ["CallMemberActionExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
     }
     static bsqparse(jv: any): TIRCallMemberActionExpression {
-        return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].rtype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+        return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2659,7 +2659,7 @@ abstract class TIRStatement {
         else if(jv[0] === "TaskRefAssignFromScratch") {
             return TIRTaskRefAssignFromScratch.bsqparse(jv);
         }
-        else if(jv[0] === "CallWRefStatememt") {
+        else if(jv[0] === "CallStatementWRef") {
             return TIRCallStatementWRef.bsqparse(jv);
         }
         else if(jv[0] === "CallStatementWTaskRef") {
@@ -3219,7 +3219,7 @@ class TIRMatchStatement extends TIRStatement {
             SourceInfo.bsqparse(jv[1].sinfo),
             TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
             jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
-            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
+            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].edefault.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
             jv[1].isexhaustive
         )
     }

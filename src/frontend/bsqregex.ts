@@ -292,7 +292,7 @@ class BSQRegex {
     }
 
     static jparse(obj: any): BSQRegex {
-        return new BSQRegex(obj.restr, RegexComponent.jparse(obj.re));
+        return new BSQRegex(obj.regexstr, RegexComponent.jparse(obj.re));
     }
 }
 
@@ -306,25 +306,25 @@ abstract class RegexComponent {
     abstract compileToJS(): string;
 
     static jparse(obj: any): RegexComponent {
-        const tag = obj.tag;
+        const tag = obj[0];
         switch (tag) {
-            case "Literal":
+            case "RegexLiteral":
                 return RegexLiteral.jparse(obj);
-            case "CharRange":
+            case "RegexCharRange":
                 return RegexCharRange.jparse(obj);
-            case "DotCharClass":
+            case "RegexDotCharClass":
                 return RegexDotCharClass.jparse(obj);
-            case "ConstRegexClass":
+            case "RegexConstRegexClass":
                 return RegexConstClass.jparse(obj);
-            case "StarRepeat":
+            case "RegexStarRepeat":
                 return RegexStarRepeat.jparse(obj);
-            case "PlusRepeat":
+            case "RegexPlusRepeat":
                 return RegexPlusRepeat.jparse(obj);
-            case "RangeRepeat":
+            case "RegexRangeRepeat":
                 return RegexRangeRepeat.jparse(obj);
-            case "Optional":
+            case "RegexOptional":
                 return RegexOptional.jparse(obj);
-            case "Alternation":
+            case "RegexAlternation":
                 return RegexAlternation.jparse(obj);
             default:
                 return RegexSequence.jparse(obj);
@@ -344,11 +344,11 @@ class RegexLiteral extends RegexComponent {
     }
 
     jemit(): any {
-        return {tag: "Literal", restr: this.restr, escstr: this.escstr};
+        return ["RegexLiteral", {restr: this.restr, escstr: this.escstr}];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexLiteral(obj.restr, obj.escstr);
+        return new RegexLiteral(obj[1].restr, obj[1].escstr);
     }
 
     static mergeLiterals(l1: RegexLiteral, l2: RegexLiteral): RegexLiteral {
@@ -374,11 +374,11 @@ class RegexCharRange extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "CharRange", compliment: this.compliment, range: this.range };
+        return ["RegexCharRange", {compliment: this.compliment, range: this.range }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexCharRange(obj.compliment, obj.range);
+        return new RegexCharRange(obj[1].compliment, obj[1].range);
     }
 
     private static valToSStr(cc: number): string {
@@ -413,8 +413,8 @@ class RegexDotCharClass extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "DotCharClass" };
-    }
+        return ["RegexDotCharClass", {}];
+    } 
 
     static jparse(obj: any): RegexComponent {
         return new RegexDotCharClass();
@@ -437,11 +437,11 @@ class RegexConstClass extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "ConstRegexClass", ns: this.ns, ccname: this.ccname };
+        return ["RegexConstRegexClass", { ns: this.ns, ccname: this.ccname }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexConstClass(obj.ns, obj.ccname);
+        return new RegexConstClass(obj[1].ns, obj[1].ccname);
     }
 
     compileToJS(): string {
@@ -460,11 +460,11 @@ class RegexStarRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "StarRepeat", repeat: this.repeat.jemit() };
+        return ["RegexStarRepeat", { repeat: this.repeat.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexStarRepeat(RegexComponent.jparse(obj.repeat));
+        return new RegexStarRepeat(RegexComponent.jparse(obj[1].repeat));
     }
 
     compileToJS(): string {
@@ -482,11 +482,11 @@ class RegexPlusRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "PlusRepeat", repeat: this.repeat.jemit() };
+        return ["RegexPlusRepeat", { repeat: this.repeat.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexPlusRepeat(RegexComponent.jparse(obj.repeat));
+        return new RegexPlusRepeat(RegexComponent.jparse(obj[1].repeat));
     }
 
     compileToJS(): string {
@@ -508,11 +508,11 @@ class RegexRangeRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "RangeRepeat", repeat: this.repeat.jemit(), min: this.min, max: this.max };
+        return ["RegexRangeRepeat", { repeat: this.repeat.jemit(), min: this.min, max: this.max }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexRangeRepeat(RegexComponent.jparse(obj.repeat), obj.min, obj.max);
+        return new RegexRangeRepeat(RegexComponent.jparse(obj[1].repeat), obj[1].min, obj[1].max);
     }
 
     compileToJS(): string {
@@ -530,11 +530,11 @@ class RegexOptional extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "Optional", opt: this.opt.jemit() };
+        return ["RegexOptional", { opt: this.opt.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexOptional(RegexComponent.jparse(obj.repeat));
+        return new RegexOptional(RegexComponent.jparse(obj[1].opt));
     }
 
     compileToJS(): string {
@@ -556,11 +556,11 @@ class RegexAlternation extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "Alternation", opts: this.opts.map((opt) => opt.jemit()) };
+        return ["RegexAlternation", { opts: this.opts.map((opt) => opt.jemit()) }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexAlternation(obj.opts.map((opt: any) => RegexComponent.jparse(opt)));
+        return new RegexAlternation(obj[1].opts.map((opt: any) => RegexComponent.jparse(opt)));
     }
 
     compileToJS(): string {
@@ -582,11 +582,11 @@ class RegexSequence extends RegexComponent {
     }
 
     jemit(): any {
-        return { tag: "Sequence", elems: this.elems.map((elem) => elem.jemit()) };
+        return ["RegexSequence", { elems: this.elems.map((elem) => elem.jemit()) }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexSequence(obj.elems.map((elem: any) => RegexComponent.jparse(elem)));
+        return new RegexSequence(obj[1].elems.map((elem: any) => RegexComponent.jparse(elem)));
     }
 
     compileToJS(): string {

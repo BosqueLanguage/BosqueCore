@@ -72,13 +72,17 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
         process.exit(1);
     }
 
-    //
-    //TODO: functionalization and assignment uniqueness 
-    //
-
-    //
-    //TODO: call-graph, rec-data graph, and order constructions (maybe safety too)
-    //
+    /*
+    const stasm = (tasm as TIRAssembly).bsqemit();
+    const rtasm = TIRAssembly.bsqparse(stasm);
+    const ertasm = rtasm.bsqemit();
+    if(JSON.stringify(stasm, undefined, 2) !== JSON.stringify(ertasm, undefined, 2)) {
+        process.stdout.write("ARGH\n\n");
+        process.stdout.write(JSON.stringify(detailedDiff(stasm, ertasm), undefined, 2) + "\n\n");
+        process.stdout.write(JSON.stringify(diff(stasm, ertasm), undefined, 2) + "\n\n");
+        process.exit(1);
+    }
+    */
 
     return [tasm as TIRAssembly, depsmap];
 }
