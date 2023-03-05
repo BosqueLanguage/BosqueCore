@@ -1338,8 +1338,8 @@ class TypeChecker {
                 }
                 else {
                     return { 
-                        asexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined,
-                        asnotexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
+                        asexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.fp)) : undefined,
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.tp)) : undefined,
                         trueflow: tsplit.fp, 
                         falseflow: tsplit.tp 
                     };
@@ -1356,8 +1356,8 @@ class TypeChecker {
                 }
                 else {
                     return { 
-                        asexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined, 
-                        asnotexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
+                        asexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.fp)) : undefined, 
+                        asnotexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.tp)) : undefined,
                         trueflow: tsplit.fp, 
                         falseflow: tsplit.tp 
                     };
@@ -1393,8 +1393,8 @@ class TypeChecker {
                 }
                 else {
                     return { 
-                        asexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined,
-                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined,
+                        asexp: tsplit.tp !== undefined ? new TIRAsTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.tp)) : undefined,
+                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.fp)) : undefined,
                         trueflow: tsplit.tp, 
                         falseflow: tsplit.fp 
                     };
@@ -1411,8 +1411,8 @@ class TypeChecker {
                 }
                 else {
                     return { 
-                        asexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.tp), this.toTIRTypeKey(intotype)) : undefined, 
-                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(tsplit.fp), this.toTIRTypeKey(intotype)) : undefined, 
+                        asexp: tsplit.tp !== undefined ? new TIRAsSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.tp)) : undefined, 
+                        asnotexp: tsplit.fp !== undefined ? new TIRAsNotSubTypeExpression(sinfo, tirexp, this.toTIRTypeKey(intotype), this.toTIRTypeKey(tsplit.fp)) : undefined, 
                         trueflow: tsplit.tp, 
                         falseflow: tsplit.fp 
                     };
