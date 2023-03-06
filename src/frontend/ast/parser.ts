@@ -4773,6 +4773,9 @@ class Parser {
                 });
             }
             else {
+                this.setRecover(this.scanCodeParens());
+                this.ensureAndConsumeToken(SYM_lbrace, "datatype declaration");
+
                 const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
 
                 const nestedEntities = new Map<string, EntityTypeDecl>();
@@ -4781,6 +4784,7 @@ class Parser {
                 const enveffect = new TaskEnvironmentEffect([]);
                 this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
 
+                this.ensureAndConsumeToken(SYM_rbrace, "datatype declaration");
                 complexheader = cstaticMembers.length !== 0 || cstaticFunctions.length !== 0 || cmemberMethods.length !== 0;
             }
         }
@@ -4820,6 +4824,9 @@ class Parser {
                     });
                 }
                 else {
+                    this.setRecover(this.scanCodeParens());
+                    this.ensureAndConsumeToken(SYM_lbrace, "datatype entry");
+
                     const thisType = new NominalTypeSignature(esinfo, currentDecl.ns, [ename], []);
 
                     const nestedEntities = new Map<string, EntityTypeDecl>();
@@ -4827,6 +4834,8 @@ class Parser {
                     const eventeffect = new TaskEventEffect([]);
                     const enveffect = new TaskEnvironmentEffect([]);
                     this.parseOOPMembersCommon(esinfo, false, thisType, currentDecl, [ename], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+
+                    this.ensureAndConsumeToken(SYM_rbrace, "datatype entry");
                 }
             }
 

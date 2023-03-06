@@ -1,9 +1,7 @@
 namespace TreeIR;
 
 concept Expression provides APIType {
-    field tag: ExpressionTag;
     field sinfo: SourceInfo;
-
     field etype: TypeKey;
 }
 
@@ -22,8 +20,8 @@ LiteralNoneExpression { }
 | LiteralASCIITypedStringExpression { oftype: TypeKey, value: String }
 | LiteralTemplateStringExpression { value: String }
 | LiteralASCIITemplateStringExpression { value: String }
-| LiteralTypedPrimitiveDirectExpression { value: Expression, constype: TypeKey;, basetype: TypeKey }
-| LiteralTypedPrimitiveConstructorExpression { value: Expression, constype: TypeKey;, basetype: TypeKey }
+| LiteralTypedPrimitiveDirectExpression { value: Expression, constype: TypeKey, basetype: TypeKey }
+| LiteralTypedPrimitiveConstructorExpression { value: Expression, constype: TypeKey, basetype: TypeKey }
 ;
 
 entity AccessEnvValueExpression provides Expression {
@@ -221,14 +219,14 @@ entity MapEntryConstructorExpression provides Expression {
 
 entity IfExpression provides Expression {
     field ifentry: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?};
-    field elifentries: {etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?}[];
+    field elifentries: List<{etest: Expression, value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?}>;
     field elseentry: {value: Expression, binderinfo: [Expression, Nat, Expression, Identifier]?};
 }
 
 entity SwitchExpression provides Expression {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}[];
+    field clauses: List<{ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}>;
     field edefault: {value: Expression, binderinfo: [Expression, Identifier]?}?;
     field isexhaustive: Bool;
 }
@@ -236,7 +234,7 @@ entity SwitchExpression provides Expression {
 entity MatchExpression provides Expression {
     field exp: Expression;
     field scratchidx: Nat;
-    field clauses: {ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}[];
+    field clauses: List<{ematch: Expression, value: Expression, binderinfo: [Expression, Identifier]?}>;
     field edefault: {value: Expression, binderinfo: [Expression, Identifier]?}?;
     field isexhaustive: Bool;
 }
@@ -255,7 +253,7 @@ entity TaskGetIDExpression provides Expression {
     field tasktype: TypeKey;
 }
 
-entity TIRCoerceSafeExpression provides Expression {
+entity CoerceSafeExpression provides Expression {
     field exp: Expression;
     field fromtype: TypeKey;
     field totype: TypeKey;
@@ -330,7 +328,7 @@ AsEqualToLiteralExpression { }
 ;
 
 datatype TestAsTypeExpression provides AsExpression using {
-    fieldl ttype: TypeKey;
+    field ttype: TypeKey;
 } of
 AsTypeExpression { }
 | AsNotTypeExpression { }
@@ -517,7 +515,7 @@ TaskRunStatement {
 }
 | TaskMultiStatement {
     vtrgts: List<{name: Identifier, vtype: TypeKey}>,
-    tasks: List<{ttask: TypeKey, targs: List<{argn: Identifier, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>,
+    tasks: List<{ttask: TypeKey, targs: List<{argn: Identifier, argv: Expression}>, argtype: TypeKey, consargtype: TypeKey, argexp: Expression}>
 }
 | TaskDashStatement {
     vtrgts: List<{name: Identifier, vtype: TypeKey, restype: TypeKey}>,
@@ -563,7 +561,7 @@ entity LoggerEmitConditionalStatement provides Statement {
 
 entity LoggerSetPrefixStatement provides Statement {
     field fmt: {ns: NamespaceIdentifier, keyname: Identifier};
-    field args: List<TIRExpression>;
+    field args: List<Expression>;
     field block: ScopedBlockStatement | UnscopedBlockStatement;
 }
 

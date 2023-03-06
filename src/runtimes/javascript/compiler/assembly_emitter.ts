@@ -524,8 +524,6 @@ class NamespaceEmitter {
                     
         const iidm = invdecls.join("\n");
 
-        [...this.m_decl.alltypes]
-
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
         return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]

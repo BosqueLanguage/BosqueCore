@@ -25,7 +25,7 @@ entity TypeName provides APIType {
 }
 
 entity FunctionParameter provides APIType {
-    field name: string;
+    field name: String;
     field type: TypeKey;
     field ddlit: LiteralValue?;
 }
@@ -89,7 +89,7 @@ entity TaskEnsures provides APIType {
 }
 
 concept Invoke provides APIType {
-    field invkey: TIRInvokeKey;
+    field invkey: InvokeKey;
     field name: String;
 
     field startSourceLocation: SourceInfo;
@@ -99,8 +99,8 @@ concept Invoke provides APIType {
     field attributes: List<String>;
     field isrecursive: Bool;
 
-    field tbinds: Map<String, TIRTypeKey>;
-    field pcodes: Map<String, TIRPCodeKey>;
+    field tbinds: Map<String, TypeKey>;
+    field pcodes: Map<String, PCodeKey>;
 
     field isMemberMethod: Bool;
     field isVirtual: Bool;
@@ -113,18 +113,18 @@ concept Invoke provides APIType {
     field resultType: TypeKey;
 
     field preconditions: List<PreConditionDecl>;
-    field postconditions: List<TIRPostConditionDecl>;
+    field postconditions: List<PostConditionDecl>;
 }
 
 entity InvokeAbstractDeclaration provides Invoke {
 }
 
 entity InvokeImplementation provides Invoke {
-    field body: TIRStatement[];
+    field body: List<Statement>;
 }
 
 entity InvokePrimitive provides Invoke {
-    field body: string;
+    field body: String;
 }
 
 concept MemberDecl provides APIType {
@@ -178,7 +178,7 @@ concept OOType provides Type {
     field memberFields: List<MemberFieldDecl>;
     field memberMethods: List<MemberMethodDecl>;
 
-    field iskeytype: boolean;
+    field iskeytype: Bool;
 }
 
 concept EntityType provides OOType {
@@ -203,14 +203,14 @@ typedecl PathKindValidator = /path|pathfragment|pathglob/;
 
 entity TypedeclEntityType provides EntityType {
     field valuetype: TypeKey; //result of .value()
-    field representation: TypeKey; //result of getUnderlyingRepresentation opcode -- a TIRResolvedPrimitiveInternalEntityAtomType
+    field representation: TypeKey; //result of getUnderlyingRepresentation opcode -- a ResolvedPrimitiveInternalEntityAtomType
 
     field consinvariantsall: List<TypedeclInvariantDecl>; 
     field consinvariantsexplicit: List<TypedeclInvariantDecl>; 
     field apivalidates: List<TypedeclValidateDecl>;
 
-    field strvalidator: {vtype: TypeKey, vre: BSQRegex}?; //TIRValidatorEntityType;
-    field pthvalidator: {vtype: TypeKey, vpth: PathValidator, kind: StringOf<PathKindValidator>}?; //TIRPathValidatorEntityType;
+    field strvalidator: {vtype: TypeKey, vre: BSQRegex}?; //ValidatorEntityType;
+    field pthvalidator: {vtype: TypeKey, vpth: PathValidator, kind: StringOf<PathKindValidator>}?; //PathValidatorEntityType;
 }
 
 //base class for all the primitive types that are defined
@@ -228,13 +228,13 @@ entity ValidatorEntityType provides InternalEntityType {
 
 //class representing StringOf<T> types
 entity StringOfEntityType provides InternalEntityType {
-    field validatortype: TypeKey; //TIRValidatorEntityType;
+    field validatortype: TypeKey; //ValidatorEntityType;
     field revalidator: BSQRegex;
 }
 
 //class representing ASCIIStringOf<T> types
 entity ASCIIStringOfEntityType provides InternalEntityType {
-    field validatortype: TypeKey; //TIRValidatorEntityType;
+    field validatortype: TypeKey; //ValidatorEntityType;
     field revalidator: BSQRegex;
 }
 
@@ -245,18 +245,18 @@ entity PathValidatorEntityType provides InternalEntityType {
 
 //class representing a Path<T> type
 entity PathEntityType provides InternalEntityType {
-    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field validatortype: TypeKey; //PathValidatorEntityType;
     field pthvalidator: PathValidator;
 }
 
 //class representing a PathFragment<T> type
 entity PathFragmentEntityType provides InternalEntityType {
-    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field validatortype: TypeKey; //PathValidatorEntityType;
     field pthvalidator: PathValidator;
 }
 
 entity PathGlobEntityType provides InternalEntityType {
-    field validatortype: TypeKey //TIRPathValidatorEntityType;
+    field validatortype: TypeKey; //PathValidatorEntityType;
     field pthvalidator: PathValidator;
 }
 
@@ -324,7 +324,7 @@ entity TaskType provides OOType {
     field actions: List<{akey: InvokeKey, aname: Identifier}>; //methods
     field mainfunc: {mkey: InvokeKey, mname: Identifier}; //a static function
     field onfuncs: { onCanel: InvokeKey?, onFailure: InvokeKey?, onTimeout: InvokeKey? };
-    field lfuncs: { logStart: InvokeKey?, logEnd: InvokeKey?, taskEnsures: InvokeKey?, taskWarns: TIRInvokeKey? };
+    field lfuncs: { logStart: InvokeKey?, logEnd: InvokeKey?, taskEnsures: InvokeKey?, taskWarns: InvokeKey? };
 
 
     field statuseffect: TaskStatusEffect;
@@ -340,11 +340,11 @@ entity ConceptType provides OOType {
 }
 
 entity ConceptSetType provides Type {
-    field conceptTypes: List<TypeKey>; //each is a TIRConceptType
+    field conceptTypes: List<TypeKey>; //each is a ConceptType
 }
 
 entity TupleType provides Type {
-    field types: List<TIRTypeKey>;
+    field types: List<TypeKey>;
 }
 
 entity RecordType provides Type {
@@ -423,7 +423,7 @@ InfoTemplateRecord {
     field macro: String;
 }
 | InfoTemplateValue {
-    field argpos: number;
+    field argpos: Nat;
     field argtype: TypeKey;
 }
 ;
@@ -435,13 +435,11 @@ entity StringTemplate provides APIType {
 entity NamespaceDeclaration provides APIType {
     field ns: NamespaceIdentifier;
 
-    field alltypes: List<TypeKey>;
-
     field consts: Map<Identifier, NamespaceConstDecl>;
-    field functions: Map<Identifier, NamespaceFunctionDecl[]>;
-    field operators: Map<Identifier, NamespaceOperatorDecl[]>;
-    field concepts: Map<Identifier, TypeKey[]>;
-    field objects: Map<Identifier, TypeKey[]>;
+    field functions: Map<Identifier, List<NamespaceFunctionDecl>>;
+    field operators: Map<Identifier, List<NamespaceOperatorDecl>>;
+    field concepts: Map<Identifier, List<TypeKey>>;
+    field objects: Map<Identifier, List<TypeKey>>;
     
     field tasks: Map<Identifier, TypeKey>;
 
