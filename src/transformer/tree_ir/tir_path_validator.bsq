@@ -4,7 +4,7 @@ entity PathValidator {
     field scheme: String?;
     field userinfo: BSQRegex?;
     field host: BSQRegex?;
-    field port: number?;
+    field port: Nat?;
     field path: {
         prefix: BSQRegex?,
         segments: BSQRegex?,

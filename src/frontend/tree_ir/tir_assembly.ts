@@ -1625,8 +1625,6 @@ class TIRStringTemplate {
 class TIRNamespaceDeclaration {
     readonly ns: string;
 
-    alltypes: TIRTypeKey[] = [];
-
     consts: Map<string, TIRNamespaceConstDecl>;
     functions: Map<string, TIRNamespaceFunctionDecl[]>;
     operators: Map<string, TIRNamespaceOperatorDecl[]>;
@@ -1661,7 +1659,6 @@ class TIRNamespaceDeclaration {
     bsqemit(): any {
         return ["NamespaceDeclaration", {
             ns: this.ns,
-            alltypes: this.alltypes,
             consts: [...this.consts.entries()].map((e) => ({name: e[0], value: e[1].bsqemit()})),
             functions: [...this.functions.entries()].map((e) => ({name: e[0], value: e[1].map((f) => f.bsqemit())})),
             operators: [...this.operators.entries()].map((e) => ({name: e[0], value: e[1].map((f) => f.bsqemit())})),
@@ -1677,7 +1674,6 @@ class TIRNamespaceDeclaration {
     static bsqparse(jv: any): TIRNamespaceDeclaration {
         assert(Array.isArray(jv) && jv[0] === "NamespaceDeclaration", "NamespaceDeclaration");
         const ns = new TIRNamespaceDeclaration(jv[1].ns);
-        ns.alltypes = jv[1].alltypes;
         jv[1].consts.forEach((e: any) => ns.consts.set(e.name, TIRNamespaceConstDecl.bsqparse(e.value)));
         jv[1].functions.forEach((e: any) => ns.functions.set(e.name, e.value.map((f: any) => TIRNamespaceFunctionDecl.bsqparse(f))));
         jv[1].operators.forEach((e: any) => ns.operators.set(e.name, e.value.map((f: any) => TIRNamespaceOperatorDecl.bsqparse(f))));
