@@ -18,9 +18,12 @@ typedecl NamespaceIdentifier = StringOf<NamespaceIdentifierValidator>;
 typedecl IdentifierValidator = /[$a-z_][A-Za-z0-9_]*/;
 typedecl Identifier = StringOf<IdentifierValidator>;
 
+typedecl TypeNameIdentifierValidator = /[A-Z][A-Za-z0-9_:]*/;
+typedecl TypeNameIdentifier = StringOf<TypeNameIdentifierValidator>;
+
 entity TypeName provides APIType {
-    field ns: StringOf<NamespaceIdentifierValidator>;
-    field name: StringOf<TypeNameNameIdentifierValidator>;
+    field ns: NamespaceIdentifier;
+    field name: TypeNameIdentifier;
     field templates: List<TypeKey>?;
 }
 
@@ -92,8 +95,8 @@ concept Invoke provides APIType {
     field invkey: InvokeKey;
     field name: String;
 
-    field startSourceLocation: SourceInfo;
-    field endSourceLocation: SourceInfo;
+    field sinfoStart: SourceInfo;
+    field sinfoEnd: SourceInfo;
     field srcFile: String;
 
     field attributes: List<String>;

@@ -1547,6 +1547,190 @@ class TypeChecker {
         }
     }
 
+    private createResolvedTypeForEntityDeclExportable(rtype: ResolvedConceptAtomType, fobject: EntityTypeDecl, bbinds: Map<string, ResolvedType>): ResolvedAtomType | undefined {
+        let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
+
+        if(fobject.attributes.includes("__enum_type") 
+            || fobject.attributes.includes("__validator_type") || fobject.attributes.includes("__pathvalidator_type")
+            || fobject.attributes.includes("__typedprimitive")
+            || fobject.attributes.includes("__stringof_type") || fobject.attributes.includes("__asciistringof_type")
+            || fobject.attributes.includes("__path_type") || fobject.attributes.includes("__pathfragment_type") || fobject.attributes.includes("__pathglob_type")
+        ) {
+            rtypeatom = undefined;
+        }
+        else if (fobject.attributes.includes("__ok_type")) {
+            if (rtype.isResultConcept()) {
+                assert(bbinds.has("T"), "Missing template binding");
+                rtypeatom = ResolvedOkEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+            }
+            else {
+                rtypeatom = undefined;
+            }
+        }
+        else if (fobject.attributes.includes("__err_type")) {
+            if (rtype.isResultConcept()) {
+                assert(bbinds.has("E"), "Missing template binding");
+                rtypeatom = ResolvedErrEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+            }
+            else {
+                rtypeatom = undefined;
+            }
+        }
+        else if (fobject.attributes.includes("__something_type")) {
+            if (rtype.isOptionConcept()) {
+                assert(bbinds.has("T"), "Missing template binding");
+                rtypeatom = ResolvedSomethingEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+            }
+            else {
+                rtypeatom = undefined;
+            }
+        }
+        else if (fobject.attributes.includes("__mapentry_type") || fobject.attributes.includes("__havoc_type")
+            || fobject.attributes.includes("__list_type") || fobject.attributes.includes("__stack_type") || fobject.attributes.includes("__queue_type") || fobject.attributes.includes("__set_type") || fobject.attributes.includes("__map_type")
+            || fobject.attributes.includes("__typebase")) {
+            rtypeatom = undefined;
+        }
+        else {
+            rtypeatom = ResolvedObjectEntityAtomType.create(fobject, bbinds);
+        }
+
+        return rtypeatom;
+    }
+
+    private createResolvedTypeForEntityDecl(sinfo: SourceInfo, fobject: EntityTypeDecl, bbinds: Map<string, ResolvedType>): ResolvedAtomType | undefined {
+        let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
+
+        if(fobject.attributes.includes("__enum_type")) {
+            rtypeatom = ResolvedEnumEntityAtomType.create(fobject);
+        }
+        else if (fobject.attributes.includes("__validator_type")) {
+            rtypeatom = ResolvedValidatorEntityAtomType.create(fobject);
+        }
+        else if (fobject.attributes.includes("__pathvalidator_type")) {
+            rtypeatom = ResolvedPathValidatorEntityAtomType.create(fobject);
+        }
+        else if (fobject.attributes.includes("__typedprimitive")) {
+            const rrtype = (fobject.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
+            const oftype = this.normalizeTypeOnly(rrtype, TemplateBindScope.createBaseBindScope(bbinds));
+            if(!(oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType)) {
+                this.raiseError(sinfo, `Type ${oftype.typeID} is not an entity type`);
+                return ResolvedType.createInvalid();
+            }
+            
+            const basetype = this.computeBaseTypeForTypeDecl(sinfo, oftype, []);
+            if(basetype === undefined) {
+                this.raiseError(sinfo, `Type ${oftype.typeID} is not a valid type to use as a typedecl`);
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedTypedeclEntityAtomType.create(fobject, oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType, basetype);
+        }
+        else if(fobject.attributes.includes("__stringof_type")) {
+            const validator = bbinds.get("T");
+            if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
+                this.raiseError(sinfo, "Missing Validator for StringOf");
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
+        }
+        else if(fobject.attributes.includes("__asciistringof_type")) {
+            const validator = bbinds.get("T");
+            if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
+                this.raiseError(sinfo, "Missing Validator for ASCIIStringOf");
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedASCIIStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
+        }
+        else if (fobject.attributes.includes("__path_type")) {
+            const pvalidator = bbinds.get("T");
+            if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                this.raiseError(sinfo, "Missing Validator for Path");
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedPathEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+        }
+        else if (fobject.attributes.includes("__pathfragment_type")) {
+            const pvalidator = bbinds.get("T");
+            if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                this.raiseError(sinfo, "Missing Validator for PathFragment");
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedPathFragmentEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+        }
+        else if (fobject.attributes.includes("__pathglob_type")) {
+            const pvalidator = bbinds.get("T");
+            if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
+                this.raiseError(sinfo, "Missing Validator for PathFragment");
+                return ResolvedType.createInvalid();
+            }
+
+            rtypeatom = ResolvedPathGlobEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
+        }
+        else if (fobject.attributes.includes("__ok_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+
+            rtypeatom = ResolvedOkEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__err_type")) {
+            assert(bbinds.has("E"), "Missing template binding");
+            
+            rtypeatom = ResolvedErrEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__something_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+            
+            rtypeatom = ResolvedSomethingEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__mapentry_type")) {
+            assert(bbinds.has("K"), "Missing template binding");
+            assert(bbinds.has("V"), "Missing template binding");
+
+            rtypeatom = ResolvedMapEntryEntityAtomType.create(fobject, bbinds.get("K") as ResolvedType, bbinds.get("V") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__havoc_type")) {
+            rtypeatom = ResolvedHavocEntityAtomType.create(fobject);
+        }
+        else if (fobject.attributes.includes("__list_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+
+            rtypeatom = ResolvedListEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__stack_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+
+            rtypeatom = ResolvedStackEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__queue_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+
+            rtypeatom = ResolvedQueueEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__set_type")) {
+            assert(bbinds.has("T"), "Missing template binding");
+
+            rtypeatom = ResolvedSetEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
+        }
+        else if (fobject.attributes.includes("__map_type")) {
+            assert(bbinds.has("K"), "Missing template binding");
+            assert(bbinds.has("V"), "Missing template binding");
+
+            rtypeatom = ResolvedMapEntityAtomType.create(fobject, bbinds.get("K") as ResolvedType, bbinds.get("V") as ResolvedType);
+        }
+        else if(fobject.attributes.includes("__typebase")) {
+            //class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
+            rtypeatom = ResolvedPrimitiveInternalEntityAtomType.create(fobject);
+        }
+        else {
+            rtypeatom = ResolvedObjectEntityAtomType.create(fobject, bbinds);
+        }
+
+        return rtypeatom;
+    }
+
     private normalizeType_Nominal(t: NominalTypeSignature, binds: TemplateBindScope, resolvestack: string[]): ResolvedType | ResolvedFunctionType {
         let tresolved: TypeSignature = t;
         let isresolution: boolean = false;
@@ -1572,139 +1756,10 @@ class TypeChecker {
 
             const fobject = this.m_assembly.tryGetObjectTypeForFullyResolvedName(ttname);
             if (fobject !== undefined) {
-                let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
-
                 this.checkTemplateTypesOnType(t.sinfo, fobject.terms, t.terms, binds);
                 const bbinds = this.resolveTemplateBinds(t.sinfo, fobject.terms, t.terms, binds);
 
-                if(fobject.attributes.includes("__enum_type")) {
-                    rtypeatom = ResolvedEnumEntityAtomType.create(fobject);
-                }
-                else if (fobject.attributes.includes("__validator_type")) {
-                    rtypeatom = ResolvedValidatorEntityAtomType.create(fobject);
-                }
-                else if (fobject.attributes.includes("__pathvalidator_type")) {
-                    rtypeatom = ResolvedPathValidatorEntityAtomType.create(fobject);
-                }
-                else if (fobject.attributes.includes("__typedprimitive")) {
-                    const rrtype = (fobject.memberMethods.find((mm) => mm.name === "value") as MemberMethodDecl).invoke.resultType;
-                    const oftype = this.normalizeTypeOnly(rrtype, binds);
-                    if(!(oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType)) {
-                        this.raiseError(t.sinfo, `Type ${oftype.typeID} is not an entity type`);
-                        return ResolvedType.createInvalid();
-                    }
-                    
-                    const basetype = this.computeBaseTypeForTypeDecl(t.sinfo, oftype, []);
-                    if(basetype === undefined) {
-                        this.raiseError(t.sinfo, `Type ${oftype.typeID} is not a valid type to use as a typedecl`);
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedTypedeclEntityAtomType.create(fobject, oftype.tryGetUniqueEntityTypeInfo() as ResolvedEntityAtomType, basetype);
-                }
-                else if(fobject.attributes.includes("__stringof_type")) {
-                    const validator = bbinds.get("T");
-                    if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
-                        this.raiseError(t.sinfo, "Missing Validator for StringOf");
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
-                }
-                else if(fobject.attributes.includes("__asciistringof_type")) {
-                    const validator = bbinds.get("T");
-                    if(validator === undefined || !(validator.tryGetUniqueEntityTypeInfo() instanceof ResolvedValidatorEntityAtomType)) {
-                        this.raiseError(t.sinfo, "Missing Validator for ASCIIStringOf");
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedASCIIStringOfEntityAtomType.create(fobject, validator.tryGetUniqueEntityTypeInfo() as ResolvedValidatorEntityAtomType);
-                }
-                else if (fobject.attributes.includes("__path_type")) {
-                    const pvalidator = bbinds.get("T");
-                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(t.sinfo, "Missing Validator for Path");
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedPathEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
-                }
-                else if (fobject.attributes.includes("__pathfragment_type")) {
-                    const pvalidator = bbinds.get("T");
-                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(t.sinfo, "Missing Validator for PathFragment");
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedPathFragmentEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
-                }
-                else if (fobject.attributes.includes("__pathglob_type")) {
-                    const pvalidator = bbinds.get("T");
-                    if(pvalidator === undefined || !(pvalidator.tryGetUniqueEntityTypeInfo() instanceof ResolvedPathValidatorEntityAtomType)) {
-                        this.raiseError(t.sinfo, "Missing Validator for PathFragment");
-                        return ResolvedType.createInvalid();
-                    }
-
-                    rtypeatom = ResolvedPathGlobEntityAtomType.create(fobject, pvalidator.tryGetUniqueEntityTypeInfo() as ResolvedPathValidatorEntityAtomType);
-                }
-                else if (fobject.attributes.includes("__ok_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-
-                    rtypeatom = ResolvedOkEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__err_type")) {
-                    assert(bbinds.has("E"), "Missing template binding");
-                    
-                    rtypeatom = ResolvedErrEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__something_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-                    
-                    rtypeatom = ResolvedSomethingEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__mapentry_type")) {
-                    assert(bbinds.has("K"), "Missing template binding");
-                    assert(bbinds.has("V"), "Missing template binding");
-
-                    rtypeatom = ResolvedMapEntryEntityAtomType.create(fobject, bbinds.get("K") as ResolvedType, bbinds.get("V") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__havoc_type")) {
-                    rtypeatom = ResolvedHavocEntityAtomType.create(fobject);
-                }
-                else if (fobject.attributes.includes("__list_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-
-                    rtypeatom = ResolvedListEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__stack_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-
-                    rtypeatom = ResolvedStackEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__queue_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-
-                    rtypeatom = ResolvedQueueEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__set_type")) {
-                    assert(bbinds.has("T"), "Missing template binding");
-
-                    rtypeatom = ResolvedSetEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-                }
-                else if (fobject.attributes.includes("__map_type")) {
-                    assert(bbinds.has("K"), "Missing template binding");
-                    assert(bbinds.has("V"), "Missing template binding");
-
-                    rtypeatom = ResolvedMapEntityAtomType.create(fobject, bbinds.get("K") as ResolvedType, bbinds.get("V") as ResolvedType);
-                }
-                else if(fobject.attributes.includes("__typebase")) {
-                    //class representing all the primitive values (Int, Bool, String, ...). ALl of these are special implemented values
-                    rtypeatom = ResolvedPrimitiveInternalEntityAtomType.create(fobject);
-                }
-                else {
-                    rtypeatom = ResolvedObjectEntityAtomType.create(fobject, bbinds);
-                }
-
+                const rtypeatom = this.createResolvedTypeForEntityDecl(t.sinfo, fobject, bbinds);
                 rtype = rtypeatom !== undefined ? ResolvedType.createSingle(rtypeatom) : ResolvedType.createInvalid();
             }
 
@@ -6453,8 +6508,6 @@ class TypeChecker {
     }
 
     processOOConceptType(tkey: TIRTypeKey, rtype: ResolvedConceptAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
-        //nothing else to do but make sure we register the fields
-
         tdecl.memberFields.forEach((mf) => {
             const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
             const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createEmptyBindScope()));
@@ -6463,6 +6516,16 @@ class TypeChecker {
             this.m_tirFieldMap.set(fkey, tirmf);
         });
 
+        //if this is an exportable concept then we need to also process all of the subtypes!!!
+        if(this.isExportable(rtype) && tdecl.terms.length === 0) {
+            const estl = this.m_assembly.getAllEntities()
+            .map((ee) => this.createResolvedTypeForEntityDeclExportable(rtype, ee, rtype.conceptTypes[0].binds))
+            .filter((ee) =>  ee !== undefined && this.atomSubtypeOf(ee, rtype)) as ResolvedEntityAtomType[];
+            
+            estl.forEach((est) => {
+                this.toTIRTypeKey(ResolvedType.createSingle(est));
+            });
+        }
     }
 
     private processTaskType(tkey: TIRTypeKey, rtype: ResolvedTaskAtomType, tdecl: TaskTypeDecl) {

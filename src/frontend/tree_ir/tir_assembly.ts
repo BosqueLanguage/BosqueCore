@@ -303,7 +303,7 @@ abstract class TIRInvoke {
     }
 
     bsqemit_inv(): any {
-        return {invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconds: this.preconditions.map((precond) => precond.bsqemit()), postconds: this.postconditions.map((postcond) => postcond.bsqemit())};
+        return {invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconditions: this.preconditions.map((precond) => precond.bsqemit()), postconditions: this.postconditions.map((postcond) => postcond.bsqemit())};
     }
 
     abstract bsqemit(): any;
@@ -333,7 +333,7 @@ class TIRInvokeAbstractDeclaration extends TIRInvoke {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeAbstractDeclaration", "InvokeAbstractDeclaration");
         
         jv = jv[1];
-        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)));
+        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)));
     }
 }
 
@@ -354,7 +354,7 @@ class TIRInvokeImplementation extends TIRInvoke {
         
         jv = jv[1];
         const body = jv.body.map((stmt: any) => TIRStatement.bsqparse(stmt));
-        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconds.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconds.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
+        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
     }
 }
 
