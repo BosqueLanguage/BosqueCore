@@ -309,23 +309,23 @@ abstract class RegexComponent {
     static jparse(obj: any): RegexComponent {
         const tag = obj[0];
         switch (tag) {
-            case "RegexLiteral":
+            case "TreeIR::RegexLiteral":
                 return RegexLiteral.jparse(obj);
-            case "RegexCharRange":
+            case "TreeIR::RegexCharRange":
                 return RegexCharRange.jparse(obj);
-            case "RegexDotCharClass":
+            case "TreeIR::RegexDotCharClass":
                 return RegexDotCharClass.jparse(obj);
-            case "RegexConstRegexClass":
+            case "TreeIR::RegexConstRegexClass":
                 return RegexConstClass.jparse(obj);
-            case "RegexStarRepeat":
+            case "TreeIR::RegexStarRepeat":
                 return RegexStarRepeat.jparse(obj);
-            case "RegexPlusRepeat":
+            case "TreeIR::RegexPlusRepeat":
                 return RegexPlusRepeat.jparse(obj);
-            case "RegexRangeRepeat":
+            case "TreeIR::RegexRangeRepeat":
                 return RegexRangeRepeat.jparse(obj);
-            case "RegexOptional":
+            case "TreeIR::RegexOptional":
                 return RegexOptional.jparse(obj);
-            case "RegexAlternation":
+            case "TreeIR::RegexAlternation":
                 return RegexAlternation.jparse(obj);
             default:
                 return RegexSequence.jparse(obj);
@@ -345,7 +345,7 @@ class RegexLiteral extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexLiteral", {restr: this.restr, escstr: this.escstr}];
+        return ["TreeIR::RegexLiteral", {restr: this.restr, escstr: this.escstr}];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -375,7 +375,7 @@ class RegexCharRange extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexCharRange", {compliment: this.compliment, range: this.range }];
+        return ["TreeIR::RegexCharRange", {compliment: this.compliment, range: this.range }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -414,7 +414,7 @@ class RegexDotCharClass extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexDotCharClass", {}];
+        return ["TreeIR::RegexDotCharClass", {}];
     } 
 
     static jparse(obj: any): RegexComponent {
@@ -438,7 +438,7 @@ class RegexConstClass extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexConstRegexClass", { ns: this.ns, ccname: this.ccname }];
+        return ["TreeIR::RegexConstRegexClass", { ns: this.ns, ccname: this.ccname }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -461,7 +461,7 @@ class RegexStarRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexStarRepeat", { repeat: this.repeat.jemit() }];
+        return ["TreeIR::RegexStarRepeat", { repeat: this.repeat.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -483,7 +483,7 @@ class RegexPlusRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexPlusRepeat", { repeat: this.repeat.jemit() }];
+        return ["TreeIR::RegexPlusRepeat", { repeat: this.repeat.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -509,7 +509,7 @@ class RegexRangeRepeat extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexRangeRepeat", { repeat: this.repeat.jemit(), min: this.min, max: this.max }];
+        return ["TreeIR::RegexRangeRepeat", { repeat: this.repeat.jemit(), min: this.min, max: this.max }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -531,7 +531,7 @@ class RegexOptional extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexOptional", { opt: this.opt.jemit() }];
+        return ["TreeIR::RegexOptional", { opt: this.opt.jemit() }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -557,7 +557,7 @@ class RegexAlternation extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexAlternation", { opts: this.opts.map((opt) => opt.jemit()) }];
+        return ["TreeIR::RegexAlternation", { opts: this.opts.map((opt) => opt.jemit()) }];
     }
 
     static jparse(obj: any): RegexComponent {
@@ -583,7 +583,7 @@ class RegexSequence extends RegexComponent {
     }
 
     jemit(): any {
-        return ["RegexSequence", { elems: this.elems.map((elem) => elem.jemit()) }];
+        return ["TreeIR::RegexSequence", { elems: this.elems.map((elem) => elem.jemit()) }];
     }
 
     static jparse(obj: any): RegexComponent {

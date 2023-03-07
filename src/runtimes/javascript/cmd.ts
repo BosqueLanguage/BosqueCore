@@ -136,6 +136,25 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
                 + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
                 + `}\n`);
         }
+        else if(fileasm) {
+            const loadlogic = `$API.bsqMarshalParse("${epf.params[0].type}", actual_arg)`
+            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
+
+            const mainf = Path.join(into, "_main_.mjs");
+            FS.writeFileSync(mainf, `"use strict";\n`
+                + `import * as FS from "fs";\n`
+                + `import * as $API from "./api.mjs";\n`
+                + `import * as $Main from "./Main.mjs";\n\n`
+                + `const actual_arg = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
+                + `const bsq_arg = ${loadlogic};\n`
+                + `try {\n`
+                + `    const res_val = $Main.main(bsq_arg);\n`
+                + `    const jres_val = ${emitlogic};\n`
+                + `    console.log(JSON.stringify(jres_val));\n`
+                + `} catch(ex) {\n`
+                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
+                + `}\n`);
+        }
         else {
             const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse($API.cmdunescape(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1))))`).join(", ") + "]";
             const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
@@ -174,6 +193,11 @@ function buildJSDefault(into: string, srcfiles: string[]) {
 const fileargs = fullargs.includes("--fileargs");
 if(fileargs) {
     fullargs = fullargs.filter((aa) => aa !== "--fileargs");
+}
+
+const fileasm = fullargs.includes("--fileasm");
+if(fileasm) {
+    fullargs = fullargs.filter((aa) => aa !== "--fileasm");
 }
 
 let mainNamespace = "Main";

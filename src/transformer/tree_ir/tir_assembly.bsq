@@ -131,7 +131,7 @@ concept MemberDecl provides APIType {
     field tkey: TypeKey;
     field name: String;
 
-    field sourceLocation: SourceInfo;
+    field sinfo: SourceInfo;
     field srcFile: String;
 
     field attributes: List<String>;
@@ -168,7 +168,7 @@ concept Type provides APIType {
 concept OOType provides Type {
     field tname: TypeName;
 
-    field sourceLocation: SourceInfo;
+    field sinfo: SourceInfo;
     field srcFile: String;
 
     field attributes: List<String>;
@@ -387,7 +387,7 @@ entity NamespaceLambdaDecl provides APIType {
     field ikey: InvokeKey;
     field pcid: PCodeKey;
 
-    field sourceLocation: SourceInfo;
+    field sinfo: SourceInfo;
     field srcFile: String;
 
     field attributes: List<String>;
