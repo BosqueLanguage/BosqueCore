@@ -51,7 +51,7 @@ describe('List map new type', function () {
 
     describe('List{1, 2, 3}', function () {
         it('expected [1, none, 3]', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([["Int", 1], ["None", null], ["Int", 3]]);
+            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([1, null, 3]);
         });
     });
     describe('List{}', function () {
@@ -69,8 +69,8 @@ describe('List project basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('List{1, none, 3}', function () {
-        it('expected [1, none, 3]', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([["Int", 2], ["None", null], ["Int", 4]]);
+        it('expected [2, none, 4]', function () {
+            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([2, null, 4]);
         });
     });
     describe('List{}', function () {
@@ -94,7 +94,7 @@ describe('List project boxed', function () {
 
     describe('List{1, none, 3}', function () {
         it('expected ["two", "none", "three"]', function () {
-            expect(invokeExecutionOn(jsmain, [["Int", 1], ["None", null], ["Int", 3]])).to.eql(["two", "none", "three"]);
+            expect(invokeExecutionOn(jsmain, [1, null, 3])).to.eql(["two", "none", "three"]);
         });
     });
     describe('List{}', function () {
@@ -104,7 +104,7 @@ describe('List project boxed', function () {
     });
     describe('List{7, none}', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [["Int", 7], ["None", null]])).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, [7, null])).to.includes("Failed precondition");
         });
     });
 });

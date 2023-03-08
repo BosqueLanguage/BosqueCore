@@ -13,12 +13,12 @@ describe('Var Retype simple', function () {
 
     describe('process(none)', function () {
         it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.includes("error -- cannot convert value");
+            expect(invokeExecutionOn(jsmain, null)).to.includes("error -- cannot convert value");
         });
     });
     describe('process(2)', function () {
         it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 2])).to.eql(12);
+            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
         });
     });
 });
@@ -32,12 +32,12 @@ describe('Var Retype flow', function () {
 
     describe('process(none)', function () {
         it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('process(2)', function () {
         it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 2])).to.eql(12);
+            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
         });
     });
 });
@@ -52,12 +52,12 @@ describe('Var Retype join', function () {
 
     describe('process(none)', function () {
         it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(10);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(10);
         });
     });
     describe('process(2)', function () {
         it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 2])).to.eql(12);
+            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
         });
     });
 });

@@ -13,17 +13,17 @@ describe('Switch Expression basic', function () {
 
     describe('switch(none)', function () {
         it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('switch(0)', function () {
         it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 0])).to.eql(1);
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(1);
         });
     });
     describe('switch(7)', function () {
         it('expected 2', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 7])).to.eql(2);
+            expect(invokeExecutionOn(jsmain, 7)).to.eql(2);
         });
     });
 });
@@ -56,12 +56,12 @@ describe('Switch Expression infer', function () {
 
     describe('switch(none)', function () {
         it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(["Int", 0]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('switch(5)', function () {
         it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 5])).to.eql(["Int", 1]);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(1);
         });
     });
 });
@@ -75,12 +75,12 @@ describe('Switch Expression binder general', function () {
 
     describe('switch(none)', function () {
         it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('switch(5)', function () {
         it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 5])).to.eql(6);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(6);
         });
     });
 });

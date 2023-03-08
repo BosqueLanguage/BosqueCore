@@ -13,12 +13,12 @@ describe('Tic-Tac-Toe', function () {
 
     describe('process two moves', function () {
         it('expected ok(none)', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", ["None", null]]);
+            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", null]);
         });
     });
     describe('process winner', function () {
         it('expected ok(x)', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"], [1, 0, "Main::PlayerMark::x"], [1, 1, "Main::PlayerMark::o"], [2, 0, "Main::PlayerMark::x"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", ["Main::PlayerMark", "Main::PlayerMark::x"]]);
+            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"], [1, 0, "Main::PlayerMark::x"], [1, 1, "Main::PlayerMark::o"], [2, 0, "Main::PlayerMark::x"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", "Main::PlayerMark::x"]);
         });
     });
     describe('process err invalid move', function () {

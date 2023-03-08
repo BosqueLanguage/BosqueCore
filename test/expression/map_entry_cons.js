@@ -13,7 +13,7 @@ describe('Single MapEntry constructor', function () {
 
     describe('From exps and infer return', function () {
         it('expected [1i => 2i, 3i => 4i]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([[1, 2], [3, ["Int", 4]]]);
+            expect(invokeExecutionOn(jsmain)).to.eql([[1, 2], [3, 4]]);
         });
     });
 });

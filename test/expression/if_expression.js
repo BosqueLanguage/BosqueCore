@@ -36,13 +36,13 @@ describe('If Expression Boolean Conditions -- infer', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('ITE 0', function () {
-        it('expected ["None" null]', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql(["None", null]);
+        it('expected null', function () {
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(null);
         });
     });
     describe('ITE 10', function () {
         it('expected [0, 0.0, "0", 0]', function () {
-            expect(invokeExecutionOn(jsmain, 10)).to.eql(["Int", 10]);
+            expect(invokeExecutionOn(jsmain, 10)).to.eql(10);
         });
     });
 });
@@ -56,12 +56,12 @@ describe('If Expression ITest forms -- none variations', function () {
 
     describe('ITE 3', function () {
         it('expected [1, 1, 1]', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 3])).to.eql([1, 1, 1]);
+            expect(invokeExecutionOn(jsmain, 3)).to.eql([1, 1, 1]);
         });
     });
     describe('ITE none', function () {
         it('expected [0, 0, 0]', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql([0, 0, 0]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql([0, 0, 0]);
         });
     });
 });
@@ -76,12 +76,12 @@ describe('If Expression ITest binds -- none variations', function () {
 
     describe('ITE 3', function () {
         it('expected [1, 1, 1]', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 3])).to.eql([3, 3]);
+            expect(invokeExecutionOn(jsmain, 3)).to.eql([3, 3]);
         });
     });
     describe('ITE none', function () {
         it('expected [0, 0, 0]', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql([0, 0]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql([0, 0]);
         });
     });
 });

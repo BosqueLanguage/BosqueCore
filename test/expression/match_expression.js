@@ -37,12 +37,12 @@ describe('Match Expression infer', function () {
 
     describe('match(none)', function () {
         it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(["Int", 0]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('match(5)', function () {
         it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 5])).to.eql(["Int", 1]);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(1);
         });
     });
 });
@@ -56,12 +56,12 @@ describe('Match Expression binder general', function () {
 
     describe('match(none)', function () {
         it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('match(5)', function () {
         it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 5])).to.eql(6);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(6);
         });
     });
 });

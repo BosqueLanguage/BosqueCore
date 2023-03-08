@@ -360,12 +360,12 @@ CallMemberFunctionTaskExpression { }
 | CallMemberActionExpression { }
 ;
 
-entity LiteralValue {
+entity LiteralValue provides APIType {
     field exp: Expression;
     field litstr: String;
 }
 
-concept Statement {
+concept Statement provides APIType {
     field sinfo: SourceInfo;
 }
 
@@ -566,7 +566,6 @@ entity LoggerSetPrefixStatement provides Statement {
 }
 
 datatype BlockStatement provides APIType using {
-    field stmtstr: String;
     field ops: List<Statement>;
     field isterminal: Bool;
 } of 

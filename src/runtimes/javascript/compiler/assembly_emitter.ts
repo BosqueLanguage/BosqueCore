@@ -748,7 +748,17 @@ class AssemblyEmitter {
     }
 
     private emitTIRUnionType_ParseEmit(ttype: TIRUnionType): { parse: string, emit: string } {
-        return { parse: "tryParseUnion(jv)", emit: "tryEmitUnion(nv)" };
+        if(ttype.options.length === 2 && ttype.options.includes("None")) {
+            const other = ttype.options.find((oo) => oo !== "None") as TIRTypeKey;
+
+            const parse = `{ if(jv === null) { return $Runtime.UnionValue.create("None", null); } else { return $Runtime.UnionValue.create("${other}", ioMarshalMap.get("${other}").parse(jv)); } }`;
+            const emit = `nv.tkey === "None" ? null : ioMarshalMap.get("${other}").emit(nv.value)`;
+
+            return { parse: parse, emit: emit };
+        }
+        else {
+            return { parse: "tryParseUnion(jv)", emit: "tryEmitUnion(nv)" };
+        }
     }
 
     private emitTIRType_ParseEmit(ttype: TIRType): { parse: string, emit: string } | undefined {

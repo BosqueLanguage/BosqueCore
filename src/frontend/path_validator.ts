@@ -1,7 +1,7 @@
 import * as assert  from "assert";
 import { BSQRegex } from "./bsqregex";
 
-class PathValidator {
+class BSQPathValidator {
     readonly scheme: string | undefined;
     readonly userinfo: BSQRegex | undefined;
     readonly host: BSQRegex | undefined;
@@ -45,8 +45,8 @@ class PathValidator {
             fragment: this.fragment ? this.fragment.jemit() : null
         };
     }
-    static jparse(obj: any): PathValidator {
-        return new PathValidator(
+    static jparse(obj: any): BSQPathValidator {
+        return new BSQPathValidator(
             obj.scheme || undefined,
             obj.userinfo ? BSQRegex.jparse(obj.userinfo) : undefined,
             obj.host ? BSQRegex.jparse(obj.host) : undefined,
@@ -80,5 +80,5 @@ class PathValidator {
 }
 
 export {
-    PathValidator
+    BSQPathValidator
 };

@@ -51,12 +51,12 @@ describe('If statement binder', function () {
 
     describe('process(none)', function () {
         it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('process(5)', function () {
         it('expected 4', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 5])).to.eql(4);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(4);
         });
     });
 });
@@ -70,12 +70,12 @@ describe('If statement flow join', function () {
 
     describe('process(none)', function () {
         it('expected none', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(["None", null]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(null);
         });
     });
     describe('process(5)', function () {
         it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 5])).to.eql(["Int", 6]);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(6);
         });
     });
 });
