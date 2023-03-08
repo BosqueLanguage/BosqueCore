@@ -124,12 +124,12 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             FS.writeFileSync(mainf, `"use strict";\n`
                 + `import * as FS from "fs";\n`
                 + `import * as $API from "./api.mjs";\n`
-                + `import * as $Main from "./Main.mjs";\n\n`
+                + `import * as ${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
                 + `const actual_args = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
                 + `if(!Array.isArray(actual_args) || actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args\\n"); process.exit(0); }\n\n`
                 + `const bsq_args = ${loadlogic};\n`
                 + `try {\n`
-                + `    const res_val = $Main.main(...bsq_args);\n`
+                + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
                 + `    const jres_val = ${emitlogic};\n`
                 + `    console.log(JSON.stringify(jres_val));\n`
                 + `} catch(ex) {\n`
@@ -144,11 +144,11 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             FS.writeFileSync(mainf, `"use strict";\n`
                 + `import * as FS from "fs";\n`
                 + `import * as $API from "./api.mjs";\n`
-                + `import * as $Main from "./Main.mjs";\n\n`
+                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
                 + `const actual_arg = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
                 + `const bsq_arg = ${loadlogic};\n`
                 + `try {\n`
-                + `    const res_val = $Main.main(bsq_arg);\n`
+                + `    const res_val = $${mainNamespace}.${mainFunction}(bsq_arg);\n`
                 + `    const jres_val = ${emitlogic};\n`
                 + `    console.log(JSON.stringify(jres_val));\n`
                 + `} catch(ex) {\n`
@@ -162,12 +162,12 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             const mainf = Path.join(into, "_main_.mjs");
             FS.writeFileSync(mainf, `"use strict";\n`
                 + `import * as $API from "./api.mjs";\n`
-                + `import * as $Main from "./Main.mjs";\n\n`
+                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
                 + `const actual_args = process.argv.slice(2);\n`
                 + `if(actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args but got " + actual_args.length + " args\\n"); process.exit(0); }\n\n`
                 + `const bsq_args = ${loadlogic};\n`
                 + `try {\n`
-                + `    const res_val = $Main.main(...bsq_args);\n`
+                + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
                 + `    const jres_val = ${emitlogic};\n`
                 + `    console.log(JSON.stringify(jres_val));\n`
                 + `} catch(ex) {\n`

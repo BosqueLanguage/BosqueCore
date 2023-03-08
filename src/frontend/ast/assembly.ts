@@ -8,7 +8,7 @@ import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpress
 
 import { BuildLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
-import { PathValidator } from "../path_validator";
+import { BSQPathValidator } from "../path_validator";
 
 class TemplateTermDecl {
     readonly name: string;
@@ -642,7 +642,7 @@ class Assembly {
 
     m_literalRegexs: BSQRegex[] = [];
     m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
-    m_validatorPaths: Map<string, PathValidator> = new Map<string, PathValidator>();
+    m_validatorPaths: Map<string, BSQPathValidator> = new Map<string, BSQPathValidator>();
 
     tryGetConceptTypeForFullyResolvedName(name: string): ConceptTypeDecl | undefined {
         return this.m_conceptMap.get(name);
@@ -660,7 +660,7 @@ class Assembly {
         return this.m_validatorRegexs.get(name);
     }
 
-    tryGetPathValidatorForFullyResolvedName(name: string): PathValidator | undefined {
+    tryGetPathValidatorForFullyResolvedName(name: string): BSQPathValidator | undefined {
         return this.m_validatorPaths.get(name);
     }
 
@@ -710,7 +710,7 @@ class Assembly {
         this.m_validatorRegexs.set(resolvedName, this.m_literalRegexs[ere]);
     }
 
-    addValidatorPath(resolvedName: string, validator: PathValidator) {
+    addValidatorPath(resolvedName: string, validator: BSQPathValidator) {
         this.m_validatorPaths.set(resolvedName, validator);
     }
 
@@ -730,7 +730,6 @@ export {
     TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
-    PathValidator,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
     StringTemplate,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,

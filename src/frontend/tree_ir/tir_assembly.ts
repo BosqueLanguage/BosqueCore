@@ -3,7 +3,7 @@ import { TIRExpression, TIRLiteralValue, TIRStatement } from "./tir_body";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
-import { PathValidator } from "../path_validator";
+import { BSQPathValidator } from "../path_validator";
 
 function assert(cond: boolean, msg: string) {
     if(!cond) {
@@ -454,7 +454,7 @@ class TIRStaticFunctionDecl extends TIRMemberDecl {
     }
 
     bsqemit(): any {
-        return ["TreeIR::StaticFunctionDecl", {...this.bsqemit_decl(), invoke: this.invoke.bsqemit()}];
+        return ["TreeIR::StaticFunctionDecl", {...this.bsqemit_decl(), ikey: this.ikey, invoke: this.invoke.bsqemit()}];
     }
     static bsqparse(jv: any): TIRStaticFunctionDecl {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::StaticFunctionDecl", "StaticFunctionDecl");
@@ -496,7 +496,7 @@ class TIRMemberMethodDecl extends TIRMemberDecl {
     }
 
     bsqemit() {
-        return ["TreeIR::MemberMethodDecl", {...this.bsqemit_decl(), invoke: this.invoke.bsqemit()}];
+        return ["TreeIR::MemberMethodDecl", {...this.bsqemit_decl(), ikey: this.ikey, invoke: this.invoke.bsqemit()}];
     }
     static bsqparse(jv: any): TIRMemberMethodDecl {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::MemberMethodDecl", "MemberMethodDecl");
@@ -732,9 +732,9 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly apivalidates: TIRTypedeclValidateDecl[] = [];
 
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
-    readonly pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
+    readonly pthvalidator: {vtype: TIRTypeKey, vpth: BSQPathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: PathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean, isexportable: boolean) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: BSQPathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean, isexportable: boolean) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
         this.valuetype = valuetype;
         this.representation = representation;
@@ -751,7 +751,7 @@ class TIRTypedeclEntityType extends TIREntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::TypedeclEntityType", "TypedeclEntityType");
         
         jv = jv[1];
-        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: PathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype, jv.isexportable);
+        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: BSQPathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype, jv.isexportable);
         TIROOType.bsqparse_ooinfo(jv, rr);
         
         rr.consinvariantsall.push(...jv.consinvariantsall.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
@@ -860,9 +860,9 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
 
 //class representing PathValidator types
 class TIRPathValidatorEntityType extends TIRInternalEntityType {
-    readonly pthvalidator: PathValidator;
+    readonly pthvalidator: BSQPathValidator;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: PathValidator) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: BSQPathValidator) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
         this.pthvalidator = pthvalidator;
     }
@@ -872,7 +872,7 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     }
     static bsqparse(jv: any): TIRPathValidatorEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::PathValidatorEntityType", "PathValidatorEntityType");
-        const rr = new TIRPathValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, PathValidator.jparse(jv[1].pthvalidator));
+        const rr = new TIRPathValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, BSQPathValidator.jparse(jv[1].pthvalidator));
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -882,9 +882,9 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
 //class representing a Path<T> type
 class TIRPathEntityType extends TIRInternalEntityType {
     readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
+    readonly pthvalidator: BSQPathValidator;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
@@ -895,7 +895,7 @@ class TIRPathEntityType extends TIRInternalEntityType {
     }
     static bsqparse(jv: any): TIRPathEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::PathEntityType", "PathEntityType");
-        const rr = new TIRPathEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        const rr = new TIRPathEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -905,9 +905,9 @@ class TIRPathEntityType extends TIRInternalEntityType {
 //class representing a PathFragment<T> type
 class TIRPathFragmentEntityType extends TIRInternalEntityType {
     readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
+    readonly pthvalidator: BSQPathValidator;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
@@ -918,7 +918,7 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
     }
     static bsqparse(jv: any): TIRPathFragmentEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::PathFragmentEntityType", "PathFragmentEntityType");
-        const rr = new TIRPathFragmentEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        const rr = new TIRPathFragmentEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -927,9 +927,9 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
 
 class TIRPathGlobEntityType extends TIRInternalEntityType {
     readonly validatortype: TIRTypeKey //TIRPathValidatorEntityType;
-    readonly pthvalidator: PathValidator;
+    readonly pthvalidator: BSQPathValidator;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: PathValidator) {
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
@@ -940,7 +940,7 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
     }
     static bsqparse(jv: any): TIRPathGlobEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::PathGlobEntityType", "PathGlobEntityType");
-        const rr = new TIRPathGlobEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, PathValidator.jparse(jv[1].pthvalidator));
+        const rr = new TIRPathGlobEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1696,7 +1696,7 @@ class TIRAssembly {
 
     readonly literalRegexs: BSQRegex[];
     readonly validatorRegexs: Map<string, BSQRegex>;
-    readonly validatorPaths: Map<string, PathValidator>;
+    readonly validatorPaths: Map<string, BSQPathValidator>;
 
     getNamespace(ns: string): TIRNamespaceDeclaration {
         assert(this.namespaceMap.has(ns), "Missing namespace?");
@@ -1708,7 +1708,7 @@ class TIRAssembly {
         return this.typeMap.get(tkey) as T;
     }
 
-    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], validatorRegexs: Map<string, BSQRegex>, validatorPaths: Map<string, PathValidator>) {
+    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], validatorRegexs: Map<string, BSQRegex>, validatorPaths: Map<string, BSQPathValidator>) {
         this.namespaceMap = namespaceMap;
         this.typeMap = typeMap;
         this.fieldMap = fieldMap;
@@ -1752,8 +1752,8 @@ class TIRAssembly {
         const validatorRegexs = new Map<string, BSQRegex>();
         jv.validatorRegexs.forEach((e: any) => validatorRegexs.set(e[0], BSQRegex.jparse(e[1])));
         
-        const validatorPaths = new Map<string, PathValidator>();
-        jv.validatorPaths.forEach((e: any) => validatorPaths.set(e[0], PathValidator.jparse(e[1])));
+        const validatorPaths = new Map<string, BSQPathValidator>();
+        jv.validatorPaths.forEach((e: any) => validatorPaths.set(e[0], BSQPathValidator.jparse(e[1])));
         
         return new TIRAssembly(nsmap, typemap, fieldmap, invokemap, pcodemap, literalRegexs, validatorRegexs, validatorPaths);
     }

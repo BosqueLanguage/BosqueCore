@@ -213,7 +213,7 @@ entity TypedeclEntityType provides EntityType {
     field apivalidates: List<TypedeclValidateDecl>;
 
     field strvalidator: {vtype: TypeKey, vre: BSQRegex}?; //ValidatorEntityType;
-    field pthvalidator: {vtype: TypeKey, vpth: PathValidator, kind: StringOf<PathKindValidator>}?; //PathValidatorEntityType;
+    field pthvalidator: {vtype: TypeKey, vpth: BSQPathValidator, kind: StringOf<PathKindValidator>}?; //PathValidatorEntityType;
 }
 
 //base class for all the primitive types that are defined
@@ -243,24 +243,24 @@ entity ASCIIStringOfEntityType provides InternalEntityType {
 
 //class representing PathValidator types
 entity PathValidatorEntityType provides InternalEntityType {
-    field pthvalidator: PathValidator;
+    field pthvalidator: BSQPathValidator;
 }
 
 //class representing a Path<T> type
 entity PathEntityType provides InternalEntityType {
     field validatortype: TypeKey; //PathValidatorEntityType;
-    field pthvalidator: PathValidator;
+    field pthvalidator: BSQPathValidator;
 }
 
 //class representing a PathFragment<T> type
 entity PathFragmentEntityType provides InternalEntityType {
     field validatortype: TypeKey; //PathValidatorEntityType;
-    field pthvalidator: PathValidator;
+    field pthvalidator: BSQPathValidator;
 }
 
 entity PathGlobEntityType provides InternalEntityType {
     field validatortype: TypeKey; //PathValidatorEntityType;
-    field pthvalidator: PathValidator;
+    field pthvalidator: BSQPathValidator;
 }
 
 //class representing Ok, Err, Something types
@@ -295,27 +295,27 @@ concept PrimitiveCollectionEntityType provides InternalEntityType {
 }
 
 //class representing List<T>
-concept ListEntityType provides PrimitiveCollectionEntityType {
+entity ListEntityType provides PrimitiveCollectionEntityType {
     field typeT: TypeKey;
 }
 
 //class representing Stack<T>
-concept StackEntityType provides PrimitiveCollectionEntityType {
+entity StackEntityType provides PrimitiveCollectionEntityType {
     field typeT: TypeKey;
 }
 
 //class representing Queue<T>
-concept QueueEntityType provides PrimitiveCollectionEntityType {
+entity QueueEntityType provides PrimitiveCollectionEntityType {
     field typeT: TypeKey;
 }
 
 //class representing Set<T>
-concept SetEntityType provides PrimitiveCollectionEntityType {
+entity SetEntityType provides PrimitiveCollectionEntityType {
     field typeT: TypeKey;
 }
 
 //class representing Map<K, V>
-concept MapEntityType provides PrimitiveCollectionEntityType {
+entity MapEntityType provides PrimitiveCollectionEntityType {
     field typeK: TypeKey;
     field typeV: TypeKey;
 }
@@ -462,5 +462,5 @@ entity Assembly provides APIType {
 
     field literalRegexs: List<BSQRegex>;
     field validatorRegexs: Map<String, BSQRegex>;
-    field validatorPaths: Map<String, PathValidator>;
+    field validatorPaths: Map<String, BSQPathValidator>;
 }
