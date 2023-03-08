@@ -65,12 +65,12 @@ describe('Infer record', function () {
 
     describe('process(0)', function () {
         it('expected {f=0, g=none}', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql({f:0, g:["None", null]});
+            expect(invokeExecutionOn(jsmain, 0)).to.eql({f:0, g:null});
         });
     });
     describe('process(5)', function () {
         it('expected {f=5, g=true}', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql({f:5, g:["Bool", true]});
+            expect(invokeExecutionOn(jsmain, 5)).to.eql({f:5, g:true});
         });
     });
 });

@@ -13,12 +13,12 @@ describe('Result union', function () {
 
     describe('process(0n)', function () {
         it('expected union none', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql(["None", null]);
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(null);
         });
     });
     describe('process(5n)', function () {
         it('expected union 5n', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(["Nat", 5]);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql(5);
         });
     });
 });

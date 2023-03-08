@@ -66,12 +66,12 @@ describe('Infer tuple', function () {
 
     describe('process(0)', function () {
         it('expected [0, none]', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql([0, ["None", null]]);
+            expect(invokeExecutionOn(jsmain, 0)).to.eql([0, null]);
         });
     });
     describe('process(5)', function () {
         it('expected [5, true]', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql([5, ["Bool", true]]);
+            expect(invokeExecutionOn(jsmain, 5)).to.eql([5, true]);
         });
     });
 });

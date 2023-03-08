@@ -13,7 +13,7 @@ describe('Var Declaration with Let -- basic', function () {
 
     describe('declare', function () {
         it('expected [1, [1, "hello"]]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([1, [["Int", 1], "hello"]]);
+            expect(invokeExecutionOn(jsmain)).to.eql([1, [1, "hello"]]);
         });
     });
 });
@@ -27,7 +27,7 @@ describe('Var Declaration with Var -- basic', function () {
 
     describe('declare', function () {
         it('expected [2, [1, "hello"], 5]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([2, [["Int", 1], "hello"], 5]);
+            expect(invokeExecutionOn(jsmain)).to.eql([2, [1, "hello"], 5]);
         });
     });
 });

@@ -56,12 +56,12 @@ describe('List filterType basic', function () {
 
     describe('List{3i, none, 1i}', function () {
         it('expected [3, 1]', function () {
-            expect(invokeExecutionOn(jsmain, [["Int", 3], ["None", null], ["Int", 1]])).to.eql([3, 1]);
+            expect(invokeExecutionOn(jsmain, [3, null, 1])).to.eql([3, 1]);
         });
     });
     describe('List{3i, 2i, 0i}', function () {
         it('expected [3, 2, 0]', function () {
-            expect(invokeExecutionOn(jsmain, [["Int", 3], ["Int", 2], ["Int", 0]])).to.eql([3, 2, 0]);
+            expect(invokeExecutionOn(jsmain, [3, 2, 0])).to.eql([3, 2, 0]);
         });
     });
 });

@@ -55,17 +55,17 @@ describe('Eq Mixed Key', function () {
 
     describe('checks hello', function () {
         it('expected [true, false]', function () {
-            expect(invokeExecutionOn(jsmain, ["String", "hello"])).to.eql([true, false]);
+            expect(invokeExecutionOn(jsmain, "hello")).to.eql([true, false]);
         });
     });
     describe('checks goodbye', function () {
         it('expected [false, true]', function () {
-            expect(invokeExecutionOn(jsmain, ["String", "goodbye"])).to.eql([false, true]);
+            expect(invokeExecutionOn(jsmain, "goodbye")).to.eql([false, true]);
         });
     });
     describe('checks none', function () {
         it('expected [false, true]', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql([false, true]);
+            expect(invokeExecutionOn(jsmain, null)).to.eql([false, true]);
         });
     });
 });

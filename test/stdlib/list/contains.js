@@ -13,12 +13,12 @@ describe('List Contains basic', function () {
 
     describe('List{0, 0, 0}', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain, [["Int", 0], ["Int", 0], ["Int", 0]])).to.eql(false);
+            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.eql(false);
         });
     });
     describe('List{none, 3}', function () {
         it('expected true', function () {
-            expect(invokeExecutionOn(jsmain, [["None", null], ["Int", 3]])).to.eql(true);
+            expect(invokeExecutionOn(jsmain, [null, 3])).to.eql(true);
         });
     });
     describe('List{}', function () {

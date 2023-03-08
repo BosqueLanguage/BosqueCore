@@ -166,17 +166,17 @@ describe('Binders & Flow (flowit)', function () {
 
     describe('flowit(none)', function () {
         it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
         });
     });
     describe('flowit(0)', function () {
         it('expected 10', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 0])).to.eql(10);
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(10);
         });
     });
     describe('flowit(7)', function () {
         it('expected 17', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 7])).to.eql(17);
+            expect(invokeExecutionOn(jsmain, 7)).to.eql(17);
         });
     });
 });
@@ -190,17 +190,17 @@ describe('Binders & Flow (restrict)', function () {
 
     describe('restrict(none)', function () {
         it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+            expect(invokeExecutionOn(jsmain,  null)).to.eql(0);
         });
     });
     describe('restrict(0)', function () {
         it('expected 10', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 0])).to.eql(10);
+            expect(invokeExecutionOn(jsmain, 0)).to.eql(10);
         });
     });
     describe('restrict(7)', function () {
         it('expected 17', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 7])).to.eql(17);
+            expect(invokeExecutionOn(jsmain, 7)).to.eql(17);
         });
     });
 });

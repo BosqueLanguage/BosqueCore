@@ -360,7 +360,7 @@ CallMemberFunctionTaskExpression { }
 | CallMemberActionExpression { }
 ;
 
-entity LiteralValue {
+entity LiteralValue provides APIType {
     field exp: Expression;
     field litstr: String;
 }
