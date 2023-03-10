@@ -1,0 +1,52 @@
+namespace SMTEmit;
+
+entity SMTEncodingSymbol {
+    const coloncolon = "@cc-";
+    const comma = "@c-";
+    const commaspace = "@c_-";
+    const lparen = "@lp-";
+    const rparen = "@rp-";
+    const lbracket = "@lb-";
+    const rbracket = "@rb-";
+    const langle = "@la-";
+    const randle = "@ra-";
+}
+
+function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
+    return ns.value();
+}
+
+function smtifyType(tkey: TreeIR::TypeKey): String {
+    //eplace special characters with @enc@
+    xxxx;
+}
+
+function smtifyIdentifier(ii: TreeIR::Identifier): String {
+    return ii.value();
+}
+
+function emitTypeName(tkey: TreeIR::TypeKey): String {
+    //TODO: mapping from types to special names and/or cleaning
+    if(tkey === "None"TreeIR::TypeKey) {
+        return "None";
+    }
+    else if(tkey === "Bool"TreeIR::TypeKey) {
+        return "Bool";
+    }
+    else if(tkey === "Int"TreeIR::TypeKey) {
+        return "Int";
+    }
+    else if(tkey === "Nat"TreeIR::TypeKey) {
+        return "Int";
+    }
+    else {
+        //let ttype = this.assembly.typeMap.get(tt);
+        //match on type options here
+        return smtifyType(tkey);
+    }
+}
+
+function typeEncodedAsUnion(tt: TreeIR::TypeKey): Bool {
+    let ttype = this.assembly.typeMap.get(tt);
+    return (ttype?TreeIR::ConceptType || ttype?TreeIR::UnionType);
+}

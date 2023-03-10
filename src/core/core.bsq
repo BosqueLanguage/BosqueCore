@@ -163,6 +163,12 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
     function interpolate(): String = special_method;
 
     /*
+    fromNat(n: Nat): String {
+        return StringOps::s_natToStr(n);
+    }
+
+    //TODO: other fromX operations
+
     method startsWith(v: String | Regex): Bool {
         use RE(.*)
     }
@@ -175,19 +181,19 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
         use (.*)RE(.*)
     }
 
-    method extractFront(v: String | Regex): String, String {
+    method extractFront(v: String | Regex): String {
         use search on RE(.*) -- take maximal slice
     }
 
-    method extractEnd(v: String | Regex): String, String {
+    method extractEnd(v: String | Regex): String {
         use search on (.*)RE -- take maximal slice
     }
 
-    method removeFront(v: String | Regex): String, String {
+    method removeFront(v: String | Regex): String {
         use search on RE(.*) -- take maximal slice
     }
 
-    method removeEnd(v: String | Regex): String, String {
+    method removeEnd(v: String | Regex): String {
         use search on (.*)RE -- take maximal slice
     }
 

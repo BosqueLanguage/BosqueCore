@@ -1,1 +1,54 @@
 namespace SMTEmit;
+
+import TreeIR;
+
+entity NamespaceEmitter {
+    field assembly: TreeIR::Assembly;
+    field ns: TreeIR::NamespaceIdentifier;
+    field: decl: TreeITR::NamespaceDeclaration;
+
+}
+
+entity AssemblyEmitter {
+    field assembly: TreeIR::Assembly;
+
+    method processAssembly(): String {
+        return "[NOT IMPLEMENTED]"
+    };
+
+    generateSMTCode(corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
+        return this.processAssembly();
+/*
+        let outmodules: {nsname: string, contents: string}[] = [
+            {   
+                nsname: "corelibs.mjs",
+                contents: corecode
+                    .replace("//--GENERATED_$KeyEqualOps--", [...this.keyeqinfo].map((ke) => `$KeyEqualOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
+                    .replace("//--GENERATED_$KeyLessOps--", [...this.keyeqinfo].map((ke) => `$KeyLessOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
+            },
+            {   
+                nsname: "runtime.mjs",
+                contents: runtimecode
+                    .replace("//--GENERATED_$subtypesetup--", [
+                        ...[...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", {direct: new Set([${sti[1].map((st) => "\"" + st + "\"").join(", ")}]), indirect: [] });`),
+                        ...[...this.unionsubtypeinfo].map((usi) => `subtypeMap.set("${usi[0]}", {direct: new Set([${usi[1].simpletypes.map((st) => "\"" + st + "\"").join(", ")}]), indirect: [${usi[1].concepts.map((st) => "\"" + st + "\"").join(", ")}] });`)
+                        ].join("\n")
+                    )
+                    .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map([${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}]));`).join("\n"))
+            },
+            {   
+                nsname: "api.mjs",
+                contents: apicode
+                .replace("//--GENERATED_$usermodules--", [...this.namespacedecls].map((nsi) => `import * as ${nsi[0]} from "./${nsi[0]}.mjs";`).join("\n"))
+                .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
+            }
+        ];
+
+        this.namespacedecls.forEach((nsd, name) => {
+            outmodules.push({nsname: `${name}.mjs`, contents: nsd});
+        });
+
+        return outmodules;
+*/
+    }
+}

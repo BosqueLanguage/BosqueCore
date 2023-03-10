@@ -5,7 +5,6 @@ import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
 
-
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
         throw new Error((msg || "error")  + " -- assembly_emitter.ts");
