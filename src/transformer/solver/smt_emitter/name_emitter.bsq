@@ -18,10 +18,16 @@ function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
 
 function smtifyType(tkey: TreeIR::TypeKey): String {
     //eplace special characters with @enc@
-    xxxx;
+    return ii.value();
 }
 
 function smtifyIdentifier(ii: TreeIR::Identifier): String {
+    return ii.value();
+}
+
+
+function smtifyInvokeKey(ii: TreeIR::InvokeKey): String {
+    //TODO: replace special characters with @enc@
     return ii.value();
 }
 
@@ -39,6 +45,31 @@ function emitTypeName(tkey: TreeIR::TypeKey): String {
     else if(tkey === "Nat"TreeIR::TypeKey) {
         return "Int";
     }
+    else if(tkey === "BigInt"TreeIR::TypeKey) {
+        return "Int";
+    }
+    else if(tkey === "BigNat"TreeIR::TypeKey) {
+        return "Int";
+    }
+    else if(tkey === "Rational"TreeIR::TypeKey) {
+        return "@Rational";
+    }
+    else if(tkey === "Float"TreeIR::TypeKey) {
+        return "@Float";
+    }
+    else if(tkey === "Decimal"TreeIR::TypeKey) {
+        return "@Decimal";
+    }
+    else if(tkey === "String"TreeIR::TypeKey) {
+        return "String";
+    }
+    else if(tkey === "ASCIIString"TreeIR::TypeKey) {
+        return "String";
+    }
+    else if(tkey === "ByteBuffer"TreeIR::TypeKey) {
+        return "(Seq (_ BitVec 8))";
+    }
+
     else {
         //let ttype = this.assembly.typeMap.get(tt);
         //match on type options here
