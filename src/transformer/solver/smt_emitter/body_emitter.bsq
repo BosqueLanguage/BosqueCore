@@ -23,6 +23,10 @@ enum ArgExpErrorKind {
     any
 }
 
+function joinArgExpErrorKinds(k1: ArgExpErrorKind, k2: ArgExpErrorKind): ArgExpErrorKind {
+    return if(k1 === k2) then k1 else ArgExpErrorKind::any;
+}
+
 datatype ArgExp using {
     field vexp: String;
     field exp: String;
@@ -105,7 +109,7 @@ entity BodyEmitter {
         }
         else {
             let ae = arg@ArgErrorOption;
-            let iassign = String.concat(List<String>{"(", ee.vraw, " ", ee.vexp, ")"});
+            let iassign = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
             let ichk = String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"});
             let errret = this.buildErrRetUnary(arg);
             let okassign = String.concat(List<String>{"(", ee.vok, " (@Result-value ", ae.vraw, "))"});
@@ -155,20 +159,29 @@ entity BodyEmitter {
         if(/\(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
             return [opexp, ArgExpErrorKind::safe];
         }
-        elif(arglhs?ArgOkOption) {
-            return xxxx;
-        }
-        elif(argrhs?ArgOkOption) {
-            return xxxx;
+        elif(\/(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
+            let ae = if<ArgErrorOption>(arglhs) then arglhs@ArgErrorOption else argrhs@ArgErrorOption;
+
+            let iassign = String.concat(List<String>{"(", ee.vraw, " ", ee.vexp, ")"});
+            let ichk = String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"});
+            let errret = this.buildErrRetUnary(arg);
+            let okassign = String.concat(List<String>{"(", ee.vok, " (@Result-value ", ae.vraw, "))"});
+
+            let opstr = String.concat(List<String>{
+                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", okassigns, ")\n", 
+                    indent, "  ", opexp, 
+                "\n", indent, ")))"
+            });
+
+            return [opstr, errret.1];
         }
         else {
-            xxxx;
+            let chkexps = List<ArgErrorOption>{arglhs@ArgErrorOption, argrhs@ArgErrorOption};
 
-            let chkexps = args.filterType<ArgErrorOption>();
-            let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ee.vraw, " ", ee.vexp, ")"}));
+            let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"}));
             let ichk = String::concat(List<String>{"(or ", String::join(" ", chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"})))});
             let errret = this.buildErrRet(chkexps);
-            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ee.vok, " (@Result-value ", ae.vraw, "))"}));
+            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " (@Result-value ", ae.vraw, "))"}));
 
             let opstr = String.concat(List<String>{
                 indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", String::join(" ", okassigns), ")\n", 
@@ -179,8 +192,6 @@ entity BodyEmitter {
             return [opstr, errret.1];
         }
     }
-
-////////////////////////////////////////////////////////
 
     recursive method processArgsItems(args: List<Expression>, depth: Nat, idx: Nat, indent: String): List<ArgExp> {
         return args.mapIdx<ArgExp>(recursive fn(exp: Expression, ii: Nat): ArgExp {
@@ -455,39 +466,49 @@ entity BodyEmitter {
         return this.buildOp(argexps, opexp, indent);
     }
 
-    method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression, toplevel: boolean): String {
-        const nexp = `!${this.emitExpression(exp.exp)}`;
-        return toplevel ? nexp : ("(" + nexp + ")");
+    method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
+        let opexp = this.applyBuilderUnary("not", argexp);
+
+        return this.buildOpUnary(argexp, opexp, indent);
     }
 
-    method processArithOpResult(restype: TreeIR::TypeKey, dataop: String, depth: Nat, indent: String): [String, ArgExpErrorKind]
+    method processArithOpResult(restype: TreeIR::TypeKey, dataop: String): [String, ArgExpErrorKind]
         let ttype = this.assembly.typeMap.get(restype);
         if(ttype?TreeIR::TypedeclEntityType) {
             if(ttype.consinvariantsall.empty()) {
-                return dataop;
+                return [dataop, ArgExpErrorKind::safe];
             }
             else {
-                return "[NOT IMPLEMENTED processArithOpResult]";
+                return ["[NOT IMPLEMENTED processArithOpResult]", ArgExpErrorKind::any];
             }
         }
         else {
-            return dataop;
+            return [dataop, ArgExpErrorKind::safe];
         }
     }
 
-    method emitPrefixNegateOpExpression(exp: TIRPrefixNegateExpression, toplevel: boolean): String {
-        let nexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            nexp = `${this.emitExpression(exp.exp)}.neg()`;
+    method emitPrefixNegateOpExpression(exp: TReeIR::PrefixNegateExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        let nexp: String;
+        if(exp.etype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_unary";
         }
-        else if(exp.etype === "Decimal") {
-            nexp = `${this.emitExpression(exp.exp)}.neg()`;
+        else if(exp.etype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_unary";
+        }
+        else if(exp.etype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_unary";
         }
         else {
-            nexp = `-${this.emitExpression(exp.exp)}`;
+            nexp = "-";
         }
 
-        return this.processArithOpResult(exp.etype, toplevel ? nexp : ("(" + nexp + ")"));
+        let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
+        let opexp = this.applyBuilderUnary(nexp, argexp);
+        let finalexp = this.processArithOpResult(exp.etype, opexp);
+        let rop = this.buildOpUnary(argexp, finalexp.0, indent);
+
+        return [rop.0, joinArgExpErrorKinds(rop.1, finalexp.1)];
     }
 
     method emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): String {
