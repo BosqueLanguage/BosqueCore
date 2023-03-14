@@ -20,11 +20,20 @@ enum ArgExpErrorKind {
     target,
     other,
     resource,
-    any
+    anyT,
+    anyO
 }
 
 function joinArgExpErrorKinds(k1: ArgExpErrorKind, k2: ArgExpErrorKind): ArgExpErrorKind {
-    return if(k1 === k2) then k1 else ArgExpErrorKind::any;
+    if(k1 === k2) {
+        return k1;
+    }
+    elif(\/(k1 === ArgExpErrorKind::target, k1 === ArgExpErrorKind::anyT, k2 === ArgExpErrorKind::target, k2 === ArgExpErrorKind::anyT)) {
+        return ArgExpErrorKind::anyT;
+    }
+    else {
+        return ArgExpErrorKind::anyO;
+    }
 }
 
 datatype ArgExp using {
@@ -53,13 +62,19 @@ entity BodyEmitter {
     field ns: TreeIR::NamespaceIdentifier;
 
     field expectedResultType: TreeIR::TypeKey;
+    field resultMaybeTargetErr: Bool;
 
     method processErrorConversion(exp: String, trgtType: TreeIR::TypeKey): String {
         if(trgtType === this.expectedResultType) {
             return exp;
         }
         else {
-            return String::concat(List<String>{"(@Result-mk-err (@Result-error ", exp, "))"});
+            if(this.resultMaybeTargetErr) {
+                return String::concat(List<String>{"(@ResultT-mk-err (@ResultT-error ", exp, "))"});
+            }
+            else {
+                return String::concat(List<String>{"(@ResultO-mk-err (@ResultO-error ", exp, "))"});
+            }
         }
     }
 

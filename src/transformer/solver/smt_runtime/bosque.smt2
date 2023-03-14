@@ -17,19 +17,23 @@
 ;;Make sure they are all different values
 (assert (distinct @error-target @error-other @error-resource))
 
-;;@Result datatype and 2 constructors
+;;@Result datatypes
 (declare-datatypes 
     (
-        (@Result 1)
+        (@ResultT 1)
+        (@ResultO 1)
     ) 
     (
         (par (T) (
-            (@Result-mk-err (@Result-error @ErrorKind))
-            (@Result-mk-ok (@Result-value T))
+            (@ResultT-mk-err (@ResultT-error @ErrorKind))
+            (@ResultT-mk-ok (@ResultT-value T))
+        ))
+        (par (T) (
+            (@ResultO-mk-err (@ResulO-error @ErrorKind))
+            (@ResultO-mk-ok (@ResultO-value T))
         ))
     )
 )
-
 
 ;;
 ;;Support for numerics
