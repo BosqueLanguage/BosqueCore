@@ -146,7 +146,7 @@ entity BodyEmitter {
         }
     }
 
-    function processResultWrapGeneral(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, operr: ArgErrorKind): String {
+    function processResultWrapGeneral(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, operr: ArgErrorKind, depth: Nat): String {
         if(experr === ArgErrorKind::safe) {
             return exp;
         }
@@ -158,8 +158,13 @@ entity BodyEmitter {
                 return BodyEmitter::buildMakeOk(exp, exptype, operr);
             }
             else {
-                xxxx; //TODO need to do ok and error cases here + dynamic check if anyT
-                return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, operr), exptype, experr);
+                let vrwg = String.concat(List<String>{"@rwg", "-", String::fromNat(depth)});
+
+                return String::concat(List<String>{"(let ((", vrwg, " ", exp, "))", "(ite ", 
+                    BodyEmitter::buildErrorIsTest(exp, operr), 
+                        " ", BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(vrwg, operr), exptype, experr), 
+                        " ", BodyEmitter::buildMakeOk(BodyEmitter::buildValueExtract(vrwg, operr), exptype, experr),
+                    "))"});
             }
         }
     }
@@ -500,7 +505,7 @@ entity BodyEmitter {
         let trgterr = computeTargetErrorKind(argexps); 
 
         xxxx; //TODO -- preconditions
-        let opexp = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey));
+        let opexp = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
 
         return this.buildOp(argexps, exp.etype, trgterr, opexp, indent);
     }
