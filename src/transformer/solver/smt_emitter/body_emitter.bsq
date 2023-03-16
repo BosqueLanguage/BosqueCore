@@ -24,11 +24,23 @@ enum ArgExpErrorKind {
     anyO
 }
 
+function isSafeErrorKind(k: ArgExpErrorKind): Bool {
+    return k === ArgExpErrorKind::safe;
+}
+
+function isOtherErrorKind(k: ArgExpErrorKind): Bool {
+    return /\(k !== ArgExpErrorKind::safe, k !== ArgErrorKind::target, k !== ArgExpErrorKind::anyT);
+}
+
+function isTargetErrorKind(k: ArgExpErrorKind): Bool {
+    return \/(k === ArgExpErrorKind::target, k === ArgErrorKind::anyT);
+}
+
 function joinArgExpErrorKinds(k1: ArgExpErrorKind, k2: ArgExpErrorKind): ArgExpErrorKind {
     if(k1 === k2) {
         return k1;
     }
-    elif(\/(k1 === ArgExpErrorKind::target, k1 === ArgExpErrorKind::anyT, k2 === ArgExpErrorKind::target, k2 === ArgExpErrorKind::anyT)) {
+    elif(\/(isTargetErrorKind(k1), isTargetErrorKind(k2))) {
         return ArgExpErrorKind::anyT;
     }
     else {
@@ -36,15 +48,19 @@ function joinArgExpErrorKinds(k1: ArgExpErrorKind, k2: ArgExpErrorKind): ArgExpE
     }
 }
 
+function computeTargetErrorKind(l: List<ArgErrorOption>): ArgExpErrorKind {
+    return l.reduce<ArgExpErrorKind>(ArgExpErrorKind::safe, fn(acc: ArgErrorKind, opt: ArgErrorOption): ArgErrorKind => joinArgExpErrorKinds(acc, opt.errkind));
+}
+
 datatype ArgExp using {
-    field vexp: String;
     field exp: String;
+    field vexp: String;
+    field argtype: TreeIR::TypeKey;
 }
 of
 ArgOkOption { }
 | ArgErrorOption {
     field vraw: String; //The variable to store this raw expression into
-    field convexp: String; //The expression to convert the raw expression into the correct error type
     field vok: String; //The variable to store/use when there is no error
     field errkind: ArgExpErrorKind;
 }
@@ -61,150 +77,184 @@ entity BodyEmitter {
     field file: String;
     field ns: TreeIR::NamespaceIdentifier;
 
+    field invokeErrMap: Map<TreeIR::InvokeKey, ArgErrorKind>;
     field expectedResultType: TreeIR::TypeKey;
-    field resultMaybeTargetErr: Bool;
+    field resultErrKind: ArgErrorKind;
 
-    method processErrorConversion(exp: String, trgtType: TreeIR::TypeKey): String {
-        if(trgtType === this.expectedResultType) {
+    function buildErrorIsTest(evar: String, errkind: ArgErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String.concat(List<String>{"((_ is) @ResultO-mk-err ", evar, ")"});
+        }
+        else {
+            return String.concat(List<String>{"((_ is) @ResultT-mk-err ", evar, ")"});
+        }
+    }
+
+    function buildErrorExtract(evar: String, errkind: ArgErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String.concat(List<String>{"(@ResultO-error ", evar, ")"});
+        }
+        else {
+            return String.concat(List<String>{"(@ResultT-error ", evar, ")"});
+        }
+    }
+
+    function buildValueExtract(okvar: String, errkind: ArgErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String.concat(List<String>{"(@ResultO-value ", okvar, ")"});
+        }
+        else {
+            return String.concat(List<String>{"(@ResultT-value ", okvar, ")"});
+        }
+    }
+
+    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String.concat(List<String>{"(@ResultO-mk-err ", evar, ")"});
+        }
+        else {
+            return String.concat(List<String>{"(@ResultT-mk-err ", evar, ")"});
+        }
+    }
+
+    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String.concat(List<String>{"(@ResultO-mk-ok ", okvar, ")"});
+        }
+        else {
+            return String.concat(List<String>{"(@ResultT-mk-ok ", okvar, ")"});
+        }
+    }
+
+    function processArgExpErrorPassthrough(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): String {
+        assert(/\(!isSafeErrorKind(experr), !isSafeErrorKind(trgterr)));
+
+        if(/\(exptype === trgttype, isTargetErrorKind(experr) === isTargetErrorKind(trgterr))) {
             return exp;
         }
         else {
-            if(this.resultMaybeTargetErr) {
-                return String::concat(List<String>{"(@ResultT-mk-err (@ResultT-error ", exp, "))"});
+            return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, experr), trgttype, trgterr);
+        }
+    }
+
+    function processResultWrapSafe(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind): String {
+        if(experr === ArgErrorKind::safe) {
+            return exp;
+        }
+        else {
+            return BodyEmitter::buildMakeOk(exp, exptype, experr);
+        }
+    }
+
+    function processResultWrapGeneral(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, operr: ArgErrorKind): String {
+        if(experr === ArgErrorKind::safe) {
+            return exp;
+        }
+        else {
+            if(isTargetErrorKind(experr) === isTargetErrorKind(operr)) {
+               return exp;
+            }
+            elif(isSafeErrorKind(operr)) {
+                return BodyEmitter::buildMakeOk(exp, exptype, operr);
             }
             else {
-                return String::concat(List<String>{"(@ResultO-mk-err (@ResultO-error ", exp, "))"});
+                xxxx; //TODO need to do ok and error cases here + dynamic check if anyT
+                return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, operr), exptype, experr);
             }
+        }
+    }
+
+    recursive method processArgSingle(exp: Expression, depth: Nat, idx: Nat, indent: String): ArgExp {
+        let vv = this.emit[recursive](exp, depth + 1n, idx + ii, indent);
+
+        if(vv.einfo === ArgExpErrorKind::safe) {
+            return ArgOkOption{String::concat(List<String>{indent, vv.exp}), vv.exp, exp.etype};
+        }
+        else {
+            let vraw = String.concat(List<String>{"@r", "-", String::fromNat(depth) + "-" + String.fromNat(idx + ii)});
+            let vok = String.concat(List<String>{vraw, "-vv"});
+
+            return ArgErrorOption{ee.exp, vok, exp.etype, vraw, vok, vv.einfo};
         }
     }
 
     ////
     //Specialize arg processing for single argument ops
-    recursive method processArgSingle(exp: Expression, depth: Nat, idx: Nat, indent: String): ArgExp {
-        let vv = this.emit[recursive](exp, depth + 1n, idx + ii, indent);
 
-        if(vv.einfo === ArgExpErrorKind::safe) {
-            return ArgOkOption{vv.exp, String::concat(List<String>{indent, vv.exp})};
-        }
-        else {
-            let vraw = String.concat(List<String>{"@r", "-", String::fromNat(depth) + "-" + String.fromNat(idx + ii)});
-            let vok = String.concat(List<String>{vraw, "-vv"});
-            let convexp = this.emitConvertError(vraw, vv.einfo, exp.etype);
-
-            return ArgErrorOption{ee.exp, vok, vraw, convexp, vok, vv.einfo};
-        }
-    }
-
-    method buildErrRetSelectUnary(opt: ArgErrorOption): String {
-        return opts.getSingleton().convexp;
-    }
-
-    method buildErrRetUnary(opt: ArgErrorOption): [String, ArgExpErrorKind] {
-        if(opt.errkind === ArgExpErrorKind::target) {
-            return ["(@Result-mk-err @error-target)", ArgExpErrorKind::target];
-        }
-        else if(opt.errkind === ArgExpErrorKind::resource) {
-            return ["(@Result-mk-err @error-resource)", ArgExpErrorKind::resource]
-        }
-        else if(opt.errkind === ArgExpErrorKind::other) {
-            return ["(@Result-mk-err @error-other)", ArgExpErrorKind::other]
-        }
-        else {
-            return [this.buildErrRetSelectUnary(aops), ArgExpErrorKind::any];
-        }
-    }
-
-    method applyBuilderUnary(op: String, argexp: ArgExp>: String {
+    method applyBuilderUnary(op: String, argexp: ArgExp): String {
         return String::concat("(", op, " ", argexp.vexp, ")");
     }
 
-    method buildOpUnary(arg: ArgExp, opexp: String, indent: String): [String, ArgExpErrorKind] {
+    method buildOpUnary(arg: ArgExp, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
         if(arg?ArgOkOption) {
             return [opexp, ArgExpErrorKind::safe];
         }
         else {
             let ae = arg@ArgErrorOption;
-            let iassign = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
-            let ichk = String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"});
-            let errret = this.buildErrRetUnary(arg);
-            let okassign = String.concat(List<String>{"(", ee.vok, " (@Result-value ", ae.vraw, "))"});
+            let iassigns = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
+            let okassigns = String.concat(List<String>{"(", ee.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"});
+            let vconv = BodyEmitter::processArgExpErrorPassthrough(ae.vraw, ae.argtype, ae.einfo, trgttype, trgterr);
 
             let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", okassigns, ")\n", 
-                    indent, "  ", opexp, 
+                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo), " ", vconv, " (let (", okassigns, ")\n", 
+                    indent, "  ", opexp,
                 "\n", indent, ")))"
             });
 
-            return [opstr, errret.1];
+            return [opstr, opexp.einfo];
         }
     }
 
-/////////////////////////////////////////////////////////
-
     ////
-    //Specialize arg processing for single argument ops
+    //Specialize arg processing for binary argument ops
     recursive method processArgItemsBinary(arglhs: Expression, argrhs: Expression, depth: Nat, idx: Nat, indent: String): [ArgExp, ArgExp] {
         return [this.processArgSingle[recursive](arglhs, depth, idx, indent), this.processArgSingle[recursive](argrhs, depth, idx + 1n, indent)];
     }
 
-    method buildErrRetSelectBinary(optlhs: ArgErrorOption, optrhs: ArgErrorOption): String {
-        return String.concat(List<String>{"(ite ", "((_ is) @Result-mk-err ", optlhs.vraw, "))", " ", optlhs.convexp, " ", optrhs.convexp, ")"});
-    }
+    method buildArgErrPassthroughBinary(optlhs: ArgErrorOption, optrhs: ArgErrorOption, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): [String, ArgExpErrorKind] {
+        let lhsconv = BodyEmitter::processArgExpErrorPassthrough(optlhs.vraw, optlhs.argtype, optlhs.einfo, trgttype, trgterr);
+        let rhsconv = BodyEmitter::processArgExpErrorPassthrough(optrhs.vraw, optrhs.argtype, optrhs.einfo, trgttype, trgterr);
 
-    method buildErrRetSelectBinary(optlhs: ArgErrorOption, optrhs: ArgErrorOption): [String, ArgExpErrorKind] {
-        if(\/(optlhs.errkind === ArgExpErrorKind::target, optrhs.errkind === ArgExpErrorKind::target)) {
-            return ["(@Result-mk-err @error-target)", ArgExpErrorKind::target];
-        }
-        else if(\/(optlhs.errkind === ArgExpErrorKind::resource, optrhs.errkind === ArgExpErrorKind::resource)) {
-            return ["(@Result-mk-err @error-resource)", ArgExpErrorKind::resource]
-        }
-        else if(\/(optlhs.errkind === ArgExpErrorKind::other, optrhs.errkind === ArgExpErrorKind::other)) {
-            return ["(@Result-mk-err @error-other)", ArgExpErrorKind::other]
-        }
-        else {
-            return [this.buildErrRetSelect(aops), ArgExpErrorKind::any];
-        }
+        return [String.concat(List<String>{"(ite ", BodyEmitter::buildErrorIsTest(optlhs.vraw, this.resultErrKind), " ", lhsconv, " ", rhsconv, ")"}), joinArgExpErrorKinds(optlhs.einfo, optrhs.einfo)];
     }
 
     method applyBuilderBinary(op: String, arglhs: ArgExp, argrhs: ArgExp): String {
         return String::concat("(", op, " ", arglhs, " ", argrhs, ")");
     }
 
-    method buildOpBinary(arglhs: ArgExp, argrhs: ArgExp, opexp: String, indent: String): [String, ArgExpErrorKind] {
+    method buildOpBinary(arglhs: ArgExp, argrhs: ArgExp, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
         if(/\(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
             return [opexp, ArgExpErrorKind::safe];
         }
         elif(\/(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
             let ae = if<ArgErrorOption>(arglhs) then arglhs@ArgErrorOption else argrhs@ArgErrorOption;
-
-            let iassign = String.concat(List<String>{"(", ee.vraw, " ", ee.vexp, ")"});
-            let ichk = String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"});
-            let errret = this.buildErrRetUnary(arg);
-            let okassign = String.concat(List<String>{"(", ee.vok, " (@Result-value ", ae.vraw, "))"});
+            let iassigns = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
+            let okassigns = String.concat(List<String>{"(", ee.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"});
+            let vconv = BodyEmitter::processArgExpErrorPassthrough(ae.vraw, ae.argtype, ae.einfo, trgttype, trgterr);
 
             let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", okassigns, ")\n", 
+                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo), " ", vconv, " (let (", okassigns, ")\n", 
                     indent, "  ", opexp, 
                 "\n", indent, ")))"
             });
 
-            return [opstr, errret.1];
+            return [opstr, ae.einfo];
         }
         else {
             let chkexps = List<ArgErrorOption>{arglhs@ArgErrorOption, argrhs@ArgErrorOption};
 
             let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"}));
-            let ichk = String::concat(List<String>{"(or ", String::join(" ", chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"})))});
-            let errret = this.buildErrRet(chkexps);
-            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " (@Result-value ", ae.vraw, "))"}));
+            let ichk = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo));
+            let erropt = this.buildArgErrPassthroughBinary(chkexps[0], chkexps[1], trgttype, trgterr);
+            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"}));
 
             let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", String::join(" ", okassigns), ")\n", 
+                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite (or ", String::join(", ", ichk), " ) ", erropt.0,  " (let (", String::join(" ", okassigns), ")\n", 
                     indent, "  ", opexp, 
                 "\n", indent, ")))"
             });
 
-            return [opstr, errret.1];
+            return [opstr, erropt.1];
         }
     }
 
@@ -214,30 +264,32 @@ entity BodyEmitter {
         });
     }
 
-    recursive method buildErrRetSelect(opts: List<ArgErrorOption>): String {
+    recursive method buildErrPassthrough(opts: List<ArgErrorOption>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): String {
         if(opts.isSingleton()) {
-            return opts.getSingleton().convexp;
+            let opt = opts.getSingleton();
+            return BodyEmitter::processArgExpErrorPassthrough(opt.vraw, opt.argtype, opt.einfo, trgttype, trgterr);
         }
         else {
             let opt = opts.front();
             return String.concat(List<String>{
-                "(ite ", "((_ is) @Result-mk-err ", ae.vraw, "))", " ", head.convexp, " ", this.buildErrRetSelect[recursive](tail), ")"
+                "(ite ", BodyEmitter::buildErrorIsTest(opt.vraw, opt.einfo), " ", BodyEmitter::processArgExpErrorPassthrough(opt.vraw, opt.argtype, opt.einfo, trgttype, trgterr), " ", this.buildErrPassthrough[recursive](opts.popFront()), ")"
             });
         }
     }
 
-    method buildErrRet(opts: List<ArgErrorOption>): [String, ArgExpErrorKind] {
+    method buildErrRet(opts: List<ArgErrorOption>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): [String, ArgExpErrorKind] {
         if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::target)) {
-            return ["(@Result-mk-err @error-target)", ArgExpErrorKind::target];
+            return [this.buildMakeError("@error-target", trgttype, trgterr), ArgExpErrorKind::target];
         }
         else if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::resource)) {
-            return ["(@Result-mk-err @error-resource)", ArgExpErrorKind::resource]
+            return [this.buildMakeError("@error-resource", trgttype, trgterr), ArgExpErrorKind::resource]
         }
         else if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::other)) {
-            return ["(@Result-mk-err @error-other)", ArgExpErrorKind::other]
+            return [this.buildMakeError("@error-other", trgttype, trgterr), ArgExpErrorKind::other]
         }
         else {
-            return [this.buildErrRetSelect(aops), ArgExpErrorKind::any];
+            let anyopt = if (aops.someOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::target)) then ArgExpErrorKind::anyT else ArgExpErrorKind::anyO;
+            return [this.buildErrPassthrough(aops, trgttype, trgterr), anyopt];
         }
     }
 
@@ -245,108 +297,109 @@ entity BodyEmitter {
         return String::concat("(", op, " ", String::join(" ", argexps.map(fn(argexp) => argexp.vexp)), ")");
     }
 
-    method buildOp(args: List<ArgExp>, opexp: String, indent: String): [String, ArgExpErrorKind] {
+    method buildOp(args: List<ArgExp>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
         if(args.allOf(pred(ae: ArgExp): Bool => a?ArgOkOption)) {
             return [opexp, ArgExpErrorKind::safe];
         }
         else {
             let chkexps = args.filterType<ArgErrorOption>();
+
             let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"}));
-            let ichk = String::concat(List<String>{"(or ", String::join(" ", chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String::concat(List<String>{"((_ is) @Result-mk-err ", ae.vraw, "))"})))});
-            let errret = this.buildErrRet(chkexps);
-            let okassigns = String::join(" ", chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " (@Result-value ", ae.vraw, "))"})));
+            let ichk = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo));
+            let erropt = this.buildErrRet(chkexps, trgttype, trgterr);
+            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"}));
 
             let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", ichk, " ", errret.0, " (let (", okassigns, ")\n", 
+                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite (or ", String::join(", ", ichk), " ) ", erropt.0,  " (let (", String::join(" ", okassigns), ")\n", 
                     indent, "  ", opexp, 
                 "\n", indent, ")))"
             });
 
-            return [opstr, errret.1];
+            return [opstr, erropt.1];
         }
     }
 
-    method emitLiteralNoneExpression(exp: TreeIR::LiteralNoneExpression): String {
-        return "@none";
+    method emitLiteralNoneExpression(exp: TreeIR::LiteralNoneExpression): [String, ArgExpErrorKind] {
+        return ["@none", ArgExpErrorKind::safe];
     }
 
-    method emitLiteralNothingExpression(exp: TreeIR::LiteralNothingExpression): String {
-        return "@nothing";
+    method emitLiteralNothingExpression(exp: TreeIR::LiteralNothingExpression): [String, ArgExpErrorKind] {
+        return ["@nothing", ArgExpErrorKind::safe];
     }
     
-    method emitLiteralBoolExpression(exp: TreeIR::LiteralBoolExpression): String {
-        return if(exp.value) then "true" else "false";
+    method emitLiteralBoolExpression(exp: TreeIR::LiteralBoolExpression): [String, ArgExpErrorKind] {
+        return [if(exp.value) then "true" else "false", ArgExpErrorKind::safe];
     }
 
-    method emitLiteralIntegralExpression(exp: TreeIR::LiteralIntegralExpression): String {
-        return exp.expstr.removeEnd("n");
+    method emitLiteralIntegralExpression(exp: TreeIR::LiteralIntegralExpression): [String, ArgExpErrorKind] {
+        return [exp.expstr.removeEnd("n"), ArgExpErrorKind::safe];
     }
 
-    method emitLiteralRationalExpression(exp: TreeIR::LiteralRationalExpression): String {
-        return String.concat(List<String>{"@Rational_uninterp(", exp.expstr, ")"});
+    method emitLiteralRationalExpression(exp: TreeIR::LiteralRationalExpression): [String, ArgExpErrorKind] {
+        return [String.concat(List<String>{"@Rational_uninterp(", exp.expstr, ")"}), ArgExpErrorKind::safe];
     }
 
-    method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): String {
-        let fstr: String = if(exp.etype === "Float") then exp.value.removeEnd("f") else exp.value.removeEnd("d");
+    method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): [String, ArgExpErrorKind] {
+        let fstr: String = if(exp.etype === "Float") then exp.value.removeEnd("f") else exp.value.removeEnd("d"), ArgExpErrorKind::safe];
 
         if(fstr === "0.0") {
-            return if(exp.etype === "Float") then "@Float_0" else "@Decimal_0";
+            return [if(exp.etype === "Float") then "@Float_0" else "@Decimal_0", ArgExpErrorKind::safe];
         }
         else {
-            return if(exp.etype === "Float") then String.concat(List<String>{"@Float_uninterp(", exp.expstr, ")"}) else String.concat(List<String>{"@Decimal_uninterp(", exp.expstr, ")"});
+            return [if(exp.etype === "Float") then String.concat(List<String>{"@Float_uninterp(", exp.expstr, ")"}) else String.concat(List<String>{"@Decimal_uninterp(", exp.expstr, ")"}), ArgExpErrorKind::safe];
         }
     }
 
-    method emitLiteralRegexExpression(exp: TreeIR::LiteralRegexExpression): String {
-        return "[Not Implemented Regex]";
+    method emitLiteralRegexExpression(exp: TreeIR::LiteralRegexExpression): [String, ArgExpErrorKind] {
+        return ["[NOT IMPLEMENTED Regex]", ArgExpErrorKind::safe];
     }
 
-    method emitLiteralStringExpression(exp: TreeIR::LiteralStringExpression): String {
-        return extractLiteralStringValue(exp.value, false);
+    method emitLiteralStringExpression(exp: TreeIR::LiteralStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
 
-    method emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): String {
-        return extractLiteralASCIIStringValue(exp.value, false);
+    method emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
     
-    method emitLiteralTypedStringExpression(exp: TreeIR::LiteralTypedStringExpression): String {
-        return extractLiteralStringValue(exp.value, false);
+    method emitLiteralTypedStringExpression(exp: TreeIR::LiteralTypedStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
 
-    method emitLiteralASCIITypedStringExpression(exp: TreeIR::LiteralASCIITypedStringExpression): String {
-        return extractLiteralASCIIStringValue(exp.value, false);
+    method emitLiteralASCIITypedStringExpression(exp: TreeIR::LiteralASCIITypedStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
     
-    method emitLiteralTemplateStringExpression(exp: TreeIR::LiteralTemplateStringExpression): String {
-        return extractLiteralStringValue(exp.value, false);
+    method emitLiteralTemplateStringExpression(exp: TreeIR::LiteralTemplateStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
 
-    method emitLiteralASCIITemplateStringExpression(exp: TreeIR::LiteralASCIITemplateStringExpression): String {
-        return extractLiteralASCIIStringValue(exp.value, false);
+    method emitLiteralASCIITemplateStringExpression(exp: TreeIR::LiteralASCIITemplateStringExpression): [String, ArgExpErrorKind] {
+        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
     }
     
-    method emitLiteralTypedPrimitiveDirectExpression(exp: TreeIR::LiteralTypedPrimitiveDirectExpression): String {
-        return "[NOT IMPLEMENTED TypedPrimitiveDirect]";
+    method emitLiteralTypedPrimitiveDirectExpression(exp: TreeIR::LiteralTypedPrimitiveDirectExpression): [String, ArgExpErrorKind] {
+        return ["[NOT IMPLEMENTED TypedPrimitiveDirect]", ArgExpErrorKind::safe];
     }
 
-    method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): String {
-        return "[NOT IMPLEMENTED TypedPrimitiveConstructor]";
+    method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, ArgExpErrorKind] {
+        return ["[NOT IMPLEMENTED TypedPrimitiveConstructor]", ArgExpErrorKind::safe];
     }
 
-    method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): String {
-        return "[NOT IMPLEMENTED EnvValue]";
+    method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): [String, ArgExpErrorKind] {
+        return ["[NOT IMPLEMENTED EnvValue]", ArgExpErrorKind::safe];
     }
 
-    method emitAccessNamespaceConstantExpression(exp: TreeIR::AccessNamespaceConstantExpression): String {
-        return String.concat(List<String>{smtifyNamespace(exp.ns), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
+    method emitAccessNamespaceConstantExpression(exp: TreeIR::AccessNamespaceConstantExpression): [String, ArgExpErrorKind] {
+        return [String.concat(List<String>{smtifyNamespace(exp.ns), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)}), ArgExpErrorKind::safe];
     }
 
-    method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): String {
-        return String.concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
+    method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): [String, ArgExpErrorKind] {
+        return [String.concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)}), ArgExpErrorKind::safe];
     }
 
-    method emitAccessVariableExpression(exp: TreeIR::AccessVariableExpression): String {
-        return smtifyIdentifier(exp.name);
+    method emitAccessVariableExpression(exp: TreeIR::AccessVariableExpression): [String, ArgExpErrorKind] {
+        return [smtifyIdentifier(exp.name), ArgExpErrorKind::safe];
     }
 /*
     method emitAccessCapturedVariableExpression(exp: TIRAccessCapturedVariableExpression): String {
@@ -444,9 +497,12 @@ entity BodyEmitter {
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
 
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let opexp = this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps);
+        let trgterr = computeTargetErrorKind(argexps); 
 
-        return this.buildOp(argexps, opexp, indent);
+        xxxx; //TODO -- preconditions
+        let opexp = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey));
+
+        return this.buildOp(argexps, exp.etype, trgterr, opexp, indent);
     }
 /*
     method emitCallNamespaceOperatorExpression(exp: TIRCallNamespaceOperatorExpression): String {
@@ -469,9 +525,10 @@ entity BodyEmitter {
 */
     method emitLogicActionAndExpression(exp: TreeIR::LogicActionAndExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let opexp = this.applyBuilder("and", argexps);
+        let trgterr = computeTargetErrorKind(argexps); 
 
-        return this.buildOp(argexps, opexp, indent);
+        let opexp = BodyEmitter::processResultWrap(this.applyBuilder("and", argexps), "Bool", trgterr);
+        return this.buildOp(argexps, "Bool", trgterr, opexp, indent);
     }
 
     method emitLogicActionOrExpression(exp: TreeIR::LogicActionOrExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {

@@ -60,3 +60,35 @@
 (declare-fun @Float_binary (@Float @Float) @Float)
 (declare-fun @Decimal_binary (@Decimal @Decimal) @Decimal)
 (declare-fun @Rational_bainry (@Rational @Rational) @Rational)
+
+;;
+;; Primitive datatypes 
+;;
+(declare-datatypes (
+      (@None 0)
+      (@Nothing 0)
+      ; Bool -> Bool
+      ; Int -> Int
+      ; Nat -> Int
+      ; BigInt -> Int
+      ; BigNat -> Int
+      ; Float -> @Float 
+      ; Decimal -> @Decimal
+      ; Rational -> @Rational
+      ; String -> String
+      ; ByteBuffer -> @ByteBuffer
+      ; DateTime -> @DateTime
+      ; UTCDateTime -> @UTCDateTime
+      ; PlainDate -> @PlainDate
+      ; PlainTime -> @PlainTime
+      ; TickTime -> Int
+      ; LogicalTime -> Int
+      ; ISOTimeStamp -> @ISOTimeStamp
+      ; UUID4 -> @UUID4
+      ; UUID7 -> @UUID7
+      ; SHAContentHash -> (_ BitVec 16)
+      ; LatLongCoordinate -> @LatLongCoordinate
+    ) (
+      ( (@none) ) 
+      ( (@nothing) )
+))
