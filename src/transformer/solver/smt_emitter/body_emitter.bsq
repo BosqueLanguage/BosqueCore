@@ -504,8 +504,18 @@ entity BodyEmitter {
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
         let trgterr = computeTargetErrorKind(argexps); 
 
-        xxxx; //TODO -- preconditions
-        let opexp = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
+        let invdecl = this.assembly.invokeMap.get(invk.ikey);
+        var opex = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
+        if(!invdecl.preconditions.empty()) {
+            abort;
+            /*
+            let pbvar_prefix = String::concat(List<String>{"@pre_", depth.toString(), })
+            var prebinds = invdecl.params.map<String>((pp) => String::concat(List<String>{"(", pbvar, pp.name, " ", argexps.}));
+            let condapps = yyy;
+
+            xxxx;
+            */  
+        }
 
         return this.buildOp(argexps, exp.etype, trgterr, opexp, indent);
     }
