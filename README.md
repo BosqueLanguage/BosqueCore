@@ -9,7 +9,7 @@
 
 Bosque is an open-source project focused on developing a new Programming Language and Development Tooling Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the ideas that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.
 
-Features in the **_Bosque Programming Language_** include [typed strings and paths](docs/language/expressions.md), [block-syntax](#sgn), functor-libs [TODO], dynamic operator multi-dispatch [TODO], ref methods [TODO], explicit-flow typing/binding [TODO], [typedecls & datatypes](docs/language/types.md), task-flows [TODO], and extensive logical assertion integration [TODO]. Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
+Features in the **_Bosque Programming Language_** include [typed strings](#typed-strings) and paths[TODO], [block-syntax](#sgn), [functor-libs](#flibs), dynamic operator multi-dispatch [TODO], [ref methods](#ref-methods), explicit-flow [typing/binding](#typing-binding), [typedecls](#typedecls) & [datatypes](#datatypes), [task-flows](#tasks), and extensive logical assertion integration (including [data invariants](#invariants)). Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
 
 The **_Bosque Development Stack_** provides state of the art observability and debugging features (including time-travel debugging) [TODO], a novel symbolic testing framework ([prototype](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/checker)), and, with the introduction of APITypes [TODO], a new way to version and validate package behaviors. These features provide a developers with the ability to generate tests for an API before a line of code is even written, test against imported code (or external services) using auto-generated mocks and, check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs! The testing tools allow for deep analysis of code flows in an application and can find compact debuggable inputs that trigger and error or failing test *or* prove that there is no small input that will trigger the error! For any bugs that do make it into the wild the ability to record and then locally replay the exact error accelerates their diagnosis resolution as well as makes _non-repro_ and _intermitent_ issues a thing of the past. 
 
@@ -41,6 +41,7 @@ add2(3i, 4f) //type error -- defined on Nat but given Int and Float args
 add2(3, 4)   //type error -- all numeric literals must have kind specifier
 ```
 
+<a name="flibs"></a>
 **All positive check using rest parameters and lambda:**
 ```none
 function allPositive(args: List<Int>): Bool {
@@ -72,6 +73,7 @@ sign(5i)    //1
 sign(-5i)   //-1
 ```
 
+<a name="invariants"></a>
 **Nominal Types with Multi-Inheritance & Data Invariants:**
 ```
 concept WithName {
@@ -110,6 +112,7 @@ NamedGreeting{""}.sayHello()         //invariant error
 NamedGreeting{"bob"}.sayHello()      //"hello bob"
 ```
 
+<a name="typedecl"></a>
 **Typedecl Types**
 ```
 typedecl Fahrenheit = Int;
@@ -133,6 +136,7 @@ isFreezing(-5i_Celsius) //true
 
 ```
 
+<a name="ref-methods"></a>
 **Ref Methods:**
 ```
 entity Counter {
@@ -155,6 +159,7 @@ let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
 let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
 ```
 
+<a name="typing-binding"></a>
 **Flow and Binders:**
 ```
 function flowit(x: Nat?): Nat {
@@ -178,6 +183,7 @@ function restrict(x: Nat?): Nat {
 }
 ```
 
+<a name="datatypes"></a>
 **(Algebraic Data Types)++ and Union Types**
 ```
 datatype BoolOp using {
@@ -216,6 +222,7 @@ printType(none) //"n"
 
 ```
 
+<a name="typed-strings"></a>
 **Validated Strings:**
 ```
 typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
