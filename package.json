@@ -36,6 +36,7 @@
         "bosque": "./impl/bin/cmd/bosque.js"
     },
     "engines": {
-        "node": ">=16.0"
+        "node": ">=16.0.0",
+        "typescript": ">=5.0.0"
     }
 }

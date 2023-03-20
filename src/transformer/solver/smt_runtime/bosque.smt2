@@ -17,19 +17,23 @@
 ;;Make sure they are all different values
 (assert (distinct @error-target @error-other @error-resource))
 
-;;@Result datatype and 2 constructors
+;;@Result datatypes
 (declare-datatypes 
     (
-        (@Result 1)
+        (@ResultT 1)
+        (@ResultO 1)
     ) 
     (
         (par (T) (
-            (@Result-mk-err (@Result-error @ErrorKind))
-            (@Result-mk-ok (@Result-value T))
+            (@ResultT-mk-err (@ResultT-error @ErrorKind))
+            (@ResultT-mk-ok (@ResultT-value T))
+        ))
+        (par (T) (
+            (@ResultO-mk-err (@ResulO-error @ErrorKind))
+            (@ResultO-mk-ok (@ResultO-value T))
         ))
     )
 )
-
 
 ;;
 ;;Support for numerics
@@ -56,3 +60,35 @@
 (declare-fun @Float_binary (@Float @Float) @Float)
 (declare-fun @Decimal_binary (@Decimal @Decimal) @Decimal)
 (declare-fun @Rational_bainry (@Rational @Rational) @Rational)
+
+;;
+;; Primitive datatypes 
+;;
+(declare-datatypes (
+      (@None 0)
+      (@Nothing 0)
+      ; Bool -> Bool
+      ; Int -> Int
+      ; Nat -> Int
+      ; BigInt -> Int
+      ; BigNat -> Int
+      ; Float -> @Float 
+      ; Decimal -> @Decimal
+      ; Rational -> @Rational
+      ; String -> String
+      ; ByteBuffer -> @ByteBuffer
+      ; DateTime -> @DateTime
+      ; UTCDateTime -> @UTCDateTime
+      ; PlainDate -> @PlainDate
+      ; PlainTime -> @PlainTime
+      ; TickTime -> Int
+      ; LogicalTime -> Int
+      ; ISOTimeStamp -> @ISOTimeStamp
+      ; UUID4 -> @UUID4
+      ; UUID7 -> @UUID7
+      ; SHAContentHash -> (_ BitVec 16)
+      ; LatLongCoordinate -> @LatLongCoordinate
+    ) (
+      ( (@none) ) 
+      ( (@nothing) )
+))

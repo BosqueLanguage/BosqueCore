@@ -381,6 +381,10 @@ __internal __typedeclable __typebase entity PlainTime provides Some, APIType, Ke
     }
 }
 
+//
+//TODO: Duration type!
+//
+
 //<summary>Primitive TickTime value (TIA time).</summary>
 __internal __typedeclable __typebase entity TickTime provides Some, KeyType APIType {
 }
