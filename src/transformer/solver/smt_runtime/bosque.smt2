@@ -53,13 +53,54 @@
 
 ;;TODO: maybe want to have template for all FP constants and declare distinct
 
-(declare-fun @Float_unary (@Float) @Float)
-(declare-fun @Decimal_unary (@Decimal) @Decimal)
-(declare-fun @Rational_unary (@Rational) @Rational)
+(declare-fun @Float_negate (@Float) @Float)
+(declare-fun @Float_add (@Float @Float) @Float)
+(declare-fun @Float_sub (@Float @Float) @Float)
+(declare-fun @Float_mult (@Float @Float) @Float)
+(declare-fun @Float_div (@Float @Float) @Float)
 
-(declare-fun @Float_binary (@Float @Float) @Float)
-(declare-fun @Decimal_binary (@Decimal @Decimal) @Decimal)
-(declare-fun @Rational_bainry (@Rational @Rational) @Rational)
+(declare-fun @Decimal_unary (@Decimal) @Decimal)
+(declare-fun @Decimal_add (@Decimal @Decimal) @Decimal)
+(declare-fun @Decimal_sub (@Decimal @Decimal) @Decimal)
+(declare-fun @Decimal_mult (@Decimal @Decimal) @Decimal)
+(declare-fun @Decimal_div (@Decimal @Decimal) @Decimal)
+
+(declare-fun @Rational_unary (@Rational) @Rational)
+(declare-fun @Rational_add (@Rational @Rational) @Rational)
+(declare-fun @Rational_sub (@Rational @Rational) @Rational)
+(declare-fun @Rational_mult (@Rational @Rational) @Rational)
+(declare-fun @Rational_div (@Rational @Rational) @Rational)
+
+;;NLA options
+(declare-fun @Nat_mult (@Nat @Nat) @Nat)
+(declare-fun @Nat_div (@Nat @Nat) @Nat)
+
+(declare-fun @Int_mult (@Int @Int) @Int)
+(declare-fun @Int_div (@Int @Int) @Int)
+
+(declare-fun @BigNat_mult (@BigNat @BigNat) @BigNat)
+(declare-fun @BigNat_div (@BigNat @BigNat) @BigNat)
+
+(declare-fun @BigInt_mult (@BigInt @BigInt) @BigInt)
+(declare-fun @BigInt_div (@BigInt @BigInt) @BigInt)
+
+;;Checked arith operations
+
+(define-fun @Nat_checked_trgt_sub ((x Int) (y Int)) (@ResultT Int) 
+  (ite (<= y x) (@ResultT-mk-ok (- x y)) (@ResultT-mk-err @error-target))
+)
+
+(define-fun @Nat_checked_sub ((x Int) (y Int)) (@ResultO Int) 
+  (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-target))
+)
+
+(define-fun @BigNat_checked_trgt_sub ((x Int) (y Int)) (@ResultT Int) 
+  (ite (<= y x) (@ResultT-mk-ok (- x y)) (@ResultT-mk-err @error-target))
+)
+
+(define-fun @BigNat_checked_sub ((x Int) (y Int)) (@ResultO Int) 
+  (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-target))
+)
 
 ;;
 ;; Primitive datatypes 

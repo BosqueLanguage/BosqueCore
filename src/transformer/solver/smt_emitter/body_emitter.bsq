@@ -77,9 +77,15 @@ entity BodyEmitter {
     field file: String;
     field ns: TreeIR::NamespaceIdentifier;
 
+    field trgtError: {file: String, line: Nat, errid: Int};
+
     field invokeErrMap: Map<TreeIR::InvokeKey, ArgErrorKind>;
     field expectedResultType: TreeIR::TypeKey;
     field resultErrKind: ArgErrorKind;
+
+    method isTrgtError(errid: Int): Bool {
+        return this.trgtError.errid === errid;
+    }
 
     function buildErrorIsTest(evar: String, errkind: ArgErrorKind): String {
         if(isOtherErrorKind(errkind)) {
@@ -388,7 +394,7 @@ entity BodyEmitter {
     }
 
     method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, ArgExpErrorKind] {
-        return ["[NOT IMPLEMENTED TypedPrimitiveConstructor]", ArgExpErrorKind::safe];
+        return ["[NOT IMPLEMENTED TypedPrimitiveConstructor]"];
     }
 
     method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): [String, ArgExpErrorKind] {
@@ -497,27 +503,16 @@ entity BodyEmitter {
         return `${this.resolveTypeMemberAccess(exp.oftype)}.$constructorWithChecks(${this.emitExpression(exp.arg, true)})`;
     }
 */
-    method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         let invks = this.assembly.namespaceMap.get(exp.ns).functions.get(exp.fname);
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
 
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let trgterr = computeTargetErrorKind(argexps); 
+        var trgterr = computeTargetErrorKind(argexps); 
 
         let invdecl = this.assembly.invokeMap.get(invk.ikey);
-        var opex = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
-        if(!invdecl.preconditions.empty()) {
-            abort;
-            /*
-            let pbvar_prefix = String::concat(List<String>{"@pre_", depth.toString(), })
-            var prebinds = invdecl.params.map<String>((pp) => String::concat(List<String>{"(", pbvar, pp.name, " ", argexps.}));
-            let condapps = yyy;
-
-            xxxx;
-            */  
-        }
-
-        return this.buildOp(argexps, exp.etype, trgterr, opexp, indent);
+        let opex = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
+        return [this.buildOp(argexps, exp.etype, trgterr, opexp, indent), trgterr];
     }
 /*
     method emitCallNamespaceOperatorExpression(exp: TIRCallNamespaceOperatorExpression): String {
@@ -538,7 +533,7 @@ entity BodyEmitter {
         }
     }
 */
-    method emitLogicActionAndExpression(exp: TreeIR::LogicActionAndExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitLogicActionAndExpression(exp: TreeIR::LogicActionAndExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
         let trgterr = computeTargetErrorKind(argexps); 
 
@@ -546,140 +541,164 @@ entity BodyEmitter {
         return this.buildOp(argexps, "Bool", trgterr, opexp, indent);
     }
 
-    method emitLogicActionOrExpression(exp: TreeIR::LogicActionOrExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitLogicActionOrExpression(exp: TreeIR::LogicActionOrExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let opexp = this.applyBuilder("or", argexps);
+        let trgterr = computeTargetErrorKind(argexps);
 
-        return this.buildOp(argexps, opexp, indent);
+        let opexp = BodyEmitter::processResultWrap(this.applyBuilder("or", argexps), "Bool", trgterr);
+        return this.buildOp(argexps, "Bool", trgterr, opexp, indent);
     }
 
-    method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
-        let opexp = this.applyBuilderUnary("not", argexp);
+        let trgterr = computeTargetErrorKind(List<ArgExp>{argexp}); 
 
-        return this.buildOpUnary(argexp, opexp, indent);
+        let opexp = BodyEmitter::processResultWrap(this.applyBuilderUnary("not", argexp), "Bool", trgterr);
+        return this.buildOpUnary(argexp, "Bool", trgterr, opexp, indent);
     }
 
-    method processArithOpResult(restype: TreeIR::TypeKey, dataop: String): [String, ArgExpErrorKind]
+    recursive method processArithOpResult(restype: TreeIR::TypeKey, dataop: String, operr: ArgExpErrorKind): [String, ArgExpErrorKind]
         let ttype = this.assembly.typeMap.get(restype);
-        if(ttype?TreeIR::TypedeclEntityType) {
-            if(ttype.consinvariantsall.empty()) {
-                return [dataop, ArgExpErrorKind::safe];
+        if<TreeIR::TypedeclEntityType>(ttype) {
+            if($.consinvariantsall.empty()) {
+                return [dataop, operr];
             }
             else {
                 return ["[NOT IMPLEMENTED processArithOpResult]", ArgExpErrorKind::any];
             }
         }
         else {
-            return [dataop, ArgExpErrorKind::safe];
+            return [dataop, operr];
         }
     }
 
-    method emitPrefixNegateOpExpression(exp: TReeIR::PrefixNegateExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
-        let nexp: String;
-        if(exp.etype === "Rational"TreeIR::TypeKey) {
-            nexp = "@Rational_unary";
+    recursive method emitPrefixNegateOpExpression(exp: TreeIR::PrefixNegateExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_negate";
         }
-        else if(exp.etype === "Float"TreeIR::TypeKey) {
-            nexp = "@Float_unary";
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_negate";
         }
-        else if(exp.etype === "Decimal"TreeIR::TypeKey) {
-            nexp = "@Decmial_unary";
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_negate";
         }
         else {
-            nexp = "-";
+            nexp = "neg";
         }
 
         let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
-        let opexp = this.applyBuilderUnary(nexp, argexp);
-        let finalexp = this.processArithOpResult(exp.etype, opexp);
-        let rop = this.buildOpUnary(argexp, finalexp.0, indent);
+        let trgterr = computeTargetErrorKind(List<ArgExp>{argexp}); 
 
-        return [rop.0, joinArgExpErrorKinds(rop.1, finalexp.1)];
+        let opexp = this.processArithOpResult(exp.etype, this.applyBuilderUnary(nexp, argexp), trgterr);
+        let rop = this.buildOpUnary(argexp, "Bool", opexp.1, BodyEmitter::processResultWrap(opexp.0, exp.etype, trgterr), indent);
+
+        return [rop.0, joinArgExpErrorKinds(rop.1, opexp.1)];
     }
 
-    method emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.add(${this.emitExpression(exp.rhs, true)})`;
+    recursive method emitBinAddExpression(exp: TreeIR::BinAddExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_add";
         }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.plus(${this.emitExpression(exp.rhs, true)})`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_add";
         }
-        else {
-            bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`;
-        }
-
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_add";
         }
         else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
+            nexp = "+";
         }
 
-        return this.processArithOpResult(exp.etype, dataop);
+        let argexp = this.processArgItemsBinary(exp.lhs, exp.rhs, depth + 1, indent);
+        let trgterr = computeTargetErrorKind(List<ArgExp>{argexp.0, argexp.1}); 
+
+        let opexp = this.processArithOpResult(exp.etype, this.applyBuilderBinary(nexp, argexp.0, argexp.1), trgterr);
+        let rop = this.buildOpBinary(argexp, exp.etype, opexp.1, BodyEmitter::processResultWrap(opexp.0, exp.etype, trgterr), indent);
+
+        return [rop.0, joinArgExpErrorKinds(rop.1, opexp.1)];
     }
 
-    method emitBinSubExpression(exp: TIRBinSubExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.sub(${this.emitExpression(exp.rhs, true)})`;
+    recursive method emitBinSubExpression(exp: TreeIR::BinSubExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        var nexp: String;
+        var extraerr: ArgExpErrorKind = ArgErrorKind::safe;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_sub";
         }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.minus(${this.emitExpression(exp.rhs, true)})`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_sub";
         }
-        else {
-            bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`;
-        }
-        
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "BigNat") {
-            dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_sub";
         }
         else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
+            if(exp.optype === "Nat"TreeIR::TypeKey) {
+                nexp = this.isTrgtError(exp.errid) then "@Nat_checked_trgt_sub" else "@Nat_checked_sub";
+                extraerr = this.isTrgtError(exp.errir) then ArgExpErrorKind::trgt else ArgExpErrorKind::other;
+            }
+            else if(exp.optype === "BigNat"TreeIR::TypeKey) {
+                nexp = this.isTrgtError(exp.errid) then "@BigNat_checked_trgt_sub" else "@BigNat_checked_sub";
+                extraerr = this.isTrgtError(exp.errir) then ArgExpErrorKind::trgt else ArgExpErrorKind::other;
+            }
+            else {
+                nexp = "-";
+            }
         }
 
-        return this.processArithOpResult(exp.etype, dataop);
+        let argexp = this.processArgItemsBinary(exp.lhs, exp.rhs, depth + 1, indent);
+        let trgterr = joinArgExpErrorKinds(extraerr, computeTargetErrorKind(List<ArgExp>{argexp.0, argexp.1})); 
+
+        let opexp = this.processArithOpResult(exp.etype, this.applyBuilderBinary(nexp, argexp.0, argexp.1), trgterr);
+        let rop = if[!ArgErrorKind::safe](extraerr) then
+                this.buildOpBinary(argexp, exp.etype, opexp.1, BodyEmitter::processResultWrap(opexp.0, exp.etype, trgterr), indent)
+            else
+                this.buildOpBinary(argexp, exp.etype, opexp.1, BodyEmitter::processResultWrapGeneral(opexp.0, exp.etype, trgterr, extraerr, depth), indent);
+
+        return [rop.0, joinArgExpErrorKinds(rop.1, opexp.1)];
     }
 
-    method emitBinMultExpression(exp: TIRBinMultExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.mul(${this.emitExpression(exp.rhs, true)})`;
+    recursive method emitBinMultExpression(exp: TreeIR::BinMultExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+        let nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_mult";
         }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.times(${this.emitExpression(exp.rhs, true)})`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_mult";
         }
-        else {
-            bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`;
-        }
-        
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_mult";
         }
         else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
+            if<TreeIR::LiteralIntegralExpression>(exp.lhs) {
+                nexp = "*";
+            }
+            else {
+                if(exp.optype === "Nat"TreeIR::TypeKey) {
+                    nexp = "@Nat_mult";
+                }
+                else if(exp.optype === "Int"TreeIR::TypeKey) {
+                    nexp = "@Int_mult";
+                }
+                else if(exp.optype === "BigNat"TreeIR::TypeKey) {
+                    nexp = "@BigNat_mult";
+                }
+                else {
+                    nexp = "@BigInt_mult";
+                }       
+            }
         }
 
-        return this.processArithOpResult(exp.etype, dataop);
+        let argexp = this.processArgItemsBinary(exp.lhs, exp.rhs, depth + 1, indent);
+        let trgterr = computeTargetErrorKind(List<ArgExp>{argexp.0, argexp.1}); 
+
+        let opexp = this.processArithOpResult(exp.etype, this.applyBuilderBinary(nexp, argexp.0, argexp.1), trgterr);
+        let rop = this.buildOpBinary(argexp, exp.etype, opexp.1, BodyEmitter::processResultWrap(opexp.0, op.etype, trgterr), indent);
+
+        return [rop.0, joinArgExpErrorKinds(rop.1, opexp.1)];
     }
 
-    method emitBinDivExpression(exp: TIRBinDivExpression, toplevel: boolean): String {
+    recursive method emitBinDivExpression(exp: TreeIR::BinDivExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
         const lexp = this.emitExpression(exp.lhs);
         const rexp = this.emitExpression(exp.rhs);
 
