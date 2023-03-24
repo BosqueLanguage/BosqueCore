@@ -1,5 +1,5 @@
 {
-    "name": "bosque-stack",
+    "name": "@bosque/core",
     "description": "Bosque programming language and tooling stack (Core).",
     "author": {
         "name": "Mark Marron <mark.marron@protonmail.com>"
@@ -11,17 +11,16 @@
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "~16.0.3",
-        "typescript": "5.0",
-        "refa":"0.10.0"
+        "@types/node": "18.15.7",
+        "refa": "0.10.0"
     },
     "devDependencies": {
-        "fs-extra": "11.1.0",
+        "fs-extra": "11.1.1",
         "mocha": "10.2.0",
         "chai": "4.3.7",
-        "decimal.js": "10.4.2",
+        "decimal.js": "10.4.3",
         "fraction.js": "4.2.0",
-        "immutable": "4.2.1",
+        "immutable": "4.3.0",
         "uuidv4": "6.2.13",
         "deep-object-diff": "1.1.9"
     },

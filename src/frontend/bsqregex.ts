@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import { JS, NFA, Words } from "refa";
 
 class RegexParser {
@@ -368,8 +367,6 @@ class RegexCharRange extends RegexComponent {
     constructor(compliment: boolean, range: {lb: number, ub: number}[]) {
         super();
 
-        assert(range.length !== 0);
-
         this.compliment = compliment;
         this.range = range;
     }
@@ -383,8 +380,6 @@ class RegexCharRange extends RegexComponent {
     }
 
     private static valToSStr(cc: number): string {
-        assert(cc >= 9);
-
         if(cc === 9) {
             return "\\t";
         }
@@ -446,7 +441,6 @@ class RegexConstClass extends RegexComponent {
     }
 
     compileToJS(): string {
-        assert(false, `Should be replaced by const ${this.ns}::${this.ccname}`);
         return `${this.ns}::${this.ccname}`;
     }
 }
