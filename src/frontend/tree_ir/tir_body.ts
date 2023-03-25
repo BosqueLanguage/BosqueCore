@@ -1362,7 +1362,7 @@ class TIRBinSubExpression extends TIRBinOpExpression {
     }
 
     bsqemit(): any {
-        return ["TreeIR::BinSubExpression", this.bsqemit_binop()];
+        return ["TreeIR::BinSubExpression", {...this.bsqemit_binop(), errid: -1}];
     }
     static bsqparse(jv: any): TIRBinSubExpression {
         return new TIRBinSubExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
@@ -1388,7 +1388,7 @@ class TIRBinDivExpression extends TIRBinOpExpression {
     }
 
     bsqemit(): any {
-        return ["TreeIR::BinDivExpression", this.bsqemit_binop()];
+        return ["TreeIR::BinDivExpression", {...this.bsqemit_binop(), errid: -1}];
     }
     static bsqparse(jv: any): TIRBinDivExpression {
         return new TIRBinDivExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
