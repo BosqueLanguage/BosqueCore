@@ -1109,53 +1109,23 @@ entity BodyEmitter {
     }
 */
     method emitExpression(exp: TreeIR::Expression): String {
-        /*
-        switch (exp.tag) {
-            case TIRExpressionTag.LiteralNoneExpression: {
-                return this.emitLiteralNoneExpression(exp as TIRLiteralNoneExpression);
-            }
-            case TIRExpressionTag.LiteralNothingExpression: {
-                return this.emitLiteralNothingExpression(exp as TIRLiteralNothingExpression);
-            }
-            case TIRExpressionTag.LiteralBoolExpression: {
-                return this.emitLiteralBoolExpression(exp as TIRLiteralBoolExpression);
-            }
-            case TIRExpressionTag.LiteralIntegralExpression: {
-                return this.emitLiteralIntegralExpression(exp as TIRLiteralIntegralExpression);
-            }
-            case TIRExpressionTag.LiteralRationalExpression: {
-                return this.emitLiteralRationalExpression(exp as TIRLiteralRationalExpression);
-            }
-            case TIRExpressionTag.LiteralFloatPointExpression: {
-                return this.emitLiteralFloatPointExpression(exp as TIRLiteralFloatPointExpression);
-            }
-            case TIRExpressionTag.LiteralRegexExpression: {
-                return this.emitLiteralRegexExpression(exp as TIRLiteralRegexExpression);
-            }
-            case TIRExpressionTag.LiteralStringExpression: {
-                return this.emitLiteralStringExpression(exp as TIRLiteralStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIIStringExpression: {
-                return this.emitLiteralASCIIStringExpression(exp as TIRLiteralASCIIStringExpression);
-            }
-            case TIRExpressionTag.LiteralTypedStringExpression: {
-                return this.emitLiteralTypedStringExpression(exp as TIRLiteralTypedStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIITypedStringExpression: {
-                return this.emitLiteralASCIITypedStringExpression(exp as TIRLiteralASCIITypedStringExpression);
-            }
-            case TIRExpressionTag.LiteralTemplateStringExpression: {
-                return this.emitLiteralTemplateStringExpression(exp as TIRLiteralTemplateStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIITemplateStringExpression: {
-                return this.emitLiteralASCIITemplateStringExpression(exp as TIRLiteralASCIITemplateStringExpression);
-            }
-            case TIRExpressionTag.LiteralTypedPrimitiveDirectExpression: {
-                return this.emitLiteralTypedPrimitiveDirectExpression(exp as TIRLiteralTypedPrimitiveDirectExpression, toplevel || false);
-            }
-            case TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
-                return this.emitLiteralTypedPrimitiveConstructorExpression(exp as TIRLiteralTypedPrimitiveConstructorExpression);
-            }
+        return match (exp) {
+            TreeIR::LiteralNoneExpression => this.emitLiteralNoneExpression($)
+            | TreeIR::LiteralNothingExpression => this.emitLiteralNothingExpression($)
+            | TreeIR::LiteralBoolExpression => this.emitLiteralBoolExpression($)|
+            | TreeIR::LiteralIntegralExpression => this.emitLiteralIntegralExpression($)
+            | TreeIR::LiteralRationalExpression => this.emitLiteralRationalExpression($)
+            | TreeIR::LiteralFloatPointExpression => this.emitLiteralFloatPointExpression($)
+            | TreeIR::LiteralRegexExpression => this.emitLiteralRegexExpression($)
+            | TreeIR::LiteralStringExpression => this.emitLiteralStringExpression($)
+            | TreeIR::LiteralASCIIStringExpression => this.emitLiteralASCIIStringExpression($)
+            | TreeIR::LiteralTypedStringExpression => this.emitLiteralTypedStringExpression($)
+            | TreeIR::LiteralASCIITypedStringExpression => this.emitLiteralASCIITypedStringExpression($)
+            | TreeIR::LiteralTemplateStringExpression => this.emitLiteralTemplateStringExpression($)
+            | TreeIR::LiteralASCIITemplateStringExpression => this.emitLiteralASCIITemplateStringExpression($)
+            | TreeIR::LiteralTypedPrimitiveDirectExpression => this.emitLiteralTypedPrimitiveDirectExpression($)
+            | TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression($)
+/*
             case TIRExpressionTag.AccessEnvValueExpression: {
                 return this.emitAccessEnvValueExpression(exp as TIRAccessEnvValueExpression);
             }
@@ -1231,6 +1201,7 @@ entity BodyEmitter {
             case TIRExpressionTag.CallNamespaceOperatorExpression: {
                 return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
             }
+*/
             case TIRExpressionTag.CallStaticFunctionExpression: {
                 return this.emitCallStaticFunctionExpression(exp as TIRCallStaticFunctionExpression);
             }
@@ -1258,6 +1229,7 @@ entity BodyEmitter {
             case TIRExpressionTag.BinDivExpression: {
                 return this.emitBinDivExpression(exp as TIRBinDivExpression, toplevel || false);
             }
+/*
             case TIRExpressionTag.BinKeyEqBothUniqueExpression: {
                 return this.emitBinKeyEqBothUniqueExpression(exp as TIRBinKeyEqBothUniqueExpression);
             }
@@ -1282,6 +1254,7 @@ entity BodyEmitter {
             case TIRExpressionTag.BinKeyGeneralLessExpression: {
                 return this.emitBinKeyGeneralLessExpression(exp as TIRBinKeyGeneralLessExpression);
             }
+*/
             case TIRExpressionTag.NumericEqExpression: {
                 return this.emitNumericEqExpression(exp as TIRNumericEqExpression, toplevel || false);
             }
@@ -1309,6 +1282,7 @@ entity BodyEmitter {
             case TIRExpressionTag.BinLogicImpliesExpression: {
                 return this.emitBinLogicImpliesExpression(exp as TIRBinLogicImpliesExpression, toplevel || false);
             }
+/*
             case TIRExpressionTag.MapEntryConstructorExpression: {
                 return this.emitMapEntryConstructorExpression(exp as TIRMapEntryConstructorExpression);
             }
@@ -1436,8 +1410,8 @@ entity BodyEmitter {
                 assert(false, `Unknown expression kind ${exp.tag}`);
                 return `[UNKNOWN TAG ${exp.tag}]`
             }
-        }
-        */
+*/
+        };
     }
 
     method emitNopStatement(stmt: TIRNopStatement): String {
