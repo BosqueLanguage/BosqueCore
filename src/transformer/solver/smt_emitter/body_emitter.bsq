@@ -31,7 +31,7 @@ entity BodyEmitter {
         return this.trgtError.errid === errid;
     }
 
-    function buildErrorIsTest(evar: String, errkind: ArgErrorKind): String {
+    function buildErrorIsTest(evar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"((_ is) @ResultO-mk-err ", evar, ")"});
         }
@@ -40,7 +40,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildErrorExtract(evar: String, errkind: ArgErrorKind): String {
+    function buildErrorExtract(evar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-error ", evar, ")"});
         }
@@ -49,7 +49,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildValueExtract(okvar: String, errkind: ArgErrorKind): String {
+    function buildValueExtract(okvar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-value ", okvar, ")"});
         }
@@ -58,7 +58,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-mk-err ", evar, ")"});
         }
@@ -67,7 +67,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-mk-ok ", okvar, ")"});
         }
@@ -107,6 +107,31 @@ entity BodyEmitter {
 
     function buildGeneralOp(op: String, args: List<String>): String {
         return String::concat(List<String>{"(", op, " ", String::join(" ", args), ")"});
+    }
+
+    function buildITEOp(cond: String, tres: String, fres: String, indent: String): String{
+        return String::concat(List<String>{
+            indent, "(ite ", cond, "\n",
+            tres, "\n",
+            fres, "\n",
+            indent, ")"
+        });
+    }
+
+    function buildErrorBailOp(errtest: String, errres: String, flowval: String, indent: String): String {
+        return String::concat(List<String>{
+            indent, "(ite ", errtest, " ", errres, "\n",
+            flowval, "\n",
+            indent, ")"
+        });
+    }
+
+    function buildLetOp(vname: String, vval: String, flowvar: String, indent: String): String {
+        return String::concat(List<String>{
+            indent, "(let ((", vname, " ", errres, "))\n",
+            flowval, "\n",
+            indent, ")"
+        });
     }
 
     method emitLiteralNoneExpression(exp: TreeIR::LiteralNoneExpression): String {
@@ -172,7 +197,7 @@ entity BodyEmitter {
         return "[NOT IMPLEMENTED TypedPrimitiveDirect]";
     }
 
-    method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): String {
+    recursive method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, ErrorKind] {
         return "[NOT IMPLEMENTED TypedPrimitiveConstructor]";
     }
 
@@ -1108,7 +1133,7 @@ entity BodyEmitter {
         return `$Runtime.setScratchValue($$scratch, ${exp.scidx}, ${fexp}(${aargs.join(", ")}));`;
     }
 */
-    method emitExpression(exp: TreeIR::Expression): String {
+    recursive method emitExpression(exp: TreeIR::Expression): String {
         return match (exp) {
             TreeIR::LiteralNoneExpression => this.emitLiteralNoneExpression($)
             | TreeIR::LiteralNothingExpression => this.emitLiteralNothingExpression($)
@@ -1124,7 +1149,7 @@ entity BodyEmitter {
             | TreeIR::LiteralTemplateStringExpression => this.emitLiteralTemplateStringExpression($)
             | TreeIR::LiteralASCIITemplateStringExpression => this.emitLiteralASCIITemplateStringExpression($)
             | TreeIR::LiteralTypedPrimitiveDirectExpression => this.emitLiteralTypedPrimitiveDirectExpression($)
-            | TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression($)
+            | TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression[recursive]($).0
 /*
             case TIRExpressionTag.AccessEnvValueExpression: {
                 return this.emitAccessEnvValueExpression(exp as TIRAccessEnvValueExpression);
@@ -1202,33 +1227,15 @@ entity BodyEmitter {
                 return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
             }
 */
-            case TIRExpressionTag.CallStaticFunctionExpression: {
-                return this.emitCallStaticFunctionExpression(exp as TIRCallStaticFunctionExpression);
-            }
-            case TIRExpressionTag.LogicActionAndExpression: {
-                return this.emitLogicActionAndExpression(exp as TIRLogicActionAndExpression, toplevel || false);
-            }
-            case TIRExpressionTag.LogicActionOrExpression: {
-                return this.emitLogicActionOrExpression(exp as TIRLogicActionOrExpression, toplevel || false);
-            }
-            case TIRExpressionTag.PrefixNotExpression: {
-                return this.emitPrefixNotOpExpression(exp as TIRPrefixNotExpression, toplevel || false);
-            }
-            case TIRExpressionTag.PrefixNegateExpression: {
-                return this.emitPrefixNegateOpExpression(exp as TIRPrefixNegateExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinAddExpression: {
-                return this.emitBinAddExpression(exp as TIRBinAddExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinSubExpression: {
-                return this.emitBinSubExpression(exp as TIRBinSubExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinMultExpression: {
-                return this.emitBinMultExpression(exp as TIRBinMultExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinDivExpression: {
-                return this.emitBinDivExpression(exp as TIRBinDivExpression, toplevel || false);
-            }
+            | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($).0
+            | TreeIR::LogicActionAndExpression => this.emitLogicActionAndExpression[recursive]($)
+            | TreeIR::LogicActionOrExpression => this.emitLogicActionOrExpression[recursive]($)
+            | TreeIR::PrefixNotExpression => this.emitPrefixNotOpExpression[recursive]($)
+            | TreeIR::PrefixNegateExpression => this.emitPrefixNegateOpExpression[recursive]($)
+            | TreeIR::BinAddExpression => this.emitBinAddExpression[recursive]($)
+            | TreeIR::BinSubExpression => this.emitBinSubExpression[recursive]($).0
+            | TreeIR::BinMultExpression => this.emitBinMultExpression[recursive]($)
+            | TreeIR::BinDivExpression => this.emitBinDivExpression[recursive]($).0
 /*
             case TIRExpressionTag.BinKeyEqBothUniqueExpression: {
                 return this.emitBinKeyEqBothUniqueExpression(exp as TIRBinKeyEqBothUniqueExpression);
@@ -1255,33 +1262,15 @@ entity BodyEmitter {
                 return this.emitBinKeyGeneralLessExpression(exp as TIRBinKeyGeneralLessExpression);
             }
 */
-            case TIRExpressionTag.NumericEqExpression: {
-                return this.emitNumericEqExpression(exp as TIRNumericEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericNeqExpression: {
-                return this.emitNumericNeqExpression(exp as TIRNumericNeqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericLessExpression: {
-                return this.emitNumericLessExpression(exp as TIRNumericLessExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericLessEqExpression: {
-                return this.emitNumericLessEqExpression(exp as TIRNumericLessEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericGreaterExpression: {
-                return this.emitNumericGreaterExpression(exp as TIRNumericGreaterExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericGreaterEqExpression: {
-                return this.emitNumericGreaterEqExpression(exp as TIRNumericGreaterEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicAndExpression: {
-                return this.emitBinLogicAndExpression(exp as TIRBinLogicAndExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicOrExpression: {
-                return this.emitBinLogicOrExpression(exp as TIRBinLogicOrExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicImpliesExpression: {
-                return this.emitBinLogicImpliesExpression(exp as TIRBinLogicImpliesExpression, toplevel || false);
-            }
+            | TreeIR::NumericEqExpression => this.emitNumericEqExpression[recursive]($)
+            | TreeIR::NumericNeqExpression => this.emitNumericNeqExpression[recursive]($)
+            | TreeIR::NumericLessExpression => this.emitNumericLessExpression[recursive]($)
+            | TreeIR::NumericLessEqExpression => this.emitNumericLessEqExpression[recursive]($)
+            | TreeIR::NumericGreaterExpression => this.emitNumericGreaterExpression[recursive]($)
+            | TreeIR::NumericGreaterEqExpression => this.emitNumericGreaterEqExpression[recursive]($)
+            | TreeIR::BinLogicAndExpression => self.emitBinLogicAndExpression[recursive]($)
+            | TreeIR::BinLogicOrExpression => self.emitBinLogicOrExpression[recursive]($)
+            | TreeIR::BinLogicImpliesExpression => self.emitBinLogicImpliesExpression[recursive]($)
 /*
             case TIRExpressionTag.MapEntryConstructorExpression: {
                 return this.emitMapEntryConstructorExpression(exp as TIRMapEntryConstructorExpression);
@@ -1414,36 +1403,144 @@ entity BodyEmitter {
         };
     }
 
-    method emitNopStatement(stmt: TIRNopStatement): String {
-        return "; //nop";
-    }
+
+    method emitExpressionWErr(exp: TreeIR::Expression): [String, ErrorKind] {
+        return match (exp) {
+            TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression[recursive]($)
 /*
-    method emitAbortStatement(stmt: TIRAbortStatement): String {
-        return `$Runtime.raiseUserAssert("${stmt.msg}");`;
-    }
-
-    method emitAssertCheckStatement(stmt: TIRAssertCheckStatement): String {
-        return `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(stmt.cond, true)}; } catch (ex) { $Runtime.log("warn", "AssertEvalFailure", "condition failure"); return true; } })()), "${stmt.msg}");`;
-    }
-
-    method emitDebugStatement(stmt: TIRDebugStatement): String {
-        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch(ex) { console.log("__debug(${stmt.value.expstr}) evaluation failed"); }`;
-    }
+            case TIRExpressionTag.AccessEnvValueExpression: {
+                return this.emitAccessEnvValueExpression(exp as TIRAccessEnvValueExpression);
+            }
+            case TIRExpressionTag.ConstructorPrimaryCheckExpression: {
+                return this.emitConstructorPrimaryCheckExpression(exp as TIRConstructorPrimaryCheckExpression);
+            }
+            case TIRExpressionTag.ConstructorMapExpression: {
+                return this.emitConstructorMapExpression(exp as TIRConstructorMapExpression);
+            }
+            case TIRExpressionTag.CodePackInvokeExpression: {
+                return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);
+            }
+            case TIRExpressionTag.TypedeclConstructorExpression: {
+                return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
+            }
+            case TIRExpressionTag.CallNamespaceFunctionExpression: {
+                return this.emitCallNamespaceFunctionExpression(exp as TIRCallNamespaceFunctionExpression);
+            }
+            case TIRExpressionTag.CallNamespaceOperatorExpression: {
+                return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
+            }
 */
-    method emitVarDeclareStatement(stmt: TIRVarDeclareStatement): String {
-        return `let ${stmt.vname};`;
+            | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($)
+            | TreeIR::BinSubExpression => this.emitBinSubExpression[recursive]($)
+            | TreeIR::BinDivExpression => this.emitBinDivExpression[recursive]($)
+/*
+            case TIRExpressionTag.AsSomeSpecialExpression: {
+                return this.emitAsSomeSpecialExpression(exp as TIRAsSomeSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNothingSpecialExpression: {
+                return this.emitAsNothingSpecialExpression(exp as TIRAsNothingSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsSomethingSpecialExpression: {
+                return this.emitAsSomethingSpecialExpression(exp as TIRAsSomethingSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsOkSpecialExpression: {
+                return this.emitAsOkSpecialExpression(exp as TIRAsOkSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsErrSpecialExpression: {
+                return this.emitAsErrSpecialExpression(exp as TIRAsErrSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsEqualToLiteralExpression: {
+                return this.emitAsEqualToLiteralExpression(exp as TIRAsEqualToLiteralExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotEqualToLiteralExpression: {
+                return this.emitAsNotEqualToLiteralExpression(exp as TIRAsNotEqualToLiteralExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsTypeExpression: {
+                return this.emitAsTypeExpression(exp as TIRAsTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotTypeExpression: {
+                return this.emitAsNotTypeExpression(exp as TIRAsNotTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsSubTypeExpression: {
+                return this.emitAsSubTypeExpression(exp as TIRAsSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotSubTypeExpression: {
+                return this.emitAsNotSubTypeExpression(exp as TIRAsNotSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionExpression: {
+                return this.emitCallMemberFunctionExpression(exp as TIRCallMemberFunctionExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionDynamicExpression: {
+                return this.emitCallMemberFunctionDynamicExpression(exp as TIRCallMemberFunctionDynamicExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionSelfRefExpression: {
+                return this.emitCallMemberFunctionSelfRefExpression(exp as TIRCallMemberFunctionSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskExpression: {
+                return this.emitCallMemberFunctionTaskExpression(exp as TIRCallMemberFunctionTaskExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression: {
+                return this.emitCallMemberFunctionTaskSelfRefExpression(exp as TIRCallMemberFunctionTaskSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberActionExpression: {
+                return this.emitCallMemberActionExpression(exp as TIRCallMemberActionExpression, toplevel || false);
+            }
+*/
+            | _ => [this.emitExpression(exp), ErrorKind::safe];
+        };
     }
 
-    method emitVarDeclareAndAssignStatement(stmt: TIRVarDeclareAndAssignStatement): String {
-        return `let ${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+    recursive method emitNopStatement(stmt: TreeIR::NopStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        return this.emitStatementList[recursive](follow, indent);
     }
 
-    method emitVarAssignStatement(stmt: TIRVarAssignStatement): String {
-        if(stmt.vname !== "this") {
-            return `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+    recursive method emitAbortStatement(stmt: TreeIR::AbortStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        if(this.isTrgtError(stmt.errid)) {
+            return BodyEmitter::buildMakeError("@error-target", this.bodyResultType, ErrorKind::target).prepend(indent);
         }
         else {
-            return `$_this = ${this.emitExpression(stmt.vexp, true)};`;
+            return BodyEmitter::buildMakeError("@error-other", this.bodyResultType, ErrorKind::other).prepend(indent);
+        }
+    }
+
+    recursive method emitAssertCheckStatement(stmt: TreeIR::AssertCheckStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let fstr = this.emitStatementList(follow, indent.append("    "));
+        let chkstr = this.emitExpression(stmt.cond);
+
+        var errstr: String;
+        if(this.isTrgtError(stmt.errid)) {
+            errstr = BodyEmitter::buildMakeError("@error-target", this.bodyResultType, ErrorKind::target);
+        }
+        else {
+            errstr = BodyEmitter::buildMakeError("@error-other", this.bodyResultType, ErrorKind::other);
+        }
+
+        return BodyEmitter::buildErrorBailOp(chkstr, errstr, fstr, indent);
+    }
+
+    recursive method emitDebugStatement(stmt: TreeIR::DebugStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        //These are nop'd in the SMT model
+        return this.emitStatementList[recursive](follow, indent);
+    }
+
+    recursive method emitVarDeclareAndAssignStatement(stmt: TreeIR::VarDeclareAndAssignStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let eval = this.emitExpressionWErr(stmt.exp);
+
+        if(eval.1 === ErrorKind::safe) {
+             let fstr = this.emitStatementList(follow, indent);
+             return BodyEmitter::buildLetOp(stmt.vname, eval.0, fstr, indent);
+        }
+        else {
+            let fstr this.emitStatementList(follow, indent.append("    "));
+            let tvstr = String::concat(List<String>{"@", stmt.vname, "@"});
+
+            let errchk = BodyEmitter::buildErrorIsTest(tvstr, eval.1);
+            let errstr = BodyEmitter::buildMakeError(BodyEmitter::rewrapError(tvstr, stmt.exp.etype, eval.1), this.bodyResultType, this.bodyResultErrKind);
+
+            let normalflow = BodyEmitter::buildLetOp(stmt.vname, BodyEmitter::buildValueExtract(tvstr, eval.1), fstr, indent.append("    "));
+            let errctrl = BodyEmitter::buildErrorBailOp(errchk, errstr, normalflow, indent);
+
+            return BodyEmitter::buildLetOp(tvstr, eval.0, errctrl, indent);
         }
     }
 /*
@@ -1491,8 +1588,9 @@ entity BodyEmitter {
         return "NOT IMPLEMENTED -- TIRScratchSCStatement";
     }
 */
-    method emitReturnStatement(stmt: TIRReturnStatement): String {
-        return `return ${this.emitExpression(stmt.value, true)};`;
+    recursive method emitReturnStatement(stmt: TreeIR::ReturnStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let rv =  this.emitExpression(stmt.value);
+        return rv.prepend(indent);
     }
 /*
     method emitReturnStatementWRef(stmt: TIRReturnStatementWRef): String {
@@ -1718,42 +1816,27 @@ entity BodyEmitter {
         //TODO: unscoped block needs some work here!
         return `$Runtime.pushlogprefix(${fmt}, ${args}); try ${bblock}\n${indent}catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } \n${indent}$Runtime.poplogprefix();`
     }
-
-    emitScopedBlock(blck: TIRScopedBlockStatement, indent: String, prestr?: String | undefined, poststr?: String | undefined): String {
-        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
-
-        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + "    "}${poststr}\n` : "") + indent + "}";
-    }
-
-    emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: String): String {
-        //TODO: need to declare vars as let before block so we can support things like -- LoggerSetPrefix that need to wrap the block as a try{...}catch{...}
-        return NOT_IMPLEMENTED_STATEMENT("TIRUnscopedBLock");
-    }
 */
-    method emitStatement(stmt: TreeIR::Statement, indent: String): String {
-        /*
-        switch(stmt.tag) {
-            case TIRStatementTag.NopStatement: {
-                return this.emitNopStatement(stmt as TIRNopStatement);
-            }
-            case TIRStatementTag.AbortStatement: {
-                return this.emitAbortStatement(stmt as TIRAbortStatement);
-            }
-            case TIRStatementTag.AssertCheckStatement: {
-                return this.emitAssertCheckStatement(stmt as TIRAssertCheckStatement);
-            }
-            case TIRStatementTag.DebugStatement: {
-                return this.emitDebugStatement(stmt as TIRDebugStatement);
-            }
-            case TIRStatementTag.VarDeclareStatement: {
-                return this.emitVarDeclareStatement(stmt as TIRVarDeclareStatement);
-            }
-            case TIRStatementTag.VarDeclareAndAssignStatement: {
-                return this.emitVarDeclareAndAssignStatement(stmt as TIRVarDeclareAndAssignStatement);
-            }
-            case TIRStatementTag.VarAssignStatement: {
-                return this.emitVarAssignStatement(stmt as TIRVarAssignStatement);
-            }
+    recursive method emitScopedBlock(blck: TreeIR::ScopedBlockStatement, indent: String): String 
+        requires !blck.ops.empty();
+    {
+        return this.emitStatementList[recursive](blck.ops, indent);
+    }
+
+    recursive method emitUnscopedBlock(blck: TreeIR::UnscopedBlockStatement, indent: String): String 
+        requires !blck.ops.empty();
+    {
+        return this.emitStatementList[recursive](blck.ops, indent);
+    }
+
+    recursive method emitStatement(stmt: TreeIR::Statement, follows: List<TreeIR::Statement>, indent: String): String {
+        return match (stmt) {
+            TreeIR::NopStatement => this.emitNopStatement[recursive](stmt, follows, indent)
+            | TreeIR::AbortStatement => this.emitAbortStatement[recursive](stmt, follows, indent)
+            | TreeIR::AssertCheckStatement => this.emitAssertCheckStatement[recursive](stmt, follows, indent)
+            | TreeIR::DebugStatement => this.emitDebugStatement[recursive](stmt, follows, indent)
+            | TreeIR::VarDeclareAndAssignStatement => this.emitVarDeclareAndAssignStatement[recursive](stmt, follows, indent)
+            /*
             case TIRStatementTag.StoreToScratch: {
                 return this.emitStoreToScratch(stmt as TIRStoreToScratch);
             }
@@ -1781,9 +1864,9 @@ entity BodyEmitter {
             case TIRStatementTag.ScratchSCStatement: {
                 return this.emitScratchSCStatement(stmt as TIRScratchSCStatement);
             }
-            case TIRStatementTag.ReturnStatement: {
-                return this.emitReturnStatement(stmt as TIRReturnStatement);
-            }
+*/
+            | TreeIR::ReturnStatement => this.emitReturnStatement[recursive](stmt, follows, indent)
+/*
             case TIRStatementTag.ReturnStatementWRef: {
                 return this.emitReturnStatementWRef(stmt as TIRReturnStatementWRef);
             }
@@ -1842,11 +1925,17 @@ entity BodyEmitter {
                 assert(false, `Unknown statement kind ${stmt.tag}`);
                 return `[UNKNOWN TAG ${stmt.tag}]`
             }
-        }
-        */
+*/
+        };
     }
 
-    emitBodyStatementList(body: TIRStatement[], preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], indent: String, fname: String, extractres: boolean): String {
+    recursive method emitStatementList(stmts: List<TreeIR::Statement>, indent: String): String 
+        requires !stmts.empty();
+    {
+        return this.emitStatement[recursive](stmts.front(), stmts.popFront(), indent);
+    }
+
+    method emitBodyStatementList(body: List<TreeIR::Statement>, preconds: List<TreeIR::PreConditionDecl>, postconds: List<TreeIR::PostConditionDecl>, indent: String, fname: String): String {
         const bodyindent = indent + "    ";
         const wbodyindent = bodyindent + "    ";
         let rconds = "";
@@ -1856,7 +1945,6 @@ entity BodyEmitter {
         }
 
         const bstmts = body.map((stmt) => this.emitStatement(stmt, postconds.length === 0 ? bodyindent : wbodyindent));
-        const scratch = this.m_hasScratch ? `${bodyindent}let $$scratch = [];\n` : "";
 
         if(postconds.length === 0) {
             return `{\n${scratch}${rconds}${bodyindent}${bstmts.join("\n" + bodyindent)}\n${indent}}`;

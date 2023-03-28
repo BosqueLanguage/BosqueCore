@@ -374,11 +374,13 @@ entity NopStatement provides Statement {
 
 entity AbortStatement provides Statement {
     field msg: String;
+    field errid: Int;
 }
 
 entity AssertCheckStatement provides Statement {
     field cond: Expression;
     field msg: String;
+    field errid: Int;
 }
 
 entity DebugStatement provides Statement {

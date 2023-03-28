@@ -2764,7 +2764,7 @@ class TIRAbortStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["TreeIR::AbortStatement", {...this.bsqemit_stmt(), msg: this.msg}];
+        return ["TreeIR::AbortStatement", {...this.bsqemit_stmt(), msg: this.msg, errid: -1}];
     }
     static bsqparse(jv: any): TIRAbortStatement {
         return new TIRAbortStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].msg);
@@ -2782,7 +2782,7 @@ class TIRAssertCheckStatement extends TIRStatement {
     }
 
     bsqemit(): any {
-        return ["TreeIR::AssertCheckStatement", {...this.bsqemit_stmt(), cond: this.cond.bsqemit(), msg: this.msg}];
+        return ["TreeIR::AssertCheckStatement", {...this.bsqemit_stmt(), cond: this.cond.bsqemit(), msg: this.msg, errid: -1}];
     }
     static bsqparse(jv: any): TIRAssertCheckStatement {
         return new TIRAssertCheckStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].cond), jv[1].msg);
