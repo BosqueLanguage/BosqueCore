@@ -1,0 +1,47 @@
+namespace TreeIR;
+
+entity ErrorSource provides APIType {
+    field errid: Int;
+
+    field file: String;
+    field line: Nat;
+
+    field errinfo: String;
+}
+
+enum ErrorKind {
+    safe,
+    other,
+    resource,
+    anygeneral,
+    target,
+    any
+}
+
+function isSafeErrorKind(k: ErrorKind): Bool {
+    return k === ErrorKind::safe;
+}
+
+function isOtherErrorKind(k: ErrorKind): Bool {
+    return /\(k !== ErrorKind::safe, k !== ArgErrorKind::target, k !== ErrorKind::anyT);
+}
+
+function isTargetErrorKind(k: ErrorKind): Bool {
+    return \/(k === ErrorKind::target, k === ArgErrorKind::anyT);
+}
+
+function joinErrorKinds(k1: ErrorKind, k2: ErrorKind): ErrorKind {
+    if(k1 === k2) {
+        return k1;
+    }
+    elif(\/(isTargetErrorKind(k1), isTargetErrorKind(k2))) {
+        return ErrorKind::anyT;
+    }
+    else {
+        return ErrorKind::anyO;
+    }
+}
+
+function processForErrors(asm: Assembly): [Assembly, List<ErrorSource>] {
+    return [asm, List<ErrorSource>{}];
+}

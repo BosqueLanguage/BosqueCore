@@ -428,10 +428,10 @@ class BodyEmitter {
 
     private emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): string {
         let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
+        if(exp.optype === "Rational") {
             bexp = `${this.emitExpression(exp.lhs)}.add(${this.emitExpression(exp.rhs, true)})`;
         }
-        else if(exp.etype === "Decimal") {
+        else if(exp.optype === "Decimal") {
             bexp = `${this.emitExpression(exp.lhs)}.plus(${this.emitExpression(exp.rhs, true)})`;
         }
         else {
@@ -454,10 +454,10 @@ class BodyEmitter {
 
     private emitBinSubExpression(exp: TIRBinSubExpression, toplevel: boolean): string {
         let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
+        if(exp.optype === "Rational") {
             bexp = `${this.emitExpression(exp.lhs)}.sub(${this.emitExpression(exp.rhs, true)})`;
         }
-        else if(exp.etype === "Decimal") {
+        else if(exp.optype === "Decimal") {
             bexp = `${this.emitExpression(exp.lhs)}.minus(${this.emitExpression(exp.rhs, true)})`;
         }
         else {
@@ -483,10 +483,10 @@ class BodyEmitter {
 
     private emitBinMultExpression(exp: TIRBinMultExpression, toplevel: boolean): string {
         let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
+        if(exp.optype === "Rational") {
             bexp = `${this.emitExpression(exp.lhs)}.mul(${this.emitExpression(exp.rhs, true)})`;
         }
-        else if(exp.etype === "Decimal") {
+        else if(exp.optype === "Decimal") {
             bexp = `${this.emitExpression(exp.lhs)}.times(${this.emitExpression(exp.rhs, true)})`;
         }
         else {

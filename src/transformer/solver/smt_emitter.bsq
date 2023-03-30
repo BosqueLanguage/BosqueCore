@@ -1,0 +1,7 @@
+namespace SMTEmit;
+
+export function main(asm: TReeIR::Assembly): String {
+    let flatasm = AssemblyEmitter::processAssembly(asm); //TODO should go into tree rewriter
+
+    return AssemblyEmitter::generateSMTCode(flatasm, "", Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{})
+}

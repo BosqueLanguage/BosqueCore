@@ -125,7 +125,7 @@ datatype BinOpExpression provides Expression using {
     field rhs: Expression;
 } of
 BinAddExpression { }
-| BinSubExpression { }
+| BinSubExpression { field errid: Int; }
 | BinMultExpression { }
 | BinDivExpression { }
 ;
@@ -374,11 +374,13 @@ entity NopStatement provides Statement {
 
 entity AbortStatement provides Statement {
     field msg: String;
+    field errid: Int;
 }
 
 entity AssertCheckStatement provides Statement {
     field cond: Expression;
     field msg: String;
+    field errid: Int;
 }
 
 entity DebugStatement provides Statement {
@@ -421,10 +423,10 @@ entity TaskRefAssignFromScratch provides Statement {
 }
 
 datatype CallWRefStatementGeneral provides Statement using {
-    vexp: Expression,
-    restype: TypeKey,
-    reftype: TypeKey,
-    sidx: Nat
+    field vexp: Expression,
+    field restype: TypeKey,
+    field reftype: TypeKey,
+    field sidx: Nat
 } of
 CallStatementWRef { }
 | CallStatementWTaskRef { }

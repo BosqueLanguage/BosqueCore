@@ -3,11 +3,16 @@ namespace Core;
 
 #if EXEC_LIBS
 internal entity MapOps provides Some {
+    __safe internal function s_mapentry_key<K grounded KeyType, V>(me: MapEntry<K, V>): K = s_mapentry_key;
+    __safe internal function s_mapentry_value<K grounded KeyType, V>(me: MapEntry<K, V>): V = s_mapentry_value;
+
     __safe internal function s_map_empty<K grounded KeyType, V>(m: Map<K, V>): Nat = s_map_empty;
     __safe internal function s_map_count<K grounded KeyType, V>(m: Map<K, V>): Nat = s_map_count;
 
     __safe internal function s_map_has<K grounded KeyType, V>(m: Map<K, V>, k: K): Bool = s_map_has;
     __assume_safe internal function s_map_get<K grounded KeyType, V>(m: Map<K, V>, k: K): V = s_map_get; 
+
+    __safe internal function s_map_entries<K grounded KeyType, V>(m: Map<K, V>): List<MapEntry<K, V>> = s_map_entries;
 
 /*
     __assume_safe internal function s_map_add<K grounded KeyType, V>(m: Map<K, V>, k: K, v: V): Map<K, V> = s_map_add;

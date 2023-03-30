@@ -2,8 +2,6 @@
 import * as FS from "fs";
 import * as Path from "path";
 
-import * as assert from "assert";
-
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
 import { TIRAssembly, TIRInvoke } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
@@ -113,7 +111,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: stri
             FS.writeFileSync(ppth, jscode[i].contents);
         }
 
-        assert(entrypoints.length === 1, "TODO: want to support multiple entrypoints later (at lease for Node.js packaging)");
+        //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
         const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
 
         if(fileargs) {

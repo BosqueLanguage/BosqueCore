@@ -15,73 +15,22 @@ function extractLiteralASCIIStringValue(Str: string, unescape: Bool): String {
     return unescape ? unescapeString(ll.removeFront("\"").removeEnd("\"")) : ll;
 }
 
-enum ArgExpErrorKind {
-    safe,
-    target,
-    other,
-    resource,
-    anyT,
-    anyO
-}
-
-function isSafeErrorKind(k: ArgExpErrorKind): Bool {
-    return k === ArgExpErrorKind::safe;
-}
-
-function isOtherErrorKind(k: ArgExpErrorKind): Bool {
-    return /\(k !== ArgExpErrorKind::safe, k !== ArgErrorKind::target, k !== ArgExpErrorKind::anyT);
-}
-
-function isTargetErrorKind(k: ArgExpErrorKind): Bool {
-    return \/(k === ArgExpErrorKind::target, k === ArgErrorKind::anyT);
-}
-
-function joinArgExpErrorKinds(k1: ArgExpErrorKind, k2: ArgExpErrorKind): ArgExpErrorKind {
-    if(k1 === k2) {
-        return k1;
-    }
-    elif(\/(isTargetErrorKind(k1), isTargetErrorKind(k2))) {
-        return ArgExpErrorKind::anyT;
-    }
-    else {
-        return ArgExpErrorKind::anyO;
-    }
-}
-
-function computeTargetErrorKind(l: List<ArgErrorOption>): ArgExpErrorKind {
-    return l.reduce<ArgExpErrorKind>(ArgExpErrorKind::safe, fn(acc: ArgErrorKind, opt: ArgErrorOption): ArgErrorKind => joinArgExpErrorKinds(acc, opt.errkind));
-}
-
-datatype ArgExp using {
-    field exp: String;
-    field vexp: String;
-    field argtype: TreeIR::TypeKey;
-}
-of
-ArgOkOption { }
-| ArgErrorOption {
-    field vraw: String; //The variable to store this raw expression into
-    field vok: String; //The variable to store/use when there is no error
-    field errkind: ArgExpErrorKind;
-}
-;
-
-entity SMTEmitResult {
-    field exp: String;
-    field einfo: ArgExpErrorKind;
-}
-
 entity BodyEmitter {
     field assembly: TreeIR::Assembly;
 
     field file: String;
-    field ns: TreeIR::NamespaceIdentifier;
 
-    field invokeErrMap: Map<TreeIR::InvokeKey, ArgErrorKind>;
-    field expectedResultType: TreeIR::TypeKey;
-    field resultErrKind: ArgErrorKind;
+    field trgtError: Int;
+    field invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>;
 
-    function buildErrorIsTest(evar: String, errkind: ArgErrorKind): String {
+    field bodyResultType: TreeIR::TypeKey;
+    field bodyResultErrKind: TreeIR::ErrorKind;
+
+    method isTrgtError(errid: Int): Bool {
+        return this.trgtError.errid === errid;
+    }
+
+    function buildErrorIsTest(evar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"((_ is) @ResultO-mk-err ", evar, ")"});
         }
@@ -90,7 +39,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildErrorExtract(evar: String, errkind: ArgErrorKind): String {
+    function buildErrorExtract(evar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-error ", evar, ")"});
         }
@@ -99,7 +48,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildValueExtract(okvar: String, errkind: ArgErrorKind): String {
+    function buildValueExtract(okvar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-value ", okvar, ")"});
         }
@@ -108,7 +57,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-mk-err ", evar, ")"});
         }
@@ -117,7 +66,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: ArgErrorKind): String {
+    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String.concat(List<String>{"(@ResultO-mk-ok ", okvar, ")"});
         }
@@ -126,285 +75,145 @@ entity BodyEmitter {
         }
     }
 
-    function processArgExpErrorPassthrough(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): String {
-        assert(/\(!isSafeErrorKind(experr), !isSafeErrorKind(trgterr)));
+    method generateReturnWithError(errval: String): String {
+        return BodyEmitter::buildMakeError(err, this.bodyResultType, this.bodyResultErrKind);
+    }
 
-        if(/\(exptype === trgttype, isTargetErrorKind(experr) === isTargetErrorKind(trgterr))) {
+    method generateReturnWithValue(okval: String): String {
+        return BodyEmitter::buildMakeOk(okval, this.bodyResultType, this.bodyResultErrKind);
+    }
+
+    method rewrapError(exp: String, exptype: TreeIR::TypeKey, experr: TreeIR::ErrorKind): String {
+        if(/\(exptype === this.bodyResultType, TreeIR::isTargetErrorKind(experr) === TreeIR::isTargetErrorKind(this.bodyResultErrKind))) {
             return exp;
         }
         else {
-            return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, experr), trgttype, trgterr);
+            return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, experr), this.bodyResultType, this.bodyResultErrKind);
         }
     }
 
-    function processResultWrapSafe(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind): String {
-        if(experr === ArgErrorKind::safe) {
-            return exp;
-        }
-        else {
-            return BodyEmitter::buildMakeOk(exp, exptype, experr);
-        }
+    recursive method processArgs(args: List<TreeIR::Expression>): List<String> {
+        return args.map<String>[recursive](recursive fn(arg: TreeIR::Expression): String => this.emitExpression[recursive](arg));
     }
 
-    function processResultWrapGeneral(exp: String, exptype: TreeIR::TypeKey, experr: ArgErrorKind, operr: ArgErrorKind, depth: Nat): String {
-        if(experr === ArgErrorKind::safe) {
-            return exp;
-        }
-        else {
-            if(isTargetErrorKind(experr) === isTargetErrorKind(operr)) {
-               return exp;
-            }
-            elif(isSafeErrorKind(operr)) {
-                return BodyEmitter::buildMakeOk(exp, exptype, operr);
-            }
-            else {
-                let vrwg = String.concat(List<String>{"@rwg", "-", String::fromNat(depth)});
-
-                return String::concat(List<String>{"(let ((", vrwg, " ", exp, "))", "(ite ", 
-                    BodyEmitter::buildErrorIsTest(exp, operr), 
-                        " ", BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(vrwg, operr), exptype, experr), 
-                        " ", BodyEmitter::buildMakeOk(BodyEmitter::buildValueExtract(vrwg, operr), exptype, experr),
-                    "))"});
-            }
-        }
+    function buildUnaryOp(op: String, arg: String): String {
+        return String::concat(List<String>{"(", op, " ", arg, ")"});
     }
 
-    recursive method processArgSingle(exp: Expression, depth: Nat, idx: Nat, indent: String): ArgExp {
-        let vv = this.emit[recursive](exp, depth + 1n, idx + ii, indent);
-
-        if(vv.einfo === ArgExpErrorKind::safe) {
-            return ArgOkOption{String::concat(List<String>{indent, vv.exp}), vv.exp, exp.etype};
-        }
-        else {
-            let vraw = String.concat(List<String>{"@r", "-", String::fromNat(depth) + "-" + String.fromNat(idx + ii)});
-            let vok = String.concat(List<String>{vraw, "-vv"});
-
-            return ArgErrorOption{ee.exp, vok, exp.etype, vraw, vok, vv.einfo};
-        }
+    function buildBinaryOp(op: String, lhsarg: String, rhsarg: String): String {
+        return String::concat(List<String>{"(", op, " ", lhsarg, " ", rhsarg, ")"});
     }
 
-    ////
-    //Specialize arg processing for single argument ops
-
-    method applyBuilderUnary(op: String, argexp: ArgExp): String {
-        return String::concat("(", op, " ", argexp.vexp, ")");
+    function buildGeneralOp(op: String, args: List<String>): String {
+        return String::concat(List<String>{"(", op, " ", String::join(" ", args), ")"});
     }
 
-    method buildOpUnary(arg: ArgExp, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
-        if(arg?ArgOkOption) {
-            return [opexp, ArgExpErrorKind::safe];
-        }
-        else {
-            let ae = arg@ArgErrorOption;
-            let iassigns = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
-            let okassigns = String.concat(List<String>{"(", ee.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"});
-            let vconv = BodyEmitter::processArgExpErrorPassthrough(ae.vraw, ae.argtype, ae.einfo, trgttype, trgterr);
-
-            let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo), " ", vconv, " (let (", okassigns, ")\n", 
-                    indent, "  ", opexp,
-                "\n", indent, ")))"
-            });
-
-            return [opstr, opexp.einfo];
-        }
-    }
-
-    ////
-    //Specialize arg processing for binary argument ops
-    recursive method processArgItemsBinary(arglhs: Expression, argrhs: Expression, depth: Nat, idx: Nat, indent: String): [ArgExp, ArgExp] {
-        return [this.processArgSingle[recursive](arglhs, depth, idx, indent), this.processArgSingle[recursive](argrhs, depth, idx + 1n, indent)];
-    }
-
-    method buildArgErrPassthroughBinary(optlhs: ArgErrorOption, optrhs: ArgErrorOption, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): [String, ArgExpErrorKind] {
-        let lhsconv = BodyEmitter::processArgExpErrorPassthrough(optlhs.vraw, optlhs.argtype, optlhs.einfo, trgttype, trgterr);
-        let rhsconv = BodyEmitter::processArgExpErrorPassthrough(optrhs.vraw, optrhs.argtype, optrhs.einfo, trgttype, trgterr);
-
-        return [String.concat(List<String>{"(ite ", BodyEmitter::buildErrorIsTest(optlhs.vraw, this.resultErrKind), " ", lhsconv, " ", rhsconv, ")"}), joinArgExpErrorKinds(optlhs.einfo, optrhs.einfo)];
-    }
-
-    method applyBuilderBinary(op: String, arglhs: ArgExp, argrhs: ArgExp): String {
-        return String::concat("(", op, " ", arglhs, " ", argrhs, ")");
-    }
-
-    method buildOpBinary(arglhs: ArgExp, argrhs: ArgExp, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
-        if(/\(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
-            return [opexp, ArgExpErrorKind::safe];
-        }
-        elif(\/(arglhs?ArgOkOption, argrhs?ArgOkOption)) {
-            let ae = if<ArgErrorOption>(arglhs) then arglhs@ArgErrorOption else argrhs@ArgErrorOption;
-            let iassigns = String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"});
-            let okassigns = String.concat(List<String>{"(", ee.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"});
-            let vconv = BodyEmitter::processArgExpErrorPassthrough(ae.vraw, ae.argtype, ae.einfo, trgttype, trgterr);
-
-            let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite ", BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo), " ", vconv, " (let (", okassigns, ")\n", 
-                    indent, "  ", opexp, 
-                "\n", indent, ")))"
-            });
-
-            return [opstr, ae.einfo];
-        }
-        else {
-            let chkexps = List<ArgErrorOption>{arglhs@ArgErrorOption, argrhs@ArgErrorOption};
-
-            let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"}));
-            let ichk = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo));
-            let erropt = this.buildArgErrPassthroughBinary(chkexps[0], chkexps[1], trgttype, trgterr);
-            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"}));
-
-            let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite (or ", String::join(", ", ichk), " ) ", erropt.0,  " (let (", String::join(" ", okassigns), ")\n", 
-                    indent, "  ", opexp, 
-                "\n", indent, ")))"
-            });
-
-            return [opstr, erropt.1];
-        }
-    }
-
-    recursive method processArgsItems(args: List<Expression>, depth: Nat, idx: Nat, indent: String): List<ArgExp> {
-        return args.mapIdx<ArgExp>(recursive fn(exp: Expression, ii: Nat): ArgExp {
-            return this.processArgSingle[recursive](exp, depth, idx + ii, indent);
+    function buildITEOp(cond: String, tres: String, fres: String, indent: String): String{
+        return String::concat(List<String>{
+            indent, "(ite ", cond, "\n",
+            tres, "\n",
+            fres, "\n",
+            indent, ")"
         });
     }
 
-    recursive method buildErrPassthrough(opts: List<ArgErrorOption>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): String {
-        if(opts.isSingleton()) {
-            let opt = opts.getSingleton();
-            return BodyEmitter::processArgExpErrorPassthrough(opt.vraw, opt.argtype, opt.einfo, trgttype, trgterr);
-        }
-        else {
-            let opt = opts.front();
-            return String.concat(List<String>{
-                "(ite ", BodyEmitter::buildErrorIsTest(opt.vraw, opt.einfo), " ", BodyEmitter::processArgExpErrorPassthrough(opt.vraw, opt.argtype, opt.einfo, trgttype, trgterr), " ", this.buildErrPassthrough[recursive](opts.popFront()), ")"
-            });
-        }
+    function buildErrorBailOp(errtest: String, errres: String, flowval: String, indent: String): String {
+        return String::concat(List<String>{
+            indent, "(ite ", errtest, " ", errres, "\n",
+            flowval, "\n",
+            indent, ")"
+        });
     }
 
-    method buildErrRet(opts: List<ArgErrorOption>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind): [String, ArgExpErrorKind] {
-        if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::target)) {
-            return [this.buildMakeError("@error-target", trgttype, trgterr), ArgExpErrorKind::target];
-        }
-        else if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::resource)) {
-            return [this.buildMakeError("@error-resource", trgttype, trgterr), ArgExpErrorKind::resource]
-        }
-        else if(aops.allOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::other)) {
-            return [this.buildMakeError("@error-other", trgttype, trgterr), ArgExpErrorKind::other]
-        }
-        else {
-            let anyopt = if (aops.someOf(pred(opt: ArgErrorOption): Bool => opt.errkind === ArgExpErrorKind::target)) then ArgExpErrorKind::anyT else ArgExpErrorKind::anyO;
-            return [this.buildErrPassthrough(aops, trgttype, trgterr), anyopt];
-        }
+    function buildLetOp(vname: String, vval: String, flowvar: String, indent: String): String {
+        return String::concat(List<String>{
+            indent, "(let ((", vname, " ", errres, "))\n",
+            flowval, "\n",
+            indent, ")"
+        });
     }
 
-    method applyBuilder(op: String, args: List<ArgExp>): String {
-        return String::concat("(", op, " ", String::join(" ", argexps.map(fn(argexp) => argexp.vexp)), ")");
+    method emitLiteralNoneExpression(exp: TreeIR::LiteralNoneExpression): String {
+        return "@none";
     }
 
-    method buildOp(args: List<ArgExp>, trgttype: TreeIR::TypeKey, trgterr: ArgErrorKind, opexp: String, indent: String): [String, ArgExpErrorKind] {
-        if(args.allOf(pred(ae: ArgExp): Bool => a?ArgOkOption)) {
-            return [opexp, ArgExpErrorKind::safe];
-        }
-        else {
-            let chkexps = args.filterType<ArgErrorOption>();
-
-            let iassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vraw, " ", ae.vexp, ")"}));
-            let ichk = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => BodyEmitter::buildErrorIsTest(ae.vraw, ae.einfo));
-            let erropt = this.buildErrRet(chkexps, trgttype, trgterr);
-            let okassigns = chkexps.map<ArgExp>(fn(ae: ArgErrorOption): String => String.concat(List<String>{"(", ae.vok, " ", BodyEmitter::buildValueExtract(ae.vraw, ae.einfo), ")"}));
-
-            let opstr = String.concat(List<String>{
-                indent, "(let (", String::join("\n", indent, "    ", iassigns), "\n", indent, ") (ite (or ", String::join(", ", ichk), " ) ", erropt.0,  " (let (", String::join(" ", okassigns), ")\n", 
-                    indent, "  ", opexp, 
-                "\n", indent, ")))"
-            });
-
-            return [opstr, erropt.1];
-        }
-    }
-
-    method emitLiteralNoneExpression(exp: TreeIR::LiteralNoneExpression): [String, ArgExpErrorKind] {
-        return ["@none", ArgExpErrorKind::safe];
-    }
-
-    method emitLiteralNothingExpression(exp: TreeIR::LiteralNothingExpression): [String, ArgExpErrorKind] {
-        return ["@nothing", ArgExpErrorKind::safe];
+    method emitLiteralNothingExpression(exp: TreeIR::LiteralNothingExpression): String {
+        return "@nothing";
     }
     
-    method emitLiteralBoolExpression(exp: TreeIR::LiteralBoolExpression): [String, ArgExpErrorKind] {
-        return [if(exp.value) then "true" else "false", ArgExpErrorKind::safe];
+    method emitLiteralBoolExpression(exp: TreeIR::LiteralBoolExpression): String {
+        return if(exp.value) then "true" else "false";
     }
 
-    method emitLiteralIntegralExpression(exp: TreeIR::LiteralIntegralExpression): [String, ArgExpErrorKind] {
-        return [exp.expstr.removeEnd("n"), ArgExpErrorKind::safe];
+    method emitLiteralIntegralExpression(exp: TreeIR::LiteralIntegralExpression): String {
+        return exp.expstr.removeEnd("n");
     }
 
-    method emitLiteralRationalExpression(exp: TreeIR::LiteralRationalExpression): [String, ArgExpErrorKind] {
-        return [String.concat(List<String>{"@Rational_uninterp(", exp.expstr, ")"}), ArgExpErrorKind::safe];
+    method emitLiteralRationalExpression(exp: TreeIR::LiteralRationalExpression): String {
+        return String.concat(List<String>{"@Rational_uninterp(", exp.expstr, ")"});
     }
 
-    method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): [String, ArgExpErrorKind] {
-        let fstr: String = if(exp.etype === "Float") then exp.value.removeEnd("f") else exp.value.removeEnd("d"), ArgExpErrorKind::safe];
+    method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): String {
+        let fstr: String = if(exp.etype === "Float") then exp.value.removeEnd("f") else exp.value.removeEnd("d");
 
         if(fstr === "0.0") {
-            return [if(exp.etype === "Float") then "@Float_0" else "@Decimal_0", ArgExpErrorKind::safe];
+            return if(exp.etype === "Float") then "@Float_0" else "@Decimal_0";
         }
         else {
-            return [if(exp.etype === "Float") then String.concat(List<String>{"@Float_uninterp(", exp.expstr, ")"}) else String.concat(List<String>{"@Decimal_uninterp(", exp.expstr, ")"}), ArgExpErrorKind::safe];
+            return if(exp.etype === "Float") then String.concat(List<String>{"@Float_uninterp(", exp.expstr, ")"}) else String.concat(List<String>{"@Decimal_uninterp(", exp.expstr, ")"});
         }
     }
 
-    method emitLiteralRegexExpression(exp: TreeIR::LiteralRegexExpression): [String, ArgExpErrorKind] {
-        return ["[NOT IMPLEMENTED Regex]", ArgExpErrorKind::safe];
+    method emitLiteralRegexExpression(exp: TreeIR::LiteralRegexExpression): String {
+        return "[NOT IMPLEMENTED Regex]";
     }
 
-    method emitLiteralStringExpression(exp: TreeIR::LiteralStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralStringExpression(exp: TreeIR::LiteralStringExpression): String {
+        return extractLiteralStringValue(exp.value, false);
     }
 
-    method emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): String {
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
-    method emitLiteralTypedStringExpression(exp: TreeIR::LiteralTypedStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralTypedStringExpression(exp: TreeIR::LiteralTypedStringExpression): String {
+        return extractLiteralStringValue(exp.value, false);
     }
 
-    method emitLiteralASCIITypedStringExpression(exp: TreeIR::LiteralASCIITypedStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralASCIITypedStringExpression(exp: TreeIR::LiteralASCIITypedStringExpression): String {
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
-    method emitLiteralTemplateStringExpression(exp: TreeIR::LiteralTemplateStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralTemplateStringExpression(exp: TreeIR::LiteralTemplateStringExpression): String {
+        return extractLiteralStringValue(exp.value, false);
     }
 
-    method emitLiteralASCIITemplateStringExpression(exp: TreeIR::LiteralASCIITemplateStringExpression): [String, ArgExpErrorKind] {
-        return [extractLiteralASCIIStringValue(exp.value, false), ArgExpErrorKind::safe];
+    method emitLiteralASCIITemplateStringExpression(exp: TreeIR::LiteralASCIITemplateStringExpression): String {
+        return extractLiteralASCIIStringValue(exp.value, false);
     }
     
-    method emitLiteralTypedPrimitiveDirectExpression(exp: TreeIR::LiteralTypedPrimitiveDirectExpression): [String, ArgExpErrorKind] {
-        return ["[NOT IMPLEMENTED TypedPrimitiveDirect]", ArgExpErrorKind::safe];
+    method emitLiteralTypedPrimitiveDirectExpression(exp: TreeIR::LiteralTypedPrimitiveDirectExpression): String {
+        return "[NOT IMPLEMENTED TypedPrimitiveDirect]";
     }
 
-    method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, ArgExpErrorKind] {
-        return ["[NOT IMPLEMENTED TypedPrimitiveConstructor]", ArgExpErrorKind::safe];
+    recursive method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, TreeIR::ErrorKind] {
+        return "[NOT IMPLEMENTED TypedPrimitiveConstructor]";
     }
 
-    method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): [String, ArgExpErrorKind] {
-        return ["[NOT IMPLEMENTED EnvValue]", ArgExpErrorKind::safe];
+    method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): String {
+        return "[NOT IMPLEMENTED EnvValue]";
     }
 
-    method emitAccessNamespaceConstantExpression(exp: TreeIR::AccessNamespaceConstantExpression): [String, ArgExpErrorKind] {
-        return [String.concat(List<String>{smtifyNamespace(exp.ns), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)}), ArgExpErrorKind::safe];
+    method emitAccessNamespaceConstantExpression(exp: TreeIR::AccessNamespaceConstantExpression): String {
+        return String.concat(List<String>{smtifyNamespace(exp.ns), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
     }
 
-    method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): [String, ArgExpErrorKind] {
-        return [String.concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)}), ArgExpErrorKind::safe];
+    method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): String {
+        return String.concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
     }
 
     method emitAccessVariableExpression(exp: TreeIR::AccessVariableExpression): [String, ArgExpErrorKind] {
-        return [smtifyIdentifier(exp.name), ArgExpErrorKind::safe];
+        return smtifyIdentifier(exp.name);
     }
 /*
     method emitAccessCapturedVariableExpression(exp: TIRAccessCapturedVariableExpression): String {
@@ -497,27 +306,15 @@ entity BodyEmitter {
         return `${this.resolveTypeMemberAccess(exp.oftype)}.$constructorWithChecks(${this.emitExpression(exp.arg, true)})`;
     }
 */
-    method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression): [String, TreeIR::ErrorKind] {
         let invks = this.assembly.namespaceMap.get(exp.ns).functions.get(exp.fname);
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
-
-        let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let trgterr = computeTargetErrorKind(argexps); 
-
         let invdecl = this.assembly.invokeMap.get(invk.ikey);
-        var opex = BodyEmitter::processResultWrapGeneral(this.applyBuilder(smtifyInvokeKey(invk.ikey), argexps), exp.etype, trgterr, this.invokeErrMap.get(invk.ikey), depth);
-        if(!invdecl.preconditions.empty()) {
-            abort;
-            /*
-            let pbvar_prefix = String::concat(List<String>{"@pre_", depth.toString(), })
-            var prebinds = invdecl.params.map<String>((pp) => String::concat(List<String>{"(", pbvar, pp.name, " ", argexps.}));
-            let condapps = yyy;
 
-            xxxx;
-            */  
-        }
 
-        return this.buildOp(argexps, exp.etype, trgterr, opexp, indent);
+        let opexp = BodyEmitter::buildGeneralOp(smtifyInvokeKey(invk.ikey), this.processArgs[recursive](exp.args));
+        let callerr = this.invokeResultErrMap.get(invk.ikey);
+        return [opexp, callerr];
     }
 /*
     method emitCallNamespaceOperatorExpression(exp: TIRCallNamespaceOperatorExpression): String {
@@ -538,175 +335,189 @@ entity BodyEmitter {
         }
     }
 */
-    method emitLogicActionAndExpression(exp: TreeIR::LogicActionAndExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
-        let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let trgterr = computeTargetErrorKind(argexps); 
-
-        let opexp = BodyEmitter::processResultWrap(this.applyBuilder("and", argexps), "Bool", trgterr);
-        return this.buildOp(argexps, "Bool", trgterr, opexp, indent);
+    recursive method emitLogicActionAndExpression(exp: TreeIR::LogicActionAndExpression): String {
+        return BodyEmitter::buildGeneralOp("and", this.processArgs[recursive](exp.args));
     }
 
-    method emitLogicActionOrExpression(exp: TreeIR::LogicActionOrExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
-        let argexps = this.processArgsItems[recursive](exp.args, depth + 1, indent);
-        let opexp = this.applyBuilder("or", argexps);
-
-        return this.buildOp(argexps, opexp, indent);
+    recursive method emitLogicActionOrExpression(exp: TreeIR::LogicActionOrExpression): String {
+        return BodyEmitter::buildGeneralOp("or", this.processArgs[recursive](exp.args));
     }
 
-    method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
-        let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
-        let opexp = this.applyBuilderUnary("not", argexp);
-
-        return this.buildOpUnary(argexp, opexp, indent);
+    recursive method emitPrefixNotOpExpression(exp: TreeIR::PrefixNotExpression): String {
+        return BodyEmitter::buildUnaryOp("not", this.emitExpression[recursive](exp.exp));
     }
 
-    method processArithOpResult(restype: TreeIR::TypeKey, dataop: String): [String, ArgExpErrorKind]
-        let ttype = this.assembly.typeMap.get(restype);
-        if(ttype?TreeIR::TypedeclEntityType) {
-            if(ttype.consinvariantsall.empty()) {
-                return [dataop, ArgExpErrorKind::safe];
+    recursive method emitPrefixNegateOpExpression(exp: TreeIR::PrefixNegateExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_negate";
+        }
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_negate";
+        }
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_negate";
+        }
+        else {
+            nexp = "neg";
+        }
+
+        return BodyEmitter::buildUnaryOp(nexp, this.emitExpression[recursive](exp.exp));
+    }
+
+    recursive method emitBinAddExpression(exp: TreeIR::BinAddExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_add";
+        }
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_add";
+        }
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_add";
+        }
+        else {
+            nexp = "+";
+        }
+
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
+    }
+
+    recursive method emitBinSubExpression(exp: TreeIR::BinSubExpression): [String, TreeIR::ErrorKind] {
+        var nexp: String;
+        var opterr: ArgExpErrorKind = ArgErrorKind::safe;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_sub";
+        }
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_sub";
+        }
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_sub";
+        }
+        else {
+            if(exp.optype === "Nat"TreeIR::TypeKey) {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@Nat_checked_trgt_sub";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@Nat_checked_sub";
+                    opterr = TreeIR::ErrorKind::other;
+                }
+            }
+            else if(exp.optype === "BigNat"TreeIR::TypeKey) {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@BigNat_checked_trgt_sub";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@BigNat_checked_sub";
+                    opterr = TreeIR::ErrorKind::other;
+                }
             }
             else {
-                return ["[NOT IMPLEMENTED processArithOpResult]", ArgExpErrorKind::any];
+                nexp = "-";
             }
         }
-        else {
-            return [dataop, ArgExpErrorKind::safe];
-        }
+
+        return [BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs)), opterr];
     }
 
-    method emitPrefixNegateOpExpression(exp: TReeIR::PrefixNegateExpression, depth: Nat, indent: String): [String, ArgExpErrorKind] {
+    recursive method emitBinMultExpression(exp: TreeIR::BinMultExpression): String {
         let nexp: String;
-        if(exp.etype === "Rational"TreeIR::TypeKey) {
-            nexp = "@Rational_unary";
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_mult";
         }
-        else if(exp.etype === "Float"TreeIR::TypeKey) {
-            nexp = "@Float_unary";
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_mult";
         }
-        else if(exp.etype === "Decimal"TreeIR::TypeKey) {
-            nexp = "@Decmial_unary";
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_mult";
         }
         else {
-            nexp = "-";
+            if<TreeIR::LiteralIntegralExpression>(exp.lhs) {
+                nexp = "*";
+            }
+            else {
+                if(exp.optype === "Nat"TreeIR::TypeKey) {
+                    nexp = "@Nat_mult";
+                }
+                else if(exp.optype === "Int"TreeIR::TypeKey) {
+                    nexp = "@Int_mult";
+                }
+                else if(exp.optype === "BigNat"TreeIR::TypeKey) {
+                    nexp = "@BigNat_mult";
+                }
+                else {
+                    nexp = "@BigInt_mult";
+                }       
+            }
         }
 
-        let argexp = this.processArgSingle(exp.exp, depth + 1, indent);
-        let opexp = this.applyBuilderUnary(nexp, argexp);
-        let finalexp = this.processArithOpResult(exp.etype, opexp);
-        let rop = this.buildOpUnary(argexp, finalexp.0, indent);
-
-        return [rop.0, joinArgExpErrorKinds(rop.1, finalexp.1)];
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
     }
 
-    method emitBinAddExpression(exp: TIRBinAddExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.add(${this.emitExpression(exp.rhs, true)})`;
+    recursive method emitBinDivExpression(exp: TreeIR::BinDivExpression): [String, TreeIR::ErrorKind] {
+        let nexp: String;
+        var opterr: ArgExpErrorKind = ArgErrorKind::safe;
+
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_div";
         }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.plus(${this.emitExpression(exp.rhs, true)})`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_div";
+        }
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_div";
         }
         else {
-            bexp = `${this.emitExpression(exp.lhs)} + ${this.emitExpression(exp.rhs)}`;
+            if<TreeIR::LiteralIntegralExpression>(exp.rhs) {
+                nexp = "/";
+            }
+            if(exp.optype === "Nat"TreeIR::TypeKey) {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@Nat_checked_trgt_div";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@Nat_checked_div";
+                    opterr = TreeIR::ErrorKind::other;
+                }
+            }
+            else if(exp.optype === "BigNat"TreeIR::TypeKey) {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@BigNat_checked_trgt_div";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@BigNat_checked_div";
+                    opterr = TreeIR::ErrorKind::other;
+                }
+            }
+            else if(exp.optype === "Int"TreeIR::TypeKey) {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@Int_checked_trgt_div";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@Int_checked_div";
+                    opterr = TreeIR::ErrorKind::other;
+                }
+            }
+            else {
+                if(this.isTrgtError(exp.errid)) {
+                    nexp = "@BigInt_checked_trgt_div";
+                    opterr = TreeIR::ErrorKind::target;
+                }
+                else {
+                    nexp = "@BigInt_checked_div";
+                    opterr = TreeIR::ErrorKind::other;
+                }
+            }
         }
 
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
-        }
-
-        return this.processArithOpResult(exp.etype, dataop);
-    }
-
-    method emitBinSubExpression(exp: TIRBinSubExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.sub(${this.emitExpression(exp.rhs, true)})`;
-        }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.minus(${this.emitExpression(exp.rhs, true)})`;
-        }
-        else {
-            bexp = `${this.emitExpression(exp.lhs)} - ${this.emitExpression(exp.rhs)}`;
-        }
-        
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "BigNat") {
-            dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
-        }
-        else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
-        }
-
-        return this.processArithOpResult(exp.etype, dataop);
-    }
-
-    method emitBinMultExpression(exp: TIRBinMultExpression, toplevel: boolean): String {
-        let bexp = "[NOT SET]";
-        if(exp.etype === "Rational") {
-            bexp = `${this.emitExpression(exp.lhs)}.mul(${this.emitExpression(exp.rhs, true)})`;
-        }
-        else if(exp.etype === "Decimal") {
-            bexp = `${this.emitExpression(exp.lhs)}.times(${this.emitExpression(exp.rhs, true)})`;
-        }
-        else {
-            bexp = `${this.emitExpression(exp.lhs)} * ${this.emitExpression(exp.rhs)}`;
-        }
-        
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
-        }
-        else {
-            dataop = toplevel ? bexp : ("(" + bexp + ")");
-        }
-
-        return this.processArithOpResult(exp.etype, dataop);
-    }
-
-    method emitBinDivExpression(exp: TIRBinDivExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let dataop = "[NOT SET]"
-        if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
-        }
-        else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
-        }
-        else if(exp.optype === "BigNat") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
-        }
-        else if(exp.optype === "BigInt") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
-        }
-        else if(exp.optype === "Rational") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a.div(b), (b) => b.equals(new $Runtime.Fraction(0.0)), ${lexp}, ${rexp})`;
-        }
-        else if(exp.optype === "Decimal") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a.dividedBy(b), (b) => b.equals(new $Runtime.Decimal(0.0)), ${lexp}, ${rexp})`;
-        }
-        else {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0.0, ${lexp}, ${rexp})`;
-        }
-
-        return this.processArithOpResult(exp.etype, dataop);
+        return [BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs)), opterr];
     }
 /*
     method emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): String {
@@ -744,163 +555,98 @@ entity BodyEmitter {
         return `$CoreLibs.$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 */
-    method emitNumericEqExpression(exp: TIRNumericEqExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
+    recursive method emitNumericEqExpression(exp: TreeIR::NumericEqExpression): String {
+        return BodyEmitter::buildBinaryOp("=", this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
+    }
 
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} === ${rexp}`;
+    recursive method emitNumericNeqExpression(exp: TreeIR::NumericNeqExpression): String {
+        return BodyEmitter::buildUnaryOp("not", BodyEmitter::buildBinaryOp("=", this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs)));
+    }
+
+    recursive method emitNumericLessExpression(exp: TreeIR::NumericLessExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_lt";
         }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} === ${rexp}`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_lt";
         }
-        else if(exp.optype === "Rational") {
-            cmp = `${lexp}.equals(${rexp})`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} === ${rexp}`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_lt";
         }
         else {
-            cmp = `${lexp}.equals(${rexp})`;
+            nexp = "<";
         }
 
-        return toplevel ? cmp : "(" + cmp + ")";
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
     }
 
-    method emitNumericNeqExpression(exp: TIRNumericNeqExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} !== ${rexp}`;
+    recursive method emitNumericLessEqExpression(exp: TreeIR::NumericLessEqExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_lteq";
         }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} !== ${rexp}`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_lteq";
         }
-        else if(exp.optype === "Rational") {
-            cmp = `!(${lexp}.equals(${rexp}))`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} !== ${rexp}`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_lteq";
         }
         else {
-            cmp = `!(${lexp}.equals(${rexp}))`;
+            nexp = "<=";
         }
 
-        return toplevel ? cmp : "(" + cmp + ")";
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
     }
 
-    method emitNumericLessExpression(exp: TIRNumericLessExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} < ${rexp}`;
+    recursive method emitNumericGreaterExpression(exp: TreeIR::NumericGreaterExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_lt";
         }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} < ${rexp}`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_lt";
         }
-        else if(exp.optype === "Rational") {
-            cmp = `(${lexp}.compare(${rexp}) < 0)`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} < ${rexp}`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_lt";
         }
         else {
-            cmp = `${lexp}.lessThan(${rexp})`;
+            nexp = "<";
         }
 
-        return toplevel ? cmp : "(" + cmp + ")";
+        //just swap the lhs and rhs
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.rhs), this.emitExpression[recursive](exp.lhs));
     }
 
-    method emitNumericLessEqExpression(exp: TIRNumericLessEqExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} <= ${rexp}`;
+    recursive method emitNumericGreaterEqExpression(exp: TreeIR::NumericGreaterEqExpression): String {
+        var nexp: String;
+        if(exp.optype === "Rational"TreeIR::TypeKey) {
+            nexp = "@Rational_lteq";
         }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} <= ${rexp}`;
+        else if(exp.optype === "Float"TreeIR::TypeKey) {
+            nexp = "@Float_lteq";
         }
-        else if(exp.optype === "Rational") {
-            cmp = `(${lexp}.compare(${rexp}) <= 0)`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} <= ${rexp}`;
+        else if(exp.optype === "Decimal"TreeIR::TypeKey) {
+            nexp = "@Decmial_lteq";
         }
         else {
-            cmp = `${lexp}.lessThanOrEqualTo(${rexp})`;
+            nexp = "<=";
         }
 
-        return toplevel ? cmp : "(" + cmp + ")";
+        //just swap the lhs and rhs
+        return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.rhs), this.emitExpression[recursive](exp.lhs));
     }
 
-    method emitNumericGreaterExpression(exp: TIRNumericGreaterExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} > ${rexp}`;
-        }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} > ${rexp}`;
-        }
-        else if(exp.optype === "Rational") {
-            cmp = `(${lexp}.compare(${rexp}) > 0)`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} > ${rexp}`;
-        }
-        else {
-            cmp = `${lexp}.greaterThan(${rexp})`;
-        }
-
-        return toplevel ? cmp : "(" + cmp + ")";
+    recursive method emitBinLogicAndExpression(exp: TreeIR::BinLogicAndExpression): String {
+        return BodyEmitter::buildBinaryOp("and", this.emitExpression[recursive](exp.rhs), this.emitExpression[recursive](exp.lhs));
     }
 
-    method emitNumericGreaterEqExpression(exp: TIRNumericGreaterEqExpression, toplevel: boolean): String {
-        const lexp = this.emitExpression(exp.lhs);
-        const rexp = this.emitExpression(exp.rhs);
-
-        let cmp = "[MISSING]";
-        if(exp.optype === "Nat" || exp.optype === "Int") {
-            cmp = `${lexp} >= ${rexp}`;
-        }
-        else if(exp.optype === "BigNat" || exp.optype === "BigInt") {
-            cmp = `${lexp} >= ${rexp}`;
-        }
-        else if(exp.optype === "Rational") {
-            cmp = `(${lexp}.compare(${rexp}) >= 0)`;
-        }
-        else if(exp.optype === "Float") {
-            cmp = `${lexp} >= ${rexp}`;
-        }
-        else {
-            cmp = `${lexp}.greaterThanOrEqualTo(${rexp})`;
-        }
-
-        return toplevel ? cmp : "(" + cmp + ")";
+    recursive method emitBinLogicOrExpression(exp: TreeIR::BinLogicOrExpression): String {
+        return BodyEmitter::buildBinaryOp("or", this.emitExpression[recursive](exp.rhs), this.emitExpression[recursive](exp.lhs));
     }
 
-    method emitBinLogicAndExpression(exp: TIRBinLogicAndExpression, toplevel: boolean): String {
-        const rr = `${this.emitExpression(exp.lhs)} && ${this.emitExpression(exp.rhs)}`;
-        return toplevel ? rr : "(" + rr + ")";
-    }
-
-    method emitBinLogicOrExpression(exp: TIRBinLogicOrExpression, toplevel: boolean): String {
-        const rr = `${this.emitExpression(exp.lhs)} || ${this.emitExpression(exp.rhs)}`;
-        return toplevel ? rr : "(" + rr + ")";
-    }
-
-    method emitBinLogicImpliesExpression(exp: TIRBinLogicImpliesExpression, toplevel: boolean): String {
-        const rr = `!${this.emitExpression(exp.lhs)} || ${this.emitExpression(exp.rhs)}`;
-        return toplevel ? rr : "(" + rr + ")";
+    recursive method emitBinLogicImpliesExpression(exp: TreeIR::BinLogicImpliesExpression): String {
+        return BodyEmitter::buildBinaryOp("=>", this.emitExpression[recursive](exp.rhs), this.emitExpression[recursive](exp.lhs));
     }
 /*
     method emitMapEntryConstructorExpression(exp: TIRMapEntryConstructorExpression): String {
@@ -1032,29 +778,29 @@ entity BodyEmitter {
         return "self.$ID";
     }
 */
-    method emitCoerceSafeExpression(exp: TIRCoerceSafeExpression, toplevel: boolean): String {
+    recursive method emitCoerceSafeExpression(exp: TreeIR::CoerceSafeExpression): String {
         const srcunion = this.typeEncodedAsUnion(exp.exp.etype);
         const trgtunion = this.typeEncodedAsUnion(exp.totype);
 
         if(srcunion === trgtunion) {
-            return this.emitExpression(exp.exp, toplevel);
+            return this.emitExpression[recursive](exp.exp);
         }
         else if(trgtunion) {
-            const bval = `$Runtime.UnionValue.create("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
-            return toplevel ? bval : "(" + bval + ")";
+            //TODO
+            return "[TODO -- emitCoerceSafeExpression to union]";
         }
         else {
-            const bval = `${this.emitExpression(exp.exp)}.value`;
-            return toplevel ? bval : "(" + bval + ")";
+            //TODO
+            return "[TODO -- emitCoerceSafeExpression to concrete]";
         }
     }
 
-    method emitInjectExpression(exp: TIRInjectExpression, toplevel: boolean): String {
-       return this.emitExpression(exp.exp, toplevel);
+    recursive method emitInjectExpression(exp: TreeIR::InjectExpression): String {
+       return this.emitExpression[recursive](exp.exp);
     }
 
-    method emitExtractExpression(exp: TIRExtractExpression, toplevel: boolean): String {
-       return this.emitExpression(exp.exp, toplevel);
+    recursive method emitExtractExpression(exp: TreeIR::ExtractExpression): String {
+       return this.emitExpression[recursive](exp.exp);
     }
 /*    
     method emitCreateCodePackExpression(exp: TIRCreateCodePackExpression): String {
@@ -1386,54 +1132,24 @@ entity BodyEmitter {
         return `$Runtime.setScratchValue($$scratch, ${exp.scidx}, ${fexp}(${aargs.join(", ")}));`;
     }
 */
-    method emitExpression(exp: TreeIR::Expression): String {
-        /*
-        switch (exp.tag) {
-            case TIRExpressionTag.LiteralNoneExpression: {
-                return this.emitLiteralNoneExpression(exp as TIRLiteralNoneExpression);
-            }
-            case TIRExpressionTag.LiteralNothingExpression: {
-                return this.emitLiteralNothingExpression(exp as TIRLiteralNothingExpression);
-            }
-            case TIRExpressionTag.LiteralBoolExpression: {
-                return this.emitLiteralBoolExpression(exp as TIRLiteralBoolExpression);
-            }
-            case TIRExpressionTag.LiteralIntegralExpression: {
-                return this.emitLiteralIntegralExpression(exp as TIRLiteralIntegralExpression);
-            }
-            case TIRExpressionTag.LiteralRationalExpression: {
-                return this.emitLiteralRationalExpression(exp as TIRLiteralRationalExpression);
-            }
-            case TIRExpressionTag.LiteralFloatPointExpression: {
-                return this.emitLiteralFloatPointExpression(exp as TIRLiteralFloatPointExpression);
-            }
-            case TIRExpressionTag.LiteralRegexExpression: {
-                return this.emitLiteralRegexExpression(exp as TIRLiteralRegexExpression);
-            }
-            case TIRExpressionTag.LiteralStringExpression: {
-                return this.emitLiteralStringExpression(exp as TIRLiteralStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIIStringExpression: {
-                return this.emitLiteralASCIIStringExpression(exp as TIRLiteralASCIIStringExpression);
-            }
-            case TIRExpressionTag.LiteralTypedStringExpression: {
-                return this.emitLiteralTypedStringExpression(exp as TIRLiteralTypedStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIITypedStringExpression: {
-                return this.emitLiteralASCIITypedStringExpression(exp as TIRLiteralASCIITypedStringExpression);
-            }
-            case TIRExpressionTag.LiteralTemplateStringExpression: {
-                return this.emitLiteralTemplateStringExpression(exp as TIRLiteralTemplateStringExpression);
-            }
-            case TIRExpressionTag.LiteralASCIITemplateStringExpression: {
-                return this.emitLiteralASCIITemplateStringExpression(exp as TIRLiteralASCIITemplateStringExpression);
-            }
-            case TIRExpressionTag.LiteralTypedPrimitiveDirectExpression: {
-                return this.emitLiteralTypedPrimitiveDirectExpression(exp as TIRLiteralTypedPrimitiveDirectExpression, toplevel || false);
-            }
-            case TIRExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
-                return this.emitLiteralTypedPrimitiveConstructorExpression(exp as TIRLiteralTypedPrimitiveConstructorExpression);
-            }
+    recursive method emitExpression(exp: TreeIR::Expression): String {
+        return match (exp) {
+            TreeIR::LiteralNoneExpression => this.emitLiteralNoneExpression($)
+            | TreeIR::LiteralNothingExpression => this.emitLiteralNothingExpression($)
+            | TreeIR::LiteralBoolExpression => this.emitLiteralBoolExpression($)|
+            | TreeIR::LiteralIntegralExpression => this.emitLiteralIntegralExpression($)
+            | TreeIR::LiteralRationalExpression => this.emitLiteralRationalExpression($)
+            | TreeIR::LiteralFloatPointExpression => this.emitLiteralFloatPointExpression($)
+            | TreeIR::LiteralRegexExpression => this.emitLiteralRegexExpression($)
+            | TreeIR::LiteralStringExpression => this.emitLiteralStringExpression($)
+            | TreeIR::LiteralASCIIStringExpression => this.emitLiteralASCIIStringExpression($)
+            | TreeIR::LiteralTypedStringExpression => this.emitLiteralTypedStringExpression($)
+            | TreeIR::LiteralASCIITypedStringExpression => this.emitLiteralASCIITypedStringExpression($)
+            | TreeIR::LiteralTemplateStringExpression => this.emitLiteralTemplateStringExpression($)
+            | TreeIR::LiteralASCIITemplateStringExpression => this.emitLiteralASCIITemplateStringExpression($)
+            | TreeIR::LiteralTypedPrimitiveDirectExpression => this.emitLiteralTypedPrimitiveDirectExpression($)
+            | TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression[recursive]($).0
+/*
             case TIRExpressionTag.AccessEnvValueExpression: {
                 return this.emitAccessEnvValueExpression(exp as TIRAccessEnvValueExpression);
             }
@@ -1509,33 +1225,17 @@ entity BodyEmitter {
             case TIRExpressionTag.CallNamespaceOperatorExpression: {
                 return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
             }
-            case TIRExpressionTag.CallStaticFunctionExpression: {
-                return this.emitCallStaticFunctionExpression(exp as TIRCallStaticFunctionExpression);
-            }
-            case TIRExpressionTag.LogicActionAndExpression: {
-                return this.emitLogicActionAndExpression(exp as TIRLogicActionAndExpression, toplevel || false);
-            }
-            case TIRExpressionTag.LogicActionOrExpression: {
-                return this.emitLogicActionOrExpression(exp as TIRLogicActionOrExpression, toplevel || false);
-            }
-            case TIRExpressionTag.PrefixNotExpression: {
-                return this.emitPrefixNotOpExpression(exp as TIRPrefixNotExpression, toplevel || false);
-            }
-            case TIRExpressionTag.PrefixNegateExpression: {
-                return this.emitPrefixNegateOpExpression(exp as TIRPrefixNegateExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinAddExpression: {
-                return this.emitBinAddExpression(exp as TIRBinAddExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinSubExpression: {
-                return this.emitBinSubExpression(exp as TIRBinSubExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinMultExpression: {
-                return this.emitBinMultExpression(exp as TIRBinMultExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinDivExpression: {
-                return this.emitBinDivExpression(exp as TIRBinDivExpression, toplevel || false);
-            }
+*/
+            | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($).0
+            | TreeIR::LogicActionAndExpression => this.emitLogicActionAndExpression[recursive]($)
+            | TreeIR::LogicActionOrExpression => this.emitLogicActionOrExpression[recursive]($)
+            | TreeIR::PrefixNotExpression => this.emitPrefixNotOpExpression[recursive]($)
+            | TreeIR::PrefixNegateExpression => this.emitPrefixNegateOpExpression[recursive]($)
+            | TreeIR::BinAddExpression => this.emitBinAddExpression[recursive]($)
+            | TreeIR::BinSubExpression => this.emitBinSubExpression[recursive]($).0
+            | TreeIR::BinMultExpression => this.emitBinMultExpression[recursive]($)
+            | TreeIR::BinDivExpression => this.emitBinDivExpression[recursive]($).0
+/*
             case TIRExpressionTag.BinKeyEqBothUniqueExpression: {
                 return this.emitBinKeyEqBothUniqueExpression(exp as TIRBinKeyEqBothUniqueExpression);
             }
@@ -1560,33 +1260,17 @@ entity BodyEmitter {
             case TIRExpressionTag.BinKeyGeneralLessExpression: {
                 return this.emitBinKeyGeneralLessExpression(exp as TIRBinKeyGeneralLessExpression);
             }
-            case TIRExpressionTag.NumericEqExpression: {
-                return this.emitNumericEqExpression(exp as TIRNumericEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericNeqExpression: {
-                return this.emitNumericNeqExpression(exp as TIRNumericNeqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericLessExpression: {
-                return this.emitNumericLessExpression(exp as TIRNumericLessExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericLessEqExpression: {
-                return this.emitNumericLessEqExpression(exp as TIRNumericLessEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericGreaterExpression: {
-                return this.emitNumericGreaterExpression(exp as TIRNumericGreaterExpression, toplevel || false);
-            }
-            case TIRExpressionTag.NumericGreaterEqExpression: {
-                return this.emitNumericGreaterEqExpression(exp as TIRNumericGreaterEqExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicAndExpression: {
-                return this.emitBinLogicAndExpression(exp as TIRBinLogicAndExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicOrExpression: {
-                return this.emitBinLogicOrExpression(exp as TIRBinLogicOrExpression, toplevel || false);
-            }
-            case TIRExpressionTag.BinLogicImpliesExpression: {
-                return this.emitBinLogicImpliesExpression(exp as TIRBinLogicImpliesExpression, toplevel || false);
-            }
+*/
+            | TreeIR::NumericEqExpression => this.emitNumericEqExpression[recursive]($)
+            | TreeIR::NumericNeqExpression => this.emitNumericNeqExpression[recursive]($)
+            | TreeIR::NumericLessExpression => this.emitNumericLessExpression[recursive]($)
+            | TreeIR::NumericLessEqExpression => this.emitNumericLessEqExpression[recursive]($)
+            | TreeIR::NumericGreaterExpression => this.emitNumericGreaterExpression[recursive]($)
+            | TreeIR::NumericGreaterEqExpression => this.emitNumericGreaterEqExpression[recursive]($)
+            | TreeIR::BinLogicAndExpression => self.emitBinLogicAndExpression[recursive]($)
+            | TreeIR::BinLogicOrExpression => self.emitBinLogicOrExpression[recursive]($)
+            | TreeIR::BinLogicImpliesExpression => self.emitBinLogicImpliesExpression[recursive]($)
+/*
             case TIRExpressionTag.MapEntryConstructorExpression: {
                 return this.emitMapEntryConstructorExpression(exp as TIRMapEntryConstructorExpression);
             }
@@ -1714,40 +1398,148 @@ entity BodyEmitter {
                 assert(false, `Unknown expression kind ${exp.tag}`);
                 return `[UNKNOWN TAG ${exp.tag}]`
             }
-        }
-        */
-    }
-
-    method emitNopStatement(stmt: TIRNopStatement): String {
-        return "; //nop";
-    }
-/*
-    method emitAbortStatement(stmt: TIRAbortStatement): String {
-        return `$Runtime.raiseUserAssert("${stmt.msg}");`;
-    }
-
-    method emitAssertCheckStatement(stmt: TIRAssertCheckStatement): String {
-        return `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(stmt.cond, true)}; } catch (ex) { $Runtime.log("warn", "AssertEvalFailure", "condition failure"); return true; } })()), "${stmt.msg}");`;
-    }
-
-    method emitDebugStatement(stmt: TIRDebugStatement): String {
-        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch(ex) { console.log("__debug(${stmt.value.expstr}) evaluation failed"); }`;
-    }
 */
-    method emitVarDeclareStatement(stmt: TIRVarDeclareStatement): String {
-        return `let ${stmt.vname};`;
+        };
     }
 
-    method emitVarDeclareAndAssignStatement(stmt: TIRVarDeclareAndAssignStatement): String {
-        return `let ${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+
+    method emitExpressionWErr(exp: TreeIR::Expression): [String, TreeIR::ErrorKind] {
+        return match (exp) {
+            TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression[recursive]($)
+/*
+            case TIRExpressionTag.AccessEnvValueExpression: {
+                return this.emitAccessEnvValueExpression(exp as TIRAccessEnvValueExpression);
+            }
+            case TIRExpressionTag.ConstructorPrimaryCheckExpression: {
+                return this.emitConstructorPrimaryCheckExpression(exp as TIRConstructorPrimaryCheckExpression);
+            }
+            case TIRExpressionTag.ConstructorMapExpression: {
+                return this.emitConstructorMapExpression(exp as TIRConstructorMapExpression);
+            }
+            case TIRExpressionTag.CodePackInvokeExpression: {
+                return this.emitCodePackInvokeExpression(exp as TIRCodePackInvokeExpression);
+            }
+            case TIRExpressionTag.TypedeclConstructorExpression: {
+                return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
+            }
+            case TIRExpressionTag.CallNamespaceFunctionExpression: {
+                return this.emitCallNamespaceFunctionExpression(exp as TIRCallNamespaceFunctionExpression);
+            }
+            case TIRExpressionTag.CallNamespaceOperatorExpression: {
+                return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
+            }
+*/
+            | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($)
+            | TreeIR::BinSubExpression => this.emitBinSubExpression[recursive]($)
+            | TreeIR::BinDivExpression => this.emitBinDivExpression[recursive]($)
+/*
+            case TIRExpressionTag.AsSomeSpecialExpression: {
+                return this.emitAsSomeSpecialExpression(exp as TIRAsSomeSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNothingSpecialExpression: {
+                return this.emitAsNothingSpecialExpression(exp as TIRAsNothingSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsSomethingSpecialExpression: {
+                return this.emitAsSomethingSpecialExpression(exp as TIRAsSomethingSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsOkSpecialExpression: {
+                return this.emitAsOkSpecialExpression(exp as TIRAsOkSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsErrSpecialExpression: {
+                return this.emitAsErrSpecialExpression(exp as TIRAsErrSpecialExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsEqualToLiteralExpression: {
+                return this.emitAsEqualToLiteralExpression(exp as TIRAsEqualToLiteralExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotEqualToLiteralExpression: {
+                return this.emitAsNotEqualToLiteralExpression(exp as TIRAsNotEqualToLiteralExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsTypeExpression: {
+                return this.emitAsTypeExpression(exp as TIRAsTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotTypeExpression: {
+                return this.emitAsNotTypeExpression(exp as TIRAsNotTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsSubTypeExpression: {
+                return this.emitAsSubTypeExpression(exp as TIRAsSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.AsNotSubTypeExpression: {
+                return this.emitAsNotSubTypeExpression(exp as TIRAsNotSubTypeExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionExpression: {
+                return this.emitCallMemberFunctionExpression(exp as TIRCallMemberFunctionExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionDynamicExpression: {
+                return this.emitCallMemberFunctionDynamicExpression(exp as TIRCallMemberFunctionDynamicExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionSelfRefExpression: {
+                return this.emitCallMemberFunctionSelfRefExpression(exp as TIRCallMemberFunctionSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskExpression: {
+                return this.emitCallMemberFunctionTaskExpression(exp as TIRCallMemberFunctionTaskExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberFunctionTaskSelfRefExpression: {
+                return this.emitCallMemberFunctionTaskSelfRefExpression(exp as TIRCallMemberFunctionTaskSelfRefExpression, toplevel || false);
+            }
+            case TIRExpressionTag.CallMemberActionExpression: {
+                return this.emitCallMemberActionExpression(exp as TIRCallMemberActionExpression, toplevel || false);
+            }
+*/
+            | _ => [this.emitExpression(exp), TreeIR::ErrorKind::safe];
+        };
     }
 
-    method emitVarAssignStatement(stmt: TIRVarAssignStatement): String {
-        if(stmt.vname !== "this") {
-            return `${stmt.vname} = ${this.emitExpression(stmt.vexp, true)};`;
+    recursive method emitNopStatement(stmt: TreeIR::NopStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        return this.emitStatementList[recursive](follow, indent);
+    }
+
+    recursive method emitAbortStatement(stmt: TreeIR::AbortStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        if(this.isTrgtError(stmt.errid)) {
+            return BodyEmitter::buildMakeError("@error-target", this.bodyResultType, TreeIR::ErrorKind::target).prepend(indent);
         }
         else {
-            return `$_this = ${this.emitExpression(stmt.vexp, true)};`;
+            return BodyEmitter::buildMakeError("@error-other", this.bodyResultType, TreeIR::ErrorKind::other).prepend(indent);
+        }
+    }
+
+    recursive method emitAssertCheckStatement(stmt: TreeIR::AssertCheckStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let fstr = this.emitStatementList(follow, indent.append("    "));
+        let chkstr = this.emitExpression(stmt.cond);
+
+        var errstr: String;
+        if(this.isTrgtError(stmt.errid)) {
+            errstr = BodyEmitter::buildMakeError("@error-target", this.bodyResultType, TreeIR::ErrorKind::target);
+        }
+        else {
+            errstr = BodyEmitter::buildMakeError("@error-other", this.bodyResultType, TreeIR::ErrorKind::other);
+        }
+
+        return BodyEmitter::buildErrorBailOp(chkstr, errstr, fstr, indent);
+    }
+
+    recursive method emitDebugStatement(stmt: TreeIR::DebugStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        //These are nop'd in the SMT model
+        return this.emitStatementList[recursive](follow, indent);
+    }
+
+    recursive method emitVarDeclareAndAssignStatement(stmt: TreeIR::VarDeclareAndAssignStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let eval = this.emitExpressionWErr(stmt.exp);
+
+        if(eval.1 === TreeIR::ErrorKind::safe) {
+             let fstr = this.emitStatementList(follow, indent);
+             return BodyEmitter::buildLetOp(stmt.vname, eval.0, fstr, indent);
+        }
+        else {
+            let fstr this.emitStatementList(follow, indent.append("    "));
+            let tvstr = String::concat(List<String>{"@", stmt.vname, "@"});
+
+            let errchk = BodyEmitter::buildErrorIsTest(tvstr, eval.1);
+            let errstr = BodyEmitter::buildMakeError(BodyEmitter::rewrapError(tvstr, stmt.exp.etype, eval.1), this.bodyResultType, this.bodyResultErrKind);
+
+            let normalflow = BodyEmitter::buildLetOp(stmt.vname, BodyEmitter::buildValueExtract(tvstr, eval.1), fstr, indent.append("    "));
+            let errctrl = BodyEmitter::buildErrorBailOp(errchk, errstr, normalflow, indent);
+
+            return BodyEmitter::buildLetOp(tvstr, eval.0, errctrl, indent);
         }
     }
 /*
@@ -1795,8 +1587,9 @@ entity BodyEmitter {
         return "NOT IMPLEMENTED -- TIRScratchSCStatement";
     }
 */
-    method emitReturnStatement(stmt: TIRReturnStatement): String {
-        return `return ${this.emitExpression(stmt.value, true)};`;
+    recursive method emitReturnStatement(stmt: TreeIR::ReturnStatement, follow: List<TreeIR::Statement>, indent: String): String {
+        let rv =  this.emitExpression(stmt.value);
+        return rv.prepend(indent);
     }
 /*
     method emitReturnStatementWRef(stmt: TIRReturnStatementWRef): String {
@@ -2022,42 +1815,27 @@ entity BodyEmitter {
         //TODO: unscoped block needs some work here!
         return `$Runtime.pushlogprefix(${fmt}, ${args}); try ${bblock}\n${indent}catch(ex) { $Runtime.log("LoggerError", "error", "[[logging failure -- ${this.m_file}@${stmt.sinfo.line}]]"); } \n${indent}$Runtime.poplogprefix();`
     }
-
-    emitScopedBlock(blck: TIRScopedBlockStatement, indent: String, prestr?: String | undefined, poststr?: String | undefined): String {
-        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
-
-        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + "    "}${poststr}\n` : "") + indent + "}";
-    }
-
-    emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: String): String {
-        //TODO: need to declare vars as let before block so we can support things like -- LoggerSetPrefix that need to wrap the block as a try{...}catch{...}
-        return NOT_IMPLEMENTED_STATEMENT("TIRUnscopedBLock");
-    }
 */
-    method emitStatement(stmt: TreeIR::Statement, indent: String): String {
-        /*
-        switch(stmt.tag) {
-            case TIRStatementTag.NopStatement: {
-                return this.emitNopStatement(stmt as TIRNopStatement);
-            }
-            case TIRStatementTag.AbortStatement: {
-                return this.emitAbortStatement(stmt as TIRAbortStatement);
-            }
-            case TIRStatementTag.AssertCheckStatement: {
-                return this.emitAssertCheckStatement(stmt as TIRAssertCheckStatement);
-            }
-            case TIRStatementTag.DebugStatement: {
-                return this.emitDebugStatement(stmt as TIRDebugStatement);
-            }
-            case TIRStatementTag.VarDeclareStatement: {
-                return this.emitVarDeclareStatement(stmt as TIRVarDeclareStatement);
-            }
-            case TIRStatementTag.VarDeclareAndAssignStatement: {
-                return this.emitVarDeclareAndAssignStatement(stmt as TIRVarDeclareAndAssignStatement);
-            }
-            case TIRStatementTag.VarAssignStatement: {
-                return this.emitVarAssignStatement(stmt as TIRVarAssignStatement);
-            }
+    recursive method emitScopedBlock(blck: TreeIR::ScopedBlockStatement, indent: String): String 
+        requires !blck.ops.empty();
+    {
+        return this.emitStatementList[recursive](blck.ops, indent);
+    }
+
+    recursive method emitUnscopedBlock(blck: TreeIR::UnscopedBlockStatement, indent: String): String 
+        requires !blck.ops.empty();
+    {
+        return this.emitStatementList[recursive](blck.ops, indent);
+    }
+
+    recursive method emitStatement(stmt: TreeIR::Statement, follows: List<TreeIR::Statement>, indent: String): String {
+        return match (stmt) {
+            TreeIR::NopStatement => this.emitNopStatement[recursive](stmt, follows, indent)
+            | TreeIR::AbortStatement => this.emitAbortStatement[recursive](stmt, follows, indent)
+            | TreeIR::AssertCheckStatement => this.emitAssertCheckStatement[recursive](stmt, follows, indent)
+            | TreeIR::DebugStatement => this.emitDebugStatement[recursive](stmt, follows, indent)
+            | TreeIR::VarDeclareAndAssignStatement => this.emitVarDeclareAndAssignStatement[recursive](stmt, follows, indent)
+            /*
             case TIRStatementTag.StoreToScratch: {
                 return this.emitStoreToScratch(stmt as TIRStoreToScratch);
             }
@@ -2085,9 +1863,9 @@ entity BodyEmitter {
             case TIRStatementTag.ScratchSCStatement: {
                 return this.emitScratchSCStatement(stmt as TIRScratchSCStatement);
             }
-            case TIRStatementTag.ReturnStatement: {
-                return this.emitReturnStatement(stmt as TIRReturnStatement);
-            }
+*/
+            | TreeIR::ReturnStatement => this.emitReturnStatement[recursive](stmt, follows, indent)
+/*
             case TIRStatementTag.ReturnStatementWRef: {
                 return this.emitReturnStatementWRef(stmt as TIRReturnStatementWRef);
             }
@@ -2146,30 +1924,17 @@ entity BodyEmitter {
                 assert(false, `Unknown statement kind ${stmt.tag}`);
                 return `[UNKNOWN TAG ${stmt.tag}]`
             }
-        }
-        */
+*/
+        };
     }
 
-    emitBodyStatementList(body: TIRStatement[], preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], indent: String, fname: String, extractres: boolean): String {
-        const bodyindent = indent + "    ";
-        const wbodyindent = bodyindent + "    ";
-        let rconds = "";
+    recursive method emitStatementList(stmts: List<TreeIR::Statement>, indent: String): String 
+        requires !stmts.empty();
+    {
+        return this.emitStatement[recursive](stmts.front(), stmts.popFront(), indent);
+    }
 
-        if(preconds.length !== 0) {
-            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
-        }
-
-        const bstmts = body.map((stmt) => this.emitStatement(stmt, postconds.length === 0 ? bodyindent : wbodyindent));
-        const scratch = this.m_hasScratch ? `${bodyindent}let $$scratch = [];\n` : "";
-
-        if(postconds.length === 0) {
-            return `{\n${scratch}${rconds}${bodyindent}${bstmts.join("\n" + bodyindent)}\n${indent}}`;
-        }
-        else {
-            const bstr = `{\n${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
-            const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
-
-            return `{\n${scratch}${rconds}const $$return" = (() => ${bstr})();\n${bodyindent}$return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
-        }
+    method emitBodyStatementList(body: List<TreeIR::Statement>): String {
+        return this.emitStatementList(body, "    ");
     }
 }

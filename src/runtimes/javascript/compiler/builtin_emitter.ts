@@ -1,4 +1,3 @@
-import * as assert from "assert";
 import { BSQRegex } from "../../../frontend/bsqregex";
 
 import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
@@ -19,7 +18,6 @@ function emitBuiltinNamespaceFunction(asm: TIRAssembly, func: TIRNamespaceFuncti
             return undefined;
         }
         default: {
-            assert(false, `Unknown primitive member function -- ${(func.invoke as TIRInvokePrimitive).body}`);
             return "[UNKNOWN PRIMITIVE FUNCTION]";
         }
     }
@@ -215,7 +213,6 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
 
         default: {
-            assert(false, `Unknown primitive member function -- ${(func.invoke as TIRInvokePrimitive).body}`);
             return "[UNKNOWN PRIMITIVE FUNCTION]";
         }
     }
