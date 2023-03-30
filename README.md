@@ -268,6 +268,26 @@ npm install && npm test
 
 The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
+## Run a Bosque Program
+The current focus of the project is incrementally standing up features and supporting small applications. So, the only supported way to run a Bosque program is to use the _very_ basic compiler that emits JavaScript code. The compiler is invoked as follows:
+
+```none
+node ./bin/runtimes/javascript/cmd.js [files.bsq]
+```
+
+The compiler expects an function named `main` to be present in the program and in the namespace `Main`. This file will be called with the arguments passed on the command line, which are JSON objects and will be parsed per the parameter types on the function.
+
+```none
+> ./bin/runtimes/javascript/cmd.js ./test/bsqsrc/small_apps/tic_tac_toe/tic_tac_toe.bsq
+...
+
+> node ./jsout/_main_.mjs '"[[0, 0, \"Main::PlayerMark::x\"]]"'
+["Result::Ok<Main::PlayerMark|None, String>",null]
+
+> node ./jsout/_main_.mjs '"[[0, 0, \"Main::PlayerMark::x\"], [1, 0, \"Main::PlayerMark::x\"], [2, 0, \"Main::PlayerMark::x\"]]"'
+["Result::Ok<Main::PlayerMark|None, String>","Main::PlayerMark::x"]
+
+
 ## Visual Studio Code Integration
 
 This repository provides basic [Visual Studio Code](https://code.visualstudio.com/) IDE support for the Bosque language (currently limited to syntax and brace highlighting). The installation requires manually copying the full `bosque-language-tools/` folder into your user `.vscode/extensions/` directory and restarting VSCode.
