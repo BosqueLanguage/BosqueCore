@@ -62,14 +62,14 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry
         }
     }
 
-    recursive? method mapFlat<U>(f: recursive? fn(k: K, v: V) -> U): List<U> {
+    recursive? method mapFlat<U>(f: recursive? fn(K, V) -> U): List<U> {
         if(MapOps::s_map_empty<K, V>(this)) {
             return List<U>{};
         }
         else {
             //TODO: specialize this
             let ll = MapOps::s_map_entries<K, V>(this);
-            return ListOps::s_list_map_fn<MapEntry<K, V>, U>[recursive?](ll, recursive? fn(kv: MapEntry<K, V>): U => fn(kv.key(), kv.value()));
+            return ListOps::s_list_map_fn<MapEntry<K, V>, U>[recursive?](ll, recursive? fn(kv: MapEntry<K, V>): U => f(kv.key(), kv.value()));
         }
     }
 /*
