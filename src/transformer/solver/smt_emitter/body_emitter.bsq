@@ -19,10 +19,9 @@ entity BodyEmitter {
     field assembly: TreeIR::Assembly;
 
     field file: String;
-    field ns: TreeIR::NamespaceIdentifier;
 
     field trgtError: Int;
-    field invokeResultErrMap<TreeIR::Invoke, TreeIR::ErrorKind>;
+    field invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>;
 
     field bodyResultType: TreeIR::TypeKey;
     field bodyResultErrKind: TreeIR::ErrorKind;
@@ -84,7 +83,7 @@ entity BodyEmitter {
         return BodyEmitter::buildMakeOk(okval, this.bodyResultType, this.bodyResultErrKind);
     }
 
-    method rewrapError(exp: String, exptype: TreeIR::TypeKey, experr: ErrorKind): String {
+    method rewrapError(exp: String, exptype: TreeIR::TypeKey, experr: TreeIR::ErrorKind): String {
         if(/\(exptype === this.bodyResultType, TreeIR::isTargetErrorKind(experr) === TreeIR::isTargetErrorKind(this.bodyResultErrKind))) {
             return exp;
         }
@@ -197,7 +196,7 @@ entity BodyEmitter {
         return "[NOT IMPLEMENTED TypedPrimitiveDirect]";
     }
 
-    recursive method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, ErrorKind] {
+    recursive method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, TreeIR::ErrorKind] {
         return "[NOT IMPLEMENTED TypedPrimitiveConstructor]";
     }
 
@@ -307,7 +306,7 @@ entity BodyEmitter {
         return `${this.resolveTypeMemberAccess(exp.oftype)}.$constructorWithChecks(${this.emitExpression(exp.arg, true)})`;
     }
 */
-    recursive method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression): [String, ErrorKind] {
+    recursive method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression): [String, TreeIR::ErrorKind] {
         let invks = this.assembly.namespaceMap.get(exp.ns).functions.get(exp.fname);
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
         let invdecl = this.assembly.invokeMap.get(invk.ikey);
@@ -384,7 +383,7 @@ entity BodyEmitter {
         return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
     }
 
-    recursive method emitBinSubExpression(exp: TreeIR::BinSubExpression): [String, ErrorKind] {
+    recursive method emitBinSubExpression(exp: TreeIR::BinSubExpression): [String, TreeIR::ErrorKind] {
         var nexp: String;
         var opterr: ArgExpErrorKind = ArgErrorKind::safe;
         if(exp.optype === "Rational"TreeIR::TypeKey) {
@@ -400,21 +399,21 @@ entity BodyEmitter {
             if(exp.optype === "Nat"TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Nat_checked_trgt_sub";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@Nat_checked_sub";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
             else if(exp.optype === "BigNat"TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@BigNat_checked_trgt_sub";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@BigNat_checked_sub";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
             else {
@@ -459,7 +458,7 @@ entity BodyEmitter {
         return BodyEmitter::buildBinaryOp(nexp, this.emitExpression[recursive](exp.lhs), this.emitExpression[recursive](exp.rhs));
     }
 
-    recursive method emitBinDivExpression(exp: TreeIR::BinDivExpression): [String, ErrorKind] {
+    recursive method emitBinDivExpression(exp: TreeIR::BinDivExpression): [String, TreeIR::ErrorKind] {
         let nexp: String;
         var opterr: ArgExpErrorKind = ArgErrorKind::safe;
 
@@ -479,41 +478,41 @@ entity BodyEmitter {
             if(exp.optype === "Nat"TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Nat_checked_trgt_div";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@Nat_checked_div";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
             else if(exp.optype === "BigNat"TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@BigNat_checked_trgt_div";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@BigNat_checked_div";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
             else if(exp.optype === "Int"TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Int_checked_trgt_div";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@Int_checked_div";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
             else {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@BigInt_checked_trgt_div";
-                    opterr = ErrorKind::target;
+                    opterr = TreeIR::ErrorKind::target;
                 }
                 else {
                     nexp = "@BigInt_checked_div";
-                    opterr = ErrorKind::other;
+                    opterr = TreeIR::ErrorKind::other;
                 }
             }
         }
@@ -1404,7 +1403,7 @@ entity BodyEmitter {
     }
 
 
-    method emitExpressionWErr(exp: TreeIR::Expression): [String, ErrorKind] {
+    method emitExpressionWErr(exp: TreeIR::Expression): [String, TreeIR::ErrorKind] {
         return match (exp) {
             TreeIR::LiteralTypedPrimitiveConstructorExpression => this.emitLiteralTypedPrimitiveConstructorExpression[recursive]($)
 /*
@@ -1486,7 +1485,7 @@ entity BodyEmitter {
                 return this.emitCallMemberActionExpression(exp as TIRCallMemberActionExpression, toplevel || false);
             }
 */
-            | _ => [this.emitExpression(exp), ErrorKind::safe];
+            | _ => [this.emitExpression(exp), TreeIR::ErrorKind::safe];
         };
     }
 
@@ -1496,10 +1495,10 @@ entity BodyEmitter {
 
     recursive method emitAbortStatement(stmt: TreeIR::AbortStatement, follow: List<TreeIR::Statement>, indent: String): String {
         if(this.isTrgtError(stmt.errid)) {
-            return BodyEmitter::buildMakeError("@error-target", this.bodyResultType, ErrorKind::target).prepend(indent);
+            return BodyEmitter::buildMakeError("@error-target", this.bodyResultType, TreeIR::ErrorKind::target).prepend(indent);
         }
         else {
-            return BodyEmitter::buildMakeError("@error-other", this.bodyResultType, ErrorKind::other).prepend(indent);
+            return BodyEmitter::buildMakeError("@error-other", this.bodyResultType, TreeIR::ErrorKind::other).prepend(indent);
         }
     }
 
@@ -1509,10 +1508,10 @@ entity BodyEmitter {
 
         var errstr: String;
         if(this.isTrgtError(stmt.errid)) {
-            errstr = BodyEmitter::buildMakeError("@error-target", this.bodyResultType, ErrorKind::target);
+            errstr = BodyEmitter::buildMakeError("@error-target", this.bodyResultType, TreeIR::ErrorKind::target);
         }
         else {
-            errstr = BodyEmitter::buildMakeError("@error-other", this.bodyResultType, ErrorKind::other);
+            errstr = BodyEmitter::buildMakeError("@error-other", this.bodyResultType, TreeIR::ErrorKind::other);
         }
 
         return BodyEmitter::buildErrorBailOp(chkstr, errstr, fstr, indent);
@@ -1526,7 +1525,7 @@ entity BodyEmitter {
     recursive method emitVarDeclareAndAssignStatement(stmt: TreeIR::VarDeclareAndAssignStatement, follow: List<TreeIR::Statement>, indent: String): String {
         let eval = this.emitExpressionWErr(stmt.exp);
 
-        if(eval.1 === ErrorKind::safe) {
+        if(eval.1 === TreeIR::ErrorKind::safe) {
              let fstr = this.emitStatementList(follow, indent);
              return BodyEmitter::buildLetOp(stmt.vname, eval.0, fstr, indent);
         }
@@ -1935,25 +1934,7 @@ entity BodyEmitter {
         return this.emitStatement[recursive](stmts.front(), stmts.popFront(), indent);
     }
 
-    method emitBodyStatementList(body: List<TreeIR::Statement>, preconds: List<TreeIR::PreConditionDecl>, postconds: List<TreeIR::PostConditionDecl>, indent: String, fname: String): String {
-        const bodyindent = indent + "    ";
-        const wbodyindent = bodyindent + "    ";
-        let rconds = "";
-
-        if(preconds.length !== 0) {
-            rconds = bodyindent + preconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed precondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent) + "\n";
-        }
-
-        const bstmts = body.map((stmt) => this.emitStatement(stmt, postconds.length === 0 ? bodyindent : wbodyindent));
-
-        if(postconds.length === 0) {
-            return `{\n${scratch}${rconds}${bodyindent}${bstmts.join("\n" + bodyindent)}\n${indent}}`;
-        }
-        else {
-            const bstr = `{\n${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
-            const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
-
-            return `{\n${scratch}${rconds}const $$return" = (() => ${bstr})();\n${bodyindent}$return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
-        }
+    method emitBodyStatementList(body: List<TreeIR::Statement>): String {
+        return this.emitStatementList(body, "    ");
     }
 }

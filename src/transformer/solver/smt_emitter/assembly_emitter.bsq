@@ -2,21 +2,41 @@ namespace SMTEmit;
 
 import TreeIR;
 
-entity NamespaceEmitter {
+entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
-    field ns: TreeIR::NamespaceIdentifier;
-    field: decl: TreeITR::NamespaceDeclaration;
 
+    method generateSMTDecl(t: TreeIR::Type): String {
+        return "TYPE DECL";
+    }
 }
 
 entity AssemblyEmitter {
-    field assembly: TreeIR::Assembly;
+    function processAssembly(asm: TreeIR::Assembly): TreeIR::Assembly {
+        //TODO: flatten expressions -- error inducing expressions and calls are at top-level
+        //TODO: inline as needed
+        //TODO: ensure bodies are trees
+        //TODO: make are variable assignments unique
 
-    method processAssembly(): String {
-        return "[NOT IMPLEMENTED]"
+        return asm;
     };
 
-    generateSMTCode(smtcore: String): String {
-        return this.processAssembly();
+    function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
+        let temitter = TypeInfoEmitter{flatasm};
+        let typedecls = flatasm.typeMap.mapFlat<String>(fn(k, t) => temitter.generateSMTDecl(t));
+
+        let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
+            let iname = smtifyInvokeKey(i.invkey);
+            let rtype = i.resultType;
+            let rerr = if invokeResultErrMap.has(i.invkey) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
+            let bemitter = BodyEmitter{flatasm, iname, i.srcFile, -1, invokeResultErrMap, rtype, rerr};
+            
+            match (i) {
+                TreeIR::InvokeImplementation => return bemitter.emitBodyStatementList($.body);
+                | TreeIR::InvokePrimitive => return "PRIMITIVE DECL";
+                _ => return "";
+            }
+        });
+
+        return String.concat(List<String>{String::join("\n", typedecls) + "\n" + String::join("\n", idecls)});
     }
 }

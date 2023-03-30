@@ -2,6 +2,14 @@
 namespace Core;
 
 __internal entity MapEntry<K grounded KeyType, V> provides Some, APIType when K grounded APIType && V grounded APIType, Testable when K grounded Testable && V grounded Testable {
+    
+    method key(): K {
+        return MapOps::s_mapentry_key<K, V>(this);
+    }
+
+    method value(): V {
+        return MapOps::s_mapentry_value<K, V>(this);
+    }
 }
 
 __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry<K, V>>, APIType when K grounded APIType && V grounded APIType, Testable when K grounded Testable && V grounded Testable {
@@ -23,6 +31,47 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry
         return MapOps::s_map_get<K, V>(this, key);
     }
 
+     method entries(): List<MapEntry<K, V>> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return List<MapEntry<K, V>>{};
+        }
+        else {
+            return MapOps::s_map_entries<K, V>(this);
+        }
+    }
+
+    method keys(): List<K> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return List<K>{};
+        }
+        else {
+            //TODO: specialize this
+            let ee = MapOps::s_map_entries<K, V>(this);
+            return ListOps::s_list_map_fn<[K, V], K>(ee, fn(kv: MapEntry<K, V>): K => kv.key());
+        }
+    }
+
+    method values(): List<V> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return List<V>{};
+        }
+        else {
+            //TODO: specialize this
+            let ee = MapOps::s_map_entries<K, V>(this);
+            return ListOps::s_list_map_fn<[K, V], V>(ee, fn(kv: [K, V]): V => kv.value());
+        }
+    }
+
+    recursive? method mapFlat<U>(f: recursive? fn(k: K, v: V) -> U): List<U> {
+        if(MapOps::s_map_empty<K, V>(this)) {
+            return List<U>{};
+        }
+        else {
+            //TODO: specialize this
+            let ll = MapOps::s_map_entries<K, V>(this);
+            return ListOps::s_list_map_fn<MapEntry<K, V>, U>[recursive?](ll, recursive? fn(kv: MapEntry<K, V>): U => fn(kv.key(), kv.value()));
+        }
+    }
 /*
     method getOrNone(key: K): V? {
 #if CHECK_LIBS
@@ -60,35 +109,6 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry
             return something(vv);
         }
 #endif
-    }
-
-    method entries(): List<[K, V]> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<K, V>{};
-        }
-        else {
-            MapOps::s_map_entries<K, V>(this);
-        }
-    }
-
-    method keys(): List<K> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<K>{};
-        }
-        else {
-            let ee = MapOps::s_map_entries<K, V>(this);
-            return ListOps::s_list_map_fn<[K, V], K>(ee, fn(kv: [K, V]): K => kv.0);
-        }
-    }
-
-    method values(): List<V> {
-        if(MapOps::s_map_empty<K, V>(this)) {
-            return List<V>{};
-        }
-        else {
-            let ee = MapOps::s_map_entries<K, V>(this);
-            return ListOps::s_list_map_fn<[K, V], V>(ee, fn(kv: [K, V]): V => kv.1);
-        }
     }
 
     method union(m: Map<K, V>): Map<K, V> {
