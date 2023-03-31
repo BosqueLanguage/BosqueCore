@@ -286,7 +286,7 @@ The compiler expects an function named `main` to be present in the program and i
 
 > node ./jsout/_main_.mjs '"[[0, 0, \"Main::PlayerMark::x\"], [1, 0, \"Main::PlayerMark::x\"], [2, 0, \"Main::PlayerMark::x\"]]"'
 ["Result::Ok<Main::PlayerMark|None, String>","Main::PlayerMark::x"]
-
+```
 
 ## Visual Studio Code Integration
 
