@@ -28,7 +28,7 @@ entity AssemblyEmitter {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;
             let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
-            let bemitter = BodyEmitter{flatasm, iname, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
+            let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
             match (i) {
                 TreeIR::InvokeImplementation => return bemitter.emitBodyStatementList($.body);
@@ -37,6 +37,6 @@ entity AssemblyEmitter {
             }
         });
 
-        return String::concat(List<String>{String::join("\n", typedecls) + "\n" + String::join("\n", idecls)});
+        return String::concat(List<String>{String::join("\n", typedecls), "\n", String::join("\n", idecls)});
     }
 }

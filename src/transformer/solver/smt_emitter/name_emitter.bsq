@@ -20,17 +20,16 @@ function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
 
 function smtifyType(tkey: TreeIR::TypeKey): String {
     //eplace special characters with @enc@
-    return tkey.value();
+    return tkey.value().value();
 }
 
 function smtifyIdentifier(ii: TreeIR::Identifier): String {
-    return ii.value();
+    return ii.value().value();
 }
-
 
 function smtifyInvokeKey(ii: TreeIR::InvokeKey): String {
     //TODO: replace special characters with @enc@
-    return ii.value();
+    return ii.value().value();
 }
 
 function emitTypeName(tkey: TreeIR::TypeKey): String {

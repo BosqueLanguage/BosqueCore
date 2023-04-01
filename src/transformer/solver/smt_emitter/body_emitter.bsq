@@ -27,7 +27,7 @@ entity BodyEmitter {
     field bodyResultErrKind: TreeIR::ErrorKind;
 
     method isTrgtError(errid: Int): Bool {
-        return this.trgtError.errid === errid;
+        return this.trgtError === errid;
     }
 
     function buildErrorIsTest(evar: String, errkind: TreeIR::ErrorKind): String {
@@ -57,7 +57,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeError(evar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+    function buildMakeError(evar: String, oftype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String::concat(List<String>{"(@ResultO-mk-err ", evar, ")"});
         }
@@ -66,7 +66,7 @@ entity BodyEmitter {
         }
     }
 
-    function buildMakeOk(okvar: String, oftype: TReeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+    function buildMakeOk(okvar: String, oftype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String::concat(List<String>{"(@ResultO-mk-ok ", okvar, ")"});
         }
@@ -146,11 +146,11 @@ entity BodyEmitter {
     }
 
     method emitLiteralIntegralExpression(exp: TreeIR::LiteralIntegralExpression): String {
-        return exp.expstr.removeEnd("n");
+        return exp.value.removeEnd("n");
     }
 
     method emitLiteralRationalExpression(exp: TreeIR::LiteralRationalExpression): String {
-        return String::concat(List<String>{"@Rational_uninterp(", exp.expstr, ")"});
+        return String::concat(List<String>{"@Rational_uninterp(", exp.value, ")"});
     }
 
     method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): String {
@@ -160,7 +160,7 @@ entity BodyEmitter {
             return if(exp.etype === "Float") then "@Float_0" else "@Decimal_0";
         }
         else {
-            return if(exp.etype === "Float") then String::concat(List<String>{"@Float_uninterp(", exp.expstr, ")"}) else String::concat(List<String>{"@Decimal_uninterp(", exp.expstr, ")"});
+            return if(exp.etype === "Float") then String::concat(List<String>{"@Float_uninterp(", exp.value, ")"}) else String::concat(List<String>{"@Decimal_uninterp(", exp.value, ")"});
         }
     }
 
@@ -1835,11 +1835,11 @@ entity BodyEmitter {
 
     recursive method emitStatement(stmt: TreeIR::Statement, follows: List<TreeIR::Statement>, indent: String): String {
         return match (stmt) {
-            TreeIR::NopStatement => this.emitNopStatement[recursive](stmt, follows, indent)
-            | TreeIR::AbortStatement => this.emitAbortStatement[recursive](stmt, follows, indent)
-            | TreeIR::AssertCheckStatement => this.emitAssertCheckStatement[recursive](stmt, follows, indent)
-            | TreeIR::DebugStatement => this.emitDebugStatement[recursive](stmt, follows, indent)
-            | TreeIR::VarDeclareAndAssignStatement => this.emitVarDeclareAndAssignStatement[recursive](stmt, follows, indent)
+            TreeIR::NopStatement => this.emitNopStatement[recursive]($, follows, indent)
+            | TreeIR::AbortStatement => this.emitAbortStatement[recursive]($, follows, indent)
+            | TreeIR::AssertCheckStatement => this.emitAssertCheckStatement[recursive]($, follows, indent)
+            | TreeIR::DebugStatement => this.emitDebugStatement[recursive]($, follows, indent)
+            | TreeIR::VarDeclareAndAssignStatement => this.emitVarDeclareAndAssignStatement[recursive]($, follows, indent)
             /*
             case TIRStatementTag.StoreToScratch: {
                 return this.emitStoreToScratch(stmt as TIRStoreToScratch);
@@ -1869,7 +1869,7 @@ entity BodyEmitter {
                 return this.emitScratchSCStatement(stmt as TIRScratchSCStatement);
             }
 */
-            | TreeIR::ReturnStatement => this.emitReturnStatement[recursive](stmt, follows, indent)
+            | TreeIR::ReturnStatement => this.emitReturnStatement[recursive]($, follows, indent)
 /*
             case TIRStatementTag.ReturnStatementWRef: {
                 return this.emitReturnStatementWRef(stmt as TIRReturnStatementWRef);

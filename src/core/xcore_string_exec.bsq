@@ -20,7 +20,7 @@ internal entity StringOps provides Some {
     }
 
     function s_strjoin(l: List<String>, sep: String): String {
-        if(ListOps::s_empty<String>(l)) {
+        if(ListOps::s_list_empty<String>(l)) {
             return "";
         }
         else {
