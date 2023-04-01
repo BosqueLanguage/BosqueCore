@@ -127,7 +127,7 @@ datatype BinOpExpression provides Expression using {
 BinAddExpression { }
 | BinSubExpression { field errid: Int; }
 | BinMultExpression { }
-| BinDivExpression { }
+| BinDivExpression { field errid: Int; }
 ;
 
 entity BinKeyEqBothUniqueExpression provides Expression {

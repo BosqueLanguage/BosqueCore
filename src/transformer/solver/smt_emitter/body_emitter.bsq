@@ -154,13 +154,13 @@ entity BodyEmitter {
     }
 
     method emitLiteralFloatPointExpression(exp: TreeIR::LiteralFloatPointExpression): String {
-        let fstr: String = if(exp.etype === "Float") then exp.value.removeEnd("f") else exp.value.removeEnd("d");
+        let fstr: String = if(exp.etype === "Float"_TreeIR::TypeKey) then exp.value.removeEnd("f") else exp.value.removeEnd("d");
 
         if(fstr === "0.0") {
-            return if(exp.etype === "Float") then "@Float_0" else "@Decimal_0";
+            return if(exp.etype === "Float"_TreeIR::TypeKey) then "@Float_0" else "@Decimal_0";
         }
         else {
-            return if(exp.etype === "Float") then String::concat(List<String>{"@Float_uninterp(", exp.value, ")"}) else String::concat(List<String>{"@Decimal_uninterp(", exp.value, ")"});
+            return if(exp.etype === "Float"_TreeIR::TypeKey) then String::concat(List<String>{"@Float_uninterp(", exp.value, ")"}) else String::concat(List<String>{"@Decimal_uninterp(", exp.value, ")"});
         }
     }
 
@@ -172,7 +172,7 @@ entity BodyEmitter {
         return extractLiteralStringValue(exp.value, false);
     }
 
-    method emitLiteralASCIIStringExpression(exp: TIRLiteralASCIIStringExpression): String {
+    method emitLiteralASCIIStringExpression(exp: TreeIR::LiteralASCIIStringExpression): String {
         return extractLiteralASCIIStringValue(exp.value, false);
     }
     
@@ -197,7 +197,7 @@ entity BodyEmitter {
     }
 
     recursive method emitLiteralTypedPrimitiveConstructorExpression(exp: TreeIR::LiteralTypedPrimitiveConstructorExpression): [String, TreeIR::ErrorKind] {
-        return "[NOT IMPLEMENTED TypedPrimitiveConstructor]";
+        return ["[NOT IMPLEMENTED TypedPrimitiveConstructor]", TreeIR::ErrorKind::safe];
     }
 
     method emitAccessEnvValueExpression(exp: TreeIR::AccessEnvValueExpression): String {
@@ -311,7 +311,6 @@ entity BodyEmitter {
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
         let invdecl = this.assembly.invokeMap.get(invk.ikey);
 
-
         let opexp = BodyEmitter::buildGeneralOp(smtifyInvokeKey(invk.ikey), this.processArgs[recursive](exp.args));
         let callerr = this.invokeResultErrMap.get(invk.ikey);
         return [opexp, callerr];
@@ -349,13 +348,13 @@ entity BodyEmitter {
 
     recursive method emitPrefixNegateOpExpression(exp: TreeIR::PrefixNegateExpression): String {
         var nexp: String;
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_negate";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_negate";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_negate";
         }
         else {
@@ -367,13 +366,13 @@ entity BodyEmitter {
 
     recursive method emitBinAddExpression(exp: TreeIR::BinAddExpression): String {
         var nexp: String;
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_add";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_add";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_add";
         }
         else {
@@ -385,18 +384,18 @@ entity BodyEmitter {
 
     recursive method emitBinSubExpression(exp: TreeIR::BinSubExpression): [String, TreeIR::ErrorKind] {
         var nexp: String;
-        var opterr: ArgExpErrorKind = ArgErrorKind::safe;
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        var opterr: TreeIR::ErrorKind = TreeIR::ErrorKind::safe;
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_sub";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_sub";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_sub";
         }
         else {
-            if(exp.optype === "Nat"TreeIR::TypeKey) {
+            if(exp.optype === "Nat"_TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Nat_checked_trgt_sub";
                     opterr = TreeIR::ErrorKind::target;
@@ -406,7 +405,7 @@ entity BodyEmitter {
                     opterr = TreeIR::ErrorKind::other;
                 }
             }
-            elif(exp.optype === "BigNat"TreeIR::TypeKey) {
+            elif(exp.optype === "BigNat"_TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@BigNat_checked_trgt_sub";
                     opterr = TreeIR::ErrorKind::target;
@@ -427,13 +426,13 @@ entity BodyEmitter {
     recursive method emitBinMultExpression(exp: TreeIR::BinMultExpression): String {
         var nexp: String;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_mult";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_mult";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_mult";
         }
         else {
@@ -441,13 +440,13 @@ entity BodyEmitter {
                 nexp = "*";
             }
             else {
-                if(exp.optype === "Nat"TreeIR::TypeKey) {
+                if(exp.optype === "Nat"_TreeIR::TypeKey) {
                     nexp = "@Nat_mult";
                 }
-                elif(exp.optype === "Int"TreeIR::TypeKey) {
+                elif(exp.optype === "Int"_TreeIR::TypeKey) {
                     nexp = "@Int_mult";
                 }
-                elif(exp.optype === "BigNat"TreeIR::TypeKey) {
+                elif(exp.optype === "BigNat"_TreeIR::TypeKey) {
                     nexp = "@BigNat_mult";
                 }
                 else {
@@ -461,22 +460,22 @@ entity BodyEmitter {
 
     recursive method emitBinDivExpression(exp: TreeIR::BinDivExpression): [String, TreeIR::ErrorKind] {
         var nexp: String;
-        var opterr: ArgExpErrorKind = ArgErrorKind::safe;
+        var opterr: TreeIR::ErrorKind = TreeIR::ErrorKind::safe;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_div";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_div";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_div";
         }
         else {
             if<TreeIR::LiteralIntegralExpression>(exp.rhs) {
                 nexp = "/";
             }
-            elif(exp.optype === "Nat"TreeIR::TypeKey) {
+            elif(exp.optype === "Nat"_TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Nat_checked_trgt_div";
                     opterr = TreeIR::ErrorKind::target;
@@ -486,7 +485,7 @@ entity BodyEmitter {
                     opterr = TreeIR::ErrorKind::other;
                 }
             }
-            elif(exp.optype === "BigNat"TreeIR::TypeKey) {
+            elif(exp.optype === "BigNat"_TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@BigNat_checked_trgt_div";
                     opterr = TreeIR::ErrorKind::target;
@@ -496,7 +495,7 @@ entity BodyEmitter {
                     opterr = TreeIR::ErrorKind::other;
                 }
             }
-            elif(exp.optype === "Int"TreeIR::TypeKey) {
+            elif(exp.optype === "Int"_TreeIR::TypeKey) {
                 if(this.isTrgtError(exp.errid)) {
                     nexp = "@Int_checked_trgt_div";
                     opterr = TreeIR::ErrorKind::target;
@@ -567,13 +566,13 @@ entity BodyEmitter {
     recursive method emitNumericLessExpression(exp: TreeIR::NumericLessExpression): String {
         var nexp: String;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_lt";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_lt";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_lt";
         }
         else {
@@ -586,13 +585,13 @@ entity BodyEmitter {
     recursive method emitNumericLessEqExpression(exp: TreeIR::NumericLessEqExpression): String {
         var nexp: String;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_lteq";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_lteq";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_lteq";
         }
         else {
@@ -605,13 +604,13 @@ entity BodyEmitter {
     recursive method emitNumericGreaterExpression(exp: TreeIR::NumericGreaterExpression): String {
         var nexp: String;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_lt";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_lt";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_lt";
         }
         else {
@@ -625,13 +624,13 @@ entity BodyEmitter {
     recursive method emitNumericGreaterEqExpression(exp: TreeIR::NumericGreaterEqExpression): String {
         var nexp: String;
 
-        if(exp.optype === "Rational"TreeIR::TypeKey) {
+        if(exp.optype === "Rational"_TreeIR::TypeKey) {
             nexp = "@Rational_lteq";
         }
-        elif(exp.optype === "Float"TreeIR::TypeKey) {
+        elif(exp.optype === "Float"_TreeIR::TypeKey) {
             nexp = "@Float_lteq";
         }
-        elif(exp.optype === "Decimal"TreeIR::TypeKey) {
+        elif(exp.optype === "Decimal"_TreeIR::TypeKey) {
             nexp = "@Decmial_lteq";
         }
         else {
@@ -1224,14 +1223,14 @@ entity BodyEmitter {
             case TIRExpressionTag.TypedeclConstructorExpression: {
                 return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
             }
-            case TIRExpressionTag.CallNamespaceFunctionExpression: {
-                return this.emitCallNamespaceFunctionExpression(exp as TIRCallNamespaceFunctionExpression);
-            }
+*/
+            | TreeIR::CallNamespaceFunctionExpression => this.emitCallNamespaceFunctionExpression[recursive]($).0
+/*
             case TIRExpressionTag.CallNamespaceOperatorExpression: {
                 return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
             }
-*/
             | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($).0
+*/
             | TreeIR::LogicActionAndExpression => this.emitLogicActionAndExpression[recursive]($)
             | TreeIR::LogicActionOrExpression => this.emitLogicActionOrExpression[recursive]($)
             | TreeIR::PrefixNotExpression => this.emitPrefixNotOpExpression[recursive]($)
@@ -1427,14 +1426,14 @@ entity BodyEmitter {
             case TIRExpressionTag.TypedeclConstructorExpression: {
                 return this.emitTypedeclConstructorExpression(exp as TIRTypedeclConstructorExpression);
             }
-            case TIRExpressionTag.CallNamespaceFunctionExpression: {
-                return this.emitCallNamespaceFunctionExpression(exp as TIRCallNamespaceFunctionExpression);
-            }
+*/
+            | TreeIR::CallNamespaceFunctionExpression => this.emitCallNamespaceFunctionExpression[recursive]($)
+/*
             case TIRExpressionTag.CallNamespaceOperatorExpression: {
                 return this.emitCallNamespaceOperatorExpression(exp as TIRCallNamespaceOperatorExpression);
             }
-*/
             | TreeIR::CallStaticFunctionExpression => this.emitCallStaticFunctionExpression[recursive]($)
+*/
             | TreeIR::BinSubExpression => this.emitBinSubExpression[recursive]($)
             | TreeIR::BinDivExpression => this.emitBinDivExpression[recursive]($)
 /*
@@ -1528,20 +1527,20 @@ entity BodyEmitter {
     }
 
     recursive method emitVarDeclareAndAssignStatement(stmt: TreeIR::VarDeclareAndAssignStatement, follow: List<TreeIR::Statement>, indent: String): String {
-        let eval = this.emitExpressionWErr(stmt.exp);
+        let eval = this.emitExpressionWErr(stmt.vexp);
 
         if(eval.1 === TreeIR::ErrorKind::safe) {
              let fstr = this.emitStatementList(follow, indent);
-             return BodyEmitter::buildLetOp(stmt.vname, eval.0, fstr, indent);
+             return BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), eval.0, fstr, indent);
         }
         else {
             let fstr = this.emitStatementList(follow, indent.append("    "));
-            let tvstr = String::concat(List<String>{"@", stmt.vname, "@"});
+            let tvstr = String::concat(List<String>{"@", smtifyIdentifier(stmt.vname), "@"});
 
             let errchk = BodyEmitter::buildErrorIsTest(tvstr, eval.1);
-            let errstr = BodyEmitter::buildMakeError(BodyEmitter::rewrapError(tvstr, stmt.exp.etype, eval.1), this.bodyResultType, this.bodyResultErrKind);
+            let errstr = BodyEmitter::buildMakeError(this.rewrapError(tvstr, stmt.vexp.etype, eval.1), this.bodyResultType, this.bodyResultErrKind);
 
-            let normalflow = BodyEmitter::buildLetOp(stmt.vname, BodyEmitter::buildValueExtract(tvstr, eval.1), fstr, indent.append("    "));
+            let normalflow = BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), BodyEmitter::buildValueExtract(tvstr, eval.1), fstr, indent.append("    "));
             let errctrl = BodyEmitter::buildErrorBailOp(errchk, errstr, normalflow, indent);
 
             return BodyEmitter::buildLetOp(tvstr, eval.0, errctrl, indent);

@@ -2329,6 +2329,13 @@ class TypeChecker {
     }
 
     private toTIRTypeKey(rtype: ResolvedType): TIRTypeKey {
+        if(rtype.options.length === 1) {
+            if(rtype.options[0] instanceof ResolvedMapEntityAtomType) {
+                xxx;
+                const entrytype = ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create())
+            }
+        }
+
         if(this.m_tirTypeMap.has(rtype.typeID)) {
             return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tkey;
         }

@@ -137,9 +137,6 @@ __internal __typedeclable __typebase __numeric entity Decimal provides Some, API
 
 //<summary>Primitive string value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType, APIType {
-    __safe private function s_empty(s: String): Bool = s_string_empty;
-    __assume_safe private function s_concat2(s1: String, s2: String): String = s_string_append;
-
     function concat(sl: List<String>): String {
         return StringOps::s_strconcat(sl);
     }
@@ -149,43 +146,43 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
     }
 
     method empty(): Bool {
-        return String::s_empty(this);
+        return StringOps::s_empty(this);
     }
 
     method append(s: String): String {
-        return String::s_concat2(this, s);
+        return StringOps::s_concat2(this, s);
     }
 
     method prepend(s: String): String {
-        return String::s_concat2(s, this);
+        return StringOps::s_concat2(s, this);
     }
 
-    /
+    //
     //TODO: add regex support to these
     //
 
-    method startsWith(v: String): Bool {
-        return StringOps
+    method startsWith(s: String): Bool {
+        return StringOps::s_startsWith(this, s);
     }
 
-    method extractFront(v: String): String {
-        xxxx;
+    method extractFront(s: String): String {
+        return StringOps::s_extractFront(this, s);
     }
 
-    method removeFront(v: String): String {
-        xxxx;
+    method removeFront(s: String): String {
+        return StringOps::s_removeFront(this, s);
     }
 
-    method endsWith(v: String): Bool {
-        return 
+    method endsWith(s: String): Bool {
+        return StringOps::s_endsWith(this, s);
     }
 
-    method extractEnd(v: String): String {
-        xxxx;
+    method extractEnd(s: String): String {
+        return StringOps::s_extractEnd(this, s);
     }
 
-    method removeEnd(v: String): String, {
-        xxxx;
+    method removeEnd(s: String): String {
+        return StringOps::s_removeEnd(this, s);
     }
 
     function interpolate(): String = special_method;
