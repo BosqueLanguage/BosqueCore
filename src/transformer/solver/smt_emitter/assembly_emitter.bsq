@@ -18,7 +18,7 @@ entity AssemblyEmitter {
         //TODO: make are variable assignments unique
 
         return asm;
-    };
+    }
 
     function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
         let temitter = TypeInfoEmitter{flatasm};
@@ -27,16 +27,16 @@ entity AssemblyEmitter {
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;
-            let rerr = if invokeResultErrMap.has(i.invkey) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
-            let bemitter = BodyEmitter{flatasm, iname, i.srcFile, -1, invokeResultErrMap, rtype, rerr};
+            let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
+            let bemitter = BodyEmitter{flatasm, iname, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
             match (i) {
                 TreeIR::InvokeImplementation => return bemitter.emitBodyStatementList($.body);
                 | TreeIR::InvokePrimitive => return "PRIMITIVE DECL";
-                _ => return "";
+                | _ => return "";
             }
         });
 
-        return String.concat(List<String>{String::join("\n", typedecls) + "\n" + String::join("\n", idecls)});
+        return String::concat(List<String>{String::join("\n", typedecls) + "\n" + String::join("\n", idecls)});
     }
 }

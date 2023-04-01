@@ -1,15 +1,17 @@
 namespace SMTEmit;
 
+import TreeIR;
+
 entity SMTEncodingSymbol {
-    const coloncolon = "@cc-";
-    const comma = "@c-";
-    const commaspace = "@c_-";
-    const lparen = "@lp-";
-    const rparen = "@rp-";
-    const lbracket = "@lb-";
-    const rbracket = "@rb-";
-    const langle = "@la-";
-    const randle = "@ra-";
+    const coloncolon: String = "@cc-";
+    const comma: String = "@c-";
+    const commaspace: String = "@c_-";
+    const lparen: String = "@lp-";
+    const rparen: String = "@rp-";
+    const lbracket: String = "@lb-";
+    const rbracket: String = "@rb-";
+    const langle: String = "@la-";
+    const randle: String = "@ra-";
 }
 
 function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
@@ -18,7 +20,7 @@ function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
 
 function smtifyType(tkey: TreeIR::TypeKey): String {
     //eplace special characters with @enc@
-    return ii.value();
+    return tkey.value();
 }
 
 function smtifyIdentifier(ii: TreeIR::Identifier): String {
@@ -36,37 +38,37 @@ function emitTypeName(tkey: TreeIR::TypeKey): String {
     if(tkey === "None"TreeIR::TypeKey) {
         return "None";
     }
-    else if(tkey === "Bool"TreeIR::TypeKey) {
+    elif(tkey === "Bool"TreeIR::TypeKey) {
         return "Bool";
     }
-    else if(tkey === "Int"TreeIR::TypeKey) {
+    elif(tkey === "Int"TreeIR::TypeKey) {
         return "Int";
     }
-    else if(tkey === "Nat"TreeIR::TypeKey) {
+    elif(tkey === "Nat"TreeIR::TypeKey) {
         return "Int";
     }
-    else if(tkey === "BigInt"TreeIR::TypeKey) {
+    elif(tkey === "BigInt"TreeIR::TypeKey) {
         return "Int";
     }
-    else if(tkey === "BigNat"TreeIR::TypeKey) {
+    elif(tkey === "BigNat"TreeIR::TypeKey) {
         return "Int";
     }
-    else if(tkey === "Rational"TreeIR::TypeKey) {
+    elif(tkey === "Rational"TreeIR::TypeKey) {
         return "@Rational";
     }
-    else if(tkey === "Float"TreeIR::TypeKey) {
+    elif(tkey === "Float"TreeIR::TypeKey) {
         return "@Float";
     }
-    else if(tkey === "Decimal"TreeIR::TypeKey) {
+    elif(tkey === "Decimal"TreeIR::TypeKey) {
         return "@Decimal";
     }
-    else if(tkey === "String"TreeIR::TypeKey) {
+    elif(tkey === "String"TreeIR::TypeKey) {
         return "String";
     }
-    else if(tkey === "ASCIIString"TreeIR::TypeKey) {
+    elif(tkey === "ASCIIString"TreeIR::TypeKey) {
         return "String";
     }
-    else if(tkey === "ByteBuffer"TreeIR::TypeKey) {
+    elif(tkey === "ByteBuffer"TreeIR::TypeKey) {
         return "(Seq (_ BitVec 8))";
     }
 
@@ -79,5 +81,5 @@ function emitTypeName(tkey: TreeIR::TypeKey): String {
 
 function typeEncodedAsUnion(tt: TreeIR::TypeKey): Bool {
     let ttype = this.assembly.typeMap.get(tt);
-    return (ttype?TreeIR::ConceptType || ttype?TreeIR::UnionType);
+    return (ttype?<TreeIR::ConceptType> || ttype?<TreeIR::UnionType>);
 }

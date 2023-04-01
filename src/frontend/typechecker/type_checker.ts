@@ -7061,7 +7061,7 @@ class TypeChecker {
         return inv;
     }
 
-    private ensureTIRNamespaceDecl(ns: string): TIRNamespaceDeclaration {
+    ensureTIRNamespaceDecl(ns: string): TIRNamespaceDeclaration {
         if(!this.m_tirNamespaceMap.has(ns)) {
             this.m_tirNamespaceMap.set(ns, new TIRNamespaceDeclaration(ns));
         }
@@ -7581,6 +7581,10 @@ class TypeChecker {
         //Must always have Core namespace and special types registered -- even if just as default values
         tchecker.m_tirNamespaceMap.set("Core", new TIRNamespaceDeclaration("Core"));
         tchecker.processSpecialTypes();
+
+        asm.getNamespaces().forEach((nsdecl) => {
+            tchecker.ensureTIRNamespaceDecl(nsdecl.ns);
+        });
 
         exportvals.forEach((ee) => {
             //could be function, const, task, or type

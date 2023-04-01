@@ -146,6 +146,7 @@ const KeywordStrings = [
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
 
 const NS_KW = [
+    KW_import,
     KW_function, KW_operator, KW_const, KW_format,
     KW_concept, KW_entity, KW_typedef, KW_typedecl, KW_datatype, KW_enum, 
     KW_logmsg, KW_eventmsg, KW_statusmsg
@@ -5207,7 +5208,11 @@ class Parser {
                 }
 
                 const op = this.peekToken();
-                if (this.testToken(KW_function)  || this.testToken(KW_const) || this.testToken(KW_format)) {
+                if(this.testToken(KW_import)) {
+                    this.consumeToken();
+                    //then don't care about the rest of the usings
+                }
+                else if (this.testToken(KW_function)  || this.testToken(KW_const) || this.testToken(KW_format)) {
                     this.consumeToken();
                     this.ensureToken(TokenStrings.Identifier, op);
                     const fname = this.consumeTokenAndGetValue();

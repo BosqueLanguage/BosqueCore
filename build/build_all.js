@@ -1,7 +1,4 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
+"use strict";
 
 const { exec } = require("child_process");
 const path = require("path");
@@ -42,6 +39,7 @@ exec("node ./resource_copy.js", {cwd: builddir}, (err, stdout, stderr) => {
     donecopy = true;
     doneop(err !== null, err !== null ? stderr : "done copy..."); 
 });
+
 /*
 exec(`node ./evaluator_build.js ${mode}`, {cwd: builddir}, (err, stdout, stderr) => {
     donesmt = true;
