@@ -2328,11 +2328,53 @@ class TypeChecker {
         return rtype.typeID;
     }
 
+    private toTIRTypeKey_InstantiateAdditionalExpected(rtype: ResolvedAtomType) {
+        if(rtype instanceof ResolvedOkEntityAtomType) {
+            this.toTIRTypeKey_Atom(this.getResultConceptType(rtype.typeT, rtype.typeE));
+        }
+        else if(rtype instanceof ResolvedErrEntityAtomType) {
+            this.toTIRTypeKey_Atom(this.getResultConceptType(rtype.typeT, rtype.typeE));
+        }
+        else if(rtype instanceof ResolvedSomethingEntityAtomType) {
+            this.toTIRTypeKey_Atom(this.getOptionConceptType(rtype.typeT));   
+        }
+        else if(rtype instanceof ResolvedMapEntryEntityAtomType) {
+            this.toTIRTypeKey(this.getMapType(rtype.typeK, rtype.typeV));
+        }
+        else if(rtype instanceof ResolvedMapEntityAtomType) {
+            this.toTIRTypeKey(this.getMapEntryType(rtype.typeK, rtype.typeV));
+        }
+        else if(rtype instanceof ResolvedConceptAtomType) {
+            if(rtype.conceptTypes.length === 1) {
+                const rconcept = rtype.conceptTypes[0];
+                if(rconcept.concept.attributes.includes("__result_type")) {
+                    const typet = rconcept.binds.get("T") as ResolvedType;
+                    const typee = rconcept.binds.get("E") as ResolvedType;
+
+                    this.toTIRTypeKey(this.getOkType(typet, typee));
+                    this.toTIRTypeKey(this.getErrType(typet, typee));
+                }
+                else if(rconcept.concept.attributes.includes("__option_type")) {
+                    const typet = rconcept.binds.get("T") as ResolvedType;
+
+                    this.toTIRTypeKey(this.getSomethingType(typet));
+                }
+                else {
+                    //Nothing to do!!!
+                    ;
+                }
+            }
+        }
+        else {
+            //Nothing to do!!!
+            ;
+        }
+    }
+
     private toTIRTypeKey(rtype: ResolvedType): TIRTypeKey {
         if(rtype.options.length === 1) {
             if(rtype.options[0] instanceof ResolvedMapEntityAtomType) {
-                xxx;
-                const entrytype = ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create())
+                this.toTIRTypeKey_InstantiateAdditionalExpected(rtype.options[0]);
             }
         }
 
@@ -2469,6 +2511,9 @@ class TypeChecker {
     getSpecialObjectConceptType(): ResolvedType { return this.internSpecialConceptType("Object"); }
 
     getSpecialHavocType(): ResolvedType { return ResolvedType.createSingle(ResolvedHavocEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("HavocSequence") as EntityTypeDecl)); }
+
+    getMapEntryType(k: ResolvedType, v: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("MapEntry") as EntityTypeDecl, k, v)); }
+    getMapType(k: ResolvedType, v: ResolvedType): ResolvedType { return ResolvedType.createSingle(ResolvedMapEntryEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Map") as EntityTypeDecl, k, v)); }
 
     getStringOfType(t: ResolvedValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedStringOfEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("StringOf") as EntityTypeDecl, t)); }
     getASCIIStringOfType(t: ResolvedValidatorEntityAtomType): ResolvedType { return ResolvedType.createSingle(ResolvedASCIIStringOfEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("ASCIIStringOf") as EntityTypeDecl, t)); }
