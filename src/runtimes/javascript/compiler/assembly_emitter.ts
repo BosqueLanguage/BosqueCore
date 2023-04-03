@@ -213,6 +213,13 @@ class NamespaceEmitter {
         return "[NOT IMPLEMENTED -- SET]";
     }
 
+    private emitTIRMapEntryEntityType(ttype: TIRMapEntryEntityType): string {
+        const funcs = this.emitOOTypeFunctions(ttype);
+        const methods = this.emitOOTypeMethods(ttype);
+
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs, ...methods])}}`;
+    }
+
     private emitTIRMapEntityType(ttype: TIRMapEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
@@ -337,6 +344,9 @@ class NamespaceEmitter {
         }
         else if(ttype instanceof TIRSetEntityType) {
             return [true, this.emitTIRSetEntityType(ttype)];
+        }
+        else if(ttype instanceof TIRMapEntryEntityType) {
+            return [true, this.emitTIRMapEntryEntityType(ttype)];
         }
         else if(ttype instanceof TIRMapEntityType) {
             return [true, this.emitTIRMapEntityType(ttype)];

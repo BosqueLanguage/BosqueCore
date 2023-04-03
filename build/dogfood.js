@@ -28,7 +28,7 @@ function doneop(iserror, msg) {
 }
 
 const srcfile = process.argv[2];
-const outfile = path.join(path.dirname(srcfile), "ir.json");
+const outfile = path.join("./bsqbin", "ir.json");
 
 exec("node ./bin/runtimes/javascript/cmd.js --fileasm --namespace=SMTEmit --outdir ./bsqbin ./src/transformer/tree_ir/*.bsq ./src/transformer/rewriter/*.bsq ./src/transformer/solver/*.bsq ./src/transformer/solver/smt_emitter/*.bsq", {cwd: tscdir}, (err, stdout, stderr) => {
     donesmtimpl = true;

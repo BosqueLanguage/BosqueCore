@@ -325,7 +325,12 @@ class BodyEmitter {
     }
 
     private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
-        return `$CoreLibs.$MapOps.create("${exp.etype}", ${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        if(exp.args.length === 0) {
+            return `$CoreLibs.$MapOps.create("${exp.etype}")`;
+        }
+        else {
+            return `$CoreLibs.$MapOps.create("${exp.etype}", ${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        }
     }
 
     private emitCodePackInvokeExpression(exp: TIRCodePackInvokeExpression): string {

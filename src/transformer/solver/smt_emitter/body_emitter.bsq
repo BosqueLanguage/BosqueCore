@@ -1527,23 +1527,23 @@ entity BodyEmitter {
     }
 
     recursive method emitVarDeclareAndAssignStatement(stmt: TreeIR::VarDeclareAndAssignStatement, follow: List<TreeIR::Statement>, indent: String): String {
-        let eval = this.emitExpressionWErr(stmt.vexp);
+        let eeval = this.emitExpressionWErr(stmt.vexp);
 
-        if(eval.1 === TreeIR::ErrorKind::safe) {
+        if(eeval.1 === TreeIR::ErrorKind::safe) {
              let fstr = this.emitStatementList(follow, indent);
-             return BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), eval.0, fstr, indent);
+             return BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), eeval.0, fstr, indent);
         }
         else {
             let fstr = this.emitStatementList(follow, indent.append("    "));
             let tvstr = String::concat(List<String>{"@", smtifyIdentifier(stmt.vname), "@"});
 
-            let errchk = BodyEmitter::buildErrorIsTest(tvstr, eval.1);
-            let errstr = BodyEmitter::buildMakeError(this.rewrapError(tvstr, stmt.vexp.etype, eval.1), this.bodyResultType, this.bodyResultErrKind);
+            let errchk = BodyEmitter::buildErrorIsTest(tvstr, eeval.1);
+            let errstr = BodyEmitter::buildMakeError(this.rewrapError(tvstr, stmt.vexp.etype, eeval.1), this.bodyResultType, this.bodyResultErrKind);
 
-            let normalflow = BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), BodyEmitter::buildValueExtract(tvstr, eval.1), fstr, indent.append("    "));
+            let normalflow = BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), BodyEmitter::buildValueExtract(tvstr, eeval.1), fstr, indent.append("    "));
             let errctrl = BodyEmitter::buildErrorBailOp(errchk, errstr, normalflow, indent);
 
-            return BodyEmitter::buildLetOp(tvstr, eval.0, errctrl, indent);
+            return BodyEmitter::buildLetOp(tvstr, eeval.0, errctrl, indent);
         }
     }
 /*
