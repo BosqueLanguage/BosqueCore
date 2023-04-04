@@ -719,7 +719,7 @@ class AssemblyEmitter {
     }
 
     private emitTIRMapEntityType_ParseEmit(ttype: TIRMapEntityType): { parse: string, emit: string } {
-        const parse = `{ if(!Array.isArray(jv)) { $Runtime.raiseRuntimeError("Failed in Map<K, V> parse " + JSON.stringify(jv)); } else { return $CoreLibs.$MapOps.create(...jv.map((vv) => { if(!Array.isArray(vv) || vv.length !== 2) { $Runtime.raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(vv)); } else { return [ioMarshalMap.get("${ttype.typeK}").parse(vv[0]), ioMarshalMap.get("${ttype.typeV}").parse(vv[1])] } })); } }`
+        const parse = `{ if(!Array.isArray(jv)) { $Runtime.raiseRuntimeError("Failed in Map<K, V> parse " + JSON.stringify(jv)); } else { return $CoreLibs.$MapOps.create("${ttype.typeK}", ...jv.map((vv) => { if(!Array.isArray(vv) || vv.length !== 2) { $Runtime.raiseRuntimeError("Failed in MapEntry<K, V> parse " + JSON.stringify(vv)); } else { return [ioMarshalMap.get("${ttype.typeK}").parse(vv[0]), ioMarshalMap.get("${ttype.typeV}").parse(vv[1])] } })); } }`
         
         const cmpcall = this.typeEncodedAsUnion(ttype.typeK) ? `$CoreLibs.$KeyLessGeneral` : `($CoreLibs.$KeyLessOps.get("${ttype.typeK}"))`;
         const emit = `nv.map((vv, kk) => [ioMarshalMap.get("${ttype.typeK}").emit(kk), ioMarshalMap.get("${ttype.typeV}").emit(vv)]).toArray().sort((a, b) => ${cmpcall}(a[0], b[0])).map((vv) => vv[1])`;

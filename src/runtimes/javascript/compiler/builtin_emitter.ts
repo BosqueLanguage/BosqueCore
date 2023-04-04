@@ -230,7 +230,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
         }
         case "s_map_entries": {
-            return `{ return ${func.invoke.params[0].name}.toList(); }`;
+            return `{ return ${func.invoke.params[0].name}.entrySeq().toList(); }`;
         }
 
         case "s_while": {

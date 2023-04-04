@@ -47,7 +47,7 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry
         else {
             //TODO: specialize this
             let ee = MapOps::s_map_entries<K, V>(this);
-            return ListOps::s_list_map_fn<[K, V], K>(ee, fn(kv: MapEntry<K, V>): K => kv.key());
+            return ListOps::s_list_map_fn<MapEntry<K, V>, K>(ee, fn(kv: MapEntry<K, V>): K => kv.key());
         }
     }
 
@@ -58,7 +58,7 @@ __internal entity Map<K grounded KeyType, V> provides Some, Expandoable<MapEntry
         else {
             //TODO: specialize this
             let ee = MapOps::s_map_entries<K, V>(this);
-            return ListOps::s_list_map_fn<[K, V], V>(ee, fn(kv: [K, V]): V => kv.value());
+            return ListOps::s_list_map_fn<MapEntry<K, V>, V>(ee, fn(kv: MapEntry<K, V>): V => kv.value());
         }
     }
 

@@ -2,11 +2,71 @@ namespace SMTEmit;
 
 import TreeIR;
 
+typedef TypeDeclInfo = {
+    name: String,
+    consop: String,
+    consargs: List<{cname: String, ctype: String}>
+};
+
 entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
 
-    method generateSMTDecl(t: TreeIR::Type): String {
-        return "TYPE DECL";
+    method emitEnumEntityType(t: TreeIR::EnumEntityType): TypeDeclInfo {
+        return {name="[ENUM]", consop="[ENUM_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTypedeclEntityType(t: TreeIR::TypedeclEntityType): TypeDeclInfo {
+        return {name="[TYPEDECL]", consop="[TYPEDECL_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitObjectEntityType(t: TreeIR::ObjectEntityType): TypeDeclInfo {
+        return {name="[OBJECT]", consop="[OBJECT_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTaskType(t: TreeIR::TaskType): TypeDeclInfo {
+        return {name="[TASK]", consop="[TASK_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTupleType(t: TreeIR::TupleType): TypeDeclInfo {
+        return {name="[TUPLE]", consop="[TUPLE_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitRecordType(t: TreeIR::RecordType): TypeDeclInfo {
+        return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    function typeRequiresStructuralDeclInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::TupleType => return true;
+            | TreeIR::RecordType => return true;
+            | _ => return false;
+        }
+    }
+
+    function typeRequiresOODeclInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::EnumEntityType => return true;
+            | TreeIR::TypedeclEntityType => return true;
+            | TreeIR::ObjectEntityType => return true;
+            | TreeIR::TaskType => return true;
+            | _ => return false;
+        }
+    }
+
+    method generateStructuralSMTDecl(t: TreeIR::Type): TypeDeclInfo {
+        match(t) {
+            TreeIR::TupleType => return this.emitTupleType($);
+            | TreeIR::RecordType => return this.emitRecordType($);
+        }
+    }
+
+    method generateOOSMTDecl(t: TreeIR::Type): TypeDeclInfo {
+        match(t) {
+            TreeIR::EnumEntityType => return this.emitEnumEntityType($);
+            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityType($);
+            | TreeIR::ObjectEntityType => return this.emitObjectEntityType($);
+            | TreeIR::TaskType => return this.emitTaskType($);
+        }
     }
 }
 
@@ -22,7 +82,18 @@ entity AssemblyEmitter {
 
     function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
         let temitter = TypeInfoEmitter{flatasm};
-        let typedecls = flatasm.typeMap.mapFlat<String>(fn(k, t) => temitter.generateSMTDecl(t));
+        let alltypes = flatasm.typeMap.values();
+
+        let structuraldeclinfo = alltypes
+            .filter(fn(t) => TypeInfoEmitter::typeRequiresStructuralDeclInfo(t))
+            .map<TypeDeclInfo>(fn(t) => temitter.generateStructuralSMTDecl(t));
+
+        let oodeclinfo = alltypes
+            .filter(fn(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
+            .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
+
+        let alldeclinfo = structuraldeclinfo.append(oodeclinfo);
+        let alldecls = String::join("\n    ", alldeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
 
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
@@ -37,6 +108,6 @@ entity AssemblyEmitter {
             }
         });
 
-        return String::concat(List<String>{String::join("\n", typedecls), "\n", String::join("\n", idecls)});
+        return String::concat(List<String>{alldecls, "\n", String::join("\n", idecls)});
     }
 }

@@ -149,6 +149,8 @@
 (declare-datatypes (
     (@None 0)
     (@Nothing 0)
+    ;;STRUCTURAL_DECLS;;
+    ;;OO_DECLS;;
     ; Bool -> Bool
     ; Int -> Int
     ; Nat -> Int
@@ -173,5 +175,7 @@
     ) (
         ( (@none) ) 
         ( (@nothing) )
+        ;;STRUCTURAL_CONSTRUCTORS;;
+        ;;OO_CONSTRUCTORS;;
     )
 )
