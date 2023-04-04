@@ -101,10 +101,19 @@ entity AssemblyEmitter {
             let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
             let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
-            match (i) {
-                TreeIR::InvokeImplementation => return bemitter.emitBodyStatementList($.body);
-                | TreeIR::InvokePrimitive => return "PRIMITIVE DECL";
-                | _ => return "";
+            let args = "[TODO]";
+
+            let body = match (i) {
+                TreeIR::InvokeImplementation => bemitter.emitBodyStatementList($.body)
+                | TreeIR::InvokePrimitive => "PRIMITIVE DECL"
+                | _ => ""
+            };
+
+            if(body === "") {
+                return "";
+            }
+            else {
+                return String::concat(List<String>{"(define-fun ", iname, " (", args, ") ", smtifyType(rtype), "\n", body, ")"});
             }
         });
 
