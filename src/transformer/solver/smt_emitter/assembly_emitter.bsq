@@ -75,7 +75,7 @@ entity AssemblyEmitter {
             .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
 
         
-        let alldecls = String::join("\n    ", alldeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
+        let alldecls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
 
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
