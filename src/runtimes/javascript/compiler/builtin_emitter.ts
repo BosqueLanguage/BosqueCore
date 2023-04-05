@@ -60,8 +60,29 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return Decimal.sqrt(${func.invoke.params[0].name}); }`;
         }
 
+        case "s_string_empty": {
+            return `{ return ${func.invoke.params[0].name}.length === 0; }`;
+        }
         case "s_string_append": {
             return `{ return ${func.invoke.params[0].name} + ${func.invoke.params[1].name}; }`;
+        }
+        case "s_string_startswith": {
+            return `{ return ${func.invoke.params[0].name}.startsWith(${func.invoke.params[1].name}); }`;
+        }
+        case "s_string_extractfront": {
+            return `{ return ${func.invoke.params[0].name}.slice(0, ${func.invoke.params[1].name}.length()); }`;
+        }
+        case "s_string_removefront": {
+            return `{ return ${func.invoke.params[0].name}.slice(${func.invoke.params[1].name}.length); }`;
+        }
+        case "s_string_endswith": {
+            return `{ return ${func.invoke.params[0].name}.endsWith(${func.invoke.params[1].name}); }`;
+        }
+        case "s_string_extractend": {
+            return `{ return ${func.invoke.params[0].name}.slice(${func.invoke.params[1].name}.length); }`;
+        }
+        case "s_string_removeend": {
+            return `{ return ${func.invoke.params[0].name}.slice(0, ${func.invoke.params[1].name}.length); }`;
         }
 
         case "s_list_empty": {
@@ -189,6 +210,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
         }
 
+        case "s_mapentry_key": {
+            return `{ return ${func.invoke.params[0].name}[0]; }`;
+        }
+        case "s_mapentry_value": {
+            return `{ return ${func.invoke.params[0].name}[1]; }`;
+        }
+
         case "s_map_empty": {
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
         }
@@ -200,6 +228,9 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_map_get": {
             return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
+        }
+        case "s_map_entries": {
+            return `{ return ${func.invoke.params[0].name}.entrySeq().toList(); }`;
         }
 
         case "s_while": {

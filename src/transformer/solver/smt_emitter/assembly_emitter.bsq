@@ -2,41 +2,103 @@ namespace SMTEmit;
 
 import TreeIR;
 
+typedef TypeDeclInfo = {
+    name: String,
+    consop: String,
+    consargs: List<{cname: String, ctype: String}>
+};
+
 entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
 
-    method generateSMTDecl(t: TreeIR::Type): String {
-        return "TYPE DECL";
+    method emitEnumEntityType(t: TreeIR::EnumEntityType): TypeDeclInfo {
+        return {name="[ENUM]", consop="[ENUM_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTypedeclEntityType(t: TreeIR::TypedeclEntityType): TypeDeclInfo {
+        return {name="[TYPEDECL]", consop="[TYPEDECL_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitObjectEntityType(t: TreeIR::ObjectEntityType): TypeDeclInfo {
+        return {name="[OBJECT]", consop="[OBJECT_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTaskType(t: TreeIR::TaskType): TypeDeclInfo {
+        return {name="[TASK]", consop="[TASK_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitTupleType(t: TreeIR::TupleType): TypeDeclInfo {
+        return {name="[TUPLE]", consop="[TUPLE_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method emitRecordType(t: TreeIR::RecordType): TypeDeclInfo {
+        return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    function typeRequiresOODeclInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::EnumEntityType => return true;
+            | TreeIR::TypedeclEntityType => return true;
+            | TreeIR::ObjectEntityType => return true;
+            | TreeIR::TaskType => return true;
+            | _ => return false;
+        }
+    }
+
+    method generateOOSMTDecl(t: TreeIR::Type): TypeDeclInfo {
+        match(t) {
+            TreeIR::EnumEntityType => return this.emitEnumEntityType($);
+            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityType($);
+            | TreeIR::ObjectEntityType => return this.emitObjectEntityType($);
+            | TreeIR::TaskType => return this.emitTaskType($);
+        }
     }
 }
 
 entity AssemblyEmitter {
     function processAssembly(asm: TreeIR::Assembly): TreeIR::Assembly {
+        //TODO: explicitly place code -- put validation/pre/post code in the right places
         //TODO: flatten expressions -- error inducing expressions and calls are at top-level
         //TODO: inline as needed
         //TODO: ensure bodies are trees
         //TODO: make are variable assignments unique
 
         return asm;
-    };
+    }
 
     function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
         let temitter = TypeInfoEmitter{flatasm};
-        let typedecls = flatasm.typeMap.mapFlat<String>(fn(k, t) => temitter.generateSMTDecl(t));
+        let alltypes = flatasm.typeMap.values();
+
+        let oodeclinfo = alltypes
+            .filter(fn(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
+            .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
+
+        
+        let alldecls = String::join("\n    ", alldeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
 
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;
-            let rerr = if invokeResultErrMap.has(i.invkey) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
-            let bemitter = BodyEmitter{flatasm, iname, i.srcFile, -1, invokeResultErrMap, rtype, rerr};
+            let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
+            let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
-            match (i) {
-                TreeIR::InvokeImplementation => return bemitter.emitBodyStatementList($.body);
-                | TreeIR::InvokePrimitive => return "PRIMITIVE DECL";
-                _ => return "";
+            let args = i.params.map<String>(fn(p) => String::concat(List<String>{"(", p.name, " ", emitTypeName(p.type), ")"}));
+
+            let body = match (i) {
+                TreeIR::InvokeImplementation => bemitter.emitBodyStatementList($.body)
+                | TreeIR::InvokePrimitive => "PRIMITIVE DECL"
+                | _ => ""
+            };
+
+            if(body === "") {
+                return "";
+            }
+            else {
+                return String::concat(List<String>{"(define-fun ", iname, " (", String::join(" ", args), ") ", emitTypeName(rtype), "\n", body, "\n)"});
             }
         });
 
-        return String.concat(List<String>{String::join("\n", typedecls) + "\n" + String::join("\n", idecls)});
+        return String::concat(List<String>{alldecls, "\n", String::join("\n", idecls)});
     }
 }

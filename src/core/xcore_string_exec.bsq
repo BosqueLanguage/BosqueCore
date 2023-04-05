@@ -3,6 +3,17 @@ namespace Core;
 
 #if EXEC_LIBS
 internal entity StringOps provides Some {
+    __safe function s_empty(s: String): Bool = s_string_empty;
+    __safe function s_concat2(s1: String, s2: String): String = s_string_append;
+
+    __safe function s_startsWith(s: String, prefix: String): Bool = s_string_startswith;
+    __safe function s_extractFront(s: String, prefix: String): String = s_string_extractfront;
+    __safe function s_removeFront(s: String, prefix: String): String = s_string_removefront;
+
+    __safe function s_endsWith(s: String, suffix: String): Bool = s_string_endswith;
+    __safe function s_extractEnd(s: String, suffix: String): String = s_string_extractend;
+    __safe function s_removeEnd(s: String, suffix: String): String = s_string_removeend;
+
     function s_strconcat(l: List<String>): String {
         if(ListOps::s_list_empty<String>(l)) {
             return "";
@@ -14,13 +25,13 @@ internal entity StringOps provides Some {
                 return istr;
             }
             else {
-                return ListOps::s_list_reduce<String, String>(tl, istr, fn(acc: String, s: String): String => String::s_concat2(acc, s));
+                return ListOps::s_list_reduce<String, String>(tl, istr, fn(acc: String, s: String): String => StringOps::s_concat2(acc, s));
             }
         }
     }
 
     function s_strjoin(l: List<String>, sep: String): String {
-        if(ListOps::s_empty<String>(l)) {
+        if(ListOps::s_list_empty<String>(l)) {
             return "";
         }
         else {
@@ -30,7 +41,7 @@ internal entity StringOps provides Some {
                 return istr;
             }
             else {
-                return ListOps::s_list_reduce<String, String>(tl, istr, fn(acc: String, s: String): String => String::s_concat2(String::s_concat2(acc, sep), s));
+                return ListOps::s_list_reduce<String, String>(tl, istr, fn(acc: String, s: String): String => StringOps::s_concat2(StringOps::s_concat2(acc, sep), s));
             }
         }
     }

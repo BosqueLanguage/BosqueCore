@@ -23,11 +23,11 @@ function isSafeErrorKind(k: ErrorKind): Bool {
 }
 
 function isOtherErrorKind(k: ErrorKind): Bool {
-    return /\(k !== ErrorKind::safe, k !== ArgErrorKind::target, k !== ErrorKind::anyT);
+    return /\(k !== ErrorKind::safe, k !== ErrorKind::target, k !== ErrorKind::any);
 }
 
 function isTargetErrorKind(k: ErrorKind): Bool {
-    return \/(k === ErrorKind::target, k === ArgErrorKind::anyT);
+    return \/(k === ErrorKind::target, k === ErrorKind::any);
 }
 
 function joinErrorKinds(k1: ErrorKind, k2: ErrorKind): ErrorKind {
@@ -35,10 +35,10 @@ function joinErrorKinds(k1: ErrorKind, k2: ErrorKind): ErrorKind {
         return k1;
     }
     elif(\/(isTargetErrorKind(k1), isTargetErrorKind(k2))) {
-        return ErrorKind::anyT;
+        return ErrorKind::any;
     }
     else {
-        return ErrorKind::anyO;
+        return ErrorKind::anygeneral;
     }
 }
 

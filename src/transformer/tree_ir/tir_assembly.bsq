@@ -456,8 +456,8 @@ entity NamespaceDeclaration provides APIType {
 entity Assembly provides APIType {
     field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
     field typeMap: Map<TypeKey, Type>;
-    field fieldMap: Map<TypeKey, MemberFieldDecl>;
-    field invokeMap: Map<TypeKey, Invoke>;
+    field fieldMap: Map<FieldKey, MemberFieldDecl>;
+    field invokeMap: Map<InvokeKey, Invoke>;
     field pcodemap: Map<PCodeKey, CodePack>;
 
     field literalRegexs: List<BSQRegex>;

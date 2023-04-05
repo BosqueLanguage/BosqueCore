@@ -127,7 +127,7 @@ datatype BinOpExpression provides Expression using {
 BinAddExpression { }
 | BinSubExpression { field errid: Int; }
 | BinMultExpression { }
-| BinDivExpression { }
+| BinDivExpression { field errid: Int; }
 ;
 
 entity BinKeyEqBothUniqueExpression provides Expression {
@@ -423,10 +423,10 @@ entity TaskRefAssignFromScratch provides Statement {
 }
 
 datatype CallWRefStatementGeneral provides Statement using {
-    field vexp: Expression,
-    field restype: TypeKey,
-    field reftype: TypeKey,
-    field sidx: Nat
+    field vexp: Expression;
+    field restype: TypeKey;
+    field reftype: TypeKey;
+    field sidx: Nat;
 } of
 CallStatementWRef { }
 | CallStatementWTaskRef { }

@@ -1,5 +1,6 @@
 /node_modules
 /bin
+/bsqbin
 /.vscode
 /build/test/**
 *.xml

@@ -6,7 +6,7 @@ internal entity MapOps provides Some {
     __safe internal function s_mapentry_key<K grounded KeyType, V>(me: MapEntry<K, V>): K = s_mapentry_key;
     __safe internal function s_mapentry_value<K grounded KeyType, V>(me: MapEntry<K, V>): V = s_mapentry_value;
 
-    __safe internal function s_map_empty<K grounded KeyType, V>(m: Map<K, V>): Nat = s_map_empty;
+    __safe internal function s_map_empty<K grounded KeyType, V>(m: Map<K, V>): Bool = s_map_empty;
     __safe internal function s_map_count<K grounded KeyType, V>(m: Map<K, V>): Nat = s_map_count;
 
     __safe internal function s_map_has<K grounded KeyType, V>(m: Map<K, V>, k: K): Bool = s_map_has;

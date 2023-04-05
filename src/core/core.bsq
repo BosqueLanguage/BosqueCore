@@ -137,9 +137,6 @@ __internal __typedeclable __typebase __numeric entity Decimal provides Some, API
 
 //<summary>Primitive string value.</summary>
 __internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType, APIType {
-    __safe private function s_empty(s: String): Bool = s_string_empty;
-    __assume_safe private function s_concat2(s1: String, s2: String): String = s_string_append;
-
     function concat(sl: List<String>): String {
         return StringOps::s_strconcat(sl);
     }
@@ -149,15 +146,43 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
     }
 
     method empty(): Bool {
-        return String::s_empty(this);
+        return StringOps::s_empty(this);
     }
 
     method append(s: String): String {
-        return String::s_concat2(this, s);
+        return StringOps::s_concat2(this, s);
     }
 
     method prepend(s: String): String {
-        return String::s_concat2(s, this);
+        return StringOps::s_concat2(s, this);
+    }
+
+    //
+    //TODO: add regex support to these
+    //
+
+    method startsWith(s: String): Bool {
+        return StringOps::s_startsWith(this, s);
+    }
+
+    method extractFront(s: String): String {
+        return StringOps::s_extractFront(this, s);
+    }
+
+    method removeFront(s: String): String {
+        return StringOps::s_removeFront(this, s);
+    }
+
+    method endsWith(s: String): Bool {
+        return StringOps::s_endsWith(this, s);
+    }
+
+    method extractEnd(s: String): String {
+        return StringOps::s_extractEnd(this, s);
+    }
+
+    method removeEnd(s: String): String {
+        return StringOps::s_removeEnd(this, s);
     }
 
     function interpolate(): String = special_method;
@@ -253,46 +278,6 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIStrin
     }
 
     function interpolate(): ASCIIString = special_method;
-
-    /*
-    method startsWith(v: String | Regex): Bool {
-        use RE(.*)
-    }
-
-    method endsWith(v: String | Regex): Bool {
-        use (.*)RE
-    }
-
-    method includes(v: String | Regex): Bool {
-        use (.*)RE(.*)
-    }
-
-    method extractFront(v: String | Regex): String, String {
-        use search on RE(.*) -- take slice -- max or min
-                             -- enforce regex is "monotone" in that there is one valid match length only -- no overlapping unbounded fragments like [a-z]+[a-z]{2,3}
-                             -- | is ok (maybe only at top-level) since we can expand paths/anchors and then pick maximal/minimal -- maybe want to do this generally
-    }
-
-    method extractEnd(v: String | Regex): String, String {
-        use search on (.*)RE -- take maximal slice
-    }
-
-    method removeFront(v: String | Regex): String, String {
-        use search on RE(.*) -- take maximal slice
-    }
-
-    method removeEnd(v: String | Regex): String, String {
-        use search on (.*)RE -- take maximal slice
-    }
-
-    method splitAtFirst(v: String | Regex): String, String, String {
-        use search on min position of RE(.*)
-    }
-
-    method splitAll(...seps: List<String>): List<String> {
-        split on every sep provided
-    }
-    */
 }
 
 //<summary>Primitive safe string value.</summary>

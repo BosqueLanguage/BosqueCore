@@ -114,7 +114,7 @@ if(mfs !== undefined) {
     fullargs = fullargs.filter((e) => e !== mfs);
 }
 
-if(fullargs.length > 2 && fullargs[2] === "--outdir") {
+if(fullargs.length > 2 && fullargs[2] === "--outfile") {
     buildIRDefault(fullargs[3], fullargs.slice(4));
 }
 else {
