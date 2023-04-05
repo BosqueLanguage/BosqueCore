@@ -35,14 +35,6 @@ entity TypeInfoEmitter {
         return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    function typeRequiresStructuralDeclInfo(t: TreeIR::Type): Bool {
-        match(t) {
-            TreeIR::TupleType => return true;
-            | TreeIR::RecordType => return true;
-            | _ => return false;
-        }
-    }
-
     function typeRequiresOODeclInfo(t: TreeIR::Type): Bool {
         match(t) {
             TreeIR::EnumEntityType => return true;
@@ -50,13 +42,6 @@ entity TypeInfoEmitter {
             | TreeIR::ObjectEntityType => return true;
             | TreeIR::TaskType => return true;
             | _ => return false;
-        }
-    }
-
-    method generateStructuralSMTDecl(t: TreeIR::Type): TypeDeclInfo {
-        match(t) {
-            TreeIR::TupleType => return this.emitTupleType($);
-            | TreeIR::RecordType => return this.emitRecordType($);
         }
     }
 
@@ -72,6 +57,7 @@ entity TypeInfoEmitter {
 
 entity AssemblyEmitter {
     function processAssembly(asm: TreeIR::Assembly): TreeIR::Assembly {
+        //TODO: explicitly place code -- put validation/pre/post code in the right places
         //TODO: flatten expressions -- error inducing expressions and calls are at top-level
         //TODO: inline as needed
         //TODO: ensure bodies are trees
@@ -84,15 +70,11 @@ entity AssemblyEmitter {
         let temitter = TypeInfoEmitter{flatasm};
         let alltypes = flatasm.typeMap.values();
 
-        let structuraldeclinfo = alltypes
-            .filter(fn(t) => TypeInfoEmitter::typeRequiresStructuralDeclInfo(t))
-            .map<TypeDeclInfo>(fn(t) => temitter.generateStructuralSMTDecl(t));
-
         let oodeclinfo = alltypes
             .filter(fn(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
             .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
 
-        let alldeclinfo = structuraldeclinfo.append(oodeclinfo);
+        
         let alldecls = String::join("\n    ", alldeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
 
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
@@ -101,7 +83,7 @@ entity AssemblyEmitter {
             let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
             let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
-            let args = "[TODO]";
+            let args = i.params.map<String>(fn(p) => String::concat(List<String>{"(", p.name, " ", emitTypeName(p.type), ")"}));
 
             let body = match (i) {
                 TreeIR::InvokeImplementation => bemitter.emitBodyStatementList($.body)
@@ -113,7 +95,7 @@ entity AssemblyEmitter {
                 return "";
             }
             else {
-                return String::concat(List<String>{"(define-fun ", iname, " (", args, ") ", smtifyType(rtype), "\n", body, ")"});
+                return String::concat(List<String>{"(define-fun ", iname, " (", String::join(" ", args), ") ", emitTypeName(rtype), "\n", body, "\n)"});
             }
         });
 
