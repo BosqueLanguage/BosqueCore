@@ -355,63 +355,55 @@
 ;; Value extraction and binding
 ;;
 
-(define-sort HavocSequence () (Seq Int))
+(define-sort @HavocSequence () (Seq Int))
 
-(declare-fun BBool@UFCons_API (HavocSequence) Bool)
-(declare-fun BInt@UFCons_API (HavocSequence) BInt)
-(declare-fun BNat@UFCons_API (HavocSequence) BNat)
-(declare-fun BBigInt@UFCons_API (HavocSequence) BBigInt)
-(declare-fun BBigNat@UFCons_API (HavocSequence) BBigNat)
-(declare-fun BFloat@UFCons_API (HavocSequence) BFloat)
-(declare-fun BDecimal@UFCons_API (HavocSequence) BDecimal)
-(declare-fun BRational@UFCons_API (HavocSequence) BRational)
-(declare-fun BString@UFCons_API (HavocSequence) BString)
-(declare-fun BByteBuffer@UFCons_API (HavocSequence) (Seq (_ BitVec 8)))
-(declare-fun BDateYear@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateMonth@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateDay@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateHour@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateMinute@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateSecond@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateMillis@UFCons_API (HavocSequence) BNat)
-(declare-fun BDateTZName@UFCons_API (HavocSequence) BString)
-(declare-fun BTickTime@UFCons_API (HavocSequence) BTickTime)
-(declare-fun BLogicalTime@UFCons_API (HavocSequence) BLogicalTime)
-(declare-fun BUUID4@UFCons_API (HavocSequence) BUUID4)
-(declare-fun BUUID7@UFCons_API (HavocSequence) BUUID7)
-(declare-fun BSHAContentHash@UFCons_API (HavocSequence) BSHAContentHash)
-(declare-fun BLatitude@UFCons_API (HavocSequence) BFloat)
-(declare-fun BLongitude@UFCons_API (HavocSequence) BFloat)
-(declare-fun ContainerSize@UFCons_API (HavocSequence) BNat)
-(declare-fun BEnum@UFCons_API (HavocSequence) BNat)
-(declare-fun UnionChoice@UFCons_API (HavocSequence) BNat)
+(declare-fun @Bool_UFCons_API (@HavocSequence) Bool)
+(declare-fun @Nat_UFCons_API (@HavocSequence) Int)
+(declare-fun @Int_UFCons_API (@HavocSequence) Int)
+(declare-fun @BigInt_UFCons_API (@HavocSequence) Int)
+(declare-fun @BigNat_UFCons_API (@HavocSequence) Int)
+(declare-fun @Float_UFCons_API (@HavocSequence) @Float)
+(declare-fun @Decimal_UFCons_API (@HavocSequence) @Decimal)
+(declare-fun @Rational_UFCons_API (@HavocSequence) @Rational)
+(declare-fun @String_UFCons_API (@HavocSequence) String)
+(declare-fun @ASCIIString_UFCons_API (@HavocSequence) String)
+(declare-fun @ByteBuffer_UFCons_API (@HavocSequence) (Seq (_ BitVec 8)))
+(declare-fun @DateYear_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateMonth_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateDay_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateHour_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateMinute_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateSecond_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateMillis_UFCons_API (@HavocSequence) Int)
+(declare-fun @DateTZName_UFCons_API (@HavocSequence) String)
+(declare-fun @TickTime_UFCons_API (@HavocSequence) Int)
+(declare-fun @LogicalTime_UFCons_API (@HavocSequence) Int)
+(declare-fun @UUID4_UFCons_API (@HavocSequence) String)
+(declare-fun @UUID7_UFCons_API (@HavocSequence) String)
+(declare-fun @SHAContentHash_UFCons_API (@HavocSequence) String)
+(declare-fun @Latitude_UFCons_API (@HavocSequence) @Float)
+(declare-fun @Longitude_UFCons_API (@HavocSequence) @Float)
+(declare-fun @ContainerSize_UFCons_API (@HavocSequence) Int)
+(declare-fun @Enum_UFCons_API (@HavocSequence) Int)
+(declare-fun @TypeChoice_UFCons_API (@HavocSequence) Int)
 
-(define-fun _@@cons_None_entrypoint ((ctx HavocSequence)) $Result_bsq_none
-  ($Result_bsq_none@success bsq_none@literal)
+(define-fun @entrypoint_cons_None ((ctx @HavocSequence)) (@ResultO @None)
+  (@ResultO-mk-ok @none)
 )
 
-(define-fun _@@cons_Nothing_entrypoint ((ctx HavocSequence)) $Result_bsq_nothing
-  ($Result_bsq_nothing@success bsq_nothing@literal)
+(define-fun @entrypoint_cons_Nothing ((ctx @HavocSequence)) (@ResultO @Nothing)
+  (@ResultO-mk-ok @nothing)
 )
 
-;;@BINTMIN, @BINTMAX, @BNATMAX, @SLENMAX, @BLENMAX
+;;@INT_MIN, @INT_MAX, @NAT_MAX, @SLEN_MAX, @BLEN_MAX, @CSIZE_MAX
 ;;V_MIN_MAX;;
 
-(define-fun _@@cons_Bool_entrypoint ((ctx HavocSequence)) $Result_Bool
-  ($Result_Bool@success (BBool@UFCons_API ctx))
+(define-fun @entrypoint_cons_Bool ((ctx @HavocSequence)) (@ResultO Bool)
+  (@ResultT-mk-ok (@Bool_UFCons_API ctx))
 )
 
-(define-fun _@@cons_Int_entrypoint ((ctx HavocSequence)) $Result_BInt
-  (let ((iv (BInt@UFCons_API ctx)))
-    (ite (and (<= @BINTMIN iv) (<= iv @BINTMAX))
-      ($Result_BInt@success iv)
-      ($Result_BInt@error ErrorID_AssumeCheck) 
-    )
-  )
-)
-
-(define-fun _@@cons_Nat_entrypoint ((ctx HavocSequence)) $Result_BNat
-  (let ((iv (BNat@UFCons_API ctx)))
+(define-fun @entrypoint_cons_Nat ((ctx @HavocSequence)) (@ResultO Int)
+  (let ((iv (@Nat_UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv @BNATMAX))
       ($Result_BNat@success iv)
       ($Result_BNat@error ErrorID_AssumeCheck) 
@@ -419,7 +411,16 @@
   )
 )
 
-(define-fun _@@cons_BigInt_entrypoint ((ctx HavocSequence)) $Result_BBigInt
+(define-fun @entrypoint_cons_Int ((ctx @HavocSequence)) (@ResultO Int)
+  (let ((iv (@Int_UFCons_API ctx)))
+    (ite (and (<= @BINTMIN iv) (<= iv @BINTMAX))
+      ($Result_BInt@success iv)
+      ($Result_BInt@error ErrorID_AssumeCheck) 
+    )
+  )
+)
+
+(define-fun _@@cons_BigInt_entrypoint ((ctx @HavocSequence)) $Result_BBigInt
   (let ((iv (BBigInt@UFCons_API ctx)))
     (ite (and (<= (+ @BINTMIN @BINTMIN) iv) (<= iv (+ @BINTMAX @BINTMAX)))
       ($Result_BBigInt@success iv)
@@ -428,7 +429,7 @@
   )
 )
 
-(define-fun _@@cons_BigNat_entrypoint ((ctx HavocSequence)) $Result_BBigNat
+(define-fun _@@cons_BigNat_entrypoint ((ctx @HavocSequence)) $Result_BBigNat
   (let ((iv (BBigNat@UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv (+ @BNATMAX @BNATMAX)))
       ($Result_BBigNat@success iv)
@@ -437,19 +438,19 @@
   )
 )
 
-(define-fun _@@cons_Float_entrypoint ((ctx HavocSequence)) $Result_BFloat
+(define-fun _@@cons_Float_entrypoint ((ctx @HavocSequence)) $Result_BFloat
   ($Result_BFloat@success (BFloat@UFCons_API ctx))
 )
 
-(define-fun _@@cons_Decimal_entrypoint ((ctx HavocSequence)) $Result_BDecimal
+(define-fun _@@cons_Decimal_entrypoint ((ctx @HavocSequence)) $Result_BDecimal
   ($Result_BDecimal@success (BDecimal@UFCons_API ctx))
 )
 
-(define-fun _@@cons_Rational_entrypoint ((ctx HavocSequence)) $Result_BRational
+(define-fun _@@cons_Rational_entrypoint ((ctx @HavocSequence)) $Result_BRational
   ($Result_BRational@success (BRational@UFCons_API ctx))
 )
 
-(define-fun _@@cons_String_entrypoint ((ctx HavocSequence)) $Result_BString
+(define-fun _@@cons_String_entrypoint ((ctx @HavocSequence)) $Result_BString
   (let ((sv (BString@UFCons_API ctx)))
     (ite (<= (str.len sv) @SLENMAX)
       ($Result_BString@success sv)
@@ -458,7 +459,7 @@
   )
 )
 
-(define-fun _@@cons_ByteBuffer_entrypoint ((ctx HavocSequence)) $Result_BByteBuffer
+(define-fun _@@cons_ByteBuffer_entrypoint ((ctx @HavocSequence)) $Result_BByteBuffer
   (let ((compress (BNat@UFCons_API (seq.++ ctx (seq.unit 0)))) (format (BNat@UFCons_API (seq.++ ctx (seq.unit 1)))) (buff (BByteBuffer@UFCons_API (seq.++ ctx (seq.unit 2)))))
     (ite (and (< compress 2) (< format 4) (<= (seq.len buff) @BLENMAX))
       ($Result_BByteBuffer@success (BByteBuffer@cons buff compress format))
@@ -487,7 +488,7 @@
   )
 )
 
-(define-fun _@@cons_DateTime_entrypoint ((ctx HavocSequence)) $Result_BDateTime
+(define-fun _@@cons_DateTime_entrypoint ((ctx @HavocSequence)) $Result_BDateTime
   (let ((y (BDateYear@UFCons_API ctx)) (m (BDateMonth@UFCons_API ctx)) (d (BDateDay@UFCons_API ctx)) (hh (BDateHour@UFCons_API ctx)) (mm (BDateMinute@UFCons_API ctx)) (tzo (BDateTZName@UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (or (= tzo "UTC") (= tzo "PST") (= tzo "MST") (= tzo "CEST")))
       ($Result_BDateTime@success (BDateTime@cons y m d hh mm tzo))
@@ -496,7 +497,7 @@
   )
 )
 
-(define-fun _@@cons_UTCDateTime_entrypoint ((ctx HavocSequence)) $Result_BUTCDateTime
+(define-fun _@@cons_UTCDateTime_entrypoint ((ctx @HavocSequence)) $Result_BUTCDateTime
   (let ((y (BDateYear@UFCons_API ctx)) (m (BDateMonth@UFCons_API ctx)) (d (BDateDay@UFCons_API ctx)) (hh (BDateHour@UFCons_API ctx)) (mm (BDateMinute@UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59))
       ($Result_BUTCDateTime@success (BUTCDateTime@cons y m d hh mm))
@@ -505,7 +506,7 @@
   )
 )
 
-(define-fun _@@cons_CalendarDate_entrypoint ((ctx HavocSequence)) $Result_BCalendarDate
+(define-fun _@@cons_CalendarDate_entrypoint ((ctx @HavocSequence)) $Result_BCalendarDate
   (let ((y (BDateYear@UFCons_API ctx)) (m (BDateMonth@UFCons_API ctx)) (d (BDateDay@UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@@check_DayInMonth d m y))
       ($Result_BCalendarDate@success (BCalendarDate@cons y m d))
@@ -514,7 +515,7 @@
   )
 )
 
-(define-fun _@@cons_TickTime_entrypoint ((ctx HavocSequence)) $Result_BTickTime
+(define-fun _@@cons_TickTime_entrypoint ((ctx @HavocSequence)) $Result_BTickTime
   (let ((tv (BTickTime@UFCons_API ctx)))
     (ite (and (<= 0 tv) (<= tv 1048576))
       ($Result_BTickTime@success tv)
@@ -523,7 +524,7 @@
   )
 )
 
-(define-fun _@@cons_LogicalTime_entrypoint ((ctx HavocSequence)) $Result_BLogicalTime
+(define-fun _@@cons_LogicalTime_entrypoint ((ctx @HavocSequence)) $Result_BLogicalTime
   (let ((lv (BLogicalTime@UFCons_API ctx)))
     (ite (and (<= 0 lv) (<= lv 64))
       ($Result_BLogicalTime@success lv)
@@ -532,7 +533,7 @@
   )
 )
 
-(define-fun _@@cons_ISOTimeStamp_entrypoint ((ctx HavocSequence)) $Result_BISOTimeStamp
+(define-fun _@@cons_ISOTimeStamp_entrypoint ((ctx @HavocSequence)) $Result_BISOTimeStamp
   (let ((y (BDateYear@UFCons_API ctx)) (m (BDateMonth@UFCons_API ctx)) (d (BDateDay@UFCons_API ctx)) (hh (BDateHour@UFCons_API ctx)) (mm (BDateMinute@UFCons_API ctx)) (ss (BDateSecond@UFCons_API ctx)) (millis (BDateMillis@UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (<= 0 ss) (<= ss 60) (<= 0 millis) (<= millis 999))
       ($Result_BISOTimeStamp@success (BISOTimeStamp@cons y m d hh mm ss millis))
@@ -541,7 +542,7 @@
   )
 )
 
-(define-fun _@@cons_UUID4_entrypoint ((ctx HavocSequence)) $Result_BUUID4
+(define-fun _@@cons_UUID4_entrypoint ((ctx @HavocSequence)) $Result_BUUID4
   (let ((uuv (BUUID4@UFCons_API ctx)))
     (ite (str.in.re uuv (re.loop (re.union (re.range "0" "9") (re.range "a" "f")) 32 32))
       ($Result_BUUID4@success uuv)
@@ -550,7 +551,7 @@
   )
 )
 
-(define-fun _@@cons_UUID7_entrypoint ((ctx HavocSequence)) $Result_BUUID7
+(define-fun _@@cons_UUID7_entrypoint ((ctx @HavocSequence)) $Result_BUUID7
   (let ((uuv (BUUID7@UFCons_API ctx)))
     (ite (str.in.re uuv (re.loop (re.union (re.range "0" "9") (re.range "a" "f")) 32 32))
       ($Result_BUUID7@success uuv)
@@ -559,11 +560,11 @@
   )
 )
 
-(define-fun _@@cons_ContentHash_entrypoint ((ctx HavocSequence)) $Result_BSHAContentHash
+(define-fun _@@cons_ContentHash_entrypoint ((ctx @HavocSequence)) $Result_BSHAContentHash
   ($Result_BSHAContentHash@success (BSHAContentHash@UFCons_API ctx))
 )
 
-(define-fun _@@cons_LatLongCoordinate_entrypoint ((ctx HavocSequence)) $Result_BLatLongCoordinate
+(define-fun _@@cons_LatLongCoordinate_entrypoint ((ctx @HavocSequence)) $Result_BLatLongCoordinate
   (let ((lat (BLatitude@UFCons_API ctx)) (long (BLongitude@UFCons_API ctx)))
     (ite (and (<= -90.0 lat) (<= lat 90.0) (< -180.0 long) (<= long 180.0))
       ($Result_BLatLongCoordinate@success (BLatLongCoordinate@cons lat long))
