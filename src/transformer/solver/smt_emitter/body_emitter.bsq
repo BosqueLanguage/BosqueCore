@@ -105,7 +105,12 @@ entity BodyEmitter {
     }
 
     function buildGeneralOp(op: String, args: List<String>): String {
-        return String::concat(List<String>{"(", op, " ", String::join(" ", args), ")"});
+        if(args.empty()) {
+            return op;
+        }
+        else {
+            return String::concat(List<String>{"(", op, " ", String::join(" ", args), ")"});
+        }
     }
 
     function buildITEOp(cond: String, tres: String, fres: String, indent: String): String{

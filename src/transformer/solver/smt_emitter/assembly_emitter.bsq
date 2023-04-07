@@ -11,28 +11,20 @@ typedef TypeDeclInfo = {
 entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
 
-    method emitEnumEntityType(t: TreeIR::EnumEntityType): TypeDeclInfo {
+    method emitEnumEntityTypeDecl(t: TreeIR::EnumEntityType): TypeDeclInfo {
         return {name="[ENUM]", consop="[ENUM_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    method emitTypedeclEntityType(t: TreeIR::TypedeclEntityType): TypeDeclInfo {
+    method emitTypedeclEntityTypeDecl(t: TreeIR::TypedeclEntityType): TypeDeclInfo {
         return {name="[TYPEDECL]", consop="[TYPEDECL_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    method emitObjectEntityType(t: TreeIR::ObjectEntityType): TypeDeclInfo {
+    method emitObjectEntityTypeDecl(t: TreeIR::ObjectEntityType): TypeDeclInfo {
         return {name="[OBJECT]", consop="[OBJECT_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    method emitTaskType(t: TreeIR::TaskType): TypeDeclInfo {
+    method emitTaskTypeDecl(t: TreeIR::TaskType): TypeDeclInfo {
         return {name="[TASK]", consop="[TASK_cons]", consargs=List<{cname: String, ctype: String}>{}};
-    }
-
-    method emitTupleType(t: TreeIR::TupleType): TypeDeclInfo {
-        return {name="[TUPLE]", consop="[TUPLE_cons]", consargs=List<{cname: String, ctype: String}>{}};
-    }
-
-    method emitRecordType(t: TreeIR::RecordType): TypeDeclInfo {
-        return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
     function typeRequiresOODeclInfo(t: TreeIR::Type): Bool {
@@ -47,10 +39,46 @@ entity TypeInfoEmitter {
 
     method generateOOSMTDecl(t: TreeIR::Type): TypeDeclInfo {
         match(t) {
-            TreeIR::EnumEntityType => return this.emitEnumEntityType($);
-            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityType($);
-            | TreeIR::ObjectEntityType => return this.emitObjectEntityType($);
-            | TreeIR::TaskType => return this.emitTaskType($);
+            TreeIR::EnumEntityType => return this.emitEnumEntityTypeDecl($);
+            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityTypeDecl($);
+            | TreeIR::ObjectEntityType => return this.emitObjectEntityTypeDecl($);
+            | TreeIR::TaskType => return this.emitTaskTypeDecl($);
+        }
+    }
+
+
+    method emitEnumEntityTypeBinder(t: TreeIR::EnumEntityType): String {
+        return "[ENUM]";
+    }
+
+    method emitTypedeclEntityTypeBinder(t: TreeIR::TypedeclEntityType): String {
+        return "[TYPEDECL]";
+    }
+
+    method emitObjectEntityTypeBinder(t: TreeIR::ObjectEntityType): String {
+        return "[OBJECT]";
+    }
+
+    method emitPrimitiveInternalEntityTypeBinder(t: TreeIR::PrimitiveInternalEntityType): String {
+        return "[PRIMITIVE]";
+    }
+
+    function typeRequiresIOBinder(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::EnumEntityType => return true;
+            | TreeIR::TypedeclEntityType => return true;
+            | TreeIR::ObjectEntityType => return true;
+            | TreeIR::PrimitiveInternalEntityType => return true;
+            | _ => return false;
+        }
+    }
+
+    method generateSMTIOBinder(t: TreeIR::Type): TypeDeclInfo {
+        match(t) {
+            TreeIR::EnumEntityType => return this.emitEnumEntityTypeBinder($);
+            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityTypeBinder($);
+            | TreeIR::ObjectEntityType => return this.emitObjectEntityTypeBinder($);
+            | TreeIR::PrimitiveInternalEntityType => return this.emitPrimitiveInternalEntityTypeBinder($);
         }
     }
 }
