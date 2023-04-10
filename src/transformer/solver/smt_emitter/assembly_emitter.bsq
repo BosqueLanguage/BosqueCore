@@ -11,6 +11,31 @@ typedef TypeDeclInfo = {
 entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
 
+    method getTypeTag(t: TreeIR::Type): String {
+        return String::concat(List<String>{"@TypeTag-", smtifyType(t.tkey)});
+    }
+
+    function typeRequiresTagInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::PrimitiveInternalEntityType => return false;
+            | TreeIR::HavocEntityType => return false;
+            | TreeIR::TaskType => return false;
+            | _ => return true;
+        }
+    }
+
+    function typeRequiresKeyTypeTagInfo(t: TreeIR::Type): Bool {
+        return t?<OOType> && t@<OOType>.iskeytype;
+    }
+
+    function typeRequiresSubTypeTypeTagInfo(t: TreeIR::Type): Bool {
+        if(t.supertypes?none || t.supertypes@!none.empty()) {
+            return false;
+        }
+
+        return t.supertypes@!none.someOf(pred(st) => st !== "Any"_TreeIR::TypeKey && st !== "Some"_TreeIR::TypeKey);
+    }
+
     method emitEnumEntityTypeDecl(t: TreeIR::EnumEntityType): TypeDeclInfo {
         return {name="[ENUM]", consop="[ENUM_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
@@ -45,7 +70,6 @@ entity TypeInfoEmitter {
             | TreeIR::TaskType => return this.emitTaskTypeDecl($);
         }
     }
-
 
     method emitEnumEntityTypeBinder(t: TreeIR::EnumEntityType): String {
         return "[ENUM]";
@@ -94,22 +118,55 @@ entity AssemblyEmitter {
         return asm;
     }
 
-    function generateTypeTagInfo(): {tags: String, distincsts: String} {    
-        return "[TAG INFO]";
+    function generateTypeTagInfo(flatasm: TreeIR::Assembly): {type_tag_decls: String, type_tag_distincts: String, key_type_tag_sort: String, type_tag_subtype: String} {    
+        let temitter = TypeInfoEmitter{flatasm};
+        let alltypes = flatasm.typeMap.values();
+
+        let tagdeclinfo = alltypes
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresTagInfo(t))
+            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .keySort();
+
+        let keytaginfo = alltypes
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresKeyTypeTagInfo(t))
+            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .keySort();
+        
+        let korder = alltypes
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresKeyTypeTagInfo(t) && !t?<TreeIR::PrimitiveInternalEntityType>)
+            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .keySort()
+            .mapIdx<String>(fn(kt, ii) => {
+                let ltt = if (ii == 0n) then "@TypeTag-SHAContentHash" else keytaginfo.get(ii - 1n);
+                return String::concat(List<String>{"assert (@key_type_sort_order ", ltt, " ", kt, "))"});
+            });
+
+        let subtypeinfo = alltypes
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresSubTypeTypeTagInfo(t));
+
+        return {
+            type_tag_decls = String::join("\n", tagdeclinfo.map<String>(fn(tg) => String::concat(List<String>{"(declare-const ", tg, " @TypeTag)"}))),
+            type_tag_distincts = String::join("\n", tagdeclinfo),
+            key_type_tag_sort = String::join("\n", korder),
+            type_tag_subtype = "[NOT IMPLEMENTED]"
+        };
     }
 
-    function generateTypeDecls(flatasm: TreeIR::Assembly): String {
+    function generateTypeDecls(flatasm: TreeIR::Assembly): {oo_decls: String, oo_constructors: String} {
         let temitter = TypeInfoEmitter{flatasm};
         let alltypes = flatasm.typeMap.values();
 
         let oodeclinfo = alltypes
-            .filter(fn(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
             .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
             
-        return String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
+        return {
+            oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"}))),
+            oo_constructors = "[NOT IMPLEMENTED]"
+        };
     }
 
-    function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
+    function generateSMTCode(flatasm: TreeIR::Assembly, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;

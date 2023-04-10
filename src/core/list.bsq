@@ -379,6 +379,14 @@ __internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded
         return ListOps::s_list_remove<T>(this, i);
     }
 
+    method {when T KeyType} keySort(): List<T> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T>{};
+        }
+        else {
+            return ListOps::s_list_keysort<T>(this);
+        }
+    }
 
     recursive? method reduce<U>(init: U, f: recursive? fn(U, T) -> U): U {
         if(ListOps::s_list_empty<T>(this)) {
