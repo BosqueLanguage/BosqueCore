@@ -39,6 +39,8 @@ internal entity ListOps provides Some {
     __assume_safe internal function s_list_remove<T>(l: List<T>, i: Nat): List<T> = s_list_remove;
     __assume_safe internal function s_list_insert<T>(l: List<T>, idx: Nat, v: T): List<T> = s_list_insert;
 
+    __safe internal function s_list_keysort<T KeyType>(l: List<T>): List<T> = s_list_keysort;
+
     __conditional_safe internal recursive? function s_list_reduce<T, U>(l: List<T>, iv: U, f: recursive? fn(U, T) -> U): U = s_list_reduce;
     __conditional_safe internal recursive? function s_list_reduce_idx<T, U>(l: List<T>, iv: U, f: recursive? fn(U, T, Nat) -> U): U = s_list_reduce_idx;
 

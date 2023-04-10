@@ -187,25 +187,25 @@ l.remove(1n) //List<Int>{1i, 3i}
 ```
 
 ## zip/zipWith
-The `zip` and `zipWith` methods combine two lists (of equal length) into a single list of tuples. The `zip` method combines two lists into a list of tuples. The `zipWith` method combines two lists into a list of values using the specified function.
+The `zip` and `zipWith` function combine two lists (of equal length) into a single list of tuples. The `zip` method combines two lists into a list of tuples. The `zipWith` method combines two lists into a list of values using the specified function.
 
 ```none
 let l1 = List<Int>{1i, 2i, 3i};
 let l2 = List<String>{"one", "two", "three"};
 
-l1.zip<String>(l2) //List<[Int, String]>{[1i, "one"], [2i, "two"], [3i, "three"]}
-l1.zipWith<String, Bool>(l2, fn(e1, e2) => e1 > 2 || e2 === "one") //List<Bool>{true, false, true}
+ListOp::zip<Int, String>(l1, l2) //List<[Int, String]>{[1i, "one"], [2i, "two"], [3i, "three"]}
+ListOp::zipWith<Int, String, Bool>(l1, l2, fn(e1, e2) => e1 > 2 || e2 === "one") //List<Bool>{true, false, true}
 ```
 
 ## join/group
-The `join` and `group` methods combine two lists using algebraic products. The `join` method produces a list of tuples where the first element comes from the first list, the second element comes from the second list, and the predicate applied to them is true. The `group` method produces a list of tuples where the first element comes from the first list and the second element is a list of elements from the second list that satisfy the specified predicate.
+The `join` and `group` functions combine two lists using algebraic products. The `join` method produces a list of tuples where the first element comes from the first list, the second element comes from the second list, and the predicate applied to them is true. The `group` method produces a list of tuples where the first element comes from the first list and the second element is a list of elements from the second list that satisfy the specified predicate.
 
 ```none
 let l1 = List<Int>{1i, 2i, 3i};
 let l2 = List<Int>{2i, 3i, 4i};
 
-l1.join<Int>(l2, fn(e1, e2) => e1 >= e2) //List<[Int, Int]>{[2i, 2i], [3i, 2i], [3i, 3i]}
-l1.group<Int>(l2, fn(e1, e2) => e1 >= e2) //List<[Int, List<Int>]>{[1i, List<Int>{}], [2i, List<Int>{2i}], [3i, List<Int>{2i, 3i}]}
+ListOp::join<Int, Int>(l1, l2, fn(e1, e2) => e1 >= e2) //List<[Int, Int]>{[2i, 2i], [3i, 2i], [3i, 3i]}
+ListOp::group<Int, Int>(l1, l2, fn(e1, e2) => e1 >= e2) //List<[Int, List<Int>]>{[1i, List<Int>{}], [2i, List<Int>{2i}], [3i, List<Int>{2i, 3i}]}
 ```
 
 ## reduce
