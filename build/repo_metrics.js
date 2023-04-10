@@ -9,7 +9,13 @@ function countLinesInFile(filepath, ext) {
     }
     else {
         const contents = fs.readFileSync(filepath, "utf8");
-        return (contents.match(/(^[ \t]*$)/gm) || [""]).length - 1;
+        const emptylines = contents.match(/(^[ \t]*$)/gm);
+        const totallines = contents.match(/(\n)/g);
+
+        const emptycount = emptylines !== null ? (emptylines.length - 1) : 0;
+        const linecount = totallines !== null ? (totallines.length - 1) : 0;
+
+        return linecount - emptycount;
     }
 }
 
