@@ -94,17 +94,22 @@ entity AssemblyEmitter {
         return asm;
     }
 
-    function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
+    function generateTypeTagInfo(): {tags: String, distincsts: String} {    
+        return "[TAG INFO]";
+    }
+
+    function generateTypeDecls(flatasm: TreeIR::Assembly): String {
         let temitter = TypeInfoEmitter{flatasm};
         let alltypes = flatasm.typeMap.values();
 
         let oodeclinfo = alltypes
             .filter(fn(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
             .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
+            
+        return String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
+    }
 
-        
-        let alldecls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"})));
-
+    function generateSMTCode(flatasm: TreeIR::Assembly, smtcore: String, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
         let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;
@@ -127,6 +132,6 @@ entity AssemblyEmitter {
             }
         });
 
-        return String::concat(List<String>{alldecls, "\n", String::join("\n", idecls)});
+        return String::join("\n", idecls);
     }
 }
