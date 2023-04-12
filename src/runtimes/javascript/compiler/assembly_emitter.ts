@@ -907,7 +907,7 @@ class AssemblyEmitter {
                 this.vcallinfo.set(tt.tkey, tt.vtable);
             }
 
-            if(tt.isexportable && !(tt instanceof TIRPrimitiveInternalEntityType)) {
+            if(!(tt instanceof TIRPrimitiveInternalEntityType)) {
                 const per = this.emitTIRType_ParseEmit(tt);
                 if(per !== undefined) {
                     this.marshalinfo.set(tt.tkey, {parse: per.parse, emit: per.emit});

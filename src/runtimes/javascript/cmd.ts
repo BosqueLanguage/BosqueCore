@@ -56,12 +56,12 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
     }
 }
 
-function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
+function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
     const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
-    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, istestbuild, true, false, entrypoints, depsmap);
+    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, false, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
             process.stdout.write(`Parse error -- ${errors[i]}\n`);
@@ -91,10 +91,10 @@ function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, core
 }
 
 
-function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
-        const [tasm, deps] = generateTASM(usercode, buildlevel, istestbuild, entrypoints);
+        const [tasm, deps] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting JS code...\n");
         const jscode = generateJSFiles(tasm, deps, corecode, runtimecode, apicode);
@@ -183,7 +183,7 @@ function buildJSDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: mainNamespace, fname: mainFunction}]);
+    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
 }

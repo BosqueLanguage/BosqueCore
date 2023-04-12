@@ -6,7 +6,7 @@ enum PlayerMark {
     o
 }
 
-entity Board provides APIType {
+entity Board {
     //Board is a map from cells to marks (or not in map if cell is unoccupied)
     field cells: List<List<PlayerMark>>;
 

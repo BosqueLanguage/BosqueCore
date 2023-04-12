@@ -21,62 +21,62 @@ typedecl Identifier = StringOf<IdentifierValidator>;
 typedecl TypeNameIdentifierValidator = /[A-Z][A-Za-z0-9_:]*/;
 typedecl TypeNameIdentifier = StringOf<TypeNameIdentifierValidator>;
 
-entity TypeName provides APIType {
+entity TypeName {
     field ns: NamespaceIdentifier;
     field name: TypeNameIdentifier;
     field templates: List<TypeKey>?;
 }
 
-entity FunctionParameter provides APIType {
+entity FunctionParameter {
     field name: String;
     field type: TypeKey;
     field ddlit: LiteralValue?;
 }
 
-entity PreConditionDecl provides APIType {
+entity PreConditionDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
 }
 
-entity PostConditionDecl provides APIType {
+entity PostConditionDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
 }
 
-entity ObjectInvariantDecl provides APIType {
+entity ObjectInvariantDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
 }
 
-entity ObjectValidateDecl provides APIType {
+entity ObjectValidateDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
 }
 
-entity TypedeclInvariantDecl provides APIType {
+entity TypedeclInvariantDecl {
     field exp: Expression;
     field vtype: TypeKey;
 }
 
-entity TypedeclValidateDecl provides APIType {
+entity TypedeclValidateDecl {
     field exp: Expression;
     field vtype: TypeKey;
 }
 
-entity TaskStatusEffect provides APIType {
+entity TaskStatusEffect {
     field statusinfo: List<TypeKey>;
 }
 
-entity TaskEventEffect provides APIType {
+entity TaskEventEffect {
     field eventinfo: List<TypeKey>;
 }
 
-entity TaskEnvironmentEffect provides APIType {
+entity TaskEnvironmentEffect {
     field readvars: List<String>; //string "*" is wildcard
     field writevars: List<String>; //string "*" is wildcard
 }
 
-entity TaskResourceEffect provides APIType {
+entity TaskResourceEffect {
     field pathdescriptor: TypeKey; //the resource validator
     field isread: Bool;
     field iswrite: Bool;
@@ -85,13 +85,13 @@ entity TaskResourceEffect provides APIType {
     field args: List<FunctionParameter>;
 }
 
-entity TaskEnsures provides APIType {
+entity TaskEnsures {
     field sinfo: SourceInfo;
     field exp: Expression;
     field args: List<FunctionParameter>;
 }
 
-concept Invoke provides APIType {
+concept Invoke {
     field invkey: InvokeKey;
     field name: String;
 
@@ -130,7 +130,7 @@ entity InvokePrimitive provides Invoke {
     field body: String;
 }
 
-concept MemberDecl provides APIType {
+concept MemberDecl {
     field tkey: TypeKey;
     field name: String;
 
@@ -160,12 +160,11 @@ entity MemberMethodDecl provides MemberDecl{
     field invoke: Invoke;
 }
 
-concept Type provides APIType {
+concept Type {
     field tkey: TypeKey;
 
     //direct suprertypes -- not saturated set
     field supertypes: List<TypeKey>?;
-    field isexportable: Bool;
 }
 
 concept OOType provides Type {
@@ -362,7 +361,7 @@ entity EListType provides Type {
     field types: List<TypeKey>;
 }
 
-concept NamespaceDecl provides APIType {
+concept NamespaceDecl {
     field ns: NamespaceIdentifier;
     field name: Identifier;
     field sinfo: SourceInfo;
@@ -386,7 +385,7 @@ entity NamespaceOperatorDecl provides NamespaceDecl {
     field invoke: Invoke;
 }
 
-entity NamespaceLambdaDecl provides APIType {
+entity NamespaceLambdaDecl {
     field ikey: InvokeKey;
     field pcid: PCodeKey;
 
@@ -397,7 +396,7 @@ entity NamespaceLambdaDecl provides APIType {
     field invoke: Invoke;
 }
 
-entity CodePack provides APIType {
+entity CodePack {
     field ns: NamespaceIdentifier;
     field codekey: PCodeKey;
     field invk: InvokeKey;
@@ -411,7 +410,7 @@ entity CodePack provides APIType {
     field capturedCodePacks: List<{cpname: Identifier, cpval: PCodeKey}>;
 }
 
-datatype InfoTemplate provides APIType
+datatype InfoTemplate
 of
 InfoTemplateRecord {
     field entries: List<{ name: Identifier, value: InfoTemplate }>;
@@ -431,11 +430,11 @@ InfoTemplateRecord {
 }
 ;
 
-entity StringTemplate provides APIType {
+entity StringTemplate {
     field str: String;
 }
 
-entity NamespaceDeclaration provides APIType {
+entity NamespaceDeclaration {
     field ns: NamespaceIdentifier;
 
     field consts: Map<Identifier, NamespaceConstDecl>;
@@ -453,7 +452,7 @@ entity NamespaceDeclaration provides APIType {
     field stringformats: Map<Identifier, StringTemplate>;
 }
 
-entity Assembly provides APIType {
+entity Assembly {
     field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
     field typeMap: Map<TypeKey, Type>;
     field fieldMap: Map<FieldKey, MemberFieldDecl>;

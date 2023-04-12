@@ -12,7 +12,7 @@ concept Named {
     invariant $name !== "";
 }
 
-entity Qux provides Named, Bar, APIType {
+entity Qux provides Named, Bar {
     field h: Int;
 
     invariant $g < $h;

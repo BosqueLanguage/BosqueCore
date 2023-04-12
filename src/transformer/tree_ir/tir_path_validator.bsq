@@ -1,6 +1,6 @@
 namespace TreeIR;
 
-entity BSQPathValidator provides APIType {
+entity BSQPathValidator {
     field scheme: String?;
     field userinfo: BSQRegex?;
     field host: BSQRegex?;

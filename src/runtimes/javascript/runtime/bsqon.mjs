@@ -79,6 +79,8 @@ const _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
 const _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
 const _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
+const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
+
 function BSQON(str, asjson) {
     this.m_json = asjson || false;
 
@@ -190,6 +192,43 @@ BSQON.prototype.lexNumber = function () {
         if (mdot !== null) {
             this.m_cpos += mdot[0].length;
             this.m_lastToken = createToken(TOKEN_DOTIDX, mdot[0]);
+            return true;
+        }
+    }
+
+    return false;
+}
+BSQON.prototype.tryLexString = function () {
+    _s_stringRe.lastIndex = this.m_cpos;
+    const ms = _s_stringRe.exec(this.m_input);
+    if (ms !== null) {
+        this.m_cpos += ms[0].length;
+        this.m_lastToken = createToken(TOKEN_STRING, ms[0]);
+        return true;
+    }
+
+    if (!this.m_json) {
+        _s_ascii_stringRe.lastIndex = this.m_cpos;
+        const mas = _s_ascii_stringRe.exec(this.m_input);
+        if (mas !== null) {
+            this.m_cpos += mas[0].length;
+            this.m_lastToken = createToken(TOKEN_ASCII_STRING, mas[0]);
+            return true;
+        }
+
+        _s_template_stringRe.lastIndex = this.m_cpos;
+        const template_string_m = _s_template_stringRe.exec(this.m_input);
+        if (template_string_m !== null) {
+            this.m_cpos += template_string_m[0].length;
+            this.m_lastToken = createToken(TOKEN_TEMPLATE_STRING, template_string_m[0]);
+            return true;
+        }
+
+        _s_ascii_template_stringRe.lastIndex = this.m_cpos;
+        const ascii_template_string_m = _s_ascii_template_stringRe.exec(this.m_input);
+        if (ascii_template_string_m !== null) {
+            this.m_cpos += ascii_template_string_m[0].length;
+            this.m_lastToken = createToken(TOKEN_ASCII_TEMPLATE_STRING, ascii_template_string_m[0]);
             return true;
         }
     }

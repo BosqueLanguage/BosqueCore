@@ -7,13 +7,6 @@ import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
-const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
-const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
-const api_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/api.mjs");
-
-const core_code = FS.readFileSync(core_path).toString();
-const runtime_code = FS.readFileSync(runtime_path).toString();
-const api_code = FS.readFileSync(api_path).toString();
 
 let fullargs = process.argv;
 
@@ -55,12 +48,12 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
     }
 }
 
-function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
+function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
     const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
-    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, istestbuild, true, false, entrypoints, depsmap);
+    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, true, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
             process.stdout.write(`Parse error -- ${errors[i]}\n`);
@@ -72,10 +65,10 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
     return [tasm as TIRAssembly, depsmap];
 }
 
-function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
-        const [tasm] = generateTASM(usercode, buildlevel, istestbuild, entrypoints);
+        const [tasm] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting IR code...\n");
         const ircode = tasm.bsqemit();
@@ -95,7 +88,7 @@ function buildIRDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: mainNamespace, fname: mainFunction}]);
+    workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
 }

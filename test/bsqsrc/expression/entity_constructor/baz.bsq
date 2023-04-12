@@ -4,7 +4,7 @@ concept Bar {
     field g: Int;
 }
 
-entity Baz provides Bar, APIType {
+entity Baz provides Bar {
     field h: Nat;
 }
 

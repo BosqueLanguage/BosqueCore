@@ -9,7 +9,7 @@ concept Named {
     field name: String;
 }
 
-entity Qux provides Named, Bar, APIType {
+entity Qux provides Named, Bar {
 }
 
 export function main(): Qux{

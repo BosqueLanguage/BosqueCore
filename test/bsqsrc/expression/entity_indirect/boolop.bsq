@@ -1,6 +1,6 @@
 namespace Main;
 
-datatype BoolOp provides APIType using {
+datatype BoolOp using {
     line: Nat
 } of
 LConst { val: Bool }

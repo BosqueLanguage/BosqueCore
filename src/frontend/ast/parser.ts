@@ -4338,8 +4338,7 @@ class Parser {
             
             const provides = [
                 [new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined],
-                [new NominalTypeSignature(sinfo, "Core", ["KeyType"]), undefined], 
-                [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]
+                [new NominalTypeSignature(sinfo, "Core", ["KeyType"]), undefined]
             ] as [TypeSignature, TypeConditionRestriction | undefined][];
 
             const invariants: InvariantDecl[] = [];
@@ -4680,7 +4679,7 @@ class Parser {
 
             const idval = this.parseNominalType() as NominalTypeSignature;
 
-            let provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["APIType"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
+            let provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             provides.push([new NominalTypeSignature(sinfo, "Core", ["KeyType"]), new TypeConditionRestriction([new TemplateTypeRestriction(idval, false, false, new NominalTypeSignature(sinfo, "Core", ["KeyType"]))])]);
 
             const invariants: InvariantDecl[] = [];

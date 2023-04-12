@@ -511,16 +511,14 @@ abstract class TIRType {
 
     //direct suprertypes -- not saturated set
     readonly supertypes: Set<TIRTypeKey> | undefined;
-    readonly isexportable: boolean;
 
-    constructor(tkey: TIRTypeKey, supertypes: TIRTypeKey[] | undefined, isexportable: boolean) {
+    constructor(tkey: TIRTypeKey, supertypes: TIRTypeKey[] | undefined) {
         this.tkey = tkey;
         this.supertypes = supertypes !== undefined ? new Set<TIRTypeKey>(supertypes) : undefined;
-        this.isexportable = isexportable;
     }
 
     bsqemit_type(): any {
-        return {tkey: this.tkey, supertypes: this.supertypes !== undefined ? [...this.supertypes] : null, isexportable: this.isexportable};
+        return {tkey: this.tkey, supertypes: this.supertypes !== undefined ? [...this.supertypes] : null};
     }
 
     abstract bsqemit(): any;
@@ -632,8 +630,8 @@ abstract class TIROOType extends TIRType {
 
     readonly iskeytype: boolean;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
-        super(tkey, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
+        super(tkey, supertypes);
         this.tname = tname;
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
@@ -653,8 +651,8 @@ abstract class TIROOType extends TIRType {
 }
 
 abstract class TIREntityType extends TIROOType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
     bsqemit_entitytype(): any {
@@ -672,8 +670,8 @@ class TIRObjectEntityType extends TIREntityType {
     readonly vtable: Map<string, TIRInvokeKey> = new Map<string, TIRInvokeKey>(); 
     readonly binds: Map<string, TIRTypeKey>;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
         this.binds = binds;
     }
 
@@ -684,7 +682,7 @@ class TIRObjectEntityType extends TIREntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::ObjectEntityType", "ObjectEntityType");
         
         jv = jv[1];
-        const rr = new TIRObjectEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, new Map<string, TIRTypeKey>(jv.binds), jv.isexportable);
+        const rr = new TIRObjectEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, new Map<string, TIRTypeKey>(jv.binds));
         TIROOType.bsqparse_ooinfo(jv, rr);
 
         rr.allfields.push(...jv.allfields);
@@ -702,7 +700,7 @@ class TIREnumEntityType extends TIREntityType {
     readonly litvals: Map<string, TIRLiteralValue> = new Map<string, TIRLiteralValue>();
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], enums: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.enums = enums;
     }
 
@@ -734,8 +732,8 @@ class TIRTypedeclEntityType extends TIREntityType {
     readonly strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined; //TIRValidatorEntityType;
     readonly pthvalidator: {vtype: TIRTypeKey, vpth: BSQPathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined; //TIRPathValidatorEntityType;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: BSQPathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], valuetype: TIRTypeKey, representation: TIRTypeKey, strvalidator: {vtype: TIRTypeKey, vre: BSQRegex} | undefined, pthvalidator: {vtype: TIRTypeKey, vpth: BSQPathValidator, kind: "path" | "pathfragment" | "pathglob"} | undefined, iskeytype: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
         this.valuetype = valuetype;
         this.representation = representation;
         this.strvalidator = strvalidator;
@@ -751,7 +749,7 @@ class TIRTypedeclEntityType extends TIREntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::TypedeclEntityType", "TypedeclEntityType");
         
         jv = jv[1];
-        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: BSQPathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype, jv.isexportable);
+        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? {vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre)} : undefined, jv.pthvalidator !== null ? {vtype: jv.pthvalidator.vtype, vpth: BSQPathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind} : undefined, jv.iskeytype);
         TIROOType.bsqparse_ooinfo(jv, rr);
         
         rr.consinvariantsall.push(...jv.consinvariantsall.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
@@ -764,8 +762,8 @@ class TIRTypedeclEntityType extends TIREntityType {
 
 //base class for all the primitive types that are defined
 abstract class TIRInternalEntityType extends TIREntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
     bsqemit_internalentity(): any {
@@ -776,7 +774,7 @@ abstract class TIRInternalEntityType extends TIREntityType {
 //class representing all the primitive values (Int, Bool, String, ...). All of these are special implemented values
 class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], iskeytype: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
     bsqemit(): any {
@@ -796,7 +794,7 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
         this.revalidator = revalidator;
     }
 
@@ -818,7 +816,7 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
@@ -841,7 +839,7 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     readonly revalidator: BSQRegex;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, revalidator: BSQRegex) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.validatortype = validatortype;
         this.revalidator = revalidator;
     }
@@ -863,7 +861,7 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     readonly pthvalidator: BSQPathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], pthvalidator: BSQPathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
         this.pthvalidator = pthvalidator;
     }
 
@@ -885,7 +883,7 @@ class TIRPathEntityType extends TIRInternalEntityType {
     readonly pthvalidator: BSQPathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -908,7 +906,7 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
     readonly pthvalidator: BSQPathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -930,7 +928,7 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
     readonly pthvalidator: BSQPathValidator;
 
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], validatortype: TIRTypeKey, pthvalidator: BSQPathValidator) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true, true);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, true);
         this.validatortype = validatortype;
         this.pthvalidator = pthvalidator;
     }
@@ -949,8 +947,8 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
 
 //class representing Ok, Err, Something types
 abstract class TIRConstructableEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
     }
 
     bsqemit_constructable(): any {
@@ -962,8 +960,8 @@ class TIROkEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
     readonly typeE: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
         this.typeE = typeE;
     }
@@ -973,7 +971,7 @@ class TIROkEntityType extends TIRConstructableEntityType {
     }
     static bsqparse(jv: any): TIROkEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::OkEntityType", "OkEntityType");
-        const rr = new TIROkEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
+        const rr = new TIROkEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -984,8 +982,8 @@ class TIRErrEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
     readonly typeE: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, typeE: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
         this.typeE = typeE;
     }
@@ -995,7 +993,7 @@ class TIRErrEntityType extends TIRConstructableEntityType {
     }
     static bsqparse(jv: any): TIRErrEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::ErrEntityType", "ErrEntityType");
-        const rr = new TIRErrEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE, jv[1].isexportable);
+        const rr = new TIRErrEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1005,8 +1003,8 @@ class TIRErrEntityType extends TIRConstructableEntityType {
 class TIRSomethingEntityType extends TIRConstructableEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
     }
 
@@ -1015,7 +1013,7 @@ class TIRSomethingEntityType extends TIRConstructableEntityType {
     }
     static bsqparse(jv: any): TIRSomethingEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::SomethingEntityType", "SomethingEntityType");
-        const rr = new TIRSomethingEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        const rr = new TIRSomethingEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1026,8 +1024,8 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     readonly typeK: TIRTypeKey;
     readonly typeV: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeK = typeK;
         this.typeV = typeV;
     }
@@ -1037,7 +1035,7 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     }
     static bsqparse(jv: any): TIRMapEntryEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::MapEntryEntityType", "MapEntryEntityType");
-        const rr = new TIRMapEntryEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
+        const rr = new TIRMapEntryEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1047,7 +1045,7 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
 //class representing special havoc type
 class TIRHavocEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, [], false, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, [], false);
     }
 
     bsqemit(): any {
@@ -1061,8 +1059,8 @@ class TIRHavocEntityType extends TIRInternalEntityType {
 
 //abstract class for all the builtin collection types
 abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
     }
 
     bsqemit_collection(): any {
@@ -1074,8 +1072,8 @@ abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
 class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
     }
 
@@ -1084,7 +1082,7 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
     }
     static bsqparse(jv: any): TIRListEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::ListEntityType", "ListEntityType");
-        const rr = new TIRListEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        const rr = new TIRListEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1095,8 +1093,8 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
     }
 
@@ -1105,7 +1103,7 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     }
     static bsqparse(jv: any): TIRStackEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::StackEntityType", "StackEntityType");
-        const rr = new TIRStackEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        const rr = new TIRStackEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1116,8 +1114,8 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
     }
 
@@ -1126,7 +1124,7 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
     }
     static bsqparse(jv: any): TIRQueueEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::QueueEntityType", "QueueEntityType");
-        const rr = new TIRQueueEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        const rr = new TIRQueueEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1137,8 +1135,8 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
 class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeT: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeT: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeT = typeT;
     }
 
@@ -1147,7 +1145,7 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     }
     static bsqparse(jv: any): TIRSetEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::SetEntityType", "SetEntityType");
-        const rr = new TIRSetEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].isexportable);
+        const rr = new TIRSetEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1159,8 +1157,8 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     readonly typeK: TIRTypeKey;
     readonly typeV: TIRTypeKey;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], typeK: TIRTypeKey, typeV: TIRTypeKey) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes);
         this.typeK = typeK;
         this.typeV = typeV;
     }
@@ -1170,7 +1168,7 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     }
     static bsqparse(jv: any): TIRMapEntityType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::MapEntityType", "MapEntityType");
-        const rr = new TIRMapEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV, jv[1].isexportable);
+        const rr = new TIRMapEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV);
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1199,7 +1197,7 @@ class TIRTaskType extends TIROOType {
         onfuncs: { onCanel: TIRInvokeKey | undefined, onFailure: TIRInvokeKey | undefined, onTimeout: TIRInvokeKey | undefined },
         lfuncs: { logStart: TIRInvokeKey | undefined, logEnd: TIRInvokeKey | undefined, taskEnsures: TIRInvokeKey | undefined, taskWarns: TIRInvokeKey | undefined }
     ) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, false);
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
         this.binds = binds;
         this.mainfunc = mainfunc;
         this.onfuncs = onfuncs;
@@ -1230,8 +1228,8 @@ class TIRTaskType extends TIROOType {
 class TIRConceptType extends TIROOType {
     readonly binds: Map<string, TIRTypeKey>;
 
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>, isexportable: boolean) {
-        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false, isexportable);
+    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[], binds: Map<string, TIRTypeKey>) {
+        super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
         this.binds = binds;
     }
 
@@ -1240,7 +1238,7 @@ class TIRConceptType extends TIROOType {
     }
     static bsqparse(jv: any): TIRConceptType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::ConceptType", "ConceptType");
-        const rr = new TIRConceptType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), jv[1].isexportable);
+        const rr = new TIRConceptType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds));
         TIROOType.bsqparse_ooinfo(jv[1], rr);
 
         return rr;
@@ -1266,8 +1264,8 @@ class TIRConceptType extends TIROOType {
 class TIRConceptSetType extends TIRType {
     readonly conceptTypes: TIRTypeKey[]; //each is a TIRConceptType
 
-    constructor(tkey: TIRTypeKey, concepts: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, concepts, isexportable);
+    constructor(tkey: TIRTypeKey, concepts: TIRTypeKey[]) {
+        super(tkey, concepts);
         this.conceptTypes = concepts;
     }
 
@@ -1276,15 +1274,15 @@ class TIRConceptSetType extends TIRType {
     }
     static bsqparse(jv: any): TIRConceptSetType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::ConceptSetType", "ConceptSetType");
-        return new TIRConceptSetType(jv[1].tkey, jv[1].conceptTypes, jv[1].isexportable);
+        return new TIRConceptSetType(jv[1].tkey, jv[1].conceptTypes);
     }
 }
 
 class TIRTupleType extends TIRType {
     readonly types: TIRTypeKey[];
 
-    constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, types: TIRTypeKey[], supertypes: TIRTypeKey[]) {
+        super(tkey, supertypes);
         this.types = types;
     }
 
@@ -1293,15 +1291,15 @@ class TIRTupleType extends TIRType {
     }
     static bsqparse(jv: any): TIRTupleType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::TupleType", "TupleType");
-        return new TIRTupleType(jv[1].tkey, jv[1].types, jv[1].supertypes, jv[1].isexportable);
+        return new TIRTupleType(jv[1].tkey, jv[1].types, jv[1].supertypes);
     }
 }
 
 class TIRRecordType extends TIRType {
     readonly entries: {pname: string, ptype: TIRTypeKey}[];
 
-    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, supertypes, isexportable);
+    constructor(tkey: TIRTypeKey, entries: {pname: string, ptype: TIRTypeKey}[], supertypes: TIRTypeKey[]) {
+        super(tkey, supertypes);
         this.entries = entries;
     }
 
@@ -1310,15 +1308,15 @@ class TIRRecordType extends TIRType {
     }
     static bsqparse(jv: any): TIRRecordType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::RecordType", "RecordType");
-        return new TIRRecordType(jv[1].tkey, jv[1].entries, jv[1].supertypes, jv[1].isexportable);
+        return new TIRRecordType(jv[1].tkey, jv[1].entries, jv[1].supertypes);
     }
 }
 
 class TIRUnionType extends TIRType {
     readonly options: TIRTypeKey[];
 
-    constructor(tkey: TIRTypeKey, options: TIRTypeKey[], isexportable: boolean) {
-        super(tkey, undefined, isexportable);
+    constructor(tkey: TIRTypeKey, options: TIRTypeKey[]) {
+        super(tkey, undefined);
         this.options = options;
     }
 
@@ -1327,7 +1325,7 @@ class TIRUnionType extends TIRType {
     }
     static bsqparse(jv: any): TIRUnionType {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::UnionType", "UnionType");
-        return new TIRUnionType(jv[1].tkey, jv[1].options, jv[1].isexportable);
+        return new TIRUnionType(jv[1].tkey, jv[1].options);
     }
 }
 
@@ -1335,7 +1333,7 @@ class TIREListType extends TIRType {
     readonly types: TIRTypeKey[];
 
     constructor(tkey: TIRTypeKey, types: TIRTypeKey[]) {
-        super(tkey, undefined, false);
+        super(tkey, undefined);
         this.types = types;
     }
 

@@ -1,6 +1,6 @@
 namespace TreeIR;
 
-concept Expression provides APIType {
+concept Expression {
     field sinfo: SourceInfo;
     field etype: TypeKey;
 }
@@ -360,12 +360,12 @@ CallMemberFunctionTaskExpression { }
 | CallMemberActionExpression { }
 ;
 
-entity LiteralValue provides APIType {
+entity LiteralValue {
     field exp: Expression;
     field litstr: String;
 }
 
-concept Statement provides APIType {
+concept Statement {
     field sinfo: SourceInfo;
 }
 
@@ -567,7 +567,7 @@ entity LoggerSetPrefixStatement provides Statement {
     field block: ScopedBlockStatement | UnscopedBlockStatement;
 }
 
-datatype BlockStatement provides APIType using {
+datatype BlockStatement using {
     field ops: List<Statement>;
     field isterminal: Bool;
 } of 

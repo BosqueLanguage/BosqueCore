@@ -145,7 +145,6 @@ class TypeChecker {
     private readonly m_assembly: Assembly;
     private m_buildLevel: BuildLevel;
     private m_issmtbuild: boolean;
-    private m_istestbuild: boolean;
 
     private m_file: string;
     private m_ns: string;
@@ -191,12 +190,11 @@ class TypeChecker {
 
     private m_scratchCtr = 0;
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, overflowisfailure: boolean, issmtbuild: boolean, istestbuild: boolean) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel, issmtbuild: boolean) {
         this.m_assembly = assembly;
 
         this.m_buildLevel = buildlevel;
         this.m_issmtbuild = issmtbuild;
-        this.m_istestbuild = istestbuild;
 
         this.m_file = "[No File]";
         this.m_ns = "[NOT SET]";
@@ -441,31 +439,11 @@ class TypeChecker {
 
     private getConceptsProvidedByTuple(tt: ResolvedTupleAtomType): ResolvedConceptAtomType {
         let tci: ResolvedConceptAtomTypeEntry[] = [...(this.getSpecialTupleConceptType().options[0] as ResolvedConceptAtomType).conceptTypes];
-
-        if (tt.types.every((ttype) => this.subtypeOf(ttype, this.getSpecialAPITypeConceptType()))) {
-            tci.push(...(this.getSpecialAPITypeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes);
-        }
-        else {
-            if (tt.types.every((ttype) => this.subtypeOf(ttype, this.getSpecialTestableTypeConceptType()))) {
-                tci.push(...(this.getSpecialTestableTypeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes);
-            }
-        }
-
         return ResolvedConceptAtomType.create(tci);
     }
 
     private getConceptsProvidedByRecord(rr: ResolvedRecordAtomType): ResolvedConceptAtomType {
         let tci: ResolvedConceptAtomTypeEntry[] = [...(this.getSpecialSomeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes];
-        
-        if (rr.entries.every((entry) => this.subtypeOf(entry.ptype, this.getSpecialAPITypeConceptType()))) {
-            tci.push(...(this.getSpecialAPITypeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes);
-        }
-        else {
-            if (rr.entries.every((entry) => this.subtypeOf(entry.ptype, this.getSpecialTestableTypeConceptType()))) {
-                tci.push(...(this.getSpecialTestableTypeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes);
-            } 
-        }
-
         return ResolvedConceptAtomType.create(tci);
     }
 
@@ -2051,14 +2029,6 @@ class TypeChecker {
         return { strof: chkvalid, pthof: chkpath };
     }
 
-    private isExportable(rtype: ResolvedAtomType): boolean {
-        if(ResolvedType.isUniversalConceptType(rtype)) {
-            return false;
-        }
-
-        return this.subtypeOf(ResolvedType.createSingle(rtype), this.m_istestbuild ? this.getSpecialTestableTypeConceptType() : this.getSpecialAPITypeConceptType());
-    }
-
     private toTIRTypeKey_Atom(rtype: ResolvedAtomType): TIRTypeKey {
         if(this.m_tirTypeMap.has(rtype.typeID)) {
             return (this.m_tirTypeMap.get(rtype.typeID) as TIRType).tkey;
@@ -2070,7 +2040,6 @@ class TypeChecker {
         this.m_toTIRprocessingstack.push(rtype);
 
         let tirtype: TIRType | undefined =  undefined;
-        const isexportable = this.isExportable(rtype);
         if(rtype instanceof ResolvedObjectEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, rtype.object.terms.map((term) => this.toTIRTypeKey(rtype.binds.get(term.name) as ResolvedType)));
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createBaseBindScope(rtype.binds)).map((rr) => this.toTIRTypeKey(rr));
@@ -2078,7 +2047,7 @@ class TypeChecker {
             const binds = new Map<string, TIRTypeKey>();
             rtype.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
-            tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, binds, isexportable);
+            tirtype = new TIRObjectEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, binds);
             this.m_pendingEntityDecls.push({tirtype: tirtype as TIRObjectEntityType, rtype: rtype, tdecl: rtype.object, binds: rtype.getBinds()});
             this.m_instantiatedVTableTypes.push(rtype);
         }
@@ -2105,7 +2074,7 @@ class TypeChecker {
 
             const iskeytype = this.subtypeOf(ResolvedType.createSingle(ResolvedType.createSingle(rtype.representation)), this.getSpecialKeyTypeConceptType());
 
-            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof, iskeytype, isexportable);
+            tirtype = new TIRTypedeclEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, valuetype, representation, strof, pthof, iskeytype);
             this.m_pendingTypedeclDecls.push({tirtype: tirtype as TIRTypedeclEntityType, rtype: rtype, tdecl: rtype.object, binds: rtype.getBinds()});
         }
         else if(rtype instanceof ResolvedPrimitiveInternalEntityAtomType) {
@@ -2178,7 +2147,7 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIROkEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee, isexportable);
+            tirtype = new TIROkEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedErrEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeT);
@@ -2186,14 +2155,14 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("T", rtype.typeT, "E", rtype.typeE)).map((rr) => this.toTIRTypeKey(rr));
 
-            tirtype = new TIRErrEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee, isexportable);
+            tirtype = new TIRErrEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedSomethingEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRSomethingEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
+            tirtype = new TIRSomethingEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedMapEntryEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeK);
@@ -2201,7 +2170,7 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet, typee]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRMapEntryEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee, isexportable);
+            tirtype = new TIRMapEntryEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, typee);
         }
         else if(rtype instanceof ResolvedHavocEntityAtomType) {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, undefined);
@@ -2212,28 +2181,28 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRListEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
+            tirtype = new TIRListEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedStackEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRStackEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
+            tirtype = new TIRStackEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedQueueEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRQueueEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
+            tirtype = new TIRQueueEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedSetEntityAtomType) {
             const typet = this.toTIRTypeKey(rtype.typeT);
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typet]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createSingleBindScope("T", rtype.typeT)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRSetEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet, isexportable);
+            tirtype = new TIRSetEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typet);
         }
         else if(rtype instanceof ResolvedMapEntityAtomType) {
             const typek = this.toTIRTypeKey(rtype.typeK);
@@ -2241,7 +2210,7 @@ class TypeChecker {
             const tname = new TIRTypeName(rtype.object.ns, rtype.object.name, [typek, typev]);
             const supertypes = this.resolveProvides(rtype.object, TemplateBindScope.createDoubleBindScope("K", rtype.typeK, "V", rtype.typeV)).map((rr) => this.toTIRTypeKey(rr));
             
-            tirtype = new TIRMapEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typek, typev, isexportable);
+            tirtype = new TIRMapEntityType(rtype.typeID, tname, rtype.object.sourceLocation, rtype.object.srcFile, rtype.object.attributes, supertypes, typek, typev);
         }
         else if(rtype instanceof ResolvedConceptAtomType) {
             if(rtype.conceptTypes.length === 1) {
@@ -2252,7 +2221,7 @@ class TypeChecker {
                 const binds = new Map<string, TIRTypeKey>();
                 rconcept.binds.forEach((rt, tt) => binds.set(tt, this.toTIRTypeKey(rt)));
 
-                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, supertypes, binds, isexportable);
+                tirtype = new TIRConceptType(rconcept.typeID, tname, rconcept.concept.sourceLocation, rconcept.concept.srcFile, rconcept.concept.attributes, supertypes, binds);
                 this.m_pendingConceptDecls.push({tirtype: tirtype as TIRConceptType, rtype: rtype.conceptTypes[0], tdecl: rtype.conceptTypes[0].concept, binds: rtype.conceptTypes[0].binds});
             }
             else {
@@ -2260,7 +2229,7 @@ class TypeChecker {
                     return this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])));
                 });
 
-                tirtype = new TIRConceptSetType(rtype.typeID, tirconjuncts, isexportable);
+                tirtype = new TIRConceptSetType(rtype.typeID, tirconjuncts);
             }
         }
         else if(rtype instanceof ResolvedTaskAtomType) {
@@ -2289,13 +2258,13 @@ class TypeChecker {
         }
         else if(rtype instanceof ResolvedTupleAtomType) {
             const supertypes = this.getConceptsProvidedByTuple(rtype).conceptTypes.map((cc) => this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cc]))));
-            tirtype = new TIRTupleType(rtype.typeID, rtype.types.map((tt) => this.toTIRTypeKey(tt)), supertypes, isexportable);
+            tirtype = new TIRTupleType(rtype.typeID, rtype.types.map((tt) => this.toTIRTypeKey(tt)), supertypes);
         }
         else if(rtype instanceof ResolvedRecordAtomType) {
             const supertypes = this.getConceptsProvidedByRecord(rtype).conceptTypes.map((cc) => this.toTIRTypeKey(ResolvedType.createSingle(ResolvedConceptAtomType.create([cc]))));
             tirtype = new TIRRecordType(rtype.typeID, rtype.entries.map((entrey) => {
                 return {pname: entrey.pname, ptype: this.toTIRTypeKey(entrey.ptype)};
-            }), supertypes, isexportable);
+            }), supertypes);
         }
         else {
             assert(false, `Unknown type to convert ${rtype.typeID}`);
@@ -2387,8 +2356,7 @@ class TypeChecker {
         }
         else {
             const opts = rtype.options.map((opt) => this.toTIRTypeKey_Atom(opt));
-            const isexportable = rtype.options.every((opt) => this.isExportable(opt));
-            const tt = new TIRUnionType(rtype.typeID, opts, isexportable);
+            const tt = new TIRUnionType(rtype.typeID, opts);
             
             this.m_tirTypeMap.set(rtype.typeID, tt);
             return tt.tkey;
@@ -2493,8 +2461,6 @@ class TypeChecker {
     getSpecialValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("Validator"); }
     getSpecialPathValidatorConceptType(): ResolvedType { return this.internSpecialConceptType("PathValidator"); }
 
-    getSpecialTestableTypeConceptType(): ResolvedType { return this.internSpecialConceptType("Testable"); }
-    getSpecialAPITypeConceptType(): ResolvedType { return this.internSpecialConceptType("APIType"); }
     getSpecialTupleConceptType(): ResolvedType { return this.internSpecialConceptType("Tuple"); }
     getSpecialRecordConceptType(): ResolvedType { return this.internSpecialConceptType("Record"); }
 
@@ -6569,10 +6535,10 @@ class TypeChecker {
             this.m_tirFieldMap.set(fkey, tirmf);
         });
 
-        //if this is an exportable concept then we need to also process all of the subtypes!!!
-        if(this.isExportable(rtype) && tdecl.terms.length === 0) {
+        //if this is a non-universal and non-template concept then we need to also process all of the subtypes!!!
+        if(!ResolvedType.isUniversalConceptType(rtype)) {
             const estl = this.m_assembly.getAllEntities()
-            .map((ee) => this.createResolvedTypeForEntityDeclExportable(rtype, ee, rtype.conceptTypes[0].binds))
+            .map((ee) => this.createResolvedTypeForEntityDeclExportable(rtype, ee, binds))
             .filter((ee) =>  ee !== undefined && this.atomSubtypeOf(ee, rtype)) as ResolvedEntityAtomType[];
             
             estl.forEach((est) => {
@@ -7605,8 +7571,6 @@ class TypeChecker {
         this.toTIRTypeKey(this.getSpecialValidatorConceptType());
         this.toTIRTypeKey(this.getSpecialPathValidatorConceptType());
 
-        this.toTIRTypeKey(this.getSpecialTestableTypeConceptType());
-        this.toTIRTypeKey(this.getSpecialAPITypeConceptType());
         this.toTIRTypeKey(this.getSpecialTupleConceptType());
         this.toTIRTypeKey(this.getSpecialRecordConceptType());
 
@@ -7627,8 +7591,8 @@ class TypeChecker {
         }
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, istestbuild: boolean, isoverflowfailure: boolean, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[] } {
-        let tchecker = new TypeChecker(asm, buildlevel, isoverflowfailure, issmtbuild, istestbuild);
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[] } {
+        let tchecker = new TypeChecker(asm, buildlevel, issmtbuild);
 
         //Must always have Core namespace and special types registered -- even if just as default values
         tchecker.m_tirNamespaceMap.set("Core", new TIRNamespaceDeclaration("Core"));
@@ -7761,7 +7725,7 @@ class TypeChecker {
         }
     }
 
-    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, istestbuild: boolean, isoverflowfailure: boolean, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
+    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
         ////////////////
         //Parse the contents and generate the assembly
         const assembly = new Assembly();
@@ -7846,7 +7810,7 @@ class TypeChecker {
         //TODO: compute hash of sources here -- maybe bundle for debugging or something too?
         //
 
-        return TypeChecker.processAssembly(assembly, buildLevel, istestbuild, isoverflowfailure, issmtbuild, entrypoints);
+        return TypeChecker.processAssembly(assembly, buildLevel, issmtbuild, entrypoints);
     }
 }
 

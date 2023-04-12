@@ -1,6 +1,6 @@
 namespace TreeIR;
 
-entity BSQRegex provides APIType {
+entity BSQRegex {
     field regexstr: String;
     field re: RegexComponent;
 
@@ -9,7 +9,7 @@ entity BSQRegex provides APIType {
     }
 }
 
-datatype RegexComponent provides APIType
+datatype RegexComponent
 of
 RegexLiteral {
     restr: String,
