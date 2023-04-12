@@ -1,5 +1,6 @@
 "use strict";
 
+const TOKEN_NULL = "null";
 const TOKEN_NONE = "none";
 const TOKEN_NOTHING = "nothing";
 const TOKEN_TYPE = "type";
@@ -9,9 +10,12 @@ const TOKEN_LBRACE = "{";
 const TOKEN_RBRACE = "}";
 const TOKEN_LBRACKET = "[";
 const TOKEN_RBRACKET = "]";
+const TOKEN_LPAREN = "(";
+const TOKEN_RPAREN = ")";
 const TOKEN_COLON = ":";
 const TOKEN_COMMA = ",";
 const TOKEN_EQUALS = "=";
+const TOKEN_LET = "let";
 
 const TOKEN_SRC = "$SRC";
 const TOKEN_REFERENCE = "#REF";
@@ -56,6 +60,11 @@ function createToken(type, value, extra) {
     };
 }
 
+function BSQONParseError(msg, pos) {
+    this.msg = msg;
+    this.pos = pos;
+}
+
 const _s_whitespaceRe = /\s+/y;
 const _s_commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/uy;
 
@@ -80,6 +89,34 @@ const _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
 const _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
 const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
+
+const _s_symbolRe = /[\W]+/y;
+const _s_nameSrcRe = /[$]src/y;
+const _s_nameRefRe = /[#]\w+/y;
+const _s_nameTypeRe = /([A-Z]([a-zA-Z0-9_]|::)*)/y;
+const _s_nameTypeReChk = /^([A-Z]([a-zA-Z0-9_]|::)*)$/;
+
+const _s_dotNameAccessRe = /[.][a-z_][a-zA-Z0-9_]*/y;
+const _s_dotIdxAccessRe = /[.][0-9]+/y;
+
+const SymbolStrings = [
+    TOKEN_NULL,
+    TOKEN_NONE,
+    TOKEN_NOTHING,
+    TOKEN_TYPE,
+    TOKEN_UNDER,
+
+    TOKEN_LBRACE,
+    TOKEN_RBRACE,
+    TOKEN_LBRACKET,
+    TOKEN_RBRACKET,
+    TOKEN_LPAREN,
+    TOKEN_RPAREN,
+    TOKEN_COLON,
+    TOKEN_COMMA,
+    TOKEN_EQUALS,
+    TOKEN_LET
+];
 
 function BSQON(str, asjson) {
     this.m_json = asjson || false;
@@ -198,7 +235,7 @@ BSQON.prototype.lexNumber = function () {
 
     return false;
 }
-BSQON.prototype.tryLexString = function () {
+BSQON.prototype.lexString = function () {
     _s_stringRe.lastIndex = this.m_cpos;
     const ms = _s_stringRe.exec(this.m_input);
     if (ms !== null) {
@@ -235,27 +272,160 @@ BSQON.prototype.tryLexString = function () {
 
     return false;
 }
+BSQON.prototype.lexRegex = function () {
+    _s_regexRe.lastIndex = this.m_cpos;
+    const ms = _s_regexRe.exec(this.m_input);
+    if (ms !== null) {
+        this.m_cpos += ms[0].length;
+        this.m_lastToken = createToken(TOKEN_REGEX, ms[0]);
+        return true;
+    }
+
+    return false;
+}
+BSQON.prototype.lexSymbol = function () {
+    _s_symbolRe.lastIndex = this.m_cpos;
+    const ms = _s_symbolRe.exec(this.m_input);
+    if (ms !== null) {
+        const sym = SymbolStrings.find((value) => ms[0].startsWith(value));
+        if (sym !== undefined) {
+            this.m_cpos += sym.length;
+            this.m_lastToken = createToken(TOKEN_SYMBOL, sym);
+            return true;
+        }
+    }
+
+    return false;
+}
+BSQON.prototype.lexName = function() {
+    _s_nameSrcRe.lastIndex = this.m_cpos;
+    const msrc = _s_nameSrcRe.exec(this.m_input);
+    if(msrc !== null) {
+        this.m_cpos += msrc[0].length;
+        this.m_lastToken = createToken(TOKEN_SRC, msrc[0]);
+        return true;
+    }
+
+    _s_nameRefRe.lastIndex = this.m_cpos;
+    const mref = _s_nameRefRe.exec(this.m_input);
+    if(mref !== null) {
+        this.m_cpos += mref[0].length;
+        this.m_lastToken = createToken(TOKEN_REFERENCE, mref[0]);
+        return true;
+    }
+
+    _s_nameTypeRe.lastIndex = this.m_cpos;
+    const mtype = _s_nameTypeRe.exec(this.m_input);
+    if(mtype !== null) {
+        this.m_cpos += mtype[0].length;
+        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0]);
+        return true;
+    }
+
+    return false;
+}
+BSQON.prototype.lexAccess = function() {
+    _s_dotNameAccessRe.lastIndex = this.m_cpos;
+    const dotname = _s_dotNameAccessRe.exec(this.m_input);
+    if(doname !== null) {
+        this.m_cpos += dotname[0].length;
+        this.m_lastToken = createToken(TOKEN_DOTNAME, dotname[0].slice(1));
+        return true;
+    }
+
+    _s_dotIdxAccessRe.lastIndex = this.m_cpos;
+    const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
+    if(dotidx !== null) {
+        this.m_cpos += dotidx[0].length;
+        this.m_lastToken = createToken(TOKEN_DOTIDX, dotidx[0].slice(1));
+        return true;
+    }
+
+    return false;
+}
 BSQON.prototype.peekToken = function () {
+    if(this.m_lastToken !== undefined) {
+        return this.m_lastToken;
+    }
+
     while(this.lexWS() || this.lexComment()) {
         ; //eat the token
     }
     
-    if (this.tryLexNumber() || this.tryLexString() || this.tryLexRegex() || this.tryLexSymbol() || this.tryLexName()) {
+    if (this.lexNumber() || this.lexString() || this.lexRegex() || this.lexSymbol() || this.lexName() || this.lexAccess()) {
         return this.m_lastToken;
     }
     else {
         return undefined;
     }
 }
-
+BSQON.prototype.popToken = function () {
+    while(this.lexWS() || this.lexComment()) {
+        ; //eat the token
+    }
+    
+    if (this.lexNumber() || this.lexString() || this.lexRegex() || this.lexSymbol() || this.lexName() || this.lexAccess()) {
+        return this.m_lastToken;
+    }
+    else {
+        return undefined;
+    }
+}
+BSQON.prototype.testToken = function (tkind) {
+    return this.peekToken() !== undefined && this.peekToken().type === tkind;
+}
+BSQON.prototype.raiseError = function (msg) {
+    throw new BSQONParseError(msg, this.m_cpos);
+}
+BSQON.prototype.raiseErrorIf = function (cond, msg) {
+    if (cond) {
+        this.raiseError(msg);
+    }
+}
+BSQON.prototype.expectToken = function (tkind) {
+    this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()}`);
+}
+BSQON.prototype.expectTokenAndPop = function (tkind) {
+    this.expectToken(tkind);
+    return this.popToken();
+}
+BSQON.prototype.parseNone = function () {
+    if(!this.m_json) {
+        this.expectTokenAndPop(TOKEN_NONE);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_NULL);
+    }
+    return null;
+}
+BSQON.prototype.parseNothing = function () {
+    if(!this.m_json) {
+        this.expectTokenAndPop(TOKEN_NOTHING);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_NULL);
+    }
+    return null;
+}
+BSQON.prototype.parseType = function () {
+    if(!this.m_json) {
+        const tt = this.expectTokenAndPop(TOKEN_TYPE);
+        return tt.value;
+    }
+    else {
+        const tt = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
+        this.raiseErrorIf(!_s_nameTypeReChk.test(tt), `Expected type: but got ${tt}`);
+        return tt;
+    }
+}
 export {
     TOKEN_NONE, TOKEN_NOTHING, TOKEN_TYPE, TOKEN_UNDER,
-    TOKEN_LBRACE, TOKEN_RBRACE, TOKEN_LBRACKET, TOKEN_RBRACKET, TOKEN_COLON, TOKEN_COMMA, TOKEN_EQUALS,
+    TOKEN_LBRACE, TOKEN_RBRACE, TOKEN_LBRACKET, TOKEN_RBRACKET, TOKEN_LPAREN, TOKEN_RPAREN, TOKEN_COLON, TOKEN_COMMA, TOKEN_EQUALS, TOKEN_LET,
     TOKEN_SRC, TOKEN_REFERENCE, TOKEN_NAME, TOKEN_IDX,
     TOKEN_TRUE, TOKEN_FALSE, TOKEN_NAT, TOKEN_INT, TOKEN_BIG_NAT, TOKEN_BIG_INT, TOKEN_FLOAT, TOKEN_DECIMAL, TOKEN_RATIONAL,
     TOKEN_STRING, TOKEN_ASCII_STRING, TOKEN_STRING_OF, TOKEN_ASCII_STRING_OF, TOKEN_BYTE_BUFFER, TOKEN_REGEX,
     TOKEN_DATE_TIME, TOKEN_UTC_DATE_TIME, TOKEN_PLAIN_DATE, TOKEN_PLAIN_TIME, TOKEN_TICK_TIME, TOKEN_LOGICAL_TIME, TOKEN_ISO_TIME_STAMP,
     TOKEN_UUID_V4, TOKEN_UUID_V7, TOKEN_SHA_CONTENT_HASH, TOKEN_LAT_LONG_COORDINATE,
     TOKEN_PATH, TOKEN_PATH_FRAGMENT, TOKEN_PATH_GLOB,
-    BSQON,
+    BSQON, BSQONParseError
 }
