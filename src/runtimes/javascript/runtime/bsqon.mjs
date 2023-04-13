@@ -1,5 +1,8 @@
 "use strict";
 
+import {Decimal} from "decimal.js";
+import Fraction from "fraction.js";
+
 import * as $Limits from "./limits.mjs";
 
 const TOKEN_NULL = "null";
@@ -85,6 +88,11 @@ const _s_nameTypeRe = /([A-Z]([a-zA-Z0-9_]|::)*)/y;
 
 const _s_intCheckRe = /^0|-?[1-9][0-9]*$/;
 const _s_natCheckRe = /^0|[1-9][0-9]*$/;
+const _s_floatCheckRe = /^([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?$/;
+const _s_rationalCheckRe = /^((0|-?[1-9][0-9]*)|(0|-?[1-9][0-9]*)\/([1-9][0-9]*))$/;
+
+const _s_asciiStringCheckRe = /^\"[.]*\"$/;
+
 const _s_nameTypeReChk = /^([A-Z]([a-zA-Z0-9_]|::)*)$/;
 
 const _s_dotNameAccessRe = /[.][a-z_][a-zA-Z0-9_]*/y;
@@ -449,16 +457,121 @@ BSQON.prototype.parseNat = function () {
         tkval = this.expectTokenAndPop(TOKEN_NAT).value.slice(0, -1);
     }
     else {
-        tk = this.popToken();
-        this.raiseErrorIf(tk.type !== TOKEN_NUMBER && tk.type !== TOKEN_STRING, `Expected number but got ${tk}`);
-
-        this.raiseErrorIf(tk.type === TOKEN_STRING && !_s_natCheckRe.test(tk.value.slice(1, -1)), `Expected number but got ${tk}`);
-        tkval = (tk.type === TOKEN_STRING) ? tk.value.slice(1, -1) : tk.value;
+        tkval = this.expectTokenAndPop(TOKEN_INT).value;
     }
 
-    const bv = BigInt(tkval);
-    this.raiseErrorIf(bv < 0n, `Expected non-negative number but got ${tkval}`);
-    this.raiseErrorIf(bv < 0n, `Nat value is larger than  ${tkval}`);
+    const bv = Number.parseInt(tkval);
+    this.raiseErrorIf(Number.isNaN(bv) || !Number.isFinite(bv), `Expected finite Nat number but got -- ${tkval}`);
+    this.raiseErrorIf(bv < 0, `Nat value is negative -- ${tkval}`);
+    this.raiseErrorIf(bv > $Limits.FIXED_NUMBER_MAX, `Nat value is larger than max value -- ${tkval}`);
+
+    return bv;
+}
+BSQON.prototype.parseInt = function () {
+    let tkval = undefined;
+    if(!this.isJSONMode()) {
+        tkval = this.expectTokenAndPop(TOKEN_INT).value.slice(0, -1);
+    }
+    else {
+        tkval = this.expectTokenAndPop(TOKEN_INT).value;
+    }
+
+    const bv = Number.parseInt(tkval);
+    this.raiseErrorIf(Number.isNaN(bv) || !Number.isFinite(bv), `Expected finite Int number but got -- ${tkval}`);
+    this.raiseErrorIf(bv < $Limits.FIXED_NUMBER_MIN, `Int value is smaller than min value -- ${tkval}`);
+    this.raiseErrorIf(bv > $Limits.FIXED_NUMBER_MAX, `Int value is larger than max value -- ${tkval}`);
+    
+    return bv;
+}
+BSQON.prototype.parseBigNat = function () {
+    let tkval = undefined;
+    if(!this.isJSONMode()) {
+        tkval = this.expectTokenAndPop(TOKEN_BIGNAT).value.slice(0, -1);
+    }
+    else {
+        const tk = this.popToken();
+        this.raiseErrorIf(tk.type !== TOKEN_INT && tk.type !== TOKEN_STRING, `Expected BigInt but got ${tk}`);
+
+        if(tk.type === TOKEN_INT) {
+            tkval = tk.value;
+        }
+        else {
+            tkval = tk.value.slice(1, -1);
+            this.raiseErrorIf(!_s_natCheckRe.test(tkval), `Expected BigInt: but got ${tkval}`);
+        }
+    }
+
+    return BigInt(tkval);
+}
+BSQON.prototype.parseBigInt = function () {
+    let tkval = undefined;
+    if(!this.isJSONMode()) {
+        tkval = this.expectTokenAndPop(TOKEN_BIGNAT).value.slice(0, -1);
+    }
+    else {
+        const tk = this.popToken();
+        this.raiseErrorIf(tk.type !== TOKEN_INT && tk.type !== TOKEN_STRING, `Expected BigInt but got ${tk}`);
+
+        if(tk.type === TOKEN_INT) {
+            tkval = tk.value;
+        }
+        else {
+            tkval = tk.value.slice(1, -1);
+            this.raiseErrorIf(!_s_intCheckRe.test(tkval), `Expected BigInt: but got ${tkval}`);
+        }
+    }
+
+    return BigInt(tkval);
+}
+BSQON.prototype.parseRational = function () {
+    if(!this.isJSONMode()) {
+        const tkval = this.expectTokenAndPop(TOKEN_RATIONAL).value.slice(0, -1);
+        return Fraction(tkval);
+    }
+    else {
+        const tkval = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
+        this.raiseErrorIf(!_s_rationalCheckRe.test(tkval), `Expected float but got ${tkval}`);
+
+        return Fraction(tkval);
+    }
+}
+BSQON.prototype.parseFloat = function () {
+    if(!this.isJSONMode()) {
+        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value.slice(0, -1);
+        return parseFloat(tkval);
+    }
+    else {
+        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
+        this.raiseErrorIf(!_s_floatCheckRe.test(tkval), `Expected float but got ${tkval}`);
+
+        return parseFloat(tkval);
+    }
+}
+BSQON.prototype.parseDecimal = function () {
+    if(!this.isJSONMode()) {
+        const tkval = this.expectTokenAndPop(TOKEN_DECIMAL).value.slice(0, -1);
+        return Decimal(tkval);
+    }
+    else {
+        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
+        this.raiseErrorIf(!_s_floatCheckRe.test(tkval), `Expected float but got ${tkval}`);
+
+        return Decimal(tkval);
+    }
+}
+BSQON.prototype.parseString = function () {
+    return this.expectTokenAndPop(TOKEN_STRING).value;
+}
+BSQON.prototype.parseAsciiString = function () {
+    if(!this.isJSONMode()) {
+        return this.expectTokenAndPop(TOKEN_ASCII_STRING).value.slice(6, -1);
+    }
+    else {
+        const ts = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_asciiStringCheckRe.test(ts), `Expected ASCII string but got ${ts}`);
+
+        return ts;
+    }
 }
 
 export {
