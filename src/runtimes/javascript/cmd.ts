@@ -8,10 +8,12 @@ import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
+const limit_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/limits.mjs");
 const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
 const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
 const api_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/api.mjs");
 
+const limit_code = FS.readFileSync(limit_path).toString();
 const core_code = FS.readFileSync(core_path).toString();
 const runtime_code = FS.readFileSync(runtime_path).toString();
 const api_code = FS.readFileSync(api_path).toString();
@@ -85,19 +87,19 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
     return [tasm as TIRAssembly, depsmap];
 }
 
-function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
+function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, limitscode: string, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
     const jsemittier = new AssemblyEmitter(tasm, depsmap);
-    return jsemittier.generateJSCode(corecode, runtimecode, apicode)
+    return jsemittier.generateJSCode(limitscode, corecode, runtimecode, apicode)
 }
 
 
-function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, limitscode: string, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
         const [tasm, deps] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting JS code...\n");
-        const jscode = generateJSFiles(tasm, deps, corecode, runtimecode, apicode);
+        const jscode = generateJSFiles(tasm, deps, limitscode, corecode, runtimecode, apicode);
         
         process.stdout.write(`writing JS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
@@ -183,7 +185,7 @@ function buildJSDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", [{ns: mainNamespace, fname: mainFunction}]);
+    workflowEmitToDir(into, userpackage, limit_code, core_code, runtime_code, api_code, "test", [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
 }

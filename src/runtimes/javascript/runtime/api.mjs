@@ -1,6 +1,7 @@
 "use strict";
 
 import * as assert from "assert";
+import * as $Limits from "./limits.mjs";
 import * as $CoreLibs from "./corelibs.mjs";
 import * as $Runtime from "./runtime.mjs";
 //--GENERATED_$usermodules--
@@ -10,8 +11,8 @@ import * as $Runtime from "./runtime.mjs";
 const ioMarshalMap = new Map();
 ioMarshalMap.set("None", {parse: (jv) => jv !== null ? $Runtime.raiseRuntimeError(`expected None got ${jv}`) : null, emit: (nv) => null});
 ioMarshalMap.set("Bool", {parse: (jv) => (jv === true || jv === false) ? jv : $Runtime.raiseRuntimeError(`expected Bool got ${jv}`), emit: (nv) => nv});
-ioMarshalMap.set("Nat", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected Nat got ${jv}`), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
-ioMarshalMap.set("Int", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected Int got ${jv}`), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("Nat", {parse: (jv) => (typeof(jv) === "number") ? jv : $Runtime.raiseRuntimeError(`expected Nat got ${jv}`), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
+ioMarshalMap.set("Int", {parse: (jv) => (typeof(jv) === "number") ? jv : $Runtime.raiseRuntimeError(`expected Int got ${jv}`), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("BigNat", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected BigNat got ${jv}`), emit: (nv) => nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("BigInt", {parse: (jv) => (typeof(jv) === "number" || typeof(jv) === "string") ? BigInt(jv) : $Runtime.raiseRuntimeError(`expected BigInt got ${jv}`), emit: (nv) => Number.MIN_SAFE_INTEGER <= nv && nv <= Number.MAX_SAFE_INTEGER ? Number(nv) : `"${nv.toString()}"`});
 ioMarshalMap.set("Float", {parse: (jv) => jv, emit: (nv) => nv});

@@ -505,7 +505,7 @@ class NamespaceEmitter {
             });
         });
 
-        const stdimps = [`import * as $CoreLibs from "./corelibs.mjs";`, `import * as $Runtime from "./runtime.mjs";`];
+        const stdimps = [`import * as $Limits from "./limits.mjs";`, `import * as $CoreLibs from "./corelibs.mjs";`, `import * as $Runtime from "./runtime.mjs";`];
         const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}.mjs";`).join("\n") + "\n";
 
         const fmts = formats.join("\n");
@@ -596,7 +596,7 @@ class AssemblyEmitter {
 
     private emitTIREnumEntityType_ParseEmit(ttype: TIREnumEntityType): { parse: string, emit: string } {
         const enumarr = "[" + ttype.enums.map((ee) => `"${ee}"`).join(", ") + "]";
-        const parse = `{ if(typeof(jv) !== "string" || !jv.startsWith("${ttype.tkey + "::"}")) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } const ename = jv.substr("${ttype.tkey}".length + 2); const eidx = ${enumarr}.indexOf(ename); if(eidx === -1) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } return BigInt(eidx); }`;
+        const parse = `{ if(typeof(jv) !== "string" || !jv.startsWith("${ttype.tkey + "::"}")) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } const ename = jv.substr("${ttype.tkey}".length + 2); const eidx = ${enumarr}.indexOf(ename); if(eidx === -1) { $Runtime.raiseRuntimeError("Failed in enum parse " + JSON.stringify(jv)); } return eidx; }`;
         const emit = `"${ttype.tkey}::" + ${enumarr}[nv]`;
 
         return { parse: parse, emit: emit };
@@ -916,10 +916,14 @@ class AssemblyEmitter {
         });
     };
 
-    generateJSCode(corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
+    generateJSCode(limitscode: string, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
         this.processAssembly();
 
         let outmodules: {nsname: string, contents: string}[] = [
+            {
+                nsname: "limits.mjs",
+                contents: limitscode
+            },
             {   
                 nsname: "corelibs.mjs",
                 contents: corecode

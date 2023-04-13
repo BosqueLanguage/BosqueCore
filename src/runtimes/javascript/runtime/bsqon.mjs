@@ -1,5 +1,7 @@
 "use strict";
 
+import * as $Limits from "./limits.mjs";
+
 const TOKEN_NULL = "null";
 const TOKEN_NONE = "none";
 const TOKEN_NOTHING = "nothing";
@@ -33,30 +35,16 @@ const TOKEN_DECIMAL = "DECIMAL";
 const TOKEN_RATIONAL = "RATIONAL";
 const TOKEN_STRING = "STRING";
 const TOKEN_ASCII_STRING = "ASCII_STRING";
-const TOKEN_STRING_OF = "STRING_OF";
-const TOKEN_ASCII_STRING_OF = "ASCII_STRING_OF"; 
 const TOKEN_BYTE_BUFFER = "BYTE_BUFFER";
 const TOKEN_REGEX = "REGEX";
-const TOKEN_DATE_TIME = "DATE_TIME";
-const TOKEN_UTC_DATE_TIME = "UTC_DATE_TIME";
-const TOKEN_PLAIN_DATE = "PLAIN_DATE";
-const TOKEN_PLAIN_TIME = "PLAIN_TIME";
-const TOKEN_TICK_TIME = "TICK_TIME";
-const TOKEN_LOGICAL_TIME = "LOGICAL_TIME";
-const TOKEN_ISO_TIME_STAMP = "ISO_TIME_STAMP";
-const TOKEN_UUID_V4 = "UUID_V4";
-const TOKEN_UUID_V7 = "UUID_V7";
-const TOKEN_SHA_CONTENT_HASH = "SHA_CONTENT_HASH";
+const TOKEN_ISO_DATE_TIME = "DATE_TIME";
 const TOKEN_LAT_LONG_COORDINATE = "LAT_LONG_COORDINATE";
-const TOKEN_PATH = "PATH";
-const TOKEN_PATH_FRAGMENT = "PATH_FRAGMENT"; 
-const TOKEN_PATH_GLOB = "PATH_GLOB";
+const TOKEN_PATH_ITEM = "PATH";
 
-function createToken(type, value, extra) {
+function createToken(type, value) {
     return {
         type: type,
-        value: value,
-        extra: extra || undefined
+        value: value
     };
 }
 
@@ -94,6 +82,9 @@ const _s_symbolRe = /[\W]+/y;
 const _s_nameSrcRe = /[$]src/y;
 const _s_nameRefRe = /[#]\w+/y;
 const _s_nameTypeRe = /([A-Z]([a-zA-Z0-9_]|::)*)/y;
+
+const _s_intCheckRe = /^0|-?[1-9][0-9]*$/;
+const _s_natCheckRe = /^0|[1-9][0-9]*$/;
 const _s_nameTypeReChk = /^([A-Z]([a-zA-Z0-9_]|::)*)$/;
 
 const _s_dotNameAccessRe = /[.][a-z_][a-zA-Z0-9_]*/y;
@@ -118,14 +109,30 @@ const SymbolStrings = [
     TOKEN_LET
 ];
 
-function BSQON(str, asjson) {
-    this.m_json = asjson || false;
+const PARSE_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
+const PARSE_MODE_JSON = "BSQ_OBJ_NOTATION_JSON";
+const PARSE_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
+
+function BSQON(str, srcbind, mode) {
+    this.m_parsemode = mode || PARSE_MODE_DEFAULT;
 
     this.m_str = str;
     this.m_cpos = 0;
     this.m_epos = str.length;
 
     this.m_lastToken = undefined;
+
+    this.m_srcbind = srcbind;
+    this.m_refs = new Map();
+}
+BSQON.prototype.isDefaultMode = function () {
+    return this.m_parsemode === PARSE_MODE_DEFAULT;
+}
+BSQON.prototype.isJSONMode = function () {
+    return this.m_parsemode === PARSE_MODE_JSON;
+}
+BSQON.prototype.isFullMode = function () {
+    return this.m_parsemode === PARSE_MODE_FULL;
 }
 BSQON.prototype.lexWS = function () {
     _s_whitespaceRe.lastIndex = this.m_cpos;
@@ -150,7 +157,7 @@ BSQON.prototype.lexComment = function () {
     }
 }
 BSQON.prototype.lexNumber = function () {
-    if (this.m_json) {
+    if (this.isJSONMode()) {
         _s_intNumberinoRe.lastIndex = this.m_cpos;
         const inio = _s_intNumberinoRe.exec(this.m_input);
         if (inio !== null) {
@@ -244,7 +251,7 @@ BSQON.prototype.lexString = function () {
         return true;
     }
 
-    if (!this.m_json) {
+    if (!this.isJSONMode()) {
         _s_ascii_stringRe.lastIndex = this.m_cpos;
         const mas = _s_ascii_stringRe.exec(this.m_input);
         if (mas !== null) {
@@ -389,26 +396,10 @@ BSQON.prototype.expectTokenAndPop = function (tkind) {
     this.expectToken(tkind);
     return this.popToken();
 }
-BSQON.prototype.parseNone = function () {
-    if(!this.m_json) {
-        this.expectTokenAndPop(TOKEN_NONE);
-    }
-    else {
-        this.expectTokenAndPop(TOKEN_NULL);
-    }
-    return null;
-}
-BSQON.prototype.parseNothing = function () {
-    if(!this.m_json) {
-        this.expectTokenAndPop(TOKEN_NOTHING);
-    }
-    else {
-        this.expectTokenAndPop(TOKEN_NULL);
-    }
-    return null;
-}
 BSQON.prototype.parseType = function () {
-    if(!this.m_json) {
+    this.raiseErrorIf(this.isFullMode(), "Full mode does not support dealing with types yet!!!");
+
+    if(this.isDefaultMode()) {
         const tt = this.expectTokenAndPop(TOKEN_TYPE);
         return tt.value;
     }
@@ -418,14 +409,58 @@ BSQON.prototype.parseType = function () {
         return tt;
     }
 }
+BSQON.prototype.parseSrc = function () {
+    this.expectTokenAndPop(TOKEN_SRC);
+
+    this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
+    return this.m_srcbind;
+}
+BSQON.prototype.parseReference = function () {
+    const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
+
+    this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
+    return this.m_refs.get(ref);
+}
+BSQON.prototype.parseNone = function () {
+    if(!this.isJSONMode()) {
+        this.expectTokenAndPop(TOKEN_NONE);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_NULL);
+    }
+    return null;
+}
+BSQON.prototype.parseNothing = function () {
+    if(!this.isJSONMode()) {
+        this.expectTokenAndPop(TOKEN_NOTHING);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_NULL);
+    }
+    return null;
+}
+BSQON.prototype.parseBool = function () {
+    const tk = this.popToken();
+    return tk.type === TOKEN_TRUE;
+}
+BSQON.prototype.parseNat = function () {
+    let tkval = undefined;
+    if(!this.isJSONMode()) {
+        tkval = this.expectTokenAndPop(TOKEN_NAT).value.slice(0, -1);
+    }
+    else {
+        tk = this.popToken();
+        this.raiseErrorIf(tk.type !== TOKEN_NUMBER && tk.type !== TOKEN_STRING, `Expected number but got ${tk}`);
+
+        this.raiseErrorIf(tk.type === TOKEN_STRING && !_s_natCheckRe.test(tk.value.slice(1, -1)), `Expected number but got ${tk}`);
+        tkval = (tk.type === TOKEN_STRING) ? tk.value.slice(1, -1) : tk.value;
+    }
+
+    const bv = BigInt(tkval);
+    this.raiseErrorIf(bv < 0n, `Expected non-negative number but got ${tkval}`);
+    this.raiseErrorIf(bv < 0n, `Nat value is larger than  ${tkval}`);
+}
+
 export {
-    TOKEN_NONE, TOKEN_NOTHING, TOKEN_TYPE, TOKEN_UNDER,
-    TOKEN_LBRACE, TOKEN_RBRACE, TOKEN_LBRACKET, TOKEN_RBRACKET, TOKEN_LPAREN, TOKEN_RPAREN, TOKEN_COLON, TOKEN_COMMA, TOKEN_EQUALS, TOKEN_LET,
-    TOKEN_SRC, TOKEN_REFERENCE, TOKEN_NAME, TOKEN_IDX,
-    TOKEN_TRUE, TOKEN_FALSE, TOKEN_NAT, TOKEN_INT, TOKEN_BIG_NAT, TOKEN_BIG_INT, TOKEN_FLOAT, TOKEN_DECIMAL, TOKEN_RATIONAL,
-    TOKEN_STRING, TOKEN_ASCII_STRING, TOKEN_STRING_OF, TOKEN_ASCII_STRING_OF, TOKEN_BYTE_BUFFER, TOKEN_REGEX,
-    TOKEN_DATE_TIME, TOKEN_UTC_DATE_TIME, TOKEN_PLAIN_DATE, TOKEN_PLAIN_TIME, TOKEN_TICK_TIME, TOKEN_LOGICAL_TIME, TOKEN_ISO_TIME_STAMP,
-    TOKEN_UUID_V4, TOKEN_UUID_V7, TOKEN_SHA_CONTENT_HASH, TOKEN_LAT_LONG_COORDINATE,
-    TOKEN_PATH, TOKEN_PATH_FRAGMENT, TOKEN_PATH_GLOB,
     BSQON, BSQONParseError
 }

@@ -543,7 +543,7 @@ The `!` operator is used to perform a boolean _not_ operation on a boolean expre
 ```
 
 ## Prefix Negation
-In Bosque the `-` operator is used to perform a negation operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for Int is symmetric from -(2^63 - 1) to (2^63 - 1)! 
+In Bosque the `-` operator is used to perform a negation operation on a numeric expression. In contrast to most languages the `-` operator is _safe_ for all numeric types. Specifically, as the valid range for Int is symmetric from -(2^53 - 1) to (2^53 - 1)! 
 
 ```none 
 -(-1i) // 1i

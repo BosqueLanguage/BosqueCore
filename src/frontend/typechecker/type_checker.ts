@@ -36,9 +36,9 @@ function TYPECHECKER_NOT_IMPLEMENTED<T>(f: string): T {
     return TYPECHECKER_TODO<T>(f);
 }
 
-const NAT_MAX = 9223372036854775807n; //Int <-> Nat conversions are always safe (for non-negative values)
+const NAT_MAX = Number.MAX_SAFE_INTEGER; //Int <-> Nat conversions are always safe (for non-negative values)
 
-const INT_MAX = 9223372036854775807n;
+const INT_MAX = Number.MAX_SAFE_INTEGER;
 const INT_MIN = -INT_MAX; //negation is always safe
 
 class TypeError extends Error {
@@ -1526,7 +1526,7 @@ class TypeChecker {
         }
     }
 
-    private createResolvedTypeForEntityDeclExportable(rtype: ResolvedConceptAtomType, fobject: EntityTypeDecl, bbinds: Map<string, ResolvedType>): ResolvedAtomType | undefined {
+    private createResolvedTypeForEntityDeclExportable(fobject: EntityTypeDecl): ResolvedAtomType | undefined {
         let rtypeatom: ResolvedEntityAtomType | undefined = undefined;
 
         if(fobject.attributes.includes("__enum_type") 
@@ -1534,43 +1534,20 @@ class TypeChecker {
             || fobject.attributes.includes("__typedprimitive")
             || fobject.attributes.includes("__stringof_type") || fobject.attributes.includes("__asciistringof_type")
             || fobject.attributes.includes("__path_type") || fobject.attributes.includes("__pathfragment_type") || fobject.attributes.includes("__pathglob_type")
+            || fobject.attributes.includes("__ok_type") || fobject.attributes.includes("__err_type") || fobject.attributes.includes("__something_type") 
+            || fobject.attributes.includes("__havoc_type") || fobject.attributes.includes("__mapentry_type") 
+            || fobject.attributes.includes("__list_type") || fobject.attributes.includes("__stack_type") || fobject.attributes.includes("__queue_type") || fobject.attributes.includes("__set_type") || fobject.attributes.includes("__map_type")
+            || fobject.attributes.includes("__typebase")
         ) {
             rtypeatom = undefined;
         }
-        else if (fobject.attributes.includes("__ok_type")) {
-            if (rtype.isResultConcept()) {
-                assert(bbinds.has("T"), "Missing template binding");
-                rtypeatom = ResolvedOkEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
-            }
-            else {
-                rtypeatom = undefined;
-            }
-        }
-        else if (fobject.attributes.includes("__err_type")) {
-            if (rtype.isResultConcept()) {
-                assert(bbinds.has("E"), "Missing template binding");
-                rtypeatom = ResolvedErrEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType, bbinds.get("E") as ResolvedType);
-            }
-            else {
-                rtypeatom = undefined;
-            }
-        }
-        else if (fobject.attributes.includes("__something_type")) {
-            if (rtype.isOptionConcept()) {
-                assert(bbinds.has("T"), "Missing template binding");
-                rtypeatom = ResolvedSomethingEntityAtomType.create(fobject, bbinds.get("T") as ResolvedType);
-            }
-            else {
-                rtypeatom = undefined;
-            }
-        }
-        else if (fobject.attributes.includes("__mapentry_type") || fobject.attributes.includes("__havoc_type")
-            || fobject.attributes.includes("__list_type") || fobject.attributes.includes("__stack_type") || fobject.attributes.includes("__queue_type") || fobject.attributes.includes("__set_type") || fobject.attributes.includes("__map_type")
-            || fobject.attributes.includes("__typebase")) {
-            rtypeatom = undefined;
-        }
         else {
-            rtypeatom = ResolvedObjectEntityAtomType.create(fobject, bbinds);
+            if(fobject.terms.length !== 0) {
+                rtypeatom = undefined;
+            }
+            else {
+                rtypeatom = ResolvedObjectEntityAtomType.create(fobject, new Map<string, ResolvedType>());
+            }
         }
 
         return rtypeatom;
@@ -6536,9 +6513,9 @@ class TypeChecker {
         });
 
         //if this is a non-universal and non-template concept then we need to also process all of the subtypes!!!
-        if(!ResolvedType.isUniversalConceptType(rtype)) {
+        if(!ResolvedType.isUniversalConceptType(rtype) && tdecl.terms.length === 0) {
             const estl = this.m_assembly.getAllEntities()
-            .map((ee) => this.createResolvedTypeForEntityDeclExportable(rtype, ee, binds))
+            .map((ee) => this.createResolvedTypeForEntityDeclExportable(ee))
             .filter((ee) =>  ee !== undefined && this.atomSubtypeOf(ee, rtype)) as ResolvedEntityAtomType[];
             
             estl.forEach((est) => {

@@ -89,7 +89,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
         }
         case "s_list_size": {
-            return `{ return BigInt(${func.invoke.params[0].name}.size); }`;
+            return `{ return ${func.invoke.params[0].name}.size; }`;
         }
         case "s_list_get": {
             return `{ return ${func.invoke.params[0].name}.get(Number(${func.invoke.params[1].name})); }`;
@@ -109,7 +109,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_has_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.some(${pred}); }`;
         }
         case "s_list_has": {
@@ -121,13 +121,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return BigInt(${func.invoke.params[0].name}.findKey(${pred}) || -1); }`;
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1; }`;
         }
         case "s_list_find_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return BigInt(${func.invoke.params[0].name}.findKey(${pred}) || -1); }`;
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`;
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1; }`;
         }
         case "s_list_filter_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
@@ -138,7 +138,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_filter_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "BigInt($$ii)"].join(", ")})`;
+            const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.filter(${pred}); }`;
         }
         case "s_list_filter_map_fn": {
@@ -162,7 +162,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_map_idx": {
             const fcode = resolveCodePack(asm, func.invoke, "f");
             const fcodeinvk = generatePCodeInvokeName(fcode);
-            const fn = `($$vv, $$ii) => $$fcf(${["f", "$$vv", "BigInt($$ii)"].join(", ")})`;
+            const fn = `($$vv, $$ii) => $$fcf(${["f", "$$vv", "$$ii"].join(", ")})`;
 
             return `{ const $$fcf = ${fcodeinvk}; return ${func.invoke.params[0].name}.map(${fn}); }`;
         }
@@ -224,7 +224,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_list_reduce_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "f");
             const pcodeinvk = generatePCodeInvokeName(pcode);
-            const op = `($$uu, $$vv, $$ii) => $$pcf(${["f", "$$uu", "$$vv", "BigInt($$ii)"].join(", ")})`;
+            const op = `($$uu, $$vv, $$ii) => $$pcf(${["f", "$$uu", "$$vv", "$$ii"].join(", ")})`;
             return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.reduce(${op}, ${func.invoke.params[1].name}); }`;
         }
 
@@ -239,7 +239,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
         }
         case "s_map_count": {
-            return `{ return BigInt(${func.invoke.params[0].name}.size); }`;
+            return `{ return ${func.invoke.params[0].name}.size; }`;
         }
         case "s_map_has": {
             return `{ return ${func.invoke.params[0].name}.has(${func.invoke.params[1].name}); }`;

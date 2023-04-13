@@ -153,10 +153,10 @@ class BodyEmitter {
 
     private emitLiteralIntegralExpression(exp: TIRLiteralIntegralExpression): string {
         if(exp.etype === "Nat") {
-            return exp.expstr; //n suffix makes a bigint 
+            return exp.expstr.slice(0, exp.expstr.length -1); //strip n suffix
         }
         else if(exp.etype === "Int") {
-            return exp.expstr.slice(0, exp.expstr.length - 1) + "n"; //n suffix makes it a bigint
+            return exp.expstr.slice(0, exp.expstr.length - 1); //strip i suffix
         }
         else if(exp.etype === "BigNat") {
             return exp.expstr.slice(0, exp.expstr.length - 1) + "n"; //n suffix makes it a bigint
@@ -448,10 +448,10 @@ class BodyEmitter {
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");
@@ -474,10 +474,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "BigNat") {
             dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
@@ -503,10 +503,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");
@@ -521,10 +521,10 @@ class BodyEmitter {
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "BigNat") {
             dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
