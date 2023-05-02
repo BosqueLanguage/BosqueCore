@@ -27,8 +27,8 @@ ioMarshalMap.set("PlainTime", {parse: (jv) => assert(false), emit: (nv) => asser
 ioMarshalMap.set("TickTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("LogicalTime", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("ISOTimeStamp", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
-ioMarshalMap.set("UUID4", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
-ioMarshalMap.set("UUID7", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("UUIDv4", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
+ioMarshalMap.set("UUIDv7", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("SHAContentHash", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("LatLongCoordinate", {parse: (jv) => assert(false), emit: (nv) => assert(false)});
 ioMarshalMap.set("Nothing", {parse: (jv) => undefined, emit: (nv) => undefined});

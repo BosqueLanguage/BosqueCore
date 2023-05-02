@@ -394,12 +394,12 @@ __internal __typedeclable __typebase entity ISOTimeStamp provides Some, KeyType 
     }
 }
 
-//<summary>Primitive UUID4 value.</summary>
-__internal __typedeclable __typebase entity UUID4 provides Some, KeyType {
+//<summary>Primitive UUIDv4 value.</summary>
+__internal __typedeclable __typebase entity UUIDv4 provides Some, KeyType {
 }
 
-//<summary>Primitive UUID7 value.</summary>
-__internal __typedeclable __typebase entity UUID7 provides Some, KeyType {
+//<summary>Primitive UUIDv7 value.</summary>
+__internal __typedeclable __typebase entity UUIDv7 provides Some, KeyType {
 }
 
 //<summary>Primitive hash value suitable for content addressable operations or crypto secure digests.</summary>
@@ -428,7 +428,7 @@ __internal entity Regex provides Some {
 }
 
 //<summary>Primitive type for task identifiers</summary>
-typedecl TaskID = UUID4;
+typedecl TaskID = UUIDv4;
 
 //<summary>Static methods for Tuples.</summary>
 __universal concept Tuple provides Some {

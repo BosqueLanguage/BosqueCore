@@ -2423,8 +2423,8 @@ class TypeChecker {
     getSpecialTickTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("TickTime"); }
     getSpecialLogicalTimeType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LogicalTime"); }
     getSpecialISOTimeStampType(): ResolvedType { return this.internSpecialPrimitiveObjectType("ISOTimeStamp"); }
-    getSpecialUUID4Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUID4"); }
-    getSpecialUUID7Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUID7"); }
+    getSpecialUUIDv4Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUIDv4"); }
+    getSpecialUUIDv7Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUIDv7"); }
     getSpecialSHAContentHashType(): ResolvedType { return this.internSpecialPrimitiveObjectType("SHAContentHash"); }
     getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LatLongCoordinate"); }
     getSpecialRegexType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Regex"); }
@@ -7533,8 +7533,8 @@ class TypeChecker {
         this.toTIRTypeKey(this.getSpecialTickTimeType());
         this.toTIRTypeKey(this.getSpecialLogicalTimeType());
         this.toTIRTypeKey(this.getSpecialISOTimeStampType());
-        this.toTIRTypeKey(this.getSpecialUUID4Type());
-        this.toTIRTypeKey(this.getSpecialUUID7Type());
+        this.toTIRTypeKey(this.getSpecialUUIDv4Type());
+        this.toTIRTypeKey(this.getSpecialUUIDv7Type());
         this.toTIRTypeKey(this.getSpecialSHAContentHashType());
         this.toTIRTypeKey(this.getSpecialLatLongCoordinateType());
         this.toTIRTypeKey(this.getSpecialRegexType());

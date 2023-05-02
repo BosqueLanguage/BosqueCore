@@ -60,8 +60,8 @@
 (declare-const @TypeTag-TickTime @TypeTag)
 (declare-const @TypeTag-LogicalTime @TypeTag)
 (declare-const @TypeTag-ISOTimeStamp @TypeTag)
-(declare-const @TypeTag-UUID4 @TypeTag)
-(declare-const @TypeTag-UUID7 @TypeTag)
+(declare-const @TypeTag-UUIDv4 @TypeTag)
+(declare-const @TypeTag-UUIDv7 @TypeTag)
 (declare-const @TypeTag-SHAContentHash @TypeTag)
 (declare-const @TypeTag-LatLongCoordinate @TypeTag)
 (declare-const @TypeTag-Regex @TypeTag)
@@ -70,7 +70,7 @@
 
 (assert (distinct 
 @TypeTag-None @TypeTag-Nothing @TypeTag-Bool @TypeTag-Nat @TypeTag-Int @TypeTag-BigNat @TypeTag-BigInt @TypeTag-Float @TypeTag-Decimal @TypeTag-Rational @TypeTag-String @TypeTag-ASCIIString
-@TypeTag-ByteBuffer @TypeTag-DateTime @TypeTag-UTCDateTime @TypeTag-PlainDate @TypeTag-PlainTime @TypeTag-TickTime @TypeTag-LogicalTime @TypeTag-ISOTimeStamp @TypeTag-UUID4 @TypeTag-UUID7 @TypeTag-SHAContentHash @TypeTag-LatLongCoordinate @TypeTag-Regex
+@TypeTag-ByteBuffer @TypeTag-DateTime @TypeTag-UTCDateTime @TypeTag-PlainDate @TypeTag-PlainTime @TypeTag-TickTime @TypeTag-LogicalTime @TypeTag-ISOTimeStamp @TypeTag-UUIDv4 @TypeTag-UUIDv7 @TypeTag-SHAContentHash @TypeTag-LatLongCoordinate @TypeTag-Regex
 ;;--TYPE_TAG_DISTINCTS--;;
 ))
 
@@ -88,9 +88,9 @@
 (assert (@key_type_sort_order @TypeTag-PlainTime @TypeTag-TickTime))
 (assert (@key_type_sort_order @TypeTag-TickTime @TypeTag-LogicalTime))
 (assert (@key_type_sort_order @TypeTag-LogicalTime @TypeTag-ISOTimeStamp))
-(assert (@key_type_sort_order @TypeTag-ISOTimeStamp @TypeTag-UUID4))
-(assert (@key_type_sort_order @TypeTag-UUID4 @TypeTag-UUID7))
-(assert (@key_type_sort_order @TypeTag-UUID7 @TypeTag-SHAContentHash))
+(assert (@key_type_sort_order @TypeTag-ISOTimeStamp @TypeTag-UUIDv4))
+(assert (@key_type_sort_order @TypeTag-UUIDv4 @TypeTag-UUIDv7))
+(assert (@key_type_sort_order @TypeTag-UUIDv7 @TypeTag-SHAContentHash))
 ;;--KEY_TYPE_TAG_SORT--;;
 
 (define-fun @subtypeof ((x @TypeTag) (y @TypeTag)) Bool ((_ partial-order 1) x y))
@@ -298,8 +298,8 @@
     ; TickTime -> Int
     ; LogicalTime -> Int
     ; ISOTimeStamp -> @IdealDateTime 
-    ; UUID4 -> String
-    ; UUID7 -> String
+    ; UUIDv4 -> String
+    ; UUIDv7 -> String
     ; SHAContentHash -> (_ BitVec 16)
     ; LatLongCoordinate -> (@Tuple2 Float Float)
     ; Regex -> String
@@ -405,8 +405,8 @@
 (declare-fun @IdealDateTZName_UFCons_API (@HavocSequence) String)
 (declare-fun @TickTime_UFCons_API (@HavocSequence) Int)
 (declare-fun @LogicalTime_UFCons_API (@HavocSequence) Int)
-(declare-fun @UUID4_UFCons_API (@HavocSequence) String)
-(declare-fun @UUID7_UFCons_API (@HavocSequence) String)
+(declare-fun @UUIDv4_UFCons_API (@HavocSequence) String)
+(declare-fun @UUIDv7_UFCons_API (@HavocSequence) String)
 (declare-fun @SHAContentHash_UFCons_API (@HavocSequence) (_ BitVec 16))
 (declare-fun @Latitude_UFCons_API (@HavocSequence) @Float)
 (declare-fun @Longitude_UFCons_API (@HavocSequence) @Float)
@@ -579,16 +579,16 @@
     )
 )
 
-(define-fun @entrypoint_cons_UUID4 ((ctx @HavocSequence)) (@ResultO String)
-    (let ((uuv (@UUID4_UFCons_API ctx)))
+(define-fun @entrypoint_cons_UUIDv4 ((ctx @HavocSequence)) (@ResultO String)
+    (let ((uuv (@UUIDv4_UFCons_API ctx)))
     (ite @isUUIDFormat(uuv)
         (@ResultO-mk-ok uuv)
         (@ResultO-mk-err @error-validate)
     ))
 )
 
-(define-fun @entrypoint_cons_UUID7 ((ctx @HavocSequence)) (@ResultO String)
-    (let ((uuv (@UUID7_UFCons_API ctx)))
+(define-fun @entrypoint_cons_UUIDv7 ((ctx @HavocSequence)) (@ResultO String)
+    (let ((uuv (@UUIDv7_UFCons_API ctx)))
     (ite @isUUIDFormat(uuv)
         (@ResultO-mk-ok uuv)
         (@ResultO-mk-err @error-validate)

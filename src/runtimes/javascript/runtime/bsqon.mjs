@@ -41,7 +41,12 @@ const TOKEN_ASCII_STRING = "ASCII_STRING";
 const TOKEN_BYTE_BUFFER = "BYTE_BUFFER";
 const TOKEN_REGEX = "REGEX";
 const TOKEN_ISO_DATE_TIME = "DATE_TIME";
-const TOKEN_LAT_LONG_COORDINATE = "LAT_LONG_COORDINATE";
+const TOKEN_ISO_DATE = "DATE";
+const TOKEN_ISO_TIME = "TIME";
+const TOKEN_TICK_TIME = "TICK_TIME";
+const TOKEN_LOGICAL_TIME = "LOGICAL_TIME";
+const TOKEN_UUID_TIME = "UUID";
+const TOKEN_SHA_HASH = "HASH";
 const TOKEN_PATH_ITEM = "PATH";
 
 function createToken(type, value) {
@@ -58,6 +63,31 @@ function BSQONParseError(msg, pos) {
 
 const _s_whitespaceRe = /\s+/y;
 const _s_commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/uy;
+
+const _s_bytebuffRe = /0x\[[a-zA-Z0-9]*\]/uy;
+const _s_bytebuffCheckRe = /^[a-zA-Z0-9]*$/;
+
+const _s_fullTimeRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})([A-Z]+)?/y;
+const _s_dateOnlyRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})/y;
+const _s_timeOnlyRE = /([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})/y;
+
+const _s_fullTimeCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})([A-Z]+)?$/;
+const _s_dateOnlyCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
+const _s_timeOnlyCheckRE = /^([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})$/;
+
+const _s_tickTimeRE = /[0-9]+t/y;
+const _s_logicalTimeRE = /[0-9]+l/y;
+
+const _s_tickTimeCheckRE = /^[0-9]+t$/;
+const _s_logicalTimeCheckRE = /^[0-9]+l$/;
+
+const _s_uuidRE = /uuid(4|7)\{[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}\}/y;
+const _s_shahashRE = /hash\{0x[a-z0-9]{128}\}/y;
+
+const _s_uuidCheckRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/;
+const _s_shahashCheckRE = /^0x[a-z0-9]{128}$/;
+
+const _s_pathRe = /(path|fragment|glob)\{[^\}]*\}/uy;
 
 const _s_intRe = /(0|-?[1-9][0-9]*)i/y;
 const _s_natRe = /(0|[1-9][0-9]*)n/y;
@@ -164,6 +194,29 @@ BSQON.prototype.lexComment = function () {
         return true;
     }
 }
+BSQON.prototype.lexBytebuff = function () {
+    _s_bytebuffRe.lastIndex = this.m_cpos;
+    const m = _s_bytebuffRe.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_BYTE_BUFFER, m[0]);
+        return true;
+    }
+}
+BSQON.prototype.lexTimeInfo = function () {
+    xxxx;
+}
+BSQON.prototype.lexSHACode = function () {
+    xxxx;
+}
+BSQON.prototype.lexSHACode = function () {
+    xxxx;
+}
+
+
 BSQON.prototype.lexNumber = function () {
     if (this.isJSONMode()) {
         _s_intNumberinoRe.lastIndex = this.m_cpos;
@@ -573,6 +626,64 @@ BSQON.prototype.parseAsciiString = function () {
         return ts;
     }
 }
+BSQON.prototype.parseByteBuffer = function () {
+    if(!this.isJSONMode()) {
+        return this.expectTokenAndPop(TOKEN_BYTE_BUFFER).value.slice(3, -1);
+    }
+    else {
+        const tb = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_bytebuffCheckRe.test(tb), `Expected byte buffer but got ${tb}`);
+
+        return tb;
+    }
+}
+BSQON.prototype.parseDateTime = function () {
+    if(!this.isJSONMode()) {
+        xxxx;
+        return this.expectTokenAndPop(TOKEN_DATE_TIME).value;
+    }
+    else {
+        xxxx;
+    }
+}
+BSQON.prototype.parseUTCDateTime = function () {
+    xxxx;
+}
+BSQON.prototype.parsePlainDate = function () {
+    xxxx;
+}
+BSQON.prototype.parsePlainTime = function () {
+    xxxx;
+}
+BSQON.prototype.parseTickTime = function () {
+    xxxx;
+}
+BSQON.prototype.parseLogicalTime = function () {
+    xxxx;
+}
+BSQON.prototype.parseISOTimeStamp = function () {
+    xxxx;
+}
+BSQON.prototype.parseUUIDv4 = function () {
+    xxxx;
+}
+BSQON.prototype.parseUUIDv7 = function () {
+    xxxx;
+}
+BSQON.prototype.parseSHAContentHash = function () {
+    xxxx;
+}
+BSQON.prototype.parseLatLongCoordinate = function () {
+    xxxx;
+}
+
+BSQON.prototype.parseStringOf = function () {
+    xxxx;
+}
+BSQON.prototype.parseAsciiStringOf = function () {
+    xxxx;
+}
+
 
 export {
     BSQON, BSQONParseError

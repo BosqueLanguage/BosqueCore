@@ -19,8 +19,8 @@ $KeyEqualOps.set("PlainTime", (a, b) => assert(false));
 $KeyEqualOps.set("TickTime", (a, b) => assert(false));
 $KeyEqualOps.set("LogicalTime", (a, b) => assert(false));
 $KeyEqualOps.set("ISOTimeStamp", (a, b) => assert(false));
-$KeyEqualOps.set("UUID4", (a, b) => assert(false));
-$KeyEqualOps.set("UUID7", (a, b) => assert(false));
+$KeyEqualOps.set("UUIDv4", (a, b) => assert(false));
+$KeyEqualOps.set("UUIDv7", (a, b) => assert(false));
 $KeyEqualOps.set("SHAContentHash", (a, b) => assert(false));
 //--GENERATED_$KeyEqualOps--
 
@@ -38,8 +38,8 @@ $KeyLessOps.set("PlainTime", (a, b) => assert(false));
 $KeyLessOps.set("TickTime", (a, b) => assert(false));
 $KeyLessOps.set("LogicalTime", (a, b) => assert(false));
 $KeyLessOps.set("ISOTimeStamp", (a, b) => assert(false));
-$KeyLessOps.set("UUID4", (a, b) => assert(false));
-$KeyLessOps.set("UUID7", (a, b) => assert(false));
+$KeyLessOps.set("UUIDv4", (a, b) => assert(false));
+$KeyLessOps.set("UUIDv7", (a, b) => assert(false));
 $KeyLessOps.set("SHAContentHash", (a, b) => assert(false));
 //--GENERATED_$KeyLessOps--
 
