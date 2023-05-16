@@ -45,6 +45,48 @@ UnionValue.create = function(tkey, value) {
     return Object.freeze(new UnionValue(tkey, value));
 }
 
+function BSQDate(year, month, day) {
+    this.year = year;
+    this.month = month;
+    this.day = day;
+}
+BSQDate.prototype.equals = function (other) {
+    return this.year === other.year && this.month === other.month && this.day === other.day;
+}
+BSQDate.create = function(year, month, day) {
+    return Object.freeze(new BSQDate(year, month, day));
+}
+
+function BSQTime(hour, minute, second, millisecond) {
+    this.hour = hour;
+    this.minute = minute;
+    this.second = second;
+    this.millisecond = millisecond;
+}
+BSQTime.prototype.equals = function (other) {
+    return this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond;
+}
+BSQTime.create = function(hour, minute, second, millisecond) {
+    return Object.freeze(new BSQTime(hour, minute, second, millisecond));
+}
+
+function BSQDateTime(year, month, day, hour, minute, second, millisecond, tz) {
+    this.year = year;
+    this.month = month;
+    this.day = day;
+    this.hour = hour;
+    this.minute = minute;
+    this.second = second;
+    this.millisecond = millisecond;
+    this.tz = tz;
+}
+BSQDateTime.prototype.equals = function (other) {
+    return this.year === other.year && this.month === other.month && this.day === other.day && this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond && this.tz === other.tz;
+}
+BSQDateTime.create = function(year, month, day, hour, minute, second, millisecond, tz) {
+    return Object.freeze(new BSQDateTime(year, month, day, hour, minute, second, millisecond, tz));
+}
+
 const subtypeMap = new Map();
 //--GENERATED_$subtypesetup--
 

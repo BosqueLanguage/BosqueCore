@@ -4,6 +4,7 @@ import {Decimal} from "decimal.js";
 import Fraction from "fraction.js";
 
 import * as $Limits from "./limits.mjs";
+import * as $Runtime from "./runtime.mjs";
 
 const TOKEN_NULL = "null";
 const TOKEN_NONE = "none";
@@ -41,11 +42,13 @@ const TOKEN_ASCII_STRING = "ASCII_STRING";
 const TOKEN_BYTE_BUFFER = "BYTE_BUFFER";
 const TOKEN_REGEX = "REGEX";
 const TOKEN_ISO_DATE_TIME = "DATE_TIME";
+const TOKEN_ISO_UTC_DATE_TIME = "DATE_TIME_UTC";
 const TOKEN_ISO_DATE = "DATE";
 const TOKEN_ISO_TIME = "TIME";
 const TOKEN_TICK_TIME = "TICK_TIME";
 const TOKEN_LOGICAL_TIME = "LOGICAL_TIME";
-const TOKEN_UUID_TIME = "UUID";
+const TOKEN_ISO_TIMESTAMP = "ISO_TIMESTAMP";
+const TOKEN_UUID = "UUID";
 const TOKEN_SHA_HASH = "HASH";
 const TOKEN_PATH_ITEM = "PATH";
 
@@ -67,19 +70,23 @@ const _s_commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/uy;
 const _s_bytebuffRe = /0x\[[a-zA-Z0-9]*\]/uy;
 const _s_bytebuffCheckRe = /^[a-zA-Z0-9]*$/;
 
-const _s_fullTimeRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})([A-Z]+)?/y;
+const _s_fullTimeRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})(\[[a-zA-Z/ _-]+\])/y;
+const _s_fullTimeUTCRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})/y;
 const _s_dateOnlyRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})/y;
 const _s_timeOnlyRE = /([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})/y;
 
-const _s_fullTimeCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})([A-Z]+)?$/;
+const _s_fullTimeCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})(\[[a-zA-Z/ _-]+\])?$/;
+const _s_fullTimeUTCCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})$/;
 const _s_dateOnlyCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
 const _s_timeOnlyCheckRE = /^([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})$/;
 
 const _s_tickTimeRE = /[0-9]+t/y;
 const _s_logicalTimeRE = /[0-9]+l/y;
+const _s_isostampRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z/;
 
 const _s_tickTimeCheckRE = /^[0-9]+t$/;
 const _s_logicalTimeCheckRE = /^[0-9]+l$/;
+const _s_isoStampCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
 
 const _s_uuidRE = /uuid(4|7)\{[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}\}/y;
 const _s_shahashRE = /hash\{0x[a-z0-9]{128}\}/y;
@@ -151,6 +158,130 @@ const PARSE_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
 const PARSE_MODE_JSON = "BSQ_OBJ_NOTATION_JSON";
 const PARSE_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
 
+const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
+
+function _extractDateTimeYear(m) {
+    const year = Number.parseInt(m.groups.year);
+    return (1900 <= year && year <= 2200) ? year : undefined; 
+}
+
+function _extractDateTimeMonth(m) {
+    const month = Number.parseInt(m.groups.month);
+    return (0 <= month && month <= 11) ? month : undefined;
+}
+
+function _extractDateTimeDay(m) {
+    const year = Number.parseInt(m.groups.year);
+    const month = Number.parseInt(m.groups.month);
+    const day = Number.parseInt(m.groups.day);
+    
+    if(month !== 1) {
+        return (month === 3 || month === 5 || month === 8 || month === 10) ? (day <= 30) : (day <= 31);
+    }
+    else {
+        const isleapyear = !(y === 1900 || y === 2100 || year === 2200) && (year % 4 === 0);
+        return isleapyear ? (day <= 29) : (day <= 28);
+    }
+}
+
+function _extractDateTimeHour(m) {
+    const hour = Number.parseInt(m.groups.hour);
+    return (0 <= hour && hour <= 23) ? hour : undefined;
+}
+
+function _extractDateTimeMinute(m) {
+    const minute = Number.parseInt(m.groups.minute);
+    return (0 <= minute && minute <= 59) ? minute : undefined;
+}
+
+function _extractDateTimeSecond(m) {
+    const second = Number.parseInt(m.groups.second);
+    return (0 <= second && second <= 60) ? second : undefined;
+}
+
+function _extractDateTimeMillis(dstr) {
+    const millis = Number.parseInt(m.groups.millis);
+    return (0 <= millis && millis <= 999) ? millis : undefined;
+}
+
+function _extractDateTimeTZ(dstr) {
+    const tzinfo = m.groups.timezone;
+    if(tzinfo === "Z") {
+        return "UTC";
+    }
+    else {
+        return tzinfo.slice(1, -1);
+    }
+}
+
+function isValidBSQDate(dstr) {
+    if(/0-9/.test(dstr)) {
+        dstr = dstr + "Z";
+    }
+
+    const m = _s_dateTimeNamedExtractRE.exec(dstr);
+    if(m === null) {
+        return false;
+    }
+
+    const year = _extractDateTimeYear(m);
+    const month = _extractDateTimeMonth(m);
+    const day = _extractDateTimeDay(m);
+    const hour = _extractDateTimeHour(m);
+    const minute = _extractDateTimeMinute(m);
+    const second = _extractDateTimeSecond(m);
+    const millis = _extractDateTimeMillis(m);
+
+    return (year !== undefined && month !== undefined && day !== undefined && hour !== undefined && minute !== undefined && second !== undefined && millis !== undefined);
+}
+
+function generateDate(dstr) {
+    dstr = dstr + "T00:00:00.000Z";
+    if(!isValidBSQDate(dstr)) {
+        return undefined;
+    }
+
+    const m = _s_dateTimeNamedExtractRE.exec(dstr);
+    const year = _extractDateTimeYear(m);
+    const month = _extractDateTimeMonth(m);
+    const day = _extractDateTimeDay(m);
+
+    return new $Runtime.BSQDate.create(year, month, day);
+}
+
+function generateTime(dstr) {
+    dstr = "2000-01-01" + "T" + dstr + "Z";
+    if(!isValidBSQDate(dstr)) {
+        return undefined;
+    }
+
+    const m = _s_dateTimeNamedExtractRE.exec(dstr);
+    const hour = _extractDateTimeHour(m);
+    const minute = _extractDateTimeMinute(m);
+    const second = _extractDateTimeSecond(m);
+    const millis = _extractDateTimeMillis(m);
+
+    return new $Runtime.BSQTime.create(hour, minute, second, millis);
+}
+
+function generateDateTime(dstr) {
+    if(!isValidBSQDate(dstr)) {
+        return undefined;
+    }
+
+    const m = _s_dateTimeNamedExtractRE.exec(dstr);
+    const year = _extractDateTimeYear(m);
+    const month = _extractDateTimeMonth(m);
+    const day = _extractDateTimeDay(m);
+    const hour = _extractDateTimeHour(m);
+    const minute = _extractDateTimeMinute(m);
+    const second = _extractDateTimeSecond(m);
+    const millis = _extractDateTimeMillis(m);
+    const tz = _extractDateTimeTZ(m);
+
+    return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
+}
+
 function BSQON(str, srcbind, mode) {
     this.m_parsemode = mode || PARSE_MODE_DEFAULT;
 
@@ -207,16 +338,112 @@ BSQON.prototype.lexBytebuff = function () {
     }
 }
 BSQON.prototype.lexTimeInfo = function () {
-    xxxx;
+    _s_fullTimeRE.lastIndex = this.m_cpos;
+    const ftm = _s_fullTimeRE.exec(this.m_input);
+    if(ftm !== null) {
+        this.m_cpos += ftm[0].length;
+        this.m_lastToken = createToken(TOKEN_ISO_DATE_TIME, ftm[0]);
+        return true;
+    }
+
+    _s_fullTimeUTCRE.lastIndex = this.m_cpos;
+    const ftutc = _s_fullTimeUTCRE.exec(this.m_input);
+    if(ftutc !== null) {
+        this.m_cpos += ftutc[0].length;
+        this.m_lastToken = createToken(TOKEN_ISO_UTC_DATE_TIME, ftutc[0]);
+        return true;
+    }
+
+    _s_dateOnlyRE.lastIndex = this.m_cpos;
+    const dm = _s_dateOnlyRE.exec(this.m_input);
+    if(dm !== null) {
+        this.m_cpos += dm[0].length;
+        this.m_lastToken = createToken(TOKEN_ISO_DATE, dm[0]);
+        return true;
+    }
+
+    _s_timeOnlyRE.lastIndex = this.m_cpos;
+    const tm = _s_timeOnlyRE.exec(this.m_input);
+    if(tm !== null) {
+        this.m_cpos += tm[0].length;
+        this.m_lastToken = createToken(TOKEN_ISO_TIME, tm[0]);
+        return true;
+    }
+
+    return false;
+}
+BSQON.prototype.lexLogicalTime = function () {
+    _s_logicalTimeRE.lastIndex = this.m_cpos;
+    const m = _s_logicalTimeRE.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_LOGICAL_TIME, m[0]);
+        return true;
+    }
+}
+BSQON.prototype.lexTickTime = function () {
+    _s_tickTimeRE.lastIndex = this.m_cpos;
+    const m = _s_tickTimeRE.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_TICK_TIME, m[0]);
+        return true;
+    }
+}
+BSQON.prototype.lexISOTimestamp = function () {
+    _s_isostampRE.lastIndex = this.m_cpos;
+    const m = _s_isostampRE.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_ISO_TIMESTAMP, m[0]);
+        return true;
+    }
+}
+BSQON.prototype.lexUUID = function () {
+    _s_uuidRE.lastIndex = this.m_cpos;
+    const m = _s_uuidRE.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_UUID, m[0]);
+        return true;
+    }
 }
 BSQON.prototype.lexSHACode = function () {
-    xxxx;
+    _s_shahashRE.lastIndex = this.m_cpos;
+    const m = _s_shahashRE.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_SHA_HASH, m[0]);
+        return true;
+    }
 }
-BSQON.prototype.lexSHACode = function () {
-    xxxx;
+BSQON.prototype.lexPath = function () {
+    _s_pathRe.lastIndex = this.m_cpos;
+    const m = _s_pathRe.exec(this.m_input);
+    if (m === null) {
+        return false;
+    }
+    else {
+        this.m_cpos += m[0].length;
+        this.m_lastToken = createToken(TOKEN_PATH_ITEM, m[0]);
+        return true;
+    }
 }
-
-
 BSQON.prototype.lexNumber = function () {
     if (this.isJSONMode()) {
         _s_intNumberinoRe.lastIndex = this.m_cpos;
@@ -420,7 +647,10 @@ BSQON.prototype.peekToken = function () {
         ; //eat the token
     }
     
-    if (this.lexNumber() || this.lexString() || this.lexRegex() || this.lexSymbol() || this.lexName() || this.lexAccess()) {
+    if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
+        this.lexUUID() || this.lexSHACode() || this.lexPath() ||
+        this.lexNumber() || this.lexString() || this.lexRegex() || 
+        this.lexSymbol() || this.lexName() || this.lexAccess()) {
         return this.m_lastToken;
     }
     else {
@@ -432,7 +662,10 @@ BSQON.prototype.popToken = function () {
         ; //eat the token
     }
     
-    if (this.lexNumber() || this.lexString() || this.lexRegex() || this.lexSymbol() || this.lexName() || this.lexAccess()) {
+    if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
+        this.lexUUID() || this.lexSHACode() || this.lexPath() ||
+        this.lexNumber() || this.lexString() || this.lexRegex() || 
+        this.lexSymbol() || this.lexName() || this.lexAccess()) {
         return this.m_lastToken;
     }
     else {
@@ -639,30 +872,117 @@ BSQON.prototype.parseByteBuffer = function () {
 }
 BSQON.prototype.parseDateTime = function () {
     if(!this.isJSONMode()) {
-        xxxx;
-        return this.expectTokenAndPop(TOKEN_DATE_TIME).value;
+        const tk = this.expectTokenAndPop(TOKEN_ISO_DATE_TIME).value;
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
+
+        return dd;
     }
     else {
-        xxxx;
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_fullTimeCheckRE.test(tk), `Expected date+time but got ${tk}`);
+
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
+
+        return dd;
     }
 }
 BSQON.prototype.parseUTCDateTime = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_ISO_UTC_DATE_TIME).value;
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
+
+        return dd;
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_fullTimeUTCCheckRE.test(tk), `Expected UTC date+time but got ${tk}`);
+
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
+
+        return dd;
+    }
 }
 BSQON.prototype.parsePlainDate = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_ISO_DATE).value;
+        const dd = generateDate(tk);
+        this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
+
+        return dd;
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_dateOnlyCheckRE.test(tk), `Expected plain date but got ${tk}`);
+
+        const dd = generateDate(tk);
+        this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
+
+        return dd;
+    }
 }
 BSQON.prototype.parsePlainTime = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_ISO_TIME).value;
+        const dd = generateTime(tk);
+        this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
+
+        return dd;
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_timeOnlyCheckRE.test(tk), `Expected plain time but got ${tk}`);
+
+        const dd = generateTime(tk);
+        this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
+
+        return dd;
+    }
 }
 BSQON.prototype.parseTickTime = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tt = this.expectTokenAndPop(TOKEN_TICK_TIME).value;
+        return new BigInt(tt.slice(0, -1));
+    }
+    else {
+        const tt = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_tickTimeCheckRE.test(tt), `Expected tick time but got ${tt}`);
+
+        return new BigInt(tt);
+    }
 }
 BSQON.prototype.parseLogicalTime = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tt = this.expectTokenAndPop(TOKEN_LOGICAL_TIME).value;
+        return new BigInt(tt.slice(0, -1));
+    }
+    else {
+        const tt = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_logicalTimeCheckRE.test(tt), `Expected logical time but got ${tt}`);
+
+        return new BigInt(tt);
+    }
 }
 BSQON.prototype.parseISOTimeStamp = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_ISO_TIMESTAMP).value;
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
+
+        return dd;
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_isoStampCheckRE.test(tk), `Expected timestamp but got ${tk}`);
+
+        const dd = generateDateTime(tk);
+        this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
+
+        return dd;
+    }
 }
 BSQON.prototype.parseUUIDv4 = function () {
     xxxx;
