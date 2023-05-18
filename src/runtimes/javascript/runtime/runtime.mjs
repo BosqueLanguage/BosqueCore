@@ -70,6 +70,14 @@ BSQTime.create = function(hour, minute, second, millisecond) {
     return Object.freeze(new BSQTime(hour, minute, second, millisecond));
 }
 
+function BSQLatLongCoordinate(lat, long) {
+    this.lat = lat;
+    this.long = long;
+}
+BSQLatLongCoordinate.create = function(lat, long) {
+    return Object.freeze(new BSQLatLongCoordinate(lat, long));
+}
+
 function BSQDateTime(year, month, day, hour, minute, second, millisecond, tz) {
     this.year = year;
     this.month = month;

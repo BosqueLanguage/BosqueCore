@@ -18,7 +18,10 @@ const TOKEN_LBRACKET = "[";
 const TOKEN_RBRACKET = "]";
 const TOKEN_LPAREN = "(";
 const TOKEN_RPAREN = ")";
+const TOKEN_LANGLE = "<";
+const TOKEN_RANGLE = ">";
 const TOKEN_COLON = ":";
+const TOKEN_COLON_COLON = "::";
 const TOKEN_COMMA = ",";
 const TOKEN_EQUALS = "=";
 const TOKEN_LET = "let";
@@ -89,7 +92,7 @@ const _s_logicalTimeCheckRE = /^[0-9]+l$/;
 const _s_isoStampCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
 
 const _s_uuidRE = /uuid(4|7)\{[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}\}/y;
-const _s_shahashRE = /hash\{0x[a-z0-9]{128}\}/y;
+const _s_shahashRE = /sha3\{0x[a-z0-9]{128}\}/y;
 
 const _s_uuidCheckRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/;
 const _s_shahashCheckRE = /^0x[a-z0-9]{128}$/;
@@ -121,7 +124,7 @@ const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
 const _s_symbolRe = /[\W]+/y;
 const _s_nameSrcRe = /[$]src/y;
 const _s_nameRefRe = /[#]\w+/y;
-const _s_nameTypeRe = /([A-Z]([a-zA-Z0-9_]|::)*)/y;
+const _s_nameTypeRe = /[A-Z]([a-zA-Z0-9_])+/y;
 
 const _s_intCheckRe = /^0|-?[1-9][0-9]*$/;
 const _s_natCheckRe = /^0|[1-9][0-9]*$/;
@@ -129,8 +132,6 @@ const _s_floatCheckRe = /^([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?$/;
 const _s_rationalCheckRe = /^((0|-?[1-9][0-9]*)|(0|-?[1-9][0-9]*)\/([1-9][0-9]*))$/;
 
 const _s_asciiStringCheckRe = /^\"[.]*\"$/;
-
-const _s_nameTypeReChk = /^([A-Z]([a-zA-Z0-9_]|::)*)$/;
 
 const _s_dotNameAccessRe = /[.][a-z_][a-zA-Z0-9_]*/y;
 const _s_dotIdxAccessRe = /[.][0-9]+/y;
@@ -148,7 +149,11 @@ const SymbolStrings = [
     TOKEN_RBRACKET,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
+    TOKEN_LANGLE, 
+    TOKEN_RANGLE,
+
     TOKEN_COLON,
+    TOKEN_COLON_COLON,
     TOKEN_COMMA,
     TOKEN_EQUALS,
     TOKEN_LET
@@ -157,6 +162,16 @@ const SymbolStrings = [
 const PARSE_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
 const PARSE_MODE_JSON = "BSQ_OBJ_NOTATION_JSON";
 const PARSE_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
+
+const _s_core_types = [
+    "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
+    "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
+    "LatLongCoordinate", "Regex", "Nothing", "Something"
+];
+
+const _s_core_types_with_templates = [
+    "StringOf", "ASCIIStringOf", "Something", "Option", "Ok", "Error", "Result", "Path", "PathFragment", "PathGlob", "List", "Stack", "Queue", "Set", "MapEntry", "Map"
+]
 
 const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
 
@@ -282,8 +297,11 @@ function generateDateTime(dstr) {
     return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
 }
 
-function BSQON(str, srcbind, mode) {
+function BSQON(ns, aliasmap, str, srcbind, mode) {
     this.m_parsemode = mode || PARSE_MODE_DEFAULT;
+
+    this.m_ns = ns;
+    this.m_aliasmap = aliasmap;
 
     this.m_str = str;
     this.m_cpos = 0;
@@ -613,7 +631,7 @@ BSQON.prototype.lexName = function() {
     const mtype = _s_nameTypeRe.exec(this.m_input);
     if(mtype !== null) {
         this.m_cpos += mtype[0].length;
-        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0]);
+        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0].trim());
         return true;
     }
 
@@ -690,16 +708,28 @@ BSQON.prototype.expectTokenAndPop = function (tkind) {
     this.expectToken(tkind);
     return this.popToken();
 }
-BSQON.prototype.parseType = function () {
-    this.raiseErrorIf(this.isFullMode(), "Full mode does not support dealing with types yet!!!");
+BSQON.prototype.resolveType = function (tt) {
+    xxxx;
+}
+BSQON.prototype.parseType = function (expectedOpt) {
+    if(this.isFullMode()) {
+        let tt = this.expectTokenAndPop(TOKEN_TYPE).value;
+        if(!tt.startsWith())
 
-    if(this.isDefaultMode()) {
-        const tt = this.expectTokenAndPop(TOKEN_TYPE);
-        return tt.value;
+        return tt;
+    }
+    else if(this.isDefaultMode()) {
+        let tt = this.expectTokenAndPop(TOKEN_TYPE).value;
+        xxx;
+
+        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== tt, `Expected type: but got ${tt.value}`);
+        return tt;
     }
     else {
-        const tt = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
+        let tt = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
         this.raiseErrorIf(!_s_nameTypeReChk.test(tt), `Expected type: but got ${tt}`);
+
+        xxx;
         return tt;
     }
 }
@@ -985,20 +1015,78 @@ BSQON.prototype.parseISOTimeStamp = function () {
     }
 }
 BSQON.prototype.parseUUIDv4 = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_UUID).value;
+        this.raiseErrorIf(!tk.startsWith("uuid4{"), `Expected UUIDv4 but got ${tk}`);
+
+        return tk.slice(6, -1);
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv4 but got ${tk}`);
+
+        return tk;
+    }
 }
 BSQON.prototype.parseUUIDv7 = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_UUID).value;
+        this.raiseErrorIf(!tk.startsWith("uuid7{"), `Expected UUIDv7 but got ${tk}`);
+
+        return tk.slice(6, -1);
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv7 but got ${tk}`);
+
+        return tk;
+    }
 }
 BSQON.prototype.parseSHAContentHash = function () {
-    xxxx;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_SHA_HASH).value;
+        return tk.slice(5, -1);
+    }
+    else {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_shahashCheckRE.test(tk), `Expected SHA3 512 hash but got ${tk}`);
+
+        return tk;
+    }
 }
 BSQON.prototype.parseLatLongCoordinate = function () {
-    xxxx;
-}
+    if (!this.isJSONMode()) {
+        const ttype = this.expectTokenAndPop(TOKEN_TYPE).value;
+        this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
 
-BSQON.prototype.parseStringOf = function () {
-    xxxx;
+        this.expectTokenAndPop(TOKEN_LBRACE);
+        const lat = this.parseFloat();
+        this.expectTokenAndPop(TOKEN_COMMA);
+        const long = this.parseFloat();
+        this.expectTokenAndPop(TOKEN_RBRACE);
+
+        return $Runtime.BSQONLatLongCoordinate.create(lat, long);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_LBRACKET);
+        const lat = this.parseFloat();
+        this.expectTokenAndPop(TOKEN_COMMA);
+        const long = this.parseFloat();
+        this.expectTokenAndPop(TOKEN_RBRACKET);
+
+        return $Runtime.BSQONLatLongCoordinate.create(lat, long);
+    }
+}
+BSQON.prototype.parseStringOf = function (ttype) {
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
+        const vv = this.parseType
+
+        return tk.slice(7, -1);
+    }
+    else {
+
+    }
 }
 BSQON.prototype.parseAsciiStringOf = function () {
     xxxx;
