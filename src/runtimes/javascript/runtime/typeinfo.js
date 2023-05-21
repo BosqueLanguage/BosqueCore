@@ -21,80 +21,96 @@ const TYPE_SET = "Set";
 const TYPE_MAP_ENTRY = "MapEntry";
 const TYPE_MAP = "Map";
 
+const RE_VALIDATOR_DECL = "StringValidator";
+const PATH_VALIDATOR_DECL = "PathValidator";
+
+const ENTITY_DECL = "EntityDecl";
+const ENUM_DECL = "EnumDecl";
+const TYPEDECL_DECL = "TypedeclDecl";
+const CONCEPT_DECL = "ConceptDecl";
+
 function createTuple(entries) {
-    return {type: TYPE_TUPLE, ttag: entries.map((entry) => entry.ttag).join(", "), entries: entries};
+    return {tag: TYPE_TUPLE, ttag: entries.map((entry) => entry.ttag).join(", "), entries: entries};
 }
 
 function createRecord(entries) {
-    return {type: TYPE_RECORD, ttag: entries.map((entry) => entry[0] + ": " + entry[1].ttag).join(", "), entries: entries};
+    return {tag: TYPE_RECORD, ttag: entries.map((entry) => entry[0] + ": " + entry[1].ttag).join(", "), entries: entries};
 }
 
 function createSimpleNominal(name) {
-    return {type: TYPE_SIMPLE_NOMINAL, ttag: name};
+    return {tag: TYPE_SIMPLE_NOMINAL, ttag: name};
 }
 
 function createStringOf(type) {
-    return {type: TYPE_STRING_OF, ttag: `StringOf<${type.ttag}>`, oftype: type};
+    return {tag: TYPE_STRING_OF, ttag: `StringOf<${type.ttag}>`, oftype: type};
 }
 
 function createAsciiStringOf(type) {
-    return {type: TYPE_ASCII_STRING_OF, ttag: `AsciiStringOf<${type.ttag}>`, oftype: type};
+    return {tag: TYPE_ASCII_STRING_OF, ttag: `AsciiStringOf<${type.ttag}>`, oftype: type};
 }
 
 function createSomething(type) {
-    return {type: TYPE_SOMETHING, ttag: `Something<${type.ttag}>`, oftype: type};
+    return {tag: TYPE_SOMETHING, ttag: `Something<${type.ttag}>`, oftype: type};
 }
 
 function createOption(type) {
-    return {type: TYPE_OPTION, ttag: `Option<${type.ttag}>`, oftype: type};
+    return {tag: TYPE_OPTION, ttag: `Option<${type.ttag}>`, oftype: type};
 }
 
 function createOk(ttype, etype) {
-    return {type: TYPE_OK, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Ok`, ttype: type, etype: etype};
+    return {tag: TYPE_OK, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Ok`, ttype: type, etype: etype};
 }
 
 function createError(ttype, etype) {
-    return {type: TYPE_ERROR, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Error`, ttype: type, etype: etype};
+    return {tag: TYPE_ERROR, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Error`, ttype: type, etype: etype};
 }
 
 function createResult(ttype, etype) {
-    return {type: TYPE_RESULT, ttag: `Result<${ttype.ttag}, ${etype.ttag}>`, ttype: type, etype: etype};
+    return {tag: TYPE_RESULT, ttag: `Result<${ttype.ttag}, ${etype.ttag}>`, ttype: type, etype: etype};
 }
 
 function createPath(oftype) {
-    return {type: TYPE_PATH, ttag: `Path<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_PATH, ttag: `Path<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createPathFragment(oftype) {
-    return {type: TYPE_PATH_FRAGMENT, ttag: `PathFragment<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_PATH_FRAGMENT, ttag: `PathFragment<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createPathGlob(oftype) {
-    return {type: TYPE_PATH_GLOB, ttag: `PathGlob<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_PATH_GLOB, ttag: `PathGlob<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createList(oftype) {
-    return {type: TYPE_LIST, ttag: `List<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_LIST, ttag: `List<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createStack(oftype) {
-    return {type: TYPE_STACK, ttag: `Stack<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_STACK, ttag: `Stack<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createQueue(oftype) {
-    return {type: TYPE_QUEUE, ttag: `Queue<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_QUEUE, ttag: `Queue<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createSet(oftype) {
-    return {type: TYPE_SET, ttag: `Set<${oftype.ttag}>`, oftype: oftype};
+    return {tag: TYPE_SET, ttag: `Set<${oftype.ttag}>`, oftype: oftype};
 }
 
 function createMapEntry(ktype, vtype) {
-    return {type: TYPE_MAP_ENTRY, ttag: `MapEntry<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
+    return {tag: TYPE_MAP_ENTRY, ttag: `MapEntry<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
 }
 
 function createMap(ktype, vtype) {
-    return {type: TYPE_MAP, ttag: `Map<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
+    return {tag: TYPE_MAP, ttag: `Map<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
+}
+
+function createStringValidatorDecl(svtype, vre) {
+    return {tag: RE_VALIDATOR_DECL, type: svtype, vre: vre};
+}
+
+function createPathValidatorDecl(pvtype, pstr) {
+    return {tag: PATH_VALIDATOR_DECL, type: pvtype, pstr: pstr};
 }
 
 function createEntityFieldDecl(fname, ftype) {
@@ -102,9 +118,84 @@ function createEntityFieldDecl(fname, ftype) {
 }
 
 function createEntityDecl(ntype, fields) {
-    return {type: ntype, fields: fields};
+    return {tag: ENTITY_DECL, type: ntype, fields: fields};
+}
+
+function createEnumDecl(ntype, variants) {
+    return {tag: ENUM_DECL, type: ntype, variants: variants};
+}
+
+function createTypedeclDecl(ntype, oftype, basetype) {
+    return {tag: TYPEDECL_DECL, type: ntype, oftype: oftype, basetype: basetype};
 }
 
 function createConceptDecl(ntype, subtypes) {
-    return {type: ntype, subtypes: subtypes};
+    return {tag: CONCEPT_DECL, type: ntype, subtypes: subtypes};
+}
+
+function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, conceptdecls) {
+    let types = new Map();
+    typerefs.forEach((tr) => {
+        types.set(tr.ttag, tr);
+    });
+
+    let revalidators = new Map();
+    rechks.forEach((vv) => {
+        revalidators.set(vv.type.ttag, vv);
+    });
+
+    let pthvalidators = new Map();
+    pthchks.forEach((vv) => {
+        pthvalidators.set(vv.type.ttag, vv);
+    });
+
+    let simpledecls = new Map();
+    sdecls.forEach((dd) => {
+        simpledecls.set(dd.type.ttag, dd);
+    });
+
+    let enumdecls = new Map();
+    edecls.forEach((dd) => {
+        enumdecls.set(dd.type.ttag, dd);
+    });
+
+    let typedecls = new Map();
+    tdecls.forEach((dd) => {
+        typedecls.set(dd.type.ttag, dd);
+    });
+
+    let conceptdecls = new Map();
+    cdecls.forEach((dd) => {
+        conceptdecls.set(dd.type.ttag, dd);
+    });
+
+    return {
+        types: types,
+        revalidators: revalidators,
+        pthvalidators: pthvalidators,
+        simpledecls: simpledecls,
+        enumdecls: enumdecls,
+        typedecls: typedecls,
+        conceptdecls: conceptdecls
+    };
+}
+
+export {
+    TYPE_TUPLE, TYPE_RECORD, TYPE_SIMPLE_NOMINAL,
+    TYPE_STRING_OF, TYPE_ASCII_STRING_OF,
+    TYPE_SOMETHING, TYPE_OPTION,
+    TYPE_OK, TYPE_ERROR, TYPE_RESULT,
+    TYPE_PATH, TYPE_PATH_FRAGMENT, TYPE_PATH_GLOB,
+    TYPE_LIST, TYPE_STACK, TYPE_QUEUE, TYPE_SET, TYPE_MAP_ENTRY, TYPE_MAP,
+    RE_VALIDATOR_DECL, PATH_VALIDATOR_DECL,
+    ENTITY_DECL, ENUM_DECL, TYPEDECL_DECL, CONCEPT_DECL,
+    createTuple, createRecord, createSimpleNominal,
+    createStringOf, createAsciiStringOf,
+    createSomething, createOption,
+    createOk, createError, createResult,
+    createPath, createPathFragment, createPathGlob,
+    createList, createStack, createQueue, createSet, createMapEntry, createMap,
+    createStringValidatorDecl, createPathValidatorDecl, 
+    createEntityFieldDecl,
+    createEntityDecl, createEnumDecl, createTypedeclDecl, createConceptDecl
 }

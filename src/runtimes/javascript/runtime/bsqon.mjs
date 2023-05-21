@@ -5,6 +5,7 @@ import Fraction from "fraction.js";
 
 import * as $Limits from "./limits.mjs";
 import * as $Runtime from "./runtime.mjs";
+import * as $TypeInfo from "./typeinfo.js";
 
 const TOKEN_NULL = "null";
 const TOKEN_NONE = "none";
