@@ -3,9 +3,9 @@
 import {Decimal} from "decimal.js";
 import Fraction from "fraction.js";
 
-import * as $Constants from "./constants.mjs";
-import * as $TypeInfo from "./typeinfo.js";
+import * as $Limits from "./limits.mjs";
 import * as $Runtime from "./runtime.mjs";
+import * as $TypeInfo from "./typeinfo.js";
 
 const TOKEN_NULL = "null";
 const TOKEN_NONE = "none";
@@ -780,7 +780,7 @@ BSQON.prototype.parseNat = function () {
     const bv = Number.parseInt(tkval);
     this.raiseErrorIf(Number.isNaN(bv) || !Number.isFinite(bv), `Expected finite Nat number but got -- ${tkval}`);
     this.raiseErrorIf(bv < 0, `Nat value is negative -- ${tkval}`);
-    this.raiseErrorIf(bv > $Constants.FIXED_NUMBER_MAX, `Nat value is larger than max value -- ${tkval}`);
+    this.raiseErrorIf(bv > $Limits.FIXED_NUMBER_MAX, `Nat value is larger than max value -- ${tkval}`);
 
     return bv;
 }
@@ -795,8 +795,8 @@ BSQON.prototype.parseInt = function () {
 
     const bv = Number.parseInt(tkval);
     this.raiseErrorIf(Number.isNaN(bv) || !Number.isFinite(bv), `Expected finite Int number but got -- ${tkval}`);
-    this.raiseErrorIf(bv < $Constants.FIXED_NUMBER_MIN, `Int value is smaller than min value -- ${tkval}`);
-    this.raiseErrorIf(bv > $Constants.FIXED_NUMBER_MAX, `Int value is larger than max value -- ${tkval}`);
+    this.raiseErrorIf(bv < $Limits.FIXED_NUMBER_MIN, `Int value is smaller than min value -- ${tkval}`);
+    this.raiseErrorIf(bv > $Limits.FIXED_NUMBER_MAX, `Int value is larger than max value -- ${tkval}`);
     
     return bv;
 }

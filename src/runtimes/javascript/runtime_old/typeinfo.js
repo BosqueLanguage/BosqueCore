@@ -1,5 +1,6 @@
 "use strict";
 
+
 const TYPE_TUPLE = "[...]";
 const TYPE_RECORD = "{...}";
 const TYPE_SIMPLE_NOMINAL = "T{...}";
