@@ -2,7 +2,7 @@
 
 const TYPE_TUPLE = "[...]";
 const TYPE_RECORD = "{...}";
-const TYPE_SIMPLE_NOMINAL = "T{...}";
+const TYPE_SIMPLE_NOMINAL = "Type";
 const TYPE_STRING_OF = "StringOf";
 const TYPE_ASCII_STRING_OF = "AsciiStringOf";
 const TYPE_SOMETHING = "Something"; 
@@ -20,6 +20,9 @@ const TYPE_SET = "Set";
 const TYPE_MAP_ENTRY = "MapEntry";
 const TYPE_MAP = "Map";
 
+const TYPE_CONCEPT_SET = "ConceptSet";
+const TYPE_UNION = "UnionType";
+
 const RE_VALIDATOR_DECL = "StringValidator";
 const PATH_VALIDATOR_DECL = "PathValidator";
 
@@ -33,7 +36,7 @@ function createTuple(entries) {
 }
 
 function createRecord(entries) {
-    return {tag: TYPE_RECORD, ttag: entries.map((entry) => entry[0] + ": " + entry[1].ttag).join(", "), entries: entries};
+    return {tag: TYPE_RECORD, ttag: entries.keys().sort().map((kk) => kk + ": " + entries[kk].ttag).join(", "), entries: entries};
 }
 
 function createSimpleNominal(name) {
@@ -104,6 +107,14 @@ function createMap(ktype, vtype) {
     return {tag: TYPE_MAP, ttag: `Map<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
 }
 
+function createConceptSet(concepts) {
+    return {tag: TYPE_CONCEPT_SET, ttag: concepts.map((cc) => cc.ttag).sort().join(" & "), concepts: concepts};
+}
+
+function createUnion(types) {
+    return {tag: TYPE_UNION, ttag: types.map((tt) => tt.ttag).sort().join(" | "), types: types};
+}
+
 function createStringValidatorDecl(svtype, vre) {
     return {tag: RE_VALIDATOR_DECL, type: svtype, vre: vre};
 }
@@ -132,7 +143,7 @@ function createConceptDecl(ntype, subtypes) {
     return {tag: CONCEPT_DECL, type: ntype, subtypes: subtypes};
 }
 
-function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, conceptdecls) {
+function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, conceptdecls, aliasmap) {
     let types = new Map();
     typerefs.forEach((tr) => {
         types.set(tr.ttag, tr);
@@ -175,7 +186,8 @@ function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, c
         simpledecls: simpledecls,
         enumdecls: enumdecls,
         typedecls: typedecls,
-        conceptdecls: conceptdecls
+        conceptdecls: conceptdecls,
+        aliasmap: aliasmap
     };
 }
 
@@ -186,6 +198,7 @@ export {
     TYPE_OK, TYPE_ERROR, TYPE_RESULT,
     TYPE_PATH, TYPE_PATH_FRAGMENT, TYPE_PATH_GLOB,
     TYPE_LIST, TYPE_STACK, TYPE_QUEUE, TYPE_SET, TYPE_MAP_ENTRY, TYPE_MAP,
+    TYPE_CONCEPT_SET, TYPE_UNION,
     RE_VALIDATOR_DECL, PATH_VALIDATOR_DECL,
     ENTITY_DECL, ENUM_DECL, TYPEDECL_DECL, CONCEPT_DECL,
     createTuple, createRecord, createSimpleNominal,
@@ -194,7 +207,9 @@ export {
     createOk, createError, createResult,
     createPath, createPathFragment, createPathGlob,
     createList, createStack, createQueue, createSet, createMapEntry, createMap,
+    createConceptSet, createUnion,
     createStringValidatorDecl, createPathValidatorDecl, 
     createEntityFieldDecl,
-    createEntityDecl, createEnumDecl, createTypedeclDecl, createConceptDecl
+    createEntityDecl, createEnumDecl, createTypedeclDecl, createConceptDecl,
+    createAssemblyInfo
 }

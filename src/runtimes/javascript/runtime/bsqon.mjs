@@ -24,13 +24,16 @@ const TOKEN_RANGLE = ">";
 const TOKEN_COLON = ":";
 const TOKEN_COLON_COLON = "::";
 const TOKEN_COMMA = ",";
+const TOKEN_AMP = "&";
+const TOKEN_BAR = "|";
 const TOKEN_EQUALS = "=";
 const TOKEN_LET = "let";
 
 const TOKEN_SRC = "$SRC";
 const TOKEN_REFERENCE = "#REF";
-const TOKEN_NAME = "DOT_NAME";
-const TOKEN_IDX = "DOT_IDX";
+const TOKEN_PROPERTY = "PROPERTY";
+const TOKEN_DOT_NAME = "DOT_NAME";
+const TOKEN_DOT_IDX = "DOT_IDX";
 
 const TOKEN_TRUE = "true"; 
 const TOKEN_FALSE = "false";
@@ -126,6 +129,7 @@ const _s_symbolRe = /[\W]+/y;
 const _s_nameSrcRe = /[$]src/y;
 const _s_nameRefRe = /[#]\w+/y;
 const _s_nameTypeRe = /[A-Z]([a-zA-Z0-9_])+/y;
+const _s_namePropertyRE = /[a-z_][a-zA-Z0-9_]*/y;
 
 const _s_intCheckRe = /^0|-?[1-9][0-9]*$/;
 const _s_natCheckRe = /^0|[1-9][0-9]*$/;
@@ -155,6 +159,8 @@ const SymbolStrings = [
 
     TOKEN_COLON,
     TOKEN_COLON_COLON,
+    TOKEN_AMP,
+    TOKEN_BAR,
     TOKEN_COMMA,
     TOKEN_EQUALS,
     TOKEN_LET
@@ -298,11 +304,11 @@ function generateDateTime(dstr) {
     return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
 }
 
-function BSQON(ns, aliasmap, str, srcbind, mode) {
+function BSQON(ns, assembly, str, srcbind, mode) {
     this.m_parsemode = mode || PARSE_MODE_DEFAULT;
 
     this.m_ns = ns;
-    this.m_aliasmap = aliasmap;
+    this.m_assembly = assembly;
 
     this.m_str = str;
     this.m_cpos = 0;
@@ -537,14 +543,6 @@ BSQON.prototype.lexNumber = function () {
             this.m_lastToken = createToken(TOKEN_INT, mi[0]);
             return true;
         }
-
-        _s_dotidxRe.lastIndex = this.m_cpos;
-        const mdot = _s_dotidxRe.exec(this.m_input);
-        if (mdot !== null) {
-            this.m_cpos += mdot[0].length;
-            this.m_lastToken = createToken(TOKEN_DOTIDX, mdot[0]);
-            return true;
-        }
     }
 
     return false;
@@ -632,7 +630,15 @@ BSQON.prototype.lexName = function() {
     const mtype = _s_nameTypeRe.exec(this.m_input);
     if(mtype !== null) {
         this.m_cpos += mtype[0].length;
-        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0].trim());
+        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0]);
+        return true;
+    }
+
+    _s_namePropertyRE.lastIndex = this.m_cpos;
+    const pname = _s_namePropertyRE.exec(this.m_input);
+    if(pname !== null) {
+        this.m_cpos += pname[0].length;
+        this.m_lastToken = createToken(TOKEN_PROPERTY, mtype[0]);
         return true;
     }
 
@@ -643,7 +649,7 @@ BSQON.prototype.lexAccess = function() {
     const dotname = _s_dotNameAccessRe.exec(this.m_input);
     if(doname !== null) {
         this.m_cpos += dotname[0].length;
-        this.m_lastToken = createToken(TOKEN_DOTNAME, dotname[0].slice(1));
+        this.m_lastToken = createToken(TOKEN_DOT_NAME, dotname[0].slice(1));
         return true;
     }
 
@@ -651,7 +657,7 @@ BSQON.prototype.lexAccess = function() {
     const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
     if(dotidx !== null) {
         this.m_cpos += dotidx[0].length;
-        this.m_lastToken = createToken(TOKEN_DOTIDX, dotidx[0].slice(1));
+        this.m_lastToken = createToken(TOKEN_DOT_IDX, dotidx[0].slice(1));
         return true;
     }
 
@@ -709,15 +715,166 @@ BSQON.prototype.expectTokenAndPop = function (tkind) {
     this.expectToken(tkind);
     return this.popToken();
 }
+
+
 BSQON.prototype.resolveType = function (tt) {
-    xxxx;
+    if(!this.m_assembly.aliasmap.has(tt)) {
+        return tt;
+    }
+    else {
+        return this.m_assembly.aliasmap.get(tt);
+    }
+}
+BSQON.prototype.parseNominalType = function (expectedOpt) {
+    let tname = this.expectTokenAndPop(TOKEN_TYPE).value;
+    tname = this.resolveType(tname);
+
+    if(typeof(tname) !== "string") {
+        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== tname.tag, `Expected ${expectedOpt.ttag} type: but got ${tname.tag}`);
+        return tname;
+    }
+    else {
+        let rtype = undefined;
+
+        let terms = [];
+        if(this.testToken(TOKEN_LANGLE)) {
+            xxxx;
+        }
+
+        if (_s_core_types.includes(tname)) {
+            xxxx;
+        }
+        else if (_s_core_types_with_templates.includes(tname)) {
+            xxxx;
+        }
+        else {
+            this.raiseErrorIf(terms.length !== 0, `Type ${tname} does not take type arguments`);
+
+            rtype = $TypeInfo.createSimpleNominal(tname);
+        }
+
+        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
+        return rtype;
+    }
+}
+BSQON.prototype.parseTupleType = function (expectedOpt) {
+    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== $TypeInfo.TYPE_TUPLE, `Expected ${expectedOpt.ttag} type: but found tuple type`);
+
+    let entries = [];
+    this.popToken();
+    while(entries.length === 0 || this.testToken(TOKEN_COMMA)) {
+        if(this.testToken(TOKEN_COMMA)) {
+            this.popToken();
+        }
+
+        const eptype = undefined;
+        if(expectedOpt !== undefined && entries.length < expectedOpt.entries.length) {
+            const ee = expectedOpt.entries[entries.length];
+            eptype = ee[1];
+        }
+
+        entries.push(this.parseType(eptype));
+    }
+
+    $TypeInfo.createTuple(entries);
+}
+BSQON.prototype.parseRecordType = function (expectedOpt) {
+    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== TYPE_RECORD, `Expected ${expectedOpt.ttag} type: but found record type`);
+
+    let entries = {};
+    this.popToken();
+    while(entries.length === 0 || this.testToken(TOKEN_COMMA)) {
+        if(this.testToken(TOKEN_COMMA)) {
+            this.popToken();
+        }
+
+        const pname = this.expectTokenAndPop(TOKEN_PROPERTY).value;
+
+        const eptype = undefined;
+        if(expectedOpt !== undefined && expectedOpt.entries.find((ee) => ee[0] === pname) !== undefined) {
+            const ee = expectedOpt.entries.find((ee) => ee[0] === pname);
+            eptype = ee[1];
+        }
+
+        entries[pname] = this.parseType(eptype);
+    }
+
+    $TypeInfo.createRecord(entries);
+}
+BSQON.prototype.parseBaseType = function (expectedOpt) {
+    let rtype = undefined;
+
+    if(this.testToken(TOKEN_LBRACKET)) {
+        rtype = this.parseTupleType(expectedOpt);
+    }
+    else if(this.testToken(TOKEN_LBRACE)) {
+        rtype = this.parseRecordType(expectedOpt);
+    }
+    else if(this.testToken(TOKEN_NAME)) {
+        rtype = this.parseNominalType(expectedOpt);
+    }
+    else {
+        this.raiseErrorIf(!this.testToken(TOKEN_LPAREN) `Expected type inside "(...)": but got ${tt}`);
+        this.popToken();
+        rtype = this.parseType();
+        this.raiseErrorIf(!this.testToken(TOKEN_RPAREN) `Expected type inside "(...)": but got ${tt}`);
+        this.popToken();
+    }
+
+    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
+    return rtype;
+}
+BSQON.prototype.parseConceptSetType = function (expectedOpt) {
+    let rtype = undefined;
+
+    const lt = this.parseBaseType();
+    if(!this.testToken(TOKEN_AMP)) {
+        rtype = lt;
+    }
+    else {
+        let opts = [lt];
+        while(this.testToken(TOKEN_AMP)) {
+            this.popToken();
+            opts.push(this.parseConceptSetType());
+        } 
+
+        rtype = $TypeInfo.createConceptSet(opts);
+    }
+
+    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
+    return rtype;
+}
+BSQON.prototype.parseUnionType = function (expectedOpt) {
+    let rtype = undefined;
+
+    const lt = this.parseConceptSetType();
+    if(!this.testToken(TOKEN_BAR)) {
+        rtype = lt;
+    }
+    else {
+        let opts = [lt];
+        while(this.testToken(TOKEN_BAR)) {
+            this.popToken();
+            opts.push(this.parseUnionType());
+        } 
+
+        rtype = $TypeInfo.createUnion(opts);
+    }
+
+    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
+    return rtype;
 }
 BSQON.prototype.parseType = function (expectedOpt) {
     if(this.isFullMode()) {
-        let tt = this.expectTokenAndPop(TOKEN_TYPE).value;
-        if(!tt.startsWith())
+        let tt = this.peekToken();
 
-        return tt;
+        if(tt.type === TOKEN_LBRACKET) {
+        }
+        else if(tt.type === TOKEN_LBRACE) {
+        }
+        else {
+            this.raiseErrorIf(tt.type !== TOKEN_TYPE, `Expected type: but got ${tt.value}`);
+        }
     }
     else if(this.isDefaultMode()) {
         let tt = this.expectTokenAndPop(TOKEN_TYPE).value;
@@ -746,6 +903,11 @@ BSQON.prototype.parseReference = function () {
     this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
     return this.m_refs.get(ref);
 }
+
+
+
+
+
 BSQON.prototype.parseNone = function () {
     if(!this.isJSONMode()) {
         this.expectTokenAndPop(TOKEN_NONE);

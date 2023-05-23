@@ -740,6 +740,7 @@ class BodyEmitter {
     }
 
     private emitMapEntryConstructorExpression(exp: TIRMapEntryConstructorExpression): string {
+        xxxx;
         return `[${this.emitExpression(exp.kexp, true)}, ${this.emitExpression(exp.vexp, true)}]`;
     }
 

@@ -4,96 +4,6 @@ import { JS, NFA, Words } from "refa";
 import {Decimal} from "decimal.js";
 import Fraction from "fraction.js";
 
-function UnionValue(tkey, value) {
-    this.tkey = tkey;
-    this.value = value;
-}
-UnionValue.prototype.hashCode = function () {
-    if(this.value === null || this.value === undefined) {
-        return 1;
-    }
-    else {
-        const ttype = typeof this.value;
-        if(ttype === "boolean") {
-            return this.value ? 2 : 3;
-        }
-        else if(ttype === "bigint") {
-            BigInt.asUintN(31, this.value);
-        }
-        else if(ttype === "string") {
-            //TODO: not the best string hashcode
-
-            if(this.value.length === 0) {
-                return 0;
-            }
-            else if(this.value.length === 1) {
-                return this.value.charCodeAt(0) | 0;
-            }
-            else {
-                return (this.value.length * 5 * this.value.charCodeAt(0) * this.value.charCodeAt(this.value.length - 1)) | 0;
-            }
-        }
-        else {
-            return 6535;
-        }
-    }
-}
-UnionValue.prototype.equals = function (other) {
-    return this.tkey === other.tkey && this.value === other.value;
-}
-UnionValue.create = function(tkey, value) {
-    return Object.freeze(new UnionValue(tkey, value));
-}
-
-function BSQDate(year, month, day) {
-    this.year = year;
-    this.month = month;
-    this.day = day;
-}
-BSQDate.prototype.equals = function (other) {
-    return this.year === other.year && this.month === other.month && this.day === other.day;
-}
-BSQDate.create = function(year, month, day) {
-    return Object.freeze(new BSQDate(year, month, day));
-}
-
-function BSQTime(hour, minute, second, millisecond) {
-    this.hour = hour;
-    this.minute = minute;
-    this.second = second;
-    this.millisecond = millisecond;
-}
-BSQTime.prototype.equals = function (other) {
-    return this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond;
-}
-BSQTime.create = function(hour, minute, second, millisecond) {
-    return Object.freeze(new BSQTime(hour, minute, second, millisecond));
-}
-
-function BSQLatLongCoordinate(lat, long) {
-    this.lat = lat;
-    this.long = long;
-}
-BSQLatLongCoordinate.create = function(lat, long) {
-    return Object.freeze(new BSQLatLongCoordinate(lat, long));
-}
-
-function BSQDateTime(year, month, day, hour, minute, second, millisecond, tz) {
-    this.year = year;
-    this.month = month;
-    this.day = day;
-    this.hour = hour;
-    this.minute = minute;
-    this.second = second;
-    this.millisecond = millisecond;
-    this.tz = tz;
-}
-BSQDateTime.prototype.equals = function (other) {
-    return this.year === other.year && this.month === other.month && this.day === other.day && this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond && this.tz === other.tz;
-}
-BSQDateTime.create = function(year, month, day, hour, minute, second, millisecond, tz) {
-    return Object.freeze(new BSQDateTime(year, month, day, hour, minute, second, millisecond, tz));
-}
 
 const subtypeMap = new Map();
 //--GENERATED_$subtypesetup--
@@ -119,49 +29,9 @@ function isSubtype(tkey, ofkey) {
     }
 }
 
-function Unwind(kind, msg) {
-    this.kind = kind;
-    this.msg = msg;
-}
-
-function raiseRuntimeError(msg) {
-    throw new Unwind("error", msg);
-}
-
-function raiseRuntimeErrorIf(cond, msg) {
-    if(cond) {
-        throw new Unwind("error", msg);
-    }
-}
-
-function raiseUserAssert(msg) {
-    throw new Unwind("assert", msg);
-}
-
-function raiseUserAssertIf(cond, msg) {
-    if(cond) {
-        throw new Unwind("assert", msg);
-    }
-}
-
 function setScratchValue(scratch, sidx, value) {
     scratch[sidx] = value;
     return 0;
-}
-
-function safeMath(val, lb, ub) {
-    raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
-    return val;
-}
-
-function safeMathUnderflow(val, zero) {
-    raiseRuntimeErrorIf(val < zero, `arithmetic op underflow`);
-    return val;
-}
-
-function safeMathDiv(op, chk, v1, v2) {
-    raiseRuntimeErrorIf(chk(v2), `division by 0`);
-    return op(v1, v2);
 }
 
 function BSQEnvironment(env, ...args) {
@@ -311,9 +181,9 @@ export {
     UnionValue, isSubtype,
     vtablemap, invmap,
     lambdas,
-    Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
+    
     setScratchValue, 
-    safeMath, safeMathDiv, safeMathUnderflow,
+    
     acceptsString,
     BSQEnvironment,
     setloglevel, checkloglevel, log, pushlogprefix, poplogprefix,
