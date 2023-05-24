@@ -1,8 +1,10 @@
 "use strict";
 
+const TYPE_UNRESOLVED = "UnresolvedType";
 const TYPE_TUPLE = "[...]";
 const TYPE_RECORD = "{...}";
-const TYPE_SIMPLE_NOMINAL = "Type";
+const TYPE_SIMPLE_ENTITY = "SimpleEntity";
+const TYPE_SIMPLE_CONCEPT = "SimpleConcept";
 const TYPE_STRING_OF = "StringOf";
 const TYPE_ASCII_STRING_OF = "AsciiStringOf";
 const TYPE_SOMETHING = "Something"; 
@@ -31,88 +33,94 @@ const ENUM_DECL = "EnumDecl";
 const TYPEDECL_DECL = "TypedeclDecl";
 const CONCEPT_DECL = "ConceptDecl";
 
-function createTuple(entries) {
-    return {tag: TYPE_TUPLE, ttag: entries.map((entry) => entry.ttag).join(", "), entries: entries};
+const unresolvedType = {tag: UNRESOLVED_TYPE, ttag: "[UnresolvedType]"};
+
+function createTuple(entries, isrec) {
+    return {tag: TYPE_TUPLE, isrec: isrec ?? false, ttag: entries.map((entry) => entry.ttag).join(", "), entries: entries};
 }
 
-function createRecord(entries) {
-    return {tag: TYPE_RECORD, ttag: entries.keys().sort().map((kk) => kk + ": " + entries[kk].ttag).join(", "), entries: entries};
+function createRecord(entries, isrec) {
+    return {tag: TYPE_RECORD, isrec: isrec ?? false, ttag: entries.keys().sort().map((kk) => kk + ": " + entries[kk].ttag).join(", "), entries: entries};
 }
 
-function createSimpleNominal(name) {
-    return {tag: TYPE_SIMPLE_NOMINAL, ttag: name};
+function createSimpleEntity(name, isrec) {
+    return {tag: TYPE_SIMPLE_ENTITY, isrec: isrec ?? false, ttag: name};
 }
 
-function createStringOf(type) {
-    return {tag: TYPE_STRING_OF, ttag: `StringOf<${type.ttag}>`, oftype: type};
+function createSimpleConcept(name, isrec) {
+    return {tag: TYPE_SIMPLE_CONCEPT, isrec: isrec ?? false, ttag: name};
 }
 
-function createAsciiStringOf(type) {
-    return {tag: TYPE_ASCII_STRING_OF, ttag: `AsciiStringOf<${type.ttag}>`, oftype: type};
+function createStringOf(type, isrec) {
+    return {tag: TYPE_STRING_OF, isrec: isrec ?? false, ttag: `StringOf<${type.ttag}>`, oftype: type};
 }
 
-function createSomething(type) {
-    return {tag: TYPE_SOMETHING, ttag: `Something<${type.ttag}>`, oftype: type};
+function createASCIIStringOf(type, isrec) {
+    return {tag: TYPE_ASCII_STRING_OF, isrec: isrec ?? false, ttag: `ASCIIStringOf<${type.ttag}>`, oftype: type};
 }
 
-function createOption(type) {
-    return {tag: TYPE_OPTION, ttag: `Option<${type.ttag}>`, oftype: type};
+function createSomething(type, isrec) {
+    return {tag: TYPE_SOMETHING, isrec: isrec ?? false, ttag: `Something<${type.ttag}>`, oftype: type};
 }
 
-function createOk(ttype, etype) {
-    return {tag: TYPE_OK, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Ok`, ttype: type, etype: etype};
+function createOption(type, isrec) {
+    return {tag: TYPE_OPTION, isrec: isrec ?? false, ttag: `Option<${type.ttag}>`, oftype: type};
 }
 
-function createError(ttype, etype) {
-    return {tag: TYPE_ERROR, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Error`, ttype: type, etype: etype};
+function createOk(ttype, etype, isrec) {
+    return {tag: TYPE_OK, isrec: isrec ?? false, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Ok`, ttype: type, etype: etype};
 }
 
-function createResult(ttype, etype) {
-    return {tag: TYPE_RESULT, ttag: `Result<${ttype.ttag}, ${etype.ttag}>`, ttype: type, etype: etype};
+function createError(ttype, etype, isrec) {
+    return {tag: TYPE_ERROR, isrec: isrec ?? false, ttag: `Result<${ttype.ttag}, ${etype.ttag}>::Error`, ttype: type, etype: etype};
 }
 
-function createPath(oftype) {
-    return {tag: TYPE_PATH, ttag: `Path<${oftype.ttag}>`, oftype: oftype};
+function createResult(ttype, etype, isrec) {
+    return {tag: TYPE_RESULT, isrec: isrec ?? false, ttag: `Result<${ttype.ttag}, ${etype.ttag}>`, ttype: type, etype: etype};
 }
 
-function createPathFragment(oftype) {
-    return {tag: TYPE_PATH_FRAGMENT, ttag: `PathFragment<${oftype.ttag}>`, oftype: oftype};
+function createPath(oftype, isrec) {
+    return {tag: TYPE_PATH, isrec: isrec ?? false, ttag: `Path<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createPathGlob(oftype) {
-    return {tag: TYPE_PATH_GLOB, ttag: `PathGlob<${oftype.ttag}>`, oftype: oftype};
+function createPathFragment(oftype, isrec) {
+    return {tag: TYPE_PATH_FRAGMENT, isrec: isrec ?? false, ttag: `PathFragment<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createList(oftype) {
-    return {tag: TYPE_LIST, ttag: `List<${oftype.ttag}>`, oftype: oftype};
+function createPathGlob(oftype, isrec) {
+    return {tag: TYPE_PATH_GLOB, isrec: isrec ?? false, ttag: `PathGlob<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createStack(oftype) {
-    return {tag: TYPE_STACK, ttag: `Stack<${oftype.ttag}>`, oftype: oftype};
+function createList(oftype, isrec) {
+    return {tag: TYPE_LIST, isrec: isrec ?? false, ttag: `List<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createQueue(oftype) {
-    return {tag: TYPE_QUEUE, ttag: `Queue<${oftype.ttag}>`, oftype: oftype};
+function createStack(oftype, isrec) {
+    return {tag: TYPE_STACK, isrec: isrec ?? false, ttag: `Stack<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createSet(oftype) {
-    return {tag: TYPE_SET, ttag: `Set<${oftype.ttag}>`, oftype: oftype};
+function createQueue(oftype, isrec) {
+    return {tag: TYPE_QUEUE, isrec: isrec ?? false, ttag: `Queue<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createMapEntry(ktype, vtype) {
-    return {tag: TYPE_MAP_ENTRY, ttag: `MapEntry<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
+function createSet(oftype, isrec) {
+    return {tag: TYPE_SET, isrec: isrec ?? false, ttag: `Set<${oftype.ttag}>`, oftype: oftype};
 }
 
-function createMap(ktype, vtype) {
-    return {tag: TYPE_MAP, ttag: `Map<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
+function createMapEntry(ktype, vtype, isrec) {
+    return {tag: TYPE_MAP_ENTRY, isrec: isrec ?? false, ttag: `MapEntry<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
 }
 
-function createConceptSet(concepts) {
-    return {tag: TYPE_CONCEPT_SET, ttag: concepts.map((cc) => cc.ttag).sort().join(" & "), concepts: concepts};
+function createMap(ktype, vtype, isrec) {
+    return {tag: TYPE_MAP, isrec: isrec ?? false, ttag: `Map<${ktype.ttag}, ${vtype.ttag}>`, ktype: ktype, vtype: vtype};
 }
 
-function createUnion(types) {
-    return {tag: TYPE_UNION, ttag: types.map((tt) => tt.ttag).sort().join(" | "), types: types};
+function createConceptSet(concepts, isrec) {
+    return {tag: TYPE_CONCEPT_SET, isrec: isrec ?? false, ttag: concepts.map((cc) => cc.ttag).sort().join(" & "), concepts: concepts};
+}
+
+function createUnion(types, isrec) {
+    return {tag: TYPE_UNION, isrec: isrec ?? false, ttag: types.map((tt) => tt.ttag).sort().join(" | "), types: types};
 }
 
 function createStringValidatorDecl(svtype, vre) {
@@ -143,7 +151,11 @@ function createConceptDecl(ntype, subtypes) {
     return {tag: CONCEPT_DECL, type: ntype, subtypes: subtypes};
 }
 
-function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, conceptdecls, aliasmap) {
+function createNamespace(ns, typenames) {
+    return {ns: ns, typenames: typenames};
+}
+
+function createAssemblyInfo(namespaces, typerefs, rechks, pthchks, sdecls, edecls, tdecls, conceptdecls, aliasmap) {
     let types = new Map();
     typerefs.forEach((tr) => {
         types.set(tr.ttag, tr);
@@ -180,6 +192,7 @@ function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, c
     });
 
     return {
+        namespaces: namespaces,
         types: types,
         revalidators: revalidators,
         pthvalidators: pthvalidators,
@@ -191,8 +204,39 @@ function createAssemblyInfo(typerefs, rechks, pthchks, sdecls, edecls, tdecls, c
     };
 }
 
+function resolveTypeInAssembly(asm, tname) {
+    return asm.typerefs.has(tname) ?? unresolvedType;
+}
+
+function checkSubtype(asm, t, oftype) {
+    if(t.ttag === oftype.ttag) {
+        return true;
+    }
+
+    if(oftype.tag === TYPE_SIMPLE_CONCEPT) {
+        const optconcept = asm.conceptdecls.get(oftype.ttag);
+        return optconcept !== undefined && optconcept.subtypes.has(t.ttag); 
+    }
+    else if(oftype.tag === TYPE_OPTION) {
+        return t.ttag === "Nothing" || t.ttag === `Something<${oftype.oftype}>`;
+    }
+    else if(oftype.tag === TYPE_RESULT) {
+        return t.ttag === `Result<${oftype.ttype}, ${oftype.etype}>::Ok` || t.ttag === `Result<${oftype.ttype}, ${oftype.etype}>::Error`;
+    }
+    else if(oftype.tag === TYPE_CONCEPT_SET) {
+        return oftype.concepts.every((cc) => checkSubtype(asm, t, cc));
+    }
+    else if(oftype.tag === TYPE_UNION) {
+        return oftype.types.some((tt) => checkSubtype(asm, t, tt));
+    }
+    else {
+        return false;
+    }
+}
+
 export {
-    TYPE_TUPLE, TYPE_RECORD, TYPE_SIMPLE_NOMINAL,
+    TYPE_UNRESOLVED,
+    TYPE_TUPLE, TYPE_RECORD, TYPE_SIMPLE_ENTITY, TYPE_SIMPLE_CONCEPT,
     TYPE_STRING_OF, TYPE_ASCII_STRING_OF,
     TYPE_SOMETHING, TYPE_OPTION,
     TYPE_OK, TYPE_ERROR, TYPE_RESULT,
@@ -201,8 +245,9 @@ export {
     TYPE_CONCEPT_SET, TYPE_UNION,
     RE_VALIDATOR_DECL, PATH_VALIDATOR_DECL,
     ENTITY_DECL, ENUM_DECL, TYPEDECL_DECL, CONCEPT_DECL,
-    createTuple, createRecord, createSimpleNominal,
-    createStringOf, createAsciiStringOf,
+    unresolvedType,
+    createTuple, createRecord, createSimpleEntity, createSimpleConcept,
+    createStringOf, createASCIIStringOf,
     createSomething, createOption,
     createOk, createError, createResult,
     createPath, createPathFragment, createPathGlob,
@@ -211,5 +256,7 @@ export {
     createStringValidatorDecl, createPathValidatorDecl, 
     createEntityFieldDecl,
     createEntityDecl, createEnumDecl, createTypedeclDecl, createConceptDecl,
-    createAssemblyInfo
+    createNamespace,
+    createAssemblyInfo,
+    resolveTypeInAssembly, checkSubtype
 }

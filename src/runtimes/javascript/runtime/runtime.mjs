@@ -142,21 +142,6 @@ BSQTime.prototype.lessBase = function (other) {
     return lesslexo([this.hour, this.minute, this.second, this.millisecond], [other.hour, other.minute, other.second, other.millisecond]);
 }
 
-function BSQLatLongCoordinate(lat, long) {
-    this.lat = lat;
-    this.long = long;
-}
-BSQLatLongCoordinate.create = function(lat, long) {
-    return Object.freeze(new BSQLatLongCoordinate(lat, long));
-}
-
-function BSQMapEntry(k, v) {
-    this.k = k;
-    this.v = v;
-}
-BSQMapEntry.create = function(k, v) {
-    return Object.freeze(new BSQMapEntry(k, v));
-}
 
 //None -> null
 //Nothing -> undefined
@@ -181,7 +166,7 @@ BSQMapEntry.create = function(k, v) {
 //UUIDv4 -> string
 //UUIDv7 -> string
 //SHAContentHash -> string
-//LatLongCoordinate -> BSQLatLongCoordinate
+//LatLongCoordinate -> [lat, long]
 //Regex -> string
 
 //StringOf -> string
@@ -196,7 +181,7 @@ BSQMapEntry.create = function(k, v) {
 //Stack<T> -> IStack<T>
 //Queue<T> -> IQueue<T>
 //Set<T> -> ISet<T>
-//MapEntry<K, V> -> BSQMapEntry
+//MapEntry<K, V> -> [K, V]
 //Map<K, V> -> IMap<K, V>
 
 
@@ -288,7 +273,7 @@ UnionValue.create = function(tkey, value) {
 }
 
 export {
-    BSQDateTime, BSQDate, BSQTime, BSQLatLongCoordinate, BSQMapEntry,
+    BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
     UnionValue,
     keyEqualsBase, keyLessBase,

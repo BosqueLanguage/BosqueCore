@@ -116,8 +116,6 @@ const _s_rationalRe = /((0|-?[1-9][0-9]*)|(0|-?[1-9][0-9]*)\/([1-9][0-9]*))R/y;
 const _s_intNumberinoRe = /0|-?[1-9][0-9]*/y;
 const _s_floatNumberinoRe = /([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?/y;
 
-const _s_dotidxRe = /([.][0-9]+)/y;
-
 const _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
 const _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
 const _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
@@ -173,11 +171,15 @@ const PARSE_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
 const _s_core_types = [
     "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
     "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "LatLongCoordinate", "Regex", "Nothing", "Something"
+    "LatLongCoordinate", "Regex", "Nothing"
 ];
 
-const _s_core_types_with_templates = [
-    "StringOf", "ASCIIStringOf", "Something", "Option", "Ok", "Error", "Result", "Path", "PathFragment", "PathGlob", "List", "Stack", "Queue", "Set", "MapEntry", "Map"
+const _s_core_types_with_one_template = [
+    "StringOf", "ASCIIStringOf", "Something", "Option", "Path", "PathFragment", "PathGlob", "List", "Stack", "Queue", "Set"
+]
+
+const _s_core_types_with_two_templates = [
+    "Result::Ok", "Result::Error", "Result", "MapEntry", "Map"
 ]
 
 const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
@@ -304,10 +306,14 @@ function generateDateTime(dstr) {
     return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
 }
 
-function BSQON(ns, assembly, str, srcbind, mode) {
+function createParseResult(value, decltype, einfo) {
+    return {value: value, decltype: decltype, einfo: einfo};
+}
+
+function BSQON(defaultns, assembly, str, srcbind, mode) {
     this.m_parsemode = mode || PARSE_MODE_DEFAULT;
 
-    this.m_ns = ns;
+    this.m_defaultns = defaultns;
     this.m_assembly = assembly;
 
     this.m_str = str;
@@ -316,8 +322,8 @@ function BSQON(ns, assembly, str, srcbind, mode) {
 
     this.m_lastToken = undefined;
 
-    this.m_srcbind = srcbind;
-    this.m_refs = new Map();
+    this.m_srcbind = srcbind; //a [value, type] where type is always a concrete type
+    this.m_refs = new Map(); //maps from names to [value, type] where type is always a concrete type
 }
 BSQON.prototype.isDefaultMode = function () {
     return this.m_parsemode === PARSE_MODE_DEFAULT;
@@ -697,6 +703,14 @@ BSQON.prototype.popToken = function () {
         return undefined;
     }
 }
+BSQON.prototype.unquoteStringForTypeParse = function () {
+    const slen = this.m_lastToken.value.length;
+    const str = " " + this.m_lastToken.value.slice(1, -1) + " ";
+
+    this.m_cpos -= slen;
+    this.m_str = this.m_str.slice(0, this.m_cpos) + str + this.m_str.slice(this.m_cpos + slen);
+}
+
 BSQON.prototype.testToken = function (tkind) {
     return this.peekToken() !== undefined && this.peekToken().type === tkind;
 }
@@ -715,42 +729,215 @@ BSQON.prototype.expectTokenAndPop = function (tkind) {
     this.expectToken(tkind);
     return this.popToken();
 }
+BSQON.prototype.resolveTypeFromNameList = function (tt) {
+    let scopedname = "[uninit]";
 
+    if(this.m_assembly.find((ns) => ns.ns === "Core").types.includes(tt.join("::"))) {
+        scopedname = tt.join("::");
+    }
+    else if(tt.length === 1 || this.m_assembly.namespaces.find((ns) => ns.ns === tt[0]) === undefined || !this.m_assembly.namespaces.find((ns) => ns.ns === tt[0]).types.includes(tt.slice(1).join("::"))) {
+        scopedname = `${this.m_defaultns}::${tt.join("::")}`;
+    }
+    else {
+        scopedname = tt.join("::");
+    }
 
-BSQON.prototype.resolveType = function (tt) {
-    if(!this.m_assembly.aliasmap.has(tt)) {
+    if(!this.m_assembly.aliasmap.has(scopedname)) {
         return tt;
     }
     else {
         return this.m_assembly.aliasmap.get(tt);
     }
 }
-BSQON.prototype.parseNominalType = function (expectedOpt) {
-    let tname = this.expectTokenAndPop(TOKEN_TYPE).value;
-    tname = this.resolveType(tname);
+BSQON.prototype.processCoreType = function (tname) {
+    return $TypeInfo.createSimpleNominal(tname);
+}
+BSQON.prototype.processCoreTypeW1Term = function (tname, terms, expectedOpt) {
+    if(tname === "StringOf") {
+        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+        return $TypeInfo.createStringOf(terms[0]);
+    } 
+    else if(tname === "ASCIIStringOf") {
+        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+        return $TypeInfo.createASCIIStringOf(terms[0]);
+    } 
+    else if(tname === "Something") {
+        let t = $TypeInfo.unresolvedType;
+        if(terms.length === 1) {
+            t = terms[0];
+        }
+        else {
+            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+            const sopts = expectedOpt.tag === $TypeInfo.TYPE_SOMETHING ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_SOMETHING);
+            const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
 
-    if(typeof(tname) !== "string") {
-        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== tname.tag, `Expected ${expectedOpt.ttag} type: but got ${tname.tag}`);
-        return tname;
+            this.raiseErrorIf(sopts === undefined && oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+            this.raiseErrorIf(sopts !== undefined && oopts !== undefined, `Relaxed type resolution has ambiguous types for ${tname}`);
+            t = (sopts ?? oopts).oftype;
+        }
+
+        return $TypeInfo.createSomething(t);
+    } 
+    else if(tname === "Option") {
+        let t = $TypeInfo.unresolvedType;
+        if(terms.length === 1) {
+            t = terms[0];
+        }
+        else {
+            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+            const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
+
+            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+            t = oopts.oftype;
+        }
+
+        return $TypeInfo.createOption(t);
+    } 
+    else if(tname === "Path") {
+        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+        return $TypeInfo.createPath(terms[0]);
+    } 
+    else if(tname === "PathFragment") {
+        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+        return $TypeInfo.createPathFragment(terms[0]);
+    } 
+    else if(tname === "PathGlob") {
+        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+        return $TypeInfo.createPathGlob(terms[0]);
+    }
+    else {
+        let ttag = $TypeInfo.TYPE_UNKNOWN;
+        if (tname === "List") {
+            ttag = $TypeInfo.TYPE_LIST;
+        }
+        else if (tname === "Stack") {
+            ttag = $TypeInfo.TYPE_STACK;
+        }
+        else if (tname === "Queue") {
+            ttag = $TypeInfo.TYPE_QUEUE;
+        }
+        else {
+            ttag = $TypeInfo.TYPE_SET;
+        }
+
+        let t = $TypeInfo.unresolvedType;
+        if (terms.length === 1) {
+            t = terms[0];
+        }
+        else {
+            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+            const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
+
+            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+            t = oopts.oftype;
+        }
+
+        if (tname === "List") {
+            return $TypeInfo.createList(t);
+        }
+        else if (tname === "Stack") {
+            return $TypeInfo.createStack(t);
+        }
+        else if (tname === "Queue") {
+            return $TypeInfo.createQueue(t);
+        }
+        else {
+            this.raiseErrorIf(tinfo !== "Set", `Unknown core type ${tname}`);
+
+            return $TypeInfo.createSet(t);
+        }
+    }
+}
+BSQON.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOpt) {
+    if(tname === "Result::Ok") {
+        return $TypeInfo.createOk(t1, t2);
+    } 
+    else if(tname === "Result::Error") {
+        return $TypeInfo.createError(t1, t2);
+    } 
+    else if(tname === "Result") {
+        return $TypeInfo.createResult(t1, t2);
+    } 
+    else {
+        let ttag = $TypeInfo.TYPE_UNKNOWN;
+        if (tname === "MapEntry") {
+            ttag = $TypeInfo.TYPE_MAP_ENTRY;
+        }
+        else {
+            ttag = $TypeInfo.TYPE_MAP;
+        }
+
+        let k = $TypeInfo.unresolvedType;
+        let v = $TypeInfo.unresolvedType;
+        if (terms.length === 2) {
+            k = terms[0];
+            v = terms[1];
+        }
+        else {
+            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+            const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
+
+            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+            k = oopts.ktype;
+            v = oopts.vtype;
+        }
+
+        if (tname === "MapEntry") {
+            return $TypeInfo.createMapEntry(k, v);
+        }
+        else {
+            this.raiseErrorIf(tname !== "Map", `Unknown core type ${tname}`);
+
+            return $TypeInfo.createMap(k, v);
+        }
+    }
+}
+BSQON.prototype.parseNominalType = function (expectedOpt) {
+    let tnames = [this.expectTokenAndPop(TOKEN_TYPE).value];
+    while(this.testToken(TOKEN_COLONCOLON)) {
+        this.popToken();
+        tnames.push(this.expectTokenAndPop(TOKEN_TYPE).value);
+    }
+
+    let rname = this.resolveType(tnames);
+    if(typeof(rname) !== "string") {
+        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== rname.tag, `Expected ${expectedOpt.ttag} type: but got ${rname.tag}`);
+        return rname;
     }
     else {
         let rtype = undefined;
 
         let terms = [];
         if(this.testToken(TOKEN_LANGLE)) {
-            xxxx;
+            this.popToken();
+            while(terms.length === 0 || this.testToken(TOKEN_COMMA)) {
+                if(this.testToken(TOKEN_COMMA)) {
+                    this.popToken();
+                }
+
+                terms.push(this.parseType());
+            }
         }
 
-        if (_s_core_types.includes(tname)) {
-            xxxx;
+        if (_s_core_types.includes(rname)) {
+            this.raiseErrorIf(terms.length !== 0, `Type ${rname} does not take type arguments`);
+
+            rtype = this.processCoreType(rname);
         }
-        else if (_s_core_types_with_templates.includes(tname)) {
-            xxxx;
+        else if (_s_core_types_with_one_template.includes(rname)) {
+            this.raiseErrorIf(this.isFullMode() && terms.length !== 1, `Type ${rname} requires one type argument`);
+
+            rtype = this.processCoreTypeW1Term(rname, terms, expectedOpt);
+        }
+        else if (_s_core_types_with_two_templates.includes(rname)) {
+            this.raiseErrorIf(this.isFullMode() && terms.length !== 2, `Type ${rname} requires two type arguments`);
+
+            rtype = this.processCoreTypeW2Terms(rname, terms, expectedOpt);
         }
         else {
-            this.raiseErrorIf(terms.length !== 0, `Type ${tname} does not take type arguments`);
+            this.raiseErrorIf(terms.length !== 0, `Type ${rname} does not take type arguments`);
 
-            rtype = $TypeInfo.createSimpleNominal(tname);
+            rtype = $TypeInfo.createSimpleNominal(rname);
         }
 
         this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
@@ -865,45 +1052,122 @@ BSQON.prototype.parseUnionType = function (expectedOpt) {
     return rtype;
 }
 BSQON.prototype.parseType = function (expectedOpt) {
-    if(this.isFullMode()) {
-        let tt = this.peekToken();
-
-        if(tt.type === TOKEN_LBRACKET) {
-        }
-        else if(tt.type === TOKEN_LBRACE) {
-        }
-        else {
-            this.raiseErrorIf(tt.type !== TOKEN_TYPE, `Expected type: but got ${tt.value}`);
-        }
-    }
-    else if(this.isDefaultMode()) {
-        let tt = this.expectTokenAndPop(TOKEN_TYPE).value;
-        xxx;
-
-        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== tt, `Expected type: but got ${tt.value}`);
-        return tt;
+    if(!this.isJSONMode()) {
+       return this.parseType(expectedOpt);
     }
     else {
-        let tt = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
-        this.raiseErrorIf(!_s_nameTypeReChk.test(tt), `Expected type: but got ${tt}`);
+        this.raiseErrorIf(this.testToken(TOKEN_STRING), `Expected type: but got ${tt}`);
+        this.unquoteStringForTypeParse();
 
-        xxx;
-        return tt;
+        return this.parseType(expectedOpt);
     }
 }
-BSQON.prototype.parseSrc = function () {
+BSQON.prototype.parseSrc = function (oftype) {
     this.expectTokenAndPop(TOKEN_SRC);
 
     this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
-    return this.m_srcbind;
+    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, this.m_srcbind[1], oftype), `Reference ${ref} has type ${this.m_srcbind[1].ttag} which is not a subtype of ${oftype.ttag}`);
+    const rr = oftype.ttag === this.m_srcbind[1].ttag ? this.m_srcbind[0] : new $Runtime.UnionValue(this.m_srcbind[1], this.m_srcbind[0]);
+
+    return createParseResult(rr, oftype, this.m_srcbind[1]);
 }
-BSQON.prototype.parseReference = function () {
+BSQON.prototype.parseReference = function (oftype) {
     const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
 
     this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
-    return this.m_refs.get(ref);
-}
+    const rinfo = this.m_refs.get(ref);
 
+    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
+    const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
+    
+    return createParseResult(rr, oftype, rinfo[1]);
+}
+BSQON.prototype.parseBaseExpression = function (oftype) {
+    if(this.testToken(TOKEN_SRC)) {
+        return this.parseSrc(oftype);
+    }
+    else if(this.testToken(TOKEN_REFERENCE)) {
+        return this.parseReference(oftype);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_LPAREN);
+        const re = this.parseExpression(oftype);
+        this.expectTokenAndPop(TOKEN_RPAREN);
+
+        return re;
+    }
+}
+BSQON.prototype.parsePostfixOp = function (oftype) {
+    const bexp = this.parseBaseExpression(oftype);
+
+    let vv = bexp;
+    while(this.testToken(TOKEN_DOT_NAME) || this.testToken(TOKEN_DOT_IDX) || this.testToken(TOKEN_LBRACKET)) {
+        let aval = undefined;
+        let dtype = $TypeInfo.unresolvedType;
+        let einfo = $TypeInfo.unresolvedType;
+
+        if(this.testToken(TOKEN_DOT_NAME)) {
+            const iname = this.popToken().value.slice(1);
+            if(vv.einfo.tag === $TypeInfo.TYPE_RECORD) {
+                aval = (vv.decltype.tag === $TypeInfo.TYPE_RECORD) ? vv.value[iname] : vv.value.value[iname];
+                dtype = vv.decltype[iname];
+                einfo = vv.einfo[iname];
+            }
+            else if(vv.einfo.tag === $TypeInfo.TYPE_SIMPLE_ENTITY) {
+                aval = (vv.decltype.tag === $TypeInfo.TYPE_SIMPLE_ENTITY) ? vv.value[iname] : vv.value.value[iname];
+                dtype = vv.decltype[iname];
+                einfo = vv.einfo[iname];
+            }
+            else if(vv.einfo.tag === $TypeInfo.TYPE_MAP_ENTRY) {
+                this.raiseErrorIf(iname !== "key" && iname !== "value", `Expected 'key' or 'value' property access but got ${iname}`);
+
+                if(iname === "key") {
+                    aval = (vv.decltype.tag === $TypeInfo.TYPE_MAP_ENTRY) ? vv.value[0] : vv.value.value[0];
+                    dtype = vv.decltype.ktype;
+                    einfo = vv.einfo.ktype;
+                }
+                else if(iname === "value") {
+                    aval = (vv.decltype.tag === $TypeInfo.TYPE_MAP_ENTRY) ? vv.value[1] : vv.value.value[1];
+                    dtype = vv.decltype.vtype;
+                    einfo = vv.einfo.vtype;
+                }
+            }
+            else {
+                this.raiseError(`Invalid use of '.' operator -- ${vv[1].ttag} is not a record, nominal, or map entry type`);
+            }
+        }
+        else if(this.testToken(TOKEN_DOT_IDX)) {
+            const idx = Number.parseInt(this.expectTokenAndPop(TOKEN_DOT_IDX).slice(1));
+            
+        }
+        else {
+            if(vv.einfo.tag === $TypeInfo.TYPE_LIST) {
+                const eexp = this.parseExpression(xxxx);
+
+                xxxx;
+            }
+            //OTHER TYPES HERE
+            else {
+                this.raiseErrorIf(vv.einfo.tag !== $TypeInfo.TYPE_MAP_ENTRY, `Invalid use of '[]' operator -- ${vv.einfo.ttag} is not a map type`);
+
+                const eexp = this.parseExpression(vv.einfo.ktype);
+                xxxx;
+            }
+        }
+
+        vv = createParseResult(aval, dtype, einfo);
+    }
+        
+    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
+    const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
+    
+    return createParseResult(rr, oftype, rinfo[1]);
+
+    return vv;
+}
+BSQON.prototype.parseExpression = function (oftype) {
+    return this.parsePostfixOp(oftype);
+}
 
 
 
@@ -915,7 +1179,7 @@ BSQON.prototype.parseNone = function () {
     else {
         this.expectTokenAndPop(TOKEN_NULL);
     }
-    return null;
+    return [null, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "None")];
 }
 BSQON.prototype.parseNothing = function () {
     if(!this.isJSONMode()) {
@@ -924,11 +1188,11 @@ BSQON.prototype.parseNothing = function () {
     else {
         this.expectTokenAndPop(TOKEN_NULL);
     }
-    return null;
+    return [undefined, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Nothing")];
 }
 BSQON.prototype.parseBool = function () {
     const tk = this.popToken();
-    return tk.type === TOKEN_TRUE;
+    return [tk.type === TOKEN_TRUE, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Bool")];
 }
 BSQON.prototype.parseNat = function () {
     let tkval = undefined;
