@@ -276,11 +276,44 @@ function isUnionValueRepr(v) {
     return v instanceof UnionValue;
 }
 
+function keyEqualStrict(lval, rval) {
+    return keyEqualsBase(lval, rval);
+}
+
+function keyEqualMixed(uval, gval, oftype) {
+    if(gval.tkey !== oftype) {
+        return false;
+    }
+
+    return keyEqualsBase(uval, gval.value);
+}
+
+function keyEqualUnion(lval, rval) {
+    if(lval.tkey !== rval.tkey) {
+        return false;
+    }
+
+    return keyEqualsBase(lval.value, rval.value);
+}
+
+function keyLessStrict(lval, rval) {
+    return keyLessBase(lval, rval);
+}
+
+function keyLessUnion(lval, rval) {
+    if(lval.tkey !== rval.tkey) {
+        return lval.tkey < rval.tkey;
+    }
+
+    return keyLessBase(lval.value, rval.value);
+}
+
 export {
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
     UnionValue, isUnionValueRepr,
     keyEqualsBase, keyLessBase,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
-    safeMath, safeMathDiv, safeMathUnderflow
+    safeMath, safeMathDiv, safeMathUnderflow, 
+    keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion
 };

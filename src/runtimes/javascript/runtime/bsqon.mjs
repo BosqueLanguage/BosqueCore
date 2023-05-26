@@ -321,7 +321,7 @@ function getBSQONParseInfo(parseinfo) {
     return !Array.isArray(parseinfo) ? undefined : parseinfo[1];
 }
 
-function BSQON(defaultns, assembly, str, srcbind, mode) {
+function BSQONParse(defaultns, assembly, str, srcbind, mode) {
     this.m_parsemode = mode || PARSE_MODE_DEFAULT;
 
     this.m_defaultns = defaultns;
@@ -336,16 +336,16 @@ function BSQON(defaultns, assembly, str, srcbind, mode) {
     this.m_srcbind = srcbind; //a [value, type, ttree] where type is always a concrete type
     this.m_refs = new Map(); //maps from names to [value, type, ttree] where type is always a concrete type
 }
-BSQON.prototype.isDefaultMode = function () {
+BSQONParse.prototype.isDefaultMode = function () {
     return this.m_parsemode === PARSE_MODE_DEFAULT;
 }
-BSQON.prototype.isJSONMode = function () {
+BSQONParse.prototype.isJSONMode = function () {
     return this.m_parsemode === PARSE_MODE_JSON;
 }
-BSQON.prototype.isFullMode = function () {
+BSQONParse.prototype.isFullMode = function () {
     return this.m_parsemode === PARSE_MODE_FULL;
 }
-BSQON.prototype.lexWS = function () {
+BSQONParse.prototype.lexWS = function () {
     _s_whitespaceRe.lastIndex = this.m_cpos;
     const m = _s_whitespaceRe.exec(this.m_input);
     if (m === null) {
@@ -356,7 +356,7 @@ BSQON.prototype.lexWS = function () {
         return true;
     }
 }
-BSQON.prototype.lexComment = function () {
+BSQONParse.prototype.lexComment = function () {
     _s_commentRe.lastIndex = this.m_cpos;
     const m = _s_commentRe.exec(this.m_input);
     if (m === null) {
@@ -367,7 +367,7 @@ BSQON.prototype.lexComment = function () {
         return true;
     }
 }
-BSQON.prototype.lexBytebuff = function () {
+BSQONParse.prototype.lexBytebuff = function () {
     _s_bytebuffRe.lastIndex = this.m_cpos;
     const m = _s_bytebuffRe.exec(this.m_input);
     if (m === null) {
@@ -379,7 +379,7 @@ BSQON.prototype.lexBytebuff = function () {
         return true;
     }
 }
-BSQON.prototype.lexTimeInfo = function () {
+BSQONParse.prototype.lexTimeInfo = function () {
     _s_fullTimeRE.lastIndex = this.m_cpos;
     const ftm = _s_fullTimeRE.exec(this.m_input);
     if(ftm !== null) {
@@ -414,7 +414,7 @@ BSQON.prototype.lexTimeInfo = function () {
 
     return false;
 }
-BSQON.prototype.lexLogicalTime = function () {
+BSQONParse.prototype.lexLogicalTime = function () {
     _s_logicalTimeRE.lastIndex = this.m_cpos;
     const m = _s_logicalTimeRE.exec(this.m_input);
     if (m === null) {
@@ -426,7 +426,7 @@ BSQON.prototype.lexLogicalTime = function () {
         return true;
     }
 }
-BSQON.prototype.lexTickTime = function () {
+BSQONParse.prototype.lexTickTime = function () {
     _s_tickTimeRE.lastIndex = this.m_cpos;
     const m = _s_tickTimeRE.exec(this.m_input);
     if (m === null) {
@@ -438,7 +438,7 @@ BSQON.prototype.lexTickTime = function () {
         return true;
     }
 }
-BSQON.prototype.lexISOTimestamp = function () {
+BSQONParse.prototype.lexISOTimestamp = function () {
     _s_isostampRE.lastIndex = this.m_cpos;
     const m = _s_isostampRE.exec(this.m_input);
     if (m === null) {
@@ -450,7 +450,7 @@ BSQON.prototype.lexISOTimestamp = function () {
         return true;
     }
 }
-BSQON.prototype.lexUUID = function () {
+BSQONParse.prototype.lexUUID = function () {
     _s_uuidRE.lastIndex = this.m_cpos;
     const m = _s_uuidRE.exec(this.m_input);
     if (m === null) {
@@ -462,7 +462,7 @@ BSQON.prototype.lexUUID = function () {
         return true;
     }
 }
-BSQON.prototype.lexSHACode = function () {
+BSQONParse.prototype.lexSHACode = function () {
     _s_shahashRE.lastIndex = this.m_cpos;
     const m = _s_shahashRE.exec(this.m_input);
     if (m === null) {
@@ -474,7 +474,7 @@ BSQON.prototype.lexSHACode = function () {
         return true;
     }
 }
-BSQON.prototype.lexPath = function () {
+BSQONParse.prototype.lexPath = function () {
     _s_pathRe.lastIndex = this.m_cpos;
     const m = _s_pathRe.exec(this.m_input);
     if (m === null) {
@@ -486,7 +486,7 @@ BSQON.prototype.lexPath = function () {
         return true;
     }
 }
-BSQON.prototype.lexNumber = function () {
+BSQONParse.prototype.lexNumber = function () {
     if (this.isJSONMode()) {
         _s_intNumberinoRe.lastIndex = this.m_cpos;
         const inio = _s_intNumberinoRe.exec(this.m_input);
@@ -564,7 +564,7 @@ BSQON.prototype.lexNumber = function () {
 
     return false;
 }
-BSQON.prototype.lexString = function () {
+BSQONParse.prototype.lexString = function () {
     _s_stringRe.lastIndex = this.m_cpos;
     const ms = _s_stringRe.exec(this.m_input);
     if (ms !== null) {
@@ -601,7 +601,7 @@ BSQON.prototype.lexString = function () {
 
     return false;
 }
-BSQON.prototype.lexRegex = function () {
+BSQONParse.prototype.lexRegex = function () {
     _s_regexRe.lastIndex = this.m_cpos;
     const ms = _s_regexRe.exec(this.m_input);
     if (ms !== null) {
@@ -612,7 +612,7 @@ BSQON.prototype.lexRegex = function () {
 
     return false;
 }
-BSQON.prototype.lexSymbol = function () {
+BSQONParse.prototype.lexSymbol = function () {
     _s_symbolRe.lastIndex = this.m_cpos;
     const ms = _s_symbolRe.exec(this.m_input);
     if (ms !== null) {
@@ -626,7 +626,7 @@ BSQON.prototype.lexSymbol = function () {
 
     return false;
 }
-BSQON.prototype.lexName = function() {
+BSQONParse.prototype.lexName = function() {
     _s_nameSrcRe.lastIndex = this.m_cpos;
     const msrc = _s_nameSrcRe.exec(this.m_input);
     if(msrc !== null) {
@@ -661,7 +661,7 @@ BSQON.prototype.lexName = function() {
 
     return false;
 }
-BSQON.prototype.lexAccess = function() {
+BSQONParse.prototype.lexAccess = function() {
     _s_dotNameAccessRe.lastIndex = this.m_cpos;
     const dotname = _s_dotNameAccessRe.exec(this.m_input);
     if(doname !== null) {
@@ -680,7 +680,7 @@ BSQON.prototype.lexAccess = function() {
 
     return false;
 }
-BSQON.prototype.peekToken = function () {
+BSQONParse.prototype.peekToken = function () {
     if(this.m_lastToken !== undefined) {
         return this.m_lastToken;
     }
@@ -699,7 +699,7 @@ BSQON.prototype.peekToken = function () {
         return undefined;
     }
 }
-BSQON.prototype.popToken = function () {
+BSQONParse.prototype.popToken = function () {
     while(this.lexWS() || this.lexComment()) {
         ; //eat the token
     }
@@ -714,7 +714,7 @@ BSQON.prototype.popToken = function () {
         return undefined;
     }
 }
-BSQON.prototype.unquoteStringForTypeParse = function () {
+BSQONParse.prototype.unquoteStringForTypeParse = function () {
     const slen = this.m_lastToken.value.length;
     const str = " " + this.m_lastToken.value.slice(1, -1) + " ";
 
@@ -722,25 +722,25 @@ BSQON.prototype.unquoteStringForTypeParse = function () {
     this.m_str = this.m_str.slice(0, this.m_cpos) + str + this.m_str.slice(this.m_cpos + slen);
 }
 
-BSQON.prototype.testToken = function (tkind) {
+BSQONParse.prototype.testToken = function (tkind) {
     return this.peekToken() !== undefined && this.peekToken().type === tkind;
 }
-BSQON.prototype.raiseError = function (msg) {
+BSQONParse.prototype.raiseError = function (msg) {
     throw new BSQONParseError(msg, this.m_cpos);
 }
-BSQON.prototype.raiseErrorIf = function (cond, msg) {
+BSQONParse.prototype.raiseErrorIf = function (cond, msg) {
     if (cond) {
         this.raiseError(msg);
     }
 }
-BSQON.prototype.expectToken = function (tkind) {
+BSQONParse.prototype.expectToken = function (tkind) {
     this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()}`);
 }
-BSQON.prototype.expectTokenAndPop = function (tkind) {
+BSQONParse.prototype.expectTokenAndPop = function (tkind) {
     this.expectToken(tkind);
     return this.popToken();
 }
-BSQON.prototype.resolveTypeFromNameList = function (tt) {
+BSQONParse.prototype.resolveTypeFromNameList = function (tt) {
     let scopedname = "[uninit]";
 
     if(this.m_assembly.find((ns) => ns.ns === "Core").types.includes(tt.join("::"))) {
@@ -760,10 +760,10 @@ BSQON.prototype.resolveTypeFromNameList = function (tt) {
         return this.m_assembly.aliasmap.get(tt);
     }
 }
-BSQON.prototype.processCoreType = function (tname) {
+BSQONParse.prototype.processCoreType = function (tname) {
     return $TypeInfo.createSimpleNominal(tname);
 }
-BSQON.prototype.processCoreTypeW1Term = function (tname, terms, expectedOpt) {
+BSQONParse.prototype.processCoreTypeW1Term = function (tname, terms, expectedOpt) {
     if(tname === "StringOf") {
         this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
         return $TypeInfo.createStringOf(terms[0]);
@@ -859,7 +859,7 @@ BSQON.prototype.processCoreTypeW1Term = function (tname, terms, expectedOpt) {
         }
     }
 }
-BSQON.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOpt) {
+BSQONParse.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOpt) {
     if(tname === "Result::Ok") {
         return $TypeInfo.createOk(t1, t2);
     } 
@@ -903,7 +903,7 @@ BSQON.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOpt) {
         }
     }
 }
-BSQON.prototype.parseNominalType = function (expectedOpt) {
+BSQONParse.prototype.parseNominalType = function (expectedOpt) {
     let tnames = [this.expectTokenAndPop(TOKEN_TYPE).value];
     while(this.testToken(TOKEN_COLONCOLON)) {
         this.popToken();
@@ -955,7 +955,7 @@ BSQON.prototype.parseNominalType = function (expectedOpt) {
         return rtype;
     }
 }
-BSQON.prototype.parseTupleType = function (expectedOpt) {
+BSQONParse.prototype.parseTupleType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== $TypeInfo.TYPE_TUPLE, `Expected ${expectedOpt.ttag} type: but found tuple type`);
 
     let entries = [];
@@ -976,7 +976,7 @@ BSQON.prototype.parseTupleType = function (expectedOpt) {
 
     $TypeInfo.createTuple(entries);
 }
-BSQON.prototype.parseRecordType = function (expectedOpt) {
+BSQONParse.prototype.parseRecordType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== TYPE_RECORD, `Expected ${expectedOpt.ttag} type: but found record type`);
 
     let entries = {};
@@ -999,7 +999,7 @@ BSQON.prototype.parseRecordType = function (expectedOpt) {
 
     $TypeInfo.createRecord(entries);
 }
-BSQON.prototype.parseBaseType = function (expectedOpt) {
+BSQONParse.prototype.parseBaseType = function (expectedOpt) {
     let rtype = undefined;
 
     if(this.testToken(TOKEN_LBRACKET)) {
@@ -1022,7 +1022,7 @@ BSQON.prototype.parseBaseType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQON.prototype.parseConceptSetType = function (expectedOpt) {
+BSQONParse.prototype.parseConceptSetType = function (expectedOpt) {
     let rtype = undefined;
 
     const lt = this.parseBaseType();
@@ -1042,7 +1042,7 @@ BSQON.prototype.parseConceptSetType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQON.prototype.parseUnionType = function (expectedOpt) {
+BSQONParse.prototype.parseUnionType = function (expectedOpt) {
     let rtype = undefined;
 
     const lt = this.parseConceptSetType();
@@ -1062,7 +1062,7 @@ BSQON.prototype.parseUnionType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQON.prototype.parseType = function (expectedOpt) {
+BSQONParse.prototype.parseType = function (expectedOpt) {
     if(!this.isJSONMode()) {
        return this.parseType(expectedOpt);
     }
@@ -1073,7 +1073,7 @@ BSQON.prototype.parseType = function (expectedOpt) {
         return this.parseType(expectedOpt);
     }
 }
-BSQON.prototype.parseSrc = function (oftype, breq) {
+BSQONParse.prototype.parseSrc = function (oftype, breq) {
     this.expectTokenAndPop(TOKEN_SRC);
 
     this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
@@ -1082,7 +1082,7 @@ BSQON.prototype.parseSrc = function (oftype, breq) {
 
     return createBSQONParseResult(rr, this.m_srcbind[1], this.m_srcbind[2], breq);
 }
-BSQON.prototype.parseReference = function (oftype, breq) {
+BSQONParse.prototype.parseReference = function (oftype, breq) {
     const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
 
     this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
@@ -1093,7 +1093,7 @@ BSQON.prototype.parseReference = function (oftype, breq) {
     
     return createBSQONParseResult(rr, rinfo[1], rinfo[2], breq);
 }
-BSQON.prototype.parseBaseExpression = function (oftype, breq) {
+BSQONParse.prototype.parseBaseExpression = function (oftype, breq) {
     if(this.testToken(TOKEN_SRC)) {
         return this.parseSrc(oftype, breq);
     }
@@ -1108,7 +1108,7 @@ BSQON.prototype.parseBaseExpression = function (oftype, breq) {
         return re;
     }
 }
-BSQON.prototype.parsePostfixOp = function (oftype, breq) {
+BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
     const bexp = this.parseBaseExpression(oftype, true);
 
     let vv = bexp;
@@ -1141,7 +1141,7 @@ BSQON.prototype.parsePostfixOp = function (oftype, breq) {
                 }
             }
             else {
-                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseType(vv).ttag} is not a record, nominal, or map entry type`);
+                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a record, nominal, or map entry type`);
             }
         }
         else if(this.testToken(TOKEN_DOT_IDX)) {
@@ -1155,17 +1155,26 @@ BSQON.prototype.parsePostfixOp = function (oftype, breq) {
             ptype = getBSQONParseInfo(vv).ttree[idx];
         }
         else {
-            if(vv.einfo.tag === $TypeInfo.TYPE_LIST) {
-                const eexp = this.parseExpression(xxxx);
+            if(getBSQONParseInfo(vv).ctype.tag === $TypeInfo.TYPE_LIST) {
+                this.expectTokenAndPop(TOKEN_LBRACKET);
+                const eexp = this.parseExpression(this.m_assembly.types.get("Nat"), false);
+                this.expectTokenAndPop(TOKEN_RBRACKET);
 
-                xxxx;
+                const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+                aval = lrepr.get(eexp);
+                ptype = getBSQONParseInfo(vv).ttree[eexp];
             }
             //OTHER TYPES HERE
             else {
-                this.raiseErrorIf(vv.einfo.tag !== $TypeInfo.TYPE_MAP_ENTRY, `Invalid use of '[]' operator -- ${vv.einfo.ttag} is not a map type`);
+                this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_MAP, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a map type`);
 
-                const eexp = this.parseExpression(vv.einfo.ktype);
-                xxxx;
+                this.expectTokenAndPop(TOKEN_LBRACKET);
+                const eexp = this.parseExpression(getBSQONParseInfo(vv).ctype.ktype, false);
+                this.expectTokenAndPop(TOKEN_RBRACKET);
+                
+                const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+                aval = lrepr.get(eexp);
+                ptype = getBSQONParseInfo(vv).ttree.get(eexp);
             }
         }
 
@@ -1175,38 +1184,34 @@ BSQON.prototype.parsePostfixOp = function (oftype, breq) {
     this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, getBSQONParseInfo(vv).ctype, oftype), `Reference ${ref} has type ${getBSQONParseInfo(vv).ctype.ttag} which is not a subtype of ${oftype.ttag}`);
     const rr = oftype.ttag === getBSQONParseInfo(vv).ctype ? getBSQONParseValue(vv) : new $Runtime.UnionValue(getBSQONParseValue(vv), getBSQONParseInfo(vv).ctype); 
     
-    return createParseResult(rr, ...getBSQONParseInfo(vv), breq);
+    return createBSQONParseResult(rr, ...getBSQONParseInfo(vv), breq);
 }
-BSQON.prototype.parseExpression = function (oftype, breq) {
+BSQONParse.prototype.parseExpression = function (oftype, breq) {
     return this.parsePostfixOp(oftype, breq);
 }
-
-
-
-
-BSQON.prototype.parseNone = function () {
+BSQONParse.prototype.parseNone = function (breq) {
     if(!this.isJSONMode()) {
         this.expectTokenAndPop(TOKEN_NONE);
     }
     else {
         this.expectTokenAndPop(TOKEN_NULL);
     }
-    return [null, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "None")];
+    return createBSQONParseResult(null, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "None"), undefined, breq);
 }
-BSQON.prototype.parseNothing = function () {
+BSQONParse.prototype.parseNothing = function (breq) {
     if(!this.isJSONMode()) {
         this.expectTokenAndPop(TOKEN_NOTHING);
     }
     else {
         this.expectTokenAndPop(TOKEN_NULL);
     }
-    return [undefined, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Nothing")];
+    return createBSQONParseResult(undefined, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Nothing"), undefined, breq);
 }
-BSQON.prototype.parseBool = function () {
+BSQONParse.prototype.parseBool = function (breq) {
     const tk = this.popToken();
-    return [tk.type === TOKEN_TRUE, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Bool")];
+    return createBSQONParseResult(tk.type === TOKEN_TRUE, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Bool"), undefined, breq);
 }
-BSQON.prototype.parseNat = function () {
+BSQONParse.prototype.parseNat = function (breq) {
     let tkval = undefined;
     if(!this.isJSONMode()) {
         tkval = this.expectTokenAndPop(TOKEN_NAT).value.slice(0, -1);
@@ -1220,9 +1225,9 @@ BSQON.prototype.parseNat = function () {
     this.raiseErrorIf(bv < 0, `Nat value is negative -- ${tkval}`);
     this.raiseErrorIf(bv > $Constants.FIXED_NUMBER_MAX, `Nat value is larger than max value -- ${tkval}`);
 
-    return bv;
+    return createBSQONParseResult(bv, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Nat"), undefined, breq);
 }
-BSQON.prototype.parseInt = function () {
+BSQONParse.prototype.parseInt = function (breq) {
     let tkval = undefined;
     if(!this.isJSONMode()) {
         tkval = this.expectTokenAndPop(TOKEN_INT).value.slice(0, -1);
@@ -1236,9 +1241,9 @@ BSQON.prototype.parseInt = function () {
     this.raiseErrorIf(bv < $Constants.FIXED_NUMBER_MIN, `Int value is smaller than min value -- ${tkval}`);
     this.raiseErrorIf(bv > $Constants.FIXED_NUMBER_MAX, `Int value is larger than max value -- ${tkval}`);
     
-    return bv;
+    return createBSQONParseResult(bv, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Int"), undefined, breq);
 }
-BSQON.prototype.parseBigNat = function () {
+BSQONParse.prototype.parseBigNat = function (breq) {
     let tkval = undefined;
     if(!this.isJSONMode()) {
         tkval = this.expectTokenAndPop(TOKEN_BIGNAT).value.slice(0, -1);
@@ -1256,9 +1261,9 @@ BSQON.prototype.parseBigNat = function () {
         }
     }
 
-    return BigInt(tkval);
+    return createBSQONParseResult(BigInt(tkval), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "BigNat"), undefined, breq);
 }
-BSQON.prototype.parseBigInt = function () {
+BSQONParse.prototype.parseBigInt = function (breq) {
     let tkval = undefined;
     if(!this.isJSONMode()) {
         tkval = this.expectTokenAndPop(TOKEN_BIGNAT).value.slice(0, -1);
@@ -1276,224 +1281,224 @@ BSQON.prototype.parseBigInt = function () {
         }
     }
 
-    return BigInt(tkval);
+    return createBSQONParseResult(BigInt(tkval), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "BigInt"), undefined, breq);
 }
-BSQON.prototype.parseRational = function () {
+BSQONParse.prototype.parseRational = function (breq) {
+    let tkval = undefined;
     if(!this.isJSONMode()) {
-        const tkval = this.expectTokenAndPop(TOKEN_RATIONAL).value.slice(0, -1);
-        return Fraction(tkval);
+        tkval = this.expectTokenAndPop(TOKEN_RATIONAL).value.slice(0, -1);
     }
     else {
-        const tkval = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
+        tkval = this.expectTokenAndPop(TOKEN_STRING).value.slice(1, -1);
         this.raiseErrorIf(!_s_rationalCheckRe.test(tkval), `Expected float but got ${tkval}`);
-
-        return Fraction(tkval);
     }
+
+    return createBSQONParseResult(Fraction(tkval), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Rational"), undefined, breq);
 }
-BSQON.prototype.parseFloat = function () {
+BSQONParse.prototype.parseFloat = function (breq) {
+    let tkval = undefined;
     if(!this.isJSONMode()) {
-        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value.slice(0, -1);
-        return parseFloat(tkval);
+        tkval = this.expectTokenAndPop(TOKEN_FLOAT).value.slice(0, -1);
     }
     else {
-        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
+        tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
         this.raiseErrorIf(!_s_floatCheckRe.test(tkval), `Expected float but got ${tkval}`);
-
-        return parseFloat(tkval);
     }
+
+    return createBSQONParseResult(Number.parseFloat(tkval), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Float"), undefined, breq);
 }
-BSQON.prototype.parseDecimal = function () {
+BSQONParse.prototype.parseDecimal = function (breq) {
+    let tkval = undefined;
     if(!this.isJSONMode()) {
-        const tkval = this.expectTokenAndPop(TOKEN_DECIMAL).value.slice(0, -1);
-        return Decimal(tkval);
+        tkval = this.expectTokenAndPop(TOKEN_DECIMAL).value.slice(0, -1);
     }
     else {
-        const tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
-        this.raiseErrorIf(!_s_floatCheckRe.test(tkval), `Expected float but got ${tkval}`);
-
-        return Decimal(tkval);
+        tkval = this.expectTokenAndPop(TOKEN_FLOAT).value;
+        this.raiseErrorIf(!_s_floatCheckRe.test(tkval), `Expected decimal but got ${tkval}`);
     }
+
+    return createBSQONParseResult(Decimal(tkval), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Decimal"), undefined, breq);
 }
-BSQON.prototype.parseString = function () {
-    return this.expectTokenAndPop(TOKEN_STRING).value;
+BSQONParse.prototype.parseString = function () {
+    return createBSQONParseResult(this.expectTokenAndPop(TOKEN_STRING).value, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "String"), undefined, breq);
 }
-BSQON.prototype.parseAsciiString = function () {
+BSQONParse.prototype.parseASCIIString = function (breq) {
+    let tkval = undefined;
     if(!this.isJSONMode()) {
-        return this.expectTokenAndPop(TOKEN_ASCII_STRING).value.slice(6, -1);
+        tkval = this.expectTokenAndPop(TOKEN_ASCII_STRING).value.slice(6, -1);
     }
     else {
-        const ts = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_asciiStringCheckRe.test(ts), `Expected ASCII string but got ${ts}`);
-
-        return ts;
+        tkval = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_asciiStringCheckRe.test(tkval), `Expected ASCII string but got ${ts}`);
     }
+
+    return createBSQONParseResult(tkval, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "ASCIIString"), undefined, breq);
 }
-BSQON.prototype.parseByteBuffer = function () {
+BSQONParse.prototype.parseByteBuffer = function (breq) {
+    let tbval = undefined;
     if(!this.isJSONMode()) {
-        return this.expectTokenAndPop(TOKEN_BYTE_BUFFER).value.slice(3, -1);
+        tbval = this.expectTokenAndPop(TOKEN_BYTE_BUFFER).value.slice(3, -1);
     }
     else {
-        const tb = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_bytebuffCheckRe.test(tb), `Expected byte buffer but got ${tb}`);
-
-        return tb;
+        tbval = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_bytebuffCheckRe.test(tbval), `Expected byte buffer but got ${tb}`);
     }
+
+    return createBSQONParseResult(tbval, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "ByteBuffer"), undefined, breq);
 }
-BSQON.prototype.parseDateTime = function () {
+BSQONParse.prototype.parseDateTime = function (breq) {
+    let dd = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_ISO_DATE_TIME).value;
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
-
-        return dd;
     }
     else {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_fullTimeCheckRE.test(tk), `Expected date+time but got ${tk}`);
 
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
-
-        return dd;
     }
+
+    return createBSQONParseResult(dd, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "DateTime"), undefined, breq);
 }
-BSQON.prototype.parseUTCDateTime = function () {
+BSQONParse.prototype.parseUTCDateTime = function (breq) {
+    let dd = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_ISO_UTC_DATE_TIME).value;
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
-
-        return dd;
     }
     else {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_fullTimeUTCCheckRE.test(tk), `Expected UTC date+time but got ${tk}`);
 
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
-
-        return dd;
     }
+
+    return createBSQONParseResult(dd, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "UTCDateTime"), undefined, breq);
 }
-BSQON.prototype.parsePlainDate = function () {
+BSQONParse.prototype.parsePlainDate = function (breq) {
+    let dd = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_ISO_DATE).value;
-        const dd = generateDate(tk);
+        dd = generateDate(tk);
         this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
-
-        return dd;
     }
     else {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_dateOnlyCheckRE.test(tk), `Expected plain date but got ${tk}`);
 
-        const dd = generateDate(tk);
+        dd = generateDate(tk);
         this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
-
-        return dd;
     }
+
+    return createBSQONParseResult(dd, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "PlainDate"), undefined, breq);
 }
-BSQON.prototype.parsePlainTime = function () {
+BSQONParse.prototype.parsePlainTime = function (breq) {
+    let dd = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_ISO_TIME).value;
-        const dd = generateTime(tk);
+        dd = generateTime(tk);
         this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
-
-        return dd;
     }
     else {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_timeOnlyCheckRE.test(tk), `Expected plain time but got ${tk}`);
 
-        const dd = generateTime(tk);
+        dd = generateTime(tk);
         this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
-
-        return dd;
     }
+
+    return createBSQONParseResult(dd, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "PlainTime"), undefined, breq);
 }
-BSQON.prototype.parseTickTime = function () {
+BSQONParse.prototype.parseTickTime = function (breq) {
+    let tt = undefined;
     if(!this.isJSONMode()) {
-        const tt = this.expectTokenAndPop(TOKEN_TICK_TIME).value;
-        return new BigInt(tt.slice(0, -1));
+        tt = this.expectTokenAndPop(TOKEN_TICK_TIME).value.slice(0, -1);
     }
     else {
-        const tt = this.expectTokenAndPop(TOKEN_STRING).value;
+        tt = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_tickTimeCheckRE.test(tt), `Expected tick time but got ${tt}`);
-
-        return new BigInt(tt);
     }
+
+    return createBSQONParseResult(new BigInt(tt), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "TickTime"), undefined, breq);
 }
-BSQON.prototype.parseLogicalTime = function () {
+BSQONParse.prototype.parseLogicalTime = function (breq) {
+    let tt = undefined;
     if(!this.isJSONMode()) {
-        const tt = this.expectTokenAndPop(TOKEN_LOGICAL_TIME).value;
-        return new BigInt(tt.slice(0, -1));
+        tt = this.expectTokenAndPop(TOKEN_LOGICAL_TIME).value.slice(0, -1);
     }
     else {
         const tt = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_logicalTimeCheckRE.test(tt), `Expected logical time but got ${tt}`);
-
-        return new BigInt(tt);
     }
+
+    return createBSQONParseResult(new BigInt(tt), $TypeInfo.resolveTypeInAssembly(this.m_assembly, "LogicalTime"), undefined, breq);
 }
-BSQON.prototype.parseISOTimeStamp = function () {
+BSQONParse.prototype.parseISOTimeStamp = function (breq) {
+    let dd = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_ISO_TIMESTAMP).value;
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
-
-        return dd;
     }
     else {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         this.raiseErrorIf(!_s_isoStampCheckRE.test(tk), `Expected timestamp but got ${tk}`);
 
-        const dd = generateDateTime(tk);
+        dd = generateDateTime(tk);
         this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
-
-        return dd;
     }
+
+    return createBSQONParseResult(dd, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "ISOTimeStamp"), undefined, breq);
 }
-BSQON.prototype.parseUUIDv4 = function () {
+BSQONParse.prototype.parseUUIDv4 = function (breq) {
+    let uuid = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_UUID).value;
         this.raiseErrorIf(!tk.startsWith("uuid4{"), `Expected UUIDv4 but got ${tk}`);
 
-        return tk.slice(6, -1);
+        uuid = tk.slice(6, -1);
     }
     else {
-        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv4 but got ${tk}`);
-
-        return tk;
+        uuid = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv4 but got ${uuid}`);
     }
+
+    return createBSQONParseResult(uuid, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "UUIDv4"), undefined, breq);
 }
-BSQON.prototype.parseUUIDv7 = function () {
+BSQONParse.prototype.parseUUIDv7 = function (breq) {
+    let uuid = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_UUID).value;
         this.raiseErrorIf(!tk.startsWith("uuid7{"), `Expected UUIDv7 but got ${tk}`);
 
-        return tk.slice(6, -1);
+        uuid = tk.slice(6, -1);
     }
     else {
-        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv7 but got ${tk}`);
-
-        return tk;
+        uuid = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_uuidCheckRE.test(tk), `Expected UUIDv7 but got ${uuid}`);
     }
+
+    return createBSQONParseResult(uuid, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "UUIDv7"), undefined, breq);
 }
-BSQON.prototype.parseSHAContentHash = function () {
+BSQONParse.prototype.parseSHAContentHash = function (breq) {
+    let sh = undefined;
     if(!this.isJSONMode()) {
-        const tk = this.expectTokenAndPop(TOKEN_SHA_HASH).value;
-        return tk.slice(5, -1);
+        sh = this.expectTokenAndPop(TOKEN_SHA_HASH).value.slice(5, -1);
     }
     else {
-        const tk = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_shahashCheckRE.test(tk), `Expected SHA3 512 hash but got ${tk}`);
-
-        return tk;
+        sh = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_shahashCheckRE.test(tk), `Expected SHA3 512 hash but got ${sh}`);
     }
+
+    return createBSQONParseResult(sh, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "SHAContentHash"), undefined, breq);
 }
-BSQON.prototype.parseLatLongCoordinate = function () {
+BSQONParse.prototype.parseLatLongCoordinate = function (breq) {
+    let llc = undefined;
     if (!this.isJSONMode()) {
         const ttype = this.expectTokenAndPop(TOKEN_TYPE).value;
         this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
@@ -1504,7 +1509,7 @@ BSQON.prototype.parseLatLongCoordinate = function () {
         const long = this.parseFloat();
         this.expectTokenAndPop(TOKEN_RBRACE);
 
-        return $Runtime.BSQONLatLongCoordinate.create(lat, long);
+        llc = [lat, long];
     }
     else {
         this.expectTokenAndPop(TOKEN_LBRACKET);
@@ -1513,10 +1518,12 @@ BSQON.prototype.parseLatLongCoordinate = function () {
         const long = this.parseFloat();
         this.expectTokenAndPop(TOKEN_RBRACKET);
 
-        return $Runtime.BSQONLatLongCoordinate.create(lat, long);
+        llc = [lat, long];
     }
+
+    return createBSQONParseResult(llc, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "LatLongCoordinate"), undefined, breq);
 }
-BSQON.prototype.parseStringOf = function (ttype) {
+BSQONParse.prototype.parseStringOf = function (ttype, breq) {
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
         const vv = this.parseType
@@ -1527,11 +1534,11 @@ BSQON.prototype.parseStringOf = function (ttype) {
 
     }
 }
-BSQON.prototype.parseAsciiStringOf = function () {
+BSQONParse.prototype.parseASCIIStringOf = function (ttype, breq) {
     xxxx;
 }
 
 
 export {
-    BSQON, BSQONParseError
+    BSQONParse, BSQONParseError
 }

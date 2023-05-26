@@ -546,38 +546,38 @@ class BodyEmitter {
     }
 
     private emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): string {
-        return `($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyEqualStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyEqOneUniqueExpression(exp: TIRBinKeyEqOneUniqueExpression): string {
-        return `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
+        return `$Runtime.keyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
     }
     
     private emitBinKeyEqGeneralExpression(exp: TIRBinKeyEqGeneralExpression): string {
-        return `$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyEqualUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression, toplevel: boolean): string {
-        const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression, toplevel: boolean): string {
-        const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
+        const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
         return toplevel ? rr : "(" + rr + ")";
     }
     
     private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression, toplevel: boolean): string {
-        const rr = `!$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!$Runtime.keyEqualUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyUniqueLessExpression(exp: TIRBinKeyUniqueLessExpression): string {
-        return `($CoreLibs.$KeyLessOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyLessStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyGeneralLessExpression(exp: TIRBinKeyGeneralLessExpression): string {
-        return `$CoreLibs.$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyLessUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: TIRNumericEqExpression, toplevel: boolean): string {
@@ -946,22 +946,22 @@ class BodyEmitter {
 
     private emitIsEqualToLiteralExpression(exp: TIRIsEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
+            const rr = `$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
 
     private emitIsNotEqualToLiteralExpression(exp: TIRIsNotEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
+            const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
@@ -1049,12 +1049,12 @@ class BodyEmitter {
 
     private emitAsEqualToLiteralExpression(exp: TIRAsEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
+            const rr = `$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
@@ -1062,12 +1062,12 @@ class BodyEmitter {
 
     private emitAsNotEqualToLiteralExpression(exp: TIRAsNotEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
+            const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
             const bval = `((__expval__) => ${rr} ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }

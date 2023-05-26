@@ -92,7 +92,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.size; }`;
         }
         case "s_list_get": {
-            return `{ return ${func.invoke.params[0].name}.get(Number(${func.invoke.params[1].name})); }`;
+            return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
         }
         case "s_list_back": {
             return `{ return ${func.invoke.params[0].name}.last(); }`;
@@ -114,7 +114,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_list_has": {
             const oftype = func.invoke.tbinds.get("T") as TIRTypeKey;
-            const cmp = bemitter.typeEncodedAsUnion(oftype) ? `$CoreLibs.$KeyEqualGeneral` : `($CoreLibs.$KeyEqualOps.get("${oftype}"))`;
+            const cmp = bemitter.typeEncodedAsUnion(oftype) ? `$Runtime.keyEqualUnion` : `$Runime.keyEqualStrict`;
             return `{ return ${func.invoke.params[0].name}.some((e) => ${cmp}(e, ${func.invoke.params[1].name})); }`;
         }
         case "s_list_find_pred": {
@@ -189,13 +189,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.shift(); }`;
         }
         case "s_list_set": {
-            return `{ return ${func.invoke.params[0].name}.set(Number(${func.invoke.params[1].name}), ${func.invoke.params[2].name}); }`;
+            return `{ return ${func.invoke.params[0].name}.set(${func.invoke.params[1].name}, ${func.invoke.params[2].name}); }`;
         }
         case "s_list_insert": {
-            return `{ return ${func.invoke.params[0].name}.insert(Number(${func.invoke.params[1].name}), ${func.invoke.params[2].name}); }`;
+            return `{ return ${func.invoke.params[0].name}.insert(${func.invoke.params[1].name}, ${func.invoke.params[2].name}); }`;
         }
         case "s_list_remove": {
-            return `{ return ${func.invoke.params[0].name}.delete(Number(${func.invoke.params[1].name})); }`;
+            return `{ return ${func.invoke.params[0].name}.delete(${func.invoke.params[1].name}); }`;
         }
 
         case "s_list_keysort": {
@@ -204,12 +204,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             let gt: string = "[UNDEF]";
 
             if(ttype instanceof TIROOType) {
-                lt = `($CoreLibs.$KeyLessOps.get("${ttype.tkey}"))(a, b)`;
-                gt = `($CoreLibs.$KeyLessOps.get("${ttype.tkey}"))(b, a)`;
+                lt = `$Runtime.keyLessStrict(a, b)`;
+                gt = `$Runtime.keyLessStrict(b, a)`;
             }
             else {
-                lt = `$CoreLibs.$KeyLessGeneral(a, b)`;
-                gt = `$CoreLibs.$KeyLessGeneral(b, a)`;
+                lt = `$Runtime.keyLessUnion(a, b)`;
+                gt = `$Runtime.keyLessUnion(b, a)`;
             }
 
             return `{ return ${func.invoke.params[0].name}.sort((a, b) => { if(${lt}) return -1; else if(${gt}) return 1; else return 0; }); }`
