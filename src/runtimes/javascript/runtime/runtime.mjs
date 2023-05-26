@@ -272,10 +272,14 @@ UnionValue.create = function(tkey, value) {
     return Object.freeze(new UnionValue(tkey, value));
 }
 
+function isUnionValueRepr(v) {
+    return v instanceof UnionValue;
+}
+
 export {
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
-    UnionValue,
+    UnionValue, isUnionValueRepr,
     keyEqualsBase, keyLessBase,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     safeMath, safeMathDiv, safeMathUnderflow

@@ -306,8 +306,19 @@ function generateDateTime(dstr) {
     return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
 }
 
-function createParseResult(value, decltype, einfo) {
-    return {value: value, decltype: decltype, einfo: einfo};
+function createBSQONParseResult(value, type, ttree, breq) {
+    if(!breq) {
+        return value;
+    }
+    else {
+        return [value, {ctype: type, ttree: ttree}];
+    }
+}
+function getBSQONParseValue(parseinfo) {
+    return !Array.isArray(parseinfo) ? parseinfo : parseinfo[0];
+}
+function getBSQONParseInfo(parseinfo) {
+    return !Array.isArray(parseinfo) ? undefined : parseinfo[1];
 }
 
 function BSQON(defaultns, assembly, str, srcbind, mode) {
@@ -322,8 +333,8 @@ function BSQON(defaultns, assembly, str, srcbind, mode) {
 
     this.m_lastToken = undefined;
 
-    this.m_srcbind = srcbind; //a [value, type] where type is always a concrete type
-    this.m_refs = new Map(); //maps from names to [value, type] where type is always a concrete type
+    this.m_srcbind = srcbind; //a [value, type, ttree] where type is always a concrete type
+    this.m_refs = new Map(); //maps from names to [value, type, ttree] where type is always a concrete type
 }
 BSQON.prototype.isDefaultMode = function () {
     return this.m_parsemode === PARSE_MODE_DEFAULT;
@@ -1062,16 +1073,16 @@ BSQON.prototype.parseType = function (expectedOpt) {
         return this.parseType(expectedOpt);
     }
 }
-BSQON.prototype.parseSrc = function (oftype) {
+BSQON.prototype.parseSrc = function (oftype, breq) {
     this.expectTokenAndPop(TOKEN_SRC);
 
     this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
     this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, this.m_srcbind[1], oftype), `Reference ${ref} has type ${this.m_srcbind[1].ttag} which is not a subtype of ${oftype.ttag}`);
     const rr = oftype.ttag === this.m_srcbind[1].ttag ? this.m_srcbind[0] : new $Runtime.UnionValue(this.m_srcbind[1], this.m_srcbind[0]);
 
-    return createParseResult(rr, oftype, this.m_srcbind[1]);
+    return createBSQONParseResult(rr, this.m_srcbind[1], this.m_srcbind[2], breq);
 }
-BSQON.prototype.parseReference = function (oftype) {
+BSQON.prototype.parseReference = function (oftype, breq) {
     const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
 
     this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
@@ -1080,65 +1091,68 @@ BSQON.prototype.parseReference = function (oftype) {
     this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
     const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
     
-    return createParseResult(rr, oftype, rinfo[1]);
+    return createBSQONParseResult(rr, rinfo[1], rinfo[2], breq);
 }
-BSQON.prototype.parseBaseExpression = function (oftype) {
+BSQON.prototype.parseBaseExpression = function (oftype, breq) {
     if(this.testToken(TOKEN_SRC)) {
-        return this.parseSrc(oftype);
+        return this.parseSrc(oftype, breq);
     }
     else if(this.testToken(TOKEN_REFERENCE)) {
-        return this.parseReference(oftype);
+        return this.parseReference(oftype, breq);
     }
     else {
         this.expectTokenAndPop(TOKEN_LPAREN);
-        const re = this.parseExpression(oftype);
+        const re = this.parseExpression(oftype, breq);
         this.expectTokenAndPop(TOKEN_RPAREN);
 
         return re;
     }
 }
-BSQON.prototype.parsePostfixOp = function (oftype) {
-    const bexp = this.parseBaseExpression(oftype);
+BSQON.prototype.parsePostfixOp = function (oftype, breq) {
+    const bexp = this.parseBaseExpression(oftype, true);
 
     let vv = bexp;
     while(this.testToken(TOKEN_DOT_NAME) || this.testToken(TOKEN_DOT_IDX) || this.testToken(TOKEN_LBRACKET)) {
         let aval = undefined;
-        let dtype = $TypeInfo.unresolvedType;
-        let einfo = $TypeInfo.unresolvedType;
+        let ptype = undefined;
 
         if(this.testToken(TOKEN_DOT_NAME)) {
             const iname = this.popToken().value.slice(1);
-            if(vv.einfo.tag === $TypeInfo.TYPE_RECORD) {
-                aval = (vv.decltype.tag === $TypeInfo.TYPE_RECORD) ? vv.value[iname] : vv.value.value[iname];
-                dtype = vv.decltype[iname];
-                einfo = vv.einfo[iname];
+            const vval = getBSQONParseValue(vv);
+
+            if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_RECORD) {
+                aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
+                ptype = getBSQONParseInfo(vv).ttree[iname];
             }
-            else if(vv.einfo.tag === $TypeInfo.TYPE_SIMPLE_ENTITY) {
-                aval = (vv.decltype.tag === $TypeInfo.TYPE_SIMPLE_ENTITY) ? vv.value[iname] : vv.value.value[iname];
-                dtype = vv.decltype[iname];
-                einfo = vv.einfo[iname];
+            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SIMPLE_ENTITY) {
+                aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
+                ptype = getBSQONParseInfo(vv).ttree[iname];
             }
-            else if(vv.einfo.tag === $TypeInfo.TYPE_MAP_ENTRY) {
+            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_MAP_ENTRY) {
                 this.raiseErrorIf(iname !== "key" && iname !== "value", `Expected 'key' or 'value' property access but got ${iname}`);
 
                 if(iname === "key") {
-                    aval = (vv.decltype.tag === $TypeInfo.TYPE_MAP_ENTRY) ? vv.value[0] : vv.value.value[0];
-                    dtype = vv.decltype.ktype;
-                    einfo = vv.einfo.ktype;
+                    $TypeInfo.isUnionValueRepr(vval) ? vval[0] : vval.value[0];
+                    ptype = getBSQONParseInfo(vv).ttree[0];
                 }
                 else if(iname === "value") {
-                    aval = (vv.decltype.tag === $TypeInfo.TYPE_MAP_ENTRY) ? vv.value[1] : vv.value.value[1];
-                    dtype = vv.decltype.vtype;
-                    einfo = vv.einfo.vtype;
+                    $TypeInfo.isUnionValueRepr(vval) ? vval[1] : vval.value[1];
+                    ptype = getBSQONParseInfo(vv).ttree[1];
                 }
             }
             else {
-                this.raiseError(`Invalid use of '.' operator -- ${vv[1].ttag} is not a record, nominal, or map entry type`);
+                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseType(vv).ttag} is not a record, nominal, or map entry type`);
             }
         }
         else if(this.testToken(TOKEN_DOT_IDX)) {
+            this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_TUPLE, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a tuple type`);
+
             const idx = Number.parseInt(this.expectTokenAndPop(TOKEN_DOT_IDX).slice(1));
+            const tuprepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
             
+            this.raiseErrorIf(idx >= tuprepr.length, `Invalid use of '[]' operator -- index ${idx} is out of bounds for tuple type ${getBSQONParseInfo(vv).ctype.ttag}`);
+            aval = tuprepr[idx];
+            ptype = getBSQONParseInfo(vv).ttree[idx];
         }
         else {
             if(vv.einfo.tag === $TypeInfo.TYPE_LIST) {
@@ -1155,18 +1169,16 @@ BSQON.prototype.parsePostfixOp = function (oftype) {
             }
         }
 
-        vv = createParseResult(aval, dtype, einfo);
+        vv = createBSQONParseResult(aval, ptype.ctype, ptype.ttree, true);
     }
         
-    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
-    const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
+    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, getBSQONParseInfo(vv).ctype, oftype), `Reference ${ref} has type ${getBSQONParseInfo(vv).ctype.ttag} which is not a subtype of ${oftype.ttag}`);
+    const rr = oftype.ttag === getBSQONParseInfo(vv).ctype ? getBSQONParseValue(vv) : new $Runtime.UnionValue(getBSQONParseValue(vv), getBSQONParseInfo(vv).ctype); 
     
-    return createParseResult(rr, oftype, rinfo[1]);
-
-    return vv;
+    return createParseResult(rr, ...getBSQONParseInfo(vv), breq);
 }
-BSQON.prototype.parseExpression = function (oftype) {
-    return this.parsePostfixOp(oftype);
+BSQON.prototype.parseExpression = function (oftype, breq) {
+    return this.parsePostfixOp(oftype, breq);
 }
 
 
