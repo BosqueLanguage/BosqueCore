@@ -31,6 +31,15 @@ function raiseUserAssertIf(cond, msg) {
     }
 }
 
+function acceptsString(re, str) {
+    const jsre = RegExp(re);
+
+    const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
+    const nfa = NFA.fromRegex(expression, { maxCharacter });
+
+    return nfa.test(Words.fromStringToUnicode(str));
+}
+
 function safeMath(val, lb, ub) {
     raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
     return val;
@@ -314,6 +323,7 @@ export {
     UnionValue, isUnionValueRepr,
     keyEqualsBase, keyLessBase,
     Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
+    acceptsString,
     safeMath, safeMathDiv, safeMathUnderflow, 
     keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion
 };

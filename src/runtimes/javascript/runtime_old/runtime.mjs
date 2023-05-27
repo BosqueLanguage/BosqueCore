@@ -42,15 +42,6 @@ function BSQEnvironment(env, ...args) {
     }
 }
 
-function acceptsString(re, str) {
-    const jsre = RegExp(re);
-
-    const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
-    const nfa = NFA.fromRegex(expression, { maxCharacter });
-
-    return nfa.test(Words.fromStringToUnicode(str));
-}
-
 BSQEnvironment.push = function(env) {
     return new BSQEnvironment(env);
 };

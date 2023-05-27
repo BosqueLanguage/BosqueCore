@@ -25,6 +25,8 @@ const TYPE_MAP = "Map";
 const TYPE_CONCEPT_SET = "ConceptSet";
 const TYPE_UNION = "UnionType";
 
+const AMBIG_TYPES = new Set([TYPE_SIMPLE_CONCEPT, TYPE_OPTION, TYPE_RESULT, TYPE_CONCEPT_SET, TYPE_UNION]);
+
 const RE_VALIDATOR_DECL = "StringValidator";
 const PATH_VALIDATOR_DECL = "PathValidator";
 
@@ -163,7 +165,7 @@ function createAssemblyInfo(namespaces, typerefs, rechks, pthchks, sdecls, edecl
 
     let revalidators = new Map();
     rechks.forEach((vv) => {
-        revalidators.set(vv.type.ttag, vv);
+        revalidators.set(vv.type.ttag, [vv, new RegExp("^" + vv+ "$")]);
     });
 
     let pthvalidators = new Map();
@@ -206,6 +208,10 @@ function createAssemblyInfo(namespaces, typerefs, rechks, pthchks, sdecls, edecl
 
 function resolveTypeInAssembly(asm, tname) {
     return asm.typerefs.has(tname) ?? unresolvedType;
+}
+
+function isTypeUniquelyResolvable(ttype) {
+    return !AMBIG_TYPES.has(ttype.tag);
 }
 
 function checkSubtype(asm, t, oftype) {
@@ -258,5 +264,5 @@ export {
     createEntityDecl, createEnumDecl, createTypedeclDecl, createConceptDecl,
     createNamespace,
     createAssemblyInfo,
-    resolveTypeInAssembly, checkSubtype
+    resolveTypeInAssembly, isTypeUniquelyResolvable, checkSubtype
 }

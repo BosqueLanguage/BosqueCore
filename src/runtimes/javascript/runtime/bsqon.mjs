@@ -12,6 +12,9 @@ const TOKEN_NONE = "none";
 const TOKEN_NOTHING = "nothing";
 const TOKEN_TYPE = "type";
 const TOKEN_UNDER = "_";
+const TOKEN_SOMETHING = "something";
+const TOKEN_OK = "ok";
+const TOKEN_ERR = "err";
 
 const TOKEN_LBRACE = "{";
 const TOKEN_RBRACE = "}";
@@ -101,7 +104,7 @@ const _s_shahashRE = /sha3\{0x[a-z0-9]{128}\}/y;
 const _s_uuidCheckRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/;
 const _s_shahashCheckRE = /^0x[a-z0-9]{128}$/;
 
-const _s_pathRe = /(path|fragment|glob)\{[^\}]*\}/uy;
+const _s_pathRe = /(path|fragment|glob)\[[a-zA-Z0-9_:]\]\{[^\}]*\}/uy;
 
 const _s_intRe = /(0|-?[1-9][0-9]*)i/y;
 const _s_natRe = /(0|[1-9][0-9]*)n/y;
@@ -122,6 +125,7 @@ const _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
 const _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
 const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
+const _s_regexCheckRe = /^\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\/$/y;
 
 const _s_symbolRe = /[\W]+/y;
 const _s_nameSrcRe = /[$]src/y;
@@ -145,6 +149,9 @@ const SymbolStrings = [
     TOKEN_NOTHING,
     TOKEN_TYPE,
     TOKEN_UNDER,
+    TOKEN_SOMETHING,
+    TOKEN_OK,
+    TOKEN_ERR,
 
     TOKEN_LBRACE,
     TOKEN_RBRACE,
@@ -164,9 +171,9 @@ const SymbolStrings = [
     TOKEN_LET
 ];
 
-const PARSE_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
-const PARSE_MODE_JSON = "BSQ_OBJ_NOTATION_JSON";
-const PARSE_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
+const NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
+const NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON";
+const NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL";
 
 const _s_core_types = [
     "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
@@ -320,9 +327,15 @@ function getBSQONParseValue(parseinfo) {
 function getBSQONParseInfo(parseinfo) {
     return !Array.isArray(parseinfo) ? undefined : parseinfo[1];
 }
+function getBSQONParseInfoCType(parseinfo) {
+    return !Array.isArray(parseinfo) ? undefined : parseinfo[1].ctype;
+}
+function getBSQONParseInfoTTree(parseinfo) {
+    return !Array.isArray(parseinfo) ? undefined : parseinfo[1].ttree;
+}
 
 function BSQONParse(defaultns, assembly, str, srcbind, mode) {
-    this.m_parsemode = mode || PARSE_MODE_DEFAULT;
+    this.m_parsemode = mode ?? NOTATION_MODE_DEFAULT;
 
     this.m_defaultns = defaultns;
     this.m_assembly = assembly;
@@ -337,13 +350,13 @@ function BSQONParse(defaultns, assembly, str, srcbind, mode) {
     this.m_refs = new Map(); //maps from names to [value, type, ttree] where type is always a concrete type
 }
 BSQONParse.prototype.isDefaultMode = function () {
-    return this.m_parsemode === PARSE_MODE_DEFAULT;
+    return this.m_parsemode === NOTATION_MODE_DEFAULT;
 }
 BSQONParse.prototype.isJSONMode = function () {
-    return this.m_parsemode === PARSE_MODE_JSON;
+    return this.m_parsemode === NOTATION_MODE_JSON;
 }
 BSQONParse.prototype.isFullMode = function () {
-    return this.m_parsemode === PARSE_MODE_FULL;
+    return this.m_parsemode === NOTATION_MODE_FULL;
 }
 BSQONParse.prototype.lexWS = function () {
     _s_whitespaceRe.lastIndex = this.m_cpos;
@@ -1128,6 +1141,12 @@ BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
                 aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
                 ptype = getBSQONParseInfo(vv).ttree[iname];
             }
+            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SOMETHING) {
+                this.raiseErrorIf(iname !== "value", `Expected 'value' property access but got ${iname}`);
+
+                aval = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+                ptype = getBSQONParseInfo(vv).ttree[0];
+            }
             else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_MAP_ENTRY) {
                 this.raiseErrorIf(iname !== "key" && iname !== "value", `Expected 'key' or 'value' property access but got ${iname}`);
 
@@ -1141,7 +1160,7 @@ BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
                 }
             }
             else {
-                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a record, nominal, or map entry type`);
+                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a record, nominal, option/something, or map entry type`);
             }
         }
         else if(this.testToken(TOKEN_DOT_IDX)) {
@@ -1184,7 +1203,7 @@ BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
     this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, getBSQONParseInfo(vv).ctype, oftype), `Reference ${ref} has type ${getBSQONParseInfo(vv).ctype.ttag} which is not a subtype of ${oftype.ttag}`);
     const rr = oftype.ttag === getBSQONParseInfo(vv).ctype ? getBSQONParseValue(vv) : new $Runtime.UnionValue(getBSQONParseValue(vv), getBSQONParseInfo(vv).ctype); 
     
-    return createBSQONParseResult(rr, ...getBSQONParseInfo(vv), breq);
+    return createBSQONParseResult(rr, getBSQONParseInfoCType(vv), getBSQONParseInfoTTree(vv), breq);
 }
 BSQONParse.prototype.parseExpression = function (oftype, breq) {
     return this.parsePostfixOp(oftype, breq);
@@ -1492,10 +1511,22 @@ BSQONParse.prototype.parseSHAContentHash = function (breq) {
     }
     else {
         sh = this.expectTokenAndPop(TOKEN_STRING).value;
-        this.raiseErrorIf(!_s_shahashCheckRE.test(tk), `Expected SHA3 512 hash but got ${sh}`);
+        this.raiseErrorIf(!_s_shahashCheckRE.test(tk), `Expected SHA 512 hash but got ${sh}`);
     }
 
     return createBSQONParseResult(sh, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "SHAContentHash"), undefined, breq);
+}
+BSQONParse.prototype.parseRegex = function (breq) {
+    let re = undefined;
+    if(!this.isJSONMode()) {
+        re = this.expectTokenAndPop(TOKEN_REGEX).value;
+    }
+    else {
+        re = this.expectTokenAndPop(TOKEN_STRING).value;
+        this.raiseErrorIf(!_s_regexCheckRe.test(re), `Expected a regex string but got ${re}`);
+    }
+
+    return createBSQONParseResult(re, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Regex"), undefined, breq);
 }
 BSQONParse.prototype.parseLatLongCoordinate = function (breq) {
     let llc = undefined;
@@ -1524,21 +1555,178 @@ BSQONParse.prototype.parseLatLongCoordinate = function (breq) {
     return createBSQONParseResult(llc, $TypeInfo.resolveTypeInAssembly(this.m_assembly, "LatLongCoordinate"), undefined, breq);
 }
 BSQONParse.prototype.parseStringOf = function (ttype, breq) {
+    let sval = undefined;
     if(!this.isJSONMode()) {
         const tk = this.expectTokenAndPop(TOKEN_STRING).value;
-        const vv = this.parseType
-
-        return tk.slice(7, -1);
+        const st = this.parseType(ttype.oftype);
+        this.raiseErrorIf(st.ttag !== ttype.oftype.ttag, `Expected ${ttype.tag} but got StringOf<${st.ttag}>`);
+        
+        sval = tk;
     }
     else {
-
+        sval = this.expectTokenAndPop(TOKEN_STRING).value;
     }
+
+    const vre = this.m_assembly.revalidators.get(ttype.oftype.ttag);
+    this.raiseErrorIf(!$Runtime.acceptsString(vre[1], sval), `String literal does not satisfy the required format: ${ttype.oftype.ttag} (${vre[0]})`);
+
+    return createBSQONParseResult(sval, ttype, undefined, breq);
 }
 BSQONParse.prototype.parseASCIIStringOf = function (ttype, breq) {
-    xxxx;
+    let sval = undefined;
+    if(!this.isJSONMode()) {
+        const tk = this.expectTokenAndPop(TOKEN_ASCII_STRING).value;
+        const st = this.parseType(ttype.oftype);
+        this.raiseErrorIf(st.ttag !== ttype.oftype.ttag, `Expected ${ttype.tag} but got ASCIIStringOf<${st.ttag}>`);
+        
+        sval = tk.slice(6, -1);
+    }
+    else {
+        sval = this.expectTokenAndPop(TOKEN_STRING).value;
+    }
+
+    const vre = this.m_assembly.revalidators.get(ttype.oftype.ttag);
+    this.raiseErrorIf(!$Runtime.acceptsString(vre[1], sval), `String literal does not satisfy the required format: ${ttype.oftype.ttag} (${vre[0]})`);
+
+    return createBSQONParseResult(sval, ttype, undefined, breq);
+}
+BSQONParse.prototype.parsePath = function (ttype, breq) {
+    this.raiseError("NOT IMPLEMENTED: PATH");
+    /*
+    let pth = undefined;
+    if(!this.isJSONMode()) {
+        const ptk = this.expectTokenAndPop(TOKEN_PATH_ITEM).value;
+    }
+    else {
+        const ptk = this.expectTokenAndPop(TOKEN_STRING).value;
+    }
+    */
+}
+BSQONParse.prototype.parsePathFragment = function (ttype, breq) {
+    this.raiseError("NOT IMPLEMENTED: PATH FRAGMENT");
+}
+BSQONParse.prototype.parsePathGlob = function (ttype, breq) {
+    this.raiseError("NOT IMPLEMENTED: PATH GLOB");
+}
+BSQONParse.prototype.parseSomething = function (ttype, breq) {
+    let vv = undefined;
+    if(!this.isJSONMode()) {
+        if(this.isFullMode()) {
+            const stype = this.parseType();
+            this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+
+            this.expectTokenAndPop(TOKEN_LBRACE);
+            vv = this.parseValue(ttype.oftype, breq);
+            this.expectTokenAndPop(TOKEN_RBRACE);
+        }
+        else {
+            if(this.testToken(TOKEN_SOMETHING)) {    
+                this.expectTokenAndPop(TOKEN_LPAREN);
+                vv = this.parseValue(ttype.oftype, breq);
+                this.expectTokenAndPop(TOKEN_RPAREN);
+            }
+            else {
+                const stype = this.parseType();
+                this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+    
+                this.expectTokenAndPop(TOKEN_LBRACE);
+                vv = this.parseValue(ttype.oftype, breq);
+                this.expectTokenAndPop(TOKEN_RBRACE);
+            }
+        }
+    }
+    else {
+        vv = this.parseValue(ttype.oftype, breq);
+    }
+
+    return createBSQONParseResult(getBSQONParseValue(vv), ttype, [getBSQONParseInfoTTree(vv)], breq)
+}
+BSQONParse.prototype.parseOption = function (ttype, breq) {
+    if(!this.isJSONMode()) {
+        let vv = undefined;
+        let sstype = $TypeInfo.unresolvedType;
+        if(this.testToken(TOKEN_NOTHING)) {
+            sstype = $Runtime.resolveTypeInAssembly(this.m_assembly, "Nothing");
+            vv = this.parseNothing(breq);
+        }
+        else {
+            sstype = this.m_assembly.types.get(`Something<${ttype.oftype}>`);
+            vv = this.parseSomething(sstype, breq);
+        }
+
+        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, getBSQONParseInfoTTree(vv), breq);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_LBRACKET);
+        const sstype = this.parseType();
+
+        this.raiseErrorIf(!$Runtime.isTypeUniquelyResolvable(sstype), `Type ${sstype.ttag} is not unique type for parsing`);
+        const vv = this.parseValue(sstype, breq);
+        this.expectTokenAndPop(TOKEN_RBRACKET);
+
+        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, getBSQONParseInfoTTree(vv), breq)
+    }
+}
+BSQONParse.prototype.parseOk = function (ttype, breq) {
+}
+BSQONParse.prototype.parseErr = function (ttype, breq) {
+}
+BSQONParse.prototype.parseResult = function (ttype, breq) {
+}
+BSQONParse.prototype.parseMapEntry = function (ttype, breq) {
+}
+
+BSQONParse.prototype.parseTuple = function (ttype, breq) {
+}
+BSQONParse.prototype.parseRecord = function (ttype, breq) {
+}
+BSQONParse.prototype.parseEnum = function (ttype, breq) {
+}
+BSQONParse.prototype.parseTypedecl = function (ttype, breq) {
+}
+
+BSQONParse.prototype.parseStdEntity = function (ttype, breq) {
+}
+BSQONParse.prototype.parseList = function (ttype, breq) {
+}
+BSQONParse.prototype.parseStack = function (ttype, breq) {
+}
+BSQONParse.prototype.parseQueue = function (ttype, breq) {
+}
+BSQONParse.prototype.parseSet = function (ttype, breq) {
+}
+BSQONParse.prototype.parseMap = function (ttype, breq) {
 }
 
 
+BSQONParse.prototype.parseConcept = function (ttype, breq) {
+}
+BSQONParse.prototype.parseConceptSet = function (ttype, breq) {
+}
+BSQONParse.prototype.parseUnion = function (ttype, breq) {
+}
+
+BSQONParse.prototype.parseValue = function (ttype, breq) {
+}
+
+function BSQONEmit(mode) {
+    this.m_emitmode = mode ?? NOTATION_MODE_DEFAULT;
+}
+BSQONEmit.prototype.isDefaultMode = function () {
+    return this.m_emitmode === NOTATION_MODE_DEFAULT;
+}
+BSQONEmit.prototype.isJSONMode = function () {
+    return this.m_emitmode === NOTATION_MODE_JSON;
+}
+BSQONEmit.prototype.isFullMode = function () {
+    return this.m_emitmode === NOTATION_MODE_FULL;
+}
+BSQONEmit.prototype.emitNone = function() {
+
+}
+
 export {
-    BSQONParse, BSQONParseError
+    NOTATION_MODE_DEFAULT, NOTATION_MODE_JSON, NOTATION_MODE_FULL,
+    BSQONParse, BSQONParseError,
+    BSQONEmit
 }
