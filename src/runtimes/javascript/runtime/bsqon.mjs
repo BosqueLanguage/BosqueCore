@@ -22,6 +22,8 @@ const TOKEN_LBRACKET = "[";
 const TOKEN_RBRACKET = "]";
 const TOKEN_LPAREN = "(";
 const TOKEN_RPAREN = ")";
+const TOKEN_RLET = "{|";
+const TOKEN_LLET = "|}";
 const TOKEN_LANGLE = "<";
 const TOKEN_RANGLE = ">";
 const TOKEN_COLON = ":";
@@ -29,8 +31,11 @@ const TOKEN_COLON_COLON = "::";
 const TOKEN_COMMA = ",";
 const TOKEN_AMP = "&";
 const TOKEN_BAR = "|";
+const TOKEN_ENTRY = "=>";
+const TOKEN_LDOTS = "...";
 const TOKEN_EQUALS = "=";
 const TOKEN_LET = "let";
+const TOKEN_IN = "in";
 
 const TOKEN_SRC = "$SRC";
 const TOKEN_REFERENCE = "#REF";
@@ -104,6 +109,7 @@ const _s_shahashRE = /sha3\{0x[a-z0-9]{128}\}/y;
 const _s_uuidCheckRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/;
 const _s_shahashCheckRE = /^0x[a-z0-9]{128}$/;
 
+//TODO: needs support for the [TYPE] part and impl
 const _s_pathRe = /(path|fragment|glob)\[[a-zA-Z0-9_:]\]\{[^\}]*\}/uy;
 
 const _s_intRe = /(0|-?[1-9][0-9]*)i/y;
@@ -161,14 +167,19 @@ const SymbolStrings = [
     TOKEN_RPAREN,
     TOKEN_LANGLE, 
     TOKEN_RANGLE,
+    TOKEN_RLET,
+    TOKEN_LLET,
 
     TOKEN_COLON,
     TOKEN_COLON_COLON,
     TOKEN_AMP,
     TOKEN_BAR,
+    TOKEN_ENTRY,
+    TOKEN_LDOTS,
     TOKEN_COMMA,
     TOKEN_EQUALS,
-    TOKEN_LET
+    TOKEN_LET,
+    TOKEN_IN
 ];
 
 const NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT";
@@ -1639,18 +1650,18 @@ BSQONParse.prototype.parseSomething = function (ttype, breq) {
         vv = this.parseValue(ttype.oftype, breq);
     }
 
-    return createBSQONParseResult(getBSQONParseValue(vv), ttype, [getBSQONParseInfoTTree(vv)], breq)
+    return createBSQONParseResult(getBSQONParseValue(vv), ttype, [getBSQONParseInfoTTree(vv)], breq);
 }
 BSQONParse.prototype.parseOption = function (ttype, breq) {
     if(!this.isJSONMode()) {
         let vv = undefined;
         let sstype = $TypeInfo.unresolvedType;
         if(this.testToken(TOKEN_NOTHING)) {
-            sstype = $Runtime.resolveTypeInAssembly(this.m_assembly, "Nothing");
-            vv = this.parseNothing(breq);
+            sstype = $TypeInfo.resolveTypeInAssembly(this.m_assembly, "Nothing");
+            vv = this.parseNothing(sstype, breq);
         }
         else {
-            sstype = this.m_assembly.types.get(`Something<${ttype.oftype}>`);
+            sstype = $TypeInfo.resolveTypeInAssembly(this.m_assembly, `Something<${ttype.oftype}>`);
             vv = this.parseSomething(sstype, breq);
         }
 
@@ -1661,22 +1672,152 @@ BSQONParse.prototype.parseOption = function (ttype, breq) {
         const sstype = this.parseType();
 
         this.raiseErrorIf(!$Runtime.isTypeUniquelyResolvable(sstype), `Type ${sstype.ttag} is not unique type for parsing`);
+        this.raiseErrorIf(stype.ttag !== "Nothing" && stype.ttag !== `Something<${ttype.oftype}>`, `Type ${sstype.ttag} is not a valid subtype of Option<T>`);
+
         const vv = this.parseValue(sstype, breq);
         this.expectTokenAndPop(TOKEN_RBRACKET);
 
-        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, getBSQONParseInfoTTree(vv), breq)
+        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, getBSQONParseInfoTTree(vv), breq);
     }
 }
 BSQONParse.prototype.parseOk = function (ttype, breq) {
+    let vv = undefined;
+    if(!this.isJSONMode()) {
+        if(this.isFullMode()) {
+            const stype = this.parseType();
+            this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+
+            this.expectTokenAndPop(TOKEN_LBRACE);
+            vv = this.parseValue(ttype.ttype, breq);
+            this.expectTokenAndPop(TOKEN_RBRACE);
+        }
+        else {
+            if(this.testToken(TOKEN_OK)) {    
+                this.expectTokenAndPop(TOKEN_LPAREN);
+                vv = this.parseValue(ttype.ttype, breq);
+                this.expectTokenAndPop(TOKEN_RPAREN);
+            }
+            else {
+                const stype = this.parseType();
+                this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+    
+                this.expectTokenAndPop(TOKEN_LBRACE);
+                vv = this.parseValue(ttype.ttype, breq);
+                this.expectTokenAndPop(TOKEN_RBRACE);
+            }
+        }
+    }
+    else {
+        vv = this.parseValue(ttype.oftype, breq);
+    }
+
+    return createBSQONParseResult(getBSQONParseValue(vv), ttype, [getBSQONParseInfoTTree(vv)], breq);
 }
 BSQONParse.prototype.parseErr = function (ttype, breq) {
+    let vv = undefined;
+    if(!this.isJSONMode()) {
+        if(this.isFullMode()) {
+            const stype = this.parseType();
+            this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+
+            this.expectTokenAndPop(TOKEN_LBRACE);
+            vv = this.parseValue(ttype.etype, breq);
+            this.expectTokenAndPop(TOKEN_RBRACE);
+        }
+        else {
+            if(this.testToken(TOKEN_ERR)) {    
+                this.expectTokenAndPop(TOKEN_LPAREN);
+                vv = this.parseValue(ttype.etype, breq);
+                this.expectTokenAndPop(TOKEN_RPAREN);
+            }
+            else {
+                const stype = this.parseType();
+                this.raiseErrorIf(ttype.ttag !== stype.ttag, `Expected ${ttype.ttag} but got ${stype.ttag}`);
+    
+                this.expectTokenAndPop(TOKEN_LBRACE);
+                vv = this.parseValue(ttype.etype, breq);
+                this.expectTokenAndPop(TOKEN_RBRACE);
+            }
+        }
+    }
+    else {
+        vv = this.parseValue(ttype.oftype, breq);
+    }
+
+    return createBSQONParseResult(getBSQONParseValue(vv), ttype, [getBSQONParseInfoTTree(vv)], breq);
 }
 BSQONParse.prototype.parseResult = function (ttype, breq) {
+    if(!this.isJSONMode()) {
+        let vv = undefined;
+        let sstype = $TypeInfo.unresolvedType;
+        let ptree = undefined;
+        if(this.testToken(TOKEN_OK)) {
+            sstype = $TypeInfo.resolveTypeInAssembly(this.m_assembly, `Result<${ttype.ttype}, ${ttype.etype}>::Ok`);
+            vv = this.parseOk(breq);
+            ptree = getBSQONParseInfoTTree(vv);
+        }
+        else if(this.testToken(TOKEN_ERR)) {
+            sstype = $TypeInfo.resolveTypeInAssembly(this.m_assembly, `Result<${ttype.ttype}, ${ttype.etype}>::Err`);
+            vv = this.parseErr(breq);
+            ptree = getBSQONParseInfoTTree(vv);
+        }
+        else {
+            sstype = this.parseType(ttype);
+            this.raiseErrorIf(!$Runtime.isTypeUniquelyResolvable(sstype), `Type ${sstype.ttag} is not unique type for parsing`);
+            this.raiseErrorIf(stype.ttag !== `Result<${ttype.ttype}, ${ttype.etype}>::Ok` && stype.ttag !== `Result<${ttype.ttype}, ${ttype.etype}>::Err`, `Type ${sstype.ttag} is not a valid subtype of Result<T, E>`);
+
+            this.expectTokenAndPop(TOKEN_LBRACE);
+            vv = this.parseValue(sstype);
+            ptree = [getBSQONParseInfoTTree(vv)];
+            this.expectTokenAndPop(TOKEN_RBRACE);
+        }
+
+        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, ptree, breq);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_LBRACKET);
+        const sstype = this.parseType();
+
+        this.raiseErrorIf(!$Runtime.isTypeUniquelyResolvable(sstype), `Type ${sstype.ttag} is not unique type for parsing`);
+        this.raiseErrorIf(stype.ttag !== `Result<${ttype.ttype}, ${ttype.etype}>::Ok` && stype.ttag !== `Result<${ttype.ttype}, ${ttype.etype}>::Err`, `Type ${sstype.ttag} is not a valid subtype of Result<T, E>`);
+
+        const vv = this.parseValue(sstype, breq);
+        this.expectTokenAndPop(TOKEN_RBRACKET);
+
+        return createBSQONParseResult(new $Runtime.UnionValue(sstype, getBSQONParseValue(vv)), sstype, getBSQONParseInfoTTree(vv), breq);
+    }
 }
 BSQONParse.prototype.parseMapEntry = function (ttype, breq) {
+    if(!this.isJSONMode()) {
+        const etype = this.parseType(ttype);
+        this.raiseErrorIf(etype.ttag !== ttype.ttag, `Expected ${ttype.ttag} but got value of type ${etype.ttag}`);
+ 
+        this.expectTokenAndPop(TOKEN_LBRACE);
+        const k = this.parseValue(ttype.ktype);
+        this.expectTokenAndPop(TOKEN_COMMA);
+        const v = this.parseValue(ttype.vtype);
+        this.expectTokenAndPop(TOKEN_RBRACE);
+
+        return createBSQONParseResult([getBSQONParseValue(k), getBSQONParseValue(v)], ttype, [getBSQONParseInfoTTree(k), getBSQONParseInfoTTree(v)], breq);
+    }
+    else {
+        this.expectTokenAndPop(TOKEN_LBRACKET);
+        const k = this.parseValue(ttype.ktype);
+        this.expectTokenAndPop(TOKEN_COMMA);
+        const v = this.parseValue(ttype.vtype);
+        this.expectTokenAndPop(TOKEN_RBRACKET);
+
+        return createBSQONParseResult([getBSQONParseValue(k), getBSQONParseValue(v)], ttype, [getBSQONParseInfoTTree(k), getBSQONParseInfoTTree(v)], breq);
+    }
 }
 
 BSQONParse.prototype.parseTuple = function (ttype, breq) {
+    if(!this.isJSONMode()) {
+        xxxx;
+    }
+    else {
+        xxxx;
+    }
 }
 BSQONParse.prototype.parseRecord = function (ttype, breq) {
 }
