@@ -19,5 +19,6 @@
         "src/frontend/typechecker/*.ts",
         "src/runtimes/javascript/*.ts",
         "src/runtimes/javascript/compiler/*.ts"
+        "src/runtimes/javascript/runtime/*.ts"
     ]
 }

@@ -4,7 +4,6 @@ import { JS, NFA, Words } from "refa";
 import {Decimal} from "decimal.js";
 import Fraction from "fraction.js";
 
-
 const subtypeMap = new Map();
 //--GENERATED_$subtypesetup--
 

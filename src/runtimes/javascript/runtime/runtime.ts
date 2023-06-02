@@ -31,7 +31,7 @@ function raiseUserAssertIf(cond, msg) {
     }
 }
 
-function acceptsString(re, str) {
+function acceptsString(re: string, str: string): boolean {
     const jsre = RegExp(re);
 
     const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
@@ -40,22 +40,22 @@ function acceptsString(re, str) {
     return nfa.test(Words.fromStringToUnicode(str));
 }
 
-function safeMath(val, lb, ub) {
+function safeMath<T>(val: T, lb: T, ub: T): T {
     raiseRuntimeErrorIf(val < lb || ub < val, `bounded arithmetic op overflowed`);
     return val;
 }
 
-function safeMathUnderflow(val, zero) {
+function safeMathUnderflow<T>(val: T, zero: T): T {
     raiseRuntimeErrorIf(val < zero, `arithmetic op underflow`);
     return val;
 }
 
-function safeMathDiv(op, chk, v1, v2) {
+function safeMathDiv<T>(op: (x: T, y: T) => T, chk: (x: T) => boolean, v1: T, v2: T): T {
     raiseRuntimeErrorIf(chk(v2), `division by 0`);
     return op(v1, v2);
 }
 
-function hashvals(...vals) {
+function hashvals(...vals: number[]): number {
     let h = 0;
     const len = vals.length;
     for(let i = 0; i < len; ++i) {
@@ -65,33 +65,33 @@ function hashvals(...vals) {
     return h;
 }
 
-function hashstr(str) {
+function hashstr(str: string): number {
     let h = 0;
     const len = str.length;
     for(let i = 0; i < len; ++i) {
-        return h ^ (str[i] << 11);
+        return h ^ (str.charCodeAt(i) << 11);
     }
 
     return h;
 }
 
-function lesslexo(vals1, vals2) {
+function lesslexo(vals1: number[], vals2: number[]): number {
     if(vals1.length !== vals2.length) {
-        return vals1.length < vals2.length;
+        return vals1.length < vals2.length ? -1 : 1;
     }
     else {
         const len = vals1.length;
         for (let i = 0; i < len; ++i) {
             if(vals1[i] !== vals2[i]) {
-                return vals1[i] < vals2[i];
+                return vals1[i] < vals2[i] ? -1 : 1;
             }
         }
 
-        return false; //same
+        return 0; //same
     }
 }
 
-function BSQDateTime(year, month, day, hour, minute, second, millisecond, tz) {
+function BSQDateTime(year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, tz: string) {
     this.year = year;
     this.month = month;
     this.day = day;
