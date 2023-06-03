@@ -328,12 +328,14 @@ class NamespaceDecl {
 }
 
 class AssemblyInfo {
+    readonly aliasmap: Map<string, BSQType>;
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly revalidators: Map<BSQTypeKey, string>;
     readonly pthvalidators: Map<BSQTypeKey, string>;
 
-    constructor(namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>) {
+        this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
         this.revalidators = revalidators;

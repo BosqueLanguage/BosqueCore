@@ -1,4 +1,4 @@
-"use strict";
+import { BSQTypeKey } from "./typeinfo";
 
 import { JS, NFA, Words } from "refa";
 import {Decimal} from "decimal.js";
@@ -6,28 +6,41 @@ import Fraction from "fraction.js";
 
 import { List as IList, Map as IMap } from "immutable";
 
-function Unwind(kind, msg) {
-    this.kind = kind;
-    this.msg = msg;
+enum BSQErrorKind {
+    Runtime,
+    UserAssert
 }
 
-function raiseRuntimeError(msg) {
-    throw new Unwind("error", msg);
-}
+class BSQError extends Error {
+    readonly ekind: BSQErrorKind;
+    readonly msg: string;
 
-function raiseRuntimeErrorIf(cond, msg) {
-    if(cond) {
-        throw new Unwind("error", msg);
+    constructor(ekind: BSQErrorKind, message: string) {
+        super(`Error -- ${message}`);
+        Object.setPrototypeOf(this, new.target.prototype);
+
+        this.ekind = ekind;
+        this.msg = message;
     }
 }
 
-function raiseUserAssert(msg) {
-    throw new Unwind("assert", msg);
+function raiseRuntimeError(msg: string) {
+    throw new BSQError(BSQErrorKind.Runtime, msg);
 }
 
-function raiseUserAssertIf(cond, msg) {
+function raiseRuntimeErrorIf(cond: boolean, msg: string) {
     if(cond) {
-        throw new Unwind("assert", msg);
+        throw new BSQError(BSQErrorKind.Runtime, msg);
+    }
+}
+
+function raiseUserAssert(msg: string) {
+    throw new BSQError(BSQErrorKind.UserAssert, msg);
+}
+
+function raiseUserAssertIf(cond: boolean, msg: string) {
+    if(cond) {
+        throw new BSQError(BSQErrorKind.UserAssert, msg);
     }
 }
 
@@ -91,66 +104,136 @@ function lesslexo(vals1: number[], vals2: number[]): number {
     }
 }
 
-function BSQDateTime(year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, tz: string) {
-    this.year = year;
-    this.month = month;
-    this.day = day;
-    this.hour = hour;
-    this.minute = minute;
-    this.second = second;
-    this.millisecond = millisecond;
-    this.tz = tz;
-}
-BSQDateTime.create = function(year, month, day, hour, minute, second, millisecond, tz) {
-    return Object.freeze(new BSQDateTime(year, month, day, hour, minute, second, millisecond, tz));
-}
-BSQDateTime.prototype.equalsBase = function (other) {
-    return this.year === other.year && this.month === other.month && this.day === other.day && this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond && this.tz === other.tz;
-}
-BSQDateTime.prototype.hashcodeBase = function () {
-    return hashvals(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond, this.tz.length);
-}
-BSQDateTime.prototype.lessBase = function (other) {
-    return lesslexo([this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond, this.tz], [other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond, other.tz]);
+class BSQDateTime {
+    readonly year: number;
+    readonly month: number;
+    readonly day: number;
+    readonly hour: number;
+    readonly minute: number;
+    readonly second: number;
+    readonly millisecond: number;
+    readonly tz: string;
+
+    constructor(year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number, tz: string) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+        this.hour = hour;
+        this.minute = minute;
+        this.second = second;
+        this.millisecond = millisecond;
+        this.tz = tz;
+    }
+
+    equalsBase(other: BSQDateTime): boolean {
+        return this.year === other.year && this.month === other.month && this.day === other.day && this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond && this.tz === other.tz;
+    }
+
+    hashcodeBase(): number {
+        return hashvals(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond, this.tz.length);
+    }
+
+    lessBase(other: BSQDateTime): boolean {
+        const llo = lesslexo([this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond], [other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond]);
+        return llo !== 0 ? llo < 0 : this.tz < other.tz;
+    }
+
+    hashcode(): number {
+        return this.hashcodeBase();
+    }
+
+    equals(other: any): boolean {
+        return this.equalsBase(other);
+    }
 }
 
-function BSQDate(year, month, day) {
-    this.year = year;
-    this.month = month;
-    this.day = day;
-}
-BSQDate.create = function(year, month, day) {
-    return Object.freeze(new BSQDate(year, month, day));
-}
-BSQDate.prototype.equalsBase = function (other) {
-    return this.year === other.year && this.month === other.month && this.day === other.day;
-}
-BSQDate.prototype.hashcodeBase = function () {
-    return hashvals(this.year, this.month, this.day);
-}
-BSQDate.prototype.lessBase = function (other) {
-    return lesslexo([this.year, this.month, this.day], [other.year, other.month, other.day]);
+class BSQDate{
+    readonly year: number;
+    readonly month: number;
+    readonly day: number;
+
+    constructor(year: number, month: number, day: number) {
+        this.year = year;
+        this.month = month;
+        this.day = day;
+    }
+
+    equalsBase(other: BSQDate): boolean {
+        return this.year === other.year && this.month === other.month && this.day === other.day;
+    }
+
+    hashcodeBase(): number {
+        return hashvals(this.year, this.month, this.day);
+    }
+
+    lessBase(other: BSQDate): boolean {
+        return lesslexo([this.year, this.month, this.day], [other.year, other.month, other.day]) < 0;
+    }
+
+    hashcode(): number {
+        return this.hashcodeBase();
+    }
+
+    equals(other: any): boolean {
+        return this.equalsBase(other);
+    }
 }
 
-function BSQTime(hour, minute, second, millisecond) {
-    this.hour = hour;
-    this.minute = minute;
-    this.second = second;
-    this.millisecond = millisecond;
-}
-BSQTime.create = function(year, month, day, hour, minute, second, millisecond, tz) {
-    return Object.freeze(new BSQTime(hour, minute, second, millisecond, tz));
-}
-BSQTime.prototype.equalsBase = function (other) {
-    return this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond;
-}
-BSQTime.prototype.hashcodeBase = function () {
-    return hashvals(this.hour, this.minute, this.second, this.millisecond);
-}
-BSQTime.prototype.lessBase = function (other) {
-    return lesslexo([this.hour, this.minute, this.second, this.millisecond], [other.hour, other.minute, other.second, other.millisecond]);
+class BSQTime {
+    readonly hour: number;
+    readonly minute: number;
+    readonly second: number;
+    readonly millisecond: number;
+
+    constructor(hour: number, minute: number, second: number, millisecond: number) {
+        this.hour = hour;
+        this.minute = minute;
+        this.second = second;
+        this.millisecond = millisecond;
+    }
+
+    equalsBase(other: BSQTime): boolean {
+        return this.hour === other.hour && this.minute === other.minute && this.second === other.second && this.millisecond === other.millisecond;
+    }
+
+    hashcodeBase(): number {
+        return hashvals(this.hour, this.minute, this.second, this.millisecond);
+    }
+
+    lessBase(other: BSQTime): boolean {
+        return lesslexo([this.hour, this.minute, this.second, this.millisecond], [other.hour, other.minute, other.second, other.millisecond]) < 0;
+    }
+
+    hashcode(): number {
+        return this.hashcodeBase();
+    }
+
+    equals(other: any): boolean {
+        return this.equalsBase(other);
+    }
 }
 
+class UnionValue {
+    readonly tkey: BSQTypeKey;
+    readonly value: any;
+
+    constructor(tkey: BSQTypeKey, value: any) {
+        this.tkey = tkey;
+        this.value = value;
+    }
+
+    hashCode(): number {
+        return hashvals(hashstr(this.tkey), hashcodeBase(this.value));
+    }
+
+    equals(other: any): boolean {
+        return this.tkey === other.tkey && keyEqualsBase(this.value, other.value);
+    }
+}
+
+function isUnionValueRepr(v: any): boolean {
+    return v instanceof UnionValue;
+}
 
 //None -> null
 //Nothing -> undefined
@@ -194,7 +277,7 @@ BSQTime.prototype.lessBase = function (other) {
 //Map<K, V> -> IMap<K, V>
 
 
-function keyEqualsBase(v1, v2) {
+function keyEqualsBase(v1: any, v2: any): boolean {
     if (v1 === v2) {
         return true;
     }
@@ -209,7 +292,7 @@ function keyEqualsBase(v1, v2) {
     }
 }
 
-function hashcodeBase(v) {
+function hashcodeBase(v: any): number {
     if(v === null) {
         return 0;
     }
@@ -225,7 +308,7 @@ function hashcodeBase(v) {
             return hashvals(v, 23);
         }
         else if(ttype === "bigint") {
-            return hashvals(BigInt.asUintN(31, v), 29);
+            return hashvals(Number(v), 29);
         }
         else if(ttype === "string") {
             return hashvals(hashstr(v), 79);
@@ -236,7 +319,7 @@ function hashcodeBase(v) {
     }
 }
 
-function keyLessBase(v1, v2) {
+function keyLessBase(v1: any, v2: any): boolean {
     if (v1 === v2) {
         return false;
     }
@@ -259,37 +342,11 @@ function keyLessBase(v1, v2) {
     }
 }
 
-function UnionValue(tkey, value) {
-    this.tkey = tkey;
-    this.value = value;
-}
-UnionValue.prototype.hashCode = function () {
-    return hashvals(hashstr(this.tkey), this.value);
-}
-UnionValue.prototype.equals = function (other) {
-    return this.tkey === other.tkey && keyEqualsBase(this.value, other.value);
-}
-UnionValue.prototype.less = function (other) {
-    if(this.tkey !== other.tkey) {
-        return this.tkey < other.tkey;
-    }
-    else {
-        keyEqualsBase(this.value, other.value);
-    }
-}
-UnionValue.create = function(tkey, value) {
-    return Object.freeze(new UnionValue(tkey, value));
-}
-
-function isUnionValueRepr(v) {
-    return v instanceof UnionValue;
-}
-
-function keyEqualStrict(lval, rval) {
+function keyEqualStrict(lval: any, rval: any): boolean {
     return keyEqualsBase(lval, rval);
 }
 
-function keyEqualMixed(uval, gval, oftype) {
+function keyEqualMixed(uval: any, gval: UnionValue, oftype: BSQTypeKey): boolean {
     if(gval.tkey !== oftype) {
         return false;
     }
@@ -297,7 +354,7 @@ function keyEqualMixed(uval, gval, oftype) {
     return keyEqualsBase(uval, gval.value);
 }
 
-function keyEqualUnion(lval, rval) {
+function keyEqualUnion(lval: UnionValue, rval: UnionValue): boolean {
     if(lval.tkey !== rval.tkey) {
         return false;
     }
@@ -305,11 +362,11 @@ function keyEqualUnion(lval, rval) {
     return keyEqualsBase(lval.value, rval.value);
 }
 
-function keyLessStrict(lval, rval) {
+function keyLessStrict(lval: any, rval: any): boolean {
     return keyLessBase(lval, rval);
 }
 
-function keyLessUnion(lval, rval) {
+function keyLessUnion(lval: any, rval: any): boolean {
     if(lval.tkey !== rval.tkey) {
         return lval.tkey < rval.tkey;
     }
@@ -318,11 +375,11 @@ function keyLessUnion(lval, rval) {
 }
 
 export {
+    BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
+
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
     UnionValue, isUnionValueRepr,
-    keyEqualsBase, keyLessBase,
-    Unwind, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     acceptsString,
     safeMath, safeMathDiv, safeMathUnderflow, 
     keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion

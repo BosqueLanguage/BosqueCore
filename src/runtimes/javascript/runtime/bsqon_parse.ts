@@ -5,6 +5,20 @@ import * as $Constants from "./constants";
 import * as $TypeInfo from "./typeinfo";
 import * as $Runtime from "./runtime";
 
+
+class BSQONParseError extends Error {
+    readonly msg: string;
+    readonly pos: number;
+
+    constructor(message: string, pos: number) {
+        super(`Parse Error -- ${message}`);
+        Object.setPrototypeOf(this, new.target.prototype);
+
+        this.msg = message;
+        this.pos = pos;
+    }
+}
+
 enum TokenKind {
     TOKEN_NULL = "null",
     TOKEN_NONE = "none",
@@ -67,16 +81,11 @@ enum TokenKind {
     TOKEN_PATH_ITEM = "PATH"
 }
 
-function createToken(kind: TokenKind, value: string): {kind: TokenKind, value: string} {
+function createToken(kind: string, value: string): {kind: string, value: string} {
     return {
         kind: kind,
         value: value
     };
-}
-
-function BSQONParseError(msg, pos) {
-    this.msg = msg;
-    this.pos = pos;
 }
 
 const _s_whitespaceRe = /\s+/y;
@@ -127,8 +136,6 @@ const _s_floatNumberinoRe = /([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?/y;
 
 const _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
 const _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
-const _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
-const _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
 
 const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
 const _s_regexCheckRe = /^\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\/$/y;
@@ -204,52 +211,54 @@ const _s_core_types_with_map = [
 
 const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
 
-function _extractDateTimeYear(m) {
-    const year = Number.parseInt(m.groups.year);
+function _extractDateTimeYear(m: RegExpMatchArray): number | undefined {
+    const year = Number.parseInt(m.groups!.year);
     return (1900 <= year && year <= 2200) ? year : undefined; 
 }
 
-function _extractDateTimeMonth(m) {
-    const month = Number.parseInt(m.groups.month);
+function _extractDateTimeMonth(m: RegExpMatchArray): number | undefined {
+    const month = Number.parseInt(m.groups!.month);
     return (0 <= month && month <= 11) ? month : undefined;
 }
 
-function _extractDateTimeDay(m) {
-    const year = Number.parseInt(m.groups.year);
-    const month = Number.parseInt(m.groups.month);
-    const day = Number.parseInt(m.groups.day);
+function _extractDateTimeDay(m: RegExpMatchArray): number | undefined {
+    const year = Number.parseInt(m.groups!.year);
+    const month = Number.parseInt(m.groups!.month);
+    const day = Number.parseInt(m.groups!.day);
     
     if(month !== 1) {
-        return (month === 3 || month === 5 || month === 8 || month === 10) ? (day <= 30) : (day <= 31);
+        const mday = (month === 3 || month === 5 || month === 8 || month === 10) ? 30 : 31;
+        return day <= mday ? day : undefined;
     }
     else {
-        const isleapyear = !(y === 1900 || y === 2100 || year === 2200) && (year % 4 === 0);
-        return isleapyear ? (day <= 29) : (day <= 28);
+        const isleapyear = !(year === 1900 || year === 2100 || year === 2200) && (year % 4 === 0);
+        const mday = isleapyear ? 29 : 28;
+        return day <= mday ? day : undefined;
     }
 }
 
-function _extractDateTimeHour(m) {
-    const hour = Number.parseInt(m.groups.hour);
+function _extractDateTimeHour(m: RegExpMatchArray): number | undefined {
+    const hour = Number.parseInt(m.groups!.hour);
     return (0 <= hour && hour <= 23) ? hour : undefined;
 }
 
-function _extractDateTimeMinute(m) {
-    const minute = Number.parseInt(m.groups.minute);
+function _extractDateTimeMinute(m: RegExpMatchArray): number | undefined {
+    const minute = Number.parseInt(m.groups!.minute);
     return (0 <= minute && minute <= 59) ? minute : undefined;
 }
 
-function _extractDateTimeSecond(m) {
-    const second = Number.parseInt(m.groups.second);
+function _extractDateTimeSecond(m: RegExpMatchArray): number | undefined {
+    const second = Number.parseInt(m.groups!.second);
     return (0 <= second && second <= 60) ? second : undefined;
 }
 
-function _extractDateTimeMillis(dstr) {
-    const millis = Number.parseInt(m.groups.millis);
+function _extractDateTimeMillis(m: RegExpMatchArray): number | undefined {
+    const millis = Number.parseInt(m.groups!.millis);
     return (0 <= millis && millis <= 999) ? millis : undefined;
 }
 
-function _extractDateTimeTZ(dstr) {
-    const tzinfo = m.groups.timezone;
+function _extractDateTimeTZ(m: RegExpMatchArray): string {
+    const tzinfo = m.groups!.timezone;
     if(tzinfo === "Z") {
         return "UTC";
     }
@@ -258,7 +267,7 @@ function _extractDateTimeTZ(dstr) {
     }
 }
 
-function isValidBSQDate(dstr) {
+function isValidBSQDate(dstr: string): boolean {
     if(/0-9/.test(dstr)) {
         dstr = dstr + "Z";
     }
@@ -279,648 +288,674 @@ function isValidBSQDate(dstr) {
     return (year !== undefined && month !== undefined && day !== undefined && hour !== undefined && minute !== undefined && second !== undefined && millis !== undefined);
 }
 
-function generateDate(dstr) {
+function generateDate(dstr: string): $Runtime.BSQDate | undefined {
     dstr = dstr + "T00:00:00.000Z";
     if(!isValidBSQDate(dstr)) {
         return undefined;
     }
 
-    const m = _s_dateTimeNamedExtractRE.exec(dstr);
-    const year = _extractDateTimeYear(m);
-    const month = _extractDateTimeMonth(m);
-    const day = _extractDateTimeDay(m);
+    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
+    const year = _extractDateTimeYear(m) as number;
+    const month = _extractDateTimeMonth(m) as number;
+    const day = _extractDateTimeDay(m) as number;
 
-    return new $Runtime.BSQDate.create(year, month, day);
+    return new $Runtime.BSQDate(year, month, day);
 }
 
-function generateTime(dstr) {
+function generateTime(dstr: string): $Runtime.BSQTime | undefined {
     dstr = "2000-01-01" + "T" + dstr + "Z";
     if(!isValidBSQDate(dstr)) {
         return undefined;
     }
 
-    const m = _s_dateTimeNamedExtractRE.exec(dstr);
-    const hour = _extractDateTimeHour(m);
-    const minute = _extractDateTimeMinute(m);
-    const second = _extractDateTimeSecond(m);
-    const millis = _extractDateTimeMillis(m);
+    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
+    const hour = _extractDateTimeHour(m) as number;
+    const minute = _extractDateTimeMinute(m) as number;
+    const second = _extractDateTimeSecond(m) as number;
+    const millis = _extractDateTimeMillis(m) as number;
 
-    return new $Runtime.BSQTime.create(hour, minute, second, millis);
+    return new $Runtime.BSQTime(hour, minute, second, millis);
 }
 
-function generateDateTime(dstr) {
+function generateDateTime(dstr: string): $Runtime.BSQDateTime | undefined {
     if(!isValidBSQDate(dstr)) {
         return undefined;
     }
 
-    const m = _s_dateTimeNamedExtractRE.exec(dstr);
-    const year = _extractDateTimeYear(m);
-    const month = _extractDateTimeMonth(m);
-    const day = _extractDateTimeDay(m);
-    const hour = _extractDateTimeHour(m);
-    const minute = _extractDateTimeMinute(m);
-    const second = _extractDateTimeSecond(m);
-    const millis = _extractDateTimeMillis(m);
-    const tz = _extractDateTimeTZ(m);
+    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
+    const year = _extractDateTimeYear(m) as number;
+    const month = _extractDateTimeMonth(m) as number;
+    const day = _extractDateTimeDay(m) as number;
+    const hour = _extractDateTimeHour(m) as number;
+    const minute = _extractDateTimeMinute(m) as number;
+    const second = _extractDateTimeSecond(m) as number;
+    const millis = _extractDateTimeMillis(m) as number;
+    const tz = _extractDateTimeTZ(m) as string;
 
-    return new $Runtime.BSQDateTime.create(year, month, day, hour, minute, second, millis, tz);
-}
-
-function createBSQONParseResult(value, type, ttree, breq) {
-    if(!breq) {
-        return value;
-    }
-    else {
-        return [value, {ctype: type, ttree: ttree}];
-    }
-}
-function getBSQONParseValue(parseinfo) {
-    return !Array.isArray(parseinfo) ? parseinfo : parseinfo[0];
-}
-function getBSQONParseInfo(parseinfo) {
-    return !Array.isArray(parseinfo) ? undefined : parseinfo[1];
-}
-function getBSQONParseInfoCType(parseinfo) {
-    return !Array.isArray(parseinfo) ? undefined : parseinfo[1].ctype;
-}
-function getBSQONParseInfoTTree(parseinfo) {
-    return !Array.isArray(parseinfo) ? undefined : parseinfo[1].ttree;
+    return new $Runtime.BSQDateTime(year, month, day, hour, minute, second, millis, tz);
 }
 
-function BSQONParse(defaultns, assembly, str, srcbind, mode) {
-    this.m_parsemode = mode ?? NOTATION_MODE_DEFAULT;
+class BSQONParseResult {
+    readonly value: any;
+    readonly vtype: $TypeInfo.BSQType;
+    readonly parsetree: any;
 
-    this.m_defaultns = defaultns;
-    this.m_assembly = assembly;
-
-    this.m_str = str;
-    this.m_cpos = 0;
-    this.m_epos = str.length;
-
-    this.m_lastToken = undefined;
-
-    this.m_stdentityChecks = [];
-    this.m_typedeclChecks = [];
-
-    this.m_srcbind = srcbind; //a [value, type, ttree] where type is always a concrete type
-    this.m_refs = new Map(); //maps from names to [value, type, ttree] where type is always a concrete type
-}
-BSQONParse.prototype.isDefaultMode = function () {
-    return this.m_parsemode === NOTATION_MODE_DEFAULT;
-}
-BSQONParse.prototype.isJSONMode = function () {
-    return this.m_parsemode === NOTATION_MODE_JSON;
-}
-BSQONParse.prototype.isFullMode = function () {
-    return this.m_parsemode === NOTATION_MODE_FULL;
-}
-BSQONParse.prototype.lexWS = function () {
-    _s_whitespaceRe.lastIndex = this.m_cpos;
-    const m = _s_whitespaceRe.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        return true;
-    }
-}
-BSQONParse.prototype.lexComment = function () {
-    _s_commentRe.lastIndex = this.m_cpos;
-    const m = _s_commentRe.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        return true;
-    }
-}
-BSQONParse.prototype.lexBytebuff = function () {
-    _s_bytebuffRe.lastIndex = this.m_cpos;
-    const m = _s_bytebuffRe.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_BYTE_BUFFER, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexTimeInfo = function () {
-    _s_fullTimeRE.lastIndex = this.m_cpos;
-    const ftm = _s_fullTimeRE.exec(this.m_input);
-    if(ftm !== null) {
-        this.m_cpos += ftm[0].length;
-        this.m_lastToken = createToken(TOKEN_ISO_DATE_TIME, ftm[0]);
-        return true;
+    constructor(val: any, vtype: $TypeInfo.BSQType, parsetree: any) {
+        this.value = val;
+        this.vtype = vtype;
+        this.parsetree = parsetree;
     }
 
-    _s_fullTimeUTCRE.lastIndex = this.m_cpos;
-    const ftutc = _s_fullTimeUTCRE.exec(this.m_input);
-    if(ftutc !== null) {
-        this.m_cpos += ftutc[0].length;
-        this.m_lastToken = createToken(TOKEN_ISO_UTC_DATE_TIME, ftutc[0]);
-        return true;
-    }
-
-    _s_dateOnlyRE.lastIndex = this.m_cpos;
-    const dm = _s_dateOnlyRE.exec(this.m_input);
-    if(dm !== null) {
-        this.m_cpos += dm[0].length;
-        this.m_lastToken = createToken(TOKEN_ISO_DATE, dm[0]);
-        return true;
-    }
-
-    _s_timeOnlyRE.lastIndex = this.m_cpos;
-    const tm = _s_timeOnlyRE.exec(this.m_input);
-    if(tm !== null) {
-        this.m_cpos += tm[0].length;
-        this.m_lastToken = createToken(TOKEN_ISO_TIME, tm[0]);
-        return true;
-    }
-
-    return false;
-}
-BSQONParse.prototype.lexLogicalTime = function () {
-    _s_logicalTimeRE.lastIndex = this.m_cpos;
-    const m = _s_logicalTimeRE.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_LOGICAL_TIME, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexTickTime = function () {
-    _s_tickTimeRE.lastIndex = this.m_cpos;
-    const m = _s_tickTimeRE.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_TICK_TIME, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexISOTimestamp = function () {
-    _s_isostampRE.lastIndex = this.m_cpos;
-    const m = _s_isostampRE.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_ISO_TIMESTAMP, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexUUID = function () {
-    _s_uuidRE.lastIndex = this.m_cpos;
-    const m = _s_uuidRE.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_UUID, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexSHACode = function () {
-    _s_shahashRE.lastIndex = this.m_cpos;
-    const m = _s_shahashRE.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_SHA_HASH, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexPath = function () {
-    _s_pathRe.lastIndex = this.m_cpos;
-    const m = _s_pathRe.exec(this.m_input);
-    if (m === null) {
-        return false;
-    }
-    else {
-        this.m_cpos += m[0].length;
-        this.m_lastToken = createToken(TOKEN_PATH_ITEM, m[0]);
-        return true;
-    }
-}
-BSQONParse.prototype.lexNumber = function () {
-    if (this.isJSONMode()) {
-        _s_intNumberinoRe.lastIndex = this.m_cpos;
-        const inio = _s_intNumberinoRe.exec(this.m_input);
-        if (inio !== null) {
-            this.m_cpos += inio[0].length;
-            this.m_lastToken = createToken(TOKEN_INT, inio[0]);
-            return true;
+    static create(val: any, vtype: $TypeInfo.BSQType, parsetree: any, whistory: boolean): BSQONParseResult | any {
+        if(!whistory) {
+            return val;
         }
-
-        _s_floatNumberinoRe.lastIndex = this.m_cpos;
-        const fnio = _s_floatNumberinoRe.exec(this.m_input);
-        if (fnio !== null) {
-            this.m_cpos += fnio[0].length;
-            this.m_lastToken = createToken(TOKEN_FLOAT, fnio[0]);
-            return true;
-        }
-    }
-    else {
-        _s_rationalRe.lastIndex = this.m_cpos;
-        const mr = _s_rationalRe.exec(this.m_input);
-        if (mr !== null) {
-            this.m_cpos += mr[0].length;
-            this.m_lastToken = createToken(TOKEN_RATIONAL, mr[0]);
-            return true;
-        }
-
-        _s_bignatRe.lastIndex = this.m_cpos;
-        const mbn = _s_bignatRe.exec(this.m_input);
-        if (mbn !== null) {
-            this.m_cpos += mbn[0].length;
-            this.m_lastToken = createToken(TOKEN_BIG_NAT, mbn[0]);
-            return true;
-        }
-
-        _s_bigintRe.lastIndex = this.m_cpos;
-        const mbi = _s_bigintRe.exec(this.m_input);
-        if (mbi !== null) {
-            this.m_cpos += mbi[0].length;
-            this.m_lastToken = createToken(TOKEN_BIG_INT, mbi[0]);
-            return true;
-        }
-
-        _s_decimalRe.lastIndex = this.m_cpos;
-        const md = _s_decimalRe.exec(this.m_input);
-        if (md !== null) {
-            this.m_cpos += md[0].length;
-            this.m_lastToken = createToken(TOKEN_DECIMAL, md[0]);
-            return true;
-        }
-
-        _s_floatRe.lastIndex = this.m_cpos;
-        const mf = _s_floatRe.exec(this.m_input);
-        if (mf !== null) {
-            this.m_cpos += mf[0].length;
-            this.m_lastToken = createToken(TOKEN_FLOAT, mf[0]);
-            return true;
-        }
-
-        _s_natRe.lastIndex = this.m_cpos;
-        const mn = _s_natRe.exec(this.m_input);
-        if (mn !== null) {
-            this.m_cpos += mn[0].length;
-            this.m_lastToken = createToken(TOKEN_NAT, mn[0]);
-            return true;
-        }
-
-        _s_intRe.lastIndex = this.m_cpos;
-        const mi = _s_intRe.exec(this.m_input);
-        if (mi !== null) {
-            this.m_cpos += mi[0].length;
-            this.m_lastToken = createToken(TOKEN_INT, mi[0]);
-            return true;
+        else {
+            return new BSQONParseResult(val, vtype, parsetree);
         }
     }
 
-    return false;
-}
-BSQONParse.prototype.lexString = function () {
-    _s_stringRe.lastIndex = this.m_cpos;
-    const ms = _s_stringRe.exec(this.m_input);
-    if (ms !== null) {
-        this.m_cpos += ms[0].length;
-        this.m_lastToken = createToken(TOKEN_STRING, ms[0]);
-        return true;
-    }
-
-    if (!this.isJSONMode()) {
-        _s_ascii_stringRe.lastIndex = this.m_cpos;
-        const mas = _s_ascii_stringRe.exec(this.m_input);
-        if (mas !== null) {
-            this.m_cpos += mas[0].length;
-            this.m_lastToken = createToken(TOKEN_ASCII_STRING, mas[0]);
-            return true;
-        }
-
-        _s_template_stringRe.lastIndex = this.m_cpos;
-        const template_string_m = _s_template_stringRe.exec(this.m_input);
-        if (template_string_m !== null) {
-            this.m_cpos += template_string_m[0].length;
-            this.m_lastToken = createToken(TOKEN_TEMPLATE_STRING, template_string_m[0]);
-            return true;
-        }
-
-        _s_ascii_template_stringRe.lastIndex = this.m_cpos;
-        const ascii_template_string_m = _s_ascii_template_stringRe.exec(this.m_input);
-        if (ascii_template_string_m !== null) {
-            this.m_cpos += ascii_template_string_m[0].length;
-            this.m_lastToken = createToken(TOKEN_ASCII_TEMPLATE_STRING, ascii_template_string_m[0]);
-            return true;
-        }
-    }
-
-    return false;
-}
-BSQONParse.prototype.lexRegex = function () {
-    _s_regexRe.lastIndex = this.m_cpos;
-    const ms = _s_regexRe.exec(this.m_input);
-    if (ms !== null) {
-        this.m_cpos += ms[0].length;
-        this.m_lastToken = createToken(TOKEN_REGEX, ms[0]);
-        return true;
-    }
-
-    return false;
-}
-BSQONParse.prototype.lexSymbol = function () {
-    _s_symbolRe.lastIndex = this.m_cpos;
-    const ms = _s_symbolRe.exec(this.m_input);
-    if (ms !== null) {
-        const sym = SymbolStrings.find((value) => ms[0].startsWith(value));
-        if (sym !== undefined) {
-            this.m_cpos += sym.length;
-            this.m_lastToken = createToken(TOKEN_SYMBOL, sym);
-            return true;
-        }
-    }
-
-    return false;
-}
-BSQONParse.prototype.lexName = function() {
-    _s_nameSrcRe.lastIndex = this.m_cpos;
-    const msrc = _s_nameSrcRe.exec(this.m_input);
-    if(msrc !== null) {
-        this.m_cpos += msrc[0].length;
-        this.m_lastToken = createToken(TOKEN_SRC, msrc[0]);
-        return true;
-    }
-
-    _s_nameRefRe.lastIndex = this.m_cpos;
-    const mref = _s_nameRefRe.exec(this.m_input);
-    if(mref !== null) {
-        this.m_cpos += mref[0].length;
-        this.m_lastToken = createToken(TOKEN_REFERENCE, mref[0]);
-        return true;
-    }
-
-    _s_nameTypeRe.lastIndex = this.m_cpos;
-    const mtype = _s_nameTypeRe.exec(this.m_input);
-    if(mtype !== null) {
-        this.m_cpos += mtype[0].length;
-        this.m_lastToken = createToken(TOKEN_TYPE, mtype[0]);
-        return true;
-    }
-
-    _s_namePropertyRE.lastIndex = this.m_cpos;
-    const pname = _s_namePropertyRE.exec(this.m_input);
-    if(pname !== null) {
-        this.m_cpos += pname[0].length;
-        this.m_lastToken = createToken(TOKEN_PROPERTY, mtype[0]);
-        return true;
-    }
-
-    return false;
-}
-BSQONParse.prototype.lexAccess = function() {
-    _s_dotNameAccessRe.lastIndex = this.m_cpos;
-    const dotname = _s_dotNameAccessRe.exec(this.m_input);
-    if(doname !== null) {
-        this.m_cpos += dotname[0].length;
-        this.m_lastToken = createToken(TOKEN_DOT_NAME, dotname[0].slice(1));
-        return true;
-    }
-
-    _s_dotIdxAccessRe.lastIndex = this.m_cpos;
-    const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
-    if(dotidx !== null) {
-        this.m_cpos += dotidx[0].length;
-        this.m_lastToken = createToken(TOKEN_DOT_IDX, dotidx[0].slice(1));
-        return true;
-    }
-
-    return false;
-}
-BSQONParse.prototype.peekToken = function () {
-    if(this.m_lastToken !== undefined) {
-        return this.m_lastToken;
-    }
-
-    while(this.lexWS() || this.lexComment()) {
-        ; //eat the token
+    static getParseValue(parseinfo: any, whistory: boolean): any {
+        return !whistory ? parseinfo : parseinfo.value;
     }
     
-    if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
-        this.lexUUID() || this.lexSHACode() || this.lexPath() ||
-        this.lexNumber() || this.lexString() || this.lexRegex() || 
-        this.lexSymbol() || this.lexName() || this.lexAccess()) {
-        return this.m_lastToken;
-    }
-    else {
-        return undefined;
-    }
-}
-BSQONParse.prototype.popToken = function () {
-    while(this.lexWS() || this.lexComment()) {
-        ; //eat the token
+    static getValueType(parseinfo: any, whistory: boolean): $TypeInfo.BSQType {
+        return !whistory ? undefined : parseinfo[1].vtype;
     }
     
-    if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
-        this.lexUUID() || this.lexSHACode() || this.lexPath() ||
-        this.lexNumber() || this.lexString() || this.lexRegex() || 
-        this.lexSymbol() || this.lexName() || this.lexAccess()) {
-        return this.m_lastToken;
-    }
-    else {
-        return undefined;
+    static getHistory(parseinfo: any, whistory: boolean): any {
+        return !whistory ? undefined : parseinfo[1].parsetree;
     }
 }
-BSQONParse.prototype.unquoteStringForTypeParse = function () {
-    const slen = this.m_lastToken.value.length;
-    const str = " " + this.m_lastToken.value.slice(1, -1) + " ";
 
-    this.m_cpos -= slen;
-    this.m_str = this.m_str.slice(0, this.m_cpos) + str + this.m_str.slice(this.m_cpos + slen);
-}
-BSQONParse.prototype.testToken = function (tkind) {
-    return this.peekToken() !== undefined && this.peekToken().type === tkind;
-}
-BSQONParse.prototype.testTokens = function (...tkinds) {
-    const opos = this.m_cpos;
-    for(let i = 0; i < tkinds.length; ++i) {
-        if(!this.testToken(tkinds[i])) {
-            this.m_cpos = opos;
+class BSQONParse {
+    readonly m_parsemode: NotationMode;
+   
+    readonly m_defaultns: string;
+    readonly m_importmap: Map<string, string>;
+    readonly m_assembly: $TypeInfo.AssemblyInfo;
+
+    readonly m_input: string;
+    m_cpos: number;
+    m_lastToken: {kind: string, value: string} | undefined;
+
+    readonly m_stdentityChecks: $TypeInfo.BSQTypeKey[];
+    readonly m_typedeclChecks: $TypeInfo.BSQTypeKey[];
+
+    readonly m_srcbind: [any, $TypeInfo.BSQType, any] | undefined; //a [value, type, ttree] where type is always a concrete type
+    readonly m_refs: Map<string, [any, $TypeInfo.BSQType, any]>; //maps from names to [value, type, ttree] where type is always a concrete type
+
+    constructor(mode: NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
+        this.m_parsemode = mode;
+
+        this.m_defaultns = defaultns;
+        this.m_importmap = importmap;
+        this.m_assembly = assembly;
+
+        this.m_input = str;
+        this.m_cpos = 0;
+        this.m_lastToken = undefined;
+
+        this.m_stdentityChecks = [];
+        this.m_typedeclChecks = [];
+
+        this.m_srcbind = srcbind;
+        this.m_refs = new Map<string, [any, $TypeInfo.BSQType, any]>();
+    }
+
+    private lexWS() {
+        _s_whitespaceRe.lastIndex = this.m_cpos;
+        const m = _s_whitespaceRe.exec(this.m_input);
+        if (m === null) {
             return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            return true;
         }
     }
 
-    this.m_cpos = opos;
-    return ok;
-}
-BSQONParse.prototype.testTypePrefixTokens = function (...tkinds) {
-    if(!this.testToken(TOKEN_TYPE)) {
+    private lexComment() {
+        _s_commentRe.lastIndex = this.m_cpos;
+        const m = _s_commentRe.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            return true;
+        }
+    }
+
+    private lexBytebuff() {
+        _s_bytebuffRe.lastIndex = this.m_cpos;
+        const m = _s_bytebuffRe.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_BYTE_BUFFER, m[0]);
+            return true;
+        }
+    }
+
+    private lexTimeInfo() {
+        _s_fullTimeRE.lastIndex = this.m_cpos;
+        const ftm = _s_fullTimeRE.exec(this.m_input);
+        if(ftm !== null) {
+            this.m_cpos += ftm[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_DATE_TIME, ftm[0]);
+            return true;
+        }
+    
+        _s_fullTimeUTCRE.lastIndex = this.m_cpos;
+        const ftutc = _s_fullTimeUTCRE.exec(this.m_input);
+        if(ftutc !== null) {
+            this.m_cpos += ftutc[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_UTC_DATE_TIME, ftutc[0]);
+            return true;
+        }
+    
+        _s_dateOnlyRE.lastIndex = this.m_cpos;
+        const dm = _s_dateOnlyRE.exec(this.m_input);
+        if(dm !== null) {
+            this.m_cpos += dm[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_DATE, dm[0]);
+            return true;
+        }
+    
+        _s_timeOnlyRE.lastIndex = this.m_cpos;
+        const tm = _s_timeOnlyRE.exec(this.m_input);
+        if(tm !== null) {
+            this.m_cpos += tm[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_TIME, tm[0]);
+            return true;
+        }
+    
         return false;
     }
 
-    const opos = this.m_cpos;
-    while(this.testTokens(TOKEN_COLONCOLON, TOKEN_TYPE)) {
-        this.popToken();
-        this.expectTokenAndPop(TOKEN_TYPE);
-    }
-
-    for(let i = 0; i < tkinds.length; ++i) {
-        if(!this.testToken(tkinds[i])) {
-            this.m_cpos = opos;
+    private lexLogicalTime() {
+        _s_logicalTimeRE.lastIndex = this.m_cpos;
+        const m = _s_logicalTimeRE.exec(this.m_input);
+        if (m === null) {
             return false;
         }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_LOGICAL_TIME, m[0]);
+            return true;
+        }
     }
 
-    this.m_cpos = opos;
-    return ok;
-}
-BSQONParse.prototype.raiseError = function (msg) {
-    throw new BSQONParseError(msg, this.m_cpos);
-}
-BSQONParse.prototype.raiseErrorIf = function (cond, msg) {
-    if (cond) {
-        this.raiseError(msg);
-    }
-}
-BSQONParse.prototype.expectToken = function (tkind) {
-    this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()}`);
-}
-BSQONParse.prototype.expectTokenAndPop = function (tkind) {
-    this.expectToken(tkind);
-    return this.popToken();
-}
-BSQONParse.prototype.resolveTypeFromNameList = function (tt) {
-    let scopedname = "[uninit]";
-
-    if(this.m_assembly.find((ns) => ns.ns === "Core").types.includes(tt.join("::"))) {
-        scopedname = tt.join("::");
-    }
-    else if(tt.length === 1 || this.m_assembly.namespaces.find((ns) => ns.ns === tt[0]) === undefined || !this.m_assembly.namespaces.find((ns) => ns.ns === tt[0]).types.includes(tt.slice(1).join("::"))) {
-        scopedname = `${this.m_defaultns}::${tt.join("::")}`;
-    }
-    else {
-        scopedname = tt.join("::");
-    }
-
-    if(!this.m_assembly.aliasmap.has(scopedname)) {
-        return tt;
-    }
-    else {
-        return this.m_assembly.aliasmap.get(tt);
-    }
-}
-BSQONParse.prototype.processCoreType = function (tname) {
-    return $TypeInfo.createSimpleNominal(tname);
-}
-BSQONParse.prototype.processCoreTypeW1Term = function (tname, terms, expectedOpt) {
-    if(tname === "StringOf") {
-        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-        return $TypeInfo.createStringOf(terms[0]);
-    } 
-    else if(tname === "ASCIIStringOf") {
-        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-        return $TypeInfo.createASCIIStringOf(terms[0]);
-    } 
-    else if(tname === "Something") {
-        let t = $TypeInfo.unresolvedType;
-        if(terms.length === 1) {
-            t = terms[0];
+    private lexTickTime() {
+        _s_tickTimeRE.lastIndex = this.m_cpos;
+        const m = _s_tickTimeRE.exec(this.m_input);
+        if (m === null) {
+            return false;
         }
         else {
-            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-            const sopts = expectedOpt.tag === $TypeInfo.TYPE_SOMETHING ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_SOMETHING);
-            const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
-
-            this.raiseErrorIf(sopts === undefined && oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-            this.raiseErrorIf(sopts !== undefined && oopts !== undefined, `Relaxed type resolution has ambiguous types for ${tname}`);
-            t = (sopts ?? oopts).oftype;
-        }
-
-        return $TypeInfo.createSomething(t);
-    } 
-    else if(tname === "Option") {
-        let t = $TypeInfo.unresolvedType;
-        if(terms.length === 1) {
-            t = terms[0];
-        }
-        else {
-            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-            const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
-
-            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-            t = oopts.oftype;
-        }
-
-        return $TypeInfo.createOption(t);
-    } 
-    else if(tname === "Path") {
-        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-        return $TypeInfo.createPath(terms[0]);
-    } 
-    else if(tname === "PathFragment") {
-        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-        return $TypeInfo.createPathFragment(terms[0]);
-    } 
-    else if(tname === "PathGlob") {
-        this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-        return $TypeInfo.createPathGlob(terms[0]);
-    }
-    else {
-        let ttag = $TypeInfo.TYPE_UNKNOWN;
-        if (tname === "List") {
-            ttag = $TypeInfo.TYPE_LIST;
-        }
-        else if (tname === "Stack") {
-            ttag = $TypeInfo.TYPE_STACK;
-        }
-        else if (tname === "Queue") {
-            ttag = $TypeInfo.TYPE_QUEUE;
-        }
-        else {
-            ttag = $TypeInfo.TYPE_SET;
-        }
-
-        let t = $TypeInfo.unresolvedType;
-        if (terms.length === 1) {
-            t = terms[0];
-        }
-        else {
-            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-            const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
-
-            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-            t = oopts.oftype;
-        }
-
-        if (tname === "List") {
-            return $TypeInfo.createList(t);
-        }
-        else if (tname === "Stack") {
-            return $TypeInfo.createStack(t);
-        }
-        else if (tname === "Queue") {
-            return $TypeInfo.createQueue(t);
-        }
-        else {
-            this.raiseErrorIf(tinfo !== "Set", `Unknown core type ${tname}`);
-
-            return $TypeInfo.createSet(t);
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_TICK_TIME, m[0]);
+            return true;
         }
     }
-}
-BSQONParse.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOpt) {
+
+    private lexISOTimestamp() {
+        _s_isostampRE.lastIndex = this.m_cpos;
+        const m = _s_isostampRE.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_TIMESTAMP, m[0]);
+            return true;
+        }
+    }
+
+    private lexUUID() {
+        _s_uuidRE.lastIndex = this.m_cpos;
+        const m = _s_uuidRE.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_UUID, m[0]);
+            return true;
+        }
+    }
+
+    private lexSHACode() {
+        _s_shahashRE.lastIndex = this.m_cpos;
+        const m = _s_shahashRE.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_SHA_HASH, m[0]);
+            return true;
+        }
+    }
+
+    private lexPath() {
+        _s_pathRe.lastIndex = this.m_cpos;
+        const m = _s_pathRe.exec(this.m_input);
+        if (m === null) {
+            return false;
+        }
+        else {
+            this.m_cpos += m[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_PATH_ITEM, m[0]);
+            return true;
+        }
+    }
+
+    private lexNumber() {
+        if (this.m_parsemode === NotationMode.NOTATION_MODE_JSON) {
+            _s_intNumberinoRe.lastIndex = this.m_cpos;
+            const inio = _s_intNumberinoRe.exec(this.m_input);
+            if (inio !== null) {
+                this.m_cpos += inio[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_INT, inio[0]);
+                return true;
+            }
+    
+            _s_floatNumberinoRe.lastIndex = this.m_cpos;
+            const fnio = _s_floatNumberinoRe.exec(this.m_input);
+            if (fnio !== null) {
+                this.m_cpos += fnio[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_FLOAT, fnio[0]);
+                return true;
+            }
+        }
+        else {
+            _s_rationalRe.lastIndex = this.m_cpos;
+            const mr = _s_rationalRe.exec(this.m_input);
+            if (mr !== null) {
+                this.m_cpos += mr[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_RATIONAL, mr[0]);
+                return true;
+            }
+    
+            _s_bignatRe.lastIndex = this.m_cpos;
+            const mbn = _s_bignatRe.exec(this.m_input);
+            if (mbn !== null) {
+                this.m_cpos += mbn[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_BIG_NAT, mbn[0]);
+                return true;
+            }
+    
+            _s_bigintRe.lastIndex = this.m_cpos;
+            const mbi = _s_bigintRe.exec(this.m_input);
+            if (mbi !== null) {
+                this.m_cpos += mbi[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_BIG_INT, mbi[0]);
+                return true;
+            }
+    
+            _s_decimalRe.lastIndex = this.m_cpos;
+            const md = _s_decimalRe.exec(this.m_input);
+            if (md !== null) {
+                this.m_cpos += md[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_DECIMAL, md[0]);
+                return true;
+            }
+    
+            _s_floatRe.lastIndex = this.m_cpos;
+            const mf = _s_floatRe.exec(this.m_input);
+            if (mf !== null) {
+                this.m_cpos += mf[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_FLOAT, mf[0]);
+                return true;
+            }
+    
+            _s_natRe.lastIndex = this.m_cpos;
+            const mn = _s_natRe.exec(this.m_input);
+            if (mn !== null) {
+                this.m_cpos += mn[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_NAT, mn[0]);
+                return true;
+            }
+    
+            _s_intRe.lastIndex = this.m_cpos;
+            const mi = _s_intRe.exec(this.m_input);
+            if (mi !== null) {
+                this.m_cpos += mi[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_INT, mi[0]);
+                return true;
+            }
+        }
+    
+        return false;
+    }
+
+    private lexString() {
+        _s_stringRe.lastIndex = this.m_cpos;
+        const ms = _s_stringRe.exec(this.m_input);
+        if (ms !== null) {
+            this.m_cpos += ms[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_STRING, ms[0]);
+            return true;
+        }
+    
+        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+            _s_ascii_stringRe.lastIndex = this.m_cpos;
+            const mas = _s_ascii_stringRe.exec(this.m_input);
+            if (mas !== null) {
+                this.m_cpos += mas[0].length;
+                this.m_lastToken = createToken(TokenKind.TOKEN_ASCII_STRING, mas[0]);
+                return true;
+            }
+        }
+    
+        return false;
+    }
+
+    private lexRegex() {
+        _s_regexRe.lastIndex = this.m_cpos;
+        const ms = _s_regexRe.exec(this.m_input);
+        if (ms !== null) {
+            this.m_cpos += ms[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_REGEX, ms[0]);
+            return true;
+        }
+    
+        return false;
+    }
+
+    private lexSymbol() {
+        _s_symbolRe.lastIndex = this.m_cpos;
+        const ms = _s_symbolRe.exec(this.m_input);
+        if (ms !== null) {
+            const sym = SymbolStrings.find((value) => ms[0].startsWith(value));
+            if (sym !== undefined) {
+                this.m_cpos += sym.length;
+                this.m_lastToken = createToken(sym, sym);
+                return true;
+            }
+        }
+    
+        return false;
+    }
+
+    private lexName() {
+        _s_nameSrcRe.lastIndex = this.m_cpos;
+        const msrc = _s_nameSrcRe.exec(this.m_input);
+        if(msrc !== null) {
+            this.m_cpos += msrc[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_SRC, msrc[0]);
+            return true;
+        }
+    
+        _s_nameRefRe.lastIndex = this.m_cpos;
+        const mref = _s_nameRefRe.exec(this.m_input);
+        if(mref !== null) {
+            this.m_cpos += mref[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_REFERENCE, mref[0]);
+            return true;
+        }
+    
+        _s_nameTypeRe.lastIndex = this.m_cpos;
+        const mtype = _s_nameTypeRe.exec(this.m_input);
+        if(mtype !== null) {
+            this.m_cpos += mtype[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_TYPE, mtype[0]);
+            return true;
+        }
+    
+        _s_namePropertyRE.lastIndex = this.m_cpos;
+        const pname = _s_namePropertyRE.exec(this.m_input);
+        if(pname !== null) {
+            this.m_cpos += pname[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_PROPERTY, pname[0]);
+            return true;
+        }
+    
+        return false;
+    }
+
+    private lexAccess() {
+        _s_dotNameAccessRe.lastIndex = this.m_cpos;
+        const dotname = _s_dotNameAccessRe.exec(this.m_input);
+        if(dotname !== null) {
+            this.m_cpos += dotname[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_NAME, dotname[0].slice(1));
+            return true;
+        }
+    
+        _s_dotIdxAccessRe.lastIndex = this.m_cpos;
+        const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
+        if(dotidx !== null) {
+            this.m_cpos += dotidx[0].length;
+            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_IDX, dotidx[0].slice(1));
+            return true;
+        }
+    
+        return false;
+    }
+
+
+    private peekToken(): {kind: string, value: string} | undefined {
+        if (this.m_lastToken !== undefined) {
+            return this.m_lastToken;
+        }
+
+        while (this.lexWS() || this.lexComment()) {
+            ; //eat the token
+        }
+
+        if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
+            this.lexUUID() || this.lexSHACode() || this.lexPath() ||
+            this.lexNumber() || this.lexString() || this.lexRegex() ||
+            this.lexSymbol() || this.lexName() || this.lexAccess()) {
+            return this.m_lastToken;
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    private popToken(): {kind: string, value: string} | undefined {
+        while (this.lexWS() || this.lexComment()) {
+            ; //eat the token
+        }
+
+        if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
+            this.lexUUID() || this.lexSHACode() || this.lexPath() ||
+            this.lexNumber() || this.lexString() || this.lexRegex() ||
+            this.lexSymbol() || this.lexName() || this.lexAccess()) {
+            return this.m_lastToken;
+        }
+        else {
+            return undefined;
+        }
+    }
+
+    private testToken(tkind: string): boolean {
+        return this.peekToken() !== undefined && this.peekToken()!.kind === tkind;
+    }
+
+    private testTokens(...tkinds: string[]): boolean {
+        const opos = this.m_cpos;
+        for (let i = 0; i < tkinds.length; ++i) {
+            if (!this.testToken(tkinds[i])) {
+                this.m_cpos = opos;
+                return false;
+            }
+        }
+
+        this.m_cpos = opos;
+        return true;
+    }
+
+    private testTypePrefixTokens(...tkinds: string[]): boolean {
+        if (!this.testToken(TokenKind.TOKEN_TYPE)) {
+            return false;
+        }
+
+        const opos = this.m_cpos;
+        while (this.testTokens(TokenKind.TOKEN_COLON_COLON, TokenKind.TOKEN_TYPE)) {
+            this.popToken();
+            this.expectTokenAndPop(TokenKind.TOKEN_TYPE);
+        }
+
+        for (let i = 0; i < tkinds.length; ++i) {
+            if (!this.testToken(tkinds[i])) {
+                this.m_cpos = opos;
+                return false;
+            }
+        }
+
+        this.m_cpos = opos;
+        return true;
+    }
+
+    private raiseError(msg: string) {
+        throw new BSQONParseError(msg, this.m_cpos);
+    }
+
+    private raiseErrorIf(cond: boolean, msg: string) {
+        if (cond) {
+            this.raiseError(msg);
+        }
+    }
+
+    private expectToken(tkind: string) {
+        this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()}`);
+    }
+
+    private expectTokenAndPop(tkind: string): {kind: string, value: string} {
+        this.expectToken(tkind);
+        return this.popToken() as {kind: string, value: string};
+    }
+
+    private resolveTypeFromNameList(tt: string[]): $TypeInfo.BSQType  {
+        let scopedname = "[uninit]";
+
+        if (this.m_assembly.namespaces.get("Core")!.typenames.includes(tt.join("::"))) {
+            scopedname = tt.join("::");
+        }
+        else if (this.m_importmap.has(tt[0])) {
+            scopedname = `${this.m_importmap.get(tt[0])}::${tt.slice(1).join("::")}`;
+        }
+        else {
+            scopedname = `${this.m_defaultns}::${tt.join("::")}`;
+        }
+
+        if (!this.m_assembly.aliasmap.has(scopedname)) {
+            return this.m_assembly.typerefs.get(scopedname) as $TypeInfo.BSQType;
+        }
+        else {
+            return this.m_assembly.aliasmap.get(scopedname) as $TypeInfo.BSQType;
+        }
+    }
+
+    private processCoreType(tname: string): $TypeInfo.BSQType {
+        return this.resolveTypeFromNameList([tname]);
+    }
+
+    private processCoreTypeW1Term(tname: string, terms: $TypeInfo.BSQType[], expected: $TypeInfo.BSQType | undefined): $TypeInfo.BSQType {
+        if (tname === "StringOf") {
+            this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+            return this.m_assembly.typerefs.get(`StringOf<${terms[0].tkey}>`) as $TypeInfo.BSQType;
+        }
+        else if (tname === "ASCIIStringOf") {
+            this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+            return this.m_assembly.typerefs.get(`ASCIIStringOf<${terms[0].tkey}>`) as $TypeInfo.BSQType;
+        }
+        else if (tname === "Something") {
+            let t: $TypeInfo.BSQTypeKey = $TypeInfo.UnresolvedType.singleton.tkey;
+            if (terms.length === 1) {
+                t = terms[0].tkey;
+            }
+            else {
+                this.raiseErrorIf(expected === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+                const sopts = (expected!.tag === $TypeInfo.BSQTypeTag.TYPE_SOMETHING ? expected : this.m_assembly.typerefs.get((expected as $TypeInfo.UnionType).types.find((t) => this.m_assembly.typerefs.get(t)!.tag === $TypeInfo.BSQTypeTag.TYPE_SOMETHING)!)) as $TypeInfo.SomethingType;
+                const oopts = (expected!.tag === $TypeInfo.BSQTypeTag.TYPE_OPTION ? expected : this.m_assembly.typerefs.get((expected as $TypeInfo.UnionType).types.find((t) => this.m_assembly.typerefs.get(t)!.tag === $TypeInfo.BSQTypeTag.TYPE_OPTION)!)) as $TypeInfo.OptionType;
+
+                this.raiseErrorIf(sopts === undefined && oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+                this.raiseErrorIf(sopts !== undefined && oopts !== undefined, `Relaxed type resolution has ambiguous types for ${tname}`);
+                t = (sopts ?? oopts).oftype;
+            }
+
+            return $TypeInfo.createSomething(t);
+        }
+        else if (tname === "Option") {
+            let t = $TypeInfo.unresolvedType;
+            if (terms.length === 1) {
+                t = terms[0];
+            }
+            else {
+                this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+                const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
+
+                this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+                t = oopts.oftype;
+            }
+
+            return $TypeInfo.createOption(t);
+        }
+        else if (tname === "Path") {
+            this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+            return $TypeInfo.createPath(terms[0]);
+        }
+        else if (tname === "PathFragment") {
+            this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+            return $TypeInfo.createPathFragment(terms[0]);
+        }
+        else if (tname === "PathGlob") {
+            this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
+            return $TypeInfo.createPathGlob(terms[0]);
+        }
+        else {
+            let ttag = $TypeInfo.TYPE_UNKNOWN;
+            if (tname === "List") {
+                ttag = $TypeInfo.TYPE_LIST;
+            }
+            else if (tname === "Stack") {
+                ttag = $TypeInfo.TYPE_STACK;
+            }
+            else if (tname === "Queue") {
+                ttag = $TypeInfo.TYPE_QUEUE;
+            }
+            else {
+                ttag = $TypeInfo.TYPE_SET;
+            }
+
+            let t = $TypeInfo.unresolvedType;
+            if (terms.length === 1) {
+                t = terms[0];
+            }
+            else {
+                this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
+                const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
+
+                this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
+                t = oopts.oftype;
+            }
+
+            if (tname === "List") {
+                return $TypeInfo.createList(t);
+            }
+            else if (tname === "Stack") {
+                return $TypeInfo.createStack(t);
+            }
+            else if (tname === "Queue") {
+                return $TypeInfo.createQueue(t);
+            }
+            else {
+                this.raiseErrorIf(tinfo !== "Set", `Unknown core type ${tname}`);
+
+                return $TypeInfo.createSet(t);
+            }
+        }
+    }
+
+private processCoreTypeW2Terms(tname, terms, expectedOpt) {
     if(tname === "Result::Ok") {
         return $TypeInfo.createOk(t1, t2);
     } 
@@ -964,7 +999,7 @@ BSQONParse.prototype.processCoreTypeW2Terms = function (tname, terms, expectedOp
         }
     }
 }
-BSQONParse.prototype.parseNominalType = function (expectedOpt) {
+private parseNominalType(expectedOpt) {
     let tnames = [this.expectTokenAndPop(TOKEN_TYPE).value];
     while(this.testTokens(TOKEN_COLONCOLON, TOKEN_TYPE)) {
         this.popToken();
@@ -1033,7 +1068,7 @@ BSQONParse.prototype.parseNominalType = function (expectedOpt) {
         return rtype;
     }
 }
-BSQONParse.prototype.parseTupleType = function (expectedOpt) {
+private parseTupleType(expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== $TypeInfo.TYPE_TUPLE, `Expected ${expectedOpt.ttag} type: but found tuple type`);
 
     let entries = [];
@@ -1054,7 +1089,7 @@ BSQONParse.prototype.parseTupleType = function (expectedOpt) {
 
     $TypeInfo.createTuple(entries);
 }
-BSQONParse.prototype.parseRecordType = function (expectedOpt) {
+private parseRecordType(expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== TYPE_RECORD, `Expected ${expectedOpt.ttag} type: but found record type`);
 
     let entries = {};
@@ -1077,7 +1112,7 @@ BSQONParse.prototype.parseRecordType = function (expectedOpt) {
 
     $TypeInfo.createRecord(entries);
 }
-BSQONParse.prototype.parseBaseType = function (expectedOpt) {
+private parseBaseType(expectedOpt) {
     let rtype = undefined;
 
     if(this.testToken(TOKEN_LBRACKET)) {
@@ -1100,7 +1135,7 @@ BSQONParse.prototype.parseBaseType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQONParse.prototype.parseConceptSetType = function (expectedOpt) {
+private parseConceptSetType(expectedOpt) {
     let rtype = undefined;
 
     const lt = this.parseBaseType();
@@ -1120,7 +1155,7 @@ BSQONParse.prototype.parseConceptSetType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQONParse.prototype.parseUnionType = function (expectedOpt) {
+private parseUnionType(expectedOpt) {
     let rtype = undefined;
 
     const lt = this.parseConceptSetType();
@@ -1140,7 +1175,7 @@ BSQONParse.prototype.parseUnionType = function (expectedOpt) {
     this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
     return rtype;
 }
-BSQONParse.prototype.parseType = function (expectedOpt) {
+private parseType(expectedOpt) {
     if(!this.isJSONMode()) {
        return this.parseUnionType(expectedOpt);
     }
@@ -1151,7 +1186,7 @@ BSQONParse.prototype.parseType = function (expectedOpt) {
         return this.parseUnionType(expectedOpt);
     }
 }
-BSQONParse.prototype.parseSrc = function (oftype, breq) {
+private parseSrc(oftype, breq) {
     this.expectTokenAndPop(TOKEN_SRC);
 
     this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
@@ -1160,7 +1195,7 @@ BSQONParse.prototype.parseSrc = function (oftype, breq) {
 
     return createBSQONParseResult(rr, this.m_srcbind[1], this.m_srcbind[2], breq);
 }
-BSQONParse.prototype.parseReference = function (oftype, breq) {
+private parseReference(oftype, breq) {
     const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
 
     this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
@@ -1171,7 +1206,7 @@ BSQONParse.prototype.parseReference = function (oftype, breq) {
     
     return createBSQONParseResult(rr, rinfo[1], rinfo[2], breq);
 }
-BSQONParse.prototype.parseBaseExpression = function (oftype, breq) {
+private parseBaseExpression(oftype, breq) {
     if(this.testToken(TOKEN_SRC)) {
         return this.parseSrc(oftype, breq);
     }
@@ -1186,7 +1221,7 @@ BSQONParse.prototype.parseBaseExpression = function (oftype, breq) {
         return re;
     }
 }
-BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
+private parsePostfixOp(oftype, breq) {
     const bexp = this.parseBaseExpression(oftype, true);
 
     let vv = bexp;
@@ -1270,8 +1305,9 @@ BSQONParse.prototype.parsePostfixOp = function (oftype, breq) {
     
     return createBSQONParseResult(rr, getBSQONParseInfoCType(vv), getBSQONParseInfoTTree(vv), breq);
 }
-BSQONParse.prototype.parseExpression = function (oftype, breq) {
+private parseExpression(oftype, breq) {
     return this.parsePostfixOp(oftype, breq);
+}
 }
 BSQONParse.prototype.parseNone = function (breq) {
     if(!this.isJSONMode()) {
@@ -2011,7 +2047,7 @@ BSQONEmit.prototype.emitNone = function() {
 }
 
 export {
-    NOTATION_MODE_DEFAULT, NOTATION_MODE_JSON, NOTATION_MODE_FULL,
+    NotationMode,
     BSQONParse, BSQONParseError,
     BSQONEmit
 }
