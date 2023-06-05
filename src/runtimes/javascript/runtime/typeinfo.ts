@@ -46,6 +46,8 @@ abstract class BSQType {
         this.isrecursive = isrecursive;
         this.isconcretetype = isconcretetype;
     }
+
+    abstract getTerms(): BSQTypeKey[];
 }
 
 class UnresolvedType extends BSQType {

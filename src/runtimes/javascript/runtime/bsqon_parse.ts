@@ -403,6 +403,13 @@ class BSQONParse {
         this.m_refs = new Map<string, [any, $TypeInfo.BSQType, any]>();
     }
 
+    private lookupMustDefType(tname: $TypeInfo.BSQTypeKey): $TypeInfo.BSQType {
+        const rtype = this.m_assembly.typerefs.get(tname);
+        this.raiseErrorIf(rtype === undefined, `Type ${tname} is not defined in this assembly`);
+
+        return rtype as $TypeInfo.BSQType;
+    }
+
     private lexWS() {
         _s_whitespaceRe.lastIndex = this.m_cpos;
         const m = _s_whitespaceRe.exec(this.m_input);
@@ -833,7 +840,7 @@ class BSQONParse {
         return this.popToken() as {kind: string, value: string};
     }
 
-    private resolveTypeFromNameList(tt: string[]): $TypeInfo.BSQType  {
+    private resolveTypeFromNameList(tt: string[], terms: $TypeInfo.BSQType[]): $TypeInfo.BSQType  {
         let scopedname = "[uninit]";
 
         if (this.m_assembly.namespaces.get("Core")!.typenames.includes(tt.join("::"))) {
@@ -846,6 +853,10 @@ class BSQONParse {
             scopedname = `${this.m_defaultns}::${tt.join("::")}`;
         }
 
+        if (terms.length !== 0) {
+            scopedname = scopedname + `<${terms.map((t) => t.tkey).join(", ")}>`;
+        }
+
         if (!this.m_assembly.aliasmap.has(scopedname)) {
             return this.m_assembly.typerefs.get(scopedname) as $TypeInfo.BSQType;
         }
@@ -855,459 +866,450 @@ class BSQONParse {
     }
 
     private processCoreType(tname: string): $TypeInfo.BSQType {
-        return this.resolveTypeFromNameList([tname]);
+        return this.resolveTypeFromNameList([tname], []);
     }
 
-    private processCoreTypeW1Term(tname: string, terms: $TypeInfo.BSQType[], expected: $TypeInfo.BSQType | undefined): $TypeInfo.BSQType {
+    private resolveRelaxedTypeMatch(oftags: $TypeInfo.BSQTypeTag[], opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        this.raiseErrorIf(this.m_parsemode === NotationMode.NOTATION_MODE_FULL, `Cannot use relaxed types in this (strict) BSQON context`);
+
+        if (opts.length === 1) {
+            this.raiseErrorIf(!oftags.includes(opts[0].tag), `Could not resolve relaxed type ${opts[0].tkey}, is not matchable`);
+
+            return opts[0];
+        }
+        else {
+            const popts = opts.filter((tt) => oftags.includes((this.m_assembly.typerefs.get(tt.tkey) as $TypeInfo.BSQType).tag));
+            this.raiseErrorIf(popts.length === 0, `Could not resolve relaxed type from (${opts.map((tt) => tt.tkey).join(", ")}), no candidates found`);
+            this.raiseErrorIf(popts.length > 1, `Could not resolve relaxed type from (${opts.map((tt) => tt.tkey).join(", ")}), multiple candidates found`);
+
+            return popts[0];
+        }
+    }
+
+    private resolveRelaxedTemplateMatch(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        this.raiseErrorIf(this.m_parsemode === NotationMode.NOTATION_MODE_FULL, `Cannot use relaxed types in this (strict) BSQON context`);
+
+        if (opts.length === 1) {
+            return opts[0];
+        }
+        else {
+            const popts = opts.filter((tt) => tt.getTerms().length !== 0);
+            this.raiseErrorIf(popts.length === 0, `Could not resolve relaxed type from (${opts.map((tt) => tt.tkey).join(", ")}), no candidates found`);
+            this.raiseErrorIf(popts.length > 1, `Could not resolve relaxed type from (${opts.map((tt) => tt.tkey).join(", ")}), multiple candidates found`);
+
+            return popts[0];
+        }
+    }
+
+    private processCoreTypeW1Term(tname: string, terms: $TypeInfo.BSQType[], opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
         if (tname === "StringOf") {
             this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-            return this.m_assembly.typerefs.get(`StringOf<${terms[0].tkey}>`) as $TypeInfo.BSQType;
+            return this.lookupMustDefType(`StringOf<${terms[0].tkey}>`);
         }
         else if (tname === "ASCIIStringOf") {
             this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-            return this.m_assembly.typerefs.get(`ASCIIStringOf<${terms[0].tkey}>`) as $TypeInfo.BSQType;
+            return this.lookupMustDefType(`ASCIIStringOf<${terms[0].tkey}>`);
         }
         else if (tname === "Something") {
-            let t: $TypeInfo.BSQTypeKey = $TypeInfo.UnresolvedType.singleton.tkey;
-            if (terms.length === 1) {
-                t = terms[0].tkey;
-            }
-            else {
-                this.raiseErrorIf(expected === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-                const sopts = (expected!.tag === $TypeInfo.BSQTypeTag.TYPE_SOMETHING ? expected : this.m_assembly.typerefs.get((expected as $TypeInfo.UnionType).types.find((t) => this.m_assembly.typerefs.get(t)!.tag === $TypeInfo.BSQTypeTag.TYPE_SOMETHING)!)) as $TypeInfo.SomethingType;
-                const oopts = (expected!.tag === $TypeInfo.BSQTypeTag.TYPE_OPTION ? expected : this.m_assembly.typerefs.get((expected as $TypeInfo.UnionType).types.find((t) => this.m_assembly.typerefs.get(t)!.tag === $TypeInfo.BSQTypeTag.TYPE_OPTION)!)) as $TypeInfo.OptionType;
-
-                this.raiseErrorIf(sopts === undefined && oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-                this.raiseErrorIf(sopts !== undefined && oopts !== undefined, `Relaxed type resolution has ambiguous types for ${tname}`);
-                t = (sopts ?? oopts).oftype;
-            }
-
-            return $TypeInfo.createSomething(t);
-        }
-        else if (tname === "Option") {
-            let t = $TypeInfo.unresolvedType;
+            let t: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
             if (terms.length === 1) {
                 t = terms[0];
             }
             else {
-                this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-                const oopts = expectedOpt.tag === $TypeInfo.TYPE_OPTION ? expectedOpt : expectedOpt.types.find((t) => t.tag === $TypeInfo.TYPE_OPTION);
-
-                this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-                t = oopts.oftype;
+                t = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SOMETHING, $TypeInfo.BSQTypeTag.TYPE_OPTION], opts);
             }
 
-            return $TypeInfo.createOption(t);
+            return this.lookupMustDefType(`Something<${t.tkey}>`);
+        }
+        else if (tname === "Option") {
+            let t: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
+            if (terms.length === 1) {
+                t = terms[0];
+            }
+            else {
+                t = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_OPTION], opts);
+            }
+
+            return this.lookupMustDefType(`Option<${t.tkey}>`);
         }
         else if (tname === "Path") {
             this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-            return $TypeInfo.createPath(terms[0]);
+            return this.lookupMustDefType(`Path<${terms[0].tkey}>`);
         }
         else if (tname === "PathFragment") {
             this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-            return $TypeInfo.createPathFragment(terms[0]);
+            return this.lookupMustDefType(`PathFragment<${terms[0].tkey}>`);
         }
         else if (tname === "PathGlob") {
             this.raiseErrorIf(terms.length !== 1, `Type ${tname} requires one type argument`);
-            return $TypeInfo.createPathGlob(terms[0]);
+            return this.lookupMustDefType(`PathGlob<${terms[0].tkey}>`);
         }
         else {
-            let ttag = $TypeInfo.TYPE_UNKNOWN;
+            let ttag = $TypeInfo.BSQTypeTag.TYPE_UNRESOLVED;
             if (tname === "List") {
-                ttag = $TypeInfo.TYPE_LIST;
+                ttag = $TypeInfo.BSQTypeTag.TYPE_LIST;
             }
             else if (tname === "Stack") {
-                ttag = $TypeInfo.TYPE_STACK;
+                ttag = $TypeInfo.BSQTypeTag.TYPE_STACK;
             }
             else if (tname === "Queue") {
-                ttag = $TypeInfo.TYPE_QUEUE;
+                ttag = $TypeInfo.BSQTypeTag.TYPE_QUEUE;
             }
             else {
-                ttag = $TypeInfo.TYPE_SET;
+                ttag = $TypeInfo.BSQTypeTag.TYPE_SET;
             }
 
-            let t = $TypeInfo.unresolvedType;
+            let t: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
             if (terms.length === 1) {
                 t = terms[0];
             }
             else {
-                this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-                const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
-
-                this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-                t = oopts.oftype;
+                t = this.resolveRelaxedTypeMatch([ttag], opts);
             }
 
             if (tname === "List") {
-                return $TypeInfo.createList(t);
+                return this.lookupMustDefType(`List<${t.tkey}>`);
             }
             else if (tname === "Stack") {
-                return $TypeInfo.createStack(t);
+                return this.lookupMustDefType(`Stack<${t.tkey}>`);
             }
             else if (tname === "Queue") {
-                return $TypeInfo.createQueue(t);
+                return this.lookupMustDefType(`Queue<${t.tkey}>`);
             }
             else {
-                this.raiseErrorIf(tinfo !== "Set", `Unknown core type ${tname}`);
+                this.raiseErrorIf(tname !== "Set", `Unknown core type ${tname}`);
 
-                return $TypeInfo.createSet(t);
+                return this.lookupMustDefType(`Set<${t.tkey}>`);
             }
         }
     }
 
-private processCoreTypeW2Terms(tname, terms, expectedOpt) {
-    if(tname === "Result::Ok") {
-        return $TypeInfo.createOk(t1, t2);
-    } 
-    else if(tname === "Result::Error") {
-        return $TypeInfo.createError(t1, t2);
-    } 
-    else if(tname === "Result") {
-        return $TypeInfo.createResult(t1, t2);
-    } 
-    else {
-        let ttag = $TypeInfo.TYPE_UNKNOWN;
-        if (tname === "MapEntry") {
-            ttag = $TypeInfo.TYPE_MAP_ENTRY;
+    private processCoreTypeW2Terms(tname: string, terms: $TypeInfo.BSQType[], opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        if (tname === "Result::Ok") {
+            this.raiseErrorIf(terms.length !== 2, `Type ${tname} requires two type arguments`);
+            return this.lookupMustDefType(`Result<${terms[0].tkey}, ${terms[1].tkey}>::Ok`);
+        }
+        else if (tname === "Result::Error") {
+            this.raiseErrorIf(terms.length !== 2, `Type ${tname} requires two type arguments`);
+            return this.lookupMustDefType(`Result<${terms[0].tkey}, ${terms[1].tkey}>::Err`);
+        }
+        else if (tname === "Result") {
+            this.raiseErrorIf(terms.length !== 2, `Type ${tname} requires two type arguments`);
+            return this.lookupMustDefType(`Result<${terms[0].tkey}, ${terms[1].tkey}>`);
         }
         else {
-            ttag = $TypeInfo.TYPE_MAP;
-        }
+            let ttag = $TypeInfo.BSQTypeTag.TYPE_UNRESOLVED;
+            if (tname === "MapEntry") {
+                ttag = $TypeInfo.BSQTypeTag.TYPE_MAP_ENTRY;
+            }
+            else {
+                ttag = $TypeInfo.BSQTypeTag.TYPE_MAP;
+            }
 
-        let k = $TypeInfo.unresolvedType;
-        let v = $TypeInfo.unresolvedType;
-        if (terms.length === 2) {
-            k = terms[0];
-            v = terms[1];
-        }
-        else {
-            this.raiseErrorIf(expectedOpt === undefined, `Relaxed type resolution required expected type information for ${tname}`);
-            const oopts = expectedOpt.tag === ttag ? expectedOpt : expectedOpt.types.find((t) => t.tag === ttag);
+            if (terms.length === 2) {
+                if (tname === "MapEntry") {
+                    return this.lookupMustDefType(`MapEntry<${terms[0].tkey, terms[1].tkey}>`);
+                }
+                else {
+                    this.raiseErrorIf(tname !== "Map", `Unknown core type ${tname}`);
 
-            this.raiseErrorIf(oopts === undefined, `Relaxed type resolution cannot infer type for ${tname}`);
-            k = oopts.ktype;
-            v = oopts.vtype;
-        }
+                    return this.lookupMustDefType(`Map<${terms[0].tkey, terms[1].tkey}>`);
+                }
+            }
+            else {
+                const t = this.resolveRelaxedTypeMatch([ttag], opts);
 
-        if (tname === "MapEntry") {
-            return $TypeInfo.createMapEntry(k, v);
-        }
-        else {
-            this.raiseErrorIf(tname !== "Map", `Unknown core type ${tname}`);
+                if (tname === "MapEntry") {
+                    const tme = t as $TypeInfo.MapEntryType;
+                    return this.lookupMustDefType(`MapEntry<${tme.ktype, tme.vtype}>`);
+                }
+                else {
+                    this.raiseErrorIf(tname !== "Map", `Unknown core type ${tname}`);
 
-            return $TypeInfo.createMap(k, v);
+                    const tm = t as $TypeInfo.MapType;
+                    return this.lookupMustDefType(`Map<${tm.ktype, tm.vtype}>`);
+                }
+            }
         }
     }
-}
-private parseNominalType(expectedOpt) {
-    let tnames = [this.expectTokenAndPop(TOKEN_TYPE).value];
-    while(this.testTokens(TOKEN_COLONCOLON, TOKEN_TYPE)) {
-        this.popToken();
-        tnames.push(this.expectTokenAndPop(TOKEN_TYPE).value);
-    }
 
-    let rname = this.resolveTypeFromNameList(tnames);
-    if(typeof(rname) !== "string") {
-        if(expectedOpt === undefined) {
-            return rname;
+    private parseNominalType(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        let tnames = [this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value];
+        while (this.testTokens(TokenKind.TOKEN_COLON_COLON, TokenKind.TOKEN_TYPE)) {
+            this.popToken();
+            tnames.push(this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value);
         }
-        else {
-            this.raiseErrorIf(expectedOpt.tag !== rname.tag, `Expected ${expectedOpt.ttag} type: but got ${rname.tag}`);
-            return rname;
-        }
-    }
-    else {
-        let rtype = undefined;
 
         let terms = [];
-        if(this.testToken(TOKEN_LANGLE)) {
+        if (this.testToken(TokenKind.TOKEN_LANGLE)) {
+            const eterms = this.resolveRelaxedTemplateMatch(opts).getTerms();
             this.popToken();
-            while(terms.length === 0 || this.testToken(TOKEN_COMMA)) {
-                if(this.testToken(TOKEN_COMMA)) {
+
+            while (terms.length === 0 || this.testToken(TokenKind.TOKEN_COMMA)) {
+                if (this.testToken(TokenKind.TOKEN_COMMA)) {
                     this.popToken();
                 }
 
-                terms.push(this.parseType(undefined));
+                this.raiseErrorIf(terms.length >= eterms.length, `Expected a type with ${eterms.length} (${opts.map((tt) => tt.tkey).join(", ")}) but got ${terms.length + 1} terms`)
+                terms.push(this.parseType(this.lookupMustDefType(eterms[terms.length])));
             }
         }
 
-        if (_s_core_types.includes(rname)) {
-            this.raiseErrorIf(terms.length !== 0, `Type ${rname} does not take type arguments`);
+        if (_s_core_types.includes(tnames[0])) {
+            this.raiseErrorIf(terms.length !== 0, `Type ${tnames[0]} does not take type arguments`);
 
-            rtype = this.processCoreType(rname);
+            return this.processCoreType(tnames[0]);
         }
-        else if (_s_core_types_with_one_template.includes(rname)) {
-            this.raiseErrorIf(this.isFullMode() && terms.length !== 1, `Type ${rname} requires one type argument`);
-
-            rtype = this.processCoreTypeW1Term(rname, terms, expectedOpt);
+        else if (_s_core_types_with_one_template.includes(tnames[0])) {
+            return this.processCoreTypeW1Term(tnames[0], terms, opts);
         }
-        else if (_s_core_types_with_map.includes(rname)) {
-            this.raiseErrorIf(this.isFullMode() && terms.length !== 2, `Type ${rname} requires two type arguments`);
-
-            rtype = this.processCoreTypeW2Terms(rname, terms, expectedOpt);
+        else if (_s_core_types_with_map.includes(tnames[0])) {
+            return this.processCoreTypeW2Terms(tnames[0], terms, opts);
         }
-        else if(rname === "Result") {
-            this.raiseErrorIf(this.isFullMode() && terms.length !== 2, `Type ${rname} requires two type arguments`);
-
-            if(!this.testToken(TOKEN_COLON_COLON)) {
-                rtype = this.processCoreTypeW2Terms(rname, terms, expectedOpt);
+        else if (tnames[0] === "Result") {
+            if (!this.testToken(TokenKind.TOKEN_COLON_COLON)) {
+                return this.processCoreTypeW2Terms(tnames[0], terms, opts);
             }
             else {
-                this.expectTokenAndPop(TOKEN_COLON_COLON);
-                const tname = this.expectTokenAndPop(TOKEN_TYPE).value;
-                rtype = this.processCoreTypeW2Terms(rname + "::" + tname, terms, expectedOpt);
+                this.expectTokenAndPop(TokenKind.TOKEN_COLON_COLON);
+                const tname = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
+                return this.processCoreTypeW2Terms("Result::" + tname, terms, opts);
             }
         }
         else {
-            this.raiseErrorIf(terms.length !== 0, `Type ${rname} does not take type arguments`);
-
-            rtype = $TypeInfo.createSimpleNominal(rname);
+            return this.resolveTypeFromNameList(tnames, terms);
         }
-
-        this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
-        return rtype;
-    }
-}
-private parseTupleType(expectedOpt) {
-    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== $TypeInfo.TYPE_TUPLE, `Expected ${expectedOpt.ttag} type: but found tuple type`);
-
-    let entries = [];
-    this.popToken();
-    while(entries.length === 0 || this.testToken(TOKEN_COMMA)) {
-        if(this.testToken(TOKEN_COMMA)) {
-            this.popToken();
-        }
-
-        const eptype = undefined;
-        if(expectedOpt !== undefined && entries.length < expectedOpt.entries.length) {
-            const ee = expectedOpt.entries[entries.length];
-            eptype = ee[1];
-        }
-
-        entries.push(this.parseType(eptype));
     }
 
-    $TypeInfo.createTuple(entries);
-}
-private parseRecordType(expectedOpt) {
-    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt.tag !== TYPE_RECORD, `Expected ${expectedOpt.ttag} type: but found record type`);
+    private parseTupleType(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        const expected = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_TUPLE], opts) as $TypeInfo.TupleType;
 
-    let entries = {};
-    this.popToken();
-    while(entries.length === 0 || this.testToken(TOKEN_COMMA)) {
-        if(this.testToken(TOKEN_COMMA)) {
-            this.popToken();
-        }
-
-        const pname = this.expectTokenAndPop(TOKEN_PROPERTY).value;
-
-        const eptype = undefined;
-        if(expectedOpt !== undefined && expectedOpt.entries.find((ee) => ee[0] === pname) !== undefined) {
-            const ee = expectedOpt.entries.find((ee) => ee[0] === pname);
-            eptype = ee[1];
-        }
-
-        entries[pname] = this.parseType(eptype);
-    }
-
-    $TypeInfo.createRecord(entries);
-}
-private parseBaseType(expectedOpt) {
-    let rtype = undefined;
-
-    if(this.testToken(TOKEN_LBRACKET)) {
-        rtype = this.parseTupleType(expectedOpt);
-    }
-    else if(this.testToken(TOKEN_LBRACE)) {
-        rtype = this.parseRecordType(expectedOpt);
-    }
-    else if(this.testToken(TOKEN_NAME)) {
-        rtype = this.parseNominalType(expectedOpt);
-    }
-    else {
-        this.raiseErrorIf(!this.testToken(TOKEN_LPAREN) `Expected type inside "(...)": but got ${tt}`);
+        let entries: $TypeInfo.BSQType[] = [];
         this.popToken();
-        rtype = this.parseType(expectedOpt);
-        this.raiseErrorIf(!this.testToken(TOKEN_RPAREN) `Expected type inside "(...)": but got ${tt}`);
+        while (entries.length === 0 || this.testToken(TokenKind.TOKEN_COMMA)) {
+            if (this.testToken(TokenKind.TOKEN_COMMA)) {
+                this.popToken();
+            }
+
+            this.raiseErrorIf(entries.length >= expected.entries.length, `Expected a tuple of length ${expected.entries.length}`);
+            
+            const ee = this.lookupMustDefType(expected.entries[entries.length]);
+            entries.push(this.parseType(ee));
+        }
+        this.raiseErrorIf(entries.length !== expected.entries.length, `Expected a tuple of length ${expected.entries.length}`);
+
+        return this.lookupMustDefType(`[${entries.map((ee) => ee.tkey).join(", ")}]`);
+    }
+
+    private parseRecordType(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        const expected = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_RECORD], opts) as $TypeInfo.RecordType;
+
+        let entries: {pname: string, rtype: $TypeInfo.BSQType}[] = [];
         this.popToken();
-    }
-
-    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
-    return rtype;
-}
-private parseConceptSetType(expectedOpt) {
-    let rtype = undefined;
-
-    const lt = this.parseBaseType();
-    if(!this.testToken(TOKEN_AMP)) {
-        rtype = lt;
-    }
-    else {
-        let opts = [lt];
-        while(this.testToken(TOKEN_AMP)) {
-            this.popToken();
-            opts.push(this.parseConceptSetType());
-        } 
-
-        rtype = $TypeInfo.createConceptSet(opts);
-    }
-
-    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
-    return rtype;
-}
-private parseUnionType(expectedOpt) {
-    let rtype = undefined;
-
-    const lt = this.parseConceptSetType();
-    if(!this.testToken(TOKEN_BAR)) {
-        rtype = lt;
-    }
-    else {
-        let opts = [lt];
-        while(this.testToken(TOKEN_BAR)) {
-            this.popToken();
-            opts.push(this.parseUnionType());
-        } 
-
-        rtype = $TypeInfo.createUnion(opts);
-    }
-
-    this.raiseErrorIf(expectedOpt !== undefined && expectedOpt !== rtype, `Expected type ${expectedOpt.ttag}: but got ${rtype.ttag}`);
-    return rtype;
-}
-private parseType(expectedOpt) {
-    if(!this.isJSONMode()) {
-       return this.parseUnionType(expectedOpt);
-    }
-    else {
-        this.raiseErrorIf(this.testToken(TOKEN_STRING), `Expected type: but got ${tt}`);
-        this.unquoteStringForTypeParse();
-
-        return this.parseUnionType(expectedOpt);
-    }
-}
-private parseSrc(oftype, breq) {
-    this.expectTokenAndPop(TOKEN_SRC);
-
-    this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
-    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, this.m_srcbind[1], oftype), `Reference ${ref} has type ${this.m_srcbind[1].ttag} which is not a subtype of ${oftype.ttag}`);
-    const rr = oftype.ttag === this.m_srcbind[1].ttag ? this.m_srcbind[0] : new $Runtime.UnionValue(this.m_srcbind[1], this.m_srcbind[0]);
-
-    return createBSQONParseResult(rr, this.m_srcbind[1], this.m_srcbind[2], breq);
-}
-private parseReference(oftype, breq) {
-    const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
-
-    this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
-    const rinfo = this.m_refs.get(ref);
-
-    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
-    const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
-    
-    return createBSQONParseResult(rr, rinfo[1], rinfo[2], breq);
-}
-private parseBaseExpression(oftype, breq) {
-    if(this.testToken(TOKEN_SRC)) {
-        return this.parseSrc(oftype, breq);
-    }
-    else if(this.testToken(TOKEN_REFERENCE)) {
-        return this.parseReference(oftype, breq);
-    }
-    else {
-        this.expectTokenAndPop(TOKEN_LPAREN);
-        const re = this.parseExpression(oftype, breq);
-        this.expectTokenAndPop(TOKEN_RPAREN);
-
-        return re;
-    }
-}
-private parsePostfixOp(oftype, breq) {
-    const bexp = this.parseBaseExpression(oftype, true);
-
-    let vv = bexp;
-    while(this.testToken(TOKEN_DOT_NAME) || this.testToken(TOKEN_DOT_IDX) || this.testToken(TOKEN_LBRACKET)) {
-        let aval = undefined;
-        let ptype = undefined;
-
-        if(this.testToken(TOKEN_DOT_NAME)) {
-            const iname = this.popToken().value.slice(1);
-            const vval = getBSQONParseValue(vv);
-
-            if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_RECORD) {
-                aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
-                ptype = getBSQONParseInfo(vv).ttree[iname];
+        while (entries.length === 0 || this.testToken(TokenKind.TOKEN_COMMA)) {
+            if (this.testToken(TokenKind.TOKEN_COMMA)) {
+                this.popToken();
             }
-            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SIMPLE_ENTITY) {
-                aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
-                ptype = getBSQONParseInfo(vv).ttree[iname];
-            }
-            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SOMETHING) {
-                this.raiseErrorIf(iname !== "value", `Expected 'value' property access but got ${iname}`);
 
-                aval = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
-                ptype = getBSQONParseInfo(vv).ttree[0];
-            }
-            else if(getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_MAP_ENTRY) {
-                this.raiseErrorIf(iname !== "key" && iname !== "value", `Expected 'key' or 'value' property access but got ${iname}`);
+            const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
 
-                if(iname === "key") {
-                    $TypeInfo.isUnionValueRepr(vval) ? vval[0] : vval.value[0];
+            this.raiseErrorIf(entries.length >= expected.entries.length, `Expected a record with ${expected.entries.length} properties`);
+            
+            const ee = this.lookupMustDefType(expected.entries[entries.length].rtype);
+            const rtype = this.parseType(ee);
+
+            entries.push({pname: pname, rtype: this.parseType(rtype)});
+        }
+        this.raiseErrorIf(entries.length !== expected.entries.length, `Expected a record with ${expected.entries.length} properties`);
+
+        const ees = entries.sort((a, b) => a.pname.localeCompare(b.pname)).map((ee) => `${ee.pname}: ${ee.rtype.tkey}`);
+        return this.lookupMustDefType(`{${ees.join(", ")}}`);
+    }
+
+    private parseBaseType(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        if (this.testToken(TokenKind.TOKEN_TYPE)) {
+            return this.parseNominalType(opts);
+        }
+        else if (this.testToken(TokenKind.TOKEN_LBRACKET)) {
+            return this.parseTupleType(opts);
+        }
+        else if (this.testToken(TokenKind.TOKEN_LBRACE)) {
+            return this.parseRecordType(opts);
+        }
+        else {
+            this.raiseError(`Unexpected token when parsing type: ${this.peekToken()?.value || "EOF"}`);
+            return $TypeInfo.UnresolvedType.singleton;
+        }
+    }
+
+    private parseConceptSetType(opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType {
+        const lt = this.parseBaseType(opts);
+        if (!this.testToken(TokenKind.TOKEN_AMP)) {
+            return lt;
+        }
+        else {
+            let opts = [lt];
+            while (this.testToken(TokenKind.TOKEN_AMP)) {
+                this.popToken();
+                opts.push(this.parseConceptSetType(opts));
+            }
+
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => a.localeCompare(b)).join("&"));
+        }
+    }
+
+    private parseUnionType(expected: $TypeInfo.BSQType) {
+        const opts = (expected.tag === $TypeInfo.BSQTypeTag.TYPE_UNION) ? (expected as $TypeInfo.UnionType).types.map((tt) => this.lookupMustDefType(tt)) : [expected];
+        
+        const lt = this.parseConceptSetType(opts);
+        if (!this.testToken(TokenKind.TOKEN_BAR)) {
+            return lt;
+        }
+        else {
+            let opts = [lt];
+            while (this.testToken(TokenKind.TOKEN_BAR)) {
+                this.popToken();
+                opts.push(this.parseUnionType(expected));
+            }
+
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => a.localeCompare(b)).join(" | "));
+        }
+    }
+
+    private parseType(expected: $TypeInfo.BSQType): $TypeInfo.BSQType {
+        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+            return this.parseUnionType(expected);
+        }
+        else {
+            this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value || "EOF"}`);
+            this.unquoteStringForTypeParse();
+
+            return this.parseUnionType(expected);
+        }
+    }
+
+    private parseSrc(oftype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
+        this.expectTokenAndPop(TokenKind.TOKEN_SRC);
+
+        this.raiseErrorIf(this.m_srcbind === undefined, "Invalid use of $SRC binding");
+        this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, this.m_srcbind[1], oftype), `Reference ${ref} has type ${this.m_srcbind[1].ttag} which is not a subtype of ${oftype.ttag}`);
+        const rr = oftype.ttag === this.m_srcbind[1].ttag ? this.m_srcbind[0] : new $Runtime.UnionValue(this.m_srcbind[1], this.m_srcbind[0]);
+
+        return BSQONParseResult.create(rr, this.m_srcbind[1], this.m_srcbind[2], breq);
+    }
+    private parseReference(oftype, breq) {
+        const ref = this.expectTokenAndPop(TOKEN_REFERENCE).value;
+
+        this.raiseErrorIf(!this.m_refs.has(ref), `Reference ${ref} not found`);
+        const rinfo = this.m_refs.get(ref);
+
+        this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, rinfo[1], oftype), `Reference ${ref} has type ${rinfo[1].ttag} which is not a subtype of ${oftype.ttag}`);
+        const rr = oftype.ttag === rinfo[1].ttag ? rinfo[0] : new $Runtime.UnionValue(rinfo[1], rinfo[0]);
+
+        return createBSQONParseResult(rr, rinfo[1], rinfo[2], breq);
+    }
+    private parseBaseExpression(oftype, breq) {
+        if (this.testToken(TOKEN_SRC)) {
+            return this.parseSrc(oftype, breq);
+        }
+        else if (this.testToken(TOKEN_REFERENCE)) {
+            return this.parseReference(oftype, breq);
+        }
+        else {
+            this.expectTokenAndPop(TOKEN_LPAREN);
+            const re = this.parseExpression(oftype, breq);
+            this.expectTokenAndPop(TOKEN_RPAREN);
+
+            return re;
+        }
+    }
+    private parsePostfixOp(oftype, breq) {
+        const bexp = this.parseBaseExpression(oftype, true);
+
+        let vv = bexp;
+        while (this.testToken(TOKEN_DOT_NAME) || this.testToken(TOKEN_DOT_IDX) || this.testToken(TOKEN_LBRACKET)) {
+            let aval = undefined;
+            let ptype = undefined;
+
+            if (this.testToken(TOKEN_DOT_NAME)) {
+                const iname = this.popToken().value.slice(1);
+                const vval = getBSQONParseValue(vv);
+
+                if (getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_RECORD) {
+                    aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
+                    ptype = getBSQONParseInfo(vv).ttree[iname];
+                }
+                else if (getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SIMPLE_ENTITY) {
+                    aval = $TypeInfo.isUnionValueRepr(vval) ? vval[iname] : vval.value[iname];
+                    ptype = getBSQONParseInfo(vv).ttree[iname];
+                }
+                else if (getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_SOMETHING) {
+                    this.raiseErrorIf(iname !== "value", `Expected 'value' property access but got ${iname}`);
+
+                    aval = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
                     ptype = getBSQONParseInfo(vv).ttree[0];
                 }
-                else if(iname === "value") {
-                    $TypeInfo.isUnionValueRepr(vval) ? vval[1] : vval.value[1];
-                    ptype = getBSQONParseInfo(vv).ttree[1];
+                else if (getBSQONParseInfo(vv).ctype === $TypeInfo.TYPE_MAP_ENTRY) {
+                    this.raiseErrorIf(iname !== "key" && iname !== "value", `Expected 'key' or 'value' property access but got ${iname}`);
+
+                    if (iname === "key") {
+                        $TypeInfo.isUnionValueRepr(vval) ? vval[0] : vval.value[0];
+                        ptype = getBSQONParseInfo(vv).ttree[0];
+                    }
+                    else if (iname === "value") {
+                        $TypeInfo.isUnionValueRepr(vval) ? vval[1] : vval.value[1];
+                        ptype = getBSQONParseInfo(vv).ttree[1];
+                    }
+                }
+                else {
+                    this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a record, nominal, option/something, or map entry type`);
                 }
             }
+            else if (this.testToken(TOKEN_DOT_IDX)) {
+                this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_TUPLE, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a tuple type`);
+
+                const idx = Number.parseInt(this.expectTokenAndPop(TOKEN_DOT_IDX).slice(1));
+                const tuprepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+
+                this.raiseErrorIf(idx >= tuprepr.length, `Invalid use of '[]' operator -- index ${idx} is out of bounds for tuple type ${getBSQONParseInfo(vv).ctype.ttag}`);
+                aval = tuprepr[idx];
+                ptype = getBSQONParseInfo(vv).ttree[idx];
+            }
             else {
-                this.raiseError(`Invalid use of '.' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a record, nominal, option/something, or map entry type`);
-            }
-        }
-        else if(this.testToken(TOKEN_DOT_IDX)) {
-            this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_TUPLE, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a tuple type`);
+                if (getBSQONParseInfo(vv).ctype.tag === $TypeInfo.TYPE_LIST) {
+                    this.expectTokenAndPop(TOKEN_LBRACKET);
+                    const eexp = this.parseExpression(this.m_assembly.types.get("Nat"), false);
+                    this.expectTokenAndPop(TOKEN_RBRACKET);
 
-            const idx = Number.parseInt(this.expectTokenAndPop(TOKEN_DOT_IDX).slice(1));
-            const tuprepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
-            
-            this.raiseErrorIf(idx >= tuprepr.length, `Invalid use of '[]' operator -- index ${idx} is out of bounds for tuple type ${getBSQONParseInfo(vv).ctype.ttag}`);
-            aval = tuprepr[idx];
-            ptype = getBSQONParseInfo(vv).ttree[idx];
-        }
-        else {
-            if(getBSQONParseInfo(vv).ctype.tag === $TypeInfo.TYPE_LIST) {
-                this.expectTokenAndPop(TOKEN_LBRACKET);
-                const eexp = this.parseExpression(this.m_assembly.types.get("Nat"), false);
-                this.expectTokenAndPop(TOKEN_RBRACKET);
+                    const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+                    aval = lrepr.get(eexp);
+                    ptype = getBSQONParseInfo(vv).ttree[eexp];
+                }
+                //OTHER TYPES HERE
+                else {
+                    this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_MAP, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a map type`);
 
-                const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
-                aval = lrepr.get(eexp);
-                ptype = getBSQONParseInfo(vv).ttree[eexp];
-            }
-            //OTHER TYPES HERE
-            else {
-                this.raiseErrorIf(getBSQONParseInfo(vv).ctype.tag !== $TypeInfo.TYPE_MAP, `Invalid use of '[]' operator -- ${getBSQONParseInfo(vv).ctype.ttag} is not a map type`);
+                    this.expectTokenAndPop(TOKEN_LBRACKET);
+                    const eexp = this.parseExpression(getBSQONParseInfo(vv).ctype.ktype, false);
+                    this.expectTokenAndPop(TOKEN_RBRACKET);
 
-                this.expectTokenAndPop(TOKEN_LBRACKET);
-                const eexp = this.parseExpression(getBSQONParseInfo(vv).ctype.ktype, false);
-                this.expectTokenAndPop(TOKEN_RBRACKET);
-                
-                const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
-                aval = lrepr.get(eexp);
-                ptype = getBSQONParseInfo(vv).ttree.get(eexp);
+                    const lrepr = $TypeInfo.isUnionValueRepr(vval) ? vval : vval.value;
+                    aval = lrepr.get(eexp);
+                    ptype = getBSQONParseInfo(vv).ttree.get(eexp);
+                }
             }
+
+            vv = createBSQONParseResult(aval, ptype.ctype, ptype.ttree, true);
         }
 
-        vv = createBSQONParseResult(aval, ptype.ctype, ptype.ttree, true);
+        this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, getBSQONParseInfo(vv).ctype, oftype), `Reference ${ref} has type ${getBSQONParseInfo(vv).ctype.ttag} which is not a subtype of ${oftype.ttag}`);
+        const rr = oftype.ttag === getBSQONParseInfo(vv).ctype ? getBSQONParseValue(vv) : new $Runtime.UnionValue(getBSQONParseValue(vv), getBSQONParseInfo(vv).ctype);
+
+        return createBSQONParseResult(rr, getBSQONParseInfoCType(vv), getBSQONParseInfoTTree(vv), breq);
     }
-        
-    this.raiseErrorIf(!$TypeInfo.checkSubtype(this.m_assembly, getBSQONParseInfo(vv).ctype, oftype), `Reference ${ref} has type ${getBSQONParseInfo(vv).ctype.ttag} which is not a subtype of ${oftype.ttag}`);
-    const rr = oftype.ttag === getBSQONParseInfo(vv).ctype ? getBSQONParseValue(vv) : new $Runtime.UnionValue(getBSQONParseValue(vv), getBSQONParseInfo(vv).ctype); 
-    
-    return createBSQONParseResult(rr, getBSQONParseInfoCType(vv), getBSQONParseInfoTTree(vv), breq);
-}
-private parseExpression(oftype, breq) {
-    return this.parsePostfixOp(oftype, breq);
-}
+    private parseExpression(oftype, breq) {
+        return this.parsePostfixOp(oftype, breq);
+    }
 }
 BSQONParse.prototype.parseNone = function (breq) {
     if(!this.isJSONMode()) {
