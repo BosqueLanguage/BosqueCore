@@ -231,10 +231,6 @@ class UnionValue {
     }
 }
 
-function isUnionValueRepr(v: any): boolean {
-    return v instanceof UnionValue;
-}
-
 //None -> null
 //Nothing -> undefined
 //Bool -> boolean
@@ -379,7 +375,7 @@ export {
 
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
-    UnionValue, isUnionValueRepr,
+    UnionValue,
     acceptsString,
     safeMath, safeMathDiv, safeMathUnderflow, 
     keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion

@@ -39,20 +39,20 @@ abstract class BSQType {
     readonly isrecursive: boolean;
     readonly isconcretetype: boolean;
 
-    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, isrecursive: boolean, isconcretetype: boolean) {
+    readonly terms: BSQTypeKey[] = [];
+
+    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, isrecursive: boolean, isconcretetype: boolean, terms: BSQTypeKey[]) {
         this.tag = tag;
         this.tkey = tkey;
 
         this.isrecursive = isrecursive;
         this.isconcretetype = isconcretetype;
     }
-
-    abstract getTerms(): BSQTypeKey[];
 }
 
 class UnresolvedType extends BSQType {
     constructor() {
-        super(BSQTypeTag.TYPE_UNRESOLVED, "[UNRESOLVED]", false, true);
+        super(BSQTypeTag.TYPE_UNRESOLVED, "[UNRESOLVED]", false, true, []);
     }
 
     static readonly singleton = new UnresolvedType();
@@ -62,7 +62,7 @@ class TupleType extends BSQType {
     readonly entries: BSQTypeKey[];
 
     constructor(entries: BSQTypeKey[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_TUPLE, `[${entries.map((entry) => entry).join(", ")}]`, isrecursive, true);
+        super(BSQTypeTag.TYPE_TUPLE, `[${entries.map((entry) => entry).join(", ")}]`, isrecursive, true, []);
         this.entries = entries;
     }
 }
@@ -71,22 +71,22 @@ class RecordType extends BSQType {
     readonly entries: {pname: string, rtype: BSQTypeKey}[];
 
     constructor(entries: {pname: string, rtype: BSQTypeKey}[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_RECORD, `{${entries.map((entry) => `${entry.pname}: ${entry.rtype}`).join(", ")}}`, isrecursive, true);
+        super(BSQTypeTag.TYPE_RECORD, `{${entries.map((entry) => `${entry.pname}: ${entry.rtype}`).join(", ")}}`, isrecursive, true, []);
         this.entries = entries;
     }
 }
 
 abstract class EntityType extends BSQType {
-    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, isrecursive: boolean) {
-        super(tag, tkey, isrecursive, true);
+    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, isrecursive: boolean, terms: BSQTypeKey[]) {
+        super(tag, tkey, isrecursive, true, terms);
     }
 }
 
 abstract class ConceptType extends BSQType {
     readonly subtypes: Set<BSQTypeKey>;
 
-    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
-        super(tag, tkey, isrecursive, false);
+    constructor(tag: BSQTypeTag, tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean, terms: BSQTypeKey[]) {
+        super(tag, tkey, isrecursive, false, terms);
         this.subtypes = subtypes;
     }
 }
@@ -94,21 +94,21 @@ abstract class ConceptType extends BSQType {
 class StdEntityType extends EntityType {
     readonly fields: {fname: string, ftype: BSQTypeKey}[];
 
-    constructor(tkey: BSQTypeKey, fields: {fname: string, ftype: BSQTypeKey}[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_STD_ENTITY, tkey, isrecursive);
+    constructor(tkey: BSQTypeKey, fields: {fname: string, ftype: BSQTypeKey}[], isrecursive: boolean, terms: BSQTypeKey[]) {
+        super(BSQTypeTag.TYPE_STD_ENTITY, tkey, isrecursive, terms);
         this.fields = fields;
     }
 }
 
 class StdConceptType extends ConceptType {
-    constructor(tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_STD_CONCEPT, tkey, subtypes, isrecursive);
+    constructor(tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean, terms: BSQTypeKey[]) {
+        super(BSQTypeTag.TYPE_STD_CONCEPT, tkey, subtypes, isrecursive, terms);
     }
 }
 
 class PrimitiveType extends EntityType {
     constructor(tkey: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_PRIMITIVE, tkey, false);
+        super(BSQTypeTag.TYPE_PRIMITIVE, tkey, false, []);
     }
 }
 
@@ -116,7 +116,7 @@ class EnumType extends EntityType {
     readonly variants: string[];
 
     constructor(tkey: BSQTypeKey, variants: string[]) {
-        super(BSQTypeTag.TYPE_ENUM, tkey, false);
+        super(BSQTypeTag.TYPE_ENUM, tkey, false, []);
 
         this.variants = variants;
     }
@@ -126,7 +126,7 @@ class TypedeclType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(tkey: BSQTypeKey, oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_TYPE_DECL, tkey, isrecursive);
+        super(BSQTypeTag.TYPE_TYPE_DECL, tkey, isrecursive, []);
 
         this.oftype = oftype;
     }
@@ -134,13 +134,13 @@ class TypedeclType extends EntityType {
 
 class ValidatorREType extends EntityType {
     constructor(tkey: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_VALIDATOR_RE, tkey, false);
+        super(BSQTypeTag.TYPE_VALIDATOR_RE, tkey, false, []);
     }
 }
 
 class ValidatorPthType extends EntityType {
     constructor(tkey: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_VALIDATOR_PTH, tkey, false);
+        super(BSQTypeTag.TYPE_VALIDATOR_PTH, tkey, false, []);
     }
 }
 
@@ -148,7 +148,7 @@ class StringOfType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_STRING_OF, `StringOf<${oftype}>`, false);
+        super(BSQTypeTag.TYPE_STRING_OF, `StringOf<${oftype}>`, false, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -157,7 +157,7 @@ class ASCIIStringOfType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_ASCII_STRING_OF, `ASCIIStringOf<${oftype}>`, false);
+        super(BSQTypeTag.TYPE_ASCII_STRING_OF, `ASCIIStringOf<${oftype}>`, false, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -166,7 +166,7 @@ class SomethingType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_SOMETHING, `Something<${oftype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_SOMETHING, `Something<${oftype}>`, isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -175,7 +175,7 @@ class OptionType extends ConceptType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_OPTION, `Option<${oftype}>`, new Set(["Nothing", `Something<${oftype}>`]), isrecursive);
+        super(BSQTypeTag.TYPE_OPTION, `Option<${oftype}>`, new Set(["Nothing", `Something<${oftype}>`]), isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -185,7 +185,7 @@ class OkType extends EntityType {
     readonly etype: BSQTypeTag;
 
     constructor(ttype: BSQTypeTag, etype: BSQTypeTag, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_OK, `Result<${ttype}, ${etype}>::Ok`, isrecursive);
+        super(BSQTypeTag.TYPE_OK, `Result<${ttype}, ${etype}>::Ok`, isrecursive, [ttype, etype]);
         this.ttype = ttype;
         this.etype = etype;
     }
@@ -196,7 +196,7 @@ class ErrorType extends EntityType {
     readonly etype: BSQTypeTag;
 
     constructor(ttype: BSQTypeTag, etype: BSQTypeTag, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Error`, isrecursive);
+        super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Error`, isrecursive, [ttype, etype]);
         this.ttype = ttype;
         this.etype = etype;
     }
@@ -207,7 +207,7 @@ class ResultType extends ConceptType {
     readonly etype: BSQTypeKey;
 
     constructor(ttype: BSQTypeKey, etype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_RESULT, `Result<${ttype}, ${etype}>`, new Set([`Result<${ttype}, ${etype}>::Ok`, `Result<${ttype}, ${etype}>::Err`]), isrecursive);
+        super(BSQTypeTag.TYPE_RESULT, `Result<${ttype}, ${etype}>`, new Set([`Result<${ttype}, ${etype}>::Ok`, `Result<${ttype}, ${etype}>::Err`]), isrecursive, [ttype, etype]);
         this.ttype = ttype;
         this.etype = etype;
     }
@@ -217,7 +217,7 @@ class PathType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_PATH, `Path<${oftype}>`, false);
+        super(BSQTypeTag.TYPE_PATH, `Path<${oftype}>`, false, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -226,7 +226,7 @@ class PathFragmentType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_PATH_FRAGMENT, `PathFragment<${oftype}>`, false);
+        super(BSQTypeTag.TYPE_PATH_FRAGMENT, `PathFragment<${oftype}>`, false, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -235,7 +235,7 @@ class PathGlobType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey) {
-        super(BSQTypeTag.TYPE_PATH_GLOB, `PathGlob<${oftype}>`, false);
+        super(BSQTypeTag.TYPE_PATH_GLOB, `PathGlob<${oftype}>`, false, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -244,7 +244,7 @@ class ListType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_LIST, `List<${oftype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_LIST, `List<${oftype}>`, isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -253,7 +253,7 @@ class StackType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_STACK, `Stack<${oftype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_STACK, `Stack<${oftype}>`, isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -262,7 +262,7 @@ class QueueType extends EntityType {
     readonly oftype: BSQTypeKey;
     
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_QUEUE, `Queue<${oftype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_QUEUE, `Queue<${oftype}>`, isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -271,7 +271,7 @@ class SetType extends EntityType {
     readonly oftype: BSQTypeKey;
 
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_SET, `Set<${oftype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_SET, `Set<${oftype}>`, isrecursive, [oftype]);
         this.oftype = oftype;
     }
 }
@@ -281,7 +281,7 @@ class MapEntryType extends EntityType {
     readonly vtype: BSQTypeKey;
 
     constructor(ktype: BSQTypeKey, vtype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_MAP_ENTRY, `MapEntry<${ktype}, ${vtype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_MAP_ENTRY, `MapEntry<${ktype}, ${vtype}>`, isrecursive, [ktype, vtype]);
         this.ktype = ktype;
         this.vtype = vtype;
     }
@@ -292,7 +292,7 @@ class MapType extends EntityType {
     readonly vtype: BSQTypeKey;
 
     constructor(ktype: BSQTypeKey, vtype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_MAP, `Map<${ktype}, ${vtype}>`, isrecursive);
+        super(BSQTypeTag.TYPE_MAP, `Map<${ktype}, ${vtype}>`, isrecursive, [ktype, vtype]);
         this.ktype = ktype;
         this.vtype = vtype;
     }
@@ -303,7 +303,7 @@ class ConceptSetType extends BSQType {
     readonly subtypes: Set<BSQTypeKey>;
 
     constructor(concepts: BSQTypeKey[], subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_CONCEPT_SET, concepts.map((cc) => cc).sort().join("&"), isrecursive, false);
+        super(BSQTypeTag.TYPE_CONCEPT_SET, concepts.map((cc) => cc).sort().join("&"), isrecursive, false, []);
 
         this.concepts = concepts;
         this.subtypes = subtypes;
@@ -314,7 +314,7 @@ class UnionType extends BSQType {
     readonly types: BSQTypeKey[];
 
     constructor(types: BSQTypeKey[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_UNION, types.map((tt) => tt).sort().join(" | "), isrecursive, false);
+        super(BSQTypeTag.TYPE_UNION, types.map((tt) => tt).sort().join(" | "), isrecursive, false, []);
         this.types = types;
     }
 }
