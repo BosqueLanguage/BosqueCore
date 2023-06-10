@@ -121,11 +121,13 @@ class EnumType extends EntityType {
 }
 
 class TypedeclType extends EntityType {
+    readonly basetype: BSQTypeKey;
     readonly oftype: BSQTypeKey;
 
-    constructor(tkey: BSQTypeKey, oftype: BSQTypeKey, isrecursive: boolean) {
+    constructor(tkey: BSQTypeKey, basetype: BSQTypeKey, oftype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_TYPE_DECL, tkey, isrecursive);
 
+        this.basetype = basetype;
         this.oftype = oftype;
     }
 }
