@@ -90,10 +90,13 @@ abstract class ConceptType extends BSQType {
 }
 
 class StdEntityType extends EntityType {
+    readonly hasvalidations: boolean;
     readonly fields: {fname: string, ftype: BSQTypeKey}[];
 
-    constructor(tkey: BSQTypeKey, fields: {fname: string, ftype: BSQTypeKey}[], isrecursive: boolean) {
+    constructor(tkey: BSQTypeKey, hasvalidations: boolean, fields: {fname: string, ftype: BSQTypeKey}[], isrecursive: boolean) {
         super(BSQTypeTag.TYPE_STD_ENTITY, tkey, isrecursive);
+
+        this.hasvalidations = hasvalidations;
         this.fields = fields;
     }
 }
@@ -124,11 +127,19 @@ class TypedeclType extends EntityType {
     readonly basetype: BSQTypeKey;
     readonly oftype: BSQTypeKey;
 
-    constructor(tkey: BSQTypeKey, basetype: BSQTypeKey, oftype: BSQTypeKey, isrecursive: boolean) {
+    readonly hasvalidations: boolean;
+    readonly optStringOfValidator: BSQTypeKey | undefined;
+    readonly optPathOfValidator: BSQTypeKey | undefined;
+
+    constructor(tkey: BSQTypeKey, basetype: BSQTypeKey, oftype: BSQTypeKey, isrecursive: boolean, hasvalidations: boolean, optStringOfValidator: BSQTypeKey | undefined, optPathOfValidator: BSQTypeKey | undefined) {
         super(BSQTypeTag.TYPE_TYPE_DECL, tkey, isrecursive);
 
         this.basetype = basetype;
         this.oftype = oftype;
+
+        this.hasvalidations = hasvalidations;
+        this.optStringOfValidator = optStringOfValidator;
+        this.optPathOfValidator = optPathOfValidator;
     }
 }
 

@@ -187,12 +187,6 @@ const SymbolStrings = [
     TokenKind.TOKEN_IN
 ];
 
-enum NotationMode {
-    NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT",
-    NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON",
-    NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL"
-}
-
 const _s_core_types = [
     "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
     "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
@@ -360,8 +354,8 @@ class BSQONParseResultInfo {
 
 type BSQONParseResult = BSQONParseResultInfo | any;
 
-class BSQONParse {
-    readonly m_parsemode: NotationMode;
+class BSQONParser {
+    readonly m_parsemode: $Runtime.NotationMode;
    
     readonly m_defaultns: string;
     readonly m_importmap: Map<string, string>;
@@ -371,13 +365,13 @@ class BSQONParse {
     m_cpos: number;
     m_lastToken: {kind: string, value: string} | undefined;
 
-    readonly m_stdentityChecks: $TypeInfo.BSQTypeKey[];
-    readonly m_typedeclChecks: $TypeInfo.BSQTypeKey[];
+    readonly m_stdentityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[];
+    readonly m_typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[];
 
     readonly m_srcbind: [any, $TypeInfo.BSQType, any] | undefined; //a [value, type, ttree] where type is always a concrete type
     readonly m_refs: Map<string, [any, $TypeInfo.BSQType, any]>; //maps from names to [value, type, ttree] where type is always a concrete type
 
-    constructor(mode: NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
+    constructor(mode: $Runtime.NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
         this.m_parsemode = mode;
 
         this.m_defaultns = defaultns;
@@ -554,7 +548,7 @@ class BSQONParse {
     }
 
     private lexNumber() {
-        if (this.m_parsemode === NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
             _s_intNumberinoRe.lastIndex = this.m_cpos;
             const inio = _s_intNumberinoRe.exec(this.m_input);
             if (inio !== null) {
@@ -641,7 +635,7 @@ class BSQONParse {
             return true;
         }
     
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             _s_ascii_stringRe.lastIndex = this.m_cpos;
             const mas = _s_ascii_stringRe.exec(this.m_input);
             if (mas !== null) {
@@ -1316,7 +1310,7 @@ class BSQONParse {
     }
 
     private parseType(): $TypeInfo.BSQType {
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             return this.parseUnionType();
         }
         else {
@@ -1477,7 +1471,7 @@ class BSQONParse {
     }
 
     private parseNone(whistory: boolean): BSQONParseResult {
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             this.expectTokenAndPop(TokenKind.TOKEN_NONE);
         }
         else {
@@ -1487,7 +1481,7 @@ class BSQONParse {
     }
 
     private parseNothing(whistory: boolean): BSQONParseResult {
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             this.expectTokenAndPop(TokenKind.TOKEN_NOTHING);
         }
         else {
@@ -1505,7 +1499,7 @@ class BSQONParse {
     
     private parseNat(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_NAT).value.slice(0, -1);
         }
         else {
@@ -1522,7 +1516,7 @@ class BSQONParse {
 
     private parseInt(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_INT).value.slice(0, -1);
         }
         else {
@@ -1539,7 +1533,7 @@ class BSQONParse {
 
     private parseBigNat(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_NAT).value.slice(0, -1);
         }
         else {
@@ -1559,7 +1553,7 @@ class BSQONParse {
     }
     private parseBigInt(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_NAT).value.slice(0, -1);
         }
         else {
@@ -1580,7 +1574,7 @@ class BSQONParse {
 
     private parseRational(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_RATIONAL).value.slice(0, -1);
         }
         else {
@@ -1593,7 +1587,7 @@ class BSQONParse {
 
     private parseFloat(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_FLOAT).value.slice(0, -1);
         }
         else {
@@ -1606,7 +1600,7 @@ class BSQONParse {
 
     private parseDecimal(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_DECIMAL).value.slice(0, -1);
         }
         else {
@@ -1625,7 +1619,7 @@ class BSQONParse {
 
     private parseASCIIString(whistory: boolean): BSQONParseResult {
         let tkval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value.slice(6, -1);
         }
         else {
@@ -1638,7 +1632,7 @@ class BSQONParse {
 
     private parseByteBuffer(whistory: boolean): BSQONParseResult {
         let tbval = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tbval = this.expectTokenAndPop(TokenKind.TOKEN_BYTE_BUFFER).value.slice(3, -1);
         }
         else {
@@ -1651,7 +1645,7 @@ class BSQONParse {
 
     private parseDateTime(whistory: boolean): BSQONParseResult {
         let dd = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE_TIME).value;
             dd = generateDateTime(tk);
             this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
@@ -1669,7 +1663,7 @@ class BSQONParse {
 
     private parseUTCDateTime(whistory: boolean): BSQONParseResult {
         let dd = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_UTC_DATE_TIME).value;
             dd = generateDateTime(tk);
             this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
@@ -1687,7 +1681,7 @@ class BSQONParse {
 
     private parsePlainDate(whistory: boolean): BSQONParseResult {
         let dd = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE).value;
             dd = generateDate(tk);
             this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
@@ -1705,7 +1699,7 @@ class BSQONParse {
 
     private parsePlainTime(whistory: boolean): BSQONParseResult {
         let dd = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIME).value;
             dd = generateTime(tk);
             this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
@@ -1723,7 +1717,7 @@ class BSQONParse {
 
     private parseTickTime(whistory: boolean): BSQONParseResult {
         let tt = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tt = this.expectTokenAndPop(TokenKind.TOKEN_TICK_TIME).value.slice(0, -1);
         }
         else {
@@ -1736,7 +1730,7 @@ class BSQONParse {
 
     private parseLogicalTime(whistory: boolean): BSQONParseResult {
         let tt = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tt = this.expectTokenAndPop(TokenKind.TOKEN_LOGICAL_TIME).value.slice(0, -1);
         }
         else {
@@ -1749,7 +1743,7 @@ class BSQONParse {
 
     private parseISOTimeStamp(whistory: boolean): BSQONParseResult {
         let dd = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIMESTAMP).value;
             dd = generateDateTime(tk);
             this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
@@ -1767,7 +1761,7 @@ class BSQONParse {
 
     private parseUUIDv4(whistory: boolean): BSQONParseResult {
         let uuid = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
             this.raiseErrorIf(!tk.startsWith("uuid4{"), `Expected UUIDv4 but got ${tk}`);
     
@@ -1783,7 +1777,7 @@ class BSQONParse {
 
     private parseUUIDv7(whistory: boolean): BSQONParseResult {
         let uuid = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
             this.raiseErrorIf(!tk.startsWith("uuid7{"), `Expected UUIDv7 but got ${tk}`);
     
@@ -1799,7 +1793,7 @@ class BSQONParse {
 
     private parseSHAContentHash(whistory: boolean): BSQONParseResult {
         let sh = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             sh = this.expectTokenAndPop(TokenKind.TOKEN_SHA_HASH).value.slice(5, -1);
         }
         else {
@@ -1812,7 +1806,7 @@ class BSQONParse {
 
     private parseRegex(whistory: boolean): BSQONParseResult {
         let re = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             re = this.expectTokenAndPop(TokenKind.TOKEN_REGEX).value;
         }
         else {
@@ -1825,7 +1819,7 @@ class BSQONParse {
 
     private parseLatLongCoordinate(whistory: boolean): BSQONParseResult {
         let llc = undefined;
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const ttype = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
             this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
     
@@ -1863,7 +1857,7 @@ class BSQONParse {
 
     private parseStringOf(ttype: $TypeInfo.StringOfType, whistory: boolean): BSQONParseResult {
         let sval = undefined;
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
             const st = this.parseStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.oftype} but got StringOf<${st.tkey}>`);
@@ -1893,7 +1887,7 @@ class BSQONParse {
 
     private parseASCIIStringOf(ttype: $TypeInfo.ASCIIStringOfType, whistory: boolean): BSQONParseResult {
         let sval = undefined;
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value;
             const st = this.parseASCIIStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.tag} but got ASCIIStringOf<${st.tkey}>`);
@@ -1914,7 +1908,7 @@ class BSQONParse {
         this.raiseError("NOT IMPLEMENTED: PATH");
         /*
         let pth = undefined;
-        if(this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
+        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const ptk = this.expectTokenAndPop(TokenKind.TOKEN_PATH_ITEM).value;
         }
         else {
@@ -1935,8 +1929,8 @@ class BSQONParse {
         let vv = undefined;
         let stype: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
 
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
-            if (this.m_parsemode === NotationMode.NOTATION_MODE_FULL) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
                 stype = this.parseSomethingType(undefined);
                 this.raiseErrorIf(ttype === undefined || !this.m_assembly.checkConcreteSubtype(stype, ttype), `Expected ${ttype?.tkey ?? "Something"} but got ${stype.tkey}`);
 
@@ -1976,8 +1970,8 @@ class BSQONParse {
         let vv = undefined;
         let stype: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
 
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
-            if (this.m_parsemode === NotationMode.NOTATION_MODE_FULL) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
                 const stype = this.parseOkType(ttype);
                 this.raiseErrorIf(ttype === undefined || !this.m_assembly.checkConcreteSubtype(stype, ttype), `Expected ${ttype?.tkey ?? "Ok"} but got ${stype.tkey}`);
 
@@ -2017,8 +2011,8 @@ class BSQONParse {
         let vv = undefined;
         let stype: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
 
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
-            if (this.m_parsemode === NotationMode.NOTATION_MODE_FULL) {
+        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
                 const stype = this.parseErrType(ttype);
                 this.raiseErrorIf(ttype === undefined || !this.m_assembly.checkConcreteSubtype(stype, ttype), `Expected ${ttype?.tkey ?? "Err"} but got ${stype.tkey}`);
 
@@ -2058,8 +2052,17 @@ class BSQONParse {
         const keytype = this.lookupMustDefType(ttype.ktype);
         const valtype = this.lookupMustDefType(ttype.vtype);
 
-        if (this.m_parsemode !== NotationMode.NOTATION_MODE_JSON) {
-            if(inmapdecl) {
+        if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON || (inmapdecl && this.testToken(TokenKind.TOKEN_RBRACKET))) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
+            const k = this.parseValue(keytype, whistory);
+            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            const v = this.parseValue(valtype, whistory);
+            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+            return BSQONParseResultInfo.create([BSQONParseResultInfo.getParseValue(k, whistory), BSQONParseResultInfo.getParseValue(v, whistory)], ttype, [[BSQONParseResultInfo.getValueType(k, whistory), BSQONParseResultInfo.getHistory(k, whistory)], [BSQONParseResultInfo.getValueType(v, whistory), BSQONParseResultInfo.getHistory(v, whistory)]], whistory);
+        }
+        else {
+            if(inmapdecl && !this.testToken(TokenKind.TOKEN_TYPE)) {
                 const k = this.parseValue(keytype, whistory);
                 this.expectTokenAndPop(TokenKind.TOKEN_ENTRY);
                 const v = this.parseValue(valtype, whistory);
@@ -2078,15 +2081,6 @@ class BSQONParse {
 
                 return BSQONParseResultInfo.create([BSQONParseResultInfo.getParseValue(k, whistory), BSQONParseResultInfo.getParseValue(v, whistory)], ttype, [[BSQONParseResultInfo.getValueType(k, whistory), BSQONParseResultInfo.getHistory(k, whistory)], [BSQONParseResultInfo.getValueType(v, whistory), BSQONParseResultInfo.getHistory(v, whistory)]], whistory);
             }
-        }
-        else {
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-            const k = this.parseValue(keytype, whistory);
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const v = this.parseValue(valtype, whistory);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
-
-            return BSQONParseResultInfo.create([BSQONParseResultInfo.getParseValue(k, whistory), BSQONParseResultInfo.getParseValue(v, whistory)], ttype, [[BSQONParseResultInfo.getValueType(k, whistory), BSQONParseResultInfo.getHistory(k, whistory)], [BSQONParseResultInfo.getValueType(v, whistory), BSQONParseResultInfo.getHistory(v, whistory)]], whistory);
         }
     }
 
@@ -2173,7 +2167,7 @@ class BSQONParse {
 
         this.raiseErrorIf(ttype.tkey !== ttype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
 
-        this.m_typedeclChecks.push([ttype.tkey, xxxx]);
+        this.m_typedeclChecks.push({ttype: ttype.tkey, tvalue: vv});
 
         return BSQONParseResultInfo.create(BSQONParseResultInfo.getValueType(vv, whistory), ttype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
     }
@@ -2203,7 +2197,7 @@ class BSQONParse {
             }
             this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-            this.m_stdentityChecks.push(xxxx);
+            this.m_stdentityChecks.push({etype: ttype.tkey, evalue: tvals});
 
             this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
             return BSQONParseResultInfo.create(tvals, ttype, ptree, whistory);
@@ -2212,13 +2206,14 @@ class BSQONParse {
 
     private parseList(ttype: $TypeInfo.ListType | undefined, chktype: $TypeInfo.BSQType, whistory: boolean): [BSQONParseResult, $TypeInfo.BSQType] {
         if(this.testToken(TokenKind.TOKEN_LBRACKET)) {
-            this.raiseErrorIf(this.m_parsemode === NotationMode.NOTATION_MODE_FULL, `Cannot use list [...] shorthand notation in full mode`);
+            this.raiseErrorIf(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL, `Cannot use list [...] shorthand notation in full mode`);
+            this.raiseErrorIf(ttype === undefined, `Cannot use list [...] shorthand notation in ambigious context`);
 
             this.popToken();
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create([], ttype, [], whistory);
+                return BSQONParseResultInfo.create(IList<any>(), ttype as $TypeInfo.ListType, [], whistory);
             }
             else {
                 let vv: any[] = [];
@@ -2226,23 +2221,33 @@ class BSQONParse {
                 while(this.testToken(TokenKind.TOKEN_COMMA)) {
                     this.popToken();
 
-                    const entry = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
-                    vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
-                    ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    if(this.testToken(TokenKind.TOKEN_LDOTS)) {
+                        const entry = this.parseValue(ttype as $TypeInfo.ListType, whistory);
+                        vv.push(...(BSQONParseResultInfo.getParseValue(entry, whistory) as IList<any>));
+
+                        if(whistory) {
+                            ptree.push(...(BSQONParseResultInfo.getHistory(entry, whistory) as [$TypeInfo.BSQType, any][]));
+                        }
+                    }
+                    else {
+                        const entry = this.parseValue(this.lookupMustDefType((ttype as $TypeInfo.ListType).oftype), whistory);
+                        vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
+                        ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    }
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
 
-                return BSQONParseResultInfo.create(vv, ttype, ptree, whistory);
+                return BSQONParseResultInfo.create(IList<any>(vv), ttype as $TypeInfo.ListType, ptree, whistory);
             }
         }
         else {
-            const ltype = this.parseType();
-            this.raiseErrorIf(ltype.tkey !== ttype.tkey, `Expected list of type ${ttype.tkey} but got ${ltype.tkey}`);
+            const ltype = this.parseListType(ttype);
+            this.raiseErrorIf(this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create([], ttype, [], whistory);
+                return BSQONParseResultInfo.create(IList<any>(), ltype as $TypeInfo.ListType, [], whistory);
             }
             else {
                 let vv: any[] = [];
@@ -2250,19 +2255,25 @@ class BSQONParse {
                 while(this.testToken(TokenKind.TOKEN_COMMA)) {
                     this.popToken();
 
-                    const entry = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
-                    vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
-                    ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    if(this.testToken(TokenKind.TOKEN_LDOTS)) {
+                        const entry = this.parseValue(ltype, whistory);
+                        vv.push(...(BSQONParseResultInfo.getParseValue(entry, whistory) as IList<any>));
+
+                        if(whistory) {
+                            ptree.push(...(BSQONParseResultInfo.getHistory(entry, whistory) as [$TypeInfo.BSQType, any][]));
+                        }
+                    }
+                    else {
+                        const entry = this.parseValue(this.lookupMustDefType((ltype as $TypeInfo.ListType).oftype), whistory);
+                        vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
+                        ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    }
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
 
-                return BSQONParseResultInfo.create(vv, ttype, ptree, whistory);
+                return BSQONParseResultInfo.create(IList<any>(vv), ltype, ptree, whistory);
             }
-        };
-
-
-        TOKEN_LDOTS = "...",
-        xxxx;
+        }
     }
 
     private parseStack(ttype: $TypeInfo.StackType | undefined, chktype: $TypeInfo.BSQType, whistory: boolean): [BSQONParseResult, $TypeInfo.BSQType] {
@@ -2281,7 +2292,69 @@ class BSQONParse {
     }
 
     private parseMap(ttype: $TypeInfo.MapType | undefined, chktype: $TypeInfo.BSQType, whistory: boolean): [BSQONParseResult, $TypeInfo.BSQType] {
-        xxxx;
+        if(this.testToken(TokenKind.TOKEN_LBRACKET)) {
+            this.raiseErrorIf(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL, `Cannot use map [...] shorthand notation in full mode`);
+            this.raiseErrorIf(ttype === undefined, `Cannot use list [...] shorthand notation in ambigious context`);
+
+            this.popToken();
+            if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
+                this.popToken();
+
+                return BSQONParseResultInfo.create(IMap<any, any>(), ttype as $TypeInfo.MapType, [], whistory);
+            }
+            else {
+                const metype = this.lookupMustDefType(`MapEntry<${(ttype as $TypeInfo.MapType).ktype}, ${(ttype as $TypeInfo.MapType).vtype}>`) as $TypeInfo.MapEntryType;
+
+                let vv: [any, any][] = [];
+                let ptree: [$TypeInfo.BSQType, any][] = [];
+                while(this.testToken(TokenKind.TOKEN_COMMA)) {
+                    this.popToken();
+
+                    if(this.testToken(TokenKind.TOKEN_LDOTS)) {
+                        this.raiseError("... shorthand notation NOT IMPLEMENTED for maps yet");
+                    }
+                    else {
+                        const entry = this.parseMapEntry(metype, whistory, true);
+                        vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
+                        ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    }
+                }
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+                return BSQONParseResultInfo.create(IMap<any, any>(vv), ttype as $TypeInfo.MapType, ptree, whistory);
+            }
+        }
+        else {
+            const ltype = this.parseMapType(ttype);
+            this.raiseErrorIf(this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
+
+            if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
+                this.popToken();
+
+                return BSQONParseResultInfo.create(IMap<any, any>(), ltype as $TypeInfo.MapType, [], whistory);
+            }
+            else {
+                const metype = this.lookupMustDefType(`MapEntry<${(ltype as $TypeInfo.MapType).ktype}, ${(ltype as $TypeInfo.MapType).vtype}>`) as $TypeInfo.MapEntryType;
+
+                let vv: [any, any][] = [];
+                let ptree: [$TypeInfo.BSQType, any][] = [];
+                while(this.testToken(TokenKind.TOKEN_COMMA)) {
+                    this.popToken();
+
+                    if(this.testToken(TokenKind.TOKEN_LDOTS)) {
+                        this.raiseError("... shorthand notation NOT IMPLEMENTED for maps yet");
+                    }
+                    else {
+                        const entry = this.parseMapEntry(metype, whistory, true);
+                        vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
+                        ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
+                    }
+                }
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+                return BSQONParseResultInfo.create(IMap<any, any>(vv), ltype as $TypeInfo.MapType, ptree, whistory);
+            }
+        }
     }
 
     private parseValuePrimitive(ttype: $TypeInfo.PrimitiveType, whistory: boolean): BSQONParseResult {
@@ -2426,7 +2499,7 @@ class BSQONParse {
     }
 
     private parseValueConcept(ttype: $TypeInfo.ConceptType | $TypeInfo.ConceptSetType, whistory: boolean): BSQONParseResult {
-        if (this.m_parsemode === NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
             this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
             const tt = this.parseType();
             this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
@@ -2493,23 +2566,28 @@ class BSQONParse {
         }
     }
 
-    private resolveRelaxedTypeMatch(oftags: $TypeInfo.BSQTypeTag[], opts: $TypeInfo.BSQType[]): $TypeInfo.BSQType | undefined {
-        this.raiseErrorIf(this.m_parsemode === NotationMode.NOTATION_MODE_FULL, `Cannot use relaxed types in this (strict) BSQON context`);
-
-        xxxx;
-        if (opts.length === 1) {
-            return oftags.includes(opts[0].tag) ? opts[0] : undefined;
+    private resolveRelaxedTypeMatch(oftags: $TypeInfo.BSQTypeTag[], opts: $TypeInfo.UnionType): $TypeInfo.BSQType | undefined {
+        if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
+            return undefined;
         }
+
+        let tt: $TypeInfo.BSQType | undefined = undefined;
+        if (opts.types.length === 1) {
+            tt = this.lookupMustDefType(opts.types[0]);
+        }
+        else if(opts.types.length === 2 && opts.types.includes("None")) {
+            tt = this.lookupMustDefType(opts.types[0] === "None" ? opts.types[1] : opts.types[0]);
+        }   
         else {
-            const popts = opts.filter((tt) => oftags.includes((this.m_assembly.typerefs.get(tt.tkey) as $TypeInfo.BSQType).tag));
-
-            return popts.length === 1 ? popts[0] : undefined;
+            ; //do nothing
         }
+
+        return (tt !== undefined && oftags.includes(tt.tag)) ? tt : undefined;
     }
 
     private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
         //everyone has a none special format option
-        if (this.m_parsemode === NotationMode.NOTATION_MODE_JSON) {
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
             if (this.testToken(TokenKind.TOKEN_NULL) && ttype.types.includes("None")) {
                 return this.parseNone(whistory);
             }
@@ -2541,30 +2619,30 @@ class BSQONParse {
                 rt = this.lookupMustDefType("Nothing");
             }
             else if(tk === TokenKind.TOKEN_SOMETHING) {
-                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SOMETHING, $TypeInfo.BSQTypeTag.TYPE_OPTION], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SOMETHING, $TypeInfo.BSQTypeTag.TYPE_OPTION], ttype);
                 [rv, rt] = this.parseSomething(oftt as ($TypeInfo.SomethingType | $TypeInfo.OptionType | undefined), ttype, whistory);
             }
             else if(tk === TokenKind.TOKEN_OK) {
-                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_OK, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_OK, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype);
                 [rv, rt] = this.parseOk(oftt as ($TypeInfo.OkType | $TypeInfo.ResultType | undefined), ttype, whistory);
             }
             else if(tk === TokenKind.TOKEN_ERR) {
-                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_ERROR, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_ERROR, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype);
                 [rv, rt] = this.parseErr(oftt as ($TypeInfo.ErrorType | $TypeInfo.ResultType | undefined), ttype, whistory);
             }
             else if(tk === TokenKind.TOKEN_TYPE) {
                 const ptt = this.peekToken()!.value;
                 if(ptt === "Something") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SOMETHING, $TypeInfo.BSQTypeTag.TYPE_OPTION], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SOMETHING, $TypeInfo.BSQTypeTag.TYPE_OPTION], ttype);
                     [rv, rt] = this.parseSomething(oftt as ($TypeInfo.SomethingType | $TypeInfo.OptionType | undefined), ttype, whistory);
                 }
                 else if(ptt === "Result") {
                     if(this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Ok"})) {
-                        const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_OK, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                        const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_OK, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype);
                         [rv, rt] = this.parseOk(oftt as ($TypeInfo.OkType | $TypeInfo.ResultType | undefined), ttype, whistory);
                     }
                     else if(this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Err"})) {
-                        const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_ERROR, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                        const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_ERROR, $TypeInfo.BSQTypeTag.TYPE_RESULT], ttype);
                         [rv, rt] = this.parseErr(oftt as ($TypeInfo.ErrorType | $TypeInfo.ResultType | undefined), ttype, whistory);
                     }
                     else {
@@ -2578,23 +2656,23 @@ class BSQONParse {
                     }
                 }
                 else if(ptt === "List") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_LIST], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_LIST], ttype);
                     [rv, rt] = this.parseList(oftt as ($TypeInfo.ListType | undefined), ttype, whistory);
                 }
                 else if(ptt === "Stack") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_STACK], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_STACK], ttype);
                     [rv, rt] = this.parseStack(oftt as ($TypeInfo.StackType | undefined), ttype, whistory);
                 }
                 else if(ptt === "Queue") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_QUEUE], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_QUEUE], ttype);
                     [rv, rt] = this.parseQueue(oftt as ($TypeInfo.QueueType | undefined), ttype, whistory);
                 }
                 else if(ptt === "Set") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SET], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_SET], ttype);
                     [rv, rt] = this.parseSet(oftt as ($TypeInfo.SetType | undefined), ttype, whistory);
                 }
                 else if(ptt === "Map") {
-                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_MAP], ttype.types.map((tt) => this.lookupMustDefType(tt)));
+                    const oftt = this.resolveRelaxedTypeMatch([$TypeInfo.BSQTypeTag.TYPE_MAP], ttype);
                     [rv, rt] = this.parseMap(oftt as ($TypeInfo.MapType | undefined), ttype, whistory);
                 }
                 else {
@@ -2621,103 +2699,102 @@ class BSQONParse {
                 this.raiseError(`Unexpected token ${tk} -- in ambigous position tuples/lists/etc. need to be prefixed with a (type)`);
             }
             else {
-                let vv: BSQONParseResult = undefined;
                 let tt: string = "[UnresolvedType]";
 
                 if(this.testToken(TokenKind.TOKEN_TRUE) || this.testToken(TokenKind.TOKEN_FALSE)) {
-                    vv = this.parseBool(whistory);
+                    rv = this.parseBool(whistory);
                     tt = "Bool";
                 }
                 else if(this.testToken(TokenKind.TOKEN_NAT)) {
-                    vv = this.parseNat(whistory);
+                    rv = this.parseNat(whistory);
                     tt = "Nat";
                 }
                 else if(this.testToken(TokenKind.TOKEN_INT)) {
-                    vv = this.parseInt(whistory);
+                    rv = this.parseInt(whistory);
                     tt = "Int";
                 }
                 else if(this.testToken(TokenKind.TOKEN_BIG_NAT)) {
-                    vv = this.parseBigNat(whistory);
+                    rv = this.parseBigNat(whistory);
                     tt = "BigNat";
                 }
                 else if(this.testToken(TokenKind.TOKEN_BIG_INT)) {
-                    vv = this.parseBigInt(whistory);
+                    rv = this.parseBigInt(whistory);
                     tt = "BigInt";
                 }
                 else if(this.testToken(TokenKind.TOKEN_FLOAT)) {
-                    vv = this.parseFloat(whistory);
+                    rv = this.parseFloat(whistory);
                     tt = "Float";
                 }
                 else if(this.testToken(TokenKind.TOKEN_DECIMAL)) {
-                    vv = this.parseDecimal(whistory);
+                    rv = this.parseDecimal(whistory);
                     tt = "Decimal";
                 }
                 else if(this.testToken(TokenKind.TOKEN_RATIONAL)) {
-                    vv = this.parseRational(whistory);
+                    rv = this.parseRational(whistory);
                     tt = "Rational";
                 }
                 else if(this.testTokens(TokenKind.TOKEN_STRING, TokenKind.TOKEN_UNDER)) {
-                    [vv, tt] = this.parseStringOfWithType(whistory);
+                    [rv, tt] = this.parseStringOfWithType(whistory);
                 }
                 else if(this.testTokens(TokenKind.TOKEN_ASCII_STRING, TokenKind.TOKEN_UNDER)) {
-                    [vv, tt] = this.parseASCIIStringOfWithType(whistory);
+                    [rv, tt] = this.parseASCIIStringOfWithType(whistory);
                 }
                 else if(this.testToken(TokenKind.TOKEN_STRING)) {
-                    vv = this.parseString(whistory);
+                    rv = this.parseString(whistory);
                     tt = "String";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ASCII_STRING)) {
-                    vv = this.parseASCIIString(whistory);
+                    rv = this.parseASCIIString(whistory);
                     tt = "ASCIIString";
                 }
                 else if(this.testToken(TokenKind.TOKEN_BYTE_BUFFER)) {
-                    vv = this.parseByteBuffer(whistory);
+                    rv = this.parseByteBuffer(whistory);
                     tt = "ByteBuffer";
                 }
                 else if(this.testToken(TokenKind.TOKEN_REGEX)) {
-                    vv = this.parseRegex(whistory);
+                    rv = this.parseRegex(whistory);
                     tt = "Regex";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ISO_DATE_TIME)) {
-                    vv = this.parseDateTime(whistory);
+                    rv = this.parseDateTime(whistory);
                     tt = "DateTime";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ISO_UTC_DATE_TIME)) {
-                    vv = this.parseUTCDateTime(whistory);
+                    rv = this.parseUTCDateTime(whistory);
                     tt = "UTCDateTime";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ISO_DATE)) {
-                    vv = this.parsePlainDate(whistory);
+                    rv = this.parsePlainDate(whistory);
                     tt = "Date";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ISO_TIME)) {
-                    vv = this.parsePlainTime(whistory);
+                    rv = this.parsePlainTime(whistory);
                     tt = "Time";
                 }
                 else if(this.testToken(TokenKind.TOKEN_TICK_TIME)) {
-                    vv = this.parseTickTime(whistory);
+                    rv = this.parseTickTime(whistory);
                     tt = "TickTime";
                 }
                 else if(this.testToken(TokenKind.TOKEN_LOGICAL_TIME)) {
-                    vv = this.parseLogicalTime(whistory);
+                    rv = this.parseLogicalTime(whistory);
                     tt = "LogicalTime";
                 }
                 else if(this.testToken(TokenKind.TOKEN_ISO_TIMESTAMP)) {
-                    vv = this.parseISOTimeStamp(whistory);
+                    rv = this.parseISOTimeStamp(whistory);
                     tt = "Timestamp";
                 }
                 else if(this.testToken(TokenKind.TOKEN_UUID)) {
                     if(this.peekToken()!.value.startsWith("uuid4{")) {
-                        vv = this.parseUUIDv4(whistory);
+                        rv = this.parseUUIDv4(whistory);
                         tt = "UUIDv4";
                     }
                     else {
-                        vv = this.parseUUIDv7(whistory);
+                        rv = this.parseUUIDv7(whistory);
                         tt = "UUIDv7";
                     }
                 }
                 else if(this.testToken(TokenKind.TOKEN_SHA_HASH)) {
-                    vv = this.parseSHAContentHash(whistory);
+                    rv = this.parseSHAContentHash(whistory);
                     tt = "SHAHash";
                 }
                 else if(this.testToken(TokenKind.TOKEN_PATH_ITEM)) {
@@ -2733,7 +2810,20 @@ class BSQONParse {
                     this.raiseErrorIf(!(tdtype instanceof $TypeInfo.TypedeclType), `Expected a typedecl type but got ${tdtype.tkey}`);
                     this.raiseErrorIf((tdtype as $TypeInfo.TypedeclType).basetype !== tt, `Typedecl has a basetype of ${tdtype.tkey} but got ${tt}`);
 
-                    xxxx;
+                    tt = tdtype.tkey;
+
+                    if((tdtype as $TypeInfo.TypedeclType).optStringOfValidator !== undefined) {
+                        const vre = this.m_assembly.revalidators.get((tdtype as $TypeInfo.TypedeclType).optStringOfValidator!);
+                        this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre, tt), `Typedecl string literal does not satisfy the required format: ${(tdtype as $TypeInfo.TypedeclType).optStringOfValidator!} (${vre})`);
+                    }
+
+                    if((tdtype as $TypeInfo.TypedeclType).optPathOfValidator !== undefined) {
+                        this.raiseError("PATH ITEMS ARE NOT IMPLEMENTED YET!!!");
+                    }
+
+                    if((tdtype as $TypeInfo.TypedeclType).hasvalidations) {
+                        this.m_typedeclChecks.push({ttype: tt, tvalue: rv});
+                    }
                 }
 
                 rt = this.lookupMustDefType(tt);
@@ -2746,7 +2836,26 @@ class BSQONParse {
 
     private parseValue(ttype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
         if(this.testTokens(TokenKind.TOKEN_LPAREN, TokenKind.TOKEN_LET)) {
-            xxxx;
+            this.popToken();
+            this.popToken();
+
+            const vname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
+            this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+            const vtype = this.parseType();
+            this.expectTokenAndPop(TokenKind.TOKEN_EQUALS);
+            const vvalue = this.parseValue(vtype, true);
+            
+            this.raiseErrorIf(this.m_refs.has(vname), `Duplicate let binding ${vname}`);
+            this.m_refs.set(vname, [BSQONParseResultInfo.getParseValue(vvalue, true), BSQONParseResultInfo.getValueType(vvalue, true), BSQONParseResultInfo.getHistory(vvalue, true)]);
+
+            this.expectTokenAndPop(TokenKind.TOKEN_IN);
+
+            const vv = this.parseExpression(ttype, whistory);
+
+            this.expectTokenAndPop(TokenKind.TOKEN_RPAREN);
+
+            this.m_refs.delete(vname);
+            return vv;
         }
         else if(this.testTokens(TokenKind.TOKEN_SRC) || this.testTokens(TokenKind.TOKEN_REFERENCE)) {
             return this.parseExpression(ttype, whistory);
@@ -2766,9 +2875,15 @@ class BSQONParse {
             }
         }
     }
+
+    static parse(input: string, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo,  mode: $Runtime.NotationMode, srcbind: [any, $TypeInfo.BSQType, any] | undefined): {result: any, entityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[], typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]} {
+        const parser = new BSQONParser(mode, defaultns, importmap, assembly, input, srcbind);
+        const result = parser.parseValue(parser.lookupMustDefType(ttype), false);
+
+        return {result: result, entityChecks: parser.m_stdentityChecks, typedeclChecks: parser.m_typedeclChecks};
+    }
 }
 
 export {
-    NotationMode,
-    BSQONParse, BSQONParseError
+    BSQONParser, BSQONParseError
 }

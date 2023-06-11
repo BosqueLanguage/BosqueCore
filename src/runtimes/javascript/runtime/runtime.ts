@@ -6,6 +6,12 @@ import Fraction from "fraction.js";
 
 import { List as IList, Map as IMap } from "immutable";
 
+enum NotationMode {
+    NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT",
+    NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON",
+    NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL"
+}
+
 enum BSQErrorKind {
     Runtime,
     UserAssert
@@ -371,8 +377,8 @@ function keyLessUnion(lval: any, rval: any): boolean {
 }
 
 export {
+    NotationMode,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
-
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 
     UnionValue,
