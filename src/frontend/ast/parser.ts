@@ -143,7 +143,7 @@ const KeywordStrings = [
     KW_eventmsg,
     KW_statusmsg,
     KW_format
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const NS_KW = [
     KW_import,
@@ -240,7 +240,7 @@ const SymbolStrings = [
     SYM_div,
     SYM_land,
     SYM_lor
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : a.localeCompare(b); });
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const RegexFollows = new Set<string>([
     KW__debug,
@@ -392,7 +392,7 @@ class Lexer {
         while (imin < imax) {
             const imid = Math.floor((imin + imax) / 2);
 
-            const scmpval = (str.length !== KeywordStrings[imid].length) ? (KeywordStrings[imid].length - str.length) : str.localeCompare(KeywordStrings[imid]);
+            const scmpval = (str.length !== KeywordStrings[imid].length) ? (KeywordStrings[imid].length - str.length) : ((str !== KeywordStrings[imid]) ? (str < KeywordStrings[imid] ? -1 : 1) : 0);
             if (scmpval === 0) {
                 return KeywordStrings[imid];
             }
@@ -2073,7 +2073,7 @@ class Parser {
             return [new ConstructorTupleExpression(sinfo, args), false];
         }
         else if  (this.testToken(SYM_lbrace)) {
-            const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).sort((a, b) => a.name.localeCompare(b.name));
+            const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).sort((a, b) => ((a.name !== b.name) ? (a.name < b.name ? -1 : 1) : 0));
             return [new ConstructorRecordExpression(sinfo, args.map((nn) => {
                 return {property: nn.name, value: nn.value};
             })), false];

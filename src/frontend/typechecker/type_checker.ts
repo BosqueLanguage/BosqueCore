@@ -1784,7 +1784,7 @@ class TypeChecker {
         }
 
         const ctypes = flattened.map((arg) => (arg as ResolvedConceptAtomType).conceptTypes);
-        const itypes = (([] as ResolvedConceptAtomTypeEntry[]).concat(...ctypes)).sort((cte1, cte2) => cte1.typeID.localeCompare(cte2.typeID));
+        const itypes = (([] as ResolvedConceptAtomTypeEntry[]).concat(...ctypes)).sort((cte1, cte2) => (cte1.typeID !== cte2.typeID) ? (cte1.typeID < cte2.typeID ? -1 : 1) : 0);
 
         return this.normalizeAndList(itypes);
     }
@@ -1863,7 +1863,7 @@ class TypeChecker {
             flattened.push(...nopts);
         }
 
-        const utypes = flattened.sort((cte1, cte2) => cte1.typeID.localeCompare(cte2.typeID));
+        const utypes = flattened.sort((cte1, cte2) => ((cte1.typeID !== cte2.typeID) ? (cte1.typeID < cte2.typeID ? -1 : 1) : 0));
 
         //do a simplification based on A | B when A \Subtypeeq B is B
         let simplifiedTypes: ResolvedAtomType[] = [];
@@ -2760,7 +2760,7 @@ class TypeChecker {
 
     resolveMemberConst(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
         const resl = this.resolveMember<StaticMemberDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticMembers.find((sm) => sm.name === name));
-        if(!(resl instanceof OOMemberResolution<StaticMemberDecl>)) {
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
             return undefined;
         }
 
@@ -2778,7 +2778,7 @@ class TypeChecker {
 
     resolveMemberFunction(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
         const resl = this.resolveMember<StaticFunctionDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticFunctions.find((sf) => sf.name === name));
-        if(!(resl instanceof OOMemberResolution<StaticFunctionDecl>)) {
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
             return undefined;
         }
 
@@ -2796,7 +2796,7 @@ class TypeChecker {
 
     resolveMemberField(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
         const resl = this.resolveMember<MemberFieldDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberFields.find((sm) => sm.name === name));
-        if(!(resl instanceof OOMemberResolution<MemberFieldDecl>)) {
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
             return undefined;
         }
 
@@ -2814,7 +2814,7 @@ class TypeChecker {
 
     resolveMemberMethod(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberResolution<MemberMethodDecl> | undefined {
         const resl = this.resolveMember<MemberMethodDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberMethods.find((mf) => mf.name === name));
-        if(!(resl instanceof OOMemberResolution<MemberMethodDecl>)) {
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
             return undefined;
         }
 
@@ -3249,8 +3249,8 @@ class TypeChecker {
         const pcterms = [...bodybinds].map((bb) => this.toTIRTypeKey(bb[1])).sort();
         const pclcaptures = [...capturedpcodes].map((pm) => pm[1].pcode.codekey).sort();
 
-        const pcvarinfo = [...capturedvars].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cname: cv[0], ctype: this.toTIRTypeKey(cv[1].vtype)}; });
-        const pclinfo = [...capturedpcodes].sort((a, b) => a[0].localeCompare(b[0])).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
+        const pcvarinfo = [...capturedvars].sort((a, b) => ((a[0] !== b[0]) ? (a[0] < b[0] ? -1 : 1) : 0)).map((cv) => { return {cname: cv[0], ctype: this.toTIRTypeKey(cv[1].vtype)}; });
+        const pclinfo = [...capturedpcodes].sort((a, b) => ((a[0] !== b[0]) ? (a[0] < b[0] ? -1 : 1) : 0)).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
 
         const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
         const cpack = new TIRCodePack(this.m_ns, lcodekey, linvkey, exp.invoke.recursive === "yes", pcterms, pclcaptures, pcvarinfo, pclinfo);
@@ -5408,7 +5408,7 @@ class TypeChecker {
                 vrl.push({vname: vn, vtype: tt});
             }
         });
-        vrl.sort((a, b) => a.vname.localeCompare(b.vname));
+        vrl.sort((a, b) => ((a.vname !== b.vname) ? (a.vname < b.vname ? -1 : 1) : 0));
 
         if(vrl.length === 0) {
             return [];
@@ -5748,7 +5748,7 @@ class TypeChecker {
 
     private checkTaskDeclExecArgs(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: TaskTypeDecl, tbinds: TemplateBindScope, taskargs: {argn: string, argv: Expression}[]): {argn: string, argv: TIRExpression}[] {
         const execargs = [...ttask.econtrol]
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .sort((a, b) => ((a.name !== b.name) ? (a.name < b.name ? -1 : 1) : 0))
             .map((cc) => {
                 const cctype = this.normalizeTypeOnly(cc.declaredType, tbinds);
                 const earg = taskargs.find((aa) => aa.argn === cc.name);
@@ -7775,7 +7775,7 @@ class TypeChecker {
                     }
                 }
 
-                allfe = [...allfe, ...nsfiles].sort((a, b) => a[1].localeCompare(b[1]));
+                allfe = [...allfe, ...nsfiles].sort((a, b) => ((a[1] !== b[1]) ? (a[1] < b[1] ? -1 : 1) : 0));
                 nsdone.add(nns);
             }
         }

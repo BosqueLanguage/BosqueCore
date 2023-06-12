@@ -1256,7 +1256,7 @@ class BSQONParser {
             }
             this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-            const ees = entries.sort((a, b) => a.pname.localeCompare(b.pname)).map((ee) => `${ee.pname}: ${ee.rtype.tkey}`);
+            const ees = entries.sort((a, b) => ((a.pname !== b.pname) ? (a.pname < b.pname ? -1 : 1) : 0)).map((ee) => `${ee.pname}: ${ee.rtype.tkey}`);
             return this.lookupMustDefType(`{${ees.join(", ")}}`);
         }
     }
@@ -1289,7 +1289,7 @@ class BSQONParser {
                 opts.push(this.parseConceptSetType());
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => a.localeCompare(b)).join("&"));
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("&"));
         }
     }
 
@@ -1305,7 +1305,7 @@ class BSQONParser {
                 opts.push(this.parseUnionType());
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => a.localeCompare(b)).join(" | "));
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
         }
     }
 
@@ -2053,7 +2053,7 @@ class BSQONParser {
         const keytype = this.lookupMustDefType(ttype.ktype);
         const valtype = this.lookupMustDefType(ttype.vtype);
 
-        if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON || (inmapdecl && this.testToken(TokenKind.TOKEN_RBRACKET))) {
+        if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON || (inmapdecl && this.testToken(TokenKind.TOKEN_LBRACKET))) {
             this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
             const k = this.parseValue(keytype, whistory);
             this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
@@ -2125,7 +2125,6 @@ class BSQONParser {
         else {
             let tvals: {[k: string]: any} = {};
             let ptree: {[k: string]: [$TypeInfo.BSQType, any]} = {};
-
             while (this.testToken(TokenKind.TOKEN_COMMA)) {
                 this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
                 
@@ -2145,7 +2144,7 @@ class BSQONParser {
             this.raiseErrorIf(ttype.entries.length !== Object.keys(tvals).length, `Expected ${Object.keys(ttype.entries).length} values but got ${Object.keys(tvals).length}`);
             this.raiseErrorIf(ttype.entries.some((entry) => !(entry.pname in tvals)), `Expected property ${Object.keys(ttype.entries).filter((pname) => !(pname in tvals)).join(", ")} but not provided`);
 
-            return BSQONParseResultInfo.create(tvals, ttype, ptree, whistory);
+            return BSQONParseResultInfo.create(Object.freeze(tvals), ttype, ptree, whistory);
         }
     }
 
@@ -2189,19 +2188,40 @@ class BSQONParser {
             return BSQONParseResultInfo.create({}, ttype, {}, whistory);
         }
         else {
-            while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                const ff = ttype.fields[tvals.length];
-                const vv = this.parseValue(this.lookupMustDefType(ff.ftype), whistory);
+            if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
+                while (this.testToken(TokenKind.TOKEN_COMMA)) {
+                    const ff = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
+                    const ffe = ttype.fields.find((f) => f.fname === ff);
+                    this.raiseErrorIf(ffe === undefined, `Field ${ff} does not exist on type ${ttype.tkey}`);
+                    
+                    this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+                    const vv = this.parseValue(this.lookupMustDefType(ffe!.ftype), whistory);
 
-                tvals[ff.fname] = BSQONParseResultInfo.getParseValue(vv, whistory);
-                ptree[ff.fname] = [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)];
+                    tvals[ffe!.fname] = BSQONParseResultInfo.getParseValue(vv, whistory);
+                    ptree[ffe!.fname] = [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)];
+                }
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
+
+                this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+
+                this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
+                return BSQONParseResultInfo.create(Object.freeze(tvals), ttype, ptree, whistory);
             }
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
+            else {
+                while (this.testToken(TokenKind.TOKEN_COMMA)) {
+                    const ff = ttype.fields[tvals.length];
+                    const vv = this.parseValue(this.lookupMustDefType(ff.ftype), whistory);
 
-            this.m_stdentityChecks.push({etype: ttype.tkey, evalue: tvals});
+                    tvals[ff.fname] = BSQONParseResultInfo.getParseValue(vv, whistory);
+                    ptree[ff.fname] = [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)];
+                }
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-            this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
-            return BSQONParseResultInfo.create(tvals, ttype, ptree, whistory);
+                this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+
+                this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
+                return BSQONParseResultInfo.create(Object.freeze(tvals), ttype, ptree, whistory);
+            }
         }
     }
 
@@ -2496,6 +2516,9 @@ class BSQONParser {
         }
         else if(ttype instanceof $TypeInfo.MapType) {
             return this.parseMap(ttype, ttype, whistory)[0];
+        }
+        else {
+            this.raiseError(`Unknown type ${ttype.tkey}`);
         }
     }
 
