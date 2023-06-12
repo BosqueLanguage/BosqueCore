@@ -12,6 +12,67 @@ enum NotationMode {
     NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL"
 }
 
+function escapeString(ll: string): string {
+    let ret = "";
+    for (let i = 0; i < ll.length; i++) {
+        if (ll[i] === "\n") {
+            ret += "\\n";
+        }
+        else if (ll[i] === "\r") {
+            ret += "\\r";
+        }
+        else if (ll[i] === "\t") {
+            ret += "\\t";
+        }
+        else if (ll[i] === "\0") {
+            ret += "\\0";
+        }
+        //TODO: hex codes???
+        else if (ll[i] === "\"") {
+            ret += "\\\"";
+        }
+        else {
+            ret += ll[i];
+        }
+    }
+
+    return ret;
+}
+
+function unescapeString(ll: string): string {
+    let ret = "";
+    for (let i = 0; i < ll.length; i++) {
+        if (ll[i] === "\\") {
+            i++;
+            if (ll[i] === "n") {
+                ret += "\n";
+            }
+            else if (ll[i] === "r") {
+                ret += "\r";
+            }
+            else if (ll[i] === "t") {
+                ret += "\t";
+            }
+            else if (ll[i] === "0") {
+                ret += "\0";
+            }
+            else if (ll[i] === "x") {
+                const hex = ll.substring(i + 1, i + 3);
+                ret += String.fromCharCode(parseInt(hex, 16));
+                i += 2;
+            }
+            else {
+                ret += ll[i];
+            }
+        }
+        else {
+            ret += ll[i];
+        }
+    }
+
+    return ret;
+}
+
 enum BSQErrorKind {
     Runtime,
     UserAssert
@@ -377,7 +438,7 @@ function keyLessUnion(lval: any, rval: any): boolean {
 }
 
 export {
-    NotationMode,
+    NotationMode, escapeString, unescapeString,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 

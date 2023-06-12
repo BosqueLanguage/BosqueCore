@@ -11,8 +11,17 @@ import * as $Runtime from "./runtime";
 class BSQONEmitter {
     readonly m_emitmode: $Runtime.NotationMode;
    
+    readonly m_assembly: $TypeInfo.AssemblyInfo;
     readonly m_defaultns: string;
     readonly m_importmap: Map<string, string>;
+
+    private lookupMustDefType(tname: $TypeInfo.BSQTypeKey): $TypeInfo.BSQType {
+        return  this.m_assembly.typerefs.get(tname);
+    }
+
+    private emitType(t: $TypeInfo.BSQType): string {
+        xxxx;
+    }
 
     private emitNone(): string {
         if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
@@ -95,229 +104,216 @@ class BSQONEmitter {
     }
 
     private emitString(s: string): string {
-        return s;
+        return $Runtime.escapeString(s);
     }
 
     private emitASCIIString(s: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return `ascii{${s}}`;
+            return `ascii{${$Runtime.escapeString(s)}}`;
         }
         else {
-            return s;
+            return $Runtime.unescapeString(s);
         }
     }
 
-    private emitByteBuffer(): string {
-        let tbval = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            tbval = this.expectTokenAndPop(TokenKind.TOKEN_BYTE_BUFFER).value.slice(3, -1);
-        }
-        else {
-            tbval = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_bytebuffCheckRe.test(tbval), `Expected byte buffer but got ${tbval}`);
-        }
-    
-        return stringInfo.create(tbval, this.lookupMustDefType("ByteBuffer"), undefined, whistory);
-    }
-
-    private emitDateTime(): string {
-        let dd = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE_TIME).value;
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
-        }
-        else {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_fullTimeCheckRE.test(tk), `Expected date+time but got ${tk}`);
-    
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined, `Expected date+time but got ${tk}`);
-        }
-    
-        return stringInfo.create(dd, this.lookupMustDefType("DateTime"), undefined, whistory);
-    }
-
-    private emitUTCDateTime(): string {
-        let dd = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_UTC_DATE_TIME).value;
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
-        }
-        else {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_fullTimeUTCCheckRE.test(tk), `Expected UTC date+time but got ${tk}`);
-    
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected UTC date+time but got ${tk}`);
-        }
-    
-        return stringInfo.create(dd, this.lookupMustDefType("UTCDateTime"), undefined, whistory);
-    }
-
-    private emitPlainDate(): string {
-        let dd = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE).value;
-            dd = generateDate(tk);
-            this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
-        }
-        else {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_dateOnlyCheckRE.test(tk), `Expected plain date but got ${tk}`);
-    
-            dd = generateDate(tk);
-            this.raiseErrorIf(dd === undefined, `Expected plain date but got ${tk}`);
-        }
-    
-        return stringInfo.create(dd, this.lookupMustDefType("PlainDate"), undefined, whistory);
-    }
-
-    private emitPlainTime(): string {
-        let dd = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIME).value;
-            dd = generateTime(tk);
-            this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
-        }
-        else {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_timeOnlyCheckRE.test(tk), `Expected plain time but got ${tk}`);
-    
-            dd = generateTime(tk);
-            this.raiseErrorIf(dd === undefined, `Expected plain time but got ${tk}`);
-        }
-    
-        return stringInfo.create(dd, this.lookupMustDefType("PlainTime"), undefined, whistory);
-    }
-
-    private emitTickTime(): string {
-        let tt = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            tt = this.expectTokenAndPop(TokenKind.TOKEN_TICK_TIME).value.slice(0, -1);
-        }
-        else {
-            tt = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_tickTimeCheckRE.test(tt), `Expected tick time but got ${tt}`);
-        }
-    
-        return stringInfo.create(BigInt(tt), this.lookupMustDefType("TickTime"), undefined, whistory);
-    }
-
-    private emitLogicalTime(): string {
-        let tt = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            tt = this.expectTokenAndPop(TokenKind.TOKEN_LOGICAL_TIME).value.slice(0, -1);
-        }
-        else {
-            tt = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_logicalTimeCheckRE.test(tt), `Expected logical time but got ${tt}`);
-        }
-    
-        return stringInfo.create(BigInt(tt), this.lookupMustDefType("LogicalTime"), undefined, whistory);
-    }
-
-    private emitISOTimeStamp(): string {
-        let dd = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIMESTAMP).value;
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
-        }
-        else {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_isoStampCheckRE.test(tk), `Expected timestamp but got ${tk}`);
-    
-            dd = generateDateTime(tk);
-            this.raiseErrorIf(dd === undefined || dd.tz !== "UTC", `Expected timestamp but got ${tk}`);
-        }
-    
-        return stringInfo.create(dd, this.lookupMustDefType("ISOTimeStamp"), undefined, whistory);
-    }
-
-    private emitUUIDv4(): string {
-        let uuid = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
-            this.raiseErrorIf(!tk.startsWith("uuid4{"), `Expected UUIDv4 but got ${tk}`);
-    
-            uuid = tk.slice(6, -1);
-        }
-        else {
-            uuid = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_uuidCheckRE.test(uuid), `Expected UUIDv4 but got ${uuid}`);
-        }
-    
-        return stringInfo.create(uuid, this.lookupMustDefType("UUIDv4"), undefined, whistory);
-    }
-
-    private emitUUIDv7(): string {
-        let uuid = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
-            this.raiseErrorIf(!tk.startsWith("uuid7{"), `Expected UUIDv7 but got ${tk}`);
-    
-            uuid = tk.slice(6, -1);
-        }
-        else {
-            uuid = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_uuidCheckRE.test(uuid), `Expected UUIDv7 but got ${uuid}`);
-        }
-    
-        return stringInfo.create(uuid, this.lookupMustDefType("UUIDv7"), undefined, whistory);
-    }
-
-    private emitSHAContentHash(): string {
-        let sh = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            sh = this.expectTokenAndPop(TokenKind.TOKEN_SHA_HASH).value.slice(5, -1);
-        }
-        else {
-            sh = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_shahashCheckRE.test(sh), `Expected SHA 512 hash but got ${sh}`);
-        }
-    
-        return stringInfo.create(sh, this.lookupMustDefType("SHAContentHash"), undefined, whistory);
-    }
-
-    private emitRegex(): string {
-        let re = undefined;
-        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            re = this.expectTokenAndPop(TokenKind.TOKEN_REGEX).value;
-        }
-        else {
-            re = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-            this.raiseErrorIf(!_s_regexCheckRe.test(re), `Expected a regex string but got ${re}`);
-        }
-    
-        return stringInfo.create(re, this.lookupMustDefType("Regex"), undefined, whistory);
-    }
-
-    private emitLatLongCoordinate(): string {
-        let llc = undefined;
+    private emitByteBuffer(buff: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const ttype = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
-            this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
-    
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
-            const lat = this.emitFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const long = this.emitFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
-    
-            llc = [lat, long];
+            return `0x${buff}`;
         }
         else {
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-            const lat = this.emitFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const long = this.emitFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
-    
-            llc = [lat, long];
+            return `\"${buff}\"`;
         }
+    }
 
-        return stringInfo.create(llc, this.lookupMustDefType("LatLongCoordinate"), undefined, whistory);
+    private emitDateTime(dt: $Runtime.BSQDateTime): string {
+        const dd = `${dt.year.toString().padStart(4, "0")}-${dt.month.toString().padStart(2, "0")}-${dt.day.toString().padStart(2, "0")}`;
+        const tt = `${dt.hour.toString().padStart(2, "0")}:${dt.minute.toString().padStart(2, "0")}:${dt.second.toString().padStart(2, "0")}.${dt.millisecond.toString().padStart(3, "0")}`;
+        const fdt = `${dd}T${tt}${dt.tz}`;
+        
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return fdt;
+        }
+        else {
+           return "\"" + fdt + "\"";
+        }
+    }
+
+    private emitUTCDateTime(dt: $Runtime.BSQDateTime): string {
+        const dd = `${dt.year.toString().padStart(4, "0")}-${dt.month.toString().padStart(2, "0")}-${dt.day.toString().padStart(2, "0")}`;
+        const tt = `${dt.hour.toString().padStart(2, "0")}:${dt.minute.toString().padStart(2, "0")}:${dt.second.toString().padStart(2, "0")}.${dt.millisecond.toString().padStart(3, "0")}`;
+        const fdt = `${dd}T${tt}`;
+        
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return fdt;
+        }
+        else {
+           return "\"" + fdt + "\"";
+        }
+    }
+
+    private emitPlainDate(pd: $Runtime.BSQDate): string {
+        const dd = `${pd.year.toString().padStart(4, "0")}-${pd.month.toString().padStart(2, "0")}-${pd.day.toString().padStart(2, "0")}`;
+        
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return dd;
+        }
+        else {
+           return "\"" + dd + "\"";
+        }
+    }
+
+    private emitPlainTime(pt: $Runtime.BSQTime): string {
+        const tt = `${pt.hour.toString().padStart(2, "0")}:${pt.minute.toString().padStart(2, "0")}:${pt.second.toString().padStart(2, "0")}.${pt.millisecond.toString().padStart(3, "0")}`;
+        
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return tt;
+        }
+        else {
+           return "\"" + tt + "\"";
+        }
+    }
+
+    private emitTickTime(t: bigint): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return t.toString() + "t";
+        }
+        else {
+            if(t <= BigInt(Number.MAX_SAFE_INTEGER)) {
+                return t.toString();
+            }
+            else {
+                return "\"" + t.toString() + "\"";
+            }
+        }
+    }
+
+    private emitLogicalTime(t: bigint): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return t.toString() + "l";
+        }
+        else {
+            if(t <= BigInt(Number.MAX_SAFE_INTEGER)) {
+                return t.toString();
+            }
+            else {
+                return "\"" + t.toString() + "\"";
+            }
+        }
+    }
+
+    private emitISOTimeStamp(ts: $Runtime.BSQDateTime): string {
+        const dd = `${ts.year.toString().padStart(4, "0")}-${ts.month.toString().padStart(2, "0")}-${ts.day.toString().padStart(2, "0")}`;
+        const tt = `${ts.hour.toString().padStart(2, "0")}:${ts.minute.toString().padStart(2, "0")}:${ts.second.toString().padStart(2, "0")}.${dt.millisecond.toString().padStart(3, "0")}`;
+        const fdt = `${dd}T${tt}Z`;
+        
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return fdt;
+        }
+        else {
+           return "\"" + fdt + "\"";
+        }
+    }
+
+    private emitUUIDv4(u: string): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return `uuid4{${u}}`;
+        }
+        else {
+            return "\"" + u + "\"";
+        }
+    }
+
+    private emitUUIDv7(u: string): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return `uuid7{${u}}`;
+        }
+        else {
+            return "\"" + u + "\"";
+        }
+    }
+
+    private emitSHAContentHash(h: string): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return `sha3{${h}}`;
+        }
+        else {
+            return "\"" + h + "\"";
+        }
+    }
+
+    private emitRegex(re: string): string {
+        if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return re;
+        }
+        else {
+            return "\"" + re + "\"";
+        }    
+    }
+
+    private emitLatLongCoordinate(llc: [number, number]): string {
+        if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return `LatLongCoordinate{${llc[0]}, ${llc[1]}}`;
+        }
+        else {
+            return `[${llc[0]}, ${llc[1]}]`;
+        }
+    }
+
+    private emitStringOf(ttype: $TypeInfo.StringOfType, str: string): string {
+        if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return "\"" + $Runtime.escapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
+        }
+        else {
+            return "\"" + $Runtime.escapeString(str) + "\"";
+        }
+    }
+
+    private emitASCIIStringOf(ttype: $TypeInfo.ASCIIStringOfType, str: string): string {
+        if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            return "\"" + $Runtime.escapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
+        }
+        else {
+            return "\"" + $Runtime.escapeString(str) + "\"";
+        }
+    }
+
+    private emitPath(ttype: $TypeInfo.BSQType, str: string): string {
+        return "[NOT IMPLEMENTED -- Path]"
+    }
+
+    private emitPathFragment(ttype: $TypeInfo.BSQType, str: string): string {
+        return "[NOT IMPLEMENTED -- PathFragment]"
+    }
+
+    private emitPathGlob(ttype: $TypeInfo.BSQType, str: string): string {
+        return "[NOT IMPLEMENTED -- PathGlob]"
+    }
+
+    private emitSomething(ttype: $TypeInfo.SomethingType, v: any): string {
+        if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            if (this.m_emitmode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
+                return `Something<${this.emitType(this.lookupMustDefType(ttype.oftype))}>(${this.emitValue(this.lookupMustDefType(ttype.oftype), v)})`;
+            }
+            else {
+                return `something(${this.emitValue(this.lookupMustDefType(ttype.oftype), v)})`;
+            }
+        }
+        else {
+            return this.emitValue(this.lookupMustDefType(ttype.oftype), v);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    private emitValue(ttype: $TypeInfo.BSQType, v: any): string {
+        xxxx;
     }
 }

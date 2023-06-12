@@ -1614,7 +1614,7 @@ class BSQONParser {
     private parseString(whistory: boolean): BSQONParseResult {
         const tstr = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
 
-        return BSQONParseResultInfo.create(tstr, this.lookupMustDefType("String"), undefined, whistory);
+        return BSQONParseResultInfo.create($Runtime.unescapeString(tstr), this.lookupMustDefType("String"), undefined, whistory);
     }
 
     private parseASCIIString(whistory: boolean): BSQONParseResult {
@@ -1627,7 +1627,7 @@ class BSQONParser {
             this.raiseErrorIf(!_s_asciiStringCheckRe.test(tkval), `Expected ASCII string but got ${tkval}`);
         }
     
-        return BSQONParseResultInfo.create(tkval, this.lookupMustDefType("ASCIIString"), undefined, whistory);
+        return BSQONParseResultInfo.create($Runtime.unescapeString(tkval), this.lookupMustDefType("ASCIIString"), undefined, whistory);
     }
 
     private parseByteBuffer(whistory: boolean): BSQONParseResult {
@@ -1841,11 +1841,12 @@ class BSQONParser {
             llc = [lat, long];
         }
 
+        this.raiseErrorIf(-90.0 <= llc[0] && llc[0] <= 90.0 && -180.0 < llc[1] && llc[1] <= 180.0, `LatLongCoordinate out of range: ${llc}`)
         return BSQONParseResultInfo.create(llc, this.lookupMustDefType("LatLongCoordinate"), undefined, whistory);
     }
 
     private parseStringOfWithType(whistory: boolean): [BSQONParseResult, $TypeInfo.BSQTypeKey] {
-        const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+        const tk = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
         const st = this.parseStringOfType() as $TypeInfo.StringOfType;
 
         const vre = this.m_assembly.revalidators.get(st.oftype);
@@ -1862,10 +1863,10 @@ class BSQONParser {
             const st = this.parseStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.oftype} but got StringOf<${st.tkey}>`);
 
-            sval = tk;
+            sval = $Runtime.unescapeString(tk);
         }
         else {
-            sval = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+            sval = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
         }
 
         const vre = this.m_assembly.revalidators.get(ttype.oftype);
@@ -1875,7 +1876,7 @@ class BSQONParser {
     }
 
     private parseASCIIStringOfWithType(whistory: boolean): [BSQONParseResult, $TypeInfo.BSQTypeKey] {
-        const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+        const tk = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
         const st = this.parseASCIIStringOfType() as $TypeInfo.ASCIIStringOfType;
 
         const vre = this.m_assembly.revalidators.get(st.oftype);
@@ -1892,10 +1893,10 @@ class BSQONParser {
             const st = this.parseASCIIStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.tag} but got ASCIIStringOf<${st.tkey}>`);
 
-            sval = tk.slice(6, -1);
+            sval = $Runtime.unescapeString(tk.slice(6, -1));
         }
         else {
-            sval = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+            sval = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
         }
 
         const vre = this.m_assembly.revalidators.get(ttype.oftype);
@@ -2733,10 +2734,10 @@ class BSQONParser {
                     rv = this.parseRational(whistory);
                     tt = "Rational";
                 }
-                else if(this.testTokens(TokenKind.TOKEN_STRING, TokenKind.TOKEN_UNDER)) {
+                else if(this.testTokens(TokenKind.TOKEN_STRING, TokenKind.TOKEN_TYPE)) {
                     [rv, tt] = this.parseStringOfWithType(whistory);
                 }
-                else if(this.testTokens(TokenKind.TOKEN_ASCII_STRING, TokenKind.TOKEN_UNDER)) {
+                else if(this.testTokens(TokenKind.TOKEN_ASCII_STRING, TokenKind.TOKEN_TYPE)) {
                     [rv, tt] = this.parseASCIIStringOfWithType(whistory);
                 }
                 else if(this.testToken(TokenKind.TOKEN_STRING)) {
