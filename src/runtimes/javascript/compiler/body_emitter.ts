@@ -1778,10 +1778,10 @@ class BodyEmitter {
     private emitEnvironmentSetStatement(stmt: TIREnvironmentSetStatement): string {
         const binds = stmt.assigns.map((asgn) => {
             if(asgn.valexp === undefined) {
-                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+                return `self.$environment.clear("${asgn.keyname}");`
             }
             else {
-                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+                return `self.$environment.set("${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
             }
         });
 
@@ -1795,15 +1795,15 @@ class BodyEmitter {
             sstr = `const ${tmpe} = self.$environment; self.$environment = new $Runtime.BSQEnvironment(undefined);`;
         }
         else {
-            sstr = `self.$environment = $Runtime.BSQEnvironment.push(self.$environment);`;
+            sstr = `self.$environment = self.$environment.pushEmpty();`;
         }
 
         const binds = stmt.assigns.map((asgn) => {
             if(asgn.valexp === undefined) {
-                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+                return `self.$environment.clear("${asgn.keyname}");`
             }
             else {
-                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+                return `self.$environment.set("${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
             }
         });
         sstr += (binds.length !== 0) ? ("\n" + indent + binds.join(" ")) : ""
@@ -1819,7 +1819,7 @@ class BodyEmitter {
             sstr += `self.$environment = ${tmpe}\n`;
         }
         else {
-            sstr += `self.$environment = $Runtime.BSQEnvironment.pop(self.$environment);\n`;
+            sstr += `self.$environment = self.$environment.pop();\n`;
         }
 
         return sstr;

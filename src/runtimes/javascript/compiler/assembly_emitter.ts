@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
@@ -461,6 +461,10 @@ class NamespaceEmitter {
                         invdecls.push(`$Runtime.invmap.set("${mm.ikey}", {op: ${bemitter.resolveTypeMemberAccess(tk)}.${mm.name}, isatom: true});`);
                     }
                 });
+
+                if(ootype instanceof TIRObjectEntityType && ootype.vtable.size > 0) {
+                    invdecls.push(`$Runtime.vtablemap.set("${ootype.tkey}", new Map([${[...ootype.vtable].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}]));`);
+                }
             });
         });
 
@@ -505,8 +509,8 @@ class NamespaceEmitter {
             });
         });
 
-        const stdimps = [`import * as $Limits from "./limits.mjs";`, `import * as $CoreLibs from "./corelibs.mjs";`, `import * as $Runtime from "./runtime.mjs";`];
-        const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}.mjs";`).join("\n") + "\n";
+        const stdimps = [`import * as $Constants from "./constants";`, `import * as $TypeInfo from "./typeinfo";`, `import * as $Runtime from "./runtime";`, `import * as $BSQONEmit from "./bsqon_emit.ts";`];
+        const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}";`).join("\n") + "\n";
 
         const fmts = formats.join("\n");
 
@@ -535,7 +539,7 @@ class NamespaceEmitter {
 
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return ["\"use strict\";", ...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
+        return [...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
@@ -546,7 +550,6 @@ class AssemblyEmitter {
     readonly nsdeps: Map<string, string[]>;
 
     readonly namespacedecls: Map<string, string> = new Map<string, string>();
-    readonly vcallinfo: Map<TIRTypeKey, Map<string, TIRInvokeKey>> = new Map<TIRTypeKey, Map<string, TIRInvokeKey>>();
     
     typeEncodedAsUnion(tt: TIRTypeKey): boolean {
         assert(this.assembly.typeMap.has(tt), `missing type name entry ${tt}`);
@@ -568,46 +571,12 @@ class AssemblyEmitter {
 
             this.namespacedecls.set(ns, tirns);
         });
-
-        //setup various maps
-        this.assembly.typeMap.forEach((tt) => {
-            if(tt instanceof TIRObjectEntityType) {
-                this.vcallinfo.set(tt.tkey, tt.vtable);
-            }
-        });
     };
 
-    generateJSCode(limitscode: string, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
+    generateJSCode(): {nsname: string, contents: string}[] {
         this.processAssembly();
 
-        let outmodules: {nsname: string, contents: string}[] = [
-            {
-                nsname: "limits.mjs",
-                contents: limitscode
-            },
-            {   
-                nsname: "corelibs.mjs",
-                contents: corecode
-                    .replace("//--GENERATED_$KeyEqualOps--", [...this.keyeqinfo].map((ke) => `$KeyEqualOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
-                    .replace("//--GENERATED_$KeyLessOps--", [...this.keyeqinfo].map((ke) => `$KeyLessOps.set("${ke[0]}", ${ke[1]});`).join("\n"))
-            },
-            {   
-                nsname: "runtime.mjs",
-                contents: runtimecode
-                    .replace("//--GENERATED_$subtypesetup--", [
-                        ...[...this.subtypeinfo].map((sti) => `subtypeMap.set("${sti[0]}", {direct: new Set([${sti[1].map((st) => "\"" + st + "\"").join(", ")}]), indirect: [] });`),
-                        ...[...this.unionsubtypeinfo].map((usi) => `subtypeMap.set("${usi[0]}", {direct: new Set([${usi[1].simpletypes.map((st) => "\"" + st + "\"").join(", ")}]), indirect: [${usi[1].concepts.map((st) => "\"" + st + "\"").join(", ")}] });`)
-                        ].join("\n")
-                    )
-                    .replace("//--GENERATED_$vtablesetup--", [...this.vcallinfo].map((vci) => `vtablemap.set("${vci[0]}", new Map([${[...vci[1]].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}]));`).join("\n"))
-            },
-            {   
-                nsname: "api.mjs",
-                contents: apicode
-                .replace("//--GENERATED_$usermodules--", [...this.namespacedecls].map((nsi) => `import * as ${nsi[0]} from "./${nsi[0]}.mjs";`).join("\n"))
-                .replace("//--GENERATED_$iomarshalsetup--", [...this.marshalinfo].map((mmi) => `ioMarshalMap.set("${mmi[0]}", {parse: (jv) => ${mmi[1].parse}, emit: (nv) => ${mmi[1].emit}});`).join("\n"))
-            }
-        ];
+        let outmodules: {nsname: string, contents: string}[] = [];
 
         this.namespacedecls.forEach((nsd, name) => {
             outmodules.push({nsname: `${name}.mjs`, contents: nsd});

@@ -8,15 +8,11 @@ import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
-const limit_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/limits.mjs");
-const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
-const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
-const api_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/api.mjs");
-
-const limit_code = FS.readFileSync(limit_path).toString();
-const core_code = FS.readFileSync(core_path).toString();
-const runtime_code = FS.readFileSync(runtime_path).toString();
-const api_code = FS.readFileSync(api_path).toString();
+const consts_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/constants.ts");
+const typeinfo_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/typeinfo.ts");
+const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.ts");
+const bsqon_emit_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_emit.ts");
+const bsqon_parse_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_parse.ts");
 
 let fullargs = process.argv;
 
@@ -87,19 +83,20 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
     return [tasm as TIRAssembly, depsmap];
 }
 
-function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, limitscode: string, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
-    const jsemittier = new AssemblyEmitter(tasm, depsmap);
-    return jsemittier.generateJSCode(limitscode, corecode, runtimecode, apicode)
+function generateTSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>): {nsname: string, contents: string}[] {
+    const tsemittier = new AssemblyEmitter(tasm, depsmap);
+    return tsemittier.generateJSCode()
 }
 
-
-function workflowEmitToDir(into: string, usercode: PackageConfig, limitscode: string, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
         const [tasm, deps] = generateTASM(usercode, buildlevel, entrypoints);
 
-        process.stdout.write("emitting JS code...\n");
-        const jscode = generateJSFiles(tasm, deps, limitscode, corecode, runtimecode, apicode);
+        process.stdout.write("emitting TS code...\n");
+        const jscode = generateTSFiles(tasm, deps);
+
+        xxxx;
         
         process.stdout.write(`writing JS code into ${into}...\n`);
         if(!FS.existsSync(into)) {

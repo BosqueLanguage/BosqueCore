@@ -450,8 +450,8 @@ class BSQEnvironment {
         }
     }
 
-    push(env: BSQEnvironment) {
-        return new BSQEnvironment(env);
+    pushEmpty() {
+        return new BSQEnvironment(this);
     }
 
     pop() {
@@ -560,6 +560,7 @@ class MapOps {
     }
 }
 
+const loglevels = ["fatal", "error", "warn", "info", "debug"];
 let loglevel = "info";
 let logprefix: {fmt: string, args: any[], smsg: string}[] = [];
 
@@ -568,7 +569,7 @@ function setloglevel(level: "fatal" | "error" | "warn" | "info" | "debug") {
 }
 
 function checkloglevel(level: "fatal" | "error" | "warn" | "info" | "debug") {
-    return level === "fatal" || level === "error" || level === "warn" || level === "info"; //we are stuck at "info" so "debug" is off
+    return loglevels.indexOf(level) <= loglevels.indexOf(loglevel);
 }
 
 function log(level: "fatal" | "error" | "warn" | "info" | "debug", tag: string, fmt: string, ...args: any[]) {
@@ -606,7 +607,6 @@ function poplogprefix() {
 }
 
 const vtablemap = new Map();
-//--GENERATED_$vtablesetup--
 
 const invmap = new Map();
 const lambdas = new Map();
