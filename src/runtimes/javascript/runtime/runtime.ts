@@ -437,7 +437,188 @@ function keyLessUnion(lval: any, rval: any): boolean {
     return keyLessBase(lval.value, rval.value);
 }
 
+class BSQEnvironment {
+    readonly parent: BSQEnvironment;
+    readonly args: Map<string, any>;
+    
+    constructor(env: BSQEnvironment, ...args: [string, any][]) {
+        this.parent = env;
+        this.args = new Map<string, any>();
+
+        for (let i = 0; i < args.length; ++i) {
+            this.args.set(args[i][0], args[i][1]);
+        }
+    }
+
+    push(env: BSQEnvironment) {
+        return new BSQEnvironment(env);
+    }
+
+    pop() {
+        return this.parent;
+    }
+
+    has(key: string): boolean {
+        if (this.args.has(key)) {
+            const vv = this.args.get(key);
+            return vv !== undefined;
+        }
+
+        return this.parent !== undefined && this.parent.has(key);
+    }
+
+    get(key: string, oftype: BSQTypeKey): any {
+        if (this.args.has(key)) {
+            const vv = this.args.get(key);
+            raiseRuntimeErrorIf(vv === undefined, `key ${key} was not found in environment`);
+
+            raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+            return vv.value;
+        }
+
+        raiseRuntimeErrorIf(this.parent === undefined, `key ${key} was not found in environment`);
+        return this.get(key, oftype);
+    }
+
+    getOrNoneUV(key: string, oftype: BSQTypeKey): UnionValue {
+        if (this.args.has(key)) {
+            const vv = this.args.get(key);
+            if (vv === undefined) {
+                return new UnionValue("None", undefined);
+            }
+
+            raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+            return new UnionValue(vv.tkey, vv.value);
+        }
+
+        if (this.parent === undefined) {
+            return new UnionValue("None", undefined);
+        }
+        else {
+            return this.parent.getOrNoneUV(key, oftype);
+        }
+    }
+
+    getOrNoneDV(key: string, oftype: BSQTypeKey): any {
+        if (this.args.has(key)) {
+            const vv = this.args.get(key);
+            if (vv === undefined) {
+                return undefined;
+            }
+
+            raiseRuntimeErrorIf(vv.tkey === oftype, `expected value of type ${oftype} but got ${vv.tkey}`);
+            return vv.value;
+        }
+
+        if (this.parent === undefined) {
+            return undefined;
+        }
+        else {
+            return this.parent.getOrNoneDV(key, oftype);
+        }
+    }
+
+    set(key: string, val: any, oftype: BSQTypeKey) {
+        this.args.set(key, { tkey: oftype, value: val });
+    }
+
+    clear(key: string): any {
+        raiseRuntimeErrorIf(!this.has(key), `key ${key} not defined in environment`);
+        this.args.set(key, undefined);
+    }
+}
+
+class NumericOps {
+}
+
+class StringOps {
+}
+
+class DateOps {
+}
+
+class ListOps {
+    create(...args: any[]): IList<any> {
+        return IList(args);
+    }
+}
+
+class MapOps {
+    create(...args: [any, any][]): IMap<any, any> {
+        const minit = IMap<any, any>();
+        const mres = minit.withMutations(map => {
+            for (let i = 0; i < args.length; ++i) {
+                if (map.has(args[i][0])) {
+                    raiseRuntimeError("Duplicate keys in Map construction");
+                }
+
+                map = map.set(args[i][0], args[i][1]);
+            }
+        });
+
+        return mres;
+    }
+}
+
+let loglevel = "info";
+let logprefix: {fmt: string, args: any[], smsg: string}[] = [];
+
+function setloglevel(level: "fatal" | "error" | "warn" | "info" | "debug") {
+    loglevel = level;
+}
+
+function checkloglevel(level: "fatal" | "error" | "warn" | "info" | "debug") {
+    return level === "fatal" || level === "error" || level === "warn" || level === "info"; //we are stuck at "info" so "debug" is off
+}
+
+function log(level: "fatal" | "error" | "warn" | "info" | "debug", tag: string, fmt: string, ...args: any[]) {
+    const msg = fmt + " -- " + args.map((arg) => JSON.stringify(arg)).join(" ");
+    if(logprefix.length === 0) {
+        console.log(JSON.stringify(
+            {
+                tag: tag,
+                msg: msg
+            }
+        ));
+    }
+    else {
+        console.log(JSON.stringify(
+            {
+                tag: tag,
+                prefix: logprefix.map((pp) => pp.smsg),
+                msg: msg
+            }
+        ));
+    }
+
+    if(level === "fatal") {
+        raiseUserAssert("log at fatal level -- " + msg);
+    }
+}
+
+function pushlogprefix(fmt: string, ...args: any[]) {
+    const smsg = fmt + " -- " + args.map((arg) => JSON.stringify(arg)).join(" ");
+    logprefix.push({fmt: fmt, args: args, smsg: smsg});
+}
+
+function poplogprefix() {
+    logprefix.pop();
+}
+
+const vtablemap = new Map();
+//--GENERATED_$vtablesetup--
+
+const invmap = new Map();
+const lambdas = new Map();
+
+function setScratchValue(scratch: any[], sidx: number, value: any): number {
+    scratch[sidx] = value;
+    return 0;
+}
+
 export {
+    Decimal, Fraction, IList, IMap,
+
     NotationMode, escapeString, unescapeString,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     BSQDateTime, BSQDate, BSQTime,
@@ -445,5 +626,11 @@ export {
     UnionValue,
     acceptsString,
     safeMath, safeMathDiv, safeMathUnderflow, 
-    keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion
+    keyEqualStrict, keyEqualMixed, keyEqualUnion, keyLessStrict, keyLessUnion,
+
+    BSQEnvironment,
+    NumericOps, StringOps, DateOps, ListOps, MapOps,
+
+    vtablemap, invmap, lambdas, setScratchValue,
+    setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
 };

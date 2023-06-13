@@ -391,11 +391,21 @@ class AssemblyInfo {
     }
 }
 
+
+let loaded_typeinfo: AssemblyInfo | undefined = undefined;
+function isSubtype_Runtime(tkey: BSQTypeKey, oftype: BSQTypeKey): boolean {
+    let lasm = loaded_typeinfo as AssemblyInfo;
+    let t = lasm.typerefs.get(tkey) as BSQType;
+    let uu = lasm.typerefs.get(oftype) as BSQType;
+    return lasm.checkConcreteSubtype(t, uu);
+}
+
 export {
     BSQTypeKey, BSQTypeTag, 
     BSQType, UnresolvedType, TupleType, RecordType, EntityType, ConceptType, StdEntityType, StdConceptType, 
     PrimitiveType, EnumType, TypedeclType, ValidatorREType, ValidatorPthType, 
     StringOfType, ASCIIStringOfType, SomethingType, OptionType, OkType, ErrorType, ResultType, PathType, PathFragmentType, PathGlobType,
     ListType, StackType, QueueType, SetType, MapEntryType, MapType,
-    ConceptSetType, UnionType, NamespaceDecl, AssemblyInfo
+    ConceptSetType, UnionType, NamespaceDecl, AssemblyInfo,
+    loaded_typeinfo, isSubtype_Runtime
 }

@@ -2312,6 +2312,26 @@ class BSQONParser {
         return (undefined as any) as [BSQONParseResult, $TypeInfo.BSQType];
     }
 
+    private static genericKeyEq(k1: any, k2: any): boolean {
+        if (k1 === k2) {
+            return true;
+        }
+        else {
+            const type1 = typeof k1;
+            if(type1 !== "object") {
+                return false;
+            }
+            else {
+                if(k1 instanceof $Runtime.UnionValue) {
+                    return k1.equals(k2);
+                }
+                else {
+                    return k1.equalsBase(k2);
+                }
+            }
+        }
+    }
+
     private parseMap(ttype: $TypeInfo.MapType | undefined, chktype: $TypeInfo.BSQType, whistory: boolean): [BSQONParseResult, $TypeInfo.BSQType] {
         if(this.testToken(TokenKind.TOKEN_LBRACKET)) {
             this.raiseErrorIf(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_FULL, `Cannot use map [...] shorthand notation in full mode`);
@@ -2336,6 +2356,10 @@ class BSQONParser {
                     }
                     else {
                         const entry = this.parseMapEntry(metype, whistory, true);
+
+                        const kk = BSQONParseResultInfo.getParseValue(entry, whistory)[0];
+                        this.raiseErrorIf(vv.some((v) => BSQONParser.genericKeyEq(kk, v[0])), `Duplicate key`);
+
                         vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
                         ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
                     }
@@ -2367,6 +2391,10 @@ class BSQONParser {
                     }
                     else {
                         const entry = this.parseMapEntry(metype, whistory, true);
+
+                        const kk = BSQONParseResultInfo.getParseValue(entry, whistory)[0];
+                        this.raiseErrorIf(vv.some((v) => BSQONParser.genericKeyEq(kk, v[0])), `Duplicate key`);
+
                         vv.push(BSQONParseResultInfo.getParseValue(entry, whistory));
                         ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
                     }
@@ -2908,6 +2936,17 @@ class BSQONParser {
     }
 }
 
+function cmdunescape(str: string): string {
+    return str.replace(/&amp;|&lt;|&gt;|&#39;|&quot;/g, 
+    tag => ({
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&#39;': "'",
+        '&quot;': '"'
+      }[tag] as string));
+}
+
 export {
-    BSQONParser, BSQONParseError
+    BSQONParser, BSQONParseError, cmdunescape
 }

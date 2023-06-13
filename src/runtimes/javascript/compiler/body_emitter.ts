@@ -110,10 +110,10 @@ class BodyEmitter {
             }
         }
         else if(ttype instanceof TIRMapEntryEntityType) {
-            taccess = `Core.$Types["${ttype.tkey}"]`;
+            taccess = `$Runtime.$Types["${ttype.tkey}"]`;
         }
         else if((ttype instanceof TIRListEntityType) || (ttype instanceof TIRStackEntityType) || (ttype instanceof TIRQueueEntityType) ||  (ttype instanceof TIRSetEntityType) || (ttype instanceof TIRMapEntityType)) {
-            taccess = `Core.$Types["${ttype.tkey}"]`;
+            taccess = `$Runtime.$Types["${ttype.tkey}"]`;
         }
         else if(ttype instanceof TIRTaskType) {
             taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
@@ -321,15 +321,15 @@ class BodyEmitter {
     }
 
     private emitConstructorListExpression(exp: TIRConstructorListExpression): string {
-        return `$CoreLibs.$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        return `$Runtime.$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
         if(exp.args.length === 0) {
-            return `$CoreLibs.$MapOps.create("${exp.etype}")`;
+            return `$Runtime.$MapOps.create()`;
         }
         else {
-            return `$CoreLibs.$MapOps.create("${exp.etype}", ${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+            return `$Runtime.$MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
         }
     }
 
@@ -876,7 +876,7 @@ class BodyEmitter {
             return this.emitExpression(exp.exp, toplevel);
         }
         else if(trgtunion) {
-            const bval = `$Runtime.UnionValue.create("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
+            const bval = `new $Runtime.UnionValue("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
@@ -986,7 +986,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
+        const bval = `$TypeInfo.isSubtype_Runtime(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -994,7 +994,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `!$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
+        const bval = `!$TypeInfo.isSubtype_Runtime(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1093,7 +1093,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $TypeInfo.isSubtype_Runtime(__expval__.tkey, "${exp.ttype}") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1101,7 +1101,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $TypeInfo.isSubtype_Runtime(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
