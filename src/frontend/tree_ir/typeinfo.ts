@@ -46,6 +46,96 @@ abstract class BSQType {
         this.isrecursive = isrecursive;
         this.isconcretetype = isconcretetype;
     }
+
+    abstract emit(): any;
+    static parse(jv: any): BSQType {
+        switch(jv.tag) {
+            case BSQTypeTag.TYPE_TUPLE: {
+                return new TupleType(jv.entries, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_RECORD: {
+                return new RecordType(jv.entries, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_STD_ENTITY: {
+                return new StdEntityType(jv.tkey, jv.hasvalidations, jv.fields, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_STD_CONCEPT: {
+                return new StdConceptType(jv.tkey, jv.subtypes, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_PRIMITIVE: {
+                return new PrimitiveType(jv.tkey);
+            }
+            case BSQTypeTag.TYPE_ENUM: {
+                return new EnumType(jv.tkey, jv.variants);
+            }
+            case BSQTypeTag.TYPE_TYPE_DECL: {
+                return new TypedeclType(jv.tkey, jv.basetype, jv.oftype, jv.isrecursive, jv.hasvalidations, jv.optStringOfValidator, jv.optPathOfValidator);
+            }
+            case BSQTypeTag.TYPE_VALIDATOR_RE: {
+                return new ValidatorREType(jv.tkey);
+            }
+            case BSQTypeTag.TYPE_VALIDATOR_PTH: {
+                return new ValidatorPthType(jv.tkey);
+            }
+            case BSQTypeTag.TYPE_STRING_OF: {
+                return new StringOfType(jv.oftype);
+            }
+            case BSQTypeTag.TYPE_ASCII_STRING_OF: {
+                return new ASCIIStringOfType(jv.oftype);
+            }
+            case BSQTypeTag.TYPE_SOMETHING: {
+                return new SomethingType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_OPTION: {
+                return new OptionType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_OK: {
+                return new OkType(jv.ttype, jv.etype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_ERROR: {
+                return new ErrorType(jv.ttype, jv.etype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_RESULT: {
+                return new ResultType(jv.ttype, jv.etype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_PATH: {
+                return new PathType(jv.oftype);
+            }
+            case BSQTypeTag.TYPE_PATH_FRAGMENT: {
+                return new PathFragmentType(jv.oftype);
+            }
+            case BSQTypeTag.TYPE_PATH_GLOB: {
+                return new PathGlobType(jv.oftype);
+            }
+            case BSQTypeTag.TYPE_LIST: {
+                return new ListType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_STACK: {
+                return new StackType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_QUEUE: {
+                return new QueueType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_SET: {
+                return new SetType(jv.oftype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_MAP_ENTRY: {
+                return new MapEntryType(jv.ktype, jv.vtype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_MAP: {
+                return new MapType(jv.ktype, jv.vtype, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_CONCEPT_SET: {
+                return new ConceptSetType(jv.concepts, jv.subtypes, jv.isrecursive);
+            }
+            case BSQTypeTag.TYPE_UNION: {
+                return new UnionType(jv.subtypes, jv.isrecursive);
+            }
+            default: {
+                return UnresolvedType.singleton;
+            }
+        }
+    }
 }
 
 class UnresolvedType extends BSQType {
@@ -54,6 +144,10 @@ class UnresolvedType extends BSQType {
     }
 
     static readonly singleton = new UnresolvedType();
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_UNRESOLVED};
+    }
 }
 
 class TupleType extends BSQType {
@@ -63,6 +157,10 @@ class TupleType extends BSQType {
         super(BSQTypeTag.TYPE_TUPLE, `[${entries.map((entry) => entry).join(", ")}]`, isrecursive, true);
         this.entries = entries;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_TUPLE, entries: this.entries, isrecursive: this.isrecursive};
+    }
 }
 
 class RecordType extends BSQType {
@@ -71,6 +169,10 @@ class RecordType extends BSQType {
     constructor(entries: {pname: string, rtype: BSQTypeKey}[], isrecursive: boolean) {
         super(BSQTypeTag.TYPE_RECORD, `{${entries.map((entry) => `${entry.pname}: ${entry.rtype}`).join(", ")}}`, isrecursive, true);
         this.entries = entries;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_RECORD, entries: this.entries, isrecursive: this.isrecursive};
     }
 }
 
@@ -99,17 +201,29 @@ class StdEntityType extends EntityType {
         this.hasvalidations = hasvalidations;
         this.fields = fields;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_STD_ENTITY, tkey: this.tkey, hasvalidations: this.hasvalidations, fields: this.fields, isrecursive: this.isrecursive};
+    }
 }
 
 class StdConceptType extends ConceptType {
     constructor(tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_STD_CONCEPT, tkey, subtypes, isrecursive);
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_STD_CONCEPT, tkey: this.tkey, subtypes: [...this.subtypes], isrecursive: this.isrecursive};
+    }
 }
 
 class PrimitiveType extends EntityType {
     constructor(tkey: BSQTypeKey) {
         super(BSQTypeTag.TYPE_PRIMITIVE, tkey, false);
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_PRIMITIVE, tkey: this.tkey};
     }
 }
 
@@ -120,6 +234,10 @@ class EnumType extends EntityType {
         super(BSQTypeTag.TYPE_ENUM, tkey, false);
 
         this.variants = variants;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_ENUM, tkey: this.tkey, variants: this.variants};
     }
 }
 
@@ -141,17 +259,29 @@ class TypedeclType extends EntityType {
         this.optStringOfValidator = optStringOfValidator;
         this.optPathOfValidator = optPathOfValidator;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_TYPE_DECL, tkey: this.tkey, basetype: this.basetype, oftype: this.oftype, isrecursive: this.isrecursive, hasvalidations: this.hasvalidations, optStringOfValidator: this.optStringOfValidator, optPathOfValidator: this.optPathOfValidator};
+    }
 }
 
 class ValidatorREType extends EntityType {
     constructor(tkey: BSQTypeKey) {
         super(BSQTypeTag.TYPE_VALIDATOR_RE, tkey, false);
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_VALIDATOR_RE, tkey: this.tkey};
+    }
 }
 
 class ValidatorPthType extends EntityType {
     constructor(tkey: BSQTypeKey) {
         super(BSQTypeTag.TYPE_VALIDATOR_PTH, tkey, false);
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_VALIDATOR_PTH, tkey: this.tkey};
     }
 }
 
@@ -162,6 +292,10 @@ class StringOfType extends EntityType {
         super(BSQTypeTag.TYPE_STRING_OF, `StringOf<${oftype}>`, false);
         this.oftype = oftype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_STRING_OF, oftype: this.oftype};
+    }
 }
 
 class ASCIIStringOfType extends EntityType {
@@ -170,6 +304,10 @@ class ASCIIStringOfType extends EntityType {
     constructor(oftype: BSQTypeKey) {
         super(BSQTypeTag.TYPE_ASCII_STRING_OF, `ASCIIStringOf<${oftype}>`, false);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_ASCII_STRING_OF, oftype: this.oftype};
     }
 }
 
@@ -180,6 +318,10 @@ class SomethingType extends EntityType {
         super(BSQTypeTag.TYPE_SOMETHING, `Something<${oftype}>`, isrecursive);
         this.oftype = oftype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_SOMETHING, oftype: this.oftype, isrecursive: this.isrecursive};
+    }
 }
 
 class OptionType extends ConceptType {
@@ -188,6 +330,10 @@ class OptionType extends ConceptType {
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_OPTION, `Option<${oftype}>`, new Set(["Nothing", `Something<${oftype}>`]), isrecursive);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_OPTION, oftype: this.oftype, isrecursive: this.isrecursive};
     }
 }
 
@@ -200,6 +346,10 @@ class OkType extends EntityType {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_OK, ttype: this.ttype, etype: this.etype, isrecursive: this.isrecursive};
+    }
 }
 
 class ErrorType extends EntityType {
@@ -210,6 +360,10 @@ class ErrorType extends EntityType {
         super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Error`, isrecursive);
         this.ttype = ttype;
         this.etype = etype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_ERROR, ttype: this.ttype, etype: this.etype, isrecursive: this.isrecursive};
     }
 }
 
@@ -222,6 +376,10 @@ class ResultType extends ConceptType {
         this.ttype = ttype;
         this.etype = etype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_RESULT, ttype: this.ttype, etype: this.etype, isrecursive: this.isrecursive};
+    }
 }
 
 class PathType extends EntityType {
@@ -230,6 +388,10 @@ class PathType extends EntityType {
     constructor(oftype: BSQTypeKey) {
         super(BSQTypeTag.TYPE_PATH, `Path<${oftype}>`, false);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_PATH, oftype: this.oftype};
     }
 }
 
@@ -240,6 +402,10 @@ class PathFragmentType extends EntityType {
         super(BSQTypeTag.TYPE_PATH_FRAGMENT, `PathFragment<${oftype}>`, false);
         this.oftype = oftype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_PATH_FRAGMENT, oftype: this.oftype};
+    }
 }
 
 class PathGlobType extends EntityType {
@@ -248,6 +414,10 @@ class PathGlobType extends EntityType {
     constructor(oftype: BSQTypeKey) {
         super(BSQTypeTag.TYPE_PATH_GLOB, `PathGlob<${oftype}>`, false);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_PATH_GLOB, oftype: this.oftype};
     }
 }
 
@@ -258,6 +428,10 @@ class ListType extends EntityType {
         super(BSQTypeTag.TYPE_LIST, `List<${oftype}>`, isrecursive);
         this.oftype = oftype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_LIST, oftype: this.oftype, isrecursive: this.isrecursive};
+    }
 }
 
 class StackType extends EntityType {
@@ -266,6 +440,10 @@ class StackType extends EntityType {
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_STACK, `Stack<${oftype}>`, isrecursive);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_STACK, oftype: this.oftype, isrecursive: this.isrecursive};
     }
 }
 
@@ -276,6 +454,10 @@ class QueueType extends EntityType {
         super(BSQTypeTag.TYPE_QUEUE, `Queue<${oftype}>`, isrecursive);
         this.oftype = oftype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_QUEUE, oftype: this.oftype, isrecursive: this.isrecursive};
+    }
 }
 
 class SetType extends EntityType {
@@ -284,6 +466,10 @@ class SetType extends EntityType {
     constructor(oftype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_SET, `Set<${oftype}>`, isrecursive);
         this.oftype = oftype;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_SET, oftype: this.oftype, isrecursive: this.isrecursive};
     }
 }
 
@@ -296,6 +482,10 @@ class MapEntryType extends EntityType {
         this.ktype = ktype;
         this.vtype = vtype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_MAP_ENTRY, ktype: this.ktype, vtype: this.vtype, isrecursive: this.isrecursive};
+    }
 }
 
 class MapType extends EntityType {
@@ -307,17 +497,25 @@ class MapType extends EntityType {
         this.ktype = ktype;
         this.vtype = vtype;
     }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_MAP, ktype: this.ktype, vtype: this.vtype, isrecursive: this.isrecursive};
+    }
 }
 
 class ConceptSetType extends BSQType {
     readonly concepts: BSQTypeKey[];
     readonly subtypes: Set<BSQTypeKey>;
 
-    constructor(concepts: BSQTypeKey[], subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
+    constructor(concepts: BSQTypeKey[], subtypes: BSQTypeKey[], isrecursive: boolean) {
         super(BSQTypeTag.TYPE_CONCEPT_SET, concepts.map((cc) => cc).sort().join("&"), isrecursive, false);
 
         this.concepts = concepts;
-        this.subtypes = subtypes;
+        this.subtypes = new Set<BSQTypeKey>(subtypes);
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_CONCEPT_SET, concepts: this.concepts, subtypes: [...this.subtypes], isrecursive: this.isrecursive};
     }
 }
 
@@ -327,6 +525,10 @@ class UnionType extends BSQType {
     constructor(types: BSQTypeKey[], isrecursive: boolean) {
         super(BSQTypeTag.TYPE_UNION, types.map((tt) => tt).sort().join(" | "), isrecursive, false);
         this.types = types;
+    }
+
+    emit(): any {
+        return {tag: BSQTypeTag.TYPE_UNION, types: this.types, isrecursive: this.isrecursive};
     }
 }
 
@@ -338,10 +540,18 @@ class NamespaceDecl {
         this.ns = ns;
         this.typenames = typenames;
     }
+
+    emit(): any {
+        return {ns: this.ns, typenames: this.typenames};
+    }
+
+    static parse(jv: any): NamespaceDecl {
+        return new NamespaceDecl(jv.ns, jv.typenames);
+    }
 }
 
 class AssemblyInfo {
-    readonly aliasmap: Map<string, BSQType>;
+    readonly aliasmap: Map<BSQTypeKey, BSQType>;
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly revalidators: Map<BSQTypeKey, string>;
@@ -353,6 +563,47 @@ class AssemblyInfo {
         this.typerefs = typerefs;
         this.revalidators = revalidators;
         this.pthvalidators = pthvalidators;
+    }
+
+    emit(): any {
+        return {
+            aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
+            namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
+            typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
+            revalidators: [...this.revalidators.entries()],
+            pthvalidators: [...this.pthvalidators.entries()]
+        };
+    }
+
+    static parse(jv: any): AssemblyInfo {
+        const namespaces = new Map<string, NamespaceDecl>();
+        jv.namespaces.forEach((ns: any) => {
+            const nsd = NamespaceDecl.parse(ns);
+            namespaces.set(nsd.ns, nsd);
+        });
+
+        const typerefs = new Map<string, BSQType>();
+        jv.typerefs.forEach((tt: any) => {
+            const t = BSQType.parse(tt);
+            typerefs.set(t.tkey, t);
+        });
+
+        const aliasmap = new Map<string, BSQType>();
+        jv.aliasmap.forEach((aa: any) => {
+            aliasmap.set(aa[0], typerefs.get(aa[1]) as BSQType);
+        });
+
+        const revalidators = new Map<BSQTypeKey, string>();
+        jv.revalidators.forEach((rv: any) => {
+            revalidators.set(rv[0], rv[1]);
+        });
+
+        const pthvalidators = new Map<BSQTypeKey, string>();
+        jv.pthvalidators.forEach((pv: any) => {
+            pthvalidators.set(pv[0], pv[1]);
+        });
+
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators);
     }
 
     resolveTypeWithCoreOrDefault(tname: string, inns: string): BSQType {

@@ -3,7 +3,7 @@ import Fraction from "fraction.js";
 
 import { List as IList, Map as IMap } from "immutable";
 
-import * as $TypeInfo from "./typeinfo";
+import * as $TypeInfo from "../../../frontend/tree_ir/typeinfo";
 import * as $Runtime from "./runtime";
 
 

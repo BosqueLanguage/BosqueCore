@@ -96,19 +96,19 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         process.stdout.write("emitting TS code...\n");
         const jscode = generateTSFiles(tasm, deps);
 
-        xxxx;
-        
-        process.stdout.write(`writing JS code into ${into}...\n`);
+        process.stdout.write(`writing TS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
             FS.mkdirSync(into);
         }
 
-        for(let i = 0; i < jscode.length; ++i) {
+        for (let i = 0; i < jscode.length; ++i) {
             const ppth = Path.join(into, jscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
             FS.writeFileSync(ppth, jscode[i].contents);
         }
+        xxxx;
+        
 
         //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
         const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
@@ -182,7 +182,7 @@ function buildJSDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, limit_code, core_code, runtime_code, api_code, "test", [{ns: mainNamespace, fname: mainFunction}]);
+    workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
 }

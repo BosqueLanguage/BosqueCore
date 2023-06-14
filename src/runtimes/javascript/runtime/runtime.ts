@@ -1,4 +1,4 @@
-import { BSQTypeKey } from "./typeinfo";
+import { BSQTypeKey } from "../../../frontend/tree_ir/typeinfo";
 
 import { JS, NFA, Words } from "refa";
 import {Decimal} from "decimal.js";
