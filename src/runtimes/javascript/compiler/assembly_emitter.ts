@@ -509,7 +509,7 @@ class NamespaceEmitter {
             });
         });
 
-        const stdimps = [`import * as $Constants from "./constants";`, `import * as $TypeInfo from "./typeinfo";`, `import * as $Runtime from "./runtime";`, `import * as $BSQONEmit from "./bsqon_emit.ts";`];
+        const stdimps = [`import * as $Constants from "./constants";`, `import * as $TypeInfo from "./typeinfo";`, `import * as $Runtime from "./runtime";`, `import * as $BSQONEmit from "./bsqon_emit";`];
         const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}";`).join("\n") + "\n";
 
         const fmts = formats.join("\n");
@@ -579,7 +579,7 @@ class AssemblyEmitter {
         let outmodules: {nsname: string, contents: string}[] = [];
 
         this.namespacedecls.forEach((nsd, name) => {
-            outmodules.push({nsname: `${name}.mjs`, contents: nsd});
+            outmodules.push({nsname: `${name}.ts`, contents: nsd});
         });
 
         return outmodules;

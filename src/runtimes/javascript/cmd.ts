@@ -3,17 +3,17 @@ import * as FS from "fs";
 import * as Path from "path";
 
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
-import { TIRAssembly, TIRInvoke, TIRTypeKey } from "../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
 const bsq_runtime_src = [
-    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/constants.ts"),
-    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/typeinfo.ts"),
-    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.ts"),
-    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_emit.ts"),
-    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_parse.ts")
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/constants.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/runtime.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_emit.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_parse.ts"),
+    Path.join(bosque_dir, "src/frontend/tree_ir/typeinfo.ts"),
 ];
 
 let fullargs = process.argv;
@@ -114,6 +114,8 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         process.stdout.write(`writing TS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
             FS.mkdirSync(into);
+        }
+        if(!FS.existsSync(Path.join(into, "src"))) {
             FS.mkdirSync(Path.join(into, "src"));
         }
 
@@ -133,7 +135,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
 
         //write all of the user code files
         for (let i = 0; i < tscode.length; ++i) {
-            const ppth = Path.join(into, "src", tscode[i].nsname + ".ts");
+            const ppth = Path.join(into, "src", tscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
             FS.writeFileSync(ppth, tscode[i].contents);
@@ -141,7 +143,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
 
         //generate a package.json file
         process.stdout.write(`writing build configs ...\n`);
-        FS.writeFileSync(Path.join(into, "package.json"), JSON.stringify({
+        FS.writeFileSync(Path.join(into, "tsconfig.json"), JSON.stringify({
                 "compilerOptions": {
                     "module": "Node16",
                     "alwaysStrict": true,
@@ -158,8 +160,8 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
                 "include": [
                     "src/*.ts"
                 ]
-            }
-        ));
+            }, undefined, 2)
+        );
 
         //generate the main file and write -- reading from the command line or a file
 
@@ -203,9 +205,9 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
                 + `}\n`);
         }
         else {
-            const mainf = Path.join(into, "main.ts");
+            const mainf = Path.join(into, "src", "_main.ts");
             FS.writeFileSync(mainf, `import * as $TypeInfo from "./typeinfo";\n`
-                + `import * as $JASM from "./metadata.ts";\n`
+                + `import * as $JASM from "./metadata";\n`
                 + `import * as $Parse from "./bsqon_parse";\n`
                 + `import * as $Emit from "./bsqon_emit";\n`
                 + `import * as $${mainNamespace} from "./${mainNamespace}";\n\n`
