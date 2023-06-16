@@ -624,6 +624,10 @@ class AssemblyInfo {
             return false;
         }
     }
+
+    loadType(tkey: BSQTypeKey): BSQType {
+        return this.typerefs.get(tkey) as BSQType;
+    }
 }
 
 

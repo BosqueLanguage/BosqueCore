@@ -782,6 +782,13 @@ class BSQONEmitter {
 
         return result;
     }
+
+    static emitStd(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, assembly: $TypeInfo.AssemblyInfo): string {
+        const emitter = new BSQONEmitter($Runtime.NotationMode.NOTATION_MODE_DEFAULT, defaultns, new Map<string, string>(), assembly);
+        const result = emitter.emitValue(emitter.lookupMustDefType(ttype), v);
+
+        return result;
+    }
 }
 
 export {

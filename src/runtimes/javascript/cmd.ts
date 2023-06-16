@@ -3,16 +3,18 @@ import * as FS from "fs";
 import * as Path from "path";
 
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
-import { TIRAssembly, TIRInvoke } from "../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRInvoke, TIRTypeKey } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
-const consts_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/constants.ts");
-const typeinfo_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/typeinfo.ts");
-const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.ts");
-const bsqon_emit_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_emit.ts");
-const bsqon_parse_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_parse.ts");
+const bsq_runtime_src = [
+    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/constants.ts"),
+    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/typeinfo.ts"),
+    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.ts"),
+    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_emit.ts"),
+    Path.join(bosque_dir, "bin/runtimes/javascript/runtime/bsqon_parse.ts")
+];
 
 let fullargs = process.argv;
 
@@ -54,12 +56,12 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
     }
 }
 
-function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
+function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>, Map<string, string>] {
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
     const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
-    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, false, entrypoints, depsmap);
+    const { tasm, errors, aliasmap } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, false, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
             process.stdout.write(`Parse error -- ${errors[i]}\n`);
@@ -80,7 +82,7 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
     }
     */
 
-    return [tasm as TIRAssembly, depsmap];
+    return [tasm as TIRAssembly, depsmap, aliasmap];
 }
 
 function generateTSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>): {nsname: string, contents: string}[] {
@@ -91,7 +93,20 @@ function generateTSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>): {ns
 function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
-        const [tasm, deps] = generateTASM(usercode, buildlevel, entrypoints);
+        const [tasm, deps, aliasmap] = generateTASM(usercode, buildlevel, entrypoints);
+
+        //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
+        const epns = tasm.namespaceMap.get(entrypoints[0].ns);
+        if(epns === undefined) {
+            process.stderr.write(`entrypoint namespace ${entrypoints[0].ns} not found\n`);
+            process.exit(1);
+        }
+
+        const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`);
+        if(epf === undefined) {
+            process.stderr.write(`entrypoint ${entrypoints[0].ns}::${entrypoints[0].fname} not found\n`);
+            process.exit(1);
+        }
 
         process.stdout.write("emitting TS code...\n");
         const tscode = generateTSFiles(tasm, deps);
@@ -99,28 +114,52 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         process.stdout.write(`writing TS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
             FS.mkdirSync(into);
+            FS.mkdirSync(Path.join(into, "src"));
         }
 
         //copy the runtime files
-        xxxx;
+        process.stdout.write(`copying runtime...\n`);
+        bsq_runtime_src.forEach((src) => {
+            const ppth = Path.join(into, "src", Path.basename(src));
+            FS.copyFileSync(src, ppth);
+        });
 
         //generate the typeinfo file and write
-        xxxx;
+        process.stdout.write(`writing metadata ...\n`);
+        const entrytypes = epf.params.map((pp) => pp.type).concat([epf.resultType]);
+        const tinfo = tasm.generateTypeInfo(entrytypes, aliasmap);
+        const tinfopath = Path.join(into, "src", "metadata.ts");
+        FS.writeFileSync(tinfopath, `export const metainfo = ${JSON.stringify(tinfo.emit(), undefined, 2)};\n`);
 
         //write all of the user code files
         for (let i = 0; i < tscode.length; ++i) {
-            const ppth = Path.join(into, tscode[i].nsname);
+            const ppth = Path.join(into, "src", tscode[i].nsname + ".ts");
 
             process.stdout.write(`writing ${ppth}...\n`);
             FS.writeFileSync(ppth, tscode[i].contents);
         }
 
         //generate a package.json file
-        xxxx;
-        
-
-        //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
-        const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
+        process.stdout.write(`writing build configs ...\n`);
+        FS.writeFileSync(Path.join(into, "package.json"), JSON.stringify({
+                "compilerOptions": {
+                    "module": "Node16",
+                    "alwaysStrict": true,
+                    "strict": true,
+                    //"noImplicitAny": true,
+                    "noImplicitReturns": true,
+                    "noImplicitThis": true,
+                    "noUnusedLocals": true,
+                    "strictNullChecks": true,
+                    "target": "es2020",
+                    "sourceMap": true,
+                    "outDir": "bin"
+                },
+                "include": [
+                    "src/*.ts"
+                ]
+            }
+        ));
 
         //generate the main file and write -- reading from the command line or a file
 
@@ -164,26 +203,26 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
                 + `}\n`);
         }
         else {
-            const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse($API.cmdunescape(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1))))`).join(", ") + "]";
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
-
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
+            const mainf = Path.join(into, "main.ts");
+            FS.writeFileSync(mainf, `import * as $TypeInfo from "./typeinfo";\n`
+                + `import * as $JASM from "./metadata.ts";\n`
+                + `import * as $Parse from "./bsqon_parse";\n`
+                + `import * as $Emit from "./bsqon_emit";\n`
+                + `import * as $${mainNamespace} from "./${mainNamespace}";\n\n`
+                + `const assembly = $TypeInfo.parse($JASM.metainfo);\n`
                 + `const actual_args = process.argv.slice(2);\n`
                 + `if(actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args but got " + actual_args.length + " args\\n"); process.exit(0); }\n\n`
-                + `const bsq_args = ${loadlogic};\n`
+                + `const bsq_args = ${epf.params}.map((pp, ii) => $Parse.parseStdInput(actual_args[ii], assembly.loadType(pp.type), ${epns.ns}, assembly);\n`
                 + `try {\n`
                 + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
-                + `    const jres_val = ${emitlogic};\n`
+                + `    const bsqonres_val = $Emit.emitStd(res_val, assembly.loadType(${epf.resultType}), ${epns.ns}, assembly);\n`
                 + `    console.log(JSON.stringify(jres_val));\n`
                 + `} catch(ex) {\n`
                 + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
                 + `}\n`);
         }
     } catch(e) {
-        process.stderr.write(`JS emit error -- ${e}\n`);
+        process.stderr.write(`TS emit error -- ${e}\n`);
         process.exit(1);
     }
 }
@@ -196,7 +235,7 @@ function buildTSDefault(into: string, srcfiles: string[]) {
     workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
 
     //run tsc to get the js build
-    xxxx;
+    process.stdout.write("running tsc (SKIPPED)...\n");
 
     process.stdout.write("done!\n");
 }

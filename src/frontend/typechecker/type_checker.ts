@@ -7568,7 +7568,7 @@ class TypeChecker {
         }
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[] } {
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
         let tchecker = new TypeChecker(asm, buildlevel, issmtbuild);
 
         //Must always have Core namespace and special types registered -- even if just as default values
@@ -7695,14 +7695,14 @@ class TypeChecker {
         const lvinfo = tchecker.processRegexAndValidatorInfo();
 
         if(tchecker.m_errors.length !== 0) {
-            return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`) };
+            return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
         }
         else {
-            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [] };
+            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
         }
     }
 
-    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[] } {
+    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
         ////////////////
         //Parse the contents and generate the assembly
         const assembly = new Assembly();
@@ -7718,7 +7718,7 @@ class TypeChecker {
                 const deps = p.parseCompilationUnitGetNamespaceDeps(fe[1], fe[3], fe[0].macrodefs);
             
                 if(deps === undefined) {
-                    return { tasm: undefined, errors: ["Hard failure in parse of namespace deps"] };
+                    return { tasm: undefined, errors: ["Hard failure in parse of namespace deps"], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
                 }
 
                 if(deps.ns !== "Core") {
@@ -7749,7 +7749,7 @@ class TypeChecker {
 
                 if(nsopts.length === 0) {
                     //TODO: should hunt down the cycle -- or misspelled module name
-                    return { tasm: undefined, errors: ["Cyclic dependency in namespaces or misspelled import namespace"] };
+                    return { tasm: undefined, errors: ["Cyclic dependency in namespaces or misspelled import namespace"], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
                 }
 
                 const nns = nsopts[0];
@@ -7760,7 +7760,7 @@ class TypeChecker {
                     if (!parseok || p.getParseErrors() !== undefined) {
                         const parseErrors = p.getParseErrors();
                         if (parseErrors !== undefined) {
-                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)) };
+                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
                         }
                     }
                 }
@@ -7770,7 +7770,7 @@ class TypeChecker {
                     if (!parseok || p.getParseErrors() !== undefined) {
                         const parseErrors = p.getParseErrors();
                         if (parseErrors !== undefined) {
-                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)) };
+                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
                         }
                     }
                 }
@@ -7780,7 +7780,7 @@ class TypeChecker {
             }
         }
         catch (ex) {
-            return { tasm: undefined, errors: [`Hard failure in parse with exception -- ${ex}`] };
+            return { tasm: undefined, errors: [`Hard failure in parse with exception -- ${ex}`], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
         }
 
         //
