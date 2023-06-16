@@ -573,7 +573,7 @@ class AssemblyEmitter {
         });
     };
 
-    generateJSCode(): {nsname: string, contents: string}[] {
+    generateTSCode(): {nsname: string, contents: string}[] {
         this.processAssembly();
 
         let outmodules: {nsname: string, contents: string}[] = [];

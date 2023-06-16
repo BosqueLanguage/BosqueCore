@@ -837,7 +837,12 @@ class BSQONParser {
             scopedname = `${this.m_importmap.get(tt[0])}::${tt.slice(1).join("::")}`;
         }
         else {
-            scopedname = `${this.m_defaultns}::${tt.join("::")}`;
+            if (tt[0] === this.m_defaultns) {
+                scopedname = tt.join("::");
+            }
+            else {
+                scopedname = `${this.m_defaultns}::${tt.join("::")}`;
+            }
         }
 
         if (terms.length !== 0) {
@@ -2134,7 +2139,7 @@ class BSQONParser {
                 const ptype = ttype.entries.find((ee) => ee.pname === pname);
                 this.raiseErrorIf(ptype === undefined, `Unexpected property ${pname} in record`);
 
-                const entry = this.parseValue(this.lookupMustDefType(ptype!.rtype), whistory);
+                const entry = this.parseValue(this.lookupMustDefType(ptype!.ptype), whistory);
 
                 tvals[pname] = BSQONParseResultInfo.getParseValue(entry, whistory);
                 ptree[pname] = [BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)];

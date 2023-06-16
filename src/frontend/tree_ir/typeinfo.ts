@@ -164,10 +164,10 @@ class TupleType extends BSQType {
 }
 
 class RecordType extends BSQType {
-    readonly entries: {pname: string, rtype: BSQTypeKey}[];
+    readonly entries: {pname: string, ptype: BSQTypeKey}[];
 
-    constructor(entries: {pname: string, rtype: BSQTypeKey}[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_RECORD, `{${entries.map((entry) => `${entry.pname}: ${entry.rtype}`).join(", ")}}`, isrecursive, true);
+    constructor(entries: {pname: string, ptype: BSQTypeKey}[], isrecursive: boolean) {
+        super(BSQTypeTag.TYPE_RECORD, `{${entries.map((entry) => `${entry.pname}: ${entry.ptype}`).join(", ")}}`, isrecursive, true);
         this.entries = entries;
     }
 
@@ -208,8 +208,8 @@ class StdEntityType extends EntityType {
 }
 
 class StdConceptType extends ConceptType {
-    constructor(tkey: BSQTypeKey, subtypes: Set<BSQTypeKey>, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_STD_CONCEPT, tkey, subtypes, isrecursive);
+    constructor(tkey: BSQTypeKey, subtypes: BSQTypeKey[], isrecursive: boolean) {
+        super(BSQTypeTag.TYPE_STD_CONCEPT, tkey, new Set<BSQTypeKey>(subtypes), isrecursive);
     }
 
     emit(): any {
@@ -338,10 +338,10 @@ class OptionType extends ConceptType {
 }
 
 class OkType extends EntityType {
-    readonly ttype: BSQTypeTag;
-    readonly etype: BSQTypeTag;
+    readonly ttype: BSQTypeKey;
+    readonly etype: BSQTypeKey;
 
-    constructor(ttype: BSQTypeTag, etype: BSQTypeTag, isrecursive: boolean) {
+    constructor(ttype: BSQTypeKey, etype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_OK, `Result<${ttype}, ${etype}>::Ok`, isrecursive);
         this.ttype = ttype;
         this.etype = etype;
@@ -353,10 +353,10 @@ class OkType extends EntityType {
 }
 
 class ErrorType extends EntityType {
-    readonly ttype: BSQTypeTag;
-    readonly etype: BSQTypeTag;
+    readonly ttype: BSQTypeKey;
+    readonly etype: BSQTypeKey;
 
-    constructor(ttype: BSQTypeTag, etype: BSQTypeTag, isrecursive: boolean) {
+    constructor(ttype: BSQTypeKey, etype: BSQTypeKey, isrecursive: boolean) {
         super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Error`, isrecursive);
         this.ttype = ttype;
         this.etype = etype;
@@ -604,22 +604,6 @@ class AssemblyInfo {
         });
 
         return new AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators);
-    }
-
-    resolveTypeWithCoreOrDefault(tname: string, inns: string): BSQType {
-        const cc = this.namespaces.get("Core") as NamespaceDecl;
-        if(cc.typenames.includes(tname)) {
-            return this.typerefs.get(tname) as BSQType;
-        }
-        else {
-            const ns = this.namespaces.get(inns) as NamespaceDecl;
-            if(ns.typenames.includes(tname)) {
-                return this.typerefs.get(`${inns}::${tname}`) as BSQType;
-            }
-            else {
-                return UnresolvedType.singleton;
-            }
-        }
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {

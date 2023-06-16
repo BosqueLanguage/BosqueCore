@@ -485,10 +485,6 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
         return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Any";
     }
 
-    isSomeConcept(): boolean {
-        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Some";
-    }
-
     isTupleConcept(): boolean {
         return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Tuple";
     }

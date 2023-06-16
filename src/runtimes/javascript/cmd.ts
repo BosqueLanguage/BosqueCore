@@ -85,7 +85,7 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
 
 function generateTSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>): {nsname: string, contents: string}[] {
     const tsemittier = new AssemblyEmitter(tasm, depsmap);
-    return tsemittier.generateJSCode()
+    return tsemittier.generateTSCode()
 }
 
 function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
@@ -94,24 +94,35 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         const [tasm, deps] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting TS code...\n");
-        const jscode = generateTSFiles(tasm, deps);
+        const tscode = generateTSFiles(tasm, deps);
 
         process.stdout.write(`writing TS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
             FS.mkdirSync(into);
         }
 
-        for (let i = 0; i < jscode.length; ++i) {
-            const ppth = Path.join(into, jscode[i].nsname);
+        //copy the runtime files
+        xxxx;
+
+        //generate the typeinfo file and write
+        xxxx;
+
+        //write all of the user code files
+        for (let i = 0; i < tscode.length; ++i) {
+            const ppth = Path.join(into, tscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
-            FS.writeFileSync(ppth, jscode[i].contents);
+            FS.writeFileSync(ppth, tscode[i].contents);
         }
+
+        //generate a package.json file
         xxxx;
         
 
         //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
         const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
+
+        //generate the main file and write -- reading from the command line or a file
 
         if(fileargs) {
             const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", actual_args[${ii}])`).join(", ") + "]";
@@ -177,12 +188,15 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
     }
 }
 
-function buildJSDefault(into: string, srcfiles: string[]) {
+function buildTSDefault(into: string, srcfiles: string[]) {
     process.stdout.write("loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
     workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
+
+    //run tsc to get the js build
+    xxxx;
 
     process.stdout.write("done!\n");
 }
@@ -212,8 +226,8 @@ if(mfs !== undefined) {
 }
 
 if(fullargs.length > 2 && fullargs[2] === "--outdir") {
-    buildJSDefault(fullargs[3], fullargs.slice(4));
+    buildTSDefault(fullargs[3], fullargs.slice(4));
 }
 else {
-    buildJSDefault("./jsout", fullargs.slice(2));
+    buildTSDefault("./tsout", fullargs.slice(2));
 }

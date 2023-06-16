@@ -54,7 +54,7 @@ class BSQONEmitter {
             return "[" + ttype.entries.map((tt) => this.emitType(this.lookupMustDefType(tt))).join(", ") + "]";
         }
         else if(ttype instanceof $TypeInfo.RecordType) {
-            return "{" + ttype.entries.map((tt) => tt.pname + ": " + this.emitType(this.lookupMustDefType(tt.rtype))).join(", ") + "}";
+            return "{" + ttype.entries.map((tt) => tt.pname + ": " + this.emitType(this.lookupMustDefType(tt.ptype))).join(", ") + "}";
         }
         else if(ttype instanceof $TypeInfo.StdConceptType) {
             return this.simplifyTypeName(ttype.tkey);
@@ -463,7 +463,7 @@ class BSQONEmitter {
     private emitRecord(ttype: $TypeInfo.RecordType, v: {[k: string]: any}, tagged: boolean): string {
         const pkeys = [...v.keys()].sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0));
         const emap = pkeys.map((prop) => {
-            const ftype = this.lookupMustDefType(ttype.entries.find((ee) => ee.pname === prop)!.rtype);
+            const ftype = this.lookupMustDefType(ttype.entries.find((ee) => ee.pname === prop)!.ptype);
             return `${prop}: ${this.emitValue(ftype, v[prop])}`;
         });
 
