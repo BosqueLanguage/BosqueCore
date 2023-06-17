@@ -1,11 +1,11 @@
-import {Decimal} from "decimal.js";
-import Fraction from "fraction.js";
+import {Decimal} from "npm:decimal.js@10.4.3";
+import Fraction from "npm:fraction.js@4.2.0";
 
-import { List as IList, Map as IMap } from "immutable";
+import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
 
-import * as $Constants from "./constants";
-import * as $TypeInfo from "../../../frontend/tree_ir/typeinfo";
-import * as $Runtime from "./runtime";
+import * as $Constants from "./constants.ts";
+import * as $TypeInfo from "./typeinfo.ts";
+import * as $Runtime from "./runtime.ts";
 
 
 class BSQONParseError extends Error {
@@ -356,7 +356,8 @@ type BSQONParseResult = BSQONParseResultInfo | any;
 
 class BSQONParser {
     readonly m_parsemode: $Runtime.NotationMode;
-   
+    readonly m_escapemode: "slash" | "html";
+
     readonly m_defaultns: string;
     readonly m_importmap: Map<string, string>;
     readonly m_assembly: $TypeInfo.AssemblyInfo;
@@ -371,8 +372,9 @@ class BSQONParser {
     readonly m_srcbind: [any, $TypeInfo.BSQType, any] | undefined; //a [value, type, ttree] where type is always a concrete type
     readonly m_refs: Map<string, [any, $TypeInfo.BSQType, any]>; //maps from names to [value, type, ttree] where type is always a concrete type
 
-    constructor(mode: $Runtime.NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
+    constructor(mode: $Runtime.NotationMode, escapemode: "slash" | "html", defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
         this.m_parsemode = mode;
+        this.m_escapemode = escapemode;
 
         this.m_defaultns = defaultns;
         this.m_importmap = importmap;
@@ -753,19 +755,10 @@ class BSQONParser {
     }
 
     private popToken(): {kind: string, value: string} | undefined {
-        while (this.lexWS() || this.lexComment()) {
-            ; //eat the token
-        }
-
-        if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
-            this.lexUUID() || this.lexSHACode() || this.lexPath() ||
-            this.lexNumber() || this.lexString() || this.lexRegex() ||
-            this.lexSymbol() || this.lexName() || this.lexAccess()) {
-            return this.m_lastToken;
-        }
-        else {
-            return undefined;
-        }
+        const tt = this.peekToken();
+        
+        this.m_lastToken = undefined;
+        return tt;
     }
 
     private popTokenSafe(): {kind: string, value: string} {
@@ -781,6 +774,8 @@ class BSQONParser {
         for (let i = 0; i < tkinds.length; ++i) {
             if (!this.testToken(tkinds[i])) {
                 this.m_cpos = opos;
+                this.m_lastToken = undefined;
+
                 return false;
             }
         }
@@ -799,6 +794,8 @@ class BSQONParser {
         for (let i = 0; i < tks.length; ++i) {
             if (!this.testTokenWValue(tks[i])) {
                 this.m_cpos = opos;
+                this.m_lastToken = undefined;
+                
                 return false;
             }
         }
@@ -819,7 +816,7 @@ class BSQONParser {
     }
 
     private expectToken(tkind: string) {
-        this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()}`);
+        this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()?.value ?? "[Unknown]"}`);
     }
 
     private expectTokenAndPop(tkind: string): {kind: string, value: string} {
@@ -1209,7 +1206,7 @@ class BSQONParser {
                 tnames.push(this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value);
             }
 
-            let terms = [];
+            let terms: $TypeInfo.BSQType[] = [];
             if (this.testToken(TokenKind.TOKEN_LANGLE)) {
                 this.popToken();
 
@@ -1503,7 +1500,7 @@ class BSQONParser {
     }
     
     private parseNat(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_NAT).value.slice(0, -1);
         }
@@ -1520,7 +1517,7 @@ class BSQONParser {
     }
 
     private parseInt(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_INT).value.slice(0, -1);
         }
@@ -1537,7 +1534,7 @@ class BSQONParser {
     }
 
     private parseBigNat(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_NAT).value.slice(0, -1);
         }
@@ -1557,7 +1554,7 @@ class BSQONParser {
         return BSQONParseResultInfo.create(BigInt(tkval), this.lookupMustDefType("BigNat"), undefined, whistory);
     }
     private parseBigInt(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_NAT).value.slice(0, -1);
         }
@@ -1578,7 +1575,7 @@ class BSQONParser {
     }
 
     private parseRational(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_RATIONAL).value.slice(0, -1);
         }
@@ -1591,7 +1588,7 @@ class BSQONParser {
     }
 
     private parseFloat(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_FLOAT).value.slice(0, -1);
         }
@@ -1604,7 +1601,7 @@ class BSQONParser {
     }
 
     private parseDecimal(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_DECIMAL).value.slice(0, -1);
         }
@@ -1618,12 +1615,13 @@ class BSQONParser {
 
     private parseString(whistory: boolean): BSQONParseResult {
         const tstr = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+        const rstr = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(tstr) : $Runtime.htmlUnescapeString(tstr);
 
-        return BSQONParseResultInfo.create($Runtime.unescapeString(tstr), this.lookupMustDefType("String"), undefined, whistory);
+        return BSQONParseResultInfo.create(rstr, this.lookupMustDefType("String"), undefined, whistory);
     }
 
     private parseASCIIString(whistory: boolean): BSQONParseResult {
-        let tkval = undefined;
+        let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value.slice(6, -1);
         }
@@ -1632,11 +1630,12 @@ class BSQONParser {
             this.raiseErrorIf(!_s_asciiStringCheckRe.test(tkval), `Expected ASCII string but got ${tkval}`);
         }
     
-        return BSQONParseResultInfo.create($Runtime.unescapeString(tkval), this.lookupMustDefType("ASCIIString"), undefined, whistory);
+        const rstr = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(tkval) : $Runtime.htmlUnescapeString(tkval);
+        return BSQONParseResultInfo.create(rstr, this.lookupMustDefType("ASCIIString"), undefined, whistory);
     }
 
     private parseByteBuffer(whistory: boolean): BSQONParseResult {
-        let tbval = undefined;
+        let tbval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tbval = this.expectTokenAndPop(TokenKind.TOKEN_BYTE_BUFFER).value.slice(3, -1);
         }
@@ -1649,7 +1648,7 @@ class BSQONParser {
     }
 
     private parseDateTime(whistory: boolean): BSQONParseResult {
-        let dd = undefined;
+        let dd: $Runtime.BSQDateTime | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE_TIME).value;
             dd = generateDateTime(tk);
@@ -1667,7 +1666,7 @@ class BSQONParser {
     }
 
     private parseUTCDateTime(whistory: boolean): BSQONParseResult {
-        let dd = undefined;
+        let dd: $Runtime.BSQDateTime | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_UTC_DATE_TIME).value;
             dd = generateDateTime(tk);
@@ -1685,7 +1684,7 @@ class BSQONParser {
     }
 
     private parsePlainDate(whistory: boolean): BSQONParseResult {
-        let dd = undefined;
+        let dd: $Runtime.BSQDate | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_DATE).value;
             dd = generateDate(tk);
@@ -1703,7 +1702,7 @@ class BSQONParser {
     }
 
     private parsePlainTime(whistory: boolean): BSQONParseResult {
-        let dd = undefined;
+        let dd: $Runtime.BSQTime | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIME).value;
             dd = generateTime(tk);
@@ -1721,7 +1720,7 @@ class BSQONParser {
     }
 
     private parseTickTime(whistory: boolean): BSQONParseResult {
-        let tt = undefined;
+        let tt: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tt = this.expectTokenAndPop(TokenKind.TOKEN_TICK_TIME).value.slice(0, -1);
         }
@@ -1734,7 +1733,7 @@ class BSQONParser {
     }
 
     private parseLogicalTime(whistory: boolean): BSQONParseResult {
-        let tt = undefined;
+        let tt: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tt = this.expectTokenAndPop(TokenKind.TOKEN_LOGICAL_TIME).value.slice(0, -1);
         }
@@ -1747,7 +1746,7 @@ class BSQONParser {
     }
 
     private parseISOTimeStamp(whistory: boolean): BSQONParseResult {
-        let dd = undefined;
+        let dd: $Runtime.BSQDateTime | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ISO_TIMESTAMP).value;
             dd = generateDateTime(tk);
@@ -1765,7 +1764,7 @@ class BSQONParser {
     }
 
     private parseUUIDv4(whistory: boolean): BSQONParseResult {
-        let uuid = undefined;
+        let uuid: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
             this.raiseErrorIf(!tk.startsWith("uuid4{"), `Expected UUIDv4 but got ${tk}`);
@@ -1781,7 +1780,7 @@ class BSQONParser {
     }
 
     private parseUUIDv7(whistory: boolean): BSQONParseResult {
-        let uuid = undefined;
+        let uuid: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_UUID).value;
             this.raiseErrorIf(!tk.startsWith("uuid7{"), `Expected UUIDv7 but got ${tk}`);
@@ -1797,7 +1796,7 @@ class BSQONParser {
     }
 
     private parseSHAContentHash(whistory: boolean): BSQONParseResult {
-        let sh = undefined;
+        let sh: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             sh = this.expectTokenAndPop(TokenKind.TOKEN_SHA_HASH).value.slice(5, -1);
         }
@@ -1810,7 +1809,7 @@ class BSQONParser {
     }
 
     private parseRegex(whistory: boolean): BSQONParseResult {
-        let re = undefined;
+        let re: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             re = this.expectTokenAndPop(TokenKind.TOKEN_REGEX).value;
         }
@@ -1823,7 +1822,7 @@ class BSQONParser {
     }
 
     private parseLatLongCoordinate(whistory: boolean): BSQONParseResult {
-        let llc = undefined;
+        let llc: [number, number] | undefined = undefined;
         if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const ttype = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
             this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
@@ -1851,7 +1850,8 @@ class BSQONParser {
     }
 
     private parseStringOfWithType(whistory: boolean): [BSQONParseResult, $TypeInfo.BSQTypeKey] {
-        const tk = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
+        const rawtk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+        const tk = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(rawtk) : $Runtime.htmlUnescapeString(rawtk);
         const st = this.parseStringOfType() as $TypeInfo.StringOfType;
 
         const vre = this.m_assembly.revalidators.get(st.oftype);
@@ -1862,16 +1862,17 @@ class BSQONParser {
     }
 
     private parseStringOf(ttype: $TypeInfo.StringOfType, whistory: boolean): BSQONParseResult {
-        let sval = undefined;
+        let sval: string | undefined = undefined;
         if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
             const st = this.parseStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.oftype} but got StringOf<${st.tkey}>`);
 
-            sval = $Runtime.unescapeString(tk);
+            sval = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(tk) : $Runtime.htmlUnescapeString(tk);
         }
         else {
-            sval = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
+            const rawtk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+            sval = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(rawtk) : $Runtime.htmlUnescapeString(rawtk);
         }
 
         const vre = this.m_assembly.revalidators.get(ttype.oftype);
@@ -1881,7 +1882,8 @@ class BSQONParser {
     }
 
     private parseASCIIStringOfWithType(whistory: boolean): [BSQONParseResult, $TypeInfo.BSQTypeKey] {
-        const tk = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
+        const rawtk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+        const tk = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(rawtk) : $Runtime.htmlUnescapeString(rawtk);
         const st = this.parseASCIIStringOfType() as $TypeInfo.ASCIIStringOfType;
 
         const vre = this.m_assembly.revalidators.get(st.oftype);
@@ -1892,16 +1894,18 @@ class BSQONParser {
     }
 
     private parseASCIIStringOf(ttype: $TypeInfo.ASCIIStringOfType, whistory: boolean): BSQONParseResult {
-        let sval = undefined;
+        let sval: string | undefined = undefined;
         if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value;
             const st = this.parseASCIIStringOfType();
             this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.tag} but got ASCIIStringOf<${st.tkey}>`);
 
-            sval = $Runtime.unescapeString(tk.slice(6, -1));
+            const rawtk = tk.slice(6, -1);
+            sval = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(rawtk) : $Runtime.htmlUnescapeString(rawtk);
         }
         else {
-            sval = $Runtime.unescapeString(this.expectTokenAndPop(TokenKind.TOKEN_STRING).value);
+            const rawtk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
+            sval = this.m_escapemode === "slash" ? $Runtime.slashUnescapeString(rawtk) : $Runtime.htmlUnescapeString(rawtk);
         }
 
         const vre = this.m_assembly.revalidators.get(ttype.oftype);
@@ -2170,7 +2174,7 @@ class BSQONParser {
         this.expectTokenAndPop(TokenKind.TOKEN_UNDER);
         const ntype = this.parseType();
 
-        this.raiseErrorIf(ttype.tkey !== ttype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
+        this.raiseErrorIf(ttype.tkey !== ntype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
 
         this.m_typedeclChecks.push({ttype: ttype.tkey, tvalue: vv});
 
@@ -2933,32 +2937,21 @@ class BSQONParser {
         }
     }
 
-    static parse(input: string, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, mode: $Runtime.NotationMode, srcbind: [any, $TypeInfo.BSQType, any] | undefined): {result: any, entityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[], typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]} {
-        const parser = new BSQONParser(mode, defaultns, importmap, assembly, input, srcbind);
+    static parse(input: string, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, mode: $Runtime.NotationMode, escapemode: "slash" | "html", srcbind: [any, $TypeInfo.BSQType, any] | undefined): {result: any, entityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[], typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]} {
+        const parser = new BSQONParser(mode, escapemode, defaultns, importmap, assembly, input, srcbind);
         const result = parser.parseValue(parser.lookupMustDefType(ttype), false);
 
         return {result: result, entityChecks: parser.m_stdentityChecks, typedeclChecks: parser.m_typedeclChecks};
     }
 
     static parseInputStd(input: string, ttype: $TypeInfo.BSQTypeKey, defaultns: string, assembly: $TypeInfo.AssemblyInfo): {result: any, entityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[], typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]} {
-        const parser = new BSQONParser($Runtime.NotationMode.NOTATION_MODE_DEFAULT, defaultns, new Map<string, string>(), assembly, input, undefined);
+        const parser = new BSQONParser($Runtime.NotationMode.NOTATION_MODE_DEFAULT, "html", defaultns, new Map<string, string>(), assembly, input, undefined);
         const result = parser.parseValue(parser.lookupMustDefType(ttype), false);
 
         return {result: result, entityChecks: parser.m_stdentityChecks, typedeclChecks: parser.m_typedeclChecks};
     }
 }
 
-function cmdunescape(str: string): string {
-    return str.replace(/&amp;|&lt;|&gt;|&#39;|&quot;/g, 
-    tag => ({
-        '&amp;': '&',
-        '&lt;': '<',
-        '&gt;': '>',
-        '&#39;': "'",
-        '&quot;': '"'
-      }[tag] as string));
-}
-
 export {
-    BSQONParser, BSQONParseError, cmdunescape
+    BSQONParser, BSQONParseError
 }

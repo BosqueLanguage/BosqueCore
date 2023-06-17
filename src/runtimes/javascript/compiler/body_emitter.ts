@@ -448,10 +448,10 @@ class BodyEmitter {
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");
@@ -474,10 +474,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "BigNat") {
             dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
@@ -503,10 +503,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Limits.FIXED_NUMBER_MIN, $Limits.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");

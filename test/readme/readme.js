@@ -2,7 +2,7 @@
 
 const expect = require("chai").expect;
 
-const {generatePaths, codegen, invokeExecutionOn, cleanTest} = require("./codeproc.js");
+const {generatePaths, codegen, invokeExecutionOn, cleanTest} = require("../codeproc.js");
 
 describe('Readme add2', function () {
     const testopt = ["readme", "add"];

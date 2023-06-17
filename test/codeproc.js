@@ -11,7 +11,7 @@ function generatePaths(testopt) {
     return {
         srcfile: path.join(proj_root, "test/bsqsrc", ...testopt) + ".bsq",
         dstdir: path.join(proj_root, "build/test", ...testopt),
-        jsmain: path.join(proj_root, "build/test", ...testopt, "_main_.mjs")
+        jsmain: path.join(proj_root, "build/test", ...testopt, "_main.ts")
     }
 }
 
@@ -21,18 +21,19 @@ function codegen(srcdir, dstdir) {
 }
 
 function cmdescape(str) {
-    return str.replace(/[&<>'"]/g, 
+    return str.replace(/[&<>'"\n]/g, 
     tag => ({
         '&': '&amp;',
         '<': '&lt;',
         '>': '&gt;',
         "'": '&#39;',
-        '"': '&quot;'
+        '"': '&quot;',
+        '\n': '&#10;'
       }[tag]));
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`node`, [jsmain, ...(args.map((vv) => "'" + cmdescape(JSON.stringify(vv)) + "'"))]).toString();
+    const rr = execFileSync(`deno`, ["run", jsmain, ...(args.map((vv) => "'" + vv + "'"))]).toString();
     if(rr.startsWith("error -- ")) {
         return rr;
     }
@@ -42,9 +43,9 @@ function invokeExecutionOn(jsmain, ...args) {
 }
 
 function cleanTest(dstdir) {
-    fsextra.removeSync(dstdir);
+    //fsextra.removeSync(dstdir);
 }
 
 module.exports = {
-    generatePaths, codegen, invokeExecutionOn, cleanTest
+    generatePaths, codegen, invokeExecutionOn, cleanTest, cmdescape
 };

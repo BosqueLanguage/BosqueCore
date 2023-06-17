@@ -398,7 +398,7 @@ class NamespaceEmitter {
         return `(${["$CodePack", ...args].join(", ")}) => ${body}`;
     }
 
-    emitNamespace(nsdeps: string[]): string {
+    emitNamespace(nsdeps: string[], asdeno: boolean): string {
         let eexports: string[] = [];
 
         let formats: string[] = [];
@@ -509,8 +509,9 @@ class NamespaceEmitter {
             });
         });
 
-        const stdimps = [`import * as $Constants from "./constants";`, `import * as $TypeInfo from "./typeinfo";`, `import * as $Runtime from "./runtime";`, `import * as $BSQONEmit from "./bsqon_emit";`];
-        const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}";`).join("\n") + "\n";
+        const iext = asdeno ? ".ts" : "";
+        const stdimps = [`import * as $Constants from "./constants${iext}";`, `import * as $TypeInfo from "./typeinfo${iext}";`, `import * as $Runtime from "./runtime${iext}";`, `import * as $BSQONEmit from "./bsqon_emit${iext}";`];
+        const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}${iext}";`).join("\n") + "\n";
 
         const fmts = formats.join("\n");
 
@@ -563,18 +564,17 @@ class AssemblyEmitter {
         this.nsdeps = nsdeps;
     }
 
-    private processAssembly() {
-        const allns = [...this.assembly.namespaceMap.keys()].sort();
+    private processAssembly(asdeno: boolean) {
         this.assembly.namespaceMap.forEach((nsd, ns) => {
             const nsemit = new NamespaceEmitter(this.assembly, ns, nsd);
-            const tirns = nsemit.emitNamespace(allns); //(this.nsdeps.get(ns) as string[]);
+            const tirns = nsemit.emitNamespace(this.nsdeps.get(ns) as string[], asdeno);
 
             this.namespacedecls.set(ns, tirns);
         });
     };
 
-    generateTSCode(): {nsname: string, contents: string}[] {
-        this.processAssembly();
+    generateTSCode(asdeno: boolean): {nsname: string, contents: string}[] {
+        this.processAssembly(asdeno);
 
         let outmodules: {nsname: string, contents: string}[] = [];
 

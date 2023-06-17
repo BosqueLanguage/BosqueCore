@@ -1,10 +1,10 @@
 type BSQTypeKey = string;
 
-import { JS, NFA, Words } from "refa";
-import {Decimal} from "decimal.js";
-import Fraction from "fraction.js";
+import { JS, NFA, Words } from "npm:refa@0.10.0";
+import {Decimal} from "npm:decimal.js@10.4.3";
+import Fraction from "npm:fraction.js@4.2.0";
 
-import { List as IList, Map as IMap } from "immutable";
+import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
 
 enum NotationMode {
     NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT",
@@ -12,7 +12,7 @@ enum NotationMode {
     NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL"
 }
 
-function escapeString(ll: string): string {
+function slashEscapeString(ll: string): string {
     let ret = "";
     for (let i = 0; i < ll.length; i++) {
         if (ll[i] === "\n") {
@@ -39,7 +39,7 @@ function escapeString(ll: string): string {
     return ret;
 }
 
-function unescapeString(ll: string): string {
+function slashUnescapeString(ll: string): string {
     let ret = "";
     for (let i = 0; i < ll.length; i++) {
         if (ll[i] === "\\") {
@@ -71,6 +71,30 @@ function unescapeString(ll: string): string {
     }
 
     return ret;
+}
+
+function htmlEscapeString(str: string): string {
+    return str.replace(/&|<|>|'|"\n/g, 
+    tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        "'": '&#39;',
+        '"': '&quot;',
+        '\n': "&#10;"
+      }[tag] as string));
+}
+
+function htmlUnescapeString(str: string): string {
+    return str.replace(/&amp;|&lt;|&gt;|&#39;|&quot;|&#10;/g, 
+    tag => ({
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&#39;': "'",
+        '&quot;': '"',
+        '&#10;': "\n"
+      }[tag] as string));
 }
 
 enum BSQErrorKind {
@@ -619,7 +643,7 @@ function setScratchValue(scratch: any[], sidx: number, value: any): number {
 export {
     Decimal, Fraction, IList, IMap,
 
-    NotationMode, escapeString, unescapeString,
+    NotationMode, slashEscapeString, slashUnescapeString, htmlEscapeString, htmlUnescapeString,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 

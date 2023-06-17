@@ -1,15 +1,15 @@
-import {Decimal} from "decimal.js";
-import Fraction from "fraction.js";
+import {Decimal} from "npm:decimal.js@10.4.3";
+import Fraction from "npm:fraction.js@4.2.0";
 
-import { List as IList, Map as IMap } from "immutable";
+import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
 
-import * as $TypeInfo from "../../../frontend/tree_ir/typeinfo";
-import * as $Runtime from "./runtime";
-
+import * as $TypeInfo from "./typeinfo.ts";
+import * as $Runtime from "./runtime.ts";
 
 class BSQONEmitter {
     readonly m_emitmode: $Runtime.NotationMode;
-   
+    readonly m_escapemode: "slash" | "html";
+
     readonly m_assembly: $TypeInfo.AssemblyInfo;
     readonly m_defaultns: string;
     readonly m_importmap: {fullns: string, localns: string}[];
@@ -18,8 +18,9 @@ class BSQONEmitter {
         return this.m_assembly.typerefs.get(tname) as $TypeInfo.BSQType;
     }
 
-    constructor(emitmode: $Runtime.NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo) {
+    constructor(emitmode: $Runtime.NotationMode, escapemode: "slash" | "html", defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo) {
         this.m_emitmode = emitmode;
+        this.m_escapemode = escapemode;
 
         this.m_assembly = assembly;
         this.m_defaultns = defaultns;
@@ -211,15 +212,15 @@ class BSQONEmitter {
     }
 
     private emitString(s: string): string {
-        return $Runtime.escapeString(s);
+        return this.m_escapemode === "slash" ? $Runtime.slashEscapeString(s) : $Runtime.htmlEscapeString(s);
     }
 
     private emitASCIIString(s: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return `ascii{${$Runtime.escapeString(s)}}`;
+            return `ascii{${this.m_escapemode === "slash" ? $Runtime.slashEscapeString(s) : $Runtime.htmlEscapeString(s)}}`;
         }
         else {
-            return $Runtime.unescapeString(s);
+            return this.m_escapemode === "slash" ? $Runtime.slashEscapeString(s) : $Runtime.htmlEscapeString(s);
         }
     }
 
@@ -368,19 +369,19 @@ class BSQONEmitter {
 
     private emitStringOf(ttype: $TypeInfo.StringOfType, str: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return "\"" + $Runtime.escapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
+            return "\"" + this.m_escapemode === "slash" ? $Runtime.slashEscapeString(str) : $Runtime.htmlEscapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
         }
         else {
-            return "\"" + $Runtime.escapeString(str) + "\"";
+            return "\"" + this.m_escapemode === "slash" ? $Runtime.slashEscapeString(str) : $Runtime.htmlEscapeString(str) + "\"";
         }
     }
 
     private emitASCIIStringOf(ttype: $TypeInfo.ASCIIStringOfType, str: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return "\"" + $Runtime.escapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
+            return "\"" + this.m_escapemode === "slash" ? $Runtime.slashEscapeString(str) : $Runtime.htmlEscapeString(str) + "\"" + this.emitType(this.lookupMustDefType(ttype.oftype));
         }
         else {
-            return "\"" + $Runtime.escapeString(str) + "\"";
+            return "\"" + this.m_escapemode === "slash" ? $Runtime.slashEscapeString(str) : $Runtime.htmlEscapeString(str) + "\"";
         }
     }
 
@@ -776,15 +777,15 @@ class BSQONEmitter {
         }
     }
 
-    static emit(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, mode: $Runtime.NotationMode): string {
-        const emitter = new BSQONEmitter(mode, defaultns, importmap, assembly);
+    static emit(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, mode: $Runtime.NotationMode, escapemode: "slash" | "html"): string {
+        const emitter = new BSQONEmitter(mode, escapemode, defaultns, importmap, assembly);
         const result = emitter.emitValue(emitter.lookupMustDefType(ttype), v);
 
         return result;
     }
 
     static emitStd(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, assembly: $TypeInfo.AssemblyInfo): string {
-        const emitter = new BSQONEmitter($Runtime.NotationMode.NOTATION_MODE_DEFAULT, defaultns, new Map<string, string>(), assembly);
+        const emitter = new BSQONEmitter($Runtime.NotationMode.NOTATION_MODE_DEFAULT, "html", defaultns, new Map<string, string>(), assembly);
         const result = emitter.emitValue(emitter.lookupMustDefType(ttype), v);
 
         return result;
