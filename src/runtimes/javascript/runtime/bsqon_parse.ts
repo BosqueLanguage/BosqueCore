@@ -26,7 +26,6 @@ enum TokenKind {
     TOKEN_NONE = "none",
     TOKEN_NOTHING = "nothing",
     TOKEN_TYPE = "type",
-    TOKEN_UNDER = "_",
     TOKEN_SOMETHING = "something",
     TOKEN_OK = "ok",
     TOKEN_ERR = "err",
@@ -161,7 +160,6 @@ const SymbolStrings = [
     TokenKind.TOKEN_NONE,
     TokenKind.TOKEN_NOTHING,
     TokenKind.TOKEN_TYPE,
-    TokenKind.TOKEN_UNDER,
     TokenKind.TOKEN_SOMETHING,
     TokenKind.TOKEN_OK,
     TokenKind.TOKEN_ERR,
@@ -769,6 +767,10 @@ class BSQONParser {
         return this.peekToken() !== undefined && this.peekToken()!.kind === tkind;
     }
 
+    private testToken_TypedeclUnder(): boolean {
+        return this.m_cpos < this.m_input.length && this.m_input[this.m_cpos] === '_';
+    }
+
     private testTokens(...tkinds: string[]): boolean {
         const opos = this.m_cpos;
         for (let i = 0; i < tkinds.length; ++i) {
@@ -795,7 +797,7 @@ class BSQONParser {
             if (!this.testTokenWValue(tks[i])) {
                 this.m_cpos = opos;
                 this.m_lastToken = undefined;
-                
+
                 return false;
             }
         }
@@ -822,6 +824,12 @@ class BSQONParser {
     private expectTokenAndPop(tkind: string): {kind: string, value: string} {
         this.expectToken(tkind);
         return this.popToken() as {kind: string, value: string};
+    }
+
+    private expectTokenAndPop_TypedeclUnder() {
+        this.raiseErrorIf(this.m_cpos >= this.m_input.length || this.m_input[this.m_cpos] !== "_", "Expected token _");
+        this.m_cpos += 1;
+        this.m_lastToken = undefined;
     }
 
     private resolveTypeFromNameList(tt: string[], terms: $TypeInfo.BSQType[]): $TypeInfo.BSQType  {
@@ -1556,7 +1564,7 @@ class BSQONParser {
     private parseBigInt(whistory: boolean): BSQONParseResult {
         let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_NAT).value.slice(0, -1);
+            tkval = this.expectTokenAndPop(TokenKind.TOKEN_BIG_INT).value.slice(0, -1);
         }
         else {
             const tk = this.popToken();
@@ -2171,14 +2179,26 @@ class BSQONParser {
     private parseTypedecl(ttype: $TypeInfo.TypedeclType, whistory: boolean): BSQONParseResult {
         const vv = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
 
-        this.expectTokenAndPop(TokenKind.TOKEN_UNDER);
+        this.expectTokenAndPop_TypedeclUnder();
         const ntype = this.parseType();
 
         this.raiseErrorIf(ttype.tkey !== ntype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
 
-        this.m_typedeclChecks.push({ttype: ttype.tkey, tvalue: vv});
+        if(ttype.hasvalidations) {
+            this.m_typedeclChecks.push({ttype: ttype.tkey, tvalue: vv});
+        }
 
-        return BSQONParseResultInfo.create(BSQONParseResultInfo.getValueType(vv, whistory), ttype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+        if(ttype.basetype.tkey === "String" || ttype.basetype.tkey === "ASCIIString") {
+            if(ttype.optStringOfValidator !== undefined) {
+                const vre = this.m_assembly.revalidators.get(ttype.optStringOfValidator);
+                this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre, vv as string), `Typedecl of string literal does not satisfy the required format: ${ttype.optStringOfValidator} (${vre})`);
+            }
+        }
+        if(ttype.basetype.tkey === "Path" || ttype.basetype.tkey === "PathFragment" || ttype.basetype.tkey === "PathGlob") {
+            this.raiseError("Path types are not IMPLEMENTED in typedecls");
+        }
+
+        return BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), ttype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
     }
 
     private parseStdEntity(ttype: $TypeInfo.StdEntityType, whistory: boolean): BSQONParseResult {
@@ -2865,8 +2885,8 @@ class BSQONParser {
                     this.raiseError(`Expected a primitive value but got ${tk}`);
                 }
 
-                if(this.testToken(TokenKind.TOKEN_UNDER)) {
-                    this.popToken();
+                if(this.testToken_TypedeclUnder()) {
+                    this.expectTokenAndPop_TypedeclUnder();
                     const tdtype = this.parseType();
                     this.raiseErrorIf(!(tdtype instanceof $TypeInfo.TypedeclType), `Expected a typedecl type but got ${tdtype.tkey}`);
                     this.raiseErrorIf((tdtype as $TypeInfo.TypedeclType).basetype !== tt, `Typedecl has a basetype of ${tdtype.tkey} but got ${tt}`);

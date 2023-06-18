@@ -2,7 +2,7 @@
 
 const path = require("path");
 const fsextra = require("fs-extra");
-const execFileSync = require("child_process").execFileSync;
+const {execSync, execFileSync} = require("child_process");
 
 const proj_root = path.join(__dirname, "../");
 const genbin = path.join(proj_root, "bin/runtimes/javascript/cmd.js")
@@ -33,17 +33,13 @@ function cmdescape(str) {
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execFileSync(`deno`, ["run", jsmain, ...(args.map((vv) => "'" + vv + "'"))]).toString();
-    if(rr.startsWith("error -- ")) {
-        return rr;
-    }
-    else {
-        return JSON.parse(rr);
-    }
+    const rr = execSync(`deno run ${jsmain} ${args.join(" ")}`).toString().trim();
+    //console.log(rr);
+    return rr;
 }
 
 function cleanTest(dstdir) {
-    //fsextra.removeSync(dstdir);
+    fsextra.removeSync(dstdir);
 }
 
 module.exports = {

@@ -11,14 +11,14 @@ describe('Addition', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('addop 1, 3.0, 3/2, 10', function () {
-        it('expected [2, 0.0, "11/6", 11]', function () {
-            expect(invokeExecutionOn(jsmain, "1i", "3.0f", "3/2R", "10N_Foo")).to.eql([2, 0.0, "11/6", 11]);
+    describe('addop 1i, 3.0f, 3/2R, 10I_Foo', function () {
+        it('expected [2i, 0.0f, 11/6R, 11I_Foo]', function () {
+            expect(invokeExecutionOn(jsmain, "1i", "3.0f", "3/2R", "10I_Foo")).to.eql("[2i, 0.0f, 11/6R, 11I_Foo]");
         });
     });
-    describe('addop -1, -1.0, 0/2, 0', function () {
-        it('expected [0, -4.0, "1/3", 1]', function () {
-            expect(invokeExecutionOn(jsmain, "-1i", "-1.0f", "0/2R", "0N_Foo")).to.eql([0, -4.0, "1/3", 1]);
+    describe('addop -1i, -1.0f, 0/2R, 0I_Foo', function () {
+        it('expected [0i, -4.0f, 1/3R, 1I_Foo]', function () {
+            expect(invokeExecutionOn(jsmain, "-1i", "-1.0f", "0/2R", "0I_Foo")).to.eql("[0i, -4.0f, 1/3R, 1I_Foo]");
         });
     });
 });

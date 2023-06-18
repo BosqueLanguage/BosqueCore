@@ -191,23 +191,39 @@ class BSQONEmitter {
 
     private emitRational(r: Fraction): string {
         if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return  "[TODO]R";
+            return  `${r.toFraction()}R`;
         }
         else {
-            return  "\"[TODO RATIONAL]\"";
+            return  `"${r.toFraction()}"`;
         }
     }
 
     private emitFloat(f: number): string {
-        return f.toString() + (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON ? "f" : "");
+        let ff = f.toString();
+        if(ff.startsWith(".")) {
+            ff = "0" + ff;
+        }
+        if(ff.indexOf(".") === -1) {
+            ff = ff + ".0";
+        }
+
+        return ff + (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON ? "f" : "");
     }
 
     private emitDecimal(d: Decimal): string {
+        let dd = d.toString();
+        if(dd.startsWith(".")) {
+            dd = "0" + dd;
+        }
+        if(dd.indexOf(".") === -1) {
+            dd = dd + ".0";
+        }
+
         if(this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return d.toString() + "d";
+            return dd + "d";
         }
         else {
-            return "\"" + d.toString() + "\"";
+            return "\"" + dd + "\"";
         }
     }
 
