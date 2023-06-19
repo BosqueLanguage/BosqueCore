@@ -11,14 +11,14 @@ describe('Equality', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('eqop 1, -3.0, 1/3, 1', function () {
+    describe('eqop 1i, -3.0f, 1/3R, 1I_Foo', function () {
         it('expected [true, true, false, true, false]', function () {
-            expect(invokeExecutionOn(jsmain, 1, -3.0, "1/3", 1)).to.eql([true, true, false, true, false]);
+            expect(invokeExecutionOn(jsmain, "1i", "-3.0f", "1/3R", "1I_Foo")).to.eql("[true, true, false, true, false]");
         });
     });
-    describe('eqop 2, 1.0, 5/2, 3', function () {
+    describe('eqop 2i, 1.0f, 5/2R, 3I_Foo', function () {
         it('expected [false, false, true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain, 2, 1.0, "5/2", 3)).to.eql([false, false, true, false, true]);
+            expect(invokeExecutionOn(jsmain, "2i", "1.0f", "5/2R", "3I_Foo")).to.eql("[false, false, true, false, true]");
         });
     });
 });
