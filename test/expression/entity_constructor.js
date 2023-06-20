@@ -13,7 +13,7 @@ describe('Foo constructor', function () {
 
     describe('Foo{3i}', function () {
         it('expected Foo{3i}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql({f:3});
+            expect(invokeExecutionOn(jsmain)).to.eql("Foo{3i}");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('baz constructor', function () {
 
     describe('Baz{3i, 4n}', function () {
         it('expected Baz{3i, 4n}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql({g:3, h:4});
+            expect(invokeExecutionOn(jsmain)).to.eql("Baz{3i, 4n}");
         });
     });
 });
@@ -41,7 +41,7 @@ describe('qux constructor', function () {
 
     describe('Qux{"bob", 3i}', function () {
         it('expected Qux{"bob", 3i}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql({g:3, name:"bob"});
+            expect(invokeExecutionOn(jsmain)).to.eql('Qux{"bob", 3i}');
         });
     });
 });

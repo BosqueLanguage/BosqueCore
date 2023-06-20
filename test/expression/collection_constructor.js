@@ -13,12 +13,12 @@ describe('List constructor', function () {
 
     describe('List<Int>{}', function () {
         it('expected List<Int>{}', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([]);
+            expect(invokeExecutionOn(jsmain, true)).to.eql("List{}");
         });
     });
     describe('List<Int>{1i, 2i, 3i}', function () {
         it('expected List<Int>{1i, 2i, 3i}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([1, 2, 3]);
+            expect(invokeExecutionOn(jsmain, false)).to.eql("List{1i, 2i, 3i}");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('Map constructor', function () {
 
     describe('Map<Int, String>{}', function () {
         it('expected Map<Int, String>{}', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([]);
+            expect(invokeExecutionOn(jsmain, true)).to.eql("Map{}");
         });
     });
-    describe('Map<Int, String>{MapEntry<Int, String>{1i, "one"}, MapEntry<Int, String>{2i, "two"}}}', function () {
+    describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([[1, "one"], [2, "two"]]);
+            expect(invokeExecutionOn(jsmain, false)).to.eql('Map{1i => "one", 2i => "two"}');
         });
     });
 });
@@ -50,13 +50,13 @@ describe('Map specific constructor', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('Map<Int, String>{}', function () {
-        it('expected Map<Int, String>{}', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.contain("error -- duplicate keys");
+        it('expected error', function () {
+            expect(invokeExecutionOn(jsmain, true)).to.contain("Duplicate keys in Map construction");
         });
     });
     describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([[1, "one"], [2, "two"]]);
+            expect(invokeExecutionOn(jsmain, false)).to.eql('Map{1i => "one", 2i => "two"}');
         });
     });
 });

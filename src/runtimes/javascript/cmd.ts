@@ -141,70 +141,38 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         //generate the main file and write -- reading from the command line or a file
 
         const iext = asdeno ? ".ts" : "";
-        if(fileargs) {
-            const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", actual_args[${ii}])`).join(", ") + "]";
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
 
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as FS from "fs";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as ${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
-                + `const actual_args = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
-                + `if(!Array.isArray(actual_args) || actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args\\n"); process.exit(0); }\n\n`
-                + `const bsq_args = ${loadlogic};\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
-                + `    const jres_val = ${emitlogic};\n`
-                + `    console.log(JSON.stringify(jres_val));\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
-                + `}\n`);
-        }
-        else if(fileasm) {
-            const loadlogic = `$API.bsqMarshalParse("${epf.params[0].type}", actual_arg)`
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
-
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as FS from "fs";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
-                + `const actual_arg = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
-                + `const bsq_arg = ${loadlogic};\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(bsq_arg);\n`
-                + `    const jres_val = ${emitlogic};\n`
-                + `    console.log(JSON.stringify(jres_val));\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
-                + `}\n`);
-        }
-        else {
-            const mainf = Path.join(into, "_main.ts");
-            FS.writeFileSync(mainf, `import * as process from "node:process";\n`
-                + `import * as $TypeInfo from "./typeinfo${iext}";\n`
-                + `import * as $JASM from "./metadata${iext}";\n`
-                + `import * as $Parse from "./bsqon_parse${iext}";\n`
-                + `import * as $Emit from "./bsqon_emit${iext}";\n`
-                + `import * as $${mainNamespace} from "./${mainNamespace}${iext}";\n\n`
-                + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n`
-                + `const actual_args = process.argv.slice(2);\n`
-                + `if(actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args but got " + actual_args.length + " args\\n"); process.exit(0); }\n\n`
-                //+ `process.stderr.write(${epf.params.map((pp, ii) => `actual_args[${ii}].slice(1, -1)`).join(" + ")} + "\\n");\n`
-                + `const bsq_args = [${epf.params.map((pp, ii) => `$Parse.BSQONParser.parseInputStd(actual_args[${ii}], "${pp.type}", "${epns.ns}", assembly)`).join(", ")}];\n`
-                + `const echks = ([] as {etype: $TypeInfo.BSQTypeKey, evalue: any}[]).concat(...bsq_args.filter((vv) => vv.entityChecks.length !== 0).map((vv) => vv.entityChecks));\n`
-                + `const tchks = ([] as {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]).concat(...bsq_args.filter((vv) => vv.typedeclChecks.length !== 0).map((vv) => vv.typedeclChecks));\n`
-                + `//TODO: implement entity and typedecl checks\n`
-                + `if(echks.length !== 0 || tchks.length !== 0) { process.stdout.write("NOT IMPLEMENTED CALL CHECKS!!!"); process.exit(0); }\n\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(${epf.params.map((pp, ii) => `bsq_args[${ii}].result`).join(", ")});\n`
-                + `    const bsqonres_val = $Emit.BSQONEmitter.emitStd(res_val, "${epf.resultType}", "${epns.ns}", assembly);\n`
-                + `    console.log(bsqonres_val);\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + JSON.stringify(ex, undefined, 2) + "\\n");\n`
-                + `}\n`);
-        }
+        const mainf = Path.join(into, "_main.ts");
+        FS.writeFileSync(mainf, `import * as process from "node:process"; import {Buffer} from "node:buffer";\n import fs from "node:fs";\n`
+            + `import * as $TypeInfo from "./typeinfo${iext}";\n`
+            + `import * as $JASM from "./metadata${iext}";\n`
+            + `import * as $Runtime from "./runtime${iext}";\n`
+            + `import * as $Parse from "./bsqon_parse${iext}";\n`
+            + `import * as $Emit from "./bsqon_emit${iext}";\n`
+            + `import * as $${mainNamespace} from "./${mainNamespace}${iext}";\n\n`
+            + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n\n`
+            + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
+            + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
+            + `const input_stream = filearg !== undefined ? fs.createReadStream(filearg.substring(8)) : process.stdin;\n`
+            + `const arg_string = await read(input_stream);\n\n`
+            + `let bsq_args: any[] = [];\n`
+            + `try {\n`
+            + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`
+            //+ `    process.stderr.write(${epf.params.map((pp, ii) => `actual_args[${ii}]`).join(" + ")} + "\\n");\n`
+            + `    //TODO: implement entity and typedecl checks\n`
+            + `    if(bsq_args.entityChecks.length !== 0 || bsq_args.typedeclChecks.length !== 0) { process.stdout.write("NOT IMPLEMENTED CALL CHECKS!!!"); process.exit(0); }\n`
+            + `} catch(exp) {\n`
+            + `    process.stdout.write("error in parse -- " + JSON.stringify(exp, undefined, 2) + "\\n");\n`
+            + `    process.exit(0);\n`
+            + `}\n\n`
+            + `try {\n`
+            + `    const res_val = $${mainNamespace}.${mainFunction}(${epf.params.map((pp, ii) => `bsq_args.result[${ii}]`).join(", ")});\n`
+            + `    const bsqonres_val = $Emit.BSQONEmitter.emitStd(res_val, "${epf.resultType}", "${epns.ns}", assembly);\n`
+            + `    console.log(bsqonres_val);\n`
+            + `} catch(exe) {\n`
+            + `    process.stdout.write("error in eval -- " + JSON.stringify(exe, undefined, 2) + "\\n");\n`
+            + `    process.exit(0);\n`
+            + `}\n`);
     } catch(e) {
         process.stderr.write(`TS emit error -- ${e}\n`);
         process.exit(1);
@@ -219,16 +187,6 @@ function buildTSDefault(into: string, srcfiles: string[]) {
     workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}], true);
 
     process.stdout.write("done!\n");
-}
-
-const fileargs = fullargs.includes("--fileargs");
-if(fileargs) {
-    fullargs = fullargs.filter((aa) => aa !== "--fileargs");
-}
-
-const fileasm = fullargs.includes("--fileasm");
-if(fileasm) {
-    fullargs = fullargs.filter((aa) => aa !== "--fileasm");
 }
 
 let mainNamespace = "Main";

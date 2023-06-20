@@ -20,21 +20,9 @@ function codegen(srcdir, dstdir) {
     execFileSync(`node`, [genbin, "--outdir", dstdir, srcdir]);
 }
 
-function cmdescape(str) {
-    return str.replace(/[&<>'"\n]/g, 
-    tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;',
-        '\n': '&#10;'
-      }[tag]));
-}
-
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execSync(`deno run ${jsmain} ${args.join(" ")}`).toString().trim();
-    //console.log(rr);
+    const rr = execSync(`deno run ${jsmain}`, {input: args.join(" ")}).toString().trim();
+    console.log(rr);
     return rr;
 }
 
@@ -43,5 +31,5 @@ function cleanTest(dstdir) {
 }
 
 module.exports = {
-    generatePaths, codegen, invokeExecutionOn, cleanTest, cmdescape
+    generatePaths, codegen, invokeExecutionOn, cleanTest
 };

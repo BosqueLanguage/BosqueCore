@@ -74,7 +74,7 @@ function slashUnescapeString(ll: string): string {
 }
 
 function htmlEscapeString(str: string): string {
-    return str.replace(/&|<|>|'|"\n/g, 
+    return str.replace(/&|<|>|'|"|\n/g, 
     tag => ({
         '&': '&amp;',
         '<': '&lt;',
@@ -94,6 +94,25 @@ function htmlUnescapeString(str: string): string {
         '&#39;': "'",
         '&quot;': '"',
         '&#10;': "\n"
+      }[tag] as string));
+}
+
+
+function bsqonEscapeString(str: string): string {
+    return str.replace(/%|"|\n/g, 
+    tag => ({
+        '%': '%p;',
+        '"': '%q;',
+        '\n': "%n;"
+      }[tag] as string));
+}
+
+function bsqonUnescapeString(str: string): string {
+    return str.replace(/%p;|%q;|%n;/g, 
+    tag => ({
+        '%p;': '%',
+        '%q;': '"',
+        '&n;': "\n"
       }[tag] as string));
 }
 
@@ -562,13 +581,13 @@ class DateOps {
 }
 
 class ListOps {
-    create(...args: any[]): IList<any> {
+    static create(...args: any[]): IList<any> {
         return IList(args);
     }
 }
 
 class MapOps {
-    create(...args: [any, any][]): IMap<any, any> {
+    static create(...args: [any, any][]): IMap<any, any> {
         const minit = IMap<any, any>();
         const mres = minit.withMutations(map => {
             for (let i = 0; i < args.length; ++i) {
@@ -643,7 +662,7 @@ function setScratchValue(scratch: any[], sidx: number, value: any): number {
 export {
     Decimal, Fraction, IList, IMap,
 
-    NotationMode, slashEscapeString, slashUnescapeString, htmlEscapeString, htmlUnescapeString,
+    NotationMode, slashEscapeString, slashUnescapeString, htmlEscapeString, htmlUnescapeString, bsqonEscapeString, bsqonUnescapeString,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 

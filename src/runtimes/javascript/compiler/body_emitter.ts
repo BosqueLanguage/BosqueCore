@@ -321,15 +321,15 @@ class BodyEmitter {
     }
 
     private emitConstructorListExpression(exp: TIRConstructorListExpression): string {
-        return `$Runtime.$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        return `$Runtime.ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
         if(exp.args.length === 0) {
-            return `$Runtime.$MapOps.create()`;
+            return `$Runtime.MapOps.create()`;
         }
         else {
-            return `$Runtime.$MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+            return `$Runtime.MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
         }
     }
 
