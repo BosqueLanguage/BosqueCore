@@ -160,7 +160,10 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`
             //+ `    process.stderr.write(${epf.params.map((pp, ii) => `actual_args[${ii}]`).join(" + ")} + "\\n");\n`
             + `    //TODO: implement entity and typedecl checks\n`
-            + `    if(bsq_args.entityChecks.length !== 0 || bsq_args.typedeclChecks.length !== 0) { process.stdout.write("NOT IMPLEMENTED CALL CHECKS!!!"); process.exit(0); }\n`
+            + `    if(bsq_args.entityChecks.length !== 0 || bsq_args.typedeclChecks.length !== 0) {\n`
+            + `        bsq_args.typedeclChecks.forEach((ee) => $Runtime.validators.get(ee[0])(ee[1]));\n`
+            + `        bsq_args.entityChecks.forEach((ee) => $Runtime.validators.get(ee[0])(ee[1]));\n`
+            + `    }\n`
             + `} catch(exp) {\n`
             + `    process.stdout.write("error in parse -- " + JSON.stringify(exp, undefined, 2) + "\\n");\n`
             + `    process.exit(0);\n`

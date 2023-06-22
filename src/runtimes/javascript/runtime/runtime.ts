@@ -653,6 +653,7 @@ const vtablemap = new Map();
 
 const invmap = new Map();
 const lambdas = new Map();
+const validators = new Map();
 
 const $ASM: {[k: string]: any} = {};
 
@@ -677,6 +678,6 @@ export {
     NumericOps, StringOps, DateOps, ListOps, MapOps,
 
     $ASM,
-    vtablemap, invmap, lambdas, setScratchValue,
+    vtablemap, invmap, lambdas, validators, setScratchValue,
     setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
 };

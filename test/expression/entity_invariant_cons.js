@@ -13,12 +13,12 @@ describe('Percentage constructor', function () {
 
     describe('Percentage{101n}', function () {
         it('expected invariant failure', function () {
-            expect(invokeExecutionOn(jsmain, 101)).to.contain("Failed invariant");
+            expect(invokeExecutionOn(jsmain, "101n_Percentage")).to.contain("Failed invariant");
         });
     });
     describe('Percentage{99n}', function () {
         it('expected 99_Percentage', function () {
-            expect(invokeExecutionOn(jsmain, 99)).to.eql(99);
+            expect(invokeExecutionOn(jsmain, "99n_Percentage")).to.eql("99n_Percentage");
         });
     });
 });
@@ -32,22 +32,22 @@ describe('Qux constructor', function () {
 
     describe('Qux{"", 3i, 10i} fails', function () {
         it('expected invariant fails', function () {
-            expect(invokeExecutionOn(jsmain, "", 3, 10)).to.contain("Failed invariant");
+            expect(invokeExecutionOn(jsmain, '""', "3i", "10i")).to.contain("Failed invariant");
         });
     });
     describe('Qux{"bob", 0i, 10i} fails', function () {
         it('expected invariant fails', function () {
-            expect(invokeExecutionOn(jsmain, "bob", 0, 10)).to.contain("Failed invariant");
+            expect(invokeExecutionOn(jsmain, '"bob"', "0i", "10i")).to.contain("Failed invariant");
         });
     });
     describe('Qux{"bob", 4i, 2i} fails', function () {
         it('expected invariant fails', function () {
-            expect(invokeExecutionOn(jsmain, "bob", 4, 2)).to.contain("Failed invariant");
+            expect(invokeExecutionOn(jsmain, '"bob"', "4i", "2i")).to.contain("Failed invariant");
         });
     });
-    describe('Qux{"bob", 4i, 10i} fails', function () {
-        it('expected invariant fails', function () {
-            expect(invokeExecutionOn(jsmain, "bob", 4, 10)).to.eql({name: "bob", g: 4, h: 10});
+    describe('Qux{"bob", 4i, 10i} ok', function () {
+        it('expected Qux{"bob", 4i, 10i}', function () {
+            expect(invokeExecutionOn(jsmain, '"bob"', "4i", "10i")).to.eql('Qux{"bob", 4i, 10i}');
         });
     });
 });

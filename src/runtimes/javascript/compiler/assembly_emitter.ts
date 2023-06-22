@@ -4,6 +4,7 @@ import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMember
 import { TIRCodePack, TIRLiteralValue } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
+import { resolveTypeMemberAccess } from "./type_emitter";
 
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
@@ -129,7 +130,7 @@ class NamespaceEmitter {
             const validatechecks = ttype.apivalidates.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "ValidateEvalFailure", "condition failure"); return true; } })()), "Failed validate ${ttype.tkey}");`);
 
             const vvfstr = [...invchecks, ...validatechecks].join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member_body;
-            validatefunc.push(`$validate: function($value) {\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}return $value;\n${NamespaceEmitter.s_indent_type_member}}`);
+            validatefunc.push(`$validate: function($value) {\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}}`);
         }
 
         return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs, ...validatefunc])}}`;
@@ -148,8 +149,8 @@ class NamespaceEmitter {
         consfuncs.push(`$constructorDirect: function(${fnames.join(", ")}) { return Object.freeze({${fnames.map((fn) => fn + ": " + fn).join(", ")}}); }`);
 
         if(ttype.consinvariants.length !== 0) {
-            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
-            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n${NamespaceEmitter.s_indent_type_member_body}${checks}return Object.freeze({${fnames.map((fn) => fn + ": $" + fn).join(", ")}});\n${NamespaceEmitter.s_indent_type_member}`);
+            const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member_body;
+            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n${NamespaceEmitter.s_indent_type_member_body}${checks}return Object.freeze({${fnames.map((fn) => fn + ": $" + fn).join(", ")}});\n${NamespaceEmitter.s_indent_type_member}}`);
         }
 
         let validatefunc: string[] = [];
@@ -158,7 +159,7 @@ class NamespaceEmitter {
             const validatechecks = ttype.apivalidates.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "ValidateEvalFailure", "condition failure"); return true; } })()), "Failed validate ${ttype.tkey}");`);
 
             const vvfstr = [...invchecks, ...validatechecks].join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member;
-            validatefunc.push(`$validate: function($$value) {\n${NamespaceEmitter.s_indent_type_member_body}${fnames.map((fn) => "const $" + fn + " = $$value." + fn + "; ").join(", ")}\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}}`);
+            validatefunc.push(`$validate: function($$value) {\n${NamespaceEmitter.s_indent_type_member_body}${fnames.map((fn) => "const $" + fn + " = $$value." + fn + "; ").join(" ")}\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}}`);
         }
 
         if(ttype.binds.size === 0) {
@@ -433,6 +434,7 @@ class NamespaceEmitter {
         });
 
         let invdecls: string[] = [];
+        let chkdecls: string[] = [];
 
         let dtypes: string[] = [];
         this.m_decl.concepts.forEach((ttk) => {
@@ -469,6 +471,13 @@ class NamespaceEmitter {
 
                 if(ootype instanceof TIRObjectEntityType && ootype.vtable.size > 0) {
                     invdecls.push(`$Runtime.vtablemap.set("${ootype.tkey}", new Map([${[...ootype.vtable].map((vi) => "[\"" + vi[0] + "\", \"" + vi[1] + "\"]").join(", ")}]));`);
+                }
+
+                if(ootype instanceof TIRObjectEntityType && (ootype.consinvariants.length !== 0 || ootype.apivalidates.length !== 0)) {
+                    chkdecls.push(`$Runtime.validators.set("${ootype.tkey}", ${resolveTypeMemberAccess(this.m_assembly, ootype.tkey)}.$validate);`);
+                }
+                if(ootype instanceof TIRTypedeclEntityType && (ootype.consinvariantsall.length !== 0 || ootype.apivalidates.length !== 0)) {
+                    chkdecls.push(`$Runtime.validators.set("${ootype.tkey}", ${resolveTypeMemberAccess(this.m_assembly, ootype.tkey)}.$validate);`);
                 }
             });
         });
@@ -551,7 +560,7 @@ class NamespaceEmitter {
         }
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return [...stdimps, depimps, fmts, nstdecl, constdecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
+        return [...stdimps, depimps, fmts, nstdecl, constdecls, ifuncdecls, kfuncdecls, lambdas, ...chkdecls, iidm, exportdecl]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
