@@ -1,6 +1,7 @@
 import { extractLiteralASCIIStringValue, extractLiteralStringValue } from "../../../frontend/build_decls";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIREnumEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIROOType, TIRPostConditionDecl, TIRPreConditionDecl, TIRRecordType, TIRStaticFunctionDecl, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessScratchIndexExpression, TIRAccessScratchSingleValueExpression, TIRAccessVariableExpression, TIRAsEqualToLiteralExpression, TIRAsErrSpecialExpression, TIRAsNoneSpecialExpression, TIRAsNotEqualToLiteralExpression, TIRAsNothingSpecialExpression, TIRAsNotSubTypeExpression, TIRAsNotTypeExpression, TIRAsOkSpecialExpression, TIRAssertCheckStatement, TIRAsSomeSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsEqualToLiteralExpression, TIRIsErrSpecialExpression, TIRIsNoneSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsNothingSpecialExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsOkSpecialExpression, TIRIsSomeSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRScratchSCStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRStoreToScratch, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRefAssignFromScratch, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarDeclareAndAssignStatement, TIRVarDeclareStatement, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRVarRefAssignFromScratch } from "../../../frontend/tree_ir/tir_body";
+import { resolveTypeMemberAccess, typeEncodedAsUnion } from "./type_emitter";
 
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
@@ -23,7 +24,6 @@ class BodyEmitter {
 
     private readonly m_file: string;
     private readonly m_ns: string;
-    private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
 
@@ -36,107 +36,14 @@ class BodyEmitter {
         this.m_ns = ns;
     }
 
-    typeEncodedAsUnion(tt: TIRTypeKey): boolean {
-        assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
+    private static s_body_indent = "    ";
 
-        const ttype = this.m_assembly.typeMap.get(tt) as TIRType;
-        return (ttype instanceof TIRConceptType) || (ttype instanceof TIRUnionType);
+    typeEncodedAsUnion(tt: TIRTypeKey): boolean {
+       return typeEncodedAsUnion(this.m_assembly, tt);
     }
 
     resolveTypeMemberAccess(tt: TIRTypeKey): string {
-        assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
-
-        if(this.m_typeResolveMemo.has(tt)) {
-            return this.m_typeResolveMemo.get(tt) as string;
-        }
-
-        const ttype = this.m_assembly.typeMap.get(tt) as TIROOType;
-        const samens = ttype.tname.ns === this.m_ns;
-
-        let taccess: string = "[INVALID]";
-        if(ttype instanceof TIRObjectEntityType) {
-            if(ttype.binds.size === 0) {
-                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            }
-            else {
-                if (samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-                }
-            }
-        }
-        else if(ttype instanceof TIREnumEntityType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRTypedeclEntityType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRPrimitiveInternalEntityType) {
-            taccess =  samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if (ttype instanceof TIRValidatorEntityType) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if ((ttype instanceof TIRStringOfEntityType) || (ttype instanceof TIRASCIIStringOfEntityType)) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if (ttype instanceof TIRPathValidatorEntityType) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-
-            }
-        }
-        else if ((ttype instanceof TIRPathEntityType) || (ttype instanceof TIRPathFragmentEntityType) || (ttype instanceof TIRPathGlobEntityType)) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if(ttype instanceof TIRMapEntryEntityType) {
-            taccess = `$Runtime.$Types["${ttype.tkey}"]`;
-        }
-        else if((ttype instanceof TIRListEntityType) || (ttype instanceof TIRStackEntityType) || (ttype instanceof TIRQueueEntityType) ||  (ttype instanceof TIRSetEntityType) || (ttype instanceof TIRMapEntityType)) {
-            taccess = `$Runtime.$Types["${ttype.tkey}"]`;
-        }
-        else if(ttype instanceof TIRTaskType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRConceptType) {
-            if(ttype.binds.size === 0) {
-                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            }
-            else {
-                if (samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-                }
-            }
-        }
-        else {
-            assert(false, "Unknown type in resolveTypeNameAccess");
-        }
-
-        this.m_typeResolveMemo.set(tt, taccess);
-        return taccess;
+        return resolveTypeMemberAccess(this.m_assembly, tt);
     }
 
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
@@ -1705,10 +1612,10 @@ class BodyEmitter {
         else {
             sstr += indent + "else {\n"
             if(stmt.isexhaustive) {
-                sstr += indent + "    ;\n";
+                sstr += indent + BodyEmitter.s_body_indent ";\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1759,10 +1666,10 @@ class BodyEmitter {
         else {
             sstr += indent + "else {\n"
             if(stmt.isexhaustive) {
-                sstr += indent + "    ;\n";
+                sstr += indent + BodyEmitter.s_body_indent + ";\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1882,9 +1789,9 @@ class BodyEmitter {
     }
 
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string, prestr?: string | undefined, poststr?: string | undefined): string {
-        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
+        const stmts = blck.ops.map((op) => indent + BodyEmitter.s_body_indent + this.emitStatement(op, indent + BodyEmitter.s_body_indent)).join("\n");
 
-        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + "    "}${poststr}\n` : "") + indent + "}";
+        return " {\n" + (prestr !== undefined ? `${indent + BodyEmitter.s_body_indent}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + BodyEmitter.s_body_indent}${poststr}\n` : "") + indent + "}";
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {
@@ -2007,8 +1914,8 @@ class BodyEmitter {
     }
 
     emitBodyStatementList(body: TIRStatement[], preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], indent: string, fname: string, extractres: boolean): string {
-        const bodyindent = indent + "    ";
-        const wbodyindent = bodyindent + "    ";
+        const bodyindent = indent + BodyEmitter.s_body_indent;
+        const wbodyindent = bodyindent + BodyEmitter.s_body_indent;
         let rconds = "";
 
         if(preconds.length !== 0) {

@@ -654,6 +654,8 @@ const vtablemap = new Map();
 const invmap = new Map();
 const lambdas = new Map();
 
+const $ASM: {[k: string]: any} = {};
+
 function setScratchValue(scratch: any[], sidx: number, value: any): number {
     scratch[sidx] = value;
     return 0;
@@ -674,6 +676,7 @@ export {
     BSQEnvironment,
     NumericOps, StringOps, DateOps, ListOps, MapOps,
 
+    $ASM,
     vtablemap, invmap, lambdas, setScratchValue,
     setloglevel, checkloglevel, log, pushlogprefix, poplogprefix
 };

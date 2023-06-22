@@ -22,6 +22,10 @@ class NamespaceEmitter {
         this.m_decl = nsdecl;
     }
 
+    private static s_indent_ns_member = "    ";
+    private static s_indent_type_member = "        ";
+    private static s_indent_type_member_body = "            ";
+
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
         return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!this.$CF_${cdecl.name}) { this.$CF_${cdecl.name} = true; this.$CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return this.$CV_${cdecl.name}; }`;
@@ -65,11 +69,11 @@ class NamespaceEmitter {
     private emitOOTypeFunctions(ootype: TIROOType): string[] {
         const oofuncs = ootype.staticFunctions.filter((ff) => !ff.attributes.includes("abstract"));
 
-        const finline = oofuncs.filter((ff) => ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, "    "));
-        const fkey = oofuncs.filter((ff) => ff.invoke.tbinds.size !== 0 || ff.invoke.pcodes.size !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, "        "));
+        const finline = oofuncs.filter((ff) => ff.invoke.tbinds.size === 0 && ff.invoke.pcodes.size === 0).map((ff) => ff.name + ": " + this.emitMemberFunction(ootype, ff, NamespaceEmitter.s_indent_type_member));
+        const fkey = oofuncs.filter((ff) => ff.invoke.tbinds.size !== 0 || ff.invoke.pcodes.size !== 0).map((ff) => `"${ff.ikey}": ` + this.emitMemberFunction(ootype, ff, NamespaceEmitter.s_indent_type_member));
 
-        const finlinestr = finline.length !== 0 ? ("\n    " + finline.join(",\n    ")) : "";
-        const fkeystr = fkey.length !== 0 ? (`$Functions: {\n        ${fkey.join(",\n        ")}\n    }`) : "";
+        const finlinestr = finline.length !== 0 ? finline.join(",\n" + NamespaceEmitter.s_indent_type_member) : "";
+        const fkeystr = fkey.length !== 0 ? fkey.join(",\n" + NamespaceEmitter.s_indent_type_member) : "";
 
         return [finlinestr, fkeystr];
     }
@@ -77,23 +81,19 @@ class NamespaceEmitter {
     private emitOOTypeMethods(ootype: TIROOType): string[] {
         const oomethods = ootype.memberMethods.filter((ff) => !ff.attributes.includes("abstract"));
 
-        const minline = oomethods.filter((mm) => mm.invoke.tbinds.size === 0 && mm.invoke.pcodes.size === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, "    "));
-        const mkey = oomethods.filter((mm) => mm.invoke.tbinds.size !== 0 || mm.invoke.pcodes.size !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, "        "));
+        const minline = oomethods.filter((mm) => mm.invoke.tbinds.size === 0 && mm.invoke.pcodes.size === 0).map((mm) => mm.name + ": " + this.emitMemberMethod(ootype, mm, NamespaceEmitter.s_indent_type_member));
+        const mkey = oomethods.filter((mm) => mm.invoke.tbinds.size !== 0 || mm.invoke.pcodes.size !== 0).map((mm) => `"${mm.ikey}": ` + this.emitMemberMethod(ootype, mm, NamespaceEmitter.s_indent_type_member));
 
-        const minlinestr = minline.length !== 0 ? ("\n    " + minline.join(",\n    ")) : "";
-        const mkeystr = mkey.length !== 0 ? (`$Methods: {\n        ${mkey.join(",\n        ")}\n    }`) : "";
+        const minlinestr = minline.length !== 0 ? minline.join(",\n" + NamespaceEmitter.s_indent_type_member) : "";
+        const mkeystr = mkey.length !== 0 ? mkey.join(",\n" + NamespaceEmitter.s_indent_type_member) : "";
+
 
         return [minlinestr, mkeystr];
     }
 
     private static ooTypeOutputFlatten(outs: string[]): string {
         const oouts = outs.filter((oo) => oo !== "");
-        return oouts.length !== 0 ? `\n    ${oouts.join(",\n    ")}\n` : " ";
-    }
-
-    private static ooTypeOutputFlattenKey(outs: string[]): string {
-        const oouts = outs.filter((oo) => oo !== "");
-        return oouts.length !== 0 ? `\n        ${oouts.join(",\n        ")}\n` : " ";
+        return oouts.length !== 0 ? `\n${NamespaceEmitter.s_indent_type_member}${oouts.join(",\n" + NamespaceEmitter.s_indent_type_member)}\n${NamespaceEmitter.s_indent_ns_member}` : "";
     }
 
     private emitTIREnumEntityType(ttype: TIREnumEntityType): string {
@@ -103,7 +103,7 @@ class NamespaceEmitter {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
-        return `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...entries, ...funcs, ...methods])}};`;
+        return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...entries, ...funcs, ...methods])}}`;
     }
 
     private emitTIRTypedeclEntityType(ttype: TIRTypedeclEntityType): string {
@@ -115,18 +115,27 @@ class NamespaceEmitter {
 
         let consfuncs: string[] = [];
         if(ttype.consinvariantsall.length !== 0) {
-            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
-            consfuncs.push(`$constructorWithChecks_basetype: function($value) {\n        ${checks}return $value;\n    }`);
+            const checks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member_body;
+            consfuncs.push(`$constructorWithChecks_basetype: function($value) {\n${NamespaceEmitter.s_indent_type_member_body}${checks}return $value;\n${NamespaceEmitter.s_indent_type_member}}`);
         }
         if(ttype.consinvariantsexplicit.length !== 0) {
-            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
-            consfuncs.push(`$constructorWithChecks: function($value) {\n        ${checks}return $value;\n    }`);
+            const checks = ttype.consinvariantsexplicit.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member_body;
+            consfuncs.push(`$constructorWithChecks: function($value) {\n${NamespaceEmitter.s_indent_type_member_body}${checks}return $value;\n${NamespaceEmitter.s_indent_type_member}}`);
         }
 
-        return `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs])}};`;
+        let validatefunc: string[] = [];
+        if(ttype.apivalidates.length !== 0 || ttype.consinvariantsall.length !== 0) {
+            const invchecks = ttype.consinvariantsall.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`);
+            const validatechecks = ttype.apivalidates.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "ValidateEvalFailure", "condition failure"); return true; } })()), "Failed validate ${ttype.tkey}");`);
+
+            const vvfstr = [...invchecks, ...validatechecks].join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member_body;
+            validatefunc.push(`$validate: function($value) {\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}return $value;\n${NamespaceEmitter.s_indent_type_member}}`);
+        }
+
+        return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs, ...validatefunc])}}`;
     }
 
-    private emitTIRObjectEntityType(ttype: TIRObjectEntityType): [boolean, string] {
+    private emitTIRObjectEntityType(ttype: TIRObjectEntityType): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(ttype.srcFile), this.m_ns);
 
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
@@ -140,14 +149,23 @@ class NamespaceEmitter {
 
         if(ttype.consinvariants.length !== 0) {
             const checks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`).join("\n        ") + "\n        ";
-            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n        ${checks}return Object.freeze({${fnames.map((fn) => fn + ": $" + fn).join(", ")}});\n    }`);
+            consfuncs.push(`$constructorWithChecks: function(${fnames.map((fn) => "$" + fn).join(", ")}) {\n${NamespaceEmitter.s_indent_type_member_body}${checks}return Object.freeze({${fnames.map((fn) => fn + ": $" + fn).join(", ")}});\n${NamespaceEmitter.s_indent_type_member}`);
+        }
+
+        let validatefunc: string[] = [];
+        if(ttype.apivalidates.length !== 0 || ttype.consinvariants.length !== 0) {
+            const invchecks = ttype.consinvariants.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "InvariantEvalFailure", "condition failure"); return true; } })()), "Failed invariant ${ttype.tkey}");`);
+            const validatechecks = ttype.apivalidates.map((cc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${bemitter.emitExpression(cc.exp)}; } catch (ex) { $Runtime.log("warn", "ValidateEvalFailure", "condition failure"); return true; } })()), "Failed validate ${ttype.tkey}");`);
+
+            const vvfstr = [...invchecks, ...validatechecks].join("\n" + NamespaceEmitter.s_indent_type_member_body) + "\n" + NamespaceEmitter.s_indent_type_member;
+            validatefunc.push(`$validate: function($$value) {\n${NamespaceEmitter.s_indent_type_member_body}${fnames.map((fn) => "const $" + fn + " = $$value." + fn + "; ").join(", ")}\n${NamespaceEmitter.s_indent_type_member_body}${vvfstr}}`);
         }
 
         if(ttype.binds.size === 0) {
-            return [false, `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs])}};`];
+            return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs, ...validatefunc])}}`;
         }
         else {
-            return [true, `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...consts, ...funcs, ...methods, ...consfuncs])}}`];
+            return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs, ...validatefunc])}}`;
         }
     }
 
@@ -156,49 +174,49 @@ class NamespaceEmitter {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
-        return `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods])}};`;
+        return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods])}}`;
     }
 
     private emitTIRValidatorEntityType(ttype: TIRValidatorEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRStringOfEntityType(ttype: TIRStringOfEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRASCIIStringOfEntityType(ttype: TIRASCIIStringOfEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRPathValidatorEntityType(ttype: TIRPathValidatorEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRPathEntityType(ttype: TIRPathEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}`;
     }
 
     private emitTIRPathFragmentEntityType(ttype: TIRPathFragmentEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRPathGlobEntityType(ttype: TIRPathGlobEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype)
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs])}}`;
     }
 
     private emitTIRListEntityType(ttype: TIRListEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs, ...methods])}}`
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs, ...methods])}}`
     }
 
     private emitTIRStackEntityType(ttype: TIRStackEntityType): string {
@@ -217,14 +235,14 @@ class NamespaceEmitter {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs, ...methods])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs, ...methods])}}`;
     }
 
     private emitTIRMapEntityType(ttype: TIRMapEntityType): string {
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
-        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...funcs, ...methods])}}`;
+        return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...funcs, ...methods])}}`;
     }
 
     private emitTIRTaskType(ttype: TIRTaskType): string {
@@ -243,19 +261,19 @@ class NamespaceEmitter {
         //TODO: onX funcs such here too!
         //
 
-        return `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs])}};`;
+        return `${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods, ...consfuncs])}}`;
     }
 
-    private emitTIRConceptType(ttype: TIRConceptType): [boolean, string] {
+    private emitTIRConceptType(ttype: TIRConceptType): string {
         const consts = ttype.constMembers.map((cm) => this.emitMemberConst(ttype, cm));
         const funcs = this.emitOOTypeFunctions(ttype);
         const methods = this.emitOOTypeMethods(ttype);
 
         if(ttype.binds.size === 0) {
-            return [false, `const BSQ${ttype.tname.name} = {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods])}};`];
+            return `${ttype.tname.name}: {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods])}}`;
         }
         else {
-            return [true, `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlattenKey([...consts, ...funcs, ...methods])}}`];
+            return `"${ttype.tkey}": {${NamespaceEmitter.ooTypeOutputFlatten([...consts, ...funcs, ...methods])}}`;
         }
     }
 
@@ -299,66 +317,66 @@ class NamespaceEmitter {
         return "[NOT IMPLEMENTED]";
     }
 
-    private emitType(ttype: TIRType): [boolean, string] {
+    private emitType(ttype: TIRType): string {
         if(ttype instanceof TIREnumEntityType) {
-            return [false, this.emitTIREnumEntityType(ttype)];
+            return this.emitTIREnumEntityType(ttype);
         }
         else if(ttype instanceof TIRTypedeclEntityType) {
-            return [false, this.emitTIRTypedeclEntityType(ttype)];
+            return this.emitTIRTypedeclEntityType(ttype);
         }
         else if(ttype instanceof TIRObjectEntityType) {
             return this.emitTIRObjectEntityType(ttype);
         }
         else if(ttype instanceof TIRPrimitiveInternalEntityType) {
-            return [false, this.emitTIRPrimitiveInternalEntityType(ttype)];
+            return this.emitTIRPrimitiveInternalEntityType(ttype);
         }
         else if(ttype instanceof TIRValidatorEntityType) {
-            return [true, this.emitTIRValidatorEntityType(ttype)];
+            return this.emitTIRValidatorEntityType(ttype);
         }
         else if(ttype instanceof TIRStringOfEntityType) {
-            return [true, this.emitTIRStringOfEntityType(ttype)];
+            return this.emitTIRStringOfEntityType(ttype);
         } 
         else if(ttype instanceof TIRASCIIStringOfEntityType) {
-            return [true, this.emitTIRASCIIStringOfEntityType(ttype)];
+            return this.emitTIRASCIIStringOfEntityType(ttype);
         }
         else if(ttype instanceof TIRPathValidatorEntityType) {
-            return [true, this.emitTIRPathValidatorEntityType(ttype)];
+            return this.emitTIRPathValidatorEntityType(ttype);
         }
         else if(ttype instanceof TIRPathEntityType) {
-            return [true, this.emitTIRPathEntityType(ttype)];
+            return this.emitTIRPathEntityType(ttype);
         }
         else if(ttype instanceof TIRPathFragmentEntityType) {
-            return [true, this.emitTIRPathFragmentEntityType(ttype)];
+            return this.emitTIRPathFragmentEntityType(ttype);
         }
         else if(ttype instanceof TIRPathGlobEntityType) {
-            return [true, this.emitTIRPathGlobEntityType(ttype)];
+            return this.emitTIRPathGlobEntityType(ttype);
         }
         else if(ttype instanceof TIRListEntityType) {
-            return [true, this.emitTIRListEntityType(ttype)];
+            return this.emitTIRListEntityType(ttype);
         }
         else if(ttype instanceof TIRStackEntityType) {
-            return [true, this.emitTIRStackEntityType(ttype)];
+            return this.emitTIRStackEntityType(ttype);
         }
         else if(ttype instanceof TIRQueueEntityType) {
-            return [true, this.emitTIRQueueEntityType(ttype)];
+            return this.emitTIRQueueEntityType(ttype);
         }
         else if(ttype instanceof TIRSetEntityType) {
-            return [true, this.emitTIRSetEntityType(ttype)];
+            return this.emitTIRSetEntityType(ttype);
         }
         else if(ttype instanceof TIRMapEntryEntityType) {
-            return [true, this.emitTIRMapEntryEntityType(ttype)];
+            return this.emitTIRMapEntryEntityType(ttype);
         }
         else if(ttype instanceof TIRMapEntityType) {
-            return [true, this.emitTIRMapEntityType(ttype)];
+            return this.emitTIRMapEntityType(ttype);
         }
         else if(ttype instanceof TIRTaskType) {
-            return [false, this.emitTIRTaskType(ttype)];
+            return this.emitTIRTaskType(ttype);
         }
         else if(ttype instanceof TIRConceptType) {
             return this.emitTIRConceptType(ttype);
         }
         else {
-            return [true, ""];
+            return "";
         }
     }
 
@@ -416,19 +434,12 @@ class NamespaceEmitter {
 
         let invdecls: string[] = [];
 
-        let itypes: string[] = [];
-        let ktypes: string[] = [];
+        let dtypes: string[] = [];
         this.m_decl.concepts.forEach((ttk) => {
             ttk.forEach((tk) => {
-                const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
-                if(!iskeyed) {
-                    itypes.push(ccs);
-                    eexports.push("BSQ" + (this.m_assembly.typeMap.get(tk) as TIROOType).tname.name);
-                }
-                else {
-                    if(ccs !== "") {
-                        ktypes.push(ccs);
-                    }
+                const ccs = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
+                if(ccs !== "") {
+                    dtypes.push(ccs);
                 }
 
                 const ootype = this.m_assembly.typeMap.get(tk) as TIROOType;
@@ -443,15 +454,9 @@ class NamespaceEmitter {
     
         this.m_decl.objects.forEach((ttk) => {
             ttk.forEach((tk) => {
-                const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
-                if(!iskeyed) {
-                    itypes.push(ccs);
-                    eexports.push("BSQ" + (this.m_assembly.typeMap.get(tk) as TIROOType).tname.name);
-                }
-                else {
-                    if(ccs !== "") {
-                        ktypes.push(ccs);
-                    }
+                const ccs = this.emitType(this.m_assembly.typeMap.get(tk) as TIRType);
+                if (ccs !== "") {
+                    dtypes.push(ccs);
                 }
 
                 const ootype = this.m_assembly.typeMap.get(tk) as TIROOType;
@@ -469,14 +474,8 @@ class NamespaceEmitter {
         });
 
         this.m_decl.tasks.forEach((ttk) => {
-            const [iskeyed, ccs] = this.emitType(this.m_assembly.typeMap.get(ttk) as TIRType);
-            if (!iskeyed) {
-                itypes.push(ccs);
-                eexports.push("BSQ" + (this.m_assembly.typeMap.get(ttk) as TIROOType).tname.name);
-            }
-            else {
-                ktypes.push(ccs);
-            }
+            const ccs = this.emitType(this.m_assembly.typeMap.get(ttk) as TIRType);
+            dtypes.push(ccs);
         });
 
         let consts: string[] = []; 
@@ -510,18 +509,27 @@ class NamespaceEmitter {
         });
 
         const iext = asdeno ? ".ts" : "";
-        const stdimps = [`import * as $Constants from "./constants${iext}";`, `import * as $TypeInfo from "./typeinfo${iext}";`, `import * as $Runtime from "./runtime${iext}";`, `import * as $BSQONEmit from "./bsqon_emit${iext}";`];
+        const stdimps = [`import * as $Constants from "./constants${iext}";`, `import * as $TypeInfo from "./typeinfo${iext}";`, `import * as $Runtime from "./runtime${iext}";`, `import * as $BSQONEmit from "./bsqon_emit${iext}";`, `import {$ASM} from "./runtime${iext}";`];
+        if(this.m_ns !== "Core") {
+            stdimps.push(`import { $BSQ } from "./Core${iext}";`);
+        }
         const depimps = nsdeps.map((dep) => `import * as ${dep} from "./${dep}${iext}";`).join("\n") + "\n";
 
         const fmts = formats.join("\n");
 
         const constdecls = consts.join("\n");
 
-        const itypedecls = itypes.join("\n");
-        const ktypedecls = ktypes.length !== 0 ? `const $Types = {\n    ${ktypes.join(",\n    ")}\n};\n` : "";
-
-        if(ktypes.length !== 0) {
-            eexports.push("$Types");
+        let nstdecl = "";
+        if(this.m_ns === "Core") {
+            nstdecl = `const $BSQ = {\n${NamespaceEmitter.s_indent_ns_member}${dtypes.join(",\n" + NamespaceEmitter.s_indent_ns_member)}\n};`
+        }
+        else {
+            if(dtypes.length === 0) {
+                nstdecl = `$Runtime.$ASM.${this.m_ns.replace(/::/g, "$")} = {};`;
+            }
+            else {
+                nstdecl = `$Runtime.$ASM.${this.m_ns.replace(/::/g, "$")} = {\n${NamespaceEmitter.s_indent_ns_member}${dtypes.join(",\n" + NamespaceEmitter.s_indent_ns_member)}\n};`;
+            }
         }
 
         const ifuncdecls = ifuncs.join("\n\n");
@@ -538,9 +546,12 @@ class NamespaceEmitter {
                     
         const iidm = invdecls.join("\n");
 
+        if(this.m_ns === "Core") {
+            eexports.push("$BSQ");
+        }
         const exportdecl = `export {\n    ${eexports.join(", ")}\n};`
 
-        return [...stdimps, depimps, fmts, constdecls, itypedecls, ktypedecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
+        return [...stdimps, depimps, fmts, nstdecl, constdecls, ifuncdecls, kfuncdecls, lambdas, iidm, exportdecl]
             .filter((cmpt) => cmpt !== "")
             .join("\n");
     }
