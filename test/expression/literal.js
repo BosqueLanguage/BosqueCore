@@ -13,7 +13,7 @@ describe('None/Nothing/Boolean', function () {
 
     describe('main()', function () {
         it('expected [none, nothing, true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([null, null, true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[none, nothing, true, false]");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('Integral', function () {
 
     describe('main()', function () {
         it('expected [0n, 10n, -3i, 0i, 1i, 0N, 10N, -3I, 0I, 1I]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([0, 10, -3, 0, 1, 0, 10, -3, 0, 1]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[0n, 10n, -3i, 0i, 1i, 0N, 10N, -3I, 0I, 1I]");
         });
     });
 });
@@ -41,7 +41,7 @@ describe('Float', function () {
 
     describe('main()', function () {
         it('expected [0.0f, 1.1f, -3.01d, 5.0d, 0/2R, 2/1R, 5/2R]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([0.0, 1.1, "-3.01", "5", "0", "2", "5/2"]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[0.0f, 1.1f, -3.01d, 5.0d, 0R, 2R, 5/2R]");
         });
     });
 });
@@ -55,7 +55,7 @@ describe('String', function () {
 
     describe('main()', function () {
         it('expected ["hello", "", ascii{"hello"}, ascii{""}]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(["hello", "", "hello", ""]);
+            expect(invokeExecutionOn(jsmain)).to.eql('["hello", "", ascii{"hello"}, ascii{""}]');
         });
     });
 });

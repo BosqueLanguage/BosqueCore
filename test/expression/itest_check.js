@@ -13,12 +13,12 @@ describe('ITest check type concept', function () {
 
     describe('Qux?ITest', function () {
         it('expected [true, false]', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([true, false]);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("[true, false]");
         });
     });
     describe('Qux?!ITest', function () {
         it('expected [false, true]', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([false, true]);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("[false, true]");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('ITest check type union', function () {
 
     describe('Qux ITest', function () {
         it('expected [true, false, false, true, true]', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([true, false, false, true, true]);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("[true, false, false, true, true]");
         });
     });
     describe('None ITest', function () {
         it('expected [false, true, true, false, false]', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([false, true, true, false, false]);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("[false, true, true, false, false]");
         });
     });
 });

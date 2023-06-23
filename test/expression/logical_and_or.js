@@ -13,7 +13,7 @@ describe('Logical /\\', function () {
 
     describe('and flavors', function () {
         it('expected [true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, false]");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('Logical \\/', function () {
 
     describe('or flavors', function () {
         it('expected [true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, false]");
         });
     });
 });

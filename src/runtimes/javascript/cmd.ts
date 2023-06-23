@@ -150,7 +150,8 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `import * as $Parse from "./bsqon_parse${iext}";\n`
             + `import * as $Emit from "./bsqon_emit${iext}";\n`
             + `import * as $${mainNamespace} from "./${mainNamespace}${iext}";\n\n`
-            + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n\n`
+            + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n`
+            + `$TypeInfo.setLoadedTypeInfo(assembly);\n\n`
             + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
             + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
             + `const input_stream = filearg !== undefined ? fs.createReadStream(filearg.substring(8)) : process.stdin;\n`

@@ -12,8 +12,8 @@ describe('Single MapEntry constructor', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('From exps and infer return', function () {
-        it('expected [1i => 2i, 3i => 4i]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([[1, 2], [3, 4]]);
+        it('expected [MapEntry<Int, Int>{1i, 2i}, MapEntry<Int, Int|None>{3i, 4i}]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql("[MapEntry<Int, Int>{1i, 2i}, MapEntry<Int, Int|None>{3i, 4i}]");
         });
     });
 });
@@ -26,8 +26,8 @@ describe('Collection MapEntry Constructor', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('As Collection Entries', function () {
-        it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([[1, "one"], [2, "two"]]);
+        it('expected Map{1i => "one", 2i => "two"}', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql('Map{1i => "one", 2i => "two"}');
         });
     });
 });

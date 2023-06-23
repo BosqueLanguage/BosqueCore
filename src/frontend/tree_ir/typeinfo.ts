@@ -632,6 +632,10 @@ class AssemblyInfo {
 
 
 let loaded_typeinfo: AssemblyInfo | undefined = undefined;
+function setLoadedTypeInfo(lasm: AssemblyInfo): void {
+    loaded_typeinfo = lasm;
+}
+
 function isSubtype_Runtime(tkey: BSQTypeKey, oftype: BSQTypeKey): boolean {
     let lasm = loaded_typeinfo as AssemblyInfo;
     let t = lasm.typerefs.get(tkey) as BSQType;
@@ -646,5 +650,5 @@ export {
     StringOfType, ASCIIStringOfType, SomethingType, OptionType, OkType, ErrorType, ResultType, PathType, PathFragmentType, PathGlobType,
     ListType, StackType, QueueType, SetType, MapEntryType, MapType,
     ConceptSetType, UnionType, NamespaceDecl, AssemblyInfo,
-    loaded_typeinfo, isSubtype_Runtime
+    loaded_typeinfo, setLoadedTypeInfo, isSubtype_Runtime
 }
