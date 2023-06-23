@@ -58,7 +58,7 @@ class BSQONEmitter {
 
     private emitType(ttype: $TypeInfo.BSQType): string {
         if (ttype instanceof $TypeInfo.UnionType) {
-            return ttype.types.map((tt) => this.emitType(this.lookupMustDefType(tt))).join(" | ");
+            return ttype.types.map((tt) => this.emitType(this.lookupMustDefType(tt))).join("|");
         }
         else if(ttype instanceof $TypeInfo.ConceptSetType) {
             return ttype.concepts.map((tt) => this.emitType(this.lookupMustDefType(tt))).join("&");

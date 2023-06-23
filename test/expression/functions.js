@@ -13,12 +13,12 @@ describe('Namespace functions', function () {
 
     describe('f(1i, 2i)', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("3i");
         });
     });
     describe('Main::f(1i, 2i)', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('Type functions', function () {
 
     describe('Foo:f(1i, 2i)', function () {
         it('expected -1i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(-1);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("-1i");
         });
     });
     describe('Main::f(1i, 2i)', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });

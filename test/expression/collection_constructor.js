@@ -13,12 +13,12 @@ describe('List constructor', function () {
 
     describe('List<Int>{}', function () {
         it('expected List<Int>{}', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql("List{}");
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("List{}");
         });
     });
     describe('List<Int>{1i, 2i, 3i}', function () {
         it('expected List<Int>{1i, 2i, 3i}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql("List{1i, 2i, 3i}");
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("List{1i, 2i, 3i}");
         });
     });
 });
@@ -37,7 +37,7 @@ describe('Map constructor', function () {
     });
     describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql('Map{1i => "one", 2i => "two"}');
+            expect(invokeExecutionOn(jsmain, "false")).to.eql('Map{1i => "one", 2i => "two"}');
         });
     });
 });
@@ -51,12 +51,12 @@ describe('Map specific constructor', function () {
 
     describe('Map<Int, String>{}', function () {
         it('expected error', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.contain("Duplicate keys in Map construction");
+            expect(invokeExecutionOn(jsmain, "true")).to.contain("Duplicate keys in Map construction");
         });
     });
     describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql('Map{1i => "one", 2i => "two"}');
+            expect(invokeExecutionOn(jsmain, "false")).to.eql('Map{1i => "one", 2i => "two"}');
         });
     });
 });

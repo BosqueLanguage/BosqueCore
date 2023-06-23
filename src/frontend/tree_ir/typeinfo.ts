@@ -129,7 +129,7 @@ abstract class BSQType {
                 return new ConceptSetType(jv.concepts, jv.subtypes, jv.isrecursive);
             }
             case BSQTypeTag.TYPE_UNION: {
-                return new UnionType(jv.subtypes, jv.isrecursive);
+                return new UnionType(jv.types, jv.isrecursive);
             }
             default: {
                 return UnresolvedType.singleton;
@@ -508,7 +508,7 @@ class ConceptSetType extends BSQType {
     readonly subtypes: Set<BSQTypeKey>;
 
     constructor(concepts: BSQTypeKey[], subtypes: BSQTypeKey[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_CONCEPT_SET, concepts.map((cc) => cc).sort().join("&"), isrecursive, false);
+        super(BSQTypeTag.TYPE_CONCEPT_SET, concepts.sort().join("&"), isrecursive, false);
 
         this.concepts = concepts;
         this.subtypes = new Set<BSQTypeKey>(subtypes);
@@ -523,7 +523,7 @@ class UnionType extends BSQType {
     readonly types: BSQTypeKey[];
 
     constructor(types: BSQTypeKey[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_UNION, types.map((tt) => tt).sort().join(" | "), isrecursive, false);
+        super(BSQTypeTag.TYPE_UNION, types.sort().join("|"), isrecursive, false);
         this.types = types;
     }
 

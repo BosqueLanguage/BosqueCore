@@ -1350,7 +1350,7 @@ class BSQONParser {
                 opts.push(this.parseUnionType());
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("|"));
         }
     }
 
@@ -2327,7 +2327,7 @@ class BSQONParser {
         }
         else {
             const ltype = this.parseListType(ttype);
-            this.raiseErrorIf(this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
@@ -2435,7 +2435,7 @@ class BSQONParser {
         }
         else {
             const ltype = this.parseMapType(ttype);
-            this.raiseErrorIf(this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
@@ -2624,23 +2624,27 @@ class BSQONParser {
 
             this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
             this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
-            return vv;
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
         }
         else {
+            let rv: BSQONParseResult = undefined;
+            let rt: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
+            
             if (ttype instanceof $TypeInfo.OptionType) {
                 if (this.testToken(TokenKind.TOKEN_NOTHING)) {
-                    return this.parseNothing(whistory);
+                    rv = this.parseNothing(whistory);
+                    rt = this.lookupMustDefType("Nothing");
                 }
                 else {
-                    return this.parseSomething(ttype, ttype, whistory)[0];
+                    [rv, rt] = this.parseSomething(ttype, ttype, whistory);
                 }
             }
             else if (ttype instanceof $TypeInfo.ResultType) {
                 if (this.testToken(TokenKind.TOKEN_OK) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Ok"})) {
-                    return this.parseOk(ttype, ttype, whistory)[0];
+                    [rv, rt] = this.parseOk(ttype, ttype, whistory);
                 }
                 else if (this.testToken(TokenKind.TOKEN_ERR) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Err"})) {
-                    return this.parseErr(ttype, ttype, whistory)[0];
+                    [rv, rt] = this.parseErr(ttype, ttype, whistory);
                 }
                 else {
                     const rtype = this.parseNominalType();
@@ -2651,14 +2655,16 @@ class BSQONParser {
                         const vv = this.parseValue(this.lookupMustDefType(rtype.ttype), whistory);
                         this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-                        return BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rt = rtype;
                     }
                     else {
                         this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
                         const vv = this.parseValue(this.lookupMustDefType((rtype as $TypeInfo.ErrorType).etype), whistory);
                         this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-                        return BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rt = rtype;
                     }
                 }
             }
@@ -2667,18 +2673,22 @@ class BSQONParser {
                 this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
                 this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
 
-                return this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rt = tt;
             }
             else if (ttype instanceof $TypeInfo.ConceptSetType) {
                 const tt = this.parseNominalType();
                 this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
                 this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
 
-                return this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rt = tt;
             }
             else {
                 this.raiseError(`Unknown concept type ${ttype.tkey}`);
             }
+
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
         }
     }
 
@@ -2705,7 +2715,8 @@ class BSQONParser {
         //everyone has a none special format option
         if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
             if (this.testToken(TokenKind.TOKEN_NULL) && ttype.types.includes("None")) {
-                return this.parseNone(whistory);
+                const nonep = this.parseNone(whistory);
+                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
             }
             else {
                 this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
@@ -2716,12 +2727,13 @@ class BSQONParser {
 
                 this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
                 this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
-                return vv;
+                return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
             }
         }
         else {
             if (this.testToken(TokenKind.TOKEN_NONE) && ttype.types.includes("None")) {
-                return this.parseNone(whistory);
+                const nonep = this.parseNone(whistory);
+                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
             }
 
             //it isn't none so now we start looking at prefixes
@@ -2945,8 +2957,8 @@ class BSQONParser {
                 rt = this.lookupMustDefType(tt);
             }
 
-            this.raiseErrorIf(this.m_assembly.checkConcreteSubtype(rt, ttype), `Value is not of type ${ttype.tkey} -- got ${rt.tkey}`);
-            return rv;
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(rt, ttype), `Value is not of type ${ttype.tkey} -- got ${rt.tkey}`);   
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
         }
     }
 
