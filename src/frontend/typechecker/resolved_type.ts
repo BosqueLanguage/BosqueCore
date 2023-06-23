@@ -242,7 +242,7 @@ class ResolvedOkEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedOkEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
+        let name =  "Result<" + typeT.typeID + ", " + typeE.typeID + ">::Ok";
         return new ResolvedOkEntityAtomType(name, object, typeT, typeE);
     }
 
@@ -262,7 +262,7 @@ class ResolvedErrEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedErrEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
+        let name = "Result<" + typeT.typeID + ", " + typeE.typeID + ">::Err";
         return new ResolvedErrEntityAtomType(name, object, typeT, typeE);
     }
 

@@ -490,10 +490,10 @@ class BSQONEmitter {
     }
 
     private emitRecord(ttype: $TypeInfo.RecordType, v: {[k: string]: any}, tagged: boolean): string {
-        const pkeys = [...v.keys()].sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0));
+        const pkeys = [...Object.keys(v)].sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0));
         const emap = pkeys.map((prop) => {
             const ftype = this.lookupMustDefType(ttype.entries.find((ee) => ee.pname === prop)!.ptype);
-            return `${prop}: ${this.emitValue(ftype, v[prop])}`;
+            return `${prop}=${this.emitValue(ftype, v[prop])}`;
         });
 
         const rrv = "{" + emap.join(", ") + "}";
@@ -741,15 +741,15 @@ class BSQONEmitter {
                     return this.emitNothing();
                 }
                 else {
-                    return this.emitSomething(rtt as $TypeInfo.OptionType, v.value, true);
+                    return this.emitSomething(rtt as $TypeInfo.OptionType, v.value, false);
                 }
             }
             else if (ttype instanceof $TypeInfo.ResultType) {
                 if(rtt instanceof $TypeInfo.OkType) {
-                    return this.emitOk(rtt, v.value, true);
+                    return this.emitOk(rtt, v.value, false);
                 }
                 else {
-                    return this.emitErr(rtt as $TypeInfo.ErrorType, v.value, true);
+                    return this.emitErr(rtt as $TypeInfo.ErrorType, v.value, false);
                 }
             }
             else if (ttype instanceof $TypeInfo.StdConceptType) {

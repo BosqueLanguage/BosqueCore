@@ -808,17 +808,19 @@ class BSQONParser {
 
     private testTokens(...tkinds: string[]): boolean {
         const opos = this.m_cpos;
+        const olt = this.m_lastToken;
+
         for (let i = 0; i < tkinds.length; ++i) {
             if (!this.testToken(tkinds[i])) {
                 this.m_cpos = opos;
-                this.m_lastToken = undefined;
+                this.m_lastToken = olt;
 
                 return false;
             }
         }
 
         this.m_cpos = opos;
-        this.m_lastToken = undefined;
+        this.m_lastToken = olt;
         return true;
     }
 
@@ -828,17 +830,19 @@ class BSQONParser {
 
     private testTokensWValue(...tks: {kind: TokenKind, value: string}[]): boolean {
         const opos = this.m_cpos;
+        const olt = this.m_lastToken;
+
         for (let i = 0; i < tks.length; ++i) {
             if (!this.testTokenWValue(tks[i])) {
                 this.m_cpos = opos;
-                this.m_lastToken = undefined;
+                this.m_lastToken = olt;
 
                 return false;
             }
         }
 
         this.m_cpos = opos;
-        this.m_lastToken = undefined;
+        this.m_lastToken = olt;
         return true;
     }
 
@@ -1370,9 +1374,11 @@ class BSQONParser {
 
     private peekType(): $TypeInfo.BSQType {
         const opos = this.m_cpos;
+        const olt = this.m_lastToken;
+
         const tt = this.parseType();
 
-        this.m_lastToken = undefined;
+        this.m_lastToken = olt;
         this.m_cpos = opos;
 
         return tt;

@@ -11,19 +11,19 @@ describe('Negation', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('Negate 1, 1.0, 3/2, 10', function () {
-        it('expected [-1, -1.0, "-3/2", -10]', function () {
-            expect(invokeExecutionOn(jsmain, 1, 1.0, "3/2", 10)).to.eql([-1, -1.0, "-3/2", -10]);
+    describe('Negate 1i, 1.0f, 3/2R, 10I_Foo', function () {
+        it('expected [-1i, -1.0f, "-3/2R", -10I_Foo]', function () {
+            expect(invokeExecutionOn(jsmain, "1i", "1.0f", "3/2R", "10I_Foo")).to.eql("[-1i, -1.0f, -3/2R, -10I_Foo]");
         });
     });
-    describe('Negate -1, -1.0, -3/2, -10', function () {
-        it('expected [1, 1.0, "3/2", 10]', function () {
-            expect(invokeExecutionOn(jsmain, -1, -1.0, "-3/2", -10)).to.eql([1, 1.0, "3/2", 10]);
+    describe('Negate -1i, -1.0f, -3/2R, -10I_Foo', function () {
+        it('expected [1i, 1.0f, 3/2R, 10I_Foo]', function () {
+            expect(invokeExecutionOn(jsmain, "-1i", "-1.0f", "-3/2R", "-10I_Foo")).to.eql("[1i, 1.0f, 3/2R, 10I_Foo]");
         });
     });
-    describe('Negate 0, 0.0, 0/1, 0', function () {
-        it('expected [0, 0.0, "0", 0]', function () {
-            expect(invokeExecutionOn(jsmain, 0, 0.0, "0/2", 0)).to.eql([0, 0.0, "0", 0]);
+    describe('Negate 0i, 0.0f, 0R, 0I_Foo', function () {
+        it('expected [0i, 0.0f, 0R, 0I_Foo]', function () {
+            expect(invokeExecutionOn(jsmain, "0i", "0.0f", "0R", "0I_Foo")).to.eql("[0i, 0.0f, 0R, 0I_Foo]");
         });
     });
 });

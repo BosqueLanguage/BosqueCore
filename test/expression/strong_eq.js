@@ -13,7 +13,7 @@ describe('Eq Basics', function () {
 
     describe('checks', function () {
         it('expected [true, true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, true, false]");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('Eq Int|None', function () {
 
     describe('checks', function () {
         it('expected [false, true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([false, true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[false, true, false]");
         });
     });
 });
@@ -41,7 +41,7 @@ describe('Eq Option', function () {
 
     describe('checks', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(false);
+            expect(invokeExecutionOn(jsmain)).to.eql("false");
         });
     });
 });
@@ -55,17 +55,17 @@ describe('Eq Mixed Key', function () {
 
     describe('checks hello', function () {
         it('expected [true, false]', function () {
-            expect(invokeExecutionOn(jsmain, "hello")).to.eql([true, false]);
+            expect(invokeExecutionOn(jsmain, '"hello"')).to.eql("[true, false]");
         });
     });
     describe('checks goodbye', function () {
         it('expected [false, true]', function () {
-            expect(invokeExecutionOn(jsmain, "goodbye")).to.eql([false, true]);
+            expect(invokeExecutionOn(jsmain, '"goodbye"')).to.eql("[false, true]");
         });
     });
     describe('checks none', function () {
         it('expected [false, true]', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql([false, true]);
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("[false, true]");
         });
     });
 });
@@ -79,7 +79,7 @@ describe('Eq entity none', function () {
 
     describe('checks', function () {
         it('expected [false, true, true, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([false, true, true, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[false, true, true, false]");
         });
     });
 });

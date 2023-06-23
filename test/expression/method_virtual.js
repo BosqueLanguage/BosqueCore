@@ -13,12 +13,12 @@ describe('Method virtual concept', function () {
 
     describe('call Qux', function () {
         it('expected [2i, 4i, 1i, 1i, 2i]', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([2, 4, 1, 1, 2]);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("[2i, 4i, 1i, 1i, 2i]");
         });
     });
     describe('call Qax', function () {
         it('expected [2i, 4i, 1i, 4i, 2i]', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([2, 4, 1, 4, 4]);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("[2i, 4i, 1i, 4i, 4i]");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('Method virtual union', function () {
 
     describe('call Qux', function () {
         it('expected [2i, 4i, 1i, 1i, 2i]', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([2, 4, 1, 1, 2]);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("[2i, 4i, 1i, 1i, 2i]");
         });
     });
     describe('call Qax', function () {
         it('expected [2i, 4i, 1i, 4i, 2i]', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql([2, 4, 1, 4, 4]);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("[2i, 4i, 1i, 4i, 4i]");
         });
     });
 });

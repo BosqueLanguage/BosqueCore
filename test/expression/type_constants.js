@@ -11,7 +11,7 @@ describe('Type constants', function () {
 
     describe('main()', function () {
         it('expected [1i, 1i, 4i, 1i]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([1, 1, 4, 1]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[1i, 1i, 4i, 1i]");
         });
     });
 });

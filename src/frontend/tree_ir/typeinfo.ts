@@ -17,7 +17,7 @@ enum BSQTypeTag {
     TYPE_SOMETHING = "Something",
     TYPE_OPTION = "Option",
     TYPE_OK = "Result::Ok",
-    TYPE_ERROR = "Result::Error",
+    TYPE_ERROR = "Result::Err",
     TYPE_RESULT = "Result",
     TYPE_PATH = "Path",
     TYPE_PATH_FRAGMENT = "PathFragment",
@@ -357,7 +357,7 @@ class ErrorType extends EntityType {
     readonly etype: BSQTypeKey;
 
     constructor(ttype: BSQTypeKey, etype: BSQTypeKey, isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Error`, isrecursive);
+        super(BSQTypeTag.TYPE_ERROR, `Result<${ttype}, ${etype}>::Err`, isrecursive);
         this.ttype = ttype;
         this.etype = etype;
     }
