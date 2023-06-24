@@ -1726,12 +1726,7 @@ class TIRAssembly {
                 return false;
             }
             else {
-                for(const st in tdecl.supertypes) {
-                    if(this.isConcreteSubtypeOf(st, oftype)) {
-                        return true;
-                    }
-                }
-                return false;
+                return [...tdecl.supertypes].some((st) => this.isConcreteSubtypeOf(st, oftype));
             }
         }
     }

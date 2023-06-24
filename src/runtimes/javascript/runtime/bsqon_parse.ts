@@ -1247,6 +1247,7 @@ class BSQONParser {
             }
         }
         else {
+            this.popToken();
             let tnames = [tname];
             while (this.testTokens(TokenKind.TOKEN_COLON_COLON, TokenKind.TOKEN_TYPE)) {
                 this.popToken();
@@ -1278,8 +1279,14 @@ class BSQONParser {
             return this.lookupMustDefType("[]");
         }
         else {
-            while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                this.popToken();
+            let first = true;
+            while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    this.popToken();
+                }
                 
                 entries.push(this.parseType());
             }
@@ -1296,8 +1303,14 @@ class BSQONParser {
             return this.lookupMustDefType("{}");
         }
         else {
-            while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                this.popToken();
+            let first = true;
+            while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    this.popToken();
+                }
                 
                 const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
                 const rtype = this.parseType();
@@ -2156,8 +2169,14 @@ class BSQONParser {
             let tvals: any[] = [];
             let ptree: [$TypeInfo.BSQType, any][] = [];
 
-            while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            let first = true;
+            while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    this.popToken();
+                }
                 
                 const entry = this.parseValue(this.lookupMustDefType(ttype.entries[tvals.length]), whistory);
 
@@ -2183,8 +2202,14 @@ class BSQONParser {
         else {
             let tvals: {[k: string]: any} = {};
             let ptree: {[k: string]: [$TypeInfo.BSQType, any]} = {};
-            while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            let first = true;
+            while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                if(first) {
+                    first = false;
+                }
+                else {
+                    this.popToken();
+                }
                 
                 const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
                 this.expectTokenAndPop(TokenKind.TOKEN_COLON);
@@ -2259,7 +2284,15 @@ class BSQONParser {
         }
         else {
             if(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
-                while (this.testToken(TokenKind.TOKEN_COMMA)) {
+                let first = true;
+                while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if (first) {
+                        first = false;
+                    }
+                    else {
+                        this.popToken();
+                    }
+
                     const ff = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
                     const ffe = ttype.fields.find((f) => f.fname === ff);
                     this.raiseErrorIf(ffe === undefined, `Field ${ff} does not exist on type ${ttype.tkey}`);
@@ -2272,14 +2305,24 @@ class BSQONParser {
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-                this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+                if(ttype.hasvalidations) {
+                    this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+                }
 
                 this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
                 return BSQONParseResultInfo.create(Object.freeze(tvals), ttype, ptree, whistory);
             }
             else {
-                while (this.testToken(TokenKind.TOKEN_COMMA)) {
-                    const ff = ttype.fields[tvals.length];
+                let ii = 0;
+                while (ii === 0 || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if (ii !== 0) {
+                        this.popToken();
+                    }
+
+                    if (ii >= ttype.fields.length) {
+                        this.raiseError(`Expected ${ttype.fields.length} values but got ${ii}`);
+                    }
+                    const ff = ttype.fields[ii++];
                     const vv = this.parseValue(this.lookupMustDefType(ff.ftype), whistory);
 
                     tvals[ff.fname] = BSQONParseResultInfo.getParseValue(vv, whistory);
@@ -2287,7 +2330,9 @@ class BSQONParser {
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-                this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+                if(ttype.hasvalidations) {
+                    this.m_stdentityChecks.push({ etype: ttype.tkey, evalue: tvals });
+                }
 
                 this.raiseErrorIf(ttype.fields.length !== Object.keys(tvals).length, `Expected ${ttype.fields.length} values but got ${Object.keys(tvals).length}`);
                 return BSQONParseResultInfo.create(Object.freeze(tvals), ttype, ptree, whistory);
@@ -2304,13 +2349,19 @@ class BSQONParser {
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create(IList<any>(), ttype as $TypeInfo.ListType, [], whistory);
+                return [BSQONParseResultInfo.create(IList<any>(), ttype as $TypeInfo.ListType, [], whistory), ttype as $TypeInfo.ListType];
             }
             else {
+                let first = true;
                 let vv: any[] = [];
                 let ptree: [$TypeInfo.BSQType, any][] = [];
-                while(this.testToken(TokenKind.TOKEN_COMMA)) {
-                    this.popToken();
+                while(first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if(first) {
+                        first = false;
+                    }
+                    else {
+                        this.popToken();
+                    }
 
                     if(this.testToken(TokenKind.TOKEN_LDOTS)) {
                         const entry = this.parseValue(ttype as $TypeInfo.ListType, whistory);
@@ -2328,23 +2379,30 @@ class BSQONParser {
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
 
-                return BSQONParseResultInfo.create(IList<any>(vv), ttype as $TypeInfo.ListType, ptree, whistory);
+                return [BSQONParseResultInfo.create(IList<any>(vv), ttype as $TypeInfo.ListType, ptree, whistory), ttype as $TypeInfo.ListType];
             }
         }
         else {
             const ltype = this.parseListType(ttype);
             this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
-            if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
+            if(this.testToken(TokenKind.TOKEN_RBRACE)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create(IList<any>(), ltype as $TypeInfo.ListType, [], whistory);
+                return [BSQONParseResultInfo.create(IList<any>(), ltype as $TypeInfo.ListType, [], whistory), ltype];
             }
             else {
+                let first = true;
                 let vv: any[] = [];
                 let ptree: [$TypeInfo.BSQType, any][] = [];
-                while(this.testToken(TokenKind.TOKEN_COMMA)) {
-                    this.popToken();
+                while(first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if(first) {
+                        first = false;
+                    }
+                    else {
+                        this.popToken();
+                    }
 
                     if(this.testToken(TokenKind.TOKEN_LDOTS)) {
                         const entry = this.parseValue(ltype, whistory);
@@ -2360,9 +2418,9 @@ class BSQONParser {
                         ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
                     }
                 }
-                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
-                return BSQONParseResultInfo.create(IList<any>(vv), ltype, ptree, whistory);
+                return [BSQONParseResultInfo.create(IList<any>(vv), ltype, ptree, whistory), ltype];
             }
         }
     }
@@ -2411,15 +2469,21 @@ class BSQONParser {
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create(IMap<any, any>(), ttype as $TypeInfo.MapType, [], whistory);
+                return [BSQONParseResultInfo.create(IMap<any, any>(), ttype as $TypeInfo.MapType, [], whistory), ttype as $TypeInfo.MapType];
             }
             else {
                 const metype = this.lookupMustDefType(`MapEntry<${(ttype as $TypeInfo.MapType).ktype}, ${(ttype as $TypeInfo.MapType).vtype}>`) as $TypeInfo.MapEntryType;
 
+                let first = true;
                 let vv: [any, any][] = [];
                 let ptree: [$TypeInfo.BSQType, any][] = [];
-                while(this.testToken(TokenKind.TOKEN_COMMA)) {
-                    this.popToken();
+                while(first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if(first) {
+                        first = false;
+                    }
+                    else {
+                        this.popToken();
+                    }
 
                     if(this.testToken(TokenKind.TOKEN_LDOTS)) {
                         this.raiseError("... shorthand notation NOT IMPLEMENTED for maps yet");
@@ -2436,7 +2500,7 @@ class BSQONParser {
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
 
-                return BSQONParseResultInfo.create(IMap<any, any>(vv), ttype as $TypeInfo.MapType, ptree, whistory);
+                return [BSQONParseResultInfo.create(IMap<any, any>(vv), ttype as $TypeInfo.MapType, ptree, whistory), ttype as $TypeInfo.MapType];
             }
         }
         else {
@@ -2446,15 +2510,21 @@ class BSQONParser {
             if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
                 this.popToken();
 
-                return BSQONParseResultInfo.create(IMap<any, any>(), ltype as $TypeInfo.MapType, [], whistory);
+                return [BSQONParseResultInfo.create(IMap<any, any>(), ltype as $TypeInfo.MapType, [], whistory), ltype];
             }
             else {
                 const metype = this.lookupMustDefType(`MapEntry<${(ltype as $TypeInfo.MapType).ktype}, ${(ltype as $TypeInfo.MapType).vtype}>`) as $TypeInfo.MapEntryType;
 
+                let first = true;
                 let vv: [any, any][] = [];
                 let ptree: [$TypeInfo.BSQType, any][] = [];
-                while(this.testToken(TokenKind.TOKEN_COMMA)) {
-                    this.popToken();
+                while(first || this.testToken(TokenKind.TOKEN_COMMA)) {
+                    if(first) {
+                        first = false;
+                    }
+                    else {
+                        this.popToken();
+                    }
 
                     if(this.testToken(TokenKind.TOKEN_LDOTS)) {
                         this.raiseError("... shorthand notation NOT IMPLEMENTED for maps yet");
@@ -2471,7 +2541,7 @@ class BSQONParser {
                 }
                 this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
 
-                return BSQONParseResultInfo.create(IMap<any, any>(vv), ltype as $TypeInfo.MapType, ptree, whistory);
+                return [BSQONParseResultInfo.create(IMap<any, any>(vv), ltype as $TypeInfo.MapType, ptree, whistory), ltype];
             }
         }
     }

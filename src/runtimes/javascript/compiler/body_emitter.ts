@@ -292,7 +292,7 @@ class BodyEmitter {
             return `${accessterm}.${(invk as TIRStaticFunctionDecl).name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
-            return `${accessterm}.$Functions["${(invk as TIRStaticFunctionDecl).ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${accessterm}["${(invk as TIRStaticFunctionDecl).ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
     }
 
@@ -1025,7 +1025,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
         
         const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
@@ -1073,7 +1073,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         this.m_hasScratch = true;
@@ -1093,7 +1093,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
@@ -1114,7 +1114,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         this.m_hasScratch = true;

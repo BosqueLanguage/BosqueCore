@@ -11,9 +11,9 @@ describe('If statement basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('process(-3)', function () {
-        it('expected 3', function () {
-            expect(invokeExecutionOn(jsmain, -3)).to.eql(3);
+    describe('process(-3i)', function () {
+        it('expected 3i', function () {
+            expect(invokeExecutionOn(jsmain, "-3i")).to.eql("3i");
         });
     });
     describe('process(5)', function () {
