@@ -17,8 +17,8 @@ describe('If statement basic', function () {
         });
     });
     describe('process(5)', function () {
-        it('expected 5', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(5);
+        it('expected 5i', function () {
+            expect(invokeExecutionOn(jsmain, "5i")).to.eql("5i");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('If statement ifelse', function () {
 
     describe('process(-1)', function () {
         it('expected "negative"', function () {
-            expect(invokeExecutionOn(jsmain, -1)).to.eql("negative");
+            expect(invokeExecutionOn(jsmain, "-1i")).to.eql('"negative"');
         });
     });
     describe('process(5)', function () {
-        it('expected 5', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql("positive");
+        it('expected "positive', function () {
+            expect(invokeExecutionOn(jsmain, "5i")).to.eql('"positive"');
         });
     });
 });
@@ -50,13 +50,13 @@ describe('If statement binder', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('process(none)', function () {
-        it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
+        it('expected 0i', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0i");
         });
     });
-    describe('process(5)', function () {
-        it('expected 4', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(4);
+    describe('process(5i)', function () {
+        it('expected 4i', function () {
+            expect(invokeExecutionOn(jsmain, "5i")).to.eql("4i");
         });
     });
 });
@@ -70,12 +70,12 @@ describe('If statement flow join', function () {
 
     describe('process(none)', function () {
         it('expected none', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(null);
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("none");
         });
     });
-    describe('process(5)', function () {
-        it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(6);
+    describe('process(5i)', function () {
+        it('expected 6i', function () {
+            expect(invokeExecutionOn(jsmain, "5i")).to.eql("6i");
         });
     });
 });

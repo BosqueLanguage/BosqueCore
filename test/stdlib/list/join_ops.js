@@ -11,14 +11,14 @@ describe('List join basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{1, 2, 3}', function () {
+    describe('List{1i, 2i, 3i}', function () {
         it('expected List{[2i, 2i], [3i, 2i], [3i, 3i]}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([[2, 2], [3, 2], [3, 3]]);
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("List{[2i, 2i], [3i, 2i], [3i, 3i]}");
         });
     });
     describe('List{}', function () {
         it('expected List{}', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.eql([]);
+            expect(invokeExecutionOn(jsmain, "List{}")).to.eql("List{}");
         });
     });
 });
@@ -30,14 +30,14 @@ describe('List group basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{1, 2, 3}', function () {
-        it('expected List{[1i, List<Int>{}], [2i, List{2i}], [3i, List{2i, 3i}]}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([[1, []], [2, [2]], [3, [2, 3]]]);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected List{[1i, List{}], [2i, List{2i}], [3i, List{2i, 3i}]}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("List{[1i, List{}], [2i, List{2i}], [3i, List{2i, 3i}]}");
         });
     });
     describe('List{}', function () {
         it('expected List{}', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.eql([]);
+            expect(invokeExecutionOn(jsmain, "List{}")).to.eql("List{}");
         });
     });
 });

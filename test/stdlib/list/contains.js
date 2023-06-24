@@ -11,19 +11,19 @@ describe('List Contains basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
+    describe('List{0i, 0i, 0i}', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.eql(false);
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.eql("false");
         });
     });
-    describe('List{none, 3}', function () {
+    describe('List{none, 3i}', function () {
         it('expected true', function () {
-            expect(invokeExecutionOn(jsmain, [null, 3])).to.eql(true);
+            expect(invokeExecutionOn(jsmain, "List{none, 3i}")).to.eql("true");
         });
     });
     describe('List{}', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.eql(false);
+            expect(invokeExecutionOn(jsmain, "List{}")).to.eql("false");
         });
     });
 });

@@ -11,14 +11,14 @@ describe('List filter basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
-        it('expected []', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.eql([]);
+    describe('List{0i, 0i, 0i}', function () {
+        it('expected List{}', function () {
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.eql("List{}");
         });
     });
-    describe('List{1, 2, 0, 4}', function () {
-        it('expected [2, 4]', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 0, 4])).to.eql([2, 4]);
+    describe('List{1i, 2i, 0i, 4i}', function () {
+        it('expected List{2i, 4i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 0i, 4i}")).to.eql("List{2i, 4i}");
         });
     });
 });
@@ -30,19 +30,19 @@ describe('List filterIdx basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
-        it('expected []', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.eql([]);
+    describe('List{0i, 0i, 0i}', function () {
+        it('expected List{}', function () {
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.eql("List{}");
         });
     });
-    describe('List{1, 3, 0, 4}', function () {
-        it('expected [3]', function () {
-            expect(invokeExecutionOn(jsmain, [1, 3, 0, 4])).to.eql([3]);
+    describe('List{1i, 3i, 0i, 4i}', function () {
+        it('expected List{3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 3i, 0i, 4i}")).to.eql("List{3i}");
         });
     });
-    describe('List{1, 0, 0, 4}', function () {
-        it('expected []', function () {
-            expect(invokeExecutionOn(jsmain, [1, 0, 0, 4])).to.eql([]);
+    describe('List{1i, 0i, 0i, 4i}', function () {
+        it('expected List{}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 0i, 0i, 4i}")).to.eql("List{}");
         });
     });
 });
@@ -55,13 +55,13 @@ describe('List filterType basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('List{3i, none, 1i}', function () {
-        it('expected [3, 1]', function () {
-            expect(invokeExecutionOn(jsmain, [3, null, 1])).to.eql([3, 1]);
+        it('expected List{3i, 1i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{3i, none, 1i}")).to.eql("List{3i, 1i}");
         });
     });
     describe('List{3i, 2i, 0i}', function () {
-        it('expected [3, 2, 0]', function () {
-            expect(invokeExecutionOn(jsmain, [3, 2, 0])).to.eql([3, 2, 0]);
+        it('expected List{3i, 2i, 0i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{3i, 2i, 0i}")).to.eql("List{3i, 2i, 0i}");
         });
     });
 });

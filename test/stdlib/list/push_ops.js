@@ -11,14 +11,14 @@ describe('List pushBack basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{}, 5', function () {
-        it('expected List{5}', function () {
-            expect(invokeExecutionOn(jsmain, [], 5)).to.eql([5]);
+    describe('List{}, 5i', function () {
+        it('expected List{5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{}", "5i")).to.eql("List{5i}");
         });
     });
-    describe('List{1, 2, 3}, 5', function () {
-        it('expected List{1, 2, 3, 5}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 5)).to.eql([1, 2, 3, 5]);
+    describe('List{1i, 2i, 3i}, 5i', function () {
+        it('expected List{1i, 2i, 3i, 5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "5i")).to.eql("List{1i, 2i, 3i, 5i}");
         });
     });
 });
@@ -30,14 +30,14 @@ describe('List pushFront basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{}, 5', function () {
-        it('expected List{5}', function () {
-            expect(invokeExecutionOn(jsmain, [], 5)).to.eql([5]);
+    describe('List{}, 5i', function () {
+        it('expected List{5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{}", "5i")).to.eql("List{5i}");
         });
     });
-    describe('List{1, 2, 3}, 5', function () {
-        it('expected List{5, 1, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 5)).to.eql([5, 1, 2, 3]);
+    describe('List{1i, 2i, 3i}, 5i', function () {
+        it('expected List{5i, 1i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "5i")).to.eql("List{5i, 1i, 2i, 3i}");
         });
     });
 });

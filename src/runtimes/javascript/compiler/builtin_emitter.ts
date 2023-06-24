@@ -114,7 +114,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
         case "s_list_has": {
             const oftype = func.invoke.tbinds.get("T") as TIRTypeKey;
-            const cmp = bemitter.typeEncodedAsUnion(oftype) ? `$Runtime.keyEqualUnion` : `$Runime.keyEqualStrict`;
+            const cmp = bemitter.typeEncodedAsUnion(oftype) ? `$Runtime.keyEqualUnion` : `$Runtime.keyEqualStrict`;
             return `{ return ${func.invoke.params[0].name}.some((e) => ${cmp}(e, ${func.invoke.params[1].name})); }`;
         }
         case "s_list_find_pred": {

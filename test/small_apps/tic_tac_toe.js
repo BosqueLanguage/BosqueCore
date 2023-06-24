@@ -13,22 +13,22 @@ describe('Tic-Tac-Toe', function () {
 
     describe('process two moves', function () {
         it('expected ok(none)', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", null]);
+            expect(invokeExecutionOn(jsmain, "List{[0n, 0n, PlayerMark::x], [0n, 1n, PlayerMark::o]}")).to.eql("ok(none)");
         });
     });
     describe('process winner', function () {
         it('expected ok(x)', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"], [1, 0, "Main::PlayerMark::x"], [1, 1, "Main::PlayerMark::o"], [2, 0, "Main::PlayerMark::x"]])).to.eql(["Result::Ok<Main::PlayerMark|None, String>", "Main::PlayerMark::x"]);
+            expect(invokeExecutionOn(jsmain, "List{[0n, 0n, PlayerMark::x], [0n, 1n, PlayerMark::o], [1n, 0n, PlayerMark::x], [1n, 1n, PlayerMark::o], [2n, 0n, PlayerMark::x]}")).to.eql("ok(PlayerMark::x)");
         });
     });
     describe('process err invalid move', function () {
         it('expected invalid', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 0, "Main::PlayerMark::o"]])).to.eql(["Result::Err<Main::PlayerMark|None, String>", "Cell is already occupied"]);
+            expect(invokeExecutionOn(jsmain, "List{[0n, 0n, PlayerMark::x], [0n, 0n, PlayerMark::o]}")).to.eql('err("Cell is already occupied")');
         });
     });
     describe('process err already won', function () {
-        it('expected won', function () {
-            expect(invokeExecutionOn(jsmain, [[0, 0, "Main::PlayerMark::x"], [0, 1, "Main::PlayerMark::o"], [1, 0, "Main::PlayerMark::x"], [1, 1, "Main::PlayerMark::o"], [2, 0, "Main::PlayerMark::x"], [0, 2, "Main::PlayerMark::o"]])).to.eql(["Result::Err<Main::PlayerMark|None, String>", "A player already won"]);
+        it('expected already won', function () {
+            expect(invokeExecutionOn(jsmain, "List{[0n, 0n, PlayerMark::x], [0n, 1n, PlayerMark::o], [1n, 0n, PlayerMark::x], [1n, 1n, PlayerMark::o], [2n, 0n, PlayerMark::x], [0n, 2n, PlayerMark::o]}")).to.eql('err("A player already won")');
         });
     });
 });

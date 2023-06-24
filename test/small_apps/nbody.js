@@ -13,17 +13,17 @@ describe('NBody', function () {
 
     describe('init', function () {
         it('expected value', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql(-0.16907516382852444);
+            expect(invokeExecutionOn(jsmain, "0n")).to.eql("-0.16907516382852444f");
         });
     });
     describe('process 1', function () {
         it('expected value', function () {
-            expect(invokeExecutionOn(jsmain, 1)).to.eql(-0.16907495402506748);
+            expect(invokeExecutionOn(jsmain, "1n")).to.eql("-0.16907495402506748f");
         });
     });
     describe('process 3', function () {
         it('expected value', function () {
-            expect(invokeExecutionOn(jsmain, 3)).to.eql(-0.1690745314240226);
+            expect(invokeExecutionOn(jsmain, "3n")).to.eql("-0.1690745314240226f");
         });
     });
 });

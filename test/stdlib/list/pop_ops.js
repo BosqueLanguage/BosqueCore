@@ -13,12 +13,12 @@ describe('List popBack basic', function () {
 
     describe('List{}', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}', function () {
-        it('expected List{1, 2}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([1, 2]);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected List{1i, 2i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("List{1i, 2i}");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('List popFront basic', function () {
 
     describe('List{}', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}', function () {
-        it('expected List{2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql([2, 3]);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected List{2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("List{2i, 3i}");
         });
     });
 });
