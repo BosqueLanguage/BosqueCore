@@ -26,8 +26,7 @@
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 500",
-        "test-win": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 4000"
+        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 4000"
     },
     "files": [
         "bin/*"
