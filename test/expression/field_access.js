@@ -13,7 +13,7 @@ describe('Field direct', function () {
 
     describe('v.g', function () {
         it('expected [1i, 3i]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([1, 3]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[1i, 3i]");
         });
     });
 });
@@ -27,12 +27,12 @@ describe('Field virtual concept', function () {
 
     describe('vaccess g (1i)', function () {
         it('expected 1i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(1);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("1i");
         });
     });
     describe('vaccess g (3i)', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });
@@ -47,12 +47,12 @@ describe('Field virtual union', function () {
 
     describe('vaccess g (1i)', function () {
         it('expected 1i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(1);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("1i");
         });
     });
     describe('vaccess g (3i)', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });

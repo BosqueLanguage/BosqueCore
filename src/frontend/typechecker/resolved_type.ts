@@ -242,7 +242,7 @@ class ResolvedOkEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedOkEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
+        let name =  "Result<" + typeT.typeID + ", " + typeE.typeID + ">::Ok";
         return new ResolvedOkEntityAtomType(name, object, typeT, typeE);
     }
 
@@ -262,7 +262,7 @@ class ResolvedErrEntityAtomType extends ResolvedConstructableEntityAtomType {
     }
 
     static create(object: EntityTypeDecl, typeT: ResolvedType, typeE: ResolvedType): ResolvedErrEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name + "<" + typeT.typeID + ", " + typeE.typeID + ">";
+        let name = "Result<" + typeT.typeID + ", " + typeE.typeID + ">::Err";
         return new ResolvedErrEntityAtomType(name, object, typeT, typeE);
     }
 
@@ -475,7 +475,7 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
     }
 
     static create(concepts: ResolvedConceptAtomTypeEntry[]): ResolvedConceptAtomType {
-        const sortedConcepts = concepts.sort((a, b) => a.typeID.localeCompare(b.typeID));
+        const sortedConcepts = concepts.sort((a, b) => ((a.typeID !== b.typeID) ? (a.typeID < b.typeID ? -1 : 1) : 0));
         const name = sortedConcepts.map((cpt) => cpt.typeID).join("&");
 
         return new ResolvedConceptAtomType(name, sortedConcepts);
@@ -483,10 +483,6 @@ class ResolvedConceptAtomType extends ResolvedAtomType {
 
     isAnyConcept(): boolean {
         return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Any";
-    }
-
-    isSomeConcept(): boolean {
-        return this.conceptTypes.length === 1 && this.conceptTypes[0].typeID === "Some";
     }
 
     isTupleConcept(): boolean {
@@ -554,7 +550,7 @@ class ResolvedRecordAtomType extends ResolvedAtomType {
     }
 
     static create(entries: {pname: string, ptype: ResolvedType}[]): ResolvedRecordAtomType {
-        let simplifiedEntries = [...entries].sort((a, b) => a.pname.localeCompare(b.pname));
+        let simplifiedEntries = [...entries].sort((a, b) => ((a.pname !== b.pname) ? (a.pname < b.pname ? -1 : 1) : 0));
         const name = simplifiedEntries.map((entry) => entry.pname + ": " + entry.ptype.typeID).join(", ");
 
         return new ResolvedRecordAtomType("{" + name + "}", simplifiedEntries);
@@ -651,7 +647,7 @@ class ResolvedType {
             return ResolvedType.createSingle(types[0]);
         }
         else {
-            const atoms = types.sort((a, b) => a.typeID.localeCompare(b.typeID));
+            const atoms = types.sort((a, b) => ((a.typeID !== b.typeID) ? (a.typeID < b.typeID ? -1 : 1) : 0));
             const name = atoms.map((arg) => arg.typeID).join("|");
 
             return new ResolvedType(name, atoms);

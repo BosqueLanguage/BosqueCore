@@ -3,18 +3,18 @@ import * as FS from "fs";
 import * as Path from "path";
 
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
-import { TIRAssembly, TIRInvoke } from "../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
 import { TypeChecker } from "../../frontend/typechecker/type_checker";
 import { AssemblyEmitter } from "./compiler/assembly_emitter";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
-const core_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/corelibs.mjs");
-const runtime_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/runtime.mjs");
-const api_path = Path.join(bosque_dir, "bin/runtimes/javascript/runtime/api.mjs");
-
-const core_code = FS.readFileSync(core_path).toString();
-const runtime_code = FS.readFileSync(runtime_path).toString();
-const api_code = FS.readFileSync(api_path).toString();
+const bsq_runtime_src = [
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/constants.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/runtime.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_emit.ts"),
+    Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_parse.ts"),
+    Path.join(bosque_dir, "src/frontend/tree_ir/typeinfo.ts"),
+];
 
 let fullargs = process.argv;
 
@@ -56,12 +56,12 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
     }
 }
 
-function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
+function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>, Map<string, string>] {
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
     const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
-    const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, istestbuild, true, false, entrypoints, depsmap);
+    const { tasm, errors, aliasmap } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, false, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
             process.stdout.write(`Parse error -- ${errors[i]}\n`);
@@ -82,120 +82,115 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, istestbui
     }
     */
 
-    return [tasm as TIRAssembly, depsmap];
+    return [tasm as TIRAssembly, depsmap, aliasmap];
 }
 
-function generateJSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, corecode: string, runtimecode: string, apicode: string): {nsname: string, contents: string}[] {
-    const jsemittier = new AssemblyEmitter(tasm, depsmap);
-    return jsemittier.generateJSCode(corecode, runtimecode, apicode)
+function generateTSFiles(tasm: TIRAssembly, depsmap: Map<string, string[]>, asdeno: boolean): {nsname: string, contents: string}[] {
+    const tsemittier = new AssemblyEmitter(tasm, depsmap);
+    return tsemittier.generateTSCode(asdeno)
 }
 
-
-function workflowEmitToDir(into: string, usercode: PackageConfig, corecode: string, runtimecode: string, apicode: string, buildlevel: BuildLevel, istestbuild: boolean, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[], asdeno: boolean) {
     try {
         process.stdout.write("generating assembly...\n");
-        const [tasm, deps] = generateTASM(usercode, buildlevel, istestbuild, entrypoints);
+        const [tasm, deps, aliasmap] = generateTASM(usercode, buildlevel, entrypoints);
 
-        process.stdout.write("emitting JS code...\n");
-        const jscode = generateJSFiles(tasm, deps, corecode, runtimecode, apicode);
-        
-        process.stdout.write(`writing JS code into ${into}...\n`);
+        //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
+        const epns = tasm.namespaceMap.get(entrypoints[0].ns);
+        if(epns === undefined) {
+            process.stderr.write(`entrypoint namespace ${entrypoints[0].ns} not found\n`);
+            process.exit(1);
+        }
+
+        const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`);
+        if(epf === undefined) {
+            process.stderr.write(`entrypoint ${entrypoints[0].ns}::${entrypoints[0].fname} not found\n`);
+            process.exit(1);
+        }
+
+        process.stdout.write("emitting TS code...\n");
+        const tscode = generateTSFiles(tasm, deps, asdeno);
+
+        process.stdout.write(`writing TS code into ${into}...\n`);
         if(!FS.existsSync(into)) {
             FS.mkdirSync(into);
         }
 
-        for(let i = 0; i < jscode.length; ++i) {
-            const ppth = Path.join(into, jscode[i].nsname);
+        //copy the runtime files
+        process.stdout.write(`copying runtime...\n`);
+        bsq_runtime_src.forEach((src) => {
+            const ppth = Path.join(into, Path.basename(src));
+            FS.copyFileSync(src, ppth);
+        });
+
+        //generate the typeinfo file and write
+        process.stdout.write(`writing metadata ...\n`);
+        const entrytypes = epf.params.map((pp) => pp.type).concat([epf.resultType]);
+        const tinfo = tasm.generateTypeInfo(entrytypes, aliasmap);
+        const tinfopath = Path.join(into, "metadata.ts");
+        FS.writeFileSync(tinfopath, `export const metainfo = ${JSON.stringify(tinfo.emit(), undefined, 2)};\n`);
+
+        //write all of the user code files
+        for (let i = 0; i < tscode.length; ++i) {
+            const ppth = Path.join(into, tscode[i].nsname);
 
             process.stdout.write(`writing ${ppth}...\n`);
-            FS.writeFileSync(ppth, jscode[i].contents);
+            FS.writeFileSync(ppth, tscode[i].contents);
         }
 
-        //TODO: want to support multiple entrypoints later (at least for Node.js packaging)
-        const epf = tasm.invokeMap.get(`${entrypoints[0].ns}::${entrypoints[0].fname}`) as TIRInvoke;
+        //generate the main file and write -- reading from the command line or a file
 
-        if(fileargs) {
-            const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", actual_args[${ii}])`).join(", ") + "]";
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
+        const iext = asdeno ? ".ts" : "";
 
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as FS from "fs";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as ${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
-                + `const actual_args = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
-                + `if(!Array.isArray(actual_args) || actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args\\n"); process.exit(0); }\n\n`
-                + `const bsq_args = ${loadlogic};\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
-                + `    const jres_val = ${emitlogic};\n`
-                + `    console.log(JSON.stringify(jres_val));\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
-                + `}\n`);
-        }
-        else if(fileasm) {
-            const loadlogic = `$API.bsqMarshalParse("${epf.params[0].type}", actual_arg)`
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
-
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as FS from "fs";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
-                + `const actual_arg = JSON.parse(FS.readFileSync(process.argv[2], "utf8"));\n`
-                + `const bsq_arg = ${loadlogic};\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(bsq_arg);\n`
-                + `    const jres_val = ${emitlogic};\n`
-                + `    console.log(JSON.stringify(jres_val));\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
-                + `}\n`);
-        }
-        else {
-            const loadlogic = "[" + epf.params.map((pp, ii) => `$API.bsqMarshalParse("${pp.type}", JSON.parse($API.cmdunescape(actual_args[${ii}].substring(1, actual_args[${ii}].length - 1))))`).join(", ") + "]";
-            const emitlogic = `$API.bsqMarshalEmit("${epf.resultType}", res_val)`;
-
-            const mainf = Path.join(into, "_main_.mjs");
-            FS.writeFileSync(mainf, `"use strict";\n`
-                + `import * as $API from "./api.mjs";\n`
-                + `import * as $${mainNamespace} from "./${mainNamespace}.mjs";\n\n`
-                + `const actual_args = process.argv.slice(2);\n`
-                + `if(actual_args.length !== ${epf.params.length}) { process.stdout.write("error -- expected ${epf.params.length} args but got " + actual_args.length + " args\\n"); process.exit(0); }\n\n`
-                + `const bsq_args = ${loadlogic};\n`
-                + `try {\n`
-                + `    const res_val = $${mainNamespace}.${mainFunction}(...bsq_args);\n`
-                + `    const jres_val = ${emitlogic};\n`
-                + `    console.log(JSON.stringify(jres_val));\n`
-                + `} catch(ex) {\n`
-                + `    process.stdout.write("error -- " + ex.msg + "\\n");\n`
-                + `}\n`);
-        }
+        const mainf = Path.join(into, "_main.ts");
+        FS.writeFileSync(mainf, `import * as process from "node:process"; import {Buffer} from "node:buffer";\n import fs from "node:fs";\n`
+            + `import * as $TypeInfo from "./typeinfo${iext}";\n`
+            + `import * as $JASM from "./metadata${iext}";\n`
+            + `import * as $Runtime from "./runtime${iext}";\n`
+            + `import * as $Parse from "./bsqon_parse${iext}";\n`
+            + `import * as $Emit from "./bsqon_emit${iext}";\n`
+            + `import * as $${mainNamespace} from "./${mainNamespace}${iext}";\n\n`
+            + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n`
+            + `$TypeInfo.setLoadedTypeInfo(assembly);\n\n`
+            + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
+            + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
+            + `const input_stream = filearg !== undefined ? fs.createReadStream(filearg.substring(8)) : process.stdin;\n`
+            + `const arg_string = await read(input_stream);\n\n`
+            + `let bsq_args: any[] = [];\n`
+            + `try {\n`
+            + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`
+            //+ `    process.stderr.write(${epf.params.map((pp, ii) => `actual_args[${ii}]`).join(" + ")} + "\\n");\n`
+            + `    //TODO: implement entity and typedecl checks\n`
+            + `    if(bsq_args.entityChecks.length !== 0 || bsq_args.typedeclChecks.length !== 0) {\n`
+            + `        bsq_args.typedeclChecks.forEach((ee) => $Runtime.validators.get(ee[0])(ee[1]));\n`
+            + `        bsq_args.entityChecks.forEach((ee) => $Runtime.validators.get(ee[0])(ee[1]));\n`
+            + `    }\n`
+            + `} catch(exp) {\n`
+            + `    process.stdout.write("error in parse -- " + JSON.stringify(exp, undefined, 2) + "\\n");\n`
+            + `    process.exit(0);\n`
+            + `}\n\n`
+            + `try {\n`
+            + `    const res_val = $${mainNamespace}.${mainFunction}(${epf.params.map((pp, ii) => `bsq_args.result[${ii}]`).join(", ")});\n`
+            + `    const bsqonres_val = $Emit.BSQONEmitter.emitStd(res_val, "${epf.resultType}", "${epns.ns}", assembly);\n`
+            + `    console.log(bsqonres_val);\n`
+            + `} catch(exe) {\n`
+            + `    process.stdout.write("error in eval -- " + JSON.stringify(exe, undefined, 2) + "\\n");\n`
+            + `    process.exit(0);\n`
+            + `}\n`);
     } catch(e) {
-        process.stderr.write(`JS emit error -- ${e}\n`);
+        process.stderr.write(`TS emit error -- ${e}\n`);
         process.exit(1);
     }
 }
 
-function buildJSDefault(into: string, srcfiles: string[]) {
+function buildTSDefault(into: string, srcfiles: string[]) {
     process.stdout.write("loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig([], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, core_code, runtime_code, api_code, "test", false, [{ns: mainNamespace, fname: mainFunction}]);
+    workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}], true);
 
     process.stdout.write("done!\n");
-}
-
-const fileargs = fullargs.includes("--fileargs");
-if(fileargs) {
-    fullargs = fullargs.filter((aa) => aa !== "--fileargs");
-}
-
-const fileasm = fullargs.includes("--fileasm");
-if(fileasm) {
-    fullargs = fullargs.filter((aa) => aa !== "--fileasm");
 }
 
 let mainNamespace = "Main";
@@ -213,8 +208,8 @@ if(mfs !== undefined) {
 }
 
 if(fullargs.length > 2 && fullargs[2] === "--outdir") {
-    buildJSDefault(fullargs[3], fullargs.slice(4));
+    buildTSDefault(fullargs[3], fullargs.slice(4));
 }
 else {
-    buildJSDefault("./jsout", fullargs.slice(2));
+    buildTSDefault("./tsout", fullargs.slice(2));
 }

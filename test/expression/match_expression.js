@@ -12,18 +12,18 @@ describe('Match Expression basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('match(none)', function () {
-        it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+        it('expected 0i,', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0i");
         });
     });
     describe('match(0i)', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 0])).to.eql(1);
+        it('expected 1i', function () {
+            expect(invokeExecutionOn(jsmain, "0i")).to.eql("1i");
         });
     });
     describe('match(7n)', function () {
-        it('expected 2', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 7])).to.eql(2);
+        it('expected 2i', function () {
+            expect(invokeExecutionOn(jsmain, "7n")).to.eql("2i");
         });
     });
 });
@@ -36,13 +36,13 @@ describe('Match Expression infer', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('match(none)', function () {
-        it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
+        it('expected 0i,', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0i");
         });
     });
-    describe('match(5)', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(1);
+    describe('match(5i)', function () {
+        it('expected 1i', function () {
+            expect(invokeExecutionOn(jsmain, "5i")).to.eql("1i");
         });
     });
 });
@@ -55,13 +55,13 @@ describe('Match Expression binder general', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('match(none)', function () {
-        it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
+        it('expected 0n', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0n");
         });
     });
-    describe('match(5)', function () {
-        it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, 5)).to.eql(6);
+    describe('match(5n)', function () {
+        it('expected 6n', function () {
+            expect(invokeExecutionOn(jsmain, "5n")).to.eql("6n");
         });
     });
 });
@@ -75,13 +75,13 @@ describe('Match Expression binder option', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('match(nothing)', function () {
-        it('expected 0,', function () {
-            expect(invokeExecutionOn(jsmain, ["Nothing", null])).to.eql(0);
+        it('expected 0n,', function () {
+            expect(invokeExecutionOn(jsmain, "nothing")).to.eql("0n");
         });
     });
-    describe('match(something(5))', function () {
-        it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, ["Something<Nat>", 5])).to.eql(6);
+    describe('match(something(5n))', function () {
+        it('expected 6n', function () {
+            expect(invokeExecutionOn(jsmain, "something(5n)")).to.eql("6n");
         });
     });
 });

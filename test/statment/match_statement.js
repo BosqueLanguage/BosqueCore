@@ -12,18 +12,18 @@ describe('Match statement basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('process(1i)', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, ["Int", 1])).to.eql(1);
+        it('expected 1i', function () {
+            expect(invokeExecutionOn(jsmain, "1i")).to.eql("1i");
         });
     });
     describe('process(1n)', function () {
-        it('expected 2', function () {
-            expect(invokeExecutionOn(jsmain, ["Nat", 1])).to.eql(2);
+        it('expected 2i', function () {
+            expect(invokeExecutionOn(jsmain, "1n")).to.eql("2i");
         });
     });
-    describe('process(1n)', function () {
-        it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, ["None", null])).to.eql(0);
+    describe('process(none)', function () {
+        it('expected 0i', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0i");
         });
     });
 });

@@ -82,7 +82,7 @@ entity ListOp provides Some {
     }
 }
 
-__internal entity List<T> provides Some, Expandoable<T>, APIType when T grounded APIType, Testable when T grounded Testable {
+__internal entity List<T> provides Some, Expandoable<T> {
     internal function s_append_helper(l1: List<T>, l2: List<T>): List<T> {
         if(/\(ListOps::s_list_empty<T>(l1), ListOps::s_list_empty<T>(l2))) {
             return List<T>{};

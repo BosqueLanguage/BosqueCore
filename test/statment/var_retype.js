@@ -13,12 +13,12 @@ describe('Var Retype simple', function () {
 
     describe('process(none)', function () {
         it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.includes("error -- cannot convert value");
+            expect(invokeExecutionOn(jsmain, "none")).to.includes("cannot convert value");
         });
     });
-    describe('process(2)', function () {
-        it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
+    describe('process(2n)', function () {
+        it('expected 12n', function () {
+            expect(invokeExecutionOn(jsmain, "2n")).to.eql("12n");
         });
     });
 });
@@ -31,13 +31,13 @@ describe('Var Retype flow', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('process(none)', function () {
-        it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(0);
+        it('expected 0n', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("0n");
         });
     });
-    describe('process(2)', function () {
-        it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
+    describe('process(2n)', function () {
+        it('expected 12n', function () {
+            expect(invokeExecutionOn(jsmain, "2n")).to.eql("12n");
         });
     });
 });
@@ -51,13 +51,13 @@ describe('Var Retype join', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('process(none)', function () {
-        it('expected ', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql(10);
+        it('expected 10n', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("10n");
         });
     });
-    describe('process(2)', function () {
-        it('expected 12', function () {
-            expect(invokeExecutionOn(jsmain, 2)).to.eql(12);
+    describe('process(2n)', function () {
+        it('expected 12n', function () {
+            expect(invokeExecutionOn(jsmain, "2n")).to.eql("12n");
         });
     });
 });

@@ -13,12 +13,12 @@ describe('Logical !', function () {
 
     describe('!true', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(false);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("false");
         });
     });
     describe('!false', function () {
         it('expected true', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(true);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("true");
         });
     });
 });

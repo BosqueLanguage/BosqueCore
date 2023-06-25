@@ -13,12 +13,12 @@ describe('Assert basic', function () {
 
     describe('process ok', function () {
         it('expected true', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(true);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("true");
         });
     });
     describe('process fail', function () {
         it('expected fail', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.includes("error -- Assert");
+            expect(invokeExecutionOn(jsmain, "false")).to.includes("Assert");
         });
     });
 });

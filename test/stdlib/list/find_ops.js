@@ -11,14 +11,14 @@ describe('List find basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
+    describe('List{0i, 0i, 0i}', function () {
         it('expected error', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.includes("Assertion failed");
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.includes("Assertion failed");
         });
     });
-    describe('List{1, 2, 3}', function () {
-        it('expected 2', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql(2);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected 2i', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("2i");
         });
     });
 });
@@ -30,14 +30,14 @@ describe('List findIndexOf basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
+    describe('List{0i, 0i, 0i}', function () {
         it('expected error', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.includes("Assertion failed");
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.includes("Assertion failed");
         });
     });
-    describe('List{1, 2, 3}', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql(1);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected 1n', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("1n");
         });
     });
 });
@@ -49,14 +49,14 @@ describe('List findIdx basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
+    describe('List{0i, 0i, 0i}', function () {
         it('expected error', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.includes("Assertion failed");
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.includes("Assertion failed");
         });
     });
-    describe('List{0, -2, 0}', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, [0, -2, 0])).to.eql(-2);
+    describe('List{0i, -2i, 0i}', function () {
+        it('expected 1n', function () {
+            expect(invokeExecutionOn(jsmain, "List{0i, -2i, 0i}")).to.eql("-2i");
         });
     });
 });
@@ -68,14 +68,14 @@ describe('List findIndexOfIdx basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{0, 0, 0}', function () {
+    describe('List{0i, 0i, 0i}', function () {
         it('expected error', function () {
-            expect(invokeExecutionOn(jsmain, [0, 0, 0])).to.includes("Assertion failed");
+            expect(invokeExecutionOn(jsmain, "List{0i, 0i, 0i}")).to.includes("Assertion failed");
         });
     });
-    describe('List{0, -2, 0}', function () {
-        it('expected 1', function () {
-            expect(invokeExecutionOn(jsmain, [0, -2, 0])).to.eql(1);
+    describe('List{0i, -2i, 0i}', function () {
+        it('expected 1n', function () {
+            expect(invokeExecutionOn(jsmain, "List{0i, -2i, 0i}")).to.eql("1n");
         });
     });
 });

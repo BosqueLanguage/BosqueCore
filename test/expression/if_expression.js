@@ -12,18 +12,18 @@ describe('If Expression Boolean Conditions -- simple x', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('ITE 0', function () {
-        it('expected [0, 0]', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql([0, 0]);
+        it('expected [0i, 0i]', function () {
+            expect(invokeExecutionOn(jsmain, "0i")).to.eql("[0i, 0i]");
         });
     });
     describe('ITE -1', function () {
-        it('expected [1, -1]', function () {
-            expect(invokeExecutionOn(jsmain, -1)).to.eql([1, -1]);
+        it('expected [1i, -1i]', function () {
+            expect(invokeExecutionOn(jsmain, "-1i")).to.eql("[1i, -1i]");
         });
     });
     describe('ITE 10', function () {
-        it('expected [10, 1]', function () {
-            expect(invokeExecutionOn(jsmain, 10)).to.eql([10, 1]);
+        it('expected [10i, 1i]', function () {
+            expect(invokeExecutionOn(jsmain, "10i")).to.eql("[10i, 1i]");
         });
     });
 });
@@ -36,13 +36,13 @@ describe('If Expression Boolean Conditions -- infer', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('ITE 0', function () {
-        it('expected null', function () {
-            expect(invokeExecutionOn(jsmain, 0)).to.eql(null);
+        it('expected none', function () {
+            expect(invokeExecutionOn(jsmain, "0i")).to.eql("none");
         });
     });
     describe('ITE 10', function () {
-        it('expected [0, 0.0, "0", 0]', function () {
-            expect(invokeExecutionOn(jsmain, 10)).to.eql(10);
+        it('expected 10i', function () {
+            expect(invokeExecutionOn(jsmain, "10i")).to.eql("10i");
         });
     });
 });
@@ -55,13 +55,13 @@ describe('If Expression ITest forms -- none variations', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('ITE 3', function () {
-        it('expected [1, 1, 1]', function () {
-            expect(invokeExecutionOn(jsmain, 3)).to.eql([1, 1, 1]);
+        it('expected [1i, 1i, 1i]', function () {
+            expect(invokeExecutionOn(jsmain, "3i")).to.eql("[1i, 1i, 1i]");
         });
     });
     describe('ITE none', function () {
-        it('expected [0, 0, 0]', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql([0, 0, 0]);
+        it('expected [0i, 0i, 0i]', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("[0i, 0i, 0i]");
         });
     });
 });
@@ -75,13 +75,13 @@ describe('If Expression ITest binds -- none variations', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('ITE 3', function () {
-        it('expected [1, 1, 1]', function () {
-            expect(invokeExecutionOn(jsmain, 3)).to.eql([3, 3]);
+        it('expected [3i, 3i]', function () {
+            expect(invokeExecutionOn(jsmain, "3i")).to.eql("[3i, 3i]");
         });
     });
     describe('ITE none', function () {
-        it('expected [0, 0, 0]', function () {
-            expect(invokeExecutionOn(jsmain, null)).to.eql([0, 0]);
+        it('expected [0i, 0i]', function () {
+            expect(invokeExecutionOn(jsmain, "none")).to.eql("[0i, 0i]");
         });
     });
 });

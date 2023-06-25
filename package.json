@@ -5,7 +5,7 @@
         "name": "Mark Marron <mark.marron@protonmail.com>"
     },
     "license": "MIT",
-    "version": "0.9.5",
+    "version": "0.10.0",
     "repository": {
         "type": "git",
         "url": "https://github.com/BosqueLanguage/BosqueCore"
@@ -26,8 +26,7 @@
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --parallel --slow 500",
-        "test-win": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 4000"
+        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 4000"
     },
     "files": [
         "bin/*"

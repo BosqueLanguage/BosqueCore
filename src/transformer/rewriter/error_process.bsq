@@ -1,6 +1,6 @@
 namespace TreeIR;
 
-entity ErrorSource provides APIType {
+entity ErrorSource {
     field errid: Int;
 
     field file: String;

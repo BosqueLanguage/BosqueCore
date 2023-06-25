@@ -1,6 +1,6 @@
 namespace TreeIR;
 
-entity SourceInfo provides APIType {
+entity SourceInfo {
     field line: Nat;
     field column: Nat;
     field pos: Nat;

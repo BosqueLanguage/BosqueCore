@@ -13,12 +13,12 @@ describe('ITest convert type concept', function () {
 
     describe('Qux@ITest', function () {
         it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(2);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("2i");
         });
     });
     describe('Qux@ITest (fail)', function () {
         it('expected failure', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.include("error -- cannot convert value");
+            expect(invokeExecutionOn(jsmain, "false")).to.include("cannot convert value");
         });
     });
 });
@@ -33,12 +33,12 @@ describe('ITest convert type union', function () {
 
     describe('Qux@ITest', function () {
         it('expected [1i, 1i, 1i]', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql([1, 1, 1]);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("[1i, 1i, 1i]");
         });
     });
     describe('Qux@ITest (fail)', function () {
         it('expected failure', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.include("error -- cannot convert value");
+            expect(invokeExecutionOn(jsmain, "false")).to.include("cannot convert value");
         });
     });
 });
@@ -53,7 +53,7 @@ describe('ITest convert result ok', function () {
 
     describe('ITest result ok', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(3);
+            expect(invokeExecutionOn(jsmain)).to.eql("3i");
         });
     });
 });
@@ -68,7 +68,7 @@ describe('ITest convert result error', function () {
 
     describe('ITest result err', function () {
         it('expected false', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(false);
+            expect(invokeExecutionOn(jsmain)).to.eql("false");
         });
     });
 });

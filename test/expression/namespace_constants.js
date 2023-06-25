@@ -11,7 +11,7 @@ describe('Namespace constants', function () {
 
     describe('main()', function () {
         it('expected [1i, 3i]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([1, 3]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[1i, 3i]");
         });
     });
 });

@@ -41,7 +41,7 @@ validator ThingInfo = {
 //Path<T> is actual type associated with Path
 
 //<summary>Primitive path value.</summary>
-__internal __constructable __enumable __litvaluetype __typedeclable entity Path<T unique PathValidator> provides Some, KeyType, APIType {
+__internal __constructable __enumable __litvaluetype __typedeclable entity Path<T unique PathValidator> provides Some, KeyType {
     private function s_into(s: String): Path<T> = special_inject;
     method value(): String = special_extract;
 }
@@ -51,7 +51,7 @@ Implicitly augments the PathValidator description path component with "./" and "
 May be any contigious substring of the that is a contained in the Validator (must end on boundaries of component)
 */
 //<summary>Primitive path fragment value.</summary>
-__internal __constructable __litvaluetype __typedeclable entity PathFragment<T unique PathValidator> provides Some, KeyType, APIType {
+__internal __constructable __litvaluetype __typedeclable entity PathFragment<T unique PathValidator> provides Some, KeyType {
     private function s_into(s: String): PathFragment<T> = special_inject;
     method value(): String = special_extract;
 
@@ -68,7 +68,7 @@ __internal __constructable __litvaluetype __typedeclable entity PathFragment<T u
 }
 
 //<summary>Primitive safe string value.</summary>
-__internal __constructable __litvaluetype  __typedeclable entity PathGlob<T unique PathValidator> provides Some, KeyType, APIType {
+__internal __constructable __litvaluetype  __typedeclable entity PathGlob<T unique PathValidator> provides Some, KeyType {
     private function s_into(s: String): PathGlob<T> = special_inject;
     method value(): String = special_extract;
 

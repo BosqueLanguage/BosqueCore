@@ -12,8 +12,8 @@ describe('Var Assign basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('process', function () {
-        it('expected 3', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(3);
+        it('expected 3i', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql("3i");
         });
     });
 });

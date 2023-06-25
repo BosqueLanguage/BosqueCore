@@ -13,7 +13,7 @@ describe('Abort basic', function () {
 
     describe('process fail', function () {
         it('expected fail', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.includes("error -- Abort");
+            expect(invokeExecutionOn(jsmain, "false")).to.includes("Abort");
         });
     });
 });

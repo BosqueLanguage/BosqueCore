@@ -1,6 +1,6 @@
 namespace Main;
 
-entity Foo provides APIType {
+entity Foo {
     field f: Int;
 }
 

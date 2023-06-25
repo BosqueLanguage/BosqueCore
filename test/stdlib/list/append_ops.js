@@ -13,22 +13,22 @@ describe('List Append', function () {
 
     describe('List{}, List{}', function () {
         it('expected List{}', function () {
-            expect(invokeExecutionOn(jsmain, [], [])).to.eql([]);
+            expect(invokeExecutionOn(jsmain, "List{}", "List{}")).to.eql("List{}");
         });
     });
-    describe('List{1, 2, 3}, List{}', function () {
-        it('expected List{1, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], [])).to.eql([1, 2, 3]);
+    describe('List{1i, 2i, 3i}, List{}', function () {
+        it('expected List{1i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "List{}")).to.eql("List{1i, 2i, 3i}");
         });
     });
-    describe('List{}, List{4, 5}', function () {
-        it('expected List{4, 5}', function () {
-            expect(invokeExecutionOn(jsmain, [], [4, 5])).to.eql([4, 5]);
+    describe('List{}, List{4i, 5i}', function () {
+        it('expected List{4i, 5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{}", "List{4i, 5i}")).to.eql("List{4i, 5i}");
         });
     });
-    describe('List{1, 2, 3}, List{4, 5}', function () {
-        it('expected List{1, 2, 3, 4, 5}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], [4, 5])).to.eql([1, 2, 3, 4, 5]);
+    describe('List{1i, 2i, 3i}, List{4i, 5i}', function () {
+        it('expected List{1i, 2i, 3i, 4i, 5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "List{4i, 5i}")).to.eql("List{1i, 2i, 3i, 4i, 5i}");
         });
     });
 });
@@ -42,22 +42,22 @@ describe('List Prepend', function () {
 
     describe('List{}, List{}', function () {
         it('expected List{}', function () {
-            expect(invokeExecutionOn(jsmain, [], [])).to.eql([]);
+            expect(invokeExecutionOn(jsmain, "List{}", "List{}")).to.eql("List{}");
         });
     });
-    describe('List{1, 2, 3}, List{}', function () {
-        it('expected List{1, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], [])).to.eql([1, 2, 3]);
+    describe('List{1i, 2i, 3i}, List{}', function () {
+        it('expected List{1i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "List{}")).to.eql("List{1i, 2i, 3i}");
         });
     });
-    describe('List{}, List{4, 5}', function () {
-        it('expected List{4, 5}', function () {
-            expect(invokeExecutionOn(jsmain, [], [4, 5])).to.eql([4, 5]);
+    describe('List{}, List{4i, 5i}', function () {
+        it('expected List{4i, 5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{}", "List{4i, 5i}")).to.eql("List{4i, 5i}");
         });
     });
-    describe('List{1, 2, 3}, List{4, 5}', function () {
-        it('expected List{4, 5, 1, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], [4, 5])).to.eql([4, 5, 1, 2, 3]);
+    describe('List{1i, 2i, 3i}, List{4i, 5i}', function () {
+        it('expected List{4i, 5i, 1i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "List{4i, 5i}")).to.eql("List{4i, 5i, 1i, 2i, 3i}");
         });
     });
 });

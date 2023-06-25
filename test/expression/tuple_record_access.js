@@ -12,13 +12,13 @@ describe('Tuple basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('t.0', function () {
-        it('expected 1n', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(1);
+        it('expected 1i', function () {
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("1i");
         });
     });
     describe('t.1', function () {
         it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(2);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("2i");
         });
     });
 });
@@ -32,12 +32,12 @@ describe('Tuple nested', function () {
 
     describe('t.0.1', function () {
         it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(2);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("2i");
         });
     });
     describe('t.1', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });
@@ -51,13 +51,13 @@ describe('Record basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('r.f', function () {
-        it('expected 1n', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(1);
+        it('expected 1i', function () {
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("1i");
         });
     });
     describe('r.g', function () {
         it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(2);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("2i");
         });
     });
 });
@@ -71,12 +71,12 @@ describe('Record nested', function () {
 
     describe('r.f.g', function () {
         it('expected 2i', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql(2);
+            expect(invokeExecutionOn(jsmain, "true")).to.eql("2i");
         });
     });
     describe('r.q', function () {
         it('expected 3i', function () {
-            expect(invokeExecutionOn(jsmain, false)).to.eql(3);
+            expect(invokeExecutionOn(jsmain, "false")).to.eql("3i");
         });
     });
 });

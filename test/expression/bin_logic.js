@@ -13,7 +13,7 @@ describe('Binary &&', function () {
 
     describe('&& flavors', function () {
         it('expected [true, false, false]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, false, false]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, false, false]");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('Binary ||', function () {
 
     describe('|| flavors', function () {
         it('expected [true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, false, true]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, false, true]");
         });
     });
 });
@@ -41,7 +41,7 @@ describe('Binary ==>', function () {
 
     describe('==> flavors', function () {
         it('expected [true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([true, false, true]);
+            expect(invokeExecutionOn(jsmain)).to.eql("[true, false, true]");
         });
     });
 });

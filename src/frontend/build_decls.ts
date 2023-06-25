@@ -47,6 +47,33 @@ function logLevelNumber(ll: string): LoggerLevel {
     return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"].indexOf(ll);
 }
 
+function escapeString(ll: string): string {
+    let ret = "";
+    for (let i = 0; i < ll.length; i++) {
+        if (ll[i] === "\n") {
+            ret += "\\n";
+        }
+        else if (ll[i] === "\r") {
+            ret += "\\r";
+        }
+        else if (ll[i] === "\t") {
+            ret += "\\t";
+        }
+        else if (ll[i] === "\0") {
+            ret += "\\0";
+        }
+        //TODO: hex codes???
+        else if (ll[i] === "\"") {
+            ret += "\\\"";
+        }
+        else {
+            ret += ll[i];
+        }
+    }
+
+    return ret;
+}
+
 function unescapeString(ll: string): string {
     let ret = "";
     for (let i = 0; i < ll.length; i++) {
@@ -137,6 +164,7 @@ class PackageConfig {
 }
 
 export {
+    escapeString, unescapeString,
     BuildLevel, isBuildLevelEnabled,
     SourceInfo, CodeFileInfo, PackageConfig,
     LoggerLevel, LoggerLevel_fatal, LoggerLevel_error, LoggerLevel_warn, LoggerLevel_info, LoggerLevel_detail, LoggerLevel_trace, logLevelName, logLevelNumber,

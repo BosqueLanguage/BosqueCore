@@ -11,14 +11,14 @@ describe('List reduce basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{1, 2, 3}', function () {
-        it('expected 6', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql(6);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected 6i', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("6i");
         });
     });
     describe('List{}', function () {
-        it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.eql(0);
+        it('expected 0i', function () {
+            expect(invokeExecutionOn(jsmain, "List{}")).to.eql("0i");
         });
     });
 });
@@ -30,14 +30,14 @@ describe('List reduce idx basic', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{1, 2, 3}', function () {
-        it('expected 9', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3])).to.eql(9);
+    describe('List{1i, 2i, 3i}', function () {
+        it('expected 9i', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}")).to.eql("9i");
         });
     });
     describe('List{}', function () {
-        it('expected 0', function () {
-            expect(invokeExecutionOn(jsmain, [])).to.eql(0);
+        it('expected 0i', function () {
+            expect(invokeExecutionOn(jsmain, "List{}")).to.eql("0i");
         });
     });
 });

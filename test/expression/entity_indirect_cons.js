@@ -2,7 +2,7 @@
 
 const expect = require("chai").expect;
 
-const {generatePaths, codegen, invokeExecutionOn, cleanTest} = require("../codeproc.js");
+const {generatePaths, codegen, invokeExecutionOn, cleanTest, cmdStringEscape} = require("../codeproc.js");
 
 describe('Temp constructor', function () {
     const testopt = ["expression/entity_indirect", "temp"];
@@ -13,7 +13,7 @@ describe('Temp constructor', function () {
 
     describe('Fahrenheit{32i}', function () {
         it('expected Fahrenheit{32i}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(32);
+            expect(invokeExecutionOn(jsmain)).to.eql("32i_Fahrenheit");
         });
     });
 });
@@ -27,7 +27,7 @@ describe('PartID literal constructor', function () {
 
     describe('"ABC-123"_PartID', function () {
         it('expected "ABC-123"_PartID', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql("ABC-123");
+            expect(invokeExecutionOn(jsmain)).to.eql('"ABC-123"_PartID');
         });
     });
 });
@@ -41,12 +41,12 @@ describe('PartID constructor', function () {
 
     describe('PartID{"X-52"} fails', function () {
         it('expected PartID{"X-52"} fails', function () {
-            expect(invokeExecutionOn(jsmain, "X-52")).to.contain("Assertion failed");
+            expect(invokeExecutionOn(jsmain, '"X-52"')).to.contain("Assertion failed");
         });
     });
     describe('PartID{"ABC-123"}', function () {
         it('expected PartID{"ABC-123"}', function () {
-            expect(invokeExecutionOn(jsmain, "ABC-123")).to.eql("ABC-123");
+            expect(invokeExecutionOn(jsmain, '"ABC-123"')).to.eql('"ABC-123"_PartID');
         });
     });
 });
@@ -59,11 +59,8 @@ describe('BoolOp constructor', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('NotOp{5n LConst{1n, false}}', function () {
-        it('expected NotOp{5n LConst{1n, false}}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql(["Main::NotOp", {
-                line: 5, 
-                arg: ["Main::LConst", {line: 1, val: false}]
-            }]);
+        it('expected NotOp{5n, LConst{1n, false}}', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql("NotOp{5n, LConst{1n, false}}");
         });
     });
 });

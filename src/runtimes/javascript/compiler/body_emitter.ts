@@ -1,6 +1,7 @@
 import { extractLiteralASCIIStringValue, extractLiteralStringValue } from "../../../frontend/build_decls";
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIREnumEntityType, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIREnumEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceFunctionDecl, TIROOType, TIRPostConditionDecl, TIRPreConditionDecl, TIRRecordType, TIRStaticFunctionDecl, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRAbortStatement, TIRAccessCapturedVariableExpression, TIRAccessConstMemberFieldExpression, TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessScratchIndexExpression, TIRAccessScratchSingleValueExpression, TIRAccessVariableExpression, TIRAsEqualToLiteralExpression, TIRAsErrSpecialExpression, TIRAsNoneSpecialExpression, TIRAsNotEqualToLiteralExpression, TIRAsNothingSpecialExpression, TIRAsNotSubTypeExpression, TIRAsNotTypeExpression, TIRAsOkSpecialExpression, TIRAssertCheckStatement, TIRAsSomeSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsSubTypeExpression, TIRAsTypeExpression, TIRBinAddExpression, TIRBinDivExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyGeneralLessExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyUniqueLessExpression, TIRBinLogicAndExpression, TIRBinLogicImpliesExpression, TIRBinLogicOrExpression, TIRBinMultExpression, TIRBinSubExpression, TIRCallMemberActionExpression, TIRCallMemberFunctionDynamicExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRCallStatementWAction, TIRCallStatementWRef, TIRCallStatementWTaskRef, TIRCallStaticFunctionExpression, TIRCodePackInvokeExpression, TIRCoerceSafeExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorPrimaryDirectExpression, TIRConstructorRecordExpression, TIRConstructorTupleExpression, TIRCreateCodePackExpression, TIRDebugStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRExpression, TIRExpressionTag, TIRExtractExpression, TIRIfExpression, TIRIfStatement, TIRInjectExpression, TIRIsEqualToLiteralExpression, TIRIsErrSpecialExpression, TIRIsNoneSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsNothingSpecialExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsOkSpecialExpression, TIRIsSomeSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsSubTypeExpression, TIRIsTypeExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoggerEmitConditionalStatement, TIRLoggerEmitStatement, TIRLoggerSetPrefixStatement, TIRLogicActionAndExpression, TIRLogicActionOrExpression, TIRMapEntryConstructorExpression, TIRMatchExpression, TIRMatchStatement, TIRNopStatement, TIRNumericEqExpression, TIRNumericGreaterEqExpression, TIRNumericGreaterExpression, TIRNumericLessEqExpression, TIRNumericLessExpression, TIRNumericNeqExpression, TIRPrefixNegateExpression, TIRPrefixNotExpression, TIRResultErrConstructorExpression, TIRResultOkConstructorExpression, TIRReturnStatement, TIRReturnStatementWAction, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRScopedBlockStatement, TIRScratchSCStatement, TIRSomethingConstructorExpression, TIRStatement, TIRStatementTag, TIRStoreToScratch, TIRSwitchExpression, TIRSwitchStatement, TIRTaskAllStatement, TIRTaskDashStatement, TIRTaskGetIDExpression, TIRTaskMultiStatement, TIRTaskRaceStatement, TIRTaskRefAssignFromScratch, TIRTaskRunStatement, TIRTaskSelfControlExpression, TIRTaskSelfFieldExpression, TIRTaskSetSelfFieldStatement, TIRTypedeclConstructorExpression, TIRTypedeclDirectExpression, TIRUnscopedBlockStatement, TIRVarAssignStatement, TIRVarDeclareAndAssignStatement, TIRVarDeclareStatement, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRVarRefAssignFromScratch } from "../../../frontend/tree_ir/tir_body";
+import { resolveTypeMemberAccess, typeEncodedAsUnion } from "./type_emitter";
 
 function assert(cond: boolean, msg?: string) {
     if(!cond) {
@@ -23,7 +24,6 @@ class BodyEmitter {
 
     private readonly m_file: string;
     private readonly m_ns: string;
-    private m_typeResolveMemo: Map<TIRTypeKey, string> = new Map<TIRTypeKey, string>();
 
     private m_activeTask: TIRTypeKey = "[NOT SET]";
 
@@ -36,107 +36,14 @@ class BodyEmitter {
         this.m_ns = ns;
     }
 
-    typeEncodedAsUnion(tt: TIRTypeKey): boolean {
-        assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
+    private static s_body_indent = "    ";
 
-        const ttype = this.m_assembly.typeMap.get(tt) as TIRType;
-        return (ttype instanceof TIRConceptType) || (ttype instanceof TIRUnionType);
+    typeEncodedAsUnion(tt: TIRTypeKey): boolean {
+       return typeEncodedAsUnion(this.m_assembly, tt);
     }
 
     resolveTypeMemberAccess(tt: TIRTypeKey): string {
-        assert(this.m_assembly.typeMap.has(tt), `missing type name entry ${tt}`);
-
-        if(this.m_typeResolveMemo.has(tt)) {
-            return this.m_typeResolveMemo.get(tt) as string;
-        }
-
-        const ttype = this.m_assembly.typeMap.get(tt) as TIROOType;
-        const samens = ttype.tname.ns === this.m_ns;
-
-        let taccess: string = "[INVALID]";
-        if(ttype instanceof TIRObjectEntityType) {
-            if(ttype.binds.size === 0) {
-                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            }
-            else {
-                if (samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-                }
-            }
-        }
-        else if(ttype instanceof TIREnumEntityType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRTypedeclEntityType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRPrimitiveInternalEntityType) {
-            taccess =  samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if (ttype instanceof TIRValidatorEntityType) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if ((ttype instanceof TIRStringOfEntityType) || (ttype instanceof TIRASCIIStringOfEntityType)) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if (ttype instanceof TIRPathValidatorEntityType) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-
-            }
-        }
-        else if ((ttype instanceof TIRPathEntityType) || (ttype instanceof TIRPathFragmentEntityType) || (ttype instanceof TIRPathGlobEntityType)) {
-            if (samens) {
-                taccess = `$Types["${ttype.tkey}"]`;
-            }
-            else {
-                taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-            }
-        }
-        else if(ttype instanceof TIRMapEntryEntityType) {
-            taccess = `Core.$Types["${ttype.tkey}"]`;
-        }
-        else if((ttype instanceof TIRListEntityType) || (ttype instanceof TIRStackEntityType) || (ttype instanceof TIRQueueEntityType) ||  (ttype instanceof TIRSetEntityType) || (ttype instanceof TIRMapEntityType)) {
-            taccess = `Core.$Types["${ttype.tkey}"]`;
-        }
-        else if(ttype instanceof TIRTaskType) {
-            taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-        }
-        else if(ttype instanceof TIRConceptType) {
-            if(ttype.binds.size === 0) {
-                taccess = samens ? `BSQ${ttype.tname.name}` : `${ttype.tname.ns}.BSQ${ttype.tname.name}`;
-            }
-            else {
-                if (samens) {
-                    taccess = `$Types["${ttype.tkey}"]`;
-                }
-                else {
-                    taccess = `${ttype.tname.ns}.$Types["${ttype.tkey}"]`;
-                }
-            }
-        }
-        else {
-            assert(false, "Unknown type in resolveTypeNameAccess");
-        }
-
-        this.m_typeResolveMemo.set(tt, taccess);
-        return taccess;
+        return resolveTypeMemberAccess(this.m_assembly, tt);
     }
 
     private emitLiteralNoneExpression(exp: TIRLiteralNoneExpression): string {
@@ -153,10 +60,10 @@ class BodyEmitter {
 
     private emitLiteralIntegralExpression(exp: TIRLiteralIntegralExpression): string {
         if(exp.etype === "Nat") {
-            return exp.expstr; //n suffix makes a bigint 
+            return exp.expstr.slice(0, exp.expstr.length -1); //strip n suffix
         }
         else if(exp.etype === "Int") {
-            return exp.expstr.slice(0, exp.expstr.length - 1) + "n"; //n suffix makes it a bigint
+            return exp.expstr.slice(0, exp.expstr.length - 1); //strip i suffix
         }
         else if(exp.etype === "BigNat") {
             return exp.expstr.slice(0, exp.expstr.length - 1) + "n"; //n suffix makes it a bigint
@@ -321,15 +228,15 @@ class BodyEmitter {
     }
 
     private emitConstructorListExpression(exp: TIRConstructorListExpression): string {
-        return `$CoreLibs.$ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+        return `$Runtime.ListOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
     }
 
     private emitConstructorMapExpression(exp: TIRConstructorMapExpression): string {
         if(exp.args.length === 0) {
-            return `$CoreLibs.$MapOps.create("${exp.etype}")`;
+            return `$Runtime.MapOps.create()`;
         }
         else {
-            return `$CoreLibs.$MapOps.create("${exp.etype}", ${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
+            return `$Runtime.MapOps.create(${exp.args.map((arg) => this.emitExpression(arg, true)).join(", ")})`;
         }
     }
 
@@ -385,7 +292,7 @@ class BodyEmitter {
             return `${accessterm}.${(invk as TIRStaticFunctionDecl).name}(${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
         else {
-            return `${accessterm}.$Functions["${(invk as TIRStaticFunctionDecl).ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
+            return `${accessterm}["${(invk as TIRStaticFunctionDecl).ikey}"](${exp.args.map((arg) => this.emitExpression(arg)).join(", ")})`;
         }
     }
 
@@ -448,10 +355,10 @@ class BodyEmitter {
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");
@@ -474,10 +381,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "BigNat") {
             dataop = `$Runtime.safeMathUnderflow(${bexp}, 0n)`;
@@ -503,10 +410,10 @@ class BodyEmitter {
         
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMath(${bexp}, 0n, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, 0, $Constants.FIXED_NUMBER_MAX)`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMath(${bexp}, $Runtime.FIXED_NUMBER_MIN, $Runtime.FIXED_NUMBER_MAX)`;
+            dataop = `$Runtime.safeMath(${bexp}, $Constants.FIXED_NUMBER_MIN, $Constants.FIXED_NUMBER_MAX)`;
         }
         else {
             dataop = toplevel ? bexp : ("(" + bexp + ")");
@@ -521,10 +428,10 @@ class BodyEmitter {
 
         let dataop = "[NOT SET]"
         if(exp.optype === "Nat") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "Int") {
-            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
+            dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0, ${lexp}, ${rexp})`;
         }
         else if(exp.optype === "BigNat") {
             dataop = `$Runtime.safeMathDiv((a, b) => a / b, (b) => b === 0n, ${lexp}, ${rexp})`;
@@ -546,38 +453,38 @@ class BodyEmitter {
     }
 
     private emitBinKeyEqBothUniqueExpression(exp: TIRBinKeyEqBothUniqueExpression): string {
-        return `($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyEqualStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyEqOneUniqueExpression(exp: TIRBinKeyEqOneUniqueExpression): string {
-        return `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
+        return `$Runtime.keyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
     }
     
     private emitBinKeyEqGeneralExpression(exp: TIRBinKeyEqGeneralExpression): string {
-        return `$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyEqualUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyNeqBothUniqueExpression(exp: TIRBinKeyNeqBothUniqueExpression, toplevel: boolean): string {
-        const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyNeqOneUniqueExpression(exp: TIRBinKeyNeqOneUniqueExpression, toplevel: boolean): string {
-        const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
+        const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.uarg, true)}, ${this.emitExpression(exp.garg, true)}, "${exp.oftype}")`;
         return toplevel ? rr : "(" + rr + ")";
     }
     
     private emitBinKeyNeqGeneralExpression(exp: TIRBinKeyNeqGeneralExpression, toplevel: boolean): string {
-        const rr = `!$CoreLibs.$KeyEqualGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        const rr = `!$Runtime.keyEqualUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
         return toplevel ? rr : "(" + rr + ")";
     }
 
     private emitBinKeyUniqueLessExpression(exp: TIRBinKeyUniqueLessExpression): string {
-        return `($CoreLibs.$KeyLessOps.get("${exp.optype}"))(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyLessStrict(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitBinKeyGeneralLessExpression(exp: TIRBinKeyGeneralLessExpression): string {
-        return `$CoreLibs.$KeyLessGeneral(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
+        return `$Runtime.keyLessUnion(${this.emitExpression(exp.lhs, true)}, ${this.emitExpression(exp.rhs, true)})`;
     }
 
     private emitNumericEqExpression(exp: TIRNumericEqExpression, toplevel: boolean): string {
@@ -876,7 +783,7 @@ class BodyEmitter {
             return this.emitExpression(exp.exp, toplevel);
         }
         else if(trgtunion) {
-            const bval = `$Runtime.UnionValue.create("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
+            const bval = `new $Runtime.UnionValue("${exp.fromtype}", ${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
@@ -946,22 +853,22 @@ class BodyEmitter {
 
     private emitIsEqualToLiteralExpression(exp: TIRIsEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
+            const rr = `$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
 
     private emitIsNotEqualToLiteralExpression(exp: TIRIsNotEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
+            const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)}, "${exp.literal.exp.etype}")`;
             return toplevel ? rr : "(" + rr + ")";
         }
         else {
-            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
+            const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, ${this.emitExpression(exp.exp, true)})`;
             return toplevel ? rr : "(" + rr + ")";
         }
     }
@@ -986,7 +893,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
+        const bval = `$TypeInfo.isSubtype_Runtime(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -994,7 +901,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `!$Runtime.isSubtype(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
+        const bval = `!$TypeInfo.isSubtype_Runtime(${this.emitExpression(exp.exp, true)}.tkey, "${exp.ttype}")`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1049,12 +956,12 @@ class BodyEmitter {
 
     private emitAsEqualToLiteralExpression(exp: TIRAsEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
+            const rr = `$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
@@ -1062,12 +969,12 @@ class BodyEmitter {
 
     private emitAsNotEqualToLiteralExpression(exp: TIRAsNotEqualToLiteralExpression, toplevel: boolean): string {
         if(this.typeEncodedAsUnion(exp.exp.etype)) {
-            const rr = `!$CoreLibs.$KeyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
+            const rr = `!$Runtime.keyEqualMixed(${this.emitExpression(exp.literal.exp, true)}, __expval__, "${exp.literal.exp.etype}")`;
             const bval = `((__expval__) => ${rr} ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
         else {
-            const rr = `!($CoreLibs.$KeyEqualOps.get("${exp.literal.exp.etype}"))(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
+            const rr = `!$Runtime.keyEqualStrict(${this.emitExpression(exp.literal.exp, true)}, __expval__)`;
             const bval = `((__expval__) => ${rr} ? ${this.emitExpression(exp.literal.exp, true)} : $Runtime.raiseRuntimeError("cannot convert value to literal"))(${this.emitExpression(exp.exp)})`;
             return toplevel ? bval : "(" + bval + ")";
         }
@@ -1093,7 +1000,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $TypeInfo.isSubtype_Runtime(__expval__.tkey, "${exp.ttype}") ? __expval__ : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1101,7 +1008,7 @@ class BodyEmitter {
         assert(this.typeEncodedAsUnion(exp.exp.etype), "Why are we doing this test then?");
         assert(this.typeEncodedAsUnion(exp.ttype), "this should be a oftype then");
 
-        const bval = `((__expval__) => $Runtime.isSubtype(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
+        const bval = `((__expval__) => $TypeInfo.isSubtype_Runtime(__expval__.tkey, "${exp.ttype}") ? __expval__${!this.typeEncodedAsUnion(exp.etype) ? ".value" : ""} : $Runtime.raiseRuntimeError("cannot convert value to ${exp.ttype}"))(${this.emitExpression(exp.exp, true)})`;
         return toplevel ? bval : "(" + bval + ")";
     }
 
@@ -1118,7 +1025,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
         
         const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
@@ -1166,7 +1073,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         this.m_hasScratch = true;
@@ -1186,7 +1093,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         const eexp = `${fexp}${meexp}(${aargs.join(", ")})`;
@@ -1207,7 +1114,7 @@ class BodyEmitter {
             meexp = `.${exp.fname}`;
         }
         else {
-            meexp = `.$Methods["${exp.fkey}"]`;
+            meexp = `["${exp.fkey}"]`;
         }
 
         this.m_hasScratch = true;
@@ -1705,10 +1612,10 @@ class BodyEmitter {
         else {
             sstr += indent + "else {\n"
             if(stmt.isexhaustive) {
-                sstr += indent + "    ;\n";
+                sstr += indent + BodyEmitter.s_body_indent ";\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1759,10 +1666,10 @@ class BodyEmitter {
         else {
             sstr += indent + "else {\n"
             if(stmt.isexhaustive) {
-                sstr += indent + "    ;\n";
+                sstr += indent + BodyEmitter.s_body_indent + ";\n";
             }
             else {
-                sstr += indent + "    " + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }
@@ -1778,10 +1685,10 @@ class BodyEmitter {
     private emitEnvironmentSetStatement(stmt: TIREnvironmentSetStatement): string {
         const binds = stmt.assigns.map((asgn) => {
             if(asgn.valexp === undefined) {
-                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+                return `self.$environment.clear("${asgn.keyname}");`
             }
             else {
-                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+                return `self.$environment.set("${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
             }
         });
 
@@ -1795,15 +1702,15 @@ class BodyEmitter {
             sstr = `const ${tmpe} = self.$environment; self.$environment = new $Runtime.BSQEnvironment(undefined);`;
         }
         else {
-            sstr = `self.$environment = $Runtime.BSQEnvironment.push(self.$environment);`;
+            sstr = `self.$environment = self.$environment.pushEmpty();`;
         }
 
         const binds = stmt.assigns.map((asgn) => {
             if(asgn.valexp === undefined) {
-                return `$Runtime.BSQEnvironment.clear(self.$environment, "${asgn.keyname}");`
+                return `self.$environment.clear("${asgn.keyname}");`
             }
             else {
-                return `$Runtime.BSQEnvironment.set(self.$environment, "${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
+                return `self.$environment.set("${asgn.keyname}", ${this.emitExpression(asgn.valexp[1], true)}, "${asgn.valexp[0]}");`
             }
         });
         sstr += (binds.length !== 0) ? ("\n" + indent + binds.join(" ")) : ""
@@ -1819,7 +1726,7 @@ class BodyEmitter {
             sstr += `self.$environment = ${tmpe}\n`;
         }
         else {
-            sstr += `self.$environment = $Runtime.BSQEnvironment.pop(self.$environment);\n`;
+            sstr += `self.$environment = self.$environment.pop();\n`;
         }
 
         return sstr;
@@ -1882,9 +1789,9 @@ class BodyEmitter {
     }
 
     emitScopedBlock(blck: TIRScopedBlockStatement, indent: string, prestr?: string | undefined, poststr?: string | undefined): string {
-        const stmts = blck.ops.map((op) => indent + "    " + this.emitStatement(op, indent + "    ")).join("\n");
+        const stmts = blck.ops.map((op) => indent + BodyEmitter.s_body_indent + this.emitStatement(op, indent + BodyEmitter.s_body_indent)).join("\n");
 
-        return " {\n" + (prestr !== undefined ? `${indent + "    "}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + "    "}${poststr}\n` : "") + indent + "}";
+        return " {\n" + (prestr !== undefined ? `${indent + BodyEmitter.s_body_indent}${prestr}\n` : "") + stmts + "\n" + (poststr !== undefined ? `${indent + BodyEmitter.s_body_indent}${poststr}\n` : "") + indent + "}";
     }
 
     emitUnscopedBlock(blck: TIRUnscopedBlockStatement, indent: string): string {
@@ -2007,8 +1914,8 @@ class BodyEmitter {
     }
 
     emitBodyStatementList(body: TIRStatement[], preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], indent: string, fname: string, extractres: boolean): string {
-        const bodyindent = indent + "    ";
-        const wbodyindent = bodyindent + "    ";
+        const bodyindent = indent + BodyEmitter.s_body_indent;
+        const wbodyindent = bodyindent + BodyEmitter.s_body_indent;
         let rconds = "";
 
         if(preconds.length !== 0) {

@@ -12,8 +12,8 @@ describe('Var Declaration with Let -- basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('declare', function () {
-        it('expected [1, [1, "hello"]]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([1, [1, "hello"]]);
+        it('expected [1i, [1i, "hello"]]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql('[1i, [1i, "hello"]]');
         });
     });
 });
@@ -26,8 +26,8 @@ describe('Var Declaration with Var -- basic', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('declare', function () {
-        it('expected [2, [1, "hello"], 5]', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql([2, [1, "hello"], 5]);
+        it('expected [2i, [1i, "hello"], 5n]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql('[2i, [1i, "hello"], 5n]');
         });
     });
 });
@@ -39,9 +39,9 @@ describe('Var Declaration with Var -- flow initialize', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('declare(3)', function () {
-        it('expected 2', function () {
-            expect(invokeExecutionOn(jsmain, 3)).to.eql(4);
+    describe('declare(3i)', function () {
+        it('expected 2i', function () {
+            expect(invokeExecutionOn(jsmain, "3i")).to.eql("4i");
         });
     });
 });

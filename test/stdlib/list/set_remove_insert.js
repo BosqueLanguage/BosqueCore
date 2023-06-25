@@ -11,24 +11,24 @@ describe('List Set', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{}, 0, 5', function () {
+    describe('List{}, 0n, 5i', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [], 0, 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}", "0n", "5i")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 5, 5', function () {
+    describe('List{1i, 2i, 3i}, 5n, 5i', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 5, 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "5n", "5i")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 1, 4', function () {
-        it('expected List{1, 4, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 1, 4)).to.eql([1, 4, 3]);
+    describe('List{1i, 2i, 3i}, 1n, 4i', function () {
+        it('expected List{1i, 4i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "1n", "4i")).to.eql("List{1i, 4i, 3i}");
         });
     });
-    describe('List{1, 2, 3}, 0, 4', function () {
-        it('expected List{4, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 0, 4)).to.eql([4, 2, 3]);
+    describe('List{1i, 2i, 3i}, 0n, 4i', function () {
+        it('expected List{4i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "0n", "4i")).to.eql("List{4i, 2i, 3i}");
         });
     });
 });
@@ -40,39 +40,39 @@ describe('List Insert', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{}, 0, 5', function () {
-        it('expected List{5}', function () {
-            expect(invokeExecutionOn(jsmain, [], 0, 5)).to.eql([5]);
+    describe('List{}, 0n, 5i', function () {
+        it('expected List{5i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{}", "0n", "5i")).to.eql("List{5i}");
         });
     });
-    describe('List{}, 1, 5', function () {
+    describe('List{}, 1n, 5i', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [], 1, 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}", "1n", "5i")).to.includes("Failed precondition");
         });
     });
-    describe('List{}, 2, 5', function () {
+    describe('List{}, 2n, 5i', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [], 2, 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}", "2n", "5i")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 5, 5', function () {
+    describe('List{1i, 2i, 3i}, 5n, 5i', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 5, 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "5n", "5i")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 1, 4', function () {
-        it('expected List{1, 4, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 1, 4)).to.eql([1, 4, 2, 3]);
+    describe('List{1i, 2i, 3i}, 1n, 4i', function () {
+        it('expected List{1i, 4i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "1n", "4i")).to.eql("List{1i, 4i, 2i, 3i}");
         });
     });
-    describe('List{1, 2, 3}, 0, 4', function () {
-        it('expected List{4, 1, 2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 0, 4)).to.eql([4, 1, 2, 3]);
+    describe('List{1i, 2i, 3i}, 0n, 4i', function () {
+        it('expected List{4i, 1i, 2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "0n", "4i")).to.eql("List{4i, 1i, 2i, 3i}");
         });
     });
-    describe('List{1, 2, 3}, 3, 4', function () {
-        it('expected List{1, 2, 3, 4}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 3, 4)).to.eql([1, 2, 3, 4]);
+    describe('List{1i, 2i, 3i}, 3n, 4i', function () {
+        it('expected List{1i, 2i, 3i, 4i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "3n", "4i")).to.eql("List{1i, 2i, 3i, 4i}");
         });
     });
 });
@@ -84,29 +84,29 @@ describe('List Remove', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('List{}, 0', function () {
+    describe('List{}, 0n', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [], 0)).to.include("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{}", "0n")).to.include("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 5', function () {
+    describe('List{1i, 2i, 3i}, 5n', function () {
         it('expected err', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 5)).to.includes("Failed precondition");
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "5n")).to.includes("Failed precondition");
         });
     });
-    describe('List{1, 2, 3}, 1', function () {
-        it('expected List{1, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 1)).to.eql([1, 3]);
+    describe('List{1i, 2i, 3i}, 1n', function () {
+        it('expected List{1i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "1n")).to.eql("List{1i, 3i}");
         });
     });
-    describe('List{1, 2, 3}, 0', function () {
-        it('expected List{2, 3}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 0)).to.eql([2, 3]);
+    describe('List{1i, 2i, 3i}, 0n', function () {
+        it('expected List{2i, 3i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "0n")).to.eql("List{2i, 3i}");
         });
     });
-    describe('List{1, 2, 3}, 2', function () {
-        it('expected List{1, 2}', function () {
-            expect(invokeExecutionOn(jsmain, [1, 2, 3], 2)).to.eql([1, 2]);
+    describe('List{1i, 2i, 3i}, 2n', function () {
+        it('expected List{1i, 2i}', function () {
+            expect(invokeExecutionOn(jsmain, "List{1i, 2i, 3i}", "2n")).to.eql("List{1i, 2i}");
         });
     });
 });

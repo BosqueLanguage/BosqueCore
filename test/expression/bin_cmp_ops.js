@@ -11,14 +11,14 @@ describe('Equality', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('eqop 1, -3.0, 1/3, 1', function () {
+    describe('eqop 1i, -3.0f, 1/3R, 1I_Foo', function () {
         it('expected [true, true, false, true, false]', function () {
-            expect(invokeExecutionOn(jsmain, 1, -3.0, "1/3", 1)).to.eql([true, true, false, true, false]);
+            expect(invokeExecutionOn(jsmain, "1i", "-3.0f", "1/3R", "1I_Foo")).to.eql("[true, true, false, true, false]");
         });
     });
-    describe('eqop 2, 1.0, 5/2, 3', function () {
+    describe('eqop 2i, 1.0f, 5/2R, 3I_Foo', function () {
         it('expected [false, false, true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain, 2, 1.0, "5/2", 3)).to.eql([false, false, true, false, true]);
+            expect(invokeExecutionOn(jsmain, "2i", "1.0f", "5/2R", "3I_Foo")).to.eql("[false, false, true, false, true]");
         });
     });
 });
@@ -30,14 +30,14 @@ describe('Less', function () {
     before(function () { codegen(srcfile, dstdir); });
     after(function () { cleanTest(dstdir); });
 
-    describe('ltop 2, -3.0, 3/2, 1', function () {
+    describe('ltop 2i, -3.0f, 3/2R, 1I_Foo', function () {
         it('expected [false, true, true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain, 2, -3.0, "3/2", 1)).to.eql([false, true, true, false, true]);
+            expect(invokeExecutionOn(jsmain, "2i", "-3.0f", "3/2R", "1I_Foo")).to.eql("[false, true, true, false, true]");
         });
     });
-    describe('ltop 0, 0.0, 1/6, 2', function () {
+    describe('ltop 0i, 0.0f, 1/6R, 2I_Foo', function () {
         it('expected [true, true, false, true, false]', function () {
-            expect(invokeExecutionOn(jsmain, 0, 0.0, "1/6", 2)).to.eql([true, true, false, true, false]);
+            expect(invokeExecutionOn(jsmain, "0i", "0.0f", "1/6R", "2I_Foo")).to.eql("[true, true, false, true, false]");
         });
     });
 });
@@ -50,14 +50,14 @@ describe('Greater', function () {
     after(function () { cleanTest(dstdir); });
 
    
-    describe('gtop 2, -3.0, 3/2, 1', function () {
+    describe('gtop 2i, -3.0f, 3/2R, 1I_Foo', function () {
         it('expected [true, true, true, true, true]', function () {
-            expect(invokeExecutionOn(jsmain, 2, -3.0, "3/2", 1)).to.eql([true, true, true, true, true]);
+            expect(invokeExecutionOn(jsmain, "2i", "-3.0f", "3/2R", "1I_Foo")).to.eql("[true, true, true, true, true]");
         });
     });
-    describe('gtop 0, 0.0, 1/6, 2', function () {
+    describe('gtop 0i, 0.0f, 1/6R, 2I_Foo', function () {
         it('expected [false, false, true, false, true]', function () {
-            expect(invokeExecutionOn(jsmain, 0, 0.0, "1/6", 2)).to.eql([false, false, true, false, true]);
+            expect(invokeExecutionOn(jsmain, "0i", "0.0f", "1/6R", "2I_Foo")).to.eql("[false, false, true, false, true]");
         });
     });
 });
