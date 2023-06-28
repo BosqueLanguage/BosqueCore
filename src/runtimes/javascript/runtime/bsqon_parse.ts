@@ -3087,6 +3087,13 @@ class BSQONParser {
         return {result: result, entityChecks: parser.m_stdentityChecks, typedeclChecks: parser.m_typedeclChecks};
     }
 
+    static parseValueStd(input: string, ttype: $TypeInfo.BSQTypeKey, defaultns: string, assembly: $TypeInfo.AssemblyInfo): any {
+        const parser = new BSQONParser($Runtime.NotationMode.NOTATION_MODE_DEFAULT, "bsqon", defaultns, new Map<string, string>(), assembly, input, undefined);
+
+        const rr = parser.parseValue(parser.lookupMustDefType(ttype), false);
+        return rr;
+    }
+
     static parseInputsStd(input: string, ttypes: $TypeInfo.BSQTypeKey[], defaultns: string, assembly: $TypeInfo.AssemblyInfo): {result: any[], entityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[], typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[]} {
         const parser = new BSQONParser($Runtime.NotationMode.NOTATION_MODE_DEFAULT, "bsqon", defaultns, new Map<string, string>(), assembly, input, undefined);
 

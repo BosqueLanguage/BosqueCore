@@ -1472,7 +1472,7 @@ class BodyEmitter {
     }
 
     private emitDebugStatement(stmt: TIRDebugStatement): string {
-        return `try { console.log(${this.emitExpression(stmt.value, true)}); } catch(ex) { console.log("__debug(${stmt.value.expstr}) evaluation failed"); }`;
+        return `try { console.log($BSQONEmit.emitStd(${this.emitExpression(stmt.value, true)}, "${stmt.value.etype}", "${this.m_ns}", $TypeInfo.loaded_typeinfo)); } catch(ex) { console.log("__debug(${stmt.value.expstr}) evaluation failed"); }`;
     }
 
     private emitVarDeclareStatement(stmt: TIRVarDeclareStatement): string {

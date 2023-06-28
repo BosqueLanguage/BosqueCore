@@ -5,8 +5,8 @@
 
 import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome } from "./body";
-import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
+import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome, BSQONLiteralExpression, SynthesisBody } from "./body";
+import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
 import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
 import { BSQPathValidator } from "../path_validator";
 import { BuildLevel, logLevelNumber, SourceInfo } from "../build_decls";
@@ -57,8 +57,10 @@ const KW_return = "return";
 const KW_result = "result";
 const KW_requires = "requires";
 const KW_something = "something";
+const KW_safety = "safety";
 const KW_spec = "spec";
 const KW_some = "some";
+const KW_synth = "defer";
 const KW_switch = "switch";
 const KW_task = "task";
 const KW_test = "test";
@@ -76,6 +78,9 @@ const KW_logmsg = "logmsg";
 const KW_eventmsg = "eventmsg";
 const KW_statusmsg = "statusmsg"; 
 const KW_format = "format";
+
+const KW_bsqon = "bsqon";
+const KW_example = "example";
 
 const KeywordStrings = [
     KW_recursive_q,
@@ -125,7 +130,9 @@ const KeywordStrings = [
     KW_requires,
     KW_something,
     KW_some,
+    KW_safety,
     KW_spec,
+    KW_synth,
     KW_switch,
     KW_task,
     KW_test,
@@ -142,7 +149,10 @@ const KeywordStrings = [
     KW_logmsg,
     KW_eventmsg,
     KW_statusmsg,
-    KW_format
+    KW_format,
+
+    KW_bsqon,
+    KW_example
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 const NS_KW = [
@@ -282,7 +292,7 @@ const AttributeStrings = [
     "debug",
     "errtest",
     "export",
-    "guarantee",
+    "opaque",
     "internal",
     "override",
     "recursive?",
@@ -292,11 +302,13 @@ const AttributeStrings = [
     "public",
     "release",
     "test",
+    "safety",
     "spec",
     "virtual",
     
     "__chktest",
 
+    "__inline",
     "__internal",
     "__typedeclable",
     "__enumable", 
@@ -347,6 +359,11 @@ const TokenStrings = {
     
     String: "[LITERAL_STRING]",
     ASCIIString: "[LITERAL_ASCII_STRING]",
+
+    BSQON: "[BSQON]",
+    BSQON_EXAMPLE_ARGS: "[BSQON_EXAMPLE_ARGS]",
+    BSQON_EXAMPLE_RESULT: "[BSQON_EXAMPLE_RESULT]",
+    BSQON_EXAMPLE_FILE: "[BSQON_EXAMPLE_FILE]",
 
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
     TemplateASCIIString: "[LITERAL_TEMPLATE_ASCII_STRING]",
@@ -687,6 +704,142 @@ class Lexer {
         return false;
     }
 
+    private static readonly _s_bsqvvRe = /[{}"]/;
+    private tryLexBSQON() {
+        let bbpos = this.m_cpos;
+        if (!this.m_input.startsWith("bsqon{", bbpos)) {
+            return false;
+        }
+
+        //
+        //TODO: when we support native inline BSQON parsing we want to support the form bsqon<T>{...} as well
+        //
+
+        bbpos += 6;
+
+        let pdepth = 1;
+        while(pdepth !== 0 && bbpos < this.m_input.length) {
+            const mm = Lexer._s_bsqvvRe.exec(this.m_input.slice(bbpos));
+            if(mm === null) {
+                return false;
+            }
+
+            if(mm[0] === "{") {
+                pdepth++;
+                bbpos = bbpos + mm.index + 1;
+            }
+            else if(mm[0] === "}") {
+                pdepth--;
+                bbpos = bbpos + mm.index + 1;
+            }
+            else {
+                bbpos = bbpos + mm.index;
+                       
+                Lexer._s_stringRe.lastIndex = bbpos;
+                const ms = Lexer._s_stringRe.exec(this.m_input);
+                if (ms === null) {
+                    return false;
+                }
+
+                bbpos = bbpos + ms[0].length;
+            }
+        }
+
+        if (pdepth === 0) {
+            this.recordLexTokenWData(bbpos, TokenStrings.BSQON, this.m_input.substring(this.m_cpos, bbpos));
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private static readonly _s_bsqexamplefilebeginRe = /(\s+([.]{1,2}\/)|([$]{))/y;
+    private static readonly _s_bsqexamplefileendRe = /;/;
+    private static readonly _s_bsqexamplesplitRe = /->|"|;/;
+    private static readonly _s_bsqexampleendRe = /[;"]/;
+    private tryLexBSQONExample() {
+        if (!this.m_input.startsWith("example ", this.m_cpos)) {
+            return false;
+        }
+
+        this.recordLexToken(this.m_cpos + KW_example.length, KW_example);
+
+        Lexer._s_bsqexamplefilebeginRe.lastIndex = this.m_cpos;
+        const fb = Lexer._s_bsqexamplefilebeginRe.exec(this.m_input);
+        if (fb !== null && fb.index === this.m_cpos) {
+            const fe = Lexer._s_bsqexamplefileendRe.exec(this.m_input.slice(this.m_cpos));
+            if (fe === null) {
+                return false;
+            }
+
+            this.recordLexTokenWData(this.m_cpos + fe.index, TokenStrings.BSQON_EXAMPLE_FILE, this.m_input.substring(this.m_cpos, this.m_cpos + fe.index));
+            return true;
+        }
+        else {
+            let bbpos = this.m_cpos;
+            while (bbpos < this.m_input.length) {
+                const mm = Lexer._s_bsqexamplesplitRe.exec(this.m_input.slice(bbpos));
+                if (mm === null) {
+                    return false;
+                }
+
+                if (mm[0] === ";") {
+                    return false;
+                }
+
+                if (mm[0] === "->") {
+                    bbpos = bbpos + mm.index;
+                    break;
+                }
+                else {
+                    bbpos = bbpos + mm.index;
+
+                    Lexer._s_stringRe.lastIndex = bbpos;
+                    const ms = Lexer._s_stringRe.exec(this.m_input);
+                    if (ms === null) {
+                        return false;
+                    }
+
+                    bbpos = bbpos + ms[0].length;
+                }
+            }
+            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_ARGS, this.m_input.substring(this.m_cpos, bbpos).trim());
+            this.m_cpos += 2; //skip ->
+
+            bbpos = this.m_cpos;
+            while (bbpos < this.m_input.length) {
+                const mm = Lexer._s_bsqexampleendRe.exec(this.m_input.slice(bbpos));
+                if (mm === null) {
+                    return false;
+                }
+
+                if (mm[0] === "->") {
+                    return false;
+                }
+
+                if (mm[0] === ";") {
+                    bbpos = bbpos + mm.index;
+                    break;
+                }
+                else {
+                    bbpos = bbpos + mm.index;
+
+                    Lexer._s_stringRe.lastIndex = bbpos;
+                    const ms = Lexer._s_stringRe.exec(this.m_input);
+                    if (ms === null) {
+                        return false;
+                    }
+
+                    bbpos = bbpos + ms[0].length;
+                }
+            }
+            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_RESULT, this.m_input.substring(this.m_cpos, bbpos).trim());
+
+            return true;
+        }
+    }
+
     private static readonly _s_symbolRe = /[\W]+/y;
     private tryLexSymbol() {
         Lexer._s_symbolRe.lastIndex = this.m_cpos;
@@ -856,7 +1009,13 @@ class Lexer {
                     if (this.tryLexWS() || this.tryLexComment()) {
                         //continue
                     }
-                    else if (this.tryLexNumber() || this.tryLexString() || this.tryLexRegex() || this.tryLexSymbol() || this.tryLexName()) {
+                    else if (this.tryLexBSQONExample()) {
+                        //continue
+                    }
+                    else if (this.tryLexNumber() || this.tryLexString() || this.tryLexRegex() || this.tryLexBSQON()) {
+                        //continue
+                    }
+                    else if (this.tryLexSymbol() || this.tryLexName()) {
                         //continue
                     }
                     else {
@@ -1131,7 +1290,7 @@ class Parser {
 
     private parseBuildInfo(cb: BuildLevel): BuildLevel {
         if( this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release)) {
-            return this.consumeTokenAndGetValue() as "spec" | "debug" | "test" | "release";
+            return this.consumeTokenAndGetValue() as "spec" | "debug" | "test" | "release" | "safety";
         }
         else {
             return cb;
@@ -1201,6 +1360,21 @@ class Parser {
 
         let preconds: PreConditionDecl[] = [];
         let postconds: PostConditionDecl[] = [];
+        let samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[] = [];
+        
+        const boundtemplates = new Set<string>(!(ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) ? [...terms.map((tt) => tt.name), ...implicitTemplates] : []);
+        if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
+            this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
+        }
+        else {
+            //
+            //TODO: in type checker and emitter need to (1) pull these into concrete impls frim abstract impls (2) make sure concrete impls don't extend abstract requirements 
+            //      -- includes operators and virtual methods
+            //
+            [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, boundtemplates, resultInfo);
+            samples = this.parseSamples(sinfo);
+        }
+
         let body: BodyImplementation | undefined = undefined;
         let capturedvars = new Set<string>();
         let capturedtemplates = new Set<string>();
@@ -1208,15 +1382,6 @@ class Parser {
             this.ensureAndConsumeToken(SYM_semicolon, "an abstract function declaration");
         }
         else {
-            const boundtemplates = new Set<string>(!(ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) ? [...terms.map((tt) => tt.name), ...implicitTemplates] : []);
-
-            if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
-                this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
-            }
-            else {
-                [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, boundtemplates, resultInfo);
-            }
-
             try {
                 this.m_penv.pushFunctionScope(new FunctionScope(argNames, boundtemplates, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
                 body = this.parseBody(srcFile);
@@ -1235,11 +1400,16 @@ class Parser {
             return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, params, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
         }
         else {
-            if(body !== undefined) {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, body);
+            if(body === undefined) {
+                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, undefined);
             }
             else {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, undefined);
+                if(body.body instanceof SynthesisBody) {
+                    return InvokeDecl.createSynthesisInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, body);
+                }
+                else {
+                    return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, body);
+                }
             }
         }
     }
@@ -1948,6 +2118,17 @@ class Parser {
             this.ensureAndConsumeToken(")", tk + "constructor -- missing closing \")\"?");
 
             return [new SpecialConstructorExpression(sinfo, tk, arg), false];
+        }
+        else if (tk === TokenStrings.BSQON) {
+            const bbvalue = this.consumeTokenAndGetValue();
+            let oftype: TypeSignature | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_at)) {
+                this.ensureAndConsumeToken(SYM_le, "BSQON literal type annotation");
+                oftype = this.parseTypeSignature();
+                this.ensureAndConsumeToken(SYM_ge, "BSQON literal type annotation");
+            }
+
+            return [new BSQONLiteralExpression(sinfo, bbvalue, oftype), false];
         }
         else if (tk === KW_env) {
             this.ensureTaskOpOk();
@@ -3494,6 +3675,14 @@ class Parser {
             
             return new BodyImplementation(file, iname);
         }
+        else if(this.testFollows(SYM_lbrace, KW_synth)) {
+            this.consumeToken();
+            this.consumeToken();
+            this.ensureAndConsumeToken(SYM_semicolon, "synth body");
+            this.ensureAndConsumeToken(SYM_rbrace, "synth body");
+
+            return new BodyImplementation(file, new SynthesisBody(file, this.getCurrentSrcInfo()));
+        }
         else if (this.testToken(SYM_lbrace)) {
             return new BodyImplementation(file, this.parseScopedBlockStatement());
         }
@@ -3638,6 +3827,33 @@ class Parser {
         }
 
         return [preconds, postconds];
+    }
+
+    private parseSamples(sinfo: SourceInfo): (InvokeSampleDeclInline | InvokeSampleDeclFile)[] {
+        let samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[] = [];
+        while (this.testToken(KW_test) || this.testToken(KW_example)) {
+            const istest = this.testAndConsumeTokenIf(KW_test);
+            this.ensureAndConsumeToken(KW_example, "example");
+
+            if (this.testToken(TokenStrings.BSQON_EXAMPLE_FILE)) {
+                const fp = this.consumeTokenAndGetValue();
+
+                samples.push(new InvokeSampleDeclFile(sinfo, istest, fp));
+            }
+            else {
+                this.ensureToken(TokenStrings.BSQON_EXAMPLE_ARGS, "example");
+                const args = this.consumeTokenAndGetValue();
+
+                this.ensureToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
+                const result = this.consumeTokenAndGetValue();
+
+                samples.push(new InvokeSampleDeclInline(sinfo, istest, args, result));
+            }
+
+            this.ensureAndConsumeToken(SYM_semicolon, "example");
+        }
+
+        return samples;
     }
 
     private parseNamespaceDep(): {fromns: string, asns: string} {
@@ -3820,7 +4036,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("opaque", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false);
 
         if (allMemberNames.has(fname)) {
             this.raiseError(this.getCurrentLine(), "Collision between static and other names");
@@ -4647,7 +4863,7 @@ class Parser {
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsbody = new BodyImplementation(this.m_penv.getCurrentFile(), "validator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
             const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["Validator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__validator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
@@ -4665,7 +4881,7 @@ class Parser {
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
 
             const acceptsbody = new BodyImplementation(this.m_penv.getCurrentFile(), "pathvalidator_accepts");
-            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
+            const acceptsinvoke = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [param], false, new NominalTypeSignature(sinfo, "Core", ["Bool"]), [], [], [], false, false, new Set<string>(), new Set<string>(), acceptsbody);
             const accepts = new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "accepts", acceptsinvoke);
             const provides = [[new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined], [new NominalTypeSignature(sinfo, "Core", ["PathValidator"]), undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
             const validatortype = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__pathvalidator_type", ...attributes], currentDecl.ns, iname, [], provides, [], [], [], [accepts], [], [], new Map<string, EntityTypeDecl>());
@@ -4718,7 +4934,7 @@ class Parser {
             }
 
             const valuebody = new BodyImplementation(this.m_penv.getCurrentFile(), "special_extract");
-            const valuedecl = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [], false, idval, [], [], false, false, new Set<string>(), new Set<string>(), valuebody);
+            const valuedecl = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [], false, idval, [], [], [], false, false, new Set<string>(), new Set<string>(), valuebody);
             const value = new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "value", valuedecl);
 
             memberMethods.push(value);
@@ -5087,7 +5303,7 @@ class Parser {
         if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
             recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("guarantee", attributes), attributes, recursive, terms, [], undefined, false);
+        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("opaque", attributes), attributes, recursive, terms, [], undefined, false);
 
         currentDecl.functions.set(fname, new NamespaceFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, fname, sig));
     }

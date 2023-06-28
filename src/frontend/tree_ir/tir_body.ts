@@ -34,6 +34,8 @@ enum TIRExpressionTag {
     LiteralTypedPrimitiveDirectExpression = "LiteralTypedPrimitiveDirectExpression",
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
+    BSQONLiteralExpression = "BSQONLiteralExpression",
+
     AccessEnvValueExpression = "AccessEnvValueExpression",
 
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
@@ -220,6 +222,9 @@ abstract class TIRExpression {
         }
         else if(jv[0] === "TreeIR::LiteralTypedPrimitiveConstructorExpression") {
             return TIRLiteralTypedPrimitiveConstructorExpression.bsqparse(jv);
+        }
+        else if(jv[0] === "TreeIR::BSQONLiteralExpression") {
+            return TIRBSQONLiteralExpression.bsqparse(jv);
         }
         else if(jv[0] === "TreeIR::AccessEnvValueExpression") {
             return TIRAccessEnvValueExpression.bsqparse(jv);
@@ -769,6 +774,23 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     //
     //TODO: compiler may want to treat this like a constant and precompute with a reference for any uses
     //
+}
+
+class TIRBSQONLiteralExpression extends TIRExpression {
+    readonly bsqonstr: string;
+
+    constructor(sinfo: SourceInfo, bsqonstr: string, bsqontype: TIRTypeKey) {
+        super(TIRExpressionTag.BSQONLiteralExpression, sinfo, bsqontype, bsqonstr);
+        this.bsqonstr = bsqonstr;
+    }
+
+    bsqemit(): any {
+        return ["TreeIR::BSQONLiteralExpression", {...this.bsqemit_exp(), bsqonstr: this.bsqonstr, bsqontype: this.etype}];
+    }
+
+    static bsqparse(jv: any): TIRBSQONLiteralExpression {
+        return new TIRBSQONLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].bsqonstr, jv[1].bsqontype);
+    }
 }
 
 class TIRAccessEnvValueExpression extends TIRExpression {
@@ -3537,6 +3559,7 @@ export {
     TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralBoolExpression, TIRLiteralIntegralExpression, TIRLiteralRationalExpression, TIRLiteralFloatPointExpression,
     TIRLiteralStringExpression, TIRLiteralASCIIStringExpression, TIRLiteralRegexExpression, TIRLiteralTypedStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralASCIITemplateStringExpression,
     TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedPrimitiveConstructorExpression,
+    TIRBSQONLiteralExpression,
     TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRAccessCapturedVariableExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression,
     TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression,
     TIRConstructorPrimaryDirectExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRConstructorListExpression, TIRConstructorMapExpression,

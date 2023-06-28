@@ -94,6 +94,8 @@ enum ExpressionTag {
     
     LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
 
+    BSQONLiteralExpression = "BSQONLiteralExpression",
+
     AccessFormatInfoExpression = "AccessFormatInfoExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
 
@@ -420,6 +422,25 @@ class LiteralTypedPrimitiveConstructorExpression extends Expression {
 
     isLiteralValueExpression(): boolean {
         return true;
+    }
+}
+
+class BSQONLiteralExpression extends Expression {
+    readonly bsqonstr: string;
+    readonly bsqtype: TypeSignature | undefined;
+
+    constructor(sinfo: SourceInfo, bsqonstr: string, bsqtype: TypeSignature | undefined) {
+        super(ExpressionTag.BSQONLiteralExpression, sinfo);
+        this.bsqonstr = bsqonstr;
+        this.bsqtype = bsqtype;
+    }
+
+    isCompileTimeInlineValue(): boolean {
+        return false;
+    }
+
+    isLiteralValueExpression(): boolean {
+        return false;
     }
 }
 
@@ -1549,11 +1570,21 @@ class ScopedBlockStatement extends Statement {
     }
 }
 
+class SynthesisBody {
+    readonly file: string;
+    readonly spos: SourceInfo;
+
+    constructor(file: string, spos: SourceInfo) {
+        this.file = file;
+        this.spos = spos;
+    }
+}
+
 class BodyImplementation {
     readonly file: string;
-    readonly body: string | ScopedBlockStatement | Expression;
+    readonly body: string | ScopedBlockStatement | Expression | SynthesisBody;
 
-    constructor(file: string, body: string | ScopedBlockStatement | Expression) {
+    constructor(file: string, body: string | ScopedBlockStatement | Expression | SynthesisBody) {
         this.file = file;
         this.body = body;
     }
@@ -1567,6 +1598,7 @@ export {
     LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
     LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
     LiteralTypedPrimitiveConstructorExpression,
+    BSQONLiteralExpression,
     AccessFormatInfoExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, 
     ConstructorPCodeExpression, SpecialConstructorExpression,
@@ -1597,5 +1629,6 @@ export {
     TaskSetStatusStatement, TaskEventEmitStatement, TaskSetSelfFieldStatement, 
     LoggerLevel, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement,
     UnscopedBlockStatement, ScopedBlockStatement, 
+    SynthesisBody,
     BodyImplementation
 };

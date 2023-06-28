@@ -1,0 +1,11 @@
+namespace Main;
+
+function bb(a: Int, b: Int): Int
+    example [3i, 2i] -> 5i;
+{
+    defer;
+}
+
+export function main(): Int {
+    return bb(3i, 2i);
+}
