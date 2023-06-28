@@ -89,6 +89,46 @@ class TIRPostConditionDecl {
     }
 }
 
+class TIRInvokeSampleDeclInline {
+    readonly sinfo: SourceInfo;
+    readonly istest: boolean;
+    readonly args: string; //a tuple of the arguments
+    readonly output: string;
+
+    constructor(sinfo: SourceInfo, istest: boolean, args: string, output: string) {
+        this.sinfo = sinfo;
+        this.istest = istest;
+        this.args = args;
+        this.output = output;
+    }
+
+    bsqemit(): any {
+        return { exp: this.sinfo.bsqemit(), istest: this.istest, args: this.args, output: this.output };
+    }
+    static bsqparse(jv: any): TIRInvokeSampleDeclInline {
+        return new TIRInvokeSampleDeclInline(SourceInfo.bsqparse(jv.sinfo), jv.istest, jv.args, jv.output);
+    }
+}
+
+class TIRInvokeSampleDeclFile {
+    readonly sinfo: SourceInfo;
+    readonly istest: boolean;
+    readonly filepath: string; //may use the $root and $src meta variables
+
+    constructor(sinfo: SourceInfo, istest: boolean, filepath: string) {
+        this.sinfo = sinfo;
+        this.istest = istest;
+        this.filepath = filepath;
+    }
+
+    bsqemit(): any {
+        return { exp: this.sinfo.bsqemit(), istest: this.istest, filepath: this.filepath };
+    }
+    static bsqparse(jv: any): TIRInvokeSampleDeclFile {
+        return new TIRInvokeSampleDeclFile(SourceInfo.bsqparse(jv.sinfo), jv.istest, jv.filepath);
+    }
+}
+
 class TIRObjectInvariantDecl {
     readonly exp: TIRExpression;
     readonly args: TIRFunctionParameter[];
@@ -274,8 +314,10 @@ abstract class TIRInvoke {
 
     readonly preconditions: TIRPreConditionDecl[];
     readonly postconditions: TIRPostConditionDecl[];
+    readonly samplesinline: TIRInvokeSampleDeclInline[];
+    readonly samplesfile: TIRInvokeSampleDeclFile[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], samplesinline: TIRInvokeSampleDeclInline[], samplesfile: TIRInvokeSampleDeclFile[]) {
         this.invkey = invkey;
         this.name = name;
 
@@ -301,10 +343,12 @@ abstract class TIRInvoke {
 
         this.preconditions = preconds;
         this.postconditions = postconds;
+        this.samplesinline = samplesinline;
+        this.samplesfile = samplesfile;
     }
 
     bsqemit_inv(): any {
-        return { invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconditions: this.preconditions.map((precond) => precond.bsqemit()), postconditions: this.postconditions.map((postcond) => postcond.bsqemit()) };
+        return { invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconditions: this.preconditions.map((precond) => precond.bsqemit()), postconditions: this.postconditions.map((postcond) => postcond.bsqemit()), samplesinline: this.samplesinline.map((sample) => sample.bsqemit()), samplesfile: this.samplesfile.map((sample) => sample.bsqemit()) };
     }
 
     abstract bsqemit(): any;
@@ -316,6 +360,9 @@ abstract class TIRInvoke {
         else if (jv[0] === "TreeIR::InvokeImplementation") {
             return TIRInvokeImplementation.bsqparse(jv);
         }
+        else if (jv[0] === "TreeIR::InvokeSynthesis") {
+            return TIRInvokeSynthesis.bsqparse(jv);
+        }
         else {
             return TIRInvokePrimitive.bsqparse(jv);
         }
@@ -323,8 +370,8 @@ abstract class TIRInvoke {
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[]) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isDynamicOperator: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], samplesinline: TIRInvokeSampleDeclInline[], samplesfile: TIRInvokeSampleDeclFile[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds, samplesinline, samplesfile);
     }
 
     bsqemit(): any {
@@ -334,15 +381,15 @@ class TIRInvokeAbstractDeclaration extends TIRInvoke {
         assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeAbstractDeclaration", "InvokeAbstractDeclaration");
 
         jv = jv[1];
-        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)));
+        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)));
     }
 }
 
 class TIRInvokeImplementation extends TIRInvoke {
     readonly body: TIRStatement[];
 
-    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], body: TIRStatement[]) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds);
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], samplesinline: TIRInvokeSampleDeclInline[], samplesfile: TIRInvokeSampleDeclFile[], body: TIRStatement[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds, samplesinline, samplesfile);
 
         this.body = body;
     }
@@ -355,7 +402,23 @@ class TIRInvokeImplementation extends TIRInvoke {
 
         jv = jv[1];
         const body = jv.body.map((stmt: any) => TIRStatement.bsqparse(stmt));
-        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), body);
+        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)), body);
+    }
+}
+
+class TIRInvokeSynthesis extends TIRInvoke {
+    constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, isMemberMethod: boolean, isVirtual: boolean, isDynamicOperator: boolean, isLambda: boolean, params: TIRFunctionParameter[], isThisRef: boolean, resultType: TIRTypeKey, preconds: TIRPreConditionDecl[], postconds: TIRPostConditionDecl[], samplesinline: TIRInvokeSampleDeclInline[], samplesfile: TIRInvokeSampleDeclFile[]) {
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds, samplesinline, samplesfile);
+    }
+
+    bsqemit(): any {
+        return ["TreeIR::InvokeSynthesis", { ...this.bsqemit_inv() }];
+    }
+    static bsqparse(jv: any): TIRInvokeSynthesis {
+        assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeSynthesis", "InvokeSynthesis");
+
+        jv = jv[1];
+        return new TIRInvokeSynthesis(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)));
     }
 }
 
@@ -363,7 +426,7 @@ class TIRInvokePrimitive extends TIRInvoke {
     readonly body: string;
 
     constructor(invkey: TIRInvokeKey, name: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: boolean, tbinds: Map<string, TIRTypeKey>, pcodes: Map<string, TIRPCodeKey>, params: TIRFunctionParameter[], resultType: TIRTypeKey, body: string) {
-        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, false, false, false, false, params, false, resultType, [], []);
+        super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, false, false, false, false, params, false, resultType, [], [], [], []);
 
         this.body = body;
     }
@@ -2111,7 +2174,7 @@ export {
     TIRFunctionParameter,
     TIRObjectInvariantDecl, TIRObjectValidateDecl, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl,
     TIRTaskStatusEffect, TIRTaskEventEffect, TIRTaskEnvironmentEffect, TIRTaskResourceEffect, TIRTaskEnsures,
-    TIRInvoke, TIRPreConditionDecl, TIRPostConditionDecl, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive,
+    TIRInvoke, TIRPreConditionDecl, TIRPostConditionDecl, TIRInvokeSampleDeclInline, TIRInvokeSampleDeclFile, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeSynthesis, TIRInvokePrimitive,
     TIRConstMemberDecl, TIRStaticFunctionDecl, TIRMemberFieldDecl, TIRMemberMethodDecl,
     TIRType,
     TIROOType, TIREntityType, TIRObjectEntityType, TIREnumEntityType, TIRTypedeclEntityType, TIRInternalEntityType, TIRPrimitiveInternalEntityType,

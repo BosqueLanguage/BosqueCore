@@ -72,6 +72,32 @@ class PostConditionDecl {
     }
 }
 
+class InvokeSampleDeclInline {
+    readonly sinfo: SourceInfo;
+    readonly istest: boolean;
+    readonly args: string; //a tuple of the arguments
+    readonly output: string;
+
+    constructor(sinfo: SourceInfo, istest: boolean, args: string, output: string) {
+        this.sinfo = sinfo;
+        this.istest = istest;
+        this.args = args;
+        this.output = output;
+    }
+}
+
+class InvokeSampleDeclFile {
+    readonly sinfo: SourceInfo;
+    readonly istest: boolean;
+    readonly filepath: string; //may use the $root and $src meta variables
+
+    constructor(sinfo: SourceInfo, istest: boolean, filepath: string) {
+        this.sinfo = sinfo;
+        this.istest = istest;
+        this.filepath = filepath;
+    }
+}
+
 class InvariantDecl {
     readonly sinfo: SourceInfo;
     readonly level: BuildLevel;
@@ -114,6 +140,8 @@ class InvokeDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
+    readonly samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[];
+
     readonly isPCodeFn: boolean;
     readonly isPCodePred: boolean;
     readonly captureVarSet: Set<string>;
@@ -121,7 +149,7 @@ class InvokeDecl {
 
     readonly body: BodyImplementation | undefined;
 
-    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
+    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
         this.namespace = ns;
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
@@ -140,6 +168,7 @@ class InvokeDecl {
 
         this.preconditions = preconds;
         this.postconditions = postconds;
+        this.samples = samples;
 
         this.isPCodeFn = isPCodeFn;
         this.isPCodePred = isPCodePred;
@@ -153,11 +182,15 @@ class InvokeDecl {
     }
 
     static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
-        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
+        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
     }
 
-    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], body: BodyImplementation | undefined) {
-        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, false, false, new Set<string>(), new Set<string>(), body);
+    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], body: BodyImplementation | undefined) {
+        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
+    }
+
+    static createSynthesisInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], body: BodyImplementation) {
+        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
     }
 }
 
@@ -727,7 +760,7 @@ class Assembly {
 }
 
 export {
-    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeDecl,
+    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,

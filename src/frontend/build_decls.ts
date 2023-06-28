@@ -128,9 +128,13 @@ function cleanCommentsStringsFromFileContents(str: string): string {
         .replace(typedStringRe, "''");
 }
 
-type BuildLevel = "spec" | "debug" | "test" | "release";
+type BuildLevel = "spec" | "debug" | "test" | "release" | "safety";
 
 function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
+    if(enabled === "safety") {
+        return true;
+    }
+    
     if(enabled === "spec") {
         return check === "spec" || check === "debug" || check === "test" || check === "release";
     }
