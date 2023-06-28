@@ -382,7 +382,6 @@ class UnionValue {
 //MapEntry<K, V> -> [K, V]
 //Map<K, V> -> IMap<K, V>
 
-
 function keyEqualsBase(v1: any, v2: any): boolean {
     if (v1 === v2) {
         return true;

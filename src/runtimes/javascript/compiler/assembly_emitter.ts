@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRInvokeSynthesis, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
 import { TIRCodePack } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
@@ -43,6 +43,13 @@ class NamespaceEmitter {
         if(fdecl.invoke instanceof TIRInvokePrimitive) {
             body = emitBuiltinMemberFunction(this.m_assembly, ootype, fdecl, bemitter);
         }
+        else if(fdecl.invoke instanceof TIRInvokeSynthesis) {
+            const ptypes = fdecl.invoke.params.map((pp) => `"${pp.type}"`);
+            const rtype = `"${fdecl.invoke.resultType}"`;
+
+            const samples = fdecl.invoke.samplesinline.map((ss) => `{args: ${ss.args}, result: ${ss.output}}`);
+            body = `return processProroguedCall(${fdecl.srcFile}, ${fdecl.sourceLocation.line}, ${fdecl.name}, [${ptypes.join(", ")}], ${rtype}, ${ootype.tname.ns}, [${samples.join(", ")}], [${args}]);`;
+        }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;
             body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, indent, `${fdecl.tkey}::${fdecl.name}`, false);
@@ -61,10 +68,21 @@ class NamespaceEmitter {
 
         assert(!(mdecl.invoke instanceof TIRInvokeAbstractDeclaration) && !(mdecl.invoke instanceof TIRInvokePrimitive), "should not be doing this!!");
             
-        const mimpl = mdecl.invoke as TIRInvokeImplementation;
-        const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, indent, `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
-        
-        return `function(${args}) ${body}`;
+        if(mdecl.invoke instanceof TIRInvokeSynthesis) {
+            const ptypes = [ootype.tkey, ...mdecl.invoke.params.map((pp) => `"${pp.type}"`)];
+            const rtype = `"${mdecl.invoke.resultType}"`;
+
+            const samples = mdecl.invoke.samplesinline.map((ss) => `{args: ${ss.args}, result: ${ss.output}}`);
+            const body = `return processProroguedCall(${mdecl.srcFile}, ${mdecl.sourceLocation.line}, ${mdecl.name}, [${ptypes.join(", ")}], ${rtype}, ${ootype.tname.ns}, [${samples.join(", ")}], [${args}]);`;
+
+            return `function(${args}) ${body}`;
+        }
+        else {
+            const mimpl = mdecl.invoke as TIRInvokeImplementation;
+            const body = bemitter.emitBodyStatementList(mimpl.body, mimpl.preconditions, mimpl.postconditions, indent, `${mdecl.tkey}::${mdecl.name}`, mdecl.attributes.includes("action") || mdecl.invoke.isThisRef);
+
+            return `function(${args}) ${body}`;
+        }
     }
 
     private emitOOTypeFunctions(ootype: TIROOType): string[] {
@@ -292,6 +310,13 @@ class NamespaceEmitter {
         if(fdecl.invoke instanceof TIRInvokePrimitive) {
             body = emitBuiltinNamespaceFunction(this.m_assembly, fdecl, bemitter);
         }
+        else if(fdecl.invoke instanceof TIRInvokeSynthesis) {
+            const ptypes = fdecl.invoke.params.map((pp) => `"${pp.type}"`);
+            const rtype = `"${fdecl.invoke.resultType}"`;
+
+            const samples = fdecl.invoke.samplesinline.map((ss) => `{args: ${ss.args}, result: ${ss.output}}`);
+            body = `return processProroguedCall(${fdecl.srcFile}, ${fdecl.sourceLocation.line}, ${fdecl.name}, [${ptypes.join(", ")}], ${rtype}, ${fdecl.ns}, [${samples.join(", ")}], [${args}]);`;
+        }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;
             body = bemitter.emitBodyStatementList(fimpl.body, fimpl.preconditions, fimpl.postconditions, indent, `${fdecl.ns}::${fdecl.name}`, false);
@@ -516,7 +541,7 @@ class NamespaceEmitter {
         });
 
         const iext = asdeno ? ".ts" : "";
-        const stdimps = [`import * as $Constants from "./constants${iext}";`, `import * as $TypeInfo from "./typeinfo${iext}";`, `import * as $Runtime from "./runtime${iext}";`, `import * as $BSQONEmit from "./bsqon_emit${iext}";`, `import {$ASM} from "./runtime${iext}";`];
+        const stdimps = [`import * as $Constants from "./constants${iext}";`, `import * as $TypeInfo from "./typeinfo${iext}";`, `import * as $Runtime from "./runtime${iext}";`, `import {$ASM} from "./runtime${iext}";`, `import * as $BSQONEmit from "./bsqon_emit${iext}";`, `import * as $Prorogue from "./prorogue${iext}";`];
         if(this.m_ns !== "Core") {
             stdimps.push(`import { $BSQ } from "./Core${iext}";`);
         }
