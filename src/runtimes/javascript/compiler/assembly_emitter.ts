@@ -48,7 +48,7 @@ class NamespaceEmitter {
             const rtype = `"${fdecl.invoke.resultType}"`;
 
             const samples = fdecl.invoke.samplesinline.map((ss) => `{args: ${ss.args}, result: ${ss.output}}`);
-            body = `return processProroguedCall(${fdecl.srcFile}, ${fdecl.sourceLocation.line}, ${fdecl.name}, [${ptypes.join(", ")}], ${rtype}, ${ootype.tname.ns}, [${samples.join(", ")}], [${args}]);`;
+            body = `{\n    return processProroguedCall("${fdecl.srcFile}", ${fdecl.sourceLocation.line}, "${fdecl.name}", [${ptypes.join(", ")}], ${rtype}, ${ootype.tname.ns}, [${samples.join(", ")}], [${args}]);\n}`;
         }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;
@@ -311,11 +311,14 @@ class NamespaceEmitter {
             body = emitBuiltinNamespaceFunction(this.m_assembly, fdecl, bemitter);
         }
         else if(fdecl.invoke instanceof TIRInvokeSynthesis) {
+            const lfs = Math.max(fdecl.srcFile.lastIndexOf("/"), fdecl.srcFile.lastIndexOf("\\"));
+            const srcf = lfs !== -1 ? fdecl.srcFile.substring(lfs + 1) : fdecl.srcFile;
+
             const ptypes = fdecl.invoke.params.map((pp) => `"${pp.type}"`);
             const rtype = `"${fdecl.invoke.resultType}"`;
 
-            const samples = fdecl.invoke.samplesinline.map((ss) => `{args: ${ss.args}, result: ${ss.output}}`);
-            body = `return processProroguedCall(${fdecl.srcFile}, ${fdecl.sourceLocation.line}, ${fdecl.name}, [${ptypes.join(", ")}], ${rtype}, ${fdecl.ns}, [${samples.join(", ")}], [${args}]);`;
+            const samples = fdecl.invoke.samplesinline.map((ss) => `{args: '${ss.args}', result: '${ss.output}'}`);
+            body = `{\n    return $Prorogue.processProroguedCall("${srcf}", ${fdecl.sourceLocation.line}, "${fdecl.name}", [${ptypes.join(", ")}], ${rtype}, "${fdecl.ns}", [${samples.join(", ")}], [${args}]);\n}`;
         }
         else {
             const fimpl = fdecl.invoke as TIRInvokeImplementation;

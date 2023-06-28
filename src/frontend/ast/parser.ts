@@ -704,7 +704,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_bsqvvRe = /[{}"]/y;
+    private static readonly _s_bsqvvRe = /[{}"]/;
     private tryLexBSQON() {
         let bbpos = this.m_cpos;
         if (!this.m_input.startsWith("bsqon{", bbpos)) {
@@ -719,22 +719,21 @@ class Lexer {
 
         let pdepth = 1;
         while(pdepth !== 0 && bbpos < this.m_input.length) {
-            Lexer._s_bsqvvRe.lastIndex = bbpos;
-            const mm = Lexer._s_bsqvvRe.exec(this.m_input);
+            const mm = Lexer._s_bsqvvRe.exec(this.m_input.slice(bbpos));
             if(mm === null) {
                 return false;
             }
 
             if(mm[0] === "{") {
                 pdepth++;
-                bbpos = mm.index + 1;
+                bbpos = bbpos + mm.index + 1;
             }
             else if(mm[0] === "}") {
                 pdepth--;
-                bbpos = mm.index + 1;
+                bbpos = bbpos + mm.index + 1;
             }
             else {
-                bbpos = mm.index;
+                bbpos = bbpos + mm.index;
                        
                 Lexer._s_stringRe.lastIndex = bbpos;
                 const ms = Lexer._s_stringRe.exec(this.m_input);
@@ -755,13 +754,12 @@ class Lexer {
         }
     }
 
-    private static readonly _s_bsqexamplefilebeginRe = /^(\s+([.]{1,2}\/)|([$]{))/y;
-    private static readonly _s_bsqexamplefileendRe = /;/y;
-    private static readonly _s_bsqexamplesplitRe = /->|"|;/y;
-    private static readonly _s_bsqexampleendRe = /[;"]/y;
+    private static readonly _s_bsqexamplefilebeginRe = /(\s+([.]{1,2}\/)|([$]{))/y;
+    private static readonly _s_bsqexamplefileendRe = /;/;
+    private static readonly _s_bsqexamplesplitRe = /->|"|;/;
+    private static readonly _s_bsqexampleendRe = /[;"]/;
     private tryLexBSQONExample() {
-        let bbpos = this.m_cpos;
-        if (!this.m_input.startsWith("example ", bbpos)) {
+        if (!this.m_input.startsWith("example ", this.m_cpos)) {
             return false;
         }
 
@@ -770,20 +768,18 @@ class Lexer {
         Lexer._s_bsqexamplefilebeginRe.lastIndex = this.m_cpos;
         const fb = Lexer._s_bsqexamplefilebeginRe.exec(this.m_input);
         if (fb !== null && fb.index === this.m_cpos) {
-            Lexer._s_bsqexamplefileendRe.lastIndex = this.m_cpos;
-            const fe = Lexer._s_bsqexamplefileendRe.exec(this.m_input);
+            const fe = Lexer._s_bsqexamplefileendRe.exec(this.m_input.slice(this.m_cpos));
             if (fe === null) {
                 return false;
             }
 
-            this.recordLexTokenWData(this.m_cpos + fe.index, TokenStrings.BSQON_EXAMPLE_FILE, this.m_input.substring(this.m_cpos, fe.index));
+            this.recordLexTokenWData(this.m_cpos + fe.index, TokenStrings.BSQON_EXAMPLE_FILE, this.m_input.substring(this.m_cpos, this.m_cpos + fe.index));
             return true;
         }
         else {
             let bbpos = this.m_cpos;
             while (bbpos < this.m_input.length) {
-                Lexer._s_bsqexamplesplitRe.lastIndex = bbpos;
-                const mm = Lexer._s_bsqexamplesplitRe.exec(this.m_input);
+                const mm = Lexer._s_bsqexamplesplitRe.exec(this.m_input.slice(bbpos));
                 if (mm === null) {
                     return false;
                 }
@@ -793,10 +789,11 @@ class Lexer {
                 }
 
                 if (mm[0] === "->") {
+                    bbpos = bbpos + mm.index;
                     break;
                 }
                 else {
-                    bbpos = mm.index;
+                    bbpos = bbpos + mm.index;
 
                     Lexer._s_stringRe.lastIndex = bbpos;
                     const ms = Lexer._s_stringRe.exec(this.m_input);
@@ -807,13 +804,12 @@ class Lexer {
                     bbpos = bbpos + ms[0].length;
                 }
             }
-            this.recordLexToken(bbpos, TokenStrings.BSQON_EXAMPLE_ARGS);
+            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_ARGS, this.m_input.substring(this.m_cpos, bbpos).trim());
             this.m_cpos += 2; //skip ->
 
             bbpos = this.m_cpos;
             while (bbpos < this.m_input.length) {
-                Lexer._s_bsqexampleendRe.lastIndex = bbpos;
-                const mm = Lexer._s_bsqexampleendRe.exec(this.m_input);
+                const mm = Lexer._s_bsqexampleendRe.exec(this.m_input.slice(bbpos));
                 if (mm === null) {
                     return false;
                 }
@@ -823,10 +819,11 @@ class Lexer {
                 }
 
                 if (mm[0] === ";") {
+                    bbpos = bbpos + mm.index;
                     break;
                 }
                 else {
-                    bbpos = mm.index;
+                    bbpos = bbpos + mm.index;
 
                     Lexer._s_stringRe.lastIndex = bbpos;
                     const ms = Lexer._s_stringRe.exec(this.m_input);
@@ -837,8 +834,8 @@ class Lexer {
                     bbpos = bbpos + ms[0].length;
                 }
             }
+            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_RESULT, this.m_input.substring(this.m_cpos, bbpos).trim());
 
-            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_RESULT, this.m_input.substring(this.m_cpos, bbpos));
             return true;
         }
     }
@@ -3847,7 +3844,7 @@ class Parser {
                 this.ensureToken(TokenStrings.BSQON_EXAMPLE_ARGS, "example");
                 const args = this.consumeTokenAndGetValue();
 
-                this.ensureAndConsumeToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
+                this.ensureToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
                 const result = this.consumeTokenAndGetValue();
 
                 samples.push(new InvokeSampleDeclInline(sinfo, istest, args, result));
