@@ -150,13 +150,14 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `import * as $Runtime from "./runtime${iext}";\n`
             + `import * as $Parse from "./bsqon_parse${iext}";\n`
             + `import * as $Emit from "./bsqon_emit${iext}";\n`
+            + `import * as $Prorogue from "./prorogue${iext}";\n`
             + `import * as $${mainNamespace} from "./${mainNamespace}${iext}";\n\n`
             + `const assembly = $TypeInfo.AssemblyInfo.parse($JASM.metainfo);\n`
             + `$TypeInfo.setLoadedTypeInfo(assembly);\n\n`
             + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
             + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
             + `const input_stream = filearg !== undefined ? fs.createReadStream(filearg.substring(8)) : process.stdin;\n`
-            + `const arg_string = await read(input_stream);\n\n`
+            + (epf.params.length === 0 ? `const arg_string = "";\n\n` : `const arg_string = await read(input_stream);\n\n`)
             + `let bsq_args: any[] = [];\n`
             + `try {\n`
             + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`
@@ -174,6 +175,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `    const res_val = $${mainNamespace}.${mainFunction}(${epf.params.map((pp, ii) => `bsq_args.result[${ii}]`).join(", ")});\n`
             + `    const bsqonres_val = $Emit.BSQONEmitter.emitStd(res_val, "${epf.resultType}", "${epns.ns}", assembly);\n`
             + `    console.log(bsqonres_val);\n`
+            + `    $Prorogue.listNewProroguedImpls();\n`
             + `} catch(exe) {\n`
             + `    process.stdout.write("error in eval -- " + JSON.stringify(exe, undefined, 2) + "\\n");\n`
             + `    process.exit(0);\n`

@@ -53,6 +53,18 @@ function processProroguedCall(file: string, line: number, name: string, ptypes: 
     }
 }
 
+function listNewProroguedImpls(): void {
+    const newimpls = [...proroguedImplMap.entries()].map(([name, impls]) => {
+        const implstr = impls.map((impl) => `${impl.args} => ${impl.result}`).join("\n");
+        return `function ${name}(...) \n${implstr}\n\n`;
+    }).join("\n");
+
+    if(newimpls.length > 0) {
+        process.stdout.write("\n\n----\n" + newimpls);
+    }
+}
+
 export { 
-    processProroguedCall
+    processProroguedCall,
+    listNewProroguedImpls
 };

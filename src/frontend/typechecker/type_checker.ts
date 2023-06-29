@@ -6427,6 +6427,7 @@ class TypeChecker {
     private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
         try {
             let fargs: TIRFunctionParameter[] = [];
+            let rargs: Map<string, VarInfo> = new Map<string, VarInfo>(args);
 
             if (optthistype !== undefined) {
                 fargs.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
@@ -6442,11 +6443,15 @@ class TypeChecker {
                 }
             });
 
+            fargs.push(new TIRFunctionParameter("$return", this.toTIRTypeKey(this.normalizeTypeOnly(invk.resultType, binds))));
+            rargs.set("$return", new VarInfo(this.normalizeTypeOnly(invk.resultType, binds), true, true));
+
             if(optthistype !== undefined && invk.isThisRef) {
                 fargs.push(new TIRFunctionParameter("$this", this.toTIRTypeKey(optthistype)));
+                rargs.set("$this", new VarInfo(optthistype, true, true));
             }
 
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, args);
+            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, rargs);
             const clauses = exps
                 .filter((cev) => isBuildLevelEnabled(cev.level, this.m_buildLevel))
                 .map((cev) => {
