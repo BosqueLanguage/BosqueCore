@@ -3811,7 +3811,8 @@ class Parser {
 
         let postconds: PostConditionDecl[] = [];
         try {
-            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, true));
+            const rargs = new Set<string>(argnames).add("$return").add("$this");
+            this.m_penv.pushFunctionScope(new FunctionScope(rargs, boundtemplates, rtype, true));
             while (this.testToken(KW_ensures)) {
                 this.consumeToken();
 

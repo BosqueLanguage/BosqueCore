@@ -1929,10 +1929,10 @@ class BodyEmitter {
             return `{\n${scratch}${rconds}${bodyindent}${bstmts.join("\n" + bodyindent)}\n${indent}}`;
         }
         else {
-            const bstr = `{\n${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
+            const bstr = `{\n${wbodyindent}${bstmts.join("\n" + wbodyindent)}\n${bodyindent}}`;
             const econds = bodyindent + postconds.map((pc) => `$Runtime.raiseUserAssertIf(!((() => { try { return ${this.emitExpression(pc.exp)}; } catch (ex) { $Runtime.log("warn", "PreCondEvalFailure", "condition failure"); return true; } })()), "Failed postcondition ${fname} -- ${pc.exp.expstr}");`).join("\n" + bodyindent);
 
-            return `{\n${scratch}${rconds}const $$return" = (() => ${bstr})();\n${bodyindent}$return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
+            return `{\n${scratch}${rconds}${bodyindent}const $$return = (() => ${bstr})();\n${bodyindent}const $return = ${extractres ? "$$return[1]" : "$$return"};\n${econds}\n${bodyindent}return $$return;\n${indent}}`;
         }
     }
 }
