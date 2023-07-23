@@ -148,6 +148,8 @@ entity Counter {
 
     method ref generateNextID(): Nat {
         let id = this.ctr;
+        
+        //TODO: this syntax is not final
         this = Counter{this.ctr + 1n};
 
         return id;

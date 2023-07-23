@@ -9,7 +9,7 @@ function countLinesInFile(filepath, ext) {
     }
     else {
         const contents = fs.readFileSync(filepath, "utf8");
-        const emptylines = contents.match(/(^[ \t]*$)/gm);
+        const emptylines = contents.match(/(^[ \t]*\n$)/gm);
         const totallines = contents.match(/(\n)/g);
 
         const emptycount = emptylines !== null ? (emptylines.length - 1) : 0;
