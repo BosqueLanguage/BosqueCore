@@ -22,6 +22,7 @@ LiteralNoneExpression { }
 | LiteralASCIITemplateStringExpression { value: String }
 | LiteralTypedPrimitiveDirectExpression { value: Expression, constype: TypeKey, basetype: TypeKey }
 | LiteralTypedPrimitiveConstructorExpression { value: Expression, constype: TypeKey, basetype: TypeKey }
+| BSQONLiteralExpression {bsqonstr: String}
 ;
 
 entity AccessEnvValueExpression provides Expression {
@@ -63,7 +64,7 @@ datatype LoadSingleExpression provides Expression using {
     field exp: Expression;
 } of
 LoadIndexExpression { index: Nat }
-| LoadPropertyExpression { property: String }
+| LoadPropertyExpression { property: Identifier }
 | LoadFieldExpression { fieldkey: FieldKey }
 | LoadFieldVirtualExpression { fieldkey: FieldKey }
 ;
@@ -270,10 +271,10 @@ InjectExpression { }
 entity CreateCodePackExpression provides Expression {
     field pcodepack: CodePack;
 
-    field capturedirect: List<String>;
-    field captureindirect: List<String>;
-    field capturepackdirect: List<String>;
-    field capturepackindirect: List<String>;
+    field capturedirect: List<TreeIR::Identifier>;
+    field captureindirect: List<TreeIR::Identifier>;
+    field capturepackdirect: List<TreeIR::Identifier>;
+    field capturepackindirect: List<TreeIR::Identifier>;
 }
 
 concept TestIsExpression provides Expression {
@@ -286,8 +287,8 @@ IsNoneSpecialExpression { }
 | IsSomeSpecialExpression { }
 | IsNothingSpecialExpression { }
 | IsSomethingSpecialExpression { }
-| IsOkSpecialExpression { }
-| IsErrSpecialExpression { }
+| IsOkSpecialExpression { field oktype: TypeKey; }
+| IsErrSpecialExpression { field errtype: TypeKey; }
 ;
 
 datatype ITestIsLiteralEqExpression provides TestIsExpression using {
@@ -316,8 +317,8 @@ AsNoneSpecialExpression { }
 | AsSomeSpecialExpression { }
 | AsNothingSpecialExpression { }
 | AsSomethingSpecialExpression { }
-| AsOkSpecialExpression { }
-| AsErrSpecialExpression { }
+| AsOkSpecialExpression { field oktype: TypeKey; }
+| AsErrSpecialExpression { field errtype: TypeKey; }
 ;
 
 datatype AsLiteralEqExpression provides AsExpression using {

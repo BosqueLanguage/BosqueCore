@@ -1540,7 +1540,7 @@ class TIRCodePack {
         this.capturedCodePacks = capturedCodePacks;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::CodePack", { ns: this.ns, codekey: this.codekey, invk: this.invk, isrecursive: this.recursive, terms: this.terms, pcodes: this.pcodes, capturedValues: this.capturedValues, capturedCodePacks: this.capturedCodePacks }];
     }
     static bsqparse(jv: any): TIRCodePack {

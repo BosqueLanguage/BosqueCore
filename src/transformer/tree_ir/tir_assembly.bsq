@@ -1,25 +1,25 @@
 namespace TreeIR;
 
-typedecl TypeKeyIdentifierValidator = /[A-Z].+/;
-typedecl TypeKey = StringOf<TypeKeyIdentifierValidator>;
+typedecl ValidTypeKey = /[A-Z].+/;
+typedecl TypeKey = StringOf<ValidTypeKey>;
 
-typedecl InvokeKeyIdentifierValidator = /[a-z].*/;
-typedecl InvokeKey = StringOf<InvokeKeyIdentifierValidator>;
+typedecl ValidInvokeKey = /[a-z].*/;
+typedecl InvokeKey = StringOf<ValidInvokeKey>;
 
-typedecl FieldKeyIdentifierValidator = /[a-z].*/;
-typedecl FieldKey = StringOf<FieldKeyIdentifierValidator>;
+typedecl ValidFieldKey = /[a-z].*/;
+typedecl FieldKey = StringOf<ValidFieldKey>;
 
-typedecl PCodeKeyIdentifierValidator = /[a-z].*/;
-typedecl PCodeKey = StringOf<PCodeKeyIdentifierValidator>;
+typedecl ValidPCodeKey = /[a-z].*/;
+typedecl PCodeKey = StringOf<ValidPCodeKey>;
 
-typedecl NamespaceIdentifierValidator = /[A-Z][A-Za-z0-9_]+/;
-typedecl NamespaceIdentifier = StringOf<NamespaceIdentifierValidator>;
+typedecl ValidNamespace = /[A-Z][A-Za-z0-9_]+/;
+typedecl NamespaceIdentifier = StringOf<ValidNamespace>;
 
-typedecl IdentifierValidator = /[$a-z_][A-Za-z0-9_]*/;
-typedecl Identifier = StringOf<IdentifierValidator>;
+typedecl ValidIdentifier = /[$a-z_][A-Za-z0-9_]*/;
+typedecl Identifier = StringOf<ValidIdentifier>;
 
-typedecl TypeNameIdentifierValidator = /[A-Z][A-Za-z0-9_:]*/;
-typedecl TypeNameIdentifier = StringOf<TypeNameIdentifierValidator>;
+typedecl ValidTypeName = /[A-Z][A-Za-z0-9_:]*/;
+typedecl TypeNameIdentifier = StringOf<ValidTypeName>;
 
 entity TypeName {
     field ns: NamespaceIdentifier;
