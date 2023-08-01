@@ -28,7 +28,7 @@ entity TypeName {
 }
 
 entity FunctionParameter {
-    field name: String;
+    field name: Identifier;
     field type: TypeKey;
     field ddlit: LiteralValue?;
 }
@@ -41,6 +41,19 @@ entity PreConditionDecl {
 entity PostConditionDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
+}
+
+entity InlineSampleDecl {
+    field sinfo: SourceInfo;
+    field istest: Bool;
+    field argtuple: String;
+    field output: String;
+}
+
+entity FileSampleDecl {
+    field sinfo: SourceInfo;
+    field istest: Bool;
+    field filepath: string; //may use the $root and $src meta variables
 }
 
 entity ObjectInvariantDecl {
@@ -117,6 +130,9 @@ concept Invoke {
 
     field preconditions: List<PreConditionDecl>;
     field postconditions: List<PostConditionDecl>;
+
+    field inlinesamples: List<InlineSampleDecl>;
+    field filesamples: List<FileSamepleDecl>;
 }
 
 entity InvokeAbstractDeclaration provides Invoke {
@@ -132,7 +148,7 @@ entity InvokePrimitive provides Invoke {
 
 concept MemberDecl {
     field tkey: TypeKey;
-    field name: String;
+    field name: Identifier;
 
     field sinfo: SourceInfo;
     field srcFile: String;
@@ -198,7 +214,7 @@ entity ObjectEntityType provides EntityType {
 
 entity EnumEntityType provides EntityType {
     field enums: List<Identifier>;
-    field litvals: Map<String, LiteralValue>;
+    field litvals: Map<Identifier, LiteralValue>;
 }
 
 typedecl PathKindValidator = /path|pathfragment|pathglob/;

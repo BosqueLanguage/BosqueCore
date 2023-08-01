@@ -12,6 +12,13 @@ function assert(cond: boolean, msg: string) {
     }
 }
 
+const s_iident = "  ";
+
+
+function sinfo_bsqemit(sinfo: SourceInfo): string {
+    return `TreeIR::SourceInfo{${sinfo.line}, ${sinfo.column}, ${sinfo.pos}, ${sinfo.span}}`;
+}
+
 type TIRTypeKey = string;
 type TIRInvokeKey = string;
 type TIRFieldKey = string;
@@ -28,11 +35,15 @@ class TIRTypeName {
         this.templates = templates || [];
     }
 
-    bsqemit(): any {
-        return { ns: this.ns, name: this.name, templates: this.templates };
-    }
-    static bsqparse(jv: any): TIRTypeName {
-        return new TIRTypeName(jv.ns, jv.name, jv.templates);
+    bsqemit(): string {
+        let pfx = `TIRTree:TypeName{"${this.ns}"ValidNamespace, "${this.name}"ValidTypeName`;
+        if(this.templates !== undefined) {
+            const ttstr = this.templates.map((t) => `"${t}"ValidTypeKey`).join(", ");
+            pfx += `, List{${ttstr}}`;
+        }
+        pfx += "}";
+
+        return pfx;
     }
 }
 
@@ -47,11 +58,13 @@ class TIRFunctionParameter {
         this.ddlit = ddlit;
     }
 
-    bsqemit(): any {
-        return { name: this.name, type: this.type, ddlit: this.ddlit !== undefined ? this.ddlit.bsqemit() : null };
-    }
-    static bsqparse(jv: any): TIRFunctionParameter {
-        return new TIRFunctionParameter(jv.name, jv.type, jv.ddlit !== null ? TIRLiteralValue.bsqparse(jv.ddlit) : undefined);
+    bsqemit(): string {
+        if(this.ddlit === undefined) {
+            return `TIRTree:FunctionParameter{"${this.name}"ValidIdentifier, "${this.type}"ValidTypeKey}`;
+        }
+        else {
+            return "[NOT IMPLEMENTED -- function param with literal default value]";
+        }
     }
 }
 
@@ -64,11 +77,8 @@ class TIRPreConditionDecl {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRPreConditionDecl {
-        return new TIRPreConditionDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return `TreeIR::PreConditionDecl{\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}List{${this.args.map((arg) => arg.bsqemit())}}\n${ii}}`
     }
 }
 
@@ -81,11 +91,8 @@ class TIRPostConditionDecl {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRPostConditionDecl {
-        return new TIRPostConditionDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return `TreeIR::PostConditionDecl{\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}List{${this.args.map((arg) => arg.bsqemit())}}\n${ii}}`
     }
 }
 
@@ -102,11 +109,13 @@ class TIRInvokeSampleDeclInline {
         this.output = output;
     }
 
-    bsqemit(): any {
-        return { exp: this.sinfo.bsqemit(), istest: this.istest, args: this.args, output: this.output };
-    }
-    static bsqparse(jv: any): TIRInvokeSampleDeclInline {
-        return new TIRInvokeSampleDeclInline(SourceInfo.bsqparse(jv.sinfo), jv.istest, jv.args, jv.output);
+    bsqemit(ii: string): string {
+        return `TreeIR::InlineSampleDecl{`
+        + `\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`
+        + `,\n${ii + s_iident}${this.istest}`
+        + `,\n${ii + s_iident}${this.args}`
+        + `,\n${ii + s_iident}${this.output}`
+        + `\n${ii}}`;
     }
 }
 
@@ -121,11 +130,12 @@ class TIRInvokeSampleDeclFile {
         this.filepath = filepath;
     }
 
-    bsqemit(): any {
-        return { exp: this.sinfo.bsqemit(), istest: this.istest, filepath: this.filepath };
-    }
-    static bsqparse(jv: any): TIRInvokeSampleDeclFile {
-        return new TIRInvokeSampleDeclFile(SourceInfo.bsqparse(jv.sinfo), jv.istest, jv.filepath);
+    bsqemit(ii: string): string {
+        return `TreeIR::InlineSampleDecl{`
+        + `\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`
+        + `,\n${ii + s_iident}${this.istest}`
+        + `,\n${ii + s_iident}${this.filepath}`
+        + `\n${ii}}`;
     }
 }
 
@@ -138,11 +148,11 @@ class TIRObjectInvariantDecl {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRObjectInvariantDecl {
-        return new TIRObjectInvariantDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return `{`
+        + `\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}List{${this.args.map((arg) => arg.bsqemit())}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -155,11 +165,11 @@ class TIRObjectValidateDecl {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRObjectValidateDecl {
-        return new TIRObjectValidateDecl(TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return `{`
+        + `\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}List{${this.args.map((arg) => arg.bsqemit())}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -172,11 +182,11 @@ class TIRTypedeclInvariantDecl {
         this.vtype = vtype;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), vtype: this.vtype };
-    }
-    static bsqparse(jv: any): TIRTypedeclInvariantDecl {
-        return new TIRTypedeclInvariantDecl(TIRExpression.bsqparse(jv.exp), jv.vtype);
+    bsqemit(ii: string): string {
+        return `{`
+        + `\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.vtype}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -189,11 +199,11 @@ class TIRTypedeclValidateDecl {
         this.vtype = vtype;
     }
 
-    bsqemit(): any {
-        return { exp: this.exp.bsqemit(), vtype: this.vtype };
-    }
-    static bsqparse(jv: any): TIRTypedeclValidateDecl {
-        return new TIRTypedeclValidateDecl(TIRExpression.bsqparse(jv.exp), jv.vtype);
+    bsqemit(ii: string): string {
+        return `{`
+        + `\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.vtype}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -204,11 +214,8 @@ class TIRTaskStatusEffect {
         this.statusinfo = statusinfo;
     }
 
-    bsqemit(): any {
-        return { statusinfo: this.statusinfo };
-    }
-    static bsqparse(jv: any): TIRTaskStatusEffect {
-        return new TIRTaskStatusEffect(jv.statusinfo);
+    bsqemit(ii: string): string {
+        return "[NOT IMPLEMENTED -- task status effect]";
     }
 }
 
@@ -219,11 +226,8 @@ class TIRTaskEventEffect {
         this.eventinfo = eventinfo;
     }
 
-    bsqemit(): any {
-        return { eventinfo: this.eventinfo };
-    }
-    static bsqparse(jv: any): TIRTaskEventEffect {
-        return new TIRTaskEventEffect(jv.eventinfo);
+    bsqemit(ii: string): string {
+        return "[NOT IMPLEMENTED -- task event effect]"
     }
 }
 
@@ -236,11 +240,8 @@ class TIRTaskEnvironmentEffect {
         this.writevars = writevars;
     }
 
-    bsqemit(): any {
-        return { readvars: this.readvars, writevars: this.writevars };
-    }
-    static bsqparse(jv: any): TIRTaskEnvironmentEffect {
-        return new TIRTaskEnvironmentEffect(jv.readvars, jv.writevars);
+    bsqemit(ii: string): string {
+        return "[NOT IMPLEMENTED -- task environment effect]"
     }
 }
 
@@ -261,11 +262,8 @@ class TIRTaskResourceEffect {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { pathdescriptor: this.pathdescriptor, isread: this.isread, iswrite: this.iswrite, pathglob: this.pathglob !== undefined ? this.pathglob.bsqemit() : null, args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRTaskResourceEffect {
-        return new TIRTaskResourceEffect(jv.pathdescriptor, jv.isread, jv.iswrite, jv.pathglob !== null ? TIRExpression.bsqparse(jv.pathglob) : undefined, jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return "[NOT IMPLEMENTED -- task resource effect]"
     }
 }
 
@@ -280,11 +278,8 @@ class TIRTaskEnsures {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return { sinfo: this.sinfo.bsqemit(), exp: this.exp.bsqemit(), args: this.args.map((arg) => arg.bsqemit()) };
-    }
-    static bsqparse(jv: any): TIRTaskEnsures {
-        return new TIRTaskEnsures(SourceInfo.bsqparse(jv.sinfo), TIRExpression.bsqparse(jv.exp), jv.args.map((arg: any) => TIRFunctionParameter.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return "[NOT IMPLEMENTED -- task ensures]"
     }
 }
 
@@ -347,26 +342,52 @@ abstract class TIRInvoke {
         this.samplesfile = samplesfile;
     }
 
-    bsqemit_inv(): any {
-        return { invkey: this.invkey, name: this.name, sinfoStart: this.startSourceLocation.bsqemit(), sinfoEnd: this.endSourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, isrecursive: this.isrecursive, tbinds: Array.from(this.tbinds.entries()), pcodes: Array.from(this.pcodes.entries()), isMemberMethod: this.isMemberMethod, isVirtual: this.isVirtual, isDynamicOperator: this.isDynamicOperator, isLambda: this.isLambda, params: this.params.map((param) => param.bsqemit()), isThisRef: this.isThisRef, resultType: this.resultType, preconditions: this.preconditions.map((precond) => precond.bsqemit()), postconditions: this.postconditions.map((postcond) => postcond.bsqemit()), samplesinline: this.samplesinline.map((sample) => sample.bsqemit()), samplesfile: this.samplesfile.map((sample) => sample.bsqemit()) };
+    bsqemit_inv(ii: string): string {
+        const bindopts = [...this.tbinds.entries()].sort((a, b) => a[0].localeCompare(b[0])).map((ee) => `"${ee[0]}" => "${ee[1]}"ValidTypeKey`);
+        const binds = bindopts.length !== 0 ? `Map{${bindopts.join(", ")}}` : "Map{}";
+
+        const pcodeopts = [...this.pcodes.entries()].sort((a, b) => a[0].localeCompare(b[0])).map((ee) => `"${ee[0]}" => "${ee[1]}"ValidPCodeKey`);
+        const pcodes = pcodeopts.length !== 0 ? `Map{${pcodeopts.join(", ")}}` : "Map{}";
+
+        const paramopts = this.params.map((pp) => pp.bsqemit());
+        const params = paramopts.length !== 0 ? `List{${paramopts.join(", ")}}` : "List{}";
+
+        const precondopts = this.preconditions.map((pp) => pp.bsqemit(ii + s_iident + s_iident));
+        const preconds = precondopts.length !== 0 ? `List{${ii + s_iident + s_iident}${precondopts.join("\n, " + ii + s_iident + s_iident)}\n${ii + s_iident}}` : "List{}";
+        
+        const postcondopts = this.postconditions.map((pp) => pp.bsqemit(ii + s_iident + s_iident));
+        const postconds = postcondopts.length !== 0 ? `List{${ii + s_iident + s_iident}${postcondopts.join("\n, " + ii + s_iident + s_iident)}\n${ii + s_iident}}` : "List{}";
+
+        const isampleopts = this.samplesinline.map((pp) => pp.bsqemit(ii + s_iident + s_iident));
+        const isamples = isampleopts.length !== 0 ? `List{${ii + s_iident + s_iident}${isampleopts.join("\n, " + ii + s_iident + s_iident)}\n${ii + s_iident}}` : "List{}";
+
+        const fsampleopts = this.samplesfile.map((pp) => pp.bsqemit(ii + s_iident + s_iident));
+        const fsamples = fsampleopts.length !== 0 ? `List{${ii + s_iident + s_iident}${fsampleopts.join("\n, " + ii + s_iident + s_iident)}\n${ii + s_iident}}` : "List{}";
+
+        return `{`
+        + `\n${ii + s_iident}"${this.invkey}"TreeIR::ValidTypeKey`
+        + `\n${ii + s_iident}"${this.name}"ValidIdentifier`
+        + `\n${ii + s_iident}${sinfo_bsqemit(this.startSourceLocation)}`
+        + `\n${ii + s_iident}${sinfo_bsqemit(this.endSourceLocation)}`
+        + `\n${ii + s_iident}"${this.srcFile}"String`
+        + `\n${ii + s_iident}${"[" + this.attributes.join(", ") + "]"}`
+        + `\n${ii + s_iident}${this.isrecursive ? "true" : "false"}`
+        + `\n${ii + s_iident}${binds}`
+        + `\n${ii + s_iident}${pcodes}`
+        + `\n${ii + s_iident}${this.isMemberMethod ? "true" : "false"}`
+        + `\n${ii + s_iident}${this.isVirtual ? "true" : "false"}`
+        + `\n${ii + s_iident}${this.isDynamicOperator ? "true" : "false"}`
+        + `\n${ii + s_iident}${this.isLambda ? "true" : "false"}`
+        + `\n${ii + s_iident}${this.isThisRef ? "true" : "false"}`
+        + `\n${ii + s_iident}${params}`
+        + `\n${ii + s_iident}"${this.resultType}"ValidTypeKey`
+        + `\n${ii + s_iident}${preconds}`
+        + `\n${ii + s_iident}${postconds}`
+        + `\n${ii + s_iident}${isamples}`
+        + `\n${ii + s_iident}${fsamples}`;
     }
 
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRInvoke {
-        if (jv[0] === "TreeIR::InvokeAbstractDeclaration") {
-            return TIRInvokeAbstractDeclaration.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InvokeImplementation") {
-            return TIRInvokeImplementation.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InvokeSynthesis") {
-            return TIRInvokeSynthesis.bsqparse(jv);
-        }
-        else {
-            return TIRInvokePrimitive.bsqparse(jv);
-        }
-    }
+    abstract bsqemit(ii: string): string;
 }
 
 class TIRInvokeAbstractDeclaration extends TIRInvoke {
@@ -374,14 +395,9 @@ class TIRInvokeAbstractDeclaration extends TIRInvoke {
         super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, true, isDynamicOperator, false, params, isThisRef, resultType, preconds, postconds, samplesinline, samplesfile);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::InvokeAbstractDeclaration", this.bsqemit_inv()];
-    }
-    static bsqparse(jv: any): TIRInvokeAbstractDeclaration {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeAbstractDeclaration", "InvokeAbstractDeclaration");
-
-        jv = jv[1];
-        return new TIRInvokeAbstractDeclaration(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isDynamicOperator, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_inv(ii) 
+        + `\n${ii}}`;
     }
 }
 
@@ -394,15 +410,13 @@ class TIRInvokeImplementation extends TIRInvoke {
         this.body = body;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::InvokeImplementation", { ...this.bsqemit_inv(), body: this.body.map((stmt) => stmt.bsqemit()) }];
-    }
-    static bsqparse(jv: any): TIRInvokeImplementation {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeImplementation", "InvokeImplementation");
+    bsqemit(ii: string): string {
+        const bodyopts = this.body.map((stmt) => stmt.bsqemit(ii + s_iident));
+        const body = bodyopts.length !== 0 ? `List{${ii + s_iident}${bodyopts.join("\n, " + ii + s_iident)}\n${ii + s_iident}}` : "List{}";
 
-        jv = jv[1];
-        const body = jv.body.map((stmt: any) => TIRStatement.bsqparse(stmt));
-        return new TIRInvokeImplementation(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)), body);
+        return this.bsqemit_inv(ii)
+        + `,\n${ii + s_iident}${body}`
+        + `\n${ii}}`;
     }
 }
 
@@ -411,14 +425,9 @@ class TIRInvokeSynthesis extends TIRInvoke {
         super(invkey, name, sinfoStart, sinfoEnd, srcFile, attributes, recursive, tbinds, pcodes, isMemberMethod, isVirtual, isDynamicOperator, isLambda, params, isThisRef, resultType, preconds, postconds, samplesinline, samplesfile);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::InvokeSynthesis", { ...this.bsqemit_inv() }];
-    }
-    static bsqparse(jv: any): TIRInvokeSynthesis {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokeSynthesis", "InvokeSynthesis");
-
-        jv = jv[1];
-        return new TIRInvokeSynthesis(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.isMemberMethod, jv.isVirtual, jv.isDynamicOperator, jv.isLambda, jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.isThisRef, jv.resultType, jv.preconditions.map((precond: any) => TIRPreConditionDecl.bsqparse(precond)), jv.postconditions.map((postcond: any) => TIRPostConditionDecl.bsqparse(postcond)), jv.samplesinline.map((sample: any) => TIRInvokeSampleDeclInline.bsqparse(sample)), jv.samplesfile.map((sample: any) => TIRInvokeSampleDeclFile.bsqparse(sample)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_inv(ii) 
+        + `\n${ii}}`;
     }
 }
 
@@ -431,15 +440,10 @@ class TIRInvokePrimitive extends TIRInvoke {
         this.body = body;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::InvokePrimitive", { ...this.bsqemit_inv(), body: this.body }];
-    }
-    static bsqparse(jv: any): TIRInvokePrimitive {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InvokePrimitive", "InvokePrimitive");
-
-        jv = jv[1];
-        const body = jv.body;
-        return new TIRInvokePrimitive(jv.invkey, jv.name, SourceInfo.bsqparse(jv.sinfoStart), SourceInfo.bsqparse(jv.sinfoEnd), jv.srcFile, jv.attributes, jv.isrecursive, new Map<string, TIRTypeKey>(jv.tbinds), new Map<string, TIRPCodeKey>(jv.pcodes), jv.params.map((param: any) => TIRFunctionParameter.bsqparse(param)), jv.resultType, body);
+    bsqemit(ii: string): string {
+        return this.bsqemit_inv(ii)
+        + `,\n${ii + s_iident}"${this.body}"`
+        + `\n${ii}}`;
     }
 }
 
@@ -460,28 +464,19 @@ abstract class TIRMemberDecl {
         this.attributes = attributes;
     }
 
-    bsqemit_decl(): any {
-        return { tkey: this.tkey, name: this.name, sinfo: this.sourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes };
+    bsqemit_decl(ii: string): string {
+        const attropts = this.attributes.map((a) => `"${a}"`);
+        const attrs = attropts.length !== 0 ? `List{${attropts.join(", ")}}` : "List{}";
+
+        return `{`
+        + `\n${ii + s_iident}"${this.tkey}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.name}"ValidIdentifier`
+        + `,\n${ii + s_iident}${sinfo_bsqemit(this.sourceLocation)}`
+        + `,\n${ii + s_iident}"${this.srcFile}"`
+        + `,\n${ii + s_iident}${attrs}`;
     }
 
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRMemberDecl {
-        if (jv[0] === "TreeIR::ConstMemberDecl") {
-            return TIRConstMemberDecl.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::StaticFunctionDecl") {
-            return TIRStaticFunctionDecl.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::MemberFieldDecl") {
-            return TIRMemberFieldDecl.bsqparse(jv);
-        }
-        else {
-            assert(jv[0] === "TreeIR::MemberMethodDecl", "MemberMethodDecl");
-
-            return TIRMemberMethodDecl.bsqparse(jv);
-        }
-    }
+    abstract bsqemit(ii: string): string;
 }
 
 class TIRConstMemberDecl extends TIRMemberDecl {
@@ -494,16 +489,11 @@ class TIRConstMemberDecl extends TIRMemberDecl {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::ConstMemberDecl", { ...this.bsqemit_decl(), declaredType: this.declaredType, value: this.value.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRConstMemberDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ConstMemberDecl", "ConstMemberDecl");
-
-        jv = jv[1];
-        const declaredType = jv.declaredType;
-        const value = TIRExpression.bsqparse(jv.value);
-        return new TIRConstMemberDecl(jv.tkey, jv.name, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, declaredType, value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_decl(ii)
+        + `,\n${ii + s_iident}"${this.declaredType}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.value.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -517,14 +507,11 @@ class TIRStaticFunctionDecl extends TIRMemberDecl {
         this.invoke = invoke;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::StaticFunctionDecl", { ...this.bsqemit_decl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRStaticFunctionDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::StaticFunctionDecl", "StaticFunctionDecl");
-
-        jv = jv[1];
-        return new TIRStaticFunctionDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, TIRInvoke.bsqparse(jv.invoke));
+    bsqemit(ii: string): string {
+        return this.bsqemit_decl(ii)
+        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -538,14 +525,11 @@ class TIRMemberFieldDecl extends TIRMemberDecl {
         this.declaredType = declaredtype;
     }
 
-    bsqemit() {
-        return ["TreeIR::MemberFieldDecl", { ...this.bsqemit_decl(), fkey: this.fkey, declaredType: this.declaredType }];
-    }
-    static bsqparse(jv: any): TIRMemberFieldDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::MemberFieldDecl", "MemberFieldDecl");
-
-        jv = jv[1];
-        return new TIRMemberFieldDecl(jv.fkey, jv.tkey, jv.name, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.declaredType);
+    bsqemit(ii: string): string {
+        return this.bsqemit_decl(ii)
+        + `,\n${ii + s_iident}"${this.fkey}"ValidFieldKey`
+        + `,\n${ii + s_iident}"${this.declaredType}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -559,14 +543,11 @@ class TIRMemberMethodDecl extends TIRMemberDecl {
         this.invoke = invoke;
     }
 
-    bsqemit() {
-        return ["TreeIR::MemberMethodDecl", { ...this.bsqemit_decl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRMemberMethodDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::MemberMethodDecl", "MemberMethodDecl");
-
-        jv = jv[1];
-        return new TIRMemberMethodDecl(jv.tkey, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, TIRInvoke.bsqparse(jv.invoke));
+    bsqemit(ii: string): string {
+        return this.bsqemit_decl(ii)
+        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -581,102 +562,15 @@ abstract class TIRType {
         this.supertypes = supertypes !== undefined ? new Set<TIRTypeKey>(supertypes) : undefined;
     }
 
-    bsqemit_type(): any {
-        return { tkey: this.tkey, supertypes: this.supertypes !== undefined ? [...this.supertypes] : null };
+    bsqemit_type(ii: string): string {
+        const superopts = this.supertypes !== undefined ? ("List{" + [...this.supertypes].map((st) => `"${st}"ValidTypeKey`).join(", ") + "}") : "none";
+
+        return `{`
+        + `\n${ii + s_iident}"${this.tkey}"ValidTypeKey`
+        + `,\n${ii + s_iident}${superopts}`;
     }
 
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRType {
-        if (jv[0] === "TreeIR::ObjectEntityType") {
-            return TIRObjectEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::EnumEntityType") {
-            return TIREnumEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::TypedeclEntityType") {
-            return TIRTypedeclEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::PrimitiveInternalEntityType") {
-            return TIRPrimitiveInternalEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ValidatorEntityType") {
-            return TIRValidatorEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::StringOfEntityType") {
-            return TIRStringOfEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ASCIIStringOfEntityType") {
-            return TIRASCIIStringOfEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::PathValidatorEntityType") {
-            return TIRPathValidatorEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::PathEntityType") {
-            return TIRPathEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::PathFragmentEntityType") {
-            return TIRPathFragmentEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::PathGlobEntityType") {
-            return TIRPathGlobEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::OkEntityType") {
-            return TIROkEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ErrEntityType") {
-            return TIRErrEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::SomethingEntityType") {
-            return TIRSomethingEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::MapEntryEntityType") {
-            return TIRMapEntryEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::HavocEntityType") {
-            return TIRHavocEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ListEntityType") {
-            return TIRListEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::StackEntityType") {
-            return TIRStackEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::QueueEntityType") {
-            return TIRQueueEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::SetEntityType") {
-            return TIRSetEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::MapEntityType") {
-            return TIRMapEntityType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::TaskType") {
-            return TIRTaskType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ConceptType") {
-            return TIRConceptType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::ConceptSetType") {
-            return TIRConceptSetType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::TupleType") {
-            return TIRTupleType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::RecordType") {
-            return TIRRecordType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::UnionType") {
-            return TIRUnionType.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::EListType") {
-            return TIREListType.bsqparse(jv);
-        }
-        else {
-            assert(false, "TIRType: " + jv[0]);
-            return (undefined as any) as TIRType;
-        }
-    }
+    abstract bsqemit(ii: string): string;
 }
 
 abstract class TIROOType extends TIRType {
@@ -703,14 +597,32 @@ abstract class TIROOType extends TIRType {
         this.iskeytype = iskeytype;
     }
 
-    bsqemit_ootype(): any {
-        return { ...this.bsqemit_type(), tname: this.tname, sinfo: this.sourceLocation.bsqemit(), srcFile: this.srcFile, attributes: this.attributes, constMembers: this.constMembers.map((x) => x.bsqemit()), staticFunctions: this.staticFunctions.map((x) => x.bsqemit()), memberFields: this.memberFields.map((x) => x.bsqemit()), memberMethods: this.memberMethods.map((x) => x.bsqemit()), iskeytype: this.iskeytype };
-    }
-    static bsqparse_ooinfo(jv: any, tt: TIROOType) {
-        tt.constMembers.push(...jv.constMembers.map((x: any) => TIRConstMemberDecl.bsqparse(x)));
-        tt.staticFunctions.push(...jv.staticFunctions.map((x: any) => TIRStaticFunctionDecl.bsqparse(x)));
-        tt.memberFields.push(...jv.memberFields.map((x: any) => TIRMemberFieldDecl.bsqparse(x)));
-        tt.memberMethods.push(...jv.memberMethods.map((x: any) => TIRMemberMethodDecl.bsqparse(x)));
+    bsqemit_ootype(ii: string): string {
+        const attropts = this.attributes.map((a) => `"${a}"`);
+        const attrs = attropts.length !== 0 ? `List{${attropts.join(", ")}}` : "List{}";
+
+        const constopts = this.constMembers.map((cm) => cm.bsqemit(ii + s_iident + s_iident));
+        const constmembers = constopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${constopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
+
+        const staticopts = this.staticFunctions.map((sf) => sf.bsqemit(ii + s_iident + s_iident));
+        const staticfunctions = staticopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${staticopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
+
+        const fieldopts = this.memberFields.map((mf) => mf.bsqemit(ii + s_iident + s_iident));
+        const memberfields = fieldopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${fieldopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
+
+        const methodopts = this.memberMethods.map((mm) => mm.bsqemit(ii + s_iident + s_iident));
+        const membermethods = methodopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${methodopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
+
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}${this.tname.bsqemit()}`
+        + `,\n${ii + s_iident}${sinfo_bsqemit(this.sourceLocation)}`
+        + `,\n${ii + s_iident}"${this.srcFile}"`
+        + `,\n${ii + s_iident}${attrs}`
+        + `,\n${ii + s_iident}${constmembers}`
+        + `,\n${ii + s_iident}${staticfunctions}`
+        + `,\n${ii + s_iident}${memberfields}`
+        + `,\n${ii + s_iident}${membermethods}`
+        + `,\n${ii + s_iident}${this.iskeytype}`;
     }
 }
 
@@ -719,8 +631,8 @@ abstract class TIREntityType extends TIROOType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
-    bsqemit_entitytype(): any {
-        return { ...this.bsqemit_ootype() };
+    bsqemit_entitytype(ii: string): string {
+        return this.bsqemit_ootype(ii);
     }
 }
 
@@ -739,22 +651,25 @@ class TIRObjectEntityType extends TIREntityType {
         this.binds = binds;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::ObjectEntityType", { ...this.bsqemit_entitytype(), allfields: this.allfields, consinvariants: this.consinvariants.map((x) => x.bsqemit()), apivalidates: this.apivalidates.map((x) => x.bsqemit()), vtable: [...this.vtable], binds: [...this.binds] }];
-    }
-    static bsqparse(jv: any): TIRObjectEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ObjectEntityType", "ObjectEntityType");
+    bsqemit(ii: string): string {
+        const allfopts = "List{" + this.allfields.map((af) => `{fkey="${af.fkey}"ValidFieldKey, ftype="${af.ftype}"ValidFieldType}`).join(", ") + "}";
+        
+        const consinvopts = this.consinvariants.map((ci) => ci.bsqemit(ii + s_iident + s_iident));
+        const consinvariants = consinvopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${consinvopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
 
-        jv = jv[1];
-        const rr = new TIRObjectEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, new Map<string, TIRTypeKey>(jv.binds));
-        TIROOType.bsqparse_ooinfo(jv, rr);
+        const apivalidateopts = this.apivalidates.map((av) => av.bsqemit(ii + s_iident + s_iident));
+        const apivalidates = apivalidateopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${apivalidateopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
 
-        rr.allfields.push(...jv.allfields);
-        rr.consinvariants.push(...jv.consinvariants.map((x: any) => TIRObjectInvariantDecl.bsqparse(x)));
-        rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRObjectValidateDecl.bsqparse(x)));
-        jv.vtable.forEach((x: any) => rr.vtable.set(x[0], x[1]));
+        const vtableopts = "Map{" + [...this.vtable].map((v) => `"${v[0]}"ValidIdentifier => "${v[1]}"ValidInvokeKey`).join(", ") + "}";
+        const bindopts = "Map{" + [...this.binds].map((b) => `"${b[0]}" => "${b[1]}"ValidTypeKey`).join(", ") + "}";
 
-        return rr;
+        return this.bsqemit_entitytype(ii)
+        + `,\n${ii + s_iident}${allfopts}`
+        + `,\n${ii + s_iident}${consinvariants}`
+        + `,\n${ii + s_iident}${apivalidates}`
+        + `,\n${ii + s_iident}${vtableopts}`
+        + `,\n${ii + s_iident}${bindopts}`
+        + `\n${ii}}`;
     }
 }
 
@@ -768,19 +683,12 @@ class TIREnumEntityType extends TIREntityType {
         this.enums = enums;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::EnumEntityType", { ...this.bsqemit_entitytype(), enums: this.enums, litvals: [...this.litvals].map((x) => [x[0], x[1].bsqemit()]) }];
-    }
-    static bsqparse(jv: any): TIREnumEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::EnumEntityType", "EnumEntityType");
-
-        jv = jv[1];
-        const rr = new TIREnumEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.enums);
-        TIROOType.bsqparse_ooinfo(jv, rr);
-
-        jv.litvals.forEach((x: any) => rr.litvals.set(x[0], TIRLiteralValue.bsqparse(x[1])));
-
-        return rr;
+    bsqemit(ii: string): string {
+        const valmap = `Map{\n${ii + s_iident + s_iident}` + [...this.litvals].map((x) => `"${x[0]}"ValidIdentifier => ${x[1].bsqemit(ii + s_iident + s_iident)}`).join(", ") + `\n${ii + s_iident}}`;
+        return this.bsqemit_entitytype(ii)
+        + `,\n${ii + s_iident}List{${this.enums.map((e) => `"${e}"ValidIdentifier`).join(", ")}}`
+        + `,\n${ii + s_iident}${valmap}`
+        + `\n${ii}}`;
     }
 }
 
@@ -804,25 +712,29 @@ class TIRTypedeclEntityType extends TIREntityType {
         this.pthvalidator = pthvalidator;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TypedeclEntityType", {
-            ...this.bsqemit_entitytype(), valuetype: this.valuetype, representation: this.representation, consinvariantsall: this.consinvariantsall.map((x) => x.bsqemit()), consinvariantsexplicit: this.consinvariantsexplicit.map((x) => x.bsqemit()), apivalidates: this.apivalidates.map((x) => x.bsqemit()),
-            strvalidator: this.strvalidator !== undefined ? { vtype: this.strvalidator.vtype, vre: this.strvalidator.vre.jemit() } : null,
-            pthvalidator: this.pthvalidator !== undefined ? { vtype: this.pthvalidator, vpth: this.pthvalidator.vpth.jemit(), kind: this.pthvalidator.kind } : null
-        }];
-    }
-    static bsqparse(jv: any): TIRTypedeclEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::TypedeclEntityType", "TypedeclEntityType");
+    bsqemit(ii: string): string {
+        const consinvallopts = this.consinvariantsall.map((ci) => ci.bsqemit(ii + s_iident + s_iident));
+        const consinvariantsall = consinvallopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${consinvallopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
 
-        jv = jv[1];
-        const rr = new TIRTypedeclEntityType(jv.tkey, jv.tname, SourceInfo.bsqparse(jv.sinfo), jv.srcFile, jv.attributes, jv.supertypes, jv.valuetype, jv.representation, jv.strvalidator !== null ? { vtype: jv.strvalidator.vtype, vre: BSQRegex.jparse(jv.strvalidator.vre) } : undefined, jv.pthvalidator !== null ? { vtype: jv.pthvalidator.vtype, vpth: BSQPathValidator.jparse(jv.pthvalidator.vpth), kind: jv.pthvalidator.kind } : undefined, jv.iskeytype);
-        TIROOType.bsqparse_ooinfo(jv, rr);
+        const consinvexplicitopts = this.consinvariantsall.map((ci) => ci.bsqemit(ii + s_iident + s_iident));
+        const consinvariantsexplicit = consinvexplicitopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${consinvexplicitopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
 
-        rr.consinvariantsall.push(...jv.consinvariantsall.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
-        rr.consinvariantsexplicit.push(...jv.consinvariantsexplicit.map((x: any) => TIRTypedeclInvariantDecl.bsqparse(x)));
-        rr.apivalidates.push(...jv.apivalidates.map((x: any) => TIRTypedeclValidateDecl.bsqparse(x)));
 
-        return rr;
+        const apivalidateopts = this.apivalidates.map((av) => av.bsqemit(ii + s_iident + s_iident));
+        const apivalidates = apivalidateopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${apivalidateopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
+
+        const strvalidator = this.strvalidator !== undefined ? this.strvalidator.vre.bsqemit(ii + s_iident + s_iident) : "none";
+        const pthvalidator = this.pthvalidator !== undefined ? this.pthvalidator.vpth.bsqemit(ii + s_iident + s_iident) : "none";
+
+        return this.bsqemit_entitytype(ii)
+        + `,\n${ii + s_iident}${this.valuetype}ValidTypeKey`
+        + `,\n${ii + s_iident}${this.representation}ValidTypeKey`
+        + `,\n${ii + s_iident}${consinvariantsall}`
+        + `,\n${ii + s_iident}${consinvariantsexplicit}`
+        + `,\n${ii + s_iident}${apivalidates}`
+        + `,\n${ii + s_iident}${strvalidator}`
+        + `,\n${ii + s_iident}${pthvalidator}`
+        + `\n${ii}}`;
     }
 }
 
@@ -843,15 +755,8 @@ class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::PrimitiveInternalEntityType", this.bsqemit_internalentity()];
-    }
-    static bsqparse(jv: any): TIRPrimitiveInternalEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::PrimitiveInternalEntityType", "PrimitiveInternalEntityType");
-        const rr = new TIRPrimitiveInternalEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].iskeytype);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -864,15 +769,8 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
         this.revalidator = revalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ValidatorEntityType", { ...this.bsqemit_internalentity(), revalidator: this.revalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRValidatorEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ValidatorEntityType", "ValidatorEntityType");
-        const rr = new TIRValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, BSQRegex.jparse(jv[1].revalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -887,15 +785,8 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
         this.revalidator = revalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::StringOfEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRStringOfEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::StringOfEntityType", "StringOfEntityType");
-        const rr = new TIRStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -910,15 +801,8 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
         this.revalidator = revalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ASCIIStringOfEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRASCIIStringOfEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ASCIIStringOfEntityType", "ASCIIStringOfEntityType");
-        const rr = new TIRASCIIStringOfEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQRegex.jparse(jv[1].revalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -931,15 +815,8 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
         this.pthvalidator = pthvalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::PathValidatorEntityType", { ...this.bsqemit_internalentity(), pthvalidator: this.pthvalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRPathValidatorEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::PathValidatorEntityType", "PathValidatorEntityType");
-        const rr = new TIRPathValidatorEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, BSQPathValidator.jparse(jv[1].pthvalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -954,15 +831,8 @@ class TIRPathEntityType extends TIRInternalEntityType {
         this.pthvalidator = pthvalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::PathEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRPathEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::PathEntityType", "PathEntityType");
-        const rr = new TIRPathEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -977,15 +847,8 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
         this.pthvalidator = pthvalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::PathFragmentEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRPathFragmentEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::PathFragmentEntityType", "PathFragmentEntityType");
-        const rr = new TIRPathFragmentEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -999,15 +862,8 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
         this.pthvalidator = pthvalidator;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::PathGlobEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
-    }
-    static bsqparse(jv: any): TIRPathGlobEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::PathGlobEntityType", "PathGlobEntityType");
-        const rr = new TIRPathGlobEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].validatortype, BSQPathValidator.jparse(jv[1].pthvalidator));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1032,15 +888,8 @@ class TIROkEntityType extends TIRConstructableEntityType {
         this.typeE = typeE;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::OkEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE }];
-    }
-    static bsqparse(jv: any): TIROkEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::OkEntityType", "OkEntityType");
-        const rr = new TIROkEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1054,15 +903,8 @@ class TIRErrEntityType extends TIRConstructableEntityType {
         this.typeE = typeE;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ErrEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE }];
-    }
-    static bsqparse(jv: any): TIRErrEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ErrEntityType", "ErrEntityType");
-        const rr = new TIRErrEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT, jv[1].typeE);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1074,15 +916,8 @@ class TIRSomethingEntityType extends TIRConstructableEntityType {
         this.typeT = typeT;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::SomethingEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT }];
-    }
-    static bsqparse(jv: any): TIRSomethingEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::SomethingEntityType", "SomethingEntityType");
-        const rr = new TIRSomethingEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1096,15 +931,8 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
         this.typeV = typeV;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::MapEntryEntityType", { ...this.bsqemit_constructable(), typeK: this.typeK, typeV: this.typeV }];
-    }
-    static bsqparse(jv: any): TIRMapEntryEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::MapEntryEntityType", "MapEntryEntityType");
-        const rr = new TIRMapEntryEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1114,12 +942,8 @@ class TIRHavocEntityType extends TIRInternalEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, [], false);
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::HavocEntityType", this.bsqemit_internalentity()];
-    }
-    static bsqparse(jv: any): TIRHavocEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::HavocEntityType", "HavocEntityType");
-        return new TIRHavocEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes);
     }
 }
 
@@ -1143,15 +967,8 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
         this.typeT = typeT;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ListEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
-    }
-    static bsqparse(jv: any): TIRListEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ListEntityType", "ListEntityType");
-        const rr = new TIRListEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1164,15 +981,8 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
         this.typeT = typeT;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::StackEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
-    }
-    static bsqparse(jv: any): TIRStackEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::StackEntityType", "StackEntityType");
-        const rr = new TIRStackEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1185,15 +995,8 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
         this.typeT = typeT;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::QueueEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
-    }
-    static bsqparse(jv: any): TIRQueueEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::QueueEntityType", "QueueEntityType");
-        const rr = new TIRQueueEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1206,15 +1009,8 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
         this.typeT = typeT;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::SetEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
-    }
-    static bsqparse(jv: any): TIRSetEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::SetEntityType", "SetEntityType");
-        const rr = new TIRSetEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeT);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1229,15 +1025,8 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
         this.typeV = typeV;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::MapEntityType", { ...this.bsqemit_collection(), typeK: this.typeK, typeV: this.typeV }];
-    }
-    static bsqparse(jv: any): TIRMapEntityType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::MapEntityType", "MapEntityType");
-        const rr = new TIRMapEntityType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, jv[1].typeK, jv[1].typeV);
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 }
 
@@ -1270,24 +1059,8 @@ class TIRTaskType extends TIROOType {
         this.lfuncs = lfuncs;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::TaskType", { ...this.bsqemit_ootype(), binds: [...this.binds], controls: this.controls.map((cc) => ({ val: cc.val ? cc.val.bsqemit() : null, cname: cc.cname })), actions: this.actions, mainfunc: this.mainfunc, onfuncs: { onCancel: this.onfuncs.onCanel || null, onFailure: this.onfuncs.onFailure || null, onTimeout: this.onfuncs.onTimeout || null }, lfuncs: { logStart: this.lfuncs.logStart || null, logEnd: this.lfuncs.logEnd || null, taskEnsures: this.lfuncs.taskEnsures || null, taskWarns: this.lfuncs.taskWarns || null }, statuseffect: this.statuseffect.bsqemit(), eventeffect: this.eventeffect.bsqemit(), enveffect: this.enveffect.bsqemit(), resourceeffect: this.resourceeffect.map((eff) => eff.bsqemit()), tskensures: this.ensures.map((ee) => ee.bsqemit()) }];
-    }
-    static bsqparse(jv: any): TIRTaskType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::TaskType", "TaskType");
-        const rr = new TIRTaskType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds), { mkey: jv[1].mainfunc.mkey, mname: jv[1].mainfunc.mname }, { onCanel: jv[1].onfuncs.onCancel || undefined, onFailure: jv[1].onfuncs.onFailure || undefined, onTimeout: jv[1].onfuncs.onTimeout || undefined }, { logStart: jv[1].lfuncs.logStart || undefined, logEnd: jv[1].lfuncs.logEnd || undefined, taskEnsures: jv[1].lfuncs.taskEnsures || undefined, taskWarns: jv[1].lfuncs.taskWarns || undefined });
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        rr.controls.push(...jv[1].controls.map((cc: any) => ({ val: cc.val ? TIRLiteralValue.bsqparse(cc.val) : undefined, cname: cc.cname })));
-        rr.actions.push(...jv[1].actions);
-        rr.statuseffect.statusinfo.push(...TIRTaskStatusEffect.bsqparse(jv[1].statuseffect).statusinfo);
-        rr.eventeffect.eventinfo.push(...TIRTaskEventEffect.bsqparse(jv[1].eventeffect).eventinfo);
-        rr.enveffect.readvars.push(...TIRTaskEnvironmentEffect.bsqparse(jv[1].enveffect).readvars);
-        rr.enveffect.writevars.push(...TIRTaskEnvironmentEffect.bsqparse(jv[1].enveffect).writevars);
-        rr.resourceeffect.push(...jv[1].resourceeffect.map((x: any) => TIRTaskResourceEffect.bsqparse(x)));
-        rr.ensures.push(...jv[1].tskensures.map((x: any) => TIRTaskEnsures.bsqparse(x)));
-
-        return rr;
     }
 }
 
@@ -1299,15 +1072,8 @@ class TIRConceptType extends TIROOType {
         this.binds = binds;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ConceptType", { ...this.bsqemit_ootype(), binds: [...this.binds] }];
-    }
-    static bsqparse(jv: any): TIRConceptType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ConceptType", "ConceptType");
-        const rr = new TIRConceptType(jv[1].tkey, jv[1].tname, SourceInfo.bsqparse(jv[1].sinfo), jv[1].srcFile, jv[1].attributes, jv[1].supertypes, new Map(jv[1].binds));
-        TIROOType.bsqparse_ooinfo(jv[1], rr);
-
-        return rr;
     }
 
     isAnyConcept(): boolean {
@@ -1331,12 +1097,8 @@ class TIRConceptSetType extends TIRType {
         this.conceptTypes = concepts;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::ConceptSetType", { ...this.bsqemit_type(), conceptTypes: this.conceptTypes }];
-    }
-    static bsqparse(jv: any): TIRConceptSetType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::ConceptSetType", "ConceptSetType");
-        return new TIRConceptSetType(jv[1].tkey, jv[1].conceptTypes);
     }
 }
 
@@ -1348,12 +1110,8 @@ class TIRTupleType extends TIRType {
         this.types = types;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::TupleType", { ...this.bsqemit_type(), types: this.types }];
-    }
-    static bsqparse(jv: any): TIRTupleType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::TupleType", "TupleType");
-        return new TIRTupleType(jv[1].tkey, jv[1].types, jv[1].supertypes);
     }
 }
 
@@ -1365,12 +1123,8 @@ class TIRRecordType extends TIRType {
         this.entries = entries;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::RecordType", { ...this.bsqemit_type(), entries: this.entries }];
-    }
-    static bsqparse(jv: any): TIRRecordType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::RecordType", "RecordType");
-        return new TIRRecordType(jv[1].tkey, jv[1].entries, jv[1].supertypes);
     }
 }
 
@@ -1382,12 +1136,8 @@ class TIRUnionType extends TIRType {
         this.options = options;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::UnionType", { ...this.bsqemit_type(), options: this.options }];
-    }
-    static bsqparse(jv: any): TIRUnionType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::UnionType", "UnionType");
-        return new TIRUnionType(jv[1].tkey, jv[1].options);
     }
 }
 
@@ -1399,12 +1149,8 @@ class TIREListType extends TIRType {
         this.types = types;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::EListType", { ...this.bsqemit_type(), types: this.types }];
-    }
-    static bsqparse(jv: any): TIREListType {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::EListType", "EListType");
-        return new TIREListType(jv[1].tkey, jv[1].types);
     }
 }
 
@@ -1440,7 +1186,7 @@ class TIRNamespaceConstDecl extends TIRNamespaceDecl {
         this.value = value;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::NamespaceConstDecl", { ...this.bsqemit_nsdecl(), declaredType: this.declaredType, value: this.value.bsqemit() }];
     }
     static bsqparse(jv: any): TIRNamespaceConstDecl {
@@ -1459,7 +1205,7 @@ class TIRNamespaceFunctionDecl extends TIRNamespaceDecl {
         this.invoke = invoke;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::NamespaceFunctionDecl", { ...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
     }
 
@@ -1479,7 +1225,7 @@ class TIRNamespaceOperatorDecl extends TIRNamespaceDecl {
         this.invoke = invoke;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::NamespaceOperatorDecl", { ...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
     }
     static bsqparse(jv: any): TIRNamespaceOperatorDecl {
@@ -1507,7 +1253,7 @@ class TIRNamespaceLambdaDecl {
         this.invoke = invoke;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::NamespaceLambdaDecl", { ikey: this.ikey, pcid: this.pcid, sinfo: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes, invoke: this.invoke.bsqemit() }];
     }
     static bsqparse(jv: any): TIRNamespaceLambdaDecl {
@@ -1540,7 +1286,7 @@ class TIRCodePack {
         this.capturedCodePacks = capturedCodePacks;
     }
 
-    bsqemit(ii: string): string {
+    bsqemit(ii: string): string { {
         return ["TreeIR::CodePack", { ns: this.ns, codekey: this.codekey, invk: this.invk, isrecursive: this.recursive, terms: this.terms, pcodes: this.pcodes, capturedValues: this.capturedValues, capturedCodePacks: this.capturedCodePacks }];
     }
     static bsqparse(jv: any): TIRCodePack {
@@ -1550,29 +1296,7 @@ class TIRCodePack {
 }
 
 abstract class TIRInfoTemplate {
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRInfoTemplate {
-        if (jv[0] === "TreeIR::InfoTemplateRecord") {
-            return TIRInfoTemplateRecord.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InfoTemplateTuple") {
-            return TIRInfoTemplateTuple.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InfoTemplateConst") {
-            return TIRInfoTemplateConst.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InfoTemplateMacro") {
-            return TIRInfoTemplateMacro.bsqparse(jv);
-        }
-        else if (jv[0] === "TreeIR::InfoTemplateValue") {
-            return TIRInfoTemplateValue.bsqparse(jv);
-        }
-        else {
-            assert(false, "Unknown info template type: " + jv[0]);
-            return (undefined as any) as TIRInfoTemplate;
-        }
-    }
+    abstract bsqemit(ii: string): string;
 }
 
 class TIRInfoTemplateRecord extends TIRInfoTemplate {
@@ -1583,12 +1307,8 @@ class TIRInfoTemplateRecord extends TIRInfoTemplate {
         this.entries = entries;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::InfoTemplateRecord", { entries: this.entries.map((e) => ({ name: e.name, value: e.value.bsqemit() })) }];
-    }
-    static bsqparse(jv: any): TIRInfoTemplateRecord {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InfoTemplateRecord", "InfoTemplateRecord");
-        return new TIRInfoTemplateRecord(jv[1].entries.map((e: any) => ({ name: e.name, value: TIRInfoTemplate.bsqparse(e.value) })));
     }
 }
 
@@ -1600,12 +1320,8 @@ class TIRInfoTemplateTuple extends TIRInfoTemplate {
         this.entries = entries;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::InfoTemplateTuple", { entries: this.entries.map((e) => e.bsqemit()) }];
-    }
-    static bsqparse(jv: any): TIRInfoTemplateTuple {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InfoTemplateTuple", "InfoTemplateTuple");
-        return new TIRInfoTemplateTuple(jv[1].entries.map((e: any) => TIRInfoTemplate.bsqparse(e)));
     }
 }
 
@@ -1617,12 +1333,8 @@ class TIRInfoTemplateConst extends TIRInfoTemplate {
         this.litexp = litexp;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::InfoTemplateConst", { litexp: this.litexp.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRInfoTemplateConst {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InfoTemplateConst", "InfoTemplateConst");
-        return new TIRInfoTemplateConst(TIRLiteralValue.bsqparse(jv[1].litexp));
     }
 }
 
@@ -1634,12 +1346,8 @@ class TIRInfoTemplateMacro extends TIRInfoTemplate {
         this.macro = macro;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::InfoTemplateMacro", { macro: this.macro }];
-    }
-    static bsqparse(jv: any): TIRInfoTemplateMacro {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InfoTemplateMacro", "InfoTemplateMacro");
-        return new TIRInfoTemplateMacro(jv[1].macro);
     }
 }
 
@@ -1653,12 +1361,8 @@ class TIRInfoTemplateValue extends TIRInfoTemplate {
         this.argtype = argtype;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::InfoTemplateValue", { argpos: this.argpos, argtype: this.argtype }];
-    }
-    static bsqparse(jv: any): TIRInfoTemplateValue {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::InfoTemplateValue", "InfoTemplateValue");
-        return new TIRInfoTemplateValue(jv[1].argpos, jv[1].argtype);
     }
 }
 
@@ -1673,12 +1377,8 @@ class TIRStringTemplate {
         this.str = str;
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return ["TreeIR::StringTemplate", { str: this.str }];
-    }
-    static bsqparse(jv: any): TIRStringTemplate {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::StringTemplate", "StringTemplate");
-        return new TIRStringTemplate(jv[1].str);
     }
 }
 
@@ -1716,7 +1416,7 @@ class TIRNamespaceDeclaration {
         this.stringformats = new Map<string, TIRStringTemplate>();
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return {
             ns: this.ns,
             consts: [...this.consts.entries()].map((e) => [e[0], e[1].bsqemit()]),
@@ -1730,20 +1430,6 @@ class TIRNamespaceDeclaration {
             msgformats: [...this.msgformats.entries()].map((e) => [e[0], e[1].bsqemit()]),
             stringformats: [...this.stringformats.entries()].map((e) => [e[0], e[1].bsqemit()])
         };
-    }
-    static bsqparse(jv: any): TIRNamespaceDeclaration {
-        const ns = new TIRNamespaceDeclaration(jv[1].ns);
-        jv.consts.forEach((e: any) => ns.consts.set(e.name, TIRNamespaceConstDecl.bsqparse(e.value)));
-        jv.functions.forEach((e: any) => ns.functions.set(e[0], e[1].map((f: any) => TIRNamespaceFunctionDecl.bsqparse(f))));
-        jv.operators.forEach((e: any) => ns.operators.set(e[0], e[1].map((f: any) => TIRNamespaceOperatorDecl.bsqparse(f))));
-        jv.concepts.forEach((e: any) => ns.concepts.set(e[0], e[1]));
-        jv.objects.forEach((e: any) => ns.objects.set(e[0], e[1]));
-        jv.tasks.forEach((e: any) => ns.tasks.set(e[0], e[1]));
-        jv.lambdas.forEach((e: any) => ns.lambdas.set(e[0], TIRNamespaceLambdaDecl.bsqparse(e[1])));
-        jv.codepacks.forEach((e: any) => ns.codepacks.set(e[0], TIRCodePack.bsqparse(e[1])));
-        jv.msgformats.forEach((e: any) => ns.msgformats.set(e[0], TIRInfoTemplate.bsqparse(e[1])));
-        jv.stringformats.forEach((e: any) => ns.stringformats.set(e[0], TIRStringTemplate.bsqparse(e[1])));
-        return ns;
     }
 }
 
@@ -2128,7 +1814,7 @@ class TIRAssembly {
         return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators);
     }
 
-    bsqemit(): any {
+    bsqemit(ii: string): string {
         return {
             namespaceMap: [...this.namespaceMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
             typeMap: [...this.typeMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
@@ -2139,32 +1825,6 @@ class TIRAssembly {
             validatorRegexs: [...this.validatorRegexs.entries()].map((e) => [e[0], e[1].jemit()]),
             validatorPaths: [...this.validatorPaths.entries()].map((e) => [e[0], e[1].jemit()])
         };
-    }
-    static bsqparse(jv: any): TIRAssembly {
-        const nsmap = new Map<string, TIRNamespaceDeclaration>();
-        jv.namespaceMap.forEach((e: any) => nsmap.set(e[0], TIRNamespaceDeclaration.bsqparse(e[1])));
-
-        const typemap = new Map<TIRTypeKey, TIRType>();
-        jv.typeMap.forEach((e: any) => typemap.set(e[0], TIRType.bsqparse(e.value)));
-
-        const fieldmap = new Map<TIRTypeKey, TIRMemberFieldDecl>();
-        jv.fieldMap.forEach((e: any) => fieldmap.set(e[0], TIRMemberFieldDecl.bsqparse(e[1])));
-
-        const invokemap = new Map<TIRTypeKey, TIRInvoke>();
-        jv.invokeMap.forEach((e: any) => invokemap.set(e[0], TIRInvoke.bsqparse(e[1])));
-
-        const pcodemap = new Map<TIRPCodeKey, TIRCodePack>();
-        jv.pcodemap.forEach((e: any) => pcodemap.set(e[0], TIRCodePack.bsqparse(e[1])));
-
-        const literalRegexs = jv[1].literalRegexs.map((r: any) => BSQRegex.jparse(r));
-
-        const validatorRegexs = new Map<string, BSQRegex>();
-        jv.validatorRegexs.forEach((e: any) => validatorRegexs.set(e[0], BSQRegex.jparse(e[1])));
-
-        const validatorPaths = new Map<string, BSQPathValidator>();
-        jv.validatorPaths.forEach((e: any) => validatorPaths.set(e[0], BSQPathValidator.jparse(e[1])));
-
-        return new TIRAssembly(nsmap, typemap, fieldmap, invokemap, pcodemap, literalRegexs, validatorRegexs, validatorPaths);
     }
 }
 

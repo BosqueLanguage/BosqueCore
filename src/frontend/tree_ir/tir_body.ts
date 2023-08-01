@@ -4,12 +4,6 @@ import { TIRCodePack, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assemb
 import { LoggerLevel, logLevelName, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
-function assert(cond: boolean, msg?: string) {
-    if(!cond) {
-        throw new Error((msg || "error")  + " -- body_emitter.ts");
-    }
-} 
-
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
     InvalidExpresion = "[INVALID]",
@@ -662,7 +656,7 @@ class TIRCodePackInvokeExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.cpack.bsqemit()}`;
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.cpack.bsqemit(ii)}`;
         
         if(this.args.length === 0) {
             return pfx + `\n${ii}}`;
@@ -1210,8 +1204,8 @@ class TIRIfExpression extends TIRExpression {
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
             + `,\n${iident}${bb[1]}n`
-            + `\n${iident}${bb[2].bsqemit(iident + s_iident)}`
-            + `\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
             + `\n${ii}]`;
         }
     }
@@ -1286,15 +1280,15 @@ class TIRSwitchExpression extends TIRExpression {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
             + `\n${ii}]`;
         }
     }
-    private static bsqemit_clauseentry(ii: string, entry: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
         const iident = ii + s_iident;
 
         return `{`
-        + `\n${iident}ematch=${entry.test.bsqemit(iident + s_iident)}`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
         + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
         + `,\n${iident}binderinfo=${TIRSwitchExpression.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
         + `\n${ii}}`;
@@ -1328,7 +1322,7 @@ class TIRSwitchExpression extends TIRExpression {
         return this.bsqemit_exp(ii)
         + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
         + `,\n${iident}${cles},\n${iident}${dd}`
-        + `\n${iident}${this.isexhaustive}`
+        + `,\n${iident}${this.isexhaustive}`
         + `\n${ii}}`;
     }
 }
@@ -1357,15 +1351,15 @@ class TIRMatchExpression extends TIRExpression {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
             + `\n${ii}]`;
         }
     }
-    private static bsqemit_clauseentry(ii: string, entry: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
         const iident = ii + s_iident;
 
         return `{`
-        + `\n${iident}ematch=${entry.test.bsqemit(iident + s_iident)}`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
         + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
         + `,\n${iident}binderinfo=${TIRMatchExpression.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
         + `\n${ii}}`;
@@ -1399,7 +1393,7 @@ class TIRMatchExpression extends TIRExpression {
         return this.bsqemit_exp(ii)
         + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
         + `,\n${iident}${cles},\n${iident}${dd}`
-        + `\n${iident}${this.isexhaustive}`
+        + `,\n${iident}${this.isexhaustive}`
         + `\n${ii}}`;
     }
 }
@@ -2337,13 +2331,83 @@ class TIRIfStatement extends TIRStatement {
         this.elseentry = elseentry;
     }
 
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, number, TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}${bb[1]}n`
+            + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
+    }
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private bsqemit_ifentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${this.ifentry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${this.ifentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, this.ifentry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, this.ifentry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private static bsqemit_elifentry(ii: string, entry: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${entry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_elifentries(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.elifentries.map((e) => TIRIfStatement.bsqemit_elifentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_elseentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `${iident}value=${this.elseentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, this.elseentry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, this.elseentry.recasttypes)}`
+        + `\n${ii + s_iident}}`;
+    }
+
     bsqemit(ii: string): string {
-        return ["TreeIR::IfStatement", {
-            ...this.bsqemit_stmt(), 
-            ifentry: {etest: this.ifentry.test.bsqemit(), value: this.ifentry.value.bsqemit(), binderinfo: this.ifentry.binderinfo !== undefined ? [this.ifentry.binderinfo[0].bsqemit(), this.ifentry.binderinfo[1], this.ifentry.binderinfo[2].bsqemit(), this.ifentry.binderinfo[3]] : null, recasttypes: this.ifentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}, 
-            elifentries: this.elifentries.map((efi) => ({etest: efi.test.bsqemit(), value: efi.value.bsqemit(), binderinfo: efi.binderinfo !== undefined ? [efi.binderinfo[0].bsqemit(), efi.binderinfo[1], efi.binderinfo[2].bsqemit(), efi.binderinfo[3]] : null, recasttypes: efi.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            elseentry: {value: this.elseentry.value.bsqemit(), binderinfo: this.elseentry.binderinfo !== undefined ? [this.elseentry.binderinfo[0].bsqemit(), this.elseentry.binderinfo[1], this.elseentry.binderinfo[2].bsqemit(), this.elseentry.binderinfo[3]] : null, recasttypes: this.elseentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}
-        }];
+        const iident = ii + s_iident;
+
+        const ifes = this.bsqemit_ifentry(iident);
+        const elifes = this.bsqemit_elifentries(iident);
+        const ee = this.bsqemit_elseentry(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `,\n${iident}${ifes},\n${iident}${elifes},\n${iident}${ee}\n${ii}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -2363,15 +2427,75 @@ class TIRSwitchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
+    }
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRSwitchStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRSwitchStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRSwitchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRSwitchStatement.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
     bsqemit(ii: string): string {
-        return ["TreeIR::SwitchStatement", {
-            ...this.bsqemit_stmt(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 
@@ -2391,15 +2515,75 @@ class TIRMatchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
+    }
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRMatchStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRMatchStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRMatchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRMatchStatement.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
     bsqemit(ii: string): string {
-        return ["TreeIR::MatchStatement", {
-            ...this.bsqemit_stmt(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 

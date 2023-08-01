@@ -1,4 +1,5 @@
 import { JS, NFA, Words } from "refa";
+import { escapeString } from "./build_decls";
 
 class RegexParser {
     readonly currentns: string;
@@ -294,6 +295,10 @@ class BSQRegex {
     static jparse(obj: any): BSQRegex {
         return new BSQRegex(obj.regexstr, RegexComponent.jparse(obj.re));
     }
+
+    bsqonemit(ii: string): string {
+        return `TreeIR::BSQRegex{"${escapeString(this.regexstr)}", ${this.re.bsqonemit()}}`;
+    }
 }
 
 abstract class RegexComponent {
@@ -330,6 +335,8 @@ abstract class RegexComponent {
                 return RegexSequence.jparse(obj);
         }
     }
+
+    abstract bsqonemit(ii: string): string;
 }
 
 class RegexLiteral extends RegexComponent {
@@ -357,6 +364,10 @@ class RegexLiteral extends RegexComponent {
 
     compileToJS(): string {
         return this.restr;
+    }
+
+    bsqonemit(ii: string): string {
+        return `TreeIR::RegexLiteral{"${escapeString(this.restr)}", "${escapeString(this.escstr)}"}`;
     }
 }
 
@@ -400,6 +411,12 @@ class RegexCharRange extends RegexComponent {
         //
         const rng = this.range.map((rr) => (rr.lb == rr.ub) ? RegexCharRange.valToSStr(rr.lb) : `${RegexCharRange.valToSStr(rr.lb)}-${RegexCharRange.valToSStr(rr.ub)}`);
         return `[${this.compliment ? "^" : ""}${rng.join("")}]`;
+    }
+
+    bsqonemit(ii: string): string {
+        const rngl = this.range.map((rr) => `{lb=${rr.lb}, ub=${rr.ub}}`);
+        const rng = `List{${rngl.join(", ")}}`;
+        return `TreeIR::RegexCharRange{${this.compliment}, ${rng}}`;
     }
 }
 

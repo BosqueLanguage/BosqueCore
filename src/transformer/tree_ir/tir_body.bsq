@@ -490,7 +490,6 @@ entity MatchStatement provides Statement {
     field isexhaustive: Bool;
 }
 
-
 entity EnvironmentFreshStatement provides Statement {
     field assigns: List<{keyname: String, valexp: [TypeKey, Expression]}>;
 }
