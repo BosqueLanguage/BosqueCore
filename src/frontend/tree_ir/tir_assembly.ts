@@ -723,12 +723,12 @@ class TIRTypedeclEntityType extends TIREntityType {
         const apivalidateopts = this.apivalidates.map((av) => av.bsqemit(ii + s_iident + s_iident));
         const apivalidates = apivalidateopts.length !== 0 ? `List{\n${ii + s_iident + s_iident}${apivalidateopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}}` : "List{}";
 
-        const strvalidator = this.strvalidator !== undefined ? this.strvalidator.vre.bsqemit(ii + s_iident + s_iident) : "none";
-        const pthvalidator = this.pthvalidator !== undefined ? this.pthvalidator.vpth.bsqemit(ii + s_iident + s_iident) : "none";
+        const strvalidator = this.strvalidator !== undefined ? `{vtype="${this.strvalidator.vtype}"ValidTypeKey, vre=${this.strvalidator.vre.bsqonemit()}}` : "none";
+        const pthvalidator = this.pthvalidator !== undefined ? `{vtype="${this.pthvalidator.vtype}"ValidTypeKey, vpth=${this.pthvalidator.vpth.bsqonemit()}, kind="${this.pthvalidator.kind}"PathKindValidator}` : "none";
 
         return this.bsqemit_entitytype(ii)
-        + `,\n${ii + s_iident}${this.valuetype}ValidTypeKey`
-        + `,\n${ii + s_iident}${this.representation}ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.valuetype}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.representation}"ValidTypeKey`
         + `,\n${ii + s_iident}${consinvariantsall}`
         + `,\n${ii + s_iident}${consinvariantsexplicit}`
         + `,\n${ii + s_iident}${apivalidates}`
@@ -744,8 +744,8 @@ abstract class TIRInternalEntityType extends TIREntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, iskeytype);
     }
 
-    bsqemit_internalentity(): any {
-        return { ...this.bsqemit_entitytype() };
+    bsqemit_internalentity(ii: string): string {
+        return this.bsqemit_entitytype(ii);
     }
 }
 
@@ -756,7 +756,7 @@ class TIRPrimitiveInternalEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::PrimitiveInternalEntityType", this.bsqemit_internalentity()];
+        return this.bsqemit_internalentity(ii) + `\n${ii}}`;
     }
 }
 
@@ -770,7 +770,7 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ValidatorEntityType", { ...this.bsqemit_internalentity(), revalidator: this.revalidator.jemit() }];
+        return this.bsqemit_internalentity(ii) + `\n${ii + s_iident}${this.revalidator.bsqonemit()}` + `\n${ii}}`;
     }
 }
 
@@ -786,7 +786,10 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::StringOfEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit() }];
+        return this.bsqemit_internalentity(ii) 
+        + `,\n${ii + s_iident}"${this.validatortype}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.revalidator.bsqonemit()}`
+        + `\n${ii}}`;
     }
 }
 
@@ -802,7 +805,10 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ASCIIStringOfEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, revalidator: this.revalidator.jemit() }];
+        return this.bsqemit_internalentity(ii)
+        + `,\n${ii + s_iident}"${this.validatortype}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.revalidator.bsqonemit()}`
+        + `\n${ii}}`;
     }
 }
 
@@ -816,7 +822,7 @@ class TIRPathValidatorEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::PathValidatorEntityType", { ...this.bsqemit_internalentity(), pthvalidator: this.pthvalidator.jemit() }];
+        return this.bsqemit_internalentity(ii) + `\n${ii + s_iident}${this.pthvalidator.jemit()}` + `\n${ii}}`;
     }
 }
 
@@ -832,7 +838,10 @@ class TIRPathEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::PathEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
+        return this.bsqemit_internalentity(ii)
+        + `,\n${ii + s_iident}"${this.validatortype}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.pthvalidator.jemit()}`
+        + `\n${ii}}`;
     }
 }
 
@@ -848,7 +857,10 @@ class TIRPathFragmentEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::PathFragmentEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
+        return this.bsqemit_internalentity(ii)
+        + `,\n${ii + s_iident}"${this.validatortype}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.pthvalidator.jemit()}`
+        + `\n${ii}}`;
     }
 }
 
@@ -863,7 +875,10 @@ class TIRPathGlobEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::PathGlobEntityType", { ...this.bsqemit_internalentity(), validatortype: this.validatortype, pthvalidator: this.pthvalidator.jemit() }];
+        return this.bsqemit_internalentity(ii)
+        + `,\n${ii + s_iident}"${this.validatortype}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.pthvalidator.jemit()}`
+        + `\n${ii}}`;
     }
 }
 
@@ -873,8 +888,8 @@ abstract class TIRConstructableEntityType extends TIRInternalEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
     }
 
-    bsqemit_constructable(): any {
-        return this.bsqemit_internalentity();
+    bsqemit_constructable(ii: string): string {
+        return this.bsqemit_internalentity(ii);
     }
 }
 
@@ -889,7 +904,10 @@ class TIROkEntityType extends TIRConstructableEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::OkEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE }];
+        return this.bsqemit_constructable(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.typeE}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -904,7 +922,10 @@ class TIRErrEntityType extends TIRConstructableEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ErrEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT, typeE: this.typeE }];
+        return this.bsqemit_constructable(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.typeE}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -917,7 +938,9 @@ class TIRSomethingEntityType extends TIRConstructableEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::SomethingEntityType", { ...this.bsqemit_constructable(), typeT: this.typeT }];
+        return this.bsqemit_constructable(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -932,7 +955,10 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::MapEntryEntityType", { ...this.bsqemit_constructable(), typeK: this.typeK, typeV: this.typeV }];
+        return this.bsqemit_constructable(ii)
+        + `,\n${ii + s_iident}"${this.typeK}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.typeV}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -943,7 +969,7 @@ class TIRHavocEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::HavocEntityType", this.bsqemit_internalentity()];
+        return this.bsqemit_internalentity(ii) + `\n${ii}}`;
     }
 }
 
@@ -953,8 +979,8 @@ abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
         super(tkey, tname, srcInfo, srcFile, attributes, supertypes, false);
     }
 
-    bsqemit_collection(): any {
-        return this.bsqemit_internalentity();
+    bsqemit_collection(ii: string): string {
+        return this.bsqemit_internalentity(ii);
     }
 }
 
@@ -968,7 +994,9 @@ class TIRListEntityType extends TIRPrimitiveCollectionEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ListEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
+        return this.bsqemit_collection(ii)
+        + `,\n${ii + s_iident}"${this.typeT}'ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -982,7 +1010,9 @@ class TIRStackEntityType extends TIRPrimitiveCollectionEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::StackEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
+        return this.bsqemit_collection(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -996,7 +1026,9 @@ class TIRQueueEntityType extends TIRPrimitiveCollectionEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::QueueEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
+        return this.bsqemit_collection(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -1010,7 +1042,9 @@ class TIRSetEntityType extends TIRPrimitiveCollectionEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::SetEntityType", { ...this.bsqemit_collection(), typeT: this.typeT }];
+        return this.bsqemit_collection(ii)
+        + `,\n${ii + s_iident}"${this.typeT}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -1026,7 +1060,10 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::MapEntityType", { ...this.bsqemit_collection(), typeK: this.typeK, typeV: this.typeV }];
+        return this.bsqemit_collection(ii)
+        + `,\n${ii + s_iident}"${this.typeK}"ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.typeV}"ValidTypeKey`
+        + `\n${ii}}`;
     }
 }
 
@@ -1060,7 +1097,7 @@ class TIRTaskType extends TIROOType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::TaskType", { ...this.bsqemit_ootype(), binds: [...this.binds], controls: this.controls.map((cc) => ({ val: cc.val ? cc.val.bsqemit() : null, cname: cc.cname })), actions: this.actions, mainfunc: this.mainfunc, onfuncs: { onCancel: this.onfuncs.onCanel || null, onFailure: this.onfuncs.onFailure || null, onTimeout: this.onfuncs.onTimeout || null }, lfuncs: { logStart: this.lfuncs.logStart || null, logEnd: this.lfuncs.logEnd || null, taskEnsures: this.lfuncs.taskEnsures || null, taskWarns: this.lfuncs.taskWarns || null }, statuseffect: this.statuseffect.bsqemit(), eventeffect: this.eventeffect.bsqemit(), enveffect: this.enveffect.bsqemit(), resourceeffect: this.resourceeffect.map((eff) => eff.bsqemit()), tskensures: this.ensures.map((ee) => ee.bsqemit()) }];
+        return "[NOT IMEPLEMENTED -- task type]";
     }
 }
 
@@ -1073,7 +1110,11 @@ class TIRConceptType extends TIROOType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ConceptType", { ...this.bsqemit_ootype(), binds: [...this.binds] }];
+        const bbinds = [...this.binds].map((ee) => `${ee[0]} = "${ee[1]}"ValidTypeKey`);
+        return this.bsqemit_ootype(ii)
+        + `,\n${ii + s_iident}Map{${bbinds.join(", ")}}`
+        + `\n${ii}}`;
+        
     }
 
     isAnyConcept(): boolean {
@@ -1098,7 +1139,10 @@ class TIRConceptSetType extends TIRType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::ConceptSetType", { ...this.bsqemit_type(), conceptTypes: this.conceptTypes }];
+        const ctypes = this.conceptTypes.map((ct) => `"${ct}"ValidTypeKey`);
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}List{${ctypes.join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1111,7 +1155,10 @@ class TIRTupleType extends TIRType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::TupleType", { ...this.bsqemit_type(), types: this.types }];
+        const ttypes = this.types.map((tt) => `"${tt}"ValidTypeKey`);
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}List{${ttypes.join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1124,7 +1171,10 @@ class TIRRecordType extends TIRType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::RecordType", { ...this.bsqemit_type(), entries: this.entries }];
+        const eentries = this.entries.map((ee) => `{pname="${ee.pname}"ValidIdentifier, ptype="${ee.ptype}"ValidTypeKey}`);
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}List{${eentries.join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1137,7 +1187,10 @@ class TIRUnionType extends TIRType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::UnionType", { ...this.bsqemit_type(), options: this.options }];
+        const uopts = this.options.map((oo) => `"${oo}"ValidTypeKey`);
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}List{${uopts.join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1150,7 +1203,10 @@ class TIREListType extends TIRType {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::EListType", { ...this.bsqemit_type(), types: this.types }];
+        const etypes = this.types.map((tt) => `"${tt}"ValidTypeKey`);
+        return this.bsqemit_type(ii)
+        + `,\n${ii + s_iident}List{${etypes.join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1171,8 +1227,13 @@ abstract class TIRNamespaceDecl {
         this.attributes = attributes;
     }
 
-    bsqemit_nsdecl(): any {
-        return { ns: this.ns, name: this.name, sinfo: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes };
+    bsqemit_nsdecl(ii: string): string {
+        return `TreeIR::NamespaceDecl{`
+        + `\n${ii}"${this.ns}"ValidNamespace`
+        + `,\n${ii}"${this.name}"ValidIdentifier`
+        + `,\n${ii}${sinfo_bsqemit(this.sourceLocation)}`
+        + `,\n${ii}"${this.srcFile}"`
+        + `,\n${ii}List{${this.attributes.map((aa) => `"${aa}"`).join(", ")}}`;
     }
 }
 
@@ -1187,11 +1248,10 @@ class TIRNamespaceConstDecl extends TIRNamespaceDecl {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::NamespaceConstDecl", { ...this.bsqemit_nsdecl(), declaredType: this.declaredType, value: this.value.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRNamespaceConstDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::NamespaceConstDecl", "NamespaceConstDecl");
-        return new TIRNamespaceConstDecl(jv[1].ns, jv[1].name, jv[1].sinfo, jv[1].srcFile, jv[1].attributes, jv[1].declaredType, TIRExpression.bsqparse(jv[1].value));
+        return this.bsqemit_nsdecl(ii)
+        + `,\n${ii + s_iident}"${this.declaredType}"ValidTypeKey`
+        + `,\n${ii + s_iident}${this.value.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1206,12 +1266,10 @@ class TIRNamespaceFunctionDecl extends TIRNamespaceDecl {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::NamespaceFunctionDecl", { ...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
-    }
-
-    static bsqparse(jv: any): TIRNamespaceFunctionDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::NamespaceFunctionDecl", "NamespaceFunctionDecl");
-        return new TIRNamespaceFunctionDecl(jv[1].ns, jv[1].sinfo, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
+        return this.bsqemit_nsdecl(ii)
+        + `,\n ${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n ${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1226,11 +1284,10 @@ class TIRNamespaceOperatorDecl extends TIRNamespaceDecl {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::NamespaceOperatorDecl", { ...this.bsqemit_nsdecl(), ikey: this.ikey, invoke: this.invoke.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRNamespaceOperatorDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::NamespaceOperatorDecl", "NamespaceOperatorDecl");
-        return new TIRNamespaceOperatorDecl(jv[1].ns, jv[1].sinfo, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
+        return this.bsqemit_nsdecl(ii)
+        + `,\n ${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n ${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1255,10 +1312,6 @@ class TIRNamespaceLambdaDecl {
 
     bsqemit(ii: string): string {
         return ["TreeIR::NamespaceLambdaDecl", { ikey: this.ikey, pcid: this.pcid, sinfo: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes, invoke: this.invoke.bsqemit() }];
-    }
-    static bsqparse(jv: any): TIRNamespaceLambdaDecl {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::NamespaceLambdaDecl", "NamespaceLambdaDecl");
-        return new TIRNamespaceLambdaDecl(jv[1].pcid, jv[1].sinfo, jv[1].srcFile, TIRInvoke.bsqparse(jv[1].invoke));
     }
 }
 
@@ -1286,12 +1339,8 @@ class TIRCodePack {
         this.capturedCodePacks = capturedCodePacks;
     }
 
-    bsqemit(ii: string): string { {
-        return ["TreeIR::CodePack", { ns: this.ns, codekey: this.codekey, invk: this.invk, isrecursive: this.recursive, terms: this.terms, pcodes: this.pcodes, capturedValues: this.capturedValues, capturedCodePacks: this.capturedCodePacks }];
-    }
-    static bsqparse(jv: any): TIRCodePack {
-        assert(Array.isArray(jv) && jv[0] === "TreeIR::CodePack", "CodePack");
-        return new TIRCodePack(jv[1].ns, jv[1].codekey, jv[1].invk, jv[1].isrecursive, jv[1].terms, jv[1].pcodes, jv[1].capturedValues, jv[1].capturedCodePacks);
+    bsqemit(ii: string): string {
+        xxxx;
     }
 }
 

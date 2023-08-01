@@ -296,7 +296,7 @@ class BSQRegex {
         return new BSQRegex(obj.regexstr, RegexComponent.jparse(obj.re));
     }
 
-    bsqonemit(ii: string): string {
+    bsqonemit(): string {
         return `TreeIR::BSQRegex{"${escapeString(this.regexstr)}", ${this.re.bsqonemit()}}`;
     }
 }
@@ -336,7 +336,7 @@ abstract class RegexComponent {
         }
     }
 
-    abstract bsqonemit(ii: string): string;
+    abstract bsqonemit(): string;
 }
 
 class RegexLiteral extends RegexComponent {
@@ -366,7 +366,7 @@ class RegexLiteral extends RegexComponent {
         return this.restr;
     }
 
-    bsqonemit(ii: string): string {
+    bsqonemit(): string {
         return `TreeIR::RegexLiteral{"${escapeString(this.restr)}", "${escapeString(this.escstr)}"}`;
     }
 }
@@ -413,7 +413,7 @@ class RegexCharRange extends RegexComponent {
         return `[${this.compliment ? "^" : ""}${rng.join("")}]`;
     }
 
-    bsqonemit(ii: string): string {
+    bsqonemit(): string {
         const rngl = this.range.map((rr) => `{lb=${rr.lb}, ub=${rr.ub}}`);
         const rng = `List{${rngl.join(", ")}}`;
         return `TreeIR::RegexCharRange{${this.compliment}, ${rng}}`;
@@ -435,6 +435,10 @@ class RegexDotCharClass extends RegexComponent {
 
     compileToJS(): string {
         return ".";
+    }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexDotCharClass{}`;
     }
 }
 
@@ -460,6 +464,10 @@ class RegexConstClass extends RegexComponent {
     compileToJS(): string {
         return `${this.ns}::${this.ccname}`;
     }
+
+    bsqonemit(): string {
+        return `[NOT SUPPORTED]`;
+    }
 }
 
 class RegexStarRepeat extends RegexComponent {
@@ -482,6 +490,10 @@ class RegexStarRepeat extends RegexComponent {
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()})*` : `${this.repeat.compileToJS()}*`;
     }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexStarRepeat{${this.repeat.bsqonemit()}}`;
+    }
 }
 
 class RegexPlusRepeat extends RegexComponent {
@@ -503,6 +515,10 @@ class RegexPlusRepeat extends RegexComponent {
 
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()})+` : `${this.repeat.compileToJS()}+`;
+    }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexPlusRepeat{${this.repeat.bsqonemit()}}`;
     }
 }
 
@@ -530,6 +546,10 @@ class RegexRangeRepeat extends RegexComponent {
     compileToJS(): string {
         return this.repeat.useParens() ? `(${this.repeat.compileToJS()}){${this.min},${this.max}}` : `${this.repeat.compileToJS()}{${this.min},${this.max}}`;
     }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexRangeRepeat{${this.repeat.bsqonemit()}, ${this.min}n, ${this.max}n}`;
+    }
 }
 
 class RegexOptional extends RegexComponent {
@@ -551,6 +571,10 @@ class RegexOptional extends RegexComponent {
 
     compileToJS(): string {
         return this.opt.useParens() ? `(${this.opt.compileToJS()})?` : `${this.opt.compileToJS()}?`;
+    }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexOptional{${this.opt.bsqonemit()}`;
     }
 }
 
@@ -578,6 +602,10 @@ class RegexAlternation extends RegexComponent {
     compileToJS(): string {
         return this.opts.map((opt) => opt.compileToJS()).join("|");
     }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexAlternation{${this.opts.map((opt) => opt.bsqonemit()).join(", ")}}`;
+    }
 }
 
 class RegexSequence extends RegexComponent {
@@ -603,6 +631,10 @@ class RegexSequence extends RegexComponent {
 
     compileToJS(): string {
         return this.elems.map((elem) => elem.compileToJS()).join("");
+    }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexSequence{${this.elems.map((elem) => elem.bsqonemit()).join(", ")}}`;
     }
 }
 
