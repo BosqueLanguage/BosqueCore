@@ -71,7 +71,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         const [tasm] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting IR code...\n");
-        const ircode = tasm.bsqemit();
+        const ircode = tasm.bsqemit("");
         
         process.stdout.write(`writing IR code into ${into}...\n`);
         const ppth = Path.normalize(into);

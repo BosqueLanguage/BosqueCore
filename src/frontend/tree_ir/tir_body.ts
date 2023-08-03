@@ -4,12 +4,6 @@ import { TIRCodePack, TIRFieldKey, TIRInvokeKey, TIRTypeKey } from "./tir_assemb
 import { LoggerLevel, logLevelName, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
-function assert(cond: boolean, msg?: string) {
-    if(!cond) {
-        throw new Error((msg || "error")  + " -- body_emitter.ts");
-    }
-} 
-
 enum TIRExpressionTag {
     Clear = "[CLEAR]",
     InvalidExpresion = "[INVALID]",
@@ -156,6 +150,12 @@ enum TIRExpressionTag {
     CallMemberActionExpression = "CallMemberActionExpression"
 }
 
+const s_iident = "  ";
+
+function sinfo_bsqemit(sinfo: SourceInfo): string {
+    return `TreeIR::SourceInfo{${sinfo.line}, ${sinfo.column}, ${sinfo.pos}, ${sinfo.span}}`;
+}
+
 abstract class TIRExpression {
     readonly tag: TIRExpressionTag;
     readonly sinfo: SourceInfo;
@@ -171,342 +171,15 @@ abstract class TIRExpression {
         this.expstr = expstr;
     }
 
-    bsqemit_exp(): any {
-        return {sinfo: this.sinfo.bsqemit(), etype: this.etype};
+    bsqemit_exp(ii: string): string {
+        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)},\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
     }
 
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRExpression {
-        if(jv[0] === "TreeIR::LiteralNoneExpression") {
-            return TIRLiteralNoneExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralNothingExpression") {
-            return TIRLiteralNothingExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralBoolExpression") {
-            return TIRLiteralBoolExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralIntegralExpression") {
-            return TIRLiteralIntegralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralRationalExpression") {
-            return TIRLiteralRationalExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralFloatPointExpression") {
-            return TIRLiteralFloatPointExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralRegexExpression") {
-            return TIRLiteralRegexExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralStringExpression") {
-            return TIRLiteralStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralASCIIStringExpression") {
-            return TIRLiteralASCIIStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralTypedStringExpression") {
-            return TIRLiteralTypedStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralASCIITypedStringExpression") {
-            return TIRLiteralASCIITypedStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralTemplateStringExpression") {
-            return TIRLiteralTemplateStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralASCIITemplateStringExpression") {
-            return TIRLiteralASCIITemplateStringExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralTypedPrimitiveDirectExpression") {
-            return TIRLiteralTypedPrimitiveDirectExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LiteralTypedPrimitiveConstructorExpression") {
-            return TIRLiteralTypedPrimitiveConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BSQONLiteralExpression") {
-            return TIRBSQONLiteralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessEnvValueExpression") {
-            return TIRAccessEnvValueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessNamespaceConstantExpression") {
-            return TIRAccessNamespaceConstantExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessConstMemberFieldExpression") {
-            return TIRAccessConstMemberFieldExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessVariableExpression") {
-            return TIRAccessVariableExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessCapturedVariableExpression") {
-            return TIRAccessCapturedVariableExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessScratchSingleValueExpression") {
-            return TIRAccessScratchSingleValueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AccessScratchIndexExpression") {
-            return TIRAccessScratchIndexExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoadIndexExpression") {
-            return TIRLoadIndexExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoadPropertyExpression") {
-            return TIRLoadPropertyExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoadFieldExpression") {
-            return TIRLoadFieldExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoadFieldVirtualExpression") {
-            return TIRLoadFieldVirtualExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorPrimaryDirectExpression") {
-            return TIRConstructorPrimaryDirectExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorPrimaryCheckExpression") {
-            return TIRConstructorPrimaryCheckExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorTupleExpression") {
-            return TIRConstructorTupleExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorRecordExpression") {
-            return TIRConstructorRecordExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorListExpression") {
-            return TIRConstructorListExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ConstructorMapExpression") {
-            return TIRConstructorMapExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CodePackInvokeExpression") {
-            return TIRCodePackInvokeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ResultOkConstructorExpression") {
-            return TIRResultOkConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ResultErrConstructorExpression") {
-            return TIRResultErrConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::SomethingConstructorExpression") {
-            return TIRSomethingConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TypedeclDirectExpression") {
-            return TIRTypedeclDirectExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TypedeclConstructorExpression") {
-            return TIRTypedeclConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallNamespaceFunctionExpression") {
-            return TIRCallNamespaceFunctionExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallNamespaceOperatorExpression") {
-            return TIRCallNamespaceOperatorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallStaticFunctionExpression") {
-            return TIRCallStaticFunctionExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LogicActionAndExpression") {
-            return TIRLogicActionAndExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LogicActionOrExpression") {
-            return TIRLogicActionOrExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::PrefixNotExpression") {
-            return TIRPrefixNotExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::PrefixNegateExpression") {
-            return TIRPrefixNegateExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinAddExpression") {
-            return TIRBinAddExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinSubExpression") {
-            return TIRBinSubExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinMultExpression") {
-            return TIRBinMultExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinDivExpression") {
-            return TIRBinDivExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyEqBothUniqueExpression") {
-            return TIRBinKeyEqBothUniqueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyEqOneUniqueExpression") {
-            return TIRBinKeyEqOneUniqueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyEqGeneralExpression") {
-            return TIRBinKeyEqGeneralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyNeqBothUniqueExpression") {
-            return TIRBinKeyNeqBothUniqueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyNeqOneUniqueExpression") {
-            return TIRBinKeyNeqOneUniqueExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyNeqGeneralExpression") {
-            return TIRBinKeyNeqGeneralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyUniqueLessExpression") {
-            return TIRBinKeyUniqueLessExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinKeyGeneralLessExpression") {
-            return TIRBinKeyGeneralLessExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericEqExpression") {
-            return TIRNumericEqExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericNeqExpression") {
-            return TIRNumericNeqExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericLessExpression") {
-            return TIRNumericLessExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericLessEqExpression") {
-            return TIRNumericLessEqExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericGreaterExpression") {
-            return TIRNumericGreaterExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::NumericGreaterEqExpression") {
-            return TIRNumericGreaterEqExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinLogicAndExpression") {
-            return TIRBinLogicAndExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinLogicOrExpression") {
-            return TIRBinLogicOrExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::BinLogicImpliesExpression") {
-            return TIRBinLogicImpliesExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::MapEntryConstructorExpression") {
-            return TIRMapEntryConstructorExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IfExpression") {
-            return TIRIfExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::SwitchExpression") {
-            return TIRSwitchExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::MatchExpression") {
-            return TIRMatchExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskSelfFieldExpression") {
-            return TIRTaskSelfFieldExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskSelfControlExpression") {
-            return TIRTaskSelfControlExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskGetIDExpression") {
-            return TIRTaskGetIDExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CoerceSafeExpression") {
-            return TIRCoerceSafeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::InjectExpression") {
-            return TIRInjectExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ExtractExpression") {
-            return TIRExtractExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CreateCodePackExpression") {
-            return TIRCreateCodePackExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsNoneSpecialExpression") {
-            return TIRIsNoneSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsSomeSpecialExpression") {
-            return TIRIsSomeSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsNothingSpecialExpression") {
-            return TIRIsNothingSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsSomethingSpecialExpression") {
-            return TIRIsSomethingSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsOkSpecialExpression") {
-            return TIRIsOkSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsErrSpecialExpression") {
-            return TIRIsErrSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsEqualToLiteralExpression") {
-            return TIRIsEqualToLiteralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsNotEqualToLiteralExpression") {
-            return TIRIsNotEqualToLiteralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsTypeExpression") {
-            return TIRIsTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsNotTypeExpression") {
-            return TIRIsNotTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsSubTypeExpression") {
-            return TIRIsSubTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IsNotSubTypeExpression") {
-            return TIRIsNotSubTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsNoneSpecialExpression") {
-            return TIRAsNoneSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsSomeSpecialExpression") {
-            return TIRAsSomeSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsNothingSpecialExpression") {
-            return TIRAsNothingSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsSomethingSpecialExpression") {
-            return TIRAsSomethingSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsOkSpecialExpression") {
-            return TIRAsOkSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsErrSpecialExpression") {
-            return TIRAsErrSpecialExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsEqualToLiteralExpression") {
-            return TIRAsEqualToLiteralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsNotEqualToLiteralExpression") {
-            return TIRAsNotEqualToLiteralExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsTypeExpression") {
-            return TIRAsTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsNotTypeExpression") {
-            return TIRAsNotTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsSubTypeExpression") {
-            return TIRAsSubTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AsNotSubTypeExpression") {
-            return TIRAsNotSubTypeExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberFunctionExpression") {
-            return TIRCallMemberFunctionExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberFunctionDynamicExpression") {
-            return TIRCallMemberFunctionDynamicExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberFunctionSelfRefExpression") {
-            return TIRCallMemberFunctionSelfRefExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberFunctionTaskExpression") {
-            return TIRCallMemberFunctionTaskExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberFunctionTaskSelfRefExpression") {
-            return TIRCallMemberFunctionTaskSelfRefExpression.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallMemberActionExpression") {
-            return TIRCallMemberActionExpression.bsqparse(jv);
-        }
-        else {
-            assert(false, "Unknown TIRExpression tag: " + jv[0]);
-            return (undefined as any) as TIRExpression;
-        }
+    bsqemit_exp_il(ii: string): string {
+        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}, ${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
     }
+
+    abstract bsqemit(ii: string): string;
 }
 
 class TIRInvalidExpression extends TIRExpression {
@@ -514,11 +187,8 @@ class TIRInvalidExpression extends TIRExpression {
         super(TIRExpressionTag.InvalidExpresion, sinfo, etype, "[INVALID]");
     }
 
-    bsqemit(): any {
-        return ["TreeIR::InvalidExpression", this.bsqemit_exp()];
-    }
-    static bsqparse(jv: any): TIRInvalidExpression {
-        return new TIRInvalidExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype);
+    bsqemit(ii: string): string {
+        return "[SHOULD NOT BE EMITTED]";
     }
 }
 
@@ -527,11 +197,8 @@ class TIRLiteralNoneExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralNoneExpression, sinfo, "None", "none");
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralNoneExpression", this.bsqemit_exp()];
-    }
-    static bsqparse(jv: any): TIRLiteralNoneExpression {
-        return new TIRLiteralNoneExpression(SourceInfo.bsqparse(jv[1].sinfo));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + "}";
     }
 }
 
@@ -540,11 +207,8 @@ class TIRLiteralNothingExpression extends TIRExpression {
         super(TIRExpressionTag.LiteralNothingExpression, sinfo, "Nothing", "nothing");
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralNothingExpression", this.bsqemit_exp()];
-    }
-    static bsqparse(jv: any): TIRLiteralNothingExpression {
-        return new TIRLiteralNothingExpression(SourceInfo.bsqparse(jv[1].sinfo));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + "}";
     }
 }
 
@@ -556,11 +220,8 @@ class TIRLiteralBoolExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralBoolExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralBoolExpression {
-        return new TIRLiteralBoolExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value ? "true" : "false"}}`;
     }
 }
 
@@ -572,11 +233,8 @@ class TIRLiteralIntegralExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralIntegralExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralIntegralExpression {
-        return new TIRLiteralIntegralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -588,11 +246,8 @@ class TIRLiteralRationalExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralRationalExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralRationalExpression {
-        return new TIRLiteralRationalExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -604,11 +259,8 @@ class TIRLiteralFloatPointExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralFloatPointExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralFloatPointExpression {
-        return new TIRLiteralFloatPointExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -620,11 +272,8 @@ class TIRLiteralStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralStringExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralStringExpression {
-        return new TIRLiteralStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -636,11 +285,8 @@ class TIRLiteralRegexExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralRegexExpression", {...this.bsqemit_exp(), value: this.value.jemit()}];
-    }
-    static bsqparse(jv: any): TIRLiteralRegexExpression {
-        return new TIRLiteralRegexExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -652,11 +298,8 @@ class TIRLiteralASCIIStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralASCIIStringExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralASCIIStringExpression {
-        return new TIRLiteralASCIIStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -670,11 +313,8 @@ class TIRLiteralTypedStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralTypedStringExpression", {...this.bsqemit_exp(), oftype: this.oftype, value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralTypedStringExpression {
-        return new TIRLiteralTypedStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype, jv[1].oftype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
     }
 }
 
@@ -688,11 +328,8 @@ class TIRLiteralASCIITypedStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralASCIITypedStringExpression", {...this.bsqemit_exp(), oftype: this.oftype, value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralASCIITypedStringExpression {
-        return new TIRLiteralASCIITypedStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype, jv[1].oftype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
     }
 }
 
@@ -704,11 +341,8 @@ class TIRLiteralTemplateStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralTemplateStringExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralTemplateStringExpression {
-        return new TIRLiteralTemplateStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -720,11 +354,8 @@ class TIRLiteralASCIITemplateStringExpression extends TIRExpression {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralTemplateASCIIStringExpression", {...this.bsqemit_exp(), value: this.value}];
-    }
-    static bsqparse(jv: any): TIRLiteralASCIITemplateStringExpression {
-        return new TIRLiteralASCIITemplateStringExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -742,11 +373,8 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
         this.basetype = basetype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralTypedPrimitiveDirectExpression", {...this.bsqemit_exp(), value: this.value, constype: this.constype, basetype: this.basetype}];
-    }
-    static bsqparse(jv: any): TIRLiteralTypedPrimitiveDirectExpression {
-        return new TIRLiteralTypedPrimitiveDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].constype, jv[1].basetype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}"TreeIR::ValidTypeKey, "${this.basetype}"TreeIR::ValidTypeKey}`;
     }
 }
 
@@ -764,11 +392,8 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
         this.basetype = basetype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LiteralTypedPrimitiveConstructorExpression", {...this.bsqemit_exp(), value: this.value, constype: this.constype, basetype: this.basetype}];
-    }
-    static bsqparse(jv: any): TIRLiteralTypedPrimitiveConstructorExpression {
-        return new TIRLiteralTypedPrimitiveConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].value, jv[1].constype, jv[1].basetype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}"TreeIR::ValidTypeKey, "${this.basetype}"TreeIR::ValidTypeKey}`;
     }
 
     //
@@ -784,12 +409,8 @@ class TIRBSQONLiteralExpression extends TIRExpression {
         this.bsqonstr = bsqonstr;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BSQONLiteralExpression", {...this.bsqemit_exp(), bsqonstr: this.bsqonstr, bsqontype: this.etype}];
-    }
-
-    static bsqparse(jv: any): TIRBSQONLiteralExpression {
-        return new TIRBSQONLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].bsqonstr, jv[1].bsqontype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.bsqonstr}"}`;
     }
 }
 
@@ -807,11 +428,8 @@ class TIRAccessEnvValueExpression extends TIRExpression {
         this.orNoneMode = orNoneMode;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessEnvValueExpression", {...this.bsqemit_exp(), keyname: this.keyname, valtype: this.valtype, restype: this.restype, orNoneMode: this.orNoneMode}];
-    }
-    static bsqparse(jv: any): TIRAccessEnvValueExpression {
-        return new TIRAccessEnvValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].keyname, jv[1].valtype, jv[1].restype, jv[1].orNoneMode);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.keyname}", "${this.valtype}"TreeIR::ValidType, "${this.restype}"TreeIR::ValidType, ${this.orNoneMode}}`;
     }
 }
 
@@ -825,11 +443,8 @@ class TIRAccessNamespaceConstantExpression extends TIRExpression {
         this.cname = cname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessNamespaceConstantExpression", {...this.bsqemit_exp(), ns: this.ns, cname: this.cname}];
-    }
-    static bsqparse(jv: any): TIRAccessNamespaceConstantExpression {
-        return new TIRAccessNamespaceConstantExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].cname, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.ns}"TreeIR::ValidNamespace, "${this.cname}"TreeIR::ValidIdentifier}`;
     }
 }
 
@@ -843,11 +458,8 @@ class TIRAccessConstMemberFieldExpression extends TIRExpression {
         this.cname = cname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessConstMemberFieldExpression", {...this.bsqemit_exp(), tkey: this.tkey, cname: this.cname}];
-    }
-    static bsqparse(jv: any): TIRAccessConstMemberFieldExpression {
-        return new TIRAccessConstMemberFieldExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].cname, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.tkey}"TreeIR::ValidTypeKey, "${this.cname}"TreeIR::ValidIdentifier}`;
     }
 }
 
@@ -859,11 +471,8 @@ class TIRAccessVariableExpression extends TIRExpression {
         this.name = name;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessVariableExpression", {...this.bsqemit_exp(), name: this.name}];
-    }
-    static bsqparse(jv: any): TIRAccessVariableExpression {
-        return new TIRAccessVariableExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].name, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.name}"TreeIR::ValidIdentifier}`;
     }
 }
 
@@ -875,11 +484,8 @@ class TIRAccessCapturedVariableExpression extends TIRExpression {
         this.name = name;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessCapturedVariableExpression", {...this.bsqemit_exp(), name: this.name}];
-    }
-    static bsqparse(jv: any): TIRAccessCapturedVariableExpression {
-        return new TIRAccessCapturedVariableExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].name, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.name}"TreeIR::ValidIdentifier}`;
     }
 }
 
@@ -891,11 +497,8 @@ class TIRAccessScratchSingleValueExpression extends TIRExpression {
         this.sidx = sidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessScratchSingleValueExpression", {...this.bsqemit_exp(), sidx: this.sidx}];
-    }
-    static bsqparse(jv: any): TIRAccessScratchSingleValueExpression {
-        return new TIRAccessScratchSingleValueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype, jv[1].sidx);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.sidx}n}`;
     }
 }
 
@@ -909,11 +512,8 @@ class TIRAccessScratchIndexExpression extends TIRExpression {
         this.sidx = sidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AccessScratchIndexExpression", {...this.bsqemit_exp(), index: this.index, sidx: this.sidx}];
-    }
-    static bsqparse(jv: any): TIRAccessScratchIndexExpression {
-        return new TIRAccessScratchIndexExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].index, jv[1].etype, jv[1].sidx);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, ${this.index}n, ${this.sidx}n}`;
     }
 }
 
@@ -928,8 +528,8 @@ abstract class TIRLoadSingleExpression extends TIRExpression {
         this.exp = exp;
     }
 
-    bsqemit_loadsingle(): any {
-        return {...this.bsqemit_exp(), tkey: this.tkey, exp: this.exp.bsqemit()};
+    bsqemit_loadsingle(ii: string, accs: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.tkey}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}${accs}\n${ii}}`;
     }
 }
 
@@ -941,11 +541,8 @@ class TIRLoadIndexExpression extends TIRLoadSingleExpression {
         this.index = index;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoadIndexExpression", {...this.bsqemit_loadsingle(), index: this.index}];
-    }
-    static bsqparse(jv: any): TIRLoadIndexExpression {
-        return new TIRLoadIndexExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].tkey, jv[1].index, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_loadsingle(ii, `${this.index}n`);
     }
 } 
 
@@ -957,11 +554,8 @@ class TIRLoadPropertyExpression extends TIRLoadSingleExpression {
         this.property = property;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoadPropertyExpression", {...this.bsqemit_loadsingle(), property: this.property}];
-    }
-    static bsqparse(jv: any): TIRLoadPropertyExpression {
-        return new TIRLoadPropertyExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].tkey, jv[1].property, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_loadsingle(ii, `"${this.property}"TreeIR::ValidIdentifier`);
     }
 }
 
@@ -973,11 +567,8 @@ class TIRLoadFieldExpression extends TIRLoadSingleExpression {
         this.fieldkey = fieldkey;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoadFieldExpression", {...this.bsqemit_loadsingle(), fieldkey: this.fieldkey}];
-    }
-    static bsqparse(jv: any): TIRLoadFieldExpression {
-        return new TIRLoadFieldExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, TIRExpression.bsqparse(jv[1].exp), jv[1].fieldkey, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"TreeIR::ValidFieldKey`);
     }
 }
 
@@ -989,11 +580,8 @@ class TIRLoadFieldVirtualExpression extends TIRLoadSingleExpression {
         this.fieldkey = fieldkey;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoadFieldVirtualExpression", {...this.bsqemit_loadsingle(), fieldkey: this.fieldkey}];
-    }
-    static bsqparse(jv: any): TIRLoadFieldVirtualExpression {
-        return new TIRLoadFieldVirtualExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, TIRExpression.bsqparse(jv[1].exp), jv[1].fieldkey, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"TreeIR::ValidFieldKey`);
     }
 }
 
@@ -1008,8 +596,16 @@ abstract class TIRConstructorExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit_consexp(): any {
-        return {...this.bsqemit_exp(), oftype: this.oftype, args: this.args.map((arg) => arg.bsqemit())};
+    bsqemit(ii: string): string {
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey`;
+        
+        if(this.args.length === 0) {
+            return pfx + `\n${ii}}`;
+        }
+        else {
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
+            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+        }
     }
 }
 
@@ -1017,25 +613,11 @@ class TIRConstructorPrimaryDirectExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorPrimaryDirectExpression, sinfo, oftype, args, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorPrimaryDirectExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorPrimaryDirectExpression {
-        return new TIRConstructorPrimaryDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
 
 class TIRConstructorPrimaryCheckExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorPrimaryCheckExpression, sinfo, oftype, args, `${oftype}{${args.map((arg) => arg.expstr).join(", ")}`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorPrimaryCheckExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorPrimaryCheckExpression {
-        return new TIRConstructorPrimaryCheckExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1043,25 +625,11 @@ class TIRConstructorTupleExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorTupleExpression, sinfo, oftype, args, `[${args.map((arg) => arg.expstr).join(", ")}]`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorTupleExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorTupleExpression {
-        return new TIRConstructorTupleExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
 
 class TIRConstructorRecordExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorRecordExpression, sinfo, oftype, args, `{${args.map((arg) => arg.expstr).join(", ")}}`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorRecordExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorRecordExpression {
-        return new TIRConstructorRecordExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1069,25 +637,11 @@ class TIRConstructorListExpression  extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, args, `List{${args.map((arg) => arg.expstr).join(", ")}}`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorListExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorListExpression {
-        return new TIRConstructorListExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
     
 class TIRConstructorMapExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, args, `Map{${args.map((arg) => arg.expstr).join(", ")}}`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ConstructorMapExpression", {...this.bsqemit_consexp()}];
-    }
-    static bsqparse(jv: any): TIRConstructorMapExpression {
-        return new TIRConstructorMapExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1101,11 +655,16 @@ class TIRCodePackInvokeExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CodePackInvokeExpression", {...this.bsqemit_exp(), cpack: this.cpack.bsqemit(), args: this.args.map((arg) => arg.bsqemit())}];
-    }
-    static bsqparse(jv: any): TIRCodePackInvokeExpression {
-        return new TIRCodePackInvokeExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype, TIRCodePack.bsqparse(jv[1].cpack), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.cpack.bsqemit(ii)}`;
+        
+        if(this.args.length === 0) {
+            return pfx + `\n${ii}}`;
+        }
+        else {
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
+            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+        }
     }
 }
 
@@ -1120,8 +679,8 @@ abstract class TIRConstructorOfExpression extends TIRExpression {
         this.arg = arg;
     }
 
-    bsqemit_consof(): any {
-        return {...this.bsqemit_exp(), oftype: this.oftype, arg: this.arg.bsqemit()};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.arg.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1129,25 +688,11 @@ class TIRResultOkConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.ResultOkConstructorExpression, sinfo, oftype, arg, `cons_ok<${oftype}>{${arg.expstr}}`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ResultOkConstructorExpression", {...this.bsqemit_consof()}];
-    }
-    static bsqparse(jv: any): TIRResultOkConstructorExpression {
-        return new TIRResultOkConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
-    }
 }
 
 class TIRResultErrConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.ResultErrConstructorExpression, sinfo, oftype, arg, `cons_err<${oftype}>{${arg.expstr}}`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ResultErrConstructorExpression", {...this.bsqemit_consof()}];
-    }
-    static bsqparse(jv: any): TIRResultErrConstructorExpression {
-        return new TIRResultErrConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -1155,25 +700,11 @@ class TIRSomethingConstructorExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.SomethingConstructorExpression, sinfo, oftype, arg, `cons_something<${oftype}>{${arg.expstr}}`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::SomethingConstructorExpression", {...this.bsqemit_consof()}];
-    }
-    static bsqparse(jv: any): TIRSomethingConstructorExpression {
-        return new TIRSomethingConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
-    }
 }
 
 class TIRTypedeclDirectExpression extends TIRConstructorOfExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, arg: TIRExpression) {
         super(TIRExpressionTag.TypedeclDirectExpression, sinfo, oftype, arg, `cons_typedecl<${oftype}>{${arg.expstr}}`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::TypedeclDirectExpression", {...this.bsqemit_consof()}];
-    }
-    static bsqparse(jv: any): TIRTypedeclDirectExpression {
-        return new TIRTypedeclDirectExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -1184,13 +715,6 @@ class TIRTypedeclConstructorExpression extends TIRConstructorOfExpression {
 
     isFailableOperation(): boolean {
         return true;
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::TypedeclConstructorExpression", {...this.bsqemit_consof()}];
-    }
-    static bsqparse(jv: any): TIRTypedeclConstructorExpression {
-        return new TIRTypedeclConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].arg));
     }
 }
 
@@ -1205,8 +729,16 @@ abstract class TIRCallFunctionExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit_call(): any {
-        return {...this.bsqemit_exp(), fkey: this.fkey, args: this.args.map((arg) => arg.bsqemit())};
+    bsqemit_call(ii: string, fci: string): string {
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`;
+
+        if (this.args.length === 0) {
+            return pfx + `, \n${fci}\n${ii}}`;
+        }
+        else {
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
+            return pfx + `,\n${ii + s_iident}` + args + `, \n${fci}\n${ii}}`;
+        }
     }
 }
 
@@ -1220,11 +752,8 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
         this.fname = fname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallNamespaceFunctionExpression", {...this.bsqemit_call(), ns: this.ns, fname: this.fname}];
-    }
-    static bsqparse(jv: any): TIRCallNamespaceFunctionExpression {
-        return new TIRCallNamespaceFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_call(ii, `"${this.ns}"TreeIR::ValidNamespace,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`);
     }
 }
 
@@ -1238,11 +767,8 @@ class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
         this.oname = oname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallNamespaceOperatorExpression", {...this.bsqemit_call(), ns: this.ns, oname: this.oname}];
-    }
-    static bsqparse(jv: any): TIRCallNamespaceOperatorExpression {
-        return new TIRCallNamespaceOperatorExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].ns, jv[1].oname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_call(ii, `"${this.ns}"TreeIR::ValidNamespace,\n${ii + s_iident}"${this.oname}"TreeIR::ValidIdentifier`);
     }
 }
 
@@ -1256,11 +782,8 @@ class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
         this.fname = fname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallStaticFunctionExpression", {...this.bsqemit_call(), tkey: this.tkey, fname: this.fname}];
-    }
-    static bsqparse(jv: any): TIRCallStaticFunctionExpression {
-        return new TIRCallStaticFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_call(ii, `"${this.tkey}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`);
     }
 }
 
@@ -1273,8 +796,16 @@ abstract class TIRLogicActionExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit_laction(): any {
-        return {...this.bsqemit_exp(), args: this.args.map((arg) => arg.bsqemit())};
+    bsqemit(ii: string): string {
+        const pfx = this.bsqemit_exp(ii);
+
+        if (this.args.length === 0) {
+            return pfx + `\n${ii}}`;
+        }
+        else {
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
+            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+        }
     }
 }
 
@@ -1282,25 +813,11 @@ class TIRLogicActionAndExpression extends TIRLogicActionExpression {
     constructor(sinfo: SourceInfo, args: TIRExpression[]) {
         super(TIRExpressionTag.LogicActionAndExpression, sinfo, args, `/\\(${args.map((arg) => arg.expstr).join(", ")})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::LogicActionAndExpression", this.bsqemit_laction()];
-    }
-    static bsqparse(jv: any): TIRLogicActionAndExpression {
-        return new TIRLogicActionAndExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
 
 class TIRLogicActionOrExpression extends TIRLogicActionExpression {
     constructor(sinfo: SourceInfo, args: TIRExpression[]) {
         super(TIRExpressionTag.LogicActionOrExpression, sinfo, args, `\\/(${args.map((arg) => arg.expstr).join(", ")})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::LogicActionOrExpression", this.bsqemit_laction()];
-    }
-    static bsqparse(jv: any): TIRLogicActionOrExpression {
-        return new TIRLogicActionOrExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -1312,10 +829,6 @@ abstract class TIRUnaryExpression extends TIRExpression {
         super(tag, sinfo, rtype, exprstr);
         this.exp = exp;
     }
-
-    bsqemit_unary(): any {
-        return {...this.bsqemit_exp(), exp: this.exp.bsqemit()};
-    }
 }
 
 class TIRPrefixNotExpression extends TIRUnaryExpression {
@@ -1323,11 +836,8 @@ class TIRPrefixNotExpression extends TIRUnaryExpression {
         super(TIRExpressionTag.PrefixNotExpression, sinfo, "Bool", exp, `!(${exp.expstr})`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::PrefixNotExpression", this.bsqemit_unary()];
-    }
-    static bsqparse(jv: any): TIRPrefixNotExpression {
-        return new TIRPrefixNotExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1339,11 +849,8 @@ class TIRPrefixNegateExpression extends TIRUnaryExpression {
         this.optype = ntype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::PrefixNegateExpression", {...this.bsqemit_unary(), optype: this.optype}];
-    }
-    static bsqparse(jv: any): TIRPrefixNegateExpression {
-        return new TIRPrefixNegateExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype, jv[1].optype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -1360,21 +867,14 @@ abstract class TIRBinOpExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit_binop(): any {
-        return {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()};
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
 class TIRBinAddExpression extends TIRBinOpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
         super(TIRExpressionTag.BinAddExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} + ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::BinAddExpression", this.bsqemit_binop()];
-    }
-    static bsqparse(jv: any): TIRBinAddExpression {
-        return new TIRBinAddExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1383,24 +883,15 @@ class TIRBinSubExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinSubExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} - ${rhs.expstr})`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinSubExpression", {...this.bsqemit_binop(), errid: -1}];
-    }
-    static bsqparse(jv: any): TIRBinSubExpression {
-        return new TIRBinSubExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
+    
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
     }
 }
 
 class TIRBinMultExpression extends TIRBinOpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, exptype: TIRTypeKey, ntype: TIRTypeKey) {
         super(TIRExpressionTag.BinMultExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} * ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::BinMultExpression", this.bsqemit_binop()];
-    }
-    static bsqparse(jv: any): TIRBinMultExpression {
-        return new TIRBinMultExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
     }
 }
 
@@ -1409,11 +900,8 @@ class TIRBinDivExpression extends TIRBinOpExpression {
         super(TIRExpressionTag.BinDivExpression, sinfo, lhs, rhs, exptype, ntype, `(${lhs.expstr} / ${rhs.expstr})`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinDivExpression", {...this.bsqemit_binop(), errid: -1}];
-    }
-    static bsqparse(jv: any): TIRBinDivExpression {
-        return new TIRBinDivExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].etype, jv[1].optype);
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
     }
 }
 
@@ -1429,11 +917,8 @@ class TIRBinKeyEqBothUniqueExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyEqBothUniqueExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyEqBothUniqueExpression {
-        return new TIRBinKeyEqBothUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1453,11 +938,11 @@ class TIRBinKeyEqOneUniqueExpression extends TIRExpression {
         this.garg = garg;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyEqOneUniqueExpression", {...this.bsqemit_exp(), oftype: this.oftype, uarg: this.uarg.bsqemit(), gtype: this.gtype, garg: this.garg.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyEqOneUniqueExpression {
-        return new TIRBinKeyEqOneUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].uarg), jv[1].gtype, TIRExpression.bsqparse(jv[1].garg));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) 
+        + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.gtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1477,11 +962,11 @@ class TIRBinKeyEqGeneralExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyEqGeneralExpression", {...this.bsqemit_exp(), lhstype: this.lhstype, lhs: this.lhs.bsqemit(), rhstype: this.rhstype, rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyEqGeneralExpression {
-        return new TIRBinKeyEqGeneralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].lhstype, TIRExpression.bsqparse(jv[1].lhs), jv[1].rhstype, TIRExpression.bsqparse(jv[1].rhs));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) 
+        + `,\n${ii + s_iident}"${this.lhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.rhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1497,11 +982,8 @@ class TIRBinKeyNeqBothUniqueExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyNeqBothUniqueExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyNeqBothUniqueExpression {
-        return new TIRBinKeyNeqBothUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1521,11 +1003,11 @@ class TIRBinKeyNeqOneUniqueExpression extends TIRExpression {
         this.garg = garg;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyNeqOneUniqueExpression", {...this.bsqemit_exp(), oftype: this.oftype, uarg: this.uarg.bsqemit(), gtype: this.gtype, garg: this.garg.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyNeqOneUniqueExpression {
-        return new TIRBinKeyNeqOneUniqueExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].oftype, TIRExpression.bsqparse(jv[1].uarg), jv[1].gtype, TIRExpression.bsqparse(jv[1].garg));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii)
+        + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.gtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1545,11 +1027,11 @@ class TIRBinKeyNeqGeneralExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyNeqGeneralExpression", {...this.bsqemit_exp(), lhstype: this.lhstype, lhs: this.lhs.bsqemit(), rhstype: this.rhstype, rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyNeqGeneralExpression {
-        return new TIRBinKeyNeqGeneralExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].lhstype, TIRExpression.bsqparse(jv[1].lhs), jv[1].rhstype, TIRExpression.bsqparse(jv[1].rhs));
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii)
+        + `,\n${ii + s_iident}"${this.lhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.rhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1565,11 +1047,8 @@ class TIRBinKeyUniqueLessExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyUniqueLessExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyUniqueLessExpression {
-        return new TIRBinKeyUniqueLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1585,11 +1064,8 @@ class TIRBinKeyGeneralLessExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::BinKeyGeneralLessExpression", {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRBinKeyGeneralLessExpression {
-        return new TIRBinKeyGeneralLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1606,8 +1082,8 @@ abstract class TIRNumericBinCmpExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit_bincmp(): any {
-        return {...this.bsqemit_exp(), optype: this.optype, lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()};
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1615,25 +1091,11 @@ class TIRNumericEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} == ${rhs.expstr})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericEqExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericEqExpression {
-        return new TIRNumericEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
-    }
 }
 
 class TIRNumericNeqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericNeqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} != ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericNeqExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericNeqExpression {
-        return new TIRNumericNeqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1641,25 +1103,11 @@ class TIRNumericLessExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericLessExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} < ${rhs.expstr})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericLessExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericLessExpression {
-        return new TIRNumericLessExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
-    }
 }
 
 class TIRNumericLessEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericLessEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} <= ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericLessEqExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericLessEqExpression {
-        return new TIRNumericLessEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1667,25 +1115,11 @@ class TIRNumericGreaterExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericGreaterExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} > ${rhs.expstr})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericGreaterExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericGreaterExpression {
-        return new TIRNumericGreaterExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
-    }
 }
 
 class TIRNumericGreaterEqExpression extends TIRNumericBinCmpExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression, ntype: TIRTypeKey) {
         super(TIRExpressionTag.NumericGreaterEqExpression, sinfo, lhs, rhs, ntype, `(${lhs.expstr} >= ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::NumericGreaterEqExpression", this.bsqemit_bincmp()];
-    }
-    static bsqparse(jv: any): TIRNumericGreaterEqExpression {
-        return new TIRNumericGreaterEqExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs), jv[1].optype);
     }
 }
 
@@ -1700,8 +1134,8 @@ abstract class TIRBinLogicExpression extends TIRExpression {
         this.rhs = rhs;
     }
 
-    bsqemit_logic(): any {
-        return {...this.bsqemit_exp(), lhs: this.lhs.bsqemit(), rhs: this.rhs.bsqemit()};
+    bsqemit(ii: string): any {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1709,38 +1143,17 @@ class TIRBinLogicAndExpression extends TIRBinLogicExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression) {
         super(TIRExpressionTag.BinLogicAndExpression, sinfo, lhs, rhs, `(${lhs.expstr} && ${rhs.expstr})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::BinLogicAndExpression", this.bsqemit_logic()];
-    }
-    static bsqparse(jv: any): TIRBinLogicAndExpression {
-        return new TIRBinLogicAndExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs));
-    }
 }
 
 class TIRBinLogicOrExpression extends TIRBinLogicExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression) {
         super(TIRExpressionTag.BinLogicOrExpression, sinfo, lhs, rhs, `(${lhs.expstr} || ${rhs.expstr})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::BinLogicOrExpression", this.bsqemit_logic()];
-    }
-    static bsqparse(jv: any): TIRBinLogicOrExpression {
-        return new TIRBinLogicOrExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs));
-    }
 }
 
 class TIRBinLogicImpliesExpression extends TIRBinLogicExpression {
     constructor(sinfo: SourceInfo, lhs: TIRExpression, rhs: TIRExpression) {
         super(TIRExpressionTag.BinLogicImpliesExpression, sinfo, lhs, rhs, `(${lhs.expstr} ==> ${rhs.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::BinLogicImpliesExpression", this.bsqemit_logic()];
-    }
-    static bsqparse(jv: any): TIRBinLogicImpliesExpression {
-        return new TIRBinLogicImpliesExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].lhs), TIRExpression.bsqparse(jv[1].rhs));
     }
 }
 
@@ -1762,11 +1175,11 @@ class TIRMapEntryConstructorExpression extends TIRExpression {
         this.vexp = vexp;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::MapEntryConstructorExpression", {...this.bsqemit_exp(), ktype: this.ktype, vtype: this.vtype, oftype: this.oftype, kexp: this.kexp.bsqemit(), vexp: this.vexp.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRMapEntryConstructorExpression {
-        return new TIRMapEntryConstructorExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].kexp), TIRExpression.bsqparse(jv[1].vexp), jv[1].ktype, jv[1].vtype, jv[1].oftype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) 
+        + `,\n${ii + s_iident}"${this.ktype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.oftype}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}${this.kexp.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1782,21 +1195,64 @@ class TIRIfExpression extends TIRExpression {
         this.elseentry = elseentry;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::IfExpression", {
-            ...this.bsqemit_exp(), 
-            ifentry: {etest: this.ifentry.test.bsqemit(), value: this.ifentry.value.bsqemit(), binderinfo: this.ifentry.binderinfo !== undefined ? [this.ifentry.binderinfo[0].bsqemit(), this.ifentry.binderinfo[1], this.ifentry.binderinfo[2].bsqemit(), this.ifentry.binderinfo[3]] : null}, 
-            elifentries: this.elifentries.map((efi) => ({etest: efi.test.bsqemit(), value: efi.value.bsqemit(), binderinfo: efi.binderinfo !== undefined ? [efi.binderinfo[0].bsqemit(), efi.binderinfo[1], efi.binderinfo[2].bsqemit(), efi.binderinfo[3]] : null})), 
-            elseentry: {value: this.elseentry.value.bsqemit(), binderinfo: this.elseentry.binderinfo !== undefined ? [this.elseentry.binderinfo[0].bsqemit(), this.elseentry.binderinfo[1], this.elseentry.binderinfo[2].bsqemit(), this.elseentry.binderinfo[3]] : null}
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, number, TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}${bb[1]}n`
+            + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRIfExpression {
-        return new TIRIfExpression(
-            SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype,
-            {test: TIRExpression.bsqparse(jv[1].ifentry.etest), value: TIRExpression.bsqparse(jv[1].ifentry.value), binderinfo: jv[1].ifentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].ifentry.binderinfo[0]), jv[1].ifentry.binderinfo[1], TIRExpression.bsqparse(jv[1].ifentry.binderinfo[2]), jv[1].ifentry.binderinfo[3]] : undefined},
-            jv[1].elifentries.map((efi: any) => ({test: TIRExpression.bsqparse(efi.etest), value: TIRExpression.bsqparse(efi.value), binderinfo: efi.binderinfo !== null ? [TIRExpression.bsqparse(efi.binderinfo[0]), efi.binderinfo[1], TIRExpression.bsqparse(efi.binderinfo[2]), efi.binderinfo[3]] : undefined})),
-            {value: TIRExpression.bsqparse(jv[1].elseentry.value), binderinfo: jv[1].elseentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].elseentry.binderinfo[0]), jv[1].elseentry.binderinfo[1], TIRExpression.bsqparse(jv[1].elseentry.binderinfo[2]), jv[1].elseentry.binderinfo[3]] : undefined}
-        )
+    private bsqemit_ifentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${this.ifentry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${this.ifentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfExpression.bsqemit_binder(iident + s_iident, this.ifentry.binderinfo)}`
+        + `\n${ii}}`;
+    }
+    private static bsqemit_elifentry(ii: string, entry: {test: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${entry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfExpression.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_elifentries(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.elifentries.map((e) => TIRIfExpression.bsqemit_elifentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_elseentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `${iident}value=${this.elseentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfExpression.bsqemit_binder(iident + s_iident, this.elseentry.binderinfo)}`
+        + `\n${ii + s_iident}}`;
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const ifes = this.bsqemit_ifentry(iident);
+        const elifes = this.bsqemit_elifentries(iident);
+        const ee = this.bsqemit_elseentry(iident);
+
+        return this.bsqemit_exp(ii)
+        + `,\n${iident}${ifes},\n${iident}${elifes},\n${iident}${ee}\n${ii}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1816,24 +1272,58 @@ class TIRSwitchExpression extends TIRExpression {
         this.isexhaustive = isexhaustive;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::SwitchExpression", {
-            ...this.bsqemit_exp(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRSwitchExpression {
-        return new TIRSwitchExpression(
-            SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype,
-            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
-            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRExpression.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined})),
-            jv[1].edefault !== null ? {value: TIRExpression.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined} : undefined,
-            jv[1].isexhaustive
-        )
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRSwitchExpression.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRSwitchExpression.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRSwitchExpression.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_exp(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1853,24 +1343,58 @@ class TIRMatchExpression extends TIRExpression {
         this.isexhaustive = isexhaustive;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::MatchExpression", {
-            ...this.bsqemit_exp(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRMatchExpression {
-        return new TIRMatchExpression(
-            SourceInfo.bsqparse(jv[1].sinfo), jv[1].etype,
-            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
-            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRExpression.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined})),
-            jv[1].edefault !== null ? {value: TIRExpression.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined} : undefined,
-            jv[1].isexhaustive
-        )
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRExpression, binderinfo: [TIRExpression, string] | undefined}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRMatchExpression.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRMatchExpression.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRMatchExpression.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_exp(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1886,11 +1410,8 @@ class TIRTaskSelfFieldExpression extends TIRExpression {
         this.fname = fname;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TaskSelfFieldExpression", {...this.bsqemit_exp(), tasktype: this.tasktype, fieldkey: this.fieldkey, fname: this.fname}];
-    }
-    static bsqparse(jv: any): TIRTaskSelfFieldExpression {
-        return new TIRTaskSelfFieldExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tasktype, jv[1].field, jv[1].fname, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}"TreeIR::ValidTypeKey, "${this.fieldkey}"TreeIR::ValidFieldKey, "${this.fname}"TreeIR::ValidIdentifier}`;
     }
 }
 
@@ -1902,11 +1423,8 @@ class TIRTaskSelfControlExpression extends TIRExpression {
         this.tasktype = tasktype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TaskSelfControlExpression", {...this.bsqemit_exp(), tasktype: this.tasktype}];
-    }
-    static bsqparse(jv: any): TIRTaskSelfControlExpression {
-        return new TIRTaskSelfControlExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tasktype, jv[1].etype);
+    bsqemit(ii: string): string {
+        return "[Removing Setup for Control Fields]";
     }
 }
 
@@ -1918,11 +1436,8 @@ class TIRTaskGetIDExpression extends TIRExpression {
         this.tasktype = tasktype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TaskGetIDExpression", {...this.bsqemit_exp(), tasktype: this.tasktype}];
-    }
-    static bsqparse(jv: any): TIRTaskGetIDExpression {
-        return new TIRTaskGetIDExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tasktype, jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}"TreeIR::ValidTypeKey}`;
     }
 }
 
@@ -1945,11 +1460,8 @@ class TIRCoerceSafeExpression extends TIRCoerceSafeSingleExpression {
         super(TIRExpressionTag.CoerceSafeExpression, sinfo, exp, fromtype, totype, `coerce_safe<${totype}>(${exp.expstr})`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CoerceSafeExpression", {...this.bsqemit_exp(), exp: this.exp.bsqemit(), fromtype: this.fromtype, totype: this.totype}];
-    }
-    static bsqparse(jv: any): TIRCoerceSafeExpression {
-        return new TIRCoerceSafeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].fromtype, jv[1].totype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.fromtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.totype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -1964,8 +1476,8 @@ abstract class TIRInjectExtractExpression extends TIRExpression {
         this.totype = totype;
     }
     
-    bsqemit_ie(): any {
-        return {...this.bsqemit_exp(), exp: this.exp.bsqemit(), totype: this.totype};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.totype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -1973,25 +1485,11 @@ class TIRInjectExpression extends TIRInjectExtractExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
         super(TIRExpressionTag.InjectExpression, sinfo, exp, totype, `inject<${totype}>(${exp.expstr})`);
     }
-
-    bsqemit() {
-        return ["TreeIR::InjectExpression", this.bsqemit_ie()];
-    }
-    static bsqparse(jv: any): TIRInjectExpression {
-        return new TIRInjectExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].totype);
-    }
 }
 
 class TIRExtractExpression extends TIRInjectExtractExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, totype: TIRTypeKey) {
         super(TIRExpressionTag.ExtractExpression, sinfo, exp, totype, `extract<${totype}>(${exp.expstr})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ExtractExpression", this.bsqemit_ie()];
-    }
-    static bsqparse(jv: any): TIRExtractExpression {
-        return new TIRExtractExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].totype);
     }
 }
 
@@ -2012,11 +1510,14 @@ class TIRCreateCodePackExpression extends TIRExpression {
         this.capturepackindirect = capturepackindirect;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CreateCodePackExpression", {...this.bsqemit_exp(), pcodepack: this.pcodepack.bsqemit(), capturedirect: this.capturedirect, captureindirect: this.captureindirect, capturepackdirect: this.capturepackdirect, capturepackindirect: this.capturepackindirect}];
-    }
-    static bsqparse(jv: any): TIRCreateCodePackExpression {
-        return new TIRCreateCodePackExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRCodePack.bsqparse(jv[1].pcodepack), jv[1].etype, jv[1].capturedirect, jv[1].captureindirect, jv[1].capturepackdirect, jv[1].capturepackindirect);
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii)
+        + `,\n${ii + s_iident}${this.pcodepack.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}List{${this.capturedirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.captureindirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.capturepackdirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.capturepackindirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -2029,8 +1530,12 @@ abstract class TIRTestIsExpression extends TIRExpression {
         this.exp = exp;
     }
 
-    bsqemit_ti(): any {
-        return {...this.bsqemit_exp(), exp: this.exp.bsqemit()};
+    bsqemit_ti(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`;
+    }
+
+    bsqemit(ii: string): string {
+        return this.bsqemit_ti(ii) + `\n${ii}}`;
     }
 }
 
@@ -2045,25 +1550,11 @@ class TIRIsNoneSpecialExpression extends TIRITestIsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsNoneSpecialExpression, sinfo, exp, `${exp.expstr}?none`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::IsNoneSpecialExpression", this.bsqemit_ti()];
-    }
-    static bsqparse(jv: any): TIRIsNoneSpecialExpression {
-        return new TIRIsNoneSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
-    }
-} 
+}
 
 class TIRIsSomeSpecialExpression extends TIRITestIsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsSomeSpecialExpression, sinfo, exp, `${exp.expstr}?!none`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::IsSomeSpecialExpression", this.bsqemit_ti()];
-    }
-    static bsqparse(jv: any): TIRIsSomeSpecialExpression {
-        return new TIRIsSomeSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
     }
 }
 
@@ -2071,25 +1562,11 @@ class TIRIsNothingSpecialExpression extends TIRITestIsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsNothingSpecialExpression, sinfo, exp, `${exp.expstr}?nothing`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::IsNothingSpecialExpression", this.bsqemit_ti()];
-    }
-    static bsqparse(jv: any): TIRIsNothingSpecialExpression {
-        return new TIRIsNothingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
-    }
 }
 
 class TIRIsSomethingSpecialExpression extends TIRITestIsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.IsSomethingSpecialExpression, sinfo, exp, `${exp.expstr}?something`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::IsSomethingSpecialExpression", this.bsqemit_ti()];
-    }
-    static bsqparse(jv: any): TIRIsSomethingSpecialExpression {
-        return new TIRIsSomethingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
     }
 }
 
@@ -2101,11 +1578,8 @@ class TIRIsOkSpecialExpression  extends TIRITestIsSpecialExpression {
         this.oktype = oktype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::IsOkSpecialExpression", {...this.bsqemit_ti(), oktype: this.oktype}];
-    }
-    static bsqparse(jv: any): TIRIsOkSpecialExpression {
-        return new TIRIsOkSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].oktype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.oktype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -2117,11 +1591,8 @@ class TIRIsErrSpecialExpression extends TIRITestIsSpecialExpression {
         this.errtype = errtype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::IsErrSpecialExpression", {...this.bsqemit_ti(), errtype: this.errtype}];
-    }
-    static bsqparse(jv: any): TIRIsErrSpecialExpression {
-        return new TIRIsErrSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].errtype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.errtype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -2134,8 +1605,8 @@ abstract class TIRITestIsLiteralEqExpression extends TIRTestIsExpression {
         this.literal = literal;
     }
 
-    bsqemit_tle(): any {
-        return {...this.bsqemit_ti(), literal: this.literal.bsqemit()};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.literal.bsqemit(ii + s_iident)}`;
     }
 }
 
@@ -2143,25 +1614,11 @@ class TIRIsEqualToLiteralExpression extends TIRITestIsLiteralEqExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue) {
         super(TIRExpressionTag.IsEqualToLiteralExpression, sinfo, exp, literal, `${exp.expstr}?[${literal.litstr}]`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::IsEqualToLiteralExpression", this.bsqemit_tle()];
-    }
-    static bsqparse(jv: any): TIRIsEqualToLiteralExpression {
-        return new TIRIsEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal));
-    }
 }
 
 class TIRIsNotEqualToLiteralExpression extends TIRITestIsLiteralEqExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue) {
         super(TIRExpressionTag.IsNotEqualToLiteralExpression, sinfo, exp, literal, `${exp.expstr}?[!${literal.litstr}]`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::IsNotEqualToLiteralExpression", this.bsqemit_tle()];
-    }
-    static bsqparse(jv: any): TIRIsNotEqualToLiteralExpression {
-        return new TIRIsNotEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal));
     }
 }
 
@@ -2174,8 +1631,8 @@ abstract class TIRITestIsTypeExpression extends TIRTestIsExpression {
         this.ttype = ttype;
     }
 
-    bsqemit_tit(): any {
-        return {...this.bsqemit_ti(), ttype: this.ttype};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"TreeIR::ValidTypeKey}`;
     }
 }
 
@@ -2183,25 +1640,11 @@ class TIRIsTypeExpression extends TIRITestIsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
         super(TIRExpressionTag.IsTypeExpression, sinfo, exp, ttype, `${exp.expstr}?<${ttype}>`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::IsTypeExpression", this.bsqemit_tit()];
-    }
-    static bsqparse(jv: any): TIRIsTypeExpression {
-        return new TIRIsTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype);
-    }
 }
 
 class TIRIsNotTypeExpression  extends TIRITestIsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
         super(TIRExpressionTag.IsNotTypeExpression, sinfo, exp, ttype, `${exp.expstr}?<!${ttype}>`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::IsNotTypeExpression", this.bsqemit_tit()];
-    }
-    static bsqparse(jv: any): TIRIsNotTypeExpression {
-        return new TIRIsNotTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype);
     }
 }
 
@@ -2209,25 +1652,11 @@ class TIRIsSubTypeExpression  extends TIRITestIsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
         super(TIRExpressionTag.IsSubTypeExpression, sinfo, exp, ttype, `${exp.expstr}?<<:${ttype}>`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::IsSubTypeExpression", this.bsqemit_tit()];
-    }
-    static bsqparse(jv: any): TIRIsSubTypeExpression {
-        return new TIRIsSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype);
-    }
 }
 
 class TIRIsNotSubTypeExpression  extends TIRITestIsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey) {
         super(TIRExpressionTag.IsNotSubTypeExpression, sinfo, exp, ttype, `${exp.expstr}?<!<:${ttype}>`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::IsNotSubTypeExpression", this.bsqemit_tit()];
-    }
-    static bsqparse(jv: any): TIRIsNotSubTypeExpression {
-        return new TIRIsNotSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype);
     }
 }
 
@@ -2240,8 +1669,13 @@ abstract class TIRAsExpression extends TIRExpression {
         this.exp = exp;
     }
     
-    bsqemit_ae(): any {
-        return {...this.bsqemit_exp(), exp: this.exp.bsqemit()};
+    
+    bsqemit_ae(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)}`;
+    }
+
+    bsqemit(ii: string): string {
+        return this.bsqemit_ae(ii) + `\n${ii}}`;
     }
 }
 
@@ -2256,25 +1690,11 @@ class TIRAsNoneSpecialExpression extends TIRAsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.AsNoneSpecialExpression, sinfo, exp, "None", `${exp.expstr}@none`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::AsNoneSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsNoneSpecialExpression {
-        return new TIRAsNoneSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
-    }
 }
 
 class TIRAsSomeSpecialExpression extends TIRAsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsSomeSpecialExpression, sinfo, exp, oftype, `${exp.expstr}@!none`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::AsSomeSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsSomeSpecialExpression {
-        return new TIRAsSomeSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2282,25 +1702,11 @@ class TIRAsNothingSpecialExpression extends TIRAsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression) {
         super(TIRExpressionTag.AsNothingSpecialExpression, sinfo, exp, "Nothing", `${exp.expstr}@nothing`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::AsNothingSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsNothingSpecialExpression {
-        return new TIRAsNothingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp));
-    }
 }
 
 class TIRAsSomethingSpecialExpression extends TIRAsSpecialExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsSomethingSpecialExpression, sinfo, exp, oftype, `${exp.expstr}@something`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::AsSomethingSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsSomethingSpecialExpression {
-        return new TIRAsSomethingSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
     }
 }
 
@@ -2309,11 +1715,8 @@ class TIRAsOkSpecialExpression extends TIRAsSpecialExpression {
         super(TIRExpressionTag.AsOkSpecialExpression, sinfo, exp, oftype, `${exp.expstr}@ok`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AsOkSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsOkSpecialExpression {
-        return new TIRAsOkSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -2322,11 +1725,9 @@ class TIRAsErrSpecialExpression extends TIRAsSpecialExpression {
         super(TIRExpressionTag.AsErrSpecialExpression, sinfo, exp, oftype, `${exp.expstr}@err`);
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AsErrSpecialExpression", this.bsqemit_ae()];
-    }
-    static bsqparse(jv: any): TIRAsErrSpecialExpression {
-        return new TIRAsErrSpecialExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].etype);
+    
+    bsqemit(ii: string): string {
+        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey\n${ii}}`;
     }
 }
 
@@ -2339,8 +1740,8 @@ abstract class TIRIAsLiteralEqExpression extends TIRAsExpression {
         this.literal = literal;
     }
 
-    bsqemit_ael(): any {
-        return {...this.bsqemit_ae(), literal: this.literal.bsqemit()};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.literal.bsqemit(ii + s_iident)}`;
     }
 }
 
@@ -2348,25 +1749,11 @@ class TIRAsEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsEqualToLiteralExpression, sinfo, exp, literal, oftype, `${exp.expstr}@[${literal.litstr}]`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::AsEqualToLiteralExpression", this.bsqemit_ael()];
-    }
-    static bsqparse(jv: any): TIRAsEqualToLiteralExpression {
-        return new TIRAsEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].etype);
-    }
 }
 
 class TIRAsNotEqualToLiteralExpression extends TIRIAsLiteralEqExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, literal: TIRLiteralValue, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsNotEqualToLiteralExpression, sinfo, exp, literal, oftype, `${exp.expstr}@[!${literal.litstr}]`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::AsNotEqualToLiteralExpression", this.bsqemit_ael()];
-    }
-    static bsqparse(jv: any): TIRAsNotEqualToLiteralExpression {
-        return new TIRAsNotEqualToLiteralExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), TIRLiteralValue.bsqparse(jv[1].literal), jv[1].etype);
     }
 }
 
@@ -2379,8 +1766,8 @@ abstract class TIRITestAsTypeExpression extends TIRAsExpression {
         this.ttype = ttype;
     }
 
-    bsqemit_aet(): any {
-        return {...this.bsqemit_ae(), ttype: this.ttype};
+    bsqemit(ii: string): string {
+        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"TreeIR::ValidTypeKey}`;
     }
 }
 
@@ -2388,25 +1775,11 @@ class TIRAsTypeExpression extends TIRITestAsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsTypeExpression, sinfo, exp, ttype, oftype, `${exp.expstr}@<${ttype}>`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::AsTypeExpression", this.bsqemit_aet()];
-    }
-    static bsqparse(jv: any): TIRAsTypeExpression {
-        return new TIRAsTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
-    }
 }
 
 class TIRAsNotTypeExpression extends TIRITestAsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsNotTypeExpression, sinfo, exp, ttype, oftype, `${exp.expstr}@<!${ttype}>`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::AsNotTypeExpression", this.bsqemit_aet()];
-    }
-    static bsqparse(jv: any): TIRAsNotTypeExpression {
-        return new TIRAsNotTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2414,25 +1787,11 @@ class TIRAsSubTypeExpression extends TIRITestAsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsSubTypeExpression, sinfo, exp, ttype, oftype, `${exp.expstr}@<<:${ttype}>`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::AsSubTypeExpression", this.bsqemit_aet()];
-    }
-    static bsqparse(jv: any): TIRAsSubTypeExpression {
-        return new TIRAsSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
-    }
 }
 
 class TIRAsNotSubTypeExpression extends TIRITestAsTypeExpression {
     constructor(sinfo: SourceInfo, exp: TIRExpression, ttype: TIRTypeKey, oftype: TIRTypeKey) {
         super(TIRExpressionTag.AsNotSubTypeExpression, sinfo, exp, ttype, oftype, `${exp.expstr}@<!<:${ttype}>`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::AsNotSubTypeExpression", this.bsqemit_aet()];
-    }
-    static bsqparse(jv: any): TIRAsNotSubTypeExpression {
-        return new TIRAsNotSubTypeExpression(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].ttype, jv[1].etype);
     }
 }
 
@@ -2455,8 +1814,19 @@ abstract class TIRIMemberFunctionExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit_mf(): any {
-        return {...this.bsqemit_exp(), tkey: this.tkey, fname: this.fname, fkey: this.fkey, fdecltype: this.fdecltype, thisarg: this.thisarg.bsqemit(), args: this.args.map((arg) => arg.bsqemit())};
+    bsqemit_mf(ii: string): string {
+        const argl = this.args.map((arg) => arg.bsqemit(ii + s_iident));
+        return this.bsqemit_exp(ii)
+        + `,\n${ii + s_iident}"${this.tkey}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`
+        + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.fdecltype}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}${this.thisarg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}List{${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}}`;
+    }
+
+    bsqemit(ii: string): string {
+        return this.bsqemit_mf(ii) + `\n${ii}}`;
     }
 }
 
@@ -2464,25 +1834,11 @@ class TIRCallMemberFunctionExpression extends TIRIMemberFunctionExpression {
     constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, fkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberFunctionExpression, sinfo, tkey, fname, fkey, fdecltype, rtype, thisarg, args, `${thisarg.expstr}.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::CallMemberFunctionExpression", this.bsqemit_mf()];
-    }
-    static bsqparse(jv: any): TIRCallMemberFunctionExpression {
-        return new TIRCallMemberFunctionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
 
 class TIRCallMemberFunctionDynamicExpression extends TIRIMemberFunctionExpression {
     constructor(sinfo: SourceInfo, tkey: TIRTypeKey, fname: string, declkey: TIRInvokeKey, fdecltype: TIRTypeKey, rtype: TIRTypeKey, thisarg: TIRExpression, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberFunctionDynamicExpression, sinfo, tkey, fname, declkey, fdecltype, rtype, thisarg, args, `${thisarg.expstr}.${declkey}(${args.map((arg) => arg.expstr).join(", ")})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::CallMemberFunctionDynamicExpression", this.bsqemit_mf()];
-    }
-    static bsqparse(jv: any): TIRCallMemberFunctionDynamicExpression {
-        return new TIRCallMemberFunctionDynamicExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2496,11 +1852,8 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
         this.thisref = thisref;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallMemberFunctionSelfRefExpression", {...this.bsqemit_mf(), scidx: this.scidx, thisref: this.thisref}];
-    }
-    static bsqparse(jv: any): TIRCallMemberFunctionSelfRefExpression {
-        return new TIRCallMemberFunctionSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].tkey, jv[1].fname, jv[1].fkey, jv[1].fdecltype, jv[1].etype, jv[1].thisref, TIRExpression.bsqparse(jv[1].thisarg), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_mf(ii) + `,\n${ii + s_iident}${this.scidx},\n${ii + s_iident}"${this.thisref}"TreeIR::ValidIdentifier\n${ii}}`;
     }
 }
 
@@ -2519,21 +1872,23 @@ abstract class TIRFunctionTaskExpression extends TIRExpression {
         this.args = args;
     }
 
-    bsqemit_tf(): any {
-        return {...this.bsqemit_exp(), fname: this.fname, fkey: this.fkey, tsktype: this.tsktype, args: this.args.map((arg) => arg.bsqemit())};
+    bsqemit_tf(ii: string): string {
+        const argl = this.args.map((arg) => arg.bsqemit(ii + s_iident));
+        return this.bsqemit_exp(ii)
+        + `,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`
+        + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.tsktype}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}List{${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}}`;
+    }
+
+    bsqemit(ii: string): string {
+        return this.bsqemit_tf(ii) + `\n${ii}}`;
     }
 }
 
 class TIRCallMemberFunctionTaskExpression extends TIRFunctionTaskExpression {
     constructor(sinfo: SourceInfo, fname: string, fkey: TIRInvokeKey, rtype: TIRTypeKey, tsktype: TIRTypeKey, args: TIRExpression[]) {
         super(TIRExpressionTag.CallMemberFunctionTaskExpression, sinfo, fname, fkey, rtype, tsktype, args, `self.${fkey}(${args.map((arg) => arg.expstr).join(", ")})`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::CallMemberFunctionTaskExpression", this.bsqemit_tf()];
-    }
-    static bsqparse(jv: any): TIRCallMemberFunctionTaskExpression {
-        return new TIRCallMemberFunctionTaskExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
     }
 }
 
@@ -2545,11 +1900,8 @@ class TIRCallMemberFunctionTaskSelfRefExpression extends TIRFunctionTaskExpressi
         this.scidx = scidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallMemberFunctionTaskSelfRefExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
-    }
-    static bsqparse(jv: any): TIRCallMemberFunctionTaskSelfRefExpression {
-        return new TIRCallMemberFunctionTaskSelfRefExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_tf(ii) + `,\n${ii + s_iident}${this.scidx}\n${ii}}`;
     }
 }
 
@@ -2561,11 +1913,8 @@ class TIRCallMemberActionExpression extends TIRFunctionTaskExpression {
         this.scidx = scidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::CallMemberActionExpression", {...this.bsqemit_tf(), scidx: this.scidx}];
-    }
-    static bsqparse(jv: any): TIRCallMemberActionExpression {
-        return new TIRCallMemberActionExpression(SourceInfo.bsqparse(jv[1].sinfo), jv[1].scidx, jv[1].fname, jv[1].fkey, jv[1].etype, jv[1].tsktype, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return this.bsqemit_tf(ii) + `,\n${ii + s_iident}${this.scidx}\n${ii}}`;
     }
 }
 
@@ -2578,11 +1927,11 @@ class TIRLiteralValue {
         this.litstr = litstr;
     }
 
-    bsqemit(): any {
-        return {exp: this.exp.bsqemit(), litstr: this.litstr};
-    }
-    static bsqparse(jv: any): TIRLiteralValue {
-        return new TIRLiteralValue(TIRExpression.bsqparse(jv[1].exp), jv[1].litstr);
+    bsqemit(ii: string): string {
+        return `{\n`
+        + `${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n`
+        + `${ii + s_iident}"${this.litstr}"\n`
+        + `${ii}}`;
     }
 }
 
@@ -2644,124 +1993,15 @@ abstract class TIRStatement {
         this.stmtstr = stmtstr;
     }
 
-    bsqemit_stmt(): any {
-        return {sinfo: this.sinfo.bsqemit()};
+    bsqemit_stmt(ii: string): string {
+        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`;
     }
 
-    abstract bsqemit(): any;
-
-    static bsqparse(jv: any): TIRStatement {
-        if(jv[0] === "TreeIR::NopStatement") {
-            return TIRNopStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AbortStatement") {
-            return TIRAbortStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::AssertCheckStatement") {
-            return TIRAssertCheckStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::DebugStatement") {
-            return TIRDebugStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VarDeclareStatement") {
-            return TIRVarDeclareStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VarAssignStatement") {
-            return TIRVarAssignStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VarDeclareAndAssignStatement") {
-            return TIRVarDeclareAndAssignStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::StoreToScratch") {
-            return TIRStoreToScratch.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VarRefAssignFromScratch") {
-            return TIRVarRefAssignFromScratch.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskRefAssignFromScratch") {
-            return TIRTaskRefAssignFromScratch.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallStatementWRef") {
-            return TIRCallStatementWRef.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallStatementWTaskRef") {
-            return TIRCallStatementWTaskRef.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::CallStatementWTaskAction") {
-            return TIRCallStatementWAction.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VariableRetypeStatement") {
-            return TIRVariableRetypeStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::VariableSCRetypeStatement") {
-            return TIRVariableSCRetypeStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ScratchSCStatement") {
-            return TIRScratchSCStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ReturnStatement") {
-            return TIRReturnStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ReturnStatementWRef") {
-            return TIRReturnStatementWRef.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ReturnStatementWTaskRef") {
-            return TIRReturnStatementWTaskRef.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::ReturnStatementWAction") {
-            return TIRReturnStatementWAction.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::IfStatement") {
-            return TIRIfStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::SwitchStatement") {
-            return TIRSwitchStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::MatchStatement") {
-            return TIRMatchStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::EnvironmentFreshStatement") {
-            return TIREnvironmentFreshStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::EnvironmentSetStatement") {
-            return TIREnvironmentSetStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::EnvironmentSetStatementBracket") {
-            return TIREnvironmentSetStatementBracket.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskRunStatement") {
-            return TIRTaskRunStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskMultiStatement") {
-            return TIRTaskMultiStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskDashStatement") {
-            return TIRTaskDashStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskAllStatement") {
-            return TIRTaskAllStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskRaceStatement") {
-            return TIRTaskRaceStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::TaskSetSelfFieldStatement") {
-            return TIRTaskSetSelfFieldStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoggerEmitStatement") {
-            return TIRLoggerEmitStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoggerEmitConditionalStatement") {
-            return TIRLoggerEmitConditionalStatement.bsqparse(jv);
-        }
-        else if(jv[0] === "TreeIR::LoggerSetPrefixStatement") {
-            return TIRLoggerSetPrefixStatement.bsqparse(jv);
-        }
-        else {
-            assert(false, "unhandled parse of TIRStatementTag: " + jv[0]);
-
-            return (undefined as any) as TIRStatement;
-        }
+    bsqemit_stmt_il(ii: string): string {
+        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}`;
     }
+
+    abstract bsqemit(ii: string): string;
 }
 
 class TIRNopStatement extends TIRStatement {
@@ -2769,11 +2009,8 @@ class TIRNopStatement extends TIRStatement {
         super(TIRStatementTag.NopStatement, sinfo, "nop;");
     }
 
-    bsqemit(): any {
-        return ["TreeIR::NopStatement", this.bsqemit_stmt()];
-    }
-    static bsqparse(jv: any): TIRNopStatement {
-        return new TIRNopStatement(SourceInfo.bsqparse(jv[1].sinfo));
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt_il(ii) + `}`;
     }
 }
 
@@ -2785,11 +2022,8 @@ class TIRAbortStatement extends TIRStatement {
         this.msg = msg;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AbortStatement", {...this.bsqemit_stmt(), msg: this.msg, errid: -1}];
-    }
-    static bsqparse(jv: any): TIRAbortStatement {
-        return new TIRAbortStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].msg);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt_il(ii) + `, "${this.msg}", -1i}`;
     }
 }
 
@@ -2803,11 +2037,8 @@ class TIRAssertCheckStatement extends TIRStatement {
         this.msg = msg;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::AssertCheckStatement", {...this.bsqemit_stmt(), cond: this.cond.bsqemit(), msg: this.msg, errid: -1}];
-    }
-    static bsqparse(jv: any): TIRAssertCheckStatement {
-        return new TIRAssertCheckStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].cond), jv[1].msg);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.cond.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.msg}",\n${ii + s_iident}-1i\n${ii}}`;
     }
 }
 
@@ -2819,11 +2050,8 @@ class TIRDebugStatement extends TIRStatement {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::DebugStatement", {...this.bsqemit_stmt(), value: this.value.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRDebugStatement {
-        return new TIRDebugStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.value.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -2837,11 +2065,8 @@ class TIRVarDeclareStatement extends TIRStatement {
         this.vtype = vtype;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VarDeclareStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype}];
-    }
-    static bsqparse(jv: any): TIRVarDeclareStatement {
-        return new TIRVarDeclareStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt_il(ii) + `, "${this.vname}"TreeIR::ValidIdentifier, "${this.vtype}"TreeIR::ValidTypeKey}`;
     }
 }
 
@@ -2859,11 +2084,8 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
         this.isConst = isConst;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VarDeclareAndAssignStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit(), isConst: this.isConst}];
-    }
-    static bsqparse(jv: any): TIRVarDeclareAndAssignStatement {
-        return new TIRVarDeclareAndAssignStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, TIRExpression.bsqparse(jv[1].vexp), jv[1].isConst);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.isConst ? "true" : "false"}\n${ii}}`;
     }
 }
 
@@ -2879,11 +2101,8 @@ class TIRVarAssignStatement extends TIRStatement {
         this.vexp = vexp;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VarAssignStatement", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, vexp: this.vexp.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRVarAssignStatement {
-        return new TIRVarAssignStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, TIRExpression.bsqparse(jv[1].vexp));
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -2899,11 +2118,8 @@ class TIRStoreToScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::StoreToScratch", {...this.bsqemit_stmt(), exp: this.exp.bsqemit(), vtype: this.vtype, scidx: this.scidx}];
-    }
-    static bsqparse(jv: any): TIRStoreToScratch {
-        return new TIRStoreToScratch(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].exp), jv[1].vtype, jv[1].scidx);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2919,11 +2135,8 @@ class TIRVarRefAssignFromScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VarRefAssignFromScratch", {...this.bsqemit_stmt(), vname: this.vname, vtype: this.vtype, scidx: this.scidx}];
-    }
-    static bsqparse(jv: any): TIRVarRefAssignFromScratch {
-        return new TIRVarRefAssignFromScratch(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].vtype, jv[1].scidx);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2937,11 +2150,8 @@ class TIRTaskRefAssignFromScratch extends TIRStatement {
         this.scidx = scidx;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TaskRefAssignFromScratch", {...this.bsqemit_stmt(), vtype: this.vtype, scidx: this.scidx}];
-    }
-    static bsqparse(jv: any): TIRTaskRefAssignFromScratch {
-        return new TIRTaskRefAssignFromScratch(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vtype, jv[1].scidx);
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2950,7 +2160,7 @@ abstract class TIRCallWRefStatementGeneral extends TIRStatement {
     readonly restype: TIRTypeKey;
     readonly reftype: TIRTypeKey;
     readonly sidx: number;
-    //always stores to scratch location as a EList
+    //always stores to scratch location
 
     constructor(tag: TIRStatementTag, sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(tag, sinfo, `${vexp.expstr};`);
@@ -2960,8 +2170,8 @@ abstract class TIRCallWRefStatementGeneral extends TIRStatement {
         this.sidx = sidx;
     }
 
-    bsqemit_cwr(): any {
-        return {...this.bsqemit_stmt(), vexp: this.vexp.bsqemit(), restype: this.restype, reftype: this.reftype, sidx: this.sidx};
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.restype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.reftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.sidx}n\n${ii}}`;
     }
 }
 
@@ -2969,38 +2179,17 @@ class TIRCallStatementWRef extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallWRefStatement, sinfo, vexp, restype, reftype, sidx);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::CallStatementWRef", this.bsqemit_cwr()];
-    }
-    static bsqparse(jv: any): TIRCallStatementWRef {
-        return new TIRCallStatementWRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
-    }
 }
 
 class TIRCallStatementWTaskRef extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallStatementWTaskRef, sinfo, vexp, restype, reftype, sidx);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::CallStatementWTaskRef", this.bsqemit_cwr()];
-    }
-    static bsqparse(jv: any): TIRCallStatementWTaskRef {
-        return new TIRCallStatementWTaskRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
-    }
 }
 
 class TIRCallStatementWAction extends TIRCallWRefStatementGeneral {
     constructor(sinfo: SourceInfo, vexp: TIRExpression, restype: TIRTypeKey, reftype: TIRTypeKey, sidx: number) {
         super(TIRStatementTag.CallStatementWTaskAction, sinfo, vexp, restype, reftype, sidx);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::CallStatementWAction", this.bsqemit_cwr()];
-    }
-    static bsqparse(jv: any): TIRCallStatementWAction {
-        return new TIRCallStatementWAction(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].vexp), jv[1].restype, jv[1].reftype, jv[1].sidx);
     }
 }
 
@@ -3018,11 +2207,8 @@ class TIRVariableRetypeStatement extends TIRStatement {
         this.asconv = asconv;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VariableRetypeStatement", {...this.bsqemit_stmt(), vname: this.vname, origtype: this.origtype, newtype: this.newtype, asconv: this.asconv.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRVariableRetypeStatement {
-        return new TIRVariableRetypeStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].origtype, jv[1].newtype, TIRExpression.bsqparse(jv[1].asconv));
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.newtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.asconv.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -3044,11 +2230,20 @@ class TIRVariableSCRetypeStatement extends TIRStatement {
         this.binderinfo = binderinfo;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::VariableSCRetypeStatement", {...this.bsqemit_stmt(), vname: this.vname, origtype: this.origtype, vtest: this.test.bsqemit(), asconv: this.asconv.bsqemit(), resexp: this.resexp.bsqemit(), binderinfo: this.binderinfo !== undefined ? [this.binderinfo[0].bsqemit(), this.binderinfo[1]] : null}];
-    }
-    static bsqparse(jv: any): TIRVariableSCRetypeStatement {
-        return new TIRVariableSCRetypeStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].vname, jv[1].origtype, TIRExpression.bsqparse(jv[1].vtest), TIRExpression.bsqparse(jv[1].asconv), TIRExpression.bsqparse(jv[1].resexp), jv[1].binderinfo !== null ? [TIRExpression.bsqparse(jv[1].binderinfo[0]), jv[1].binderinfo[1]] : undefined);
+    bsqemit(ii: string): string {
+        let binfo: string = "none";
+        if(this.binderinfo !== undefined) {
+            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"TreeIR::ValidIdentifier\n${ii + s_iident }]`;
+        }
+
+        return this.bsqemit_stmt(ii) 
+            + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier`
+            + `,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey`
+            + `,\n${ii + s_iident}${this.test.bsqemit(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.asconv.bsqemit(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.resexp.bsqemit(ii + s_iident)}`
+            + `,\n${ii + s_iident}${binfo}`
+            + `\n${ii}}`;
     }
 }
 
@@ -3070,11 +2265,20 @@ class TIRScratchSCStatement extends TIRStatement {
         this.binderinfo = binderinfo;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::ScratchSCStatement", {...this.bsqemit_stmt(), sidx: this.sidx, pos: this.pos !== undefined ? this.pos : null, origtype: this.origtype, vtest: this.test.bsqemit(), resexp: this.resexp.bsqemit(), binderinfo: this.binderinfo !== undefined ? [this.binderinfo[0].bsqemit(), this.binderinfo[1]] : null}];
-    }
-    static bsqparse(jv: any): TIRScratchSCStatement {
-        return new TIRScratchSCStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].sidx, jv[1].pos !== null ? jv[1].pos : undefined, jv[1].origtype, TIRExpression.bsqparse(jv[1].vtest), TIRExpression.bsqparse(jv[1].asconv), TIRExpression.bsqparse(jv[1].resexp), jv[1].binderinfo !== null ? [TIRExpression.bsqparse(jv[1].binderinfo[0]), jv[1].binderinfo[1]] : undefined);
+    bsqemit(ii: string): string {
+        let binfo: string = "none";
+        if(this.binderinfo !== undefined) {
+            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"TreeIR::ValidIdentifier\n${ii + s_iident }]`;
+        }
+
+        return this.bsqemit_stmt(ii) 
+            + `,\n${ii + s_iident}${this.sidx}n`
+            + `,\n${ii + s_iident}${this.pos !== undefined ? (this.pos.toString() + "n") : "none"}`
+            + `,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey`
+            + `,\n${ii + s_iident}${this.test.bsqemit(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.resexp.bsqemit(ii + s_iident)}`
+            + `,\n${ii + s_iident}${binfo}`
+            + `\n${ii}}`;
     }
 }
 
@@ -3086,8 +2290,8 @@ abstract class TIRReturnStatementGeneral extends TIRStatement {
         this.value = value;
     }
 
-    bsqemit_rg(): any {
-        return {...this.bsqemit_stmt(), value: this.value.bsqemit()};
+    bsqemit(ii: string): string {
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.value.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -3095,25 +2299,11 @@ class TIRReturnStatement extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatement, sinfo, value, `return ${value.expstr};`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ReturnStatement", this.bsqemit_rg()];
-    }
-    static bsqparse(jv: any): TIRReturnStatement {
-        return new TIRReturnStatement(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
-    }
 }
 
 class TIRReturnStatementWRef extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWRef, sinfo, value, `return ${value.expstr};`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ReturnStatementWRef", this.bsqemit_rg()];
-    }
-    static bsqparse(jv: any): TIRReturnStatementWRef {
-        return new TIRReturnStatementWRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
     }
 }
 
@@ -3121,25 +2311,11 @@ class TIRReturnStatementWTaskRef extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWTaskRef, sinfo, value, `return ${value.expstr};`);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::ReturnStatementWTaskRef", this.bsqemit_rg()];
-    }
-    static bsqparse(jv: any): TIRReturnStatementWTaskRef {
-        return new TIRReturnStatementWTaskRef(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
-    }
 }
 
 class TIRReturnStatementWAction extends TIRReturnStatementGeneral {
     constructor(sinfo: SourceInfo, value: TIRExpression) {
         super(TIRStatementTag.ReturnStatementWAction, sinfo, value, `return ${value.expstr};`);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ReturnStatementWAction", this.bsqemit_rg()];
-    }
-    static bsqparse(jv: any): TIRReturnStatementWAction {
-        return new TIRReturnStatementWAction(SourceInfo.bsqparse(jv[1].sinfo), TIRExpression.bsqparse(jv[1].value));
     }
 }
 
@@ -3155,21 +2331,83 @@ class TIRIfStatement extends TIRStatement {
         this.elseentry = elseentry;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::IfStatement", {
-            ...this.bsqemit_stmt(), 
-            ifentry: {etest: this.ifentry.test.bsqemit(), value: this.ifentry.value.bsqemit(), binderinfo: this.ifentry.binderinfo !== undefined ? [this.ifentry.binderinfo[0].bsqemit(), this.ifentry.binderinfo[1], this.ifentry.binderinfo[2].bsqemit(), this.ifentry.binderinfo[3]] : null, recasttypes: this.ifentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}, 
-            elifentries: this.elifentries.map((efi) => ({etest: efi.test.bsqemit(), value: efi.value.bsqemit(), binderinfo: efi.binderinfo !== undefined ? [efi.binderinfo[0].bsqemit(), efi.binderinfo[1], efi.binderinfo[2].bsqemit(), efi.binderinfo[3]] : null, recasttypes: efi.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            elseentry: {value: this.elseentry.value.bsqemit(), binderinfo: this.elseentry.binderinfo !== undefined ? [this.elseentry.binderinfo[0].bsqemit(), this.elseentry.binderinfo[1], this.elseentry.binderinfo[2].bsqemit(), this.elseentry.binderinfo[3]] : null, recasttypes: this.elseentry.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))}
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, number, TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}${bb[1]}n`
+            + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRIfStatement {
-        return new TIRIfStatement(
-            SourceInfo.bsqparse(jv[1].sinfo),
-            {test: TIRExpression.bsqparse(jv[1].ifentry.etest), value: TIRScopedBlockStatement.bsqparse(jv[1].ifentry.value), binderinfo: jv[1].ifentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].ifentry.binderinfo[0]), jv[1].ifentry.binderinfo[1], TIRExpression.bsqparse(jv[1].ifentry.binderinfo[2]), jv[1].ifentry.binderinfo[3]] : undefined, recasttypes: jv[1].ifentry.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))},
-            jv[1].elifentries.map((efi: any) => ({test: TIRExpression.bsqparse(efi.etest), value: TIRScopedBlockStatement.bsqparse(efi.value), binderinfo: efi.binderinfo !== null ? [TIRExpression.bsqparse(efi.binderinfo[0]), efi.binderinfo[1], TIRExpression.bsqparse(efi.binderinfo[2]), efi.binderinfo[3]] : undefined, recasttypes: efi.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
-            {value: TIRScopedBlockStatement.bsqparse(jv[1].elseentry.value), binderinfo: jv[1].elseentry.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].elseentry.binderinfo[0]), jv[1].elseentry.binderinfo[1], TIRExpression.bsqparse(jv[1].elseentry.binderinfo[2]), jv[1].elseentry.binderinfo[3]] : undefined, recasttypes: jv[1].elseentry.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))}
-        )
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private bsqemit_ifentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${this.ifentry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${this.ifentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, this.ifentry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, this.ifentry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private static bsqemit_elifentry(ii: string, entry: {test: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}etest=${entry.test.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_elifentries(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.elifentries.map((e) => TIRIfStatement.bsqemit_elifentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_elseentry(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `${iident}value=${this.elseentry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRIfStatement.bsqemit_binder(iident + s_iident, this.elseentry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRIfStatement.bsqemit_recast(iident + s_iident, this.elseentry.recasttypes)}`
+        + `\n${ii + s_iident}}`;
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const ifes = this.bsqemit_ifentry(iident);
+        const elifes = this.bsqemit_elifentries(iident);
+        const ee = this.bsqemit_elseentry(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `,\n${iident}${ifes},\n${iident}${elifes},\n${iident}${ee}\n${ii}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -3189,24 +2427,75 @@ class TIRSwitchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::SwitchStatement", {
-            ...this.bsqemit_stmt(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRSwitchStatement {
-        return new TIRSwitchStatement(
-            SourceInfo.bsqparse(jv[1].sinfo),
-            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
-            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
-            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].edefault.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
-            jv[1].isexhaustive
-        )
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRSwitchStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRSwitchStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRSwitchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRSwitchStatement.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 
@@ -3226,24 +2515,75 @@ class TIRMatchStatement extends TIRStatement {
         this.isexhaustive = isexhaustive;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::MatchStatement", {
-            ...this.bsqemit_stmt(), 
-            exp: this.exp.bsqemit(), 
-            scratchidx: this.scratchidx, 
-            clauses: this.clauses.map((ci) => ({ematch: ci.match.bsqemit(), value: ci.value.bsqemit(), binderinfo: ci.binderinfo !== undefined ? [ci.binderinfo[0].bsqemit(), ci.binderinfo[1]] : null, recasttypes: ci.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))})), 
-            edefault: this.edefault !== undefined ? {value: this.edefault.value.bsqemit(), binderinfo: this.edefault.binderinfo !== undefined ? [this.edefault.binderinfo[0].bsqemit(), this.edefault.binderinfo[1]] : null, recasttypes: this.edefault.recasttypes.map((rt) => ({vname: rt.vname, cast: rt.cast.bsqemit()}))} : null, 
-            isexhaustive: this.isexhaustive
-        }];
+    private static bsqemit_binder(ii: string, bb: [TIRExpression, string] | undefined): string {
+        if(bb === undefined) {
+            return "none";
+        }
+        else {
+            const iident = ii + s_iident;
+            return `[`
+            + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
+            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `\n${ii}]`;
+        }
     }
-    static bsqparse(jv: any): TIRMatchStatement {
-        return new TIRMatchStatement(
-            SourceInfo.bsqparse(jv[1].sinfo),
-            TIRExpression.bsqparse(jv[1].exp), jv[1].scratchidx,
-            jv[1].clauses.map((ci: any) => ({match: TIRExpression.bsqparse(ci.ematch), value: TIRScopedBlockStatement.bsqparse(ci.value), binderinfo: ci.binderinfo !== null ? [TIRExpression.bsqparse(ci.binderinfo[0]), ci.binderinfo[1]] : undefined, recasttypes: ci.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))})),
-            jv[1].edefault !== null ? {value: TIRScopedBlockStatement.bsqparse(jv[1].edefault.value), binderinfo: jv[1].edefault.binderinfo !== null ? [TIRExpression.bsqparse(jv[1].edefault.binderinfo[0]), jv[1].edefault.binderinfo[1]] : undefined, recasttypes: jv[1].edefault.recasttypes.map((rt: any) => ({vname: rt.vname, cast: TIRExpression.bsqparse(rt.cast)}))} : undefined,
-            jv[1].isexhaustive
-        )
+    private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
+        if(rc.length === 0) {
+            return "List{}";
+        }
+        else {
+            const iident = ii + s_iident;
+
+            const rcc = rc.map((r) => `{`
+                + `\n${iident + s_iident}vname=${r.vname}}`
+                + `,\n${iident + s_iident}cast=${r.cast.bsqemit(iident + s_iident)}`
+                + `\n${iident}}`
+            );
+
+            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+        }
+    }
+    private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
+        const iident = ii + s_iident;
+
+        return `{`
+        + `\n${iident}ematch=${entry.match.bsqemit(iident + s_iident)}`
+        + `,\n${iident}value=${entry.value.bsqemit(iident + s_iident)}`
+        + `,\n${iident}binderinfo=${TIRMatchStatement.bsqemit_binder(iident + s_iident, entry.binderinfo)}`
+        + `,\n${iident}recasttypes=${TIRMatchStatement.bsqemit_recast(iident + s_iident, entry.recasttypes)}`
+        + `\n${ii}}`;
+    }
+    private bsqemit_clauses(ii: string): string {
+        const iident = ii + s_iident;
+
+        return `List{`
+        + this.clauses.map((e) => TIRMatchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
+        + `\n${ii}}`;
+    }
+    private bsqemit_default(ii: string): string {
+        const iident = ii + s_iident;
+        if(this.edefault === undefined) {
+            return "none";
+        }
+        else {
+            return `{`
+                + `${iident}value=${this.edefault.value.bsqemit(iident + s_iident)}`
+                + `,\n${iident}binderinfo=${TIRMatchStatement.bsqemit_binder(iident + s_iident, this.edefault.binderinfo)}`
+                + `\n${ii + s_iident}}`;
+        }
+    }
+
+    bsqemit(ii: string): string {
+        const iident = ii + s_iident;
+
+        const cles = this.bsqemit_clauses(iident);
+        const dd = this.bsqemit_default(iident);
+
+        return this.bsqemit_stmt(ii)
+        + `${this.exp.bsqemit(iident)},\n${iident}${this.scratchidx}`
+        + `,\n${iident}${cles},\n${iident}${dd}`
+        + `,\n${iident}${this.isexhaustive}`
+        + `\n${ii}}`;
     }
 }
 
@@ -3255,11 +2595,8 @@ class TIREnvironmentFreshStatement extends TIRStatement {
         this.assigns = assigns;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::EnvironmentFreshStatement", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: [asgn.valexp[0], asgn.valexp[1].bsqemit()]}))}];
-    }
-    static bsqparse(jv: any): TIREnvironmentFreshStatement {
-        return new TIREnvironmentFreshStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])]})))
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIREnvironmentFreshStatement]";
     }
 }
 
@@ -3271,11 +2608,8 @@ class TIREnvironmentSetStatement extends TIRStatement {
         this.assigns = assigns;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::EnvironmentSetStatement", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: asgn.valexp !== undefined ? [asgn.valexp[0], asgn.valexp[1].bsqemit()] : null}))}];
-    }
-    static bsqparse(jv: any): TIREnvironmentSetStatement {
-        return new TIREnvironmentSetStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: asgn.valexp !== null ? [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])] : undefined})))
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIREnvironmentSetStatement]";
     }
 }
 
@@ -3291,11 +2625,8 @@ class TIREnvironmentSetStatementBracket extends TIRStatement {
         this.isFresh = isFresh;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::EnvironmentSetStatementBracket", {...this.bsqemit_stmt(), assigns: this.assigns.map((asgn) => ({keyname: asgn.keyname, valexp: asgn.valexp !== undefined ? [asgn.valexp[0], asgn.valexp[1].bsqemit()] : null})), block: this.block.bsqemit(), isFresh: this.isFresh}];
-    }
-    static bsqparse(jv: any): TIREnvironmentSetStatementBracket {
-        return new TIREnvironmentSetStatementBracket(SourceInfo.bsqparse(jv[1].sinfo), jv[1].assigns.map((asgn: any) => ({keyname: asgn.keyname, valexp: asgn.valexp !== null ? [asgn.valexp[0], TIRExpression.bsqparse(asgn.valexp[1])] : undefined})), TIRUnscopedBlockStatement.bsqparse(jv[1].block), jv[1].isFresh)
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIREnvironmentSetStatementBracket]";
     }
 }
 
@@ -3309,8 +2640,8 @@ abstract class TIRTaskExecStatment extends TIRStatement {
         this.isconst = isconst;
     }
 
-    bsqemit_tes(): any {
-        return {...this.bsqemit_stmt(), isdefine: this.isdefine, isconst: this.isconst};
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIRTaskExecStatment]]"
     }
 }
 
@@ -3329,13 +2660,6 @@ class TIRTaskRunStatement extends TIRTaskExecStatment {
         this.consarg = consarg;
         this.args = args;
     }
-
-    bsqemit(): any {
-        return ["TreeIR::TaskRunStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, consarg: this.consarg, args: this.args.map((arg) => arg.bsqemit())}];
-    }
-    static bsqparse(jv: any): TIRTaskRunStatement {
-        return new TIRTaskRunStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, jv[1].consarg, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
-    }
 }
 
 class TIRTaskMultiStatement extends TIRTaskExecStatment {
@@ -3347,13 +2671,6 @@ class TIRTaskMultiStatement extends TIRTaskExecStatment {
         this.vtrgts = vtrgts;
         this.tasks = tasks;
     }
-
-    bsqemit(): any {
-        return ["TreeIR::TaskMultiStatement", {...this.bsqemit_tes(), vtrgts: this.vtrgts, tasks: this.tasks.map((task) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: task.argexp.bsqemit()}))}];
-    }
-    static bsqparse(jv: any): TIRTaskMultiStatement {
-        return new TIRTaskMultiStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgts, jv[1].tasks.map((task: any) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: TIRExpression.bsqparse(task.argexp)})));
-    }
 }
 
 class TIRTaskDashStatement extends TIRTaskExecStatment {
@@ -3364,13 +2681,6 @@ class TIRTaskDashStatement extends TIRTaskExecStatment {
         super(TIRStatementTag.TaskMultiStatement, sinfo, isdefine, isconst, `${vtrgts.map((vv) => vv.name).join(", ")} = Task::dash<${tasks.map((tt) => tt.task).join(", ")}>(${tasks.map((tt) => tt.argexp.expstr).join(", ")})`);
         this.vtrgts = vtrgts;
         this.tasks = tasks;
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::TaskDashStatement", {...this.bsqemit_tes(), vtrgts: this.vtrgts, tasks: this.tasks.map((task) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: task.argexp.bsqemit()}))}];
-    }
-    static bsqparse(jv: any): TIRTaskDashStatement {
-        return new TIRTaskDashStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgts, jv[1].tasks.map((task: any) => ({ttask: task.task, targs: task.targs, argtype: task.argtype, consargtype: task.consargtype, argexp: TIRExpression.bsqparse(task.argexp)})));
     }
 }
 
@@ -3391,13 +2701,6 @@ class TIRTaskAllStatement extends TIRTaskExecStatment {
         this.arglisttype = arglisttype;
         this.argentrytype = argentrytype;
     }
-
-    bsqemit(): any {
-        return ["TreeIR::TaskAllStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, arg: this.arg.bsqemit(), arglisttype: this.arglisttype, argentrytype: this.argentrytype}];
-    }
-    static bsqparse(jv: any): TIRTaskAllStatement {
-        return new TIRTaskAllStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, TIRExpression.bsqparse(jv[1].arg), jv[1].arglisttype, jv[1].argentrytype);
-    }
 }
 
 class TIRTaskRaceStatement extends TIRTaskExecStatment {
@@ -3417,13 +2720,6 @@ class TIRTaskRaceStatement extends TIRTaskExecStatment {
         this.arglisttype = arglisttype;
         this.argentrytype = argentrytype;
     }
-
-    bsqemit(): any {
-        return ["TreeIR::TaskRaceStatement", {...this.bsqemit_tes(), vtrgt: this.vtrgt, ttask: this.task, taskargs: this.taskargs, arg: this.arg.bsqemit(), arglisttype: this.arglisttype, argentrytype: this.argentrytype}];
-    }
-    static bsqparse(jv: any): TIRTaskRaceStatement {
-        return new TIRTaskRaceStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].isdefine, jv[1].isconst, jv[1].vtrgt, jv[1].ttask, jv[1].taskargs, TIRExpression.bsqparse(jv[1].arg), jv[1].arglisttype, jv[1].argentrytype);
-    }
 }
 
 class TIRTaskSetSelfFieldStatement extends TIRStatement {
@@ -3440,11 +2736,8 @@ class TIRTaskSetSelfFieldStatement extends TIRStatement {
         this.value = value;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::TaskSetSelfFieldStatement", {sinfo: this.sinfo.bsqemit(), tasktype: this.tasktype, sfield: this.field, fname: this.fname, value: this.value.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRTaskSetSelfFieldStatement {
-        return new TIRTaskSetSelfFieldStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].tasktype, jv[1].sfield, jv[1].fname, TIRExpression.bsqparse(jv[1].value));
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIRTaskSetSelfFieldStatement]";
     }
 }
 
@@ -3460,11 +2753,8 @@ class TIRLoggerEmitStatement extends TIRStatement {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoggerEmitStatement", {sinfo: this.sinfo.bsqemit(), level: this.level, fmt: this.fmt, args: this.args.map((arg) => arg.bsqemit())}];
-    }
-    static bsqparse(jv: any): TIRLoggerEmitStatement {
-        return new TIRLoggerEmitStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].level, jv[1].fmt, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIRTaskSetSelfFieldStatement]";
     }
 }
 
@@ -3482,11 +2772,8 @@ class TIRLoggerEmitConditionalStatement extends TIRStatement {
         this.args = args;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoggerEmitConditionalStatement", {sinfo: this.sinfo.bsqemit(), level: this.level, fmt: this.fmt, cond: this.cond.bsqemit(), args: this.args.map((arg) => arg.bsqemit())}];
-    }
-    static bsqparse(jv: any): TIRLoggerEmitConditionalStatement {
-        return new TIRLoggerEmitConditionalStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].level, TIRExpression.bsqparse(jv[1].cond), jv[1].fmt, jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIRTaskSetSelfFieldStatement]";
     }
 }
 
@@ -3502,11 +2789,8 @@ class TIRLoggerSetPrefixStatement extends TIRStatement {
         this.block = block;
     }
 
-    bsqemit(): any {
-        return ["TreeIR::LoggerSetPrefixStatement", {sinfo: this.sinfo.bsqemit(), fmt: this.fmt, args: this.args.map((arg) => arg.bsqemit()), block: this.block.bsqemit()}];
-    }
-    static bsqparse(jv: any): TIRLoggerSetPrefixStatement {
-        return new TIRLoggerSetPrefixStatement(SourceInfo.bsqparse(jv[1].sinfo), jv[1].fmt, TIRScopedBlockStatement.bsqparse(jv[1].block), jv[1].args.map((arg: any) => TIRExpression.bsqparse(arg)));
+    bsqemit(ii: string): string {
+        return "[NOT SUPPORTED TIRTaskSetSelfFieldStatement]";
     }
 }
 
@@ -3522,8 +2806,9 @@ class TIRBlockStatement {
         this.isterminal = isterminal;
     }
 
-    bsqemit_blck(): any {
-        return {ops: this.ops.map((op) => op.bsqemit()), isterminal: this.isterminal};
+    bsqemit(ii: string): string {
+        const ops = this.ops.length !== 0 ? ("List{" + this.ops.map((op) => op.bsqemit(ii + s_iident + s_iident)).join(",\n" + ii + s_iident + s_iident) + ii + s_iident + "}") : "List{}";
+        return `TreeIR::BlockStatement{\n${ii + s_iident}${ops},\n${ii + s_iident}${this.isterminal}\n${ii}}`;
     }
 } 
 
@@ -3531,25 +2816,11 @@ class TIRUnscopedBlockStatement extends TIRBlockStatement {
     constructor(ops: TIRStatement[]) {
         super(ops, false);
     }
-
-    bsqemit(): any {
-        return ["TreeIR::UnscopedBlockStatement", this.bsqemit_blck()];
-    }
-    static bsqparse(jv: any): TIRUnscopedBlockStatement {
-        return new TIRUnscopedBlockStatement(jv[1].ops.map((op: any) => TIRStatement.bsqparse(op)));
-    }
 }
 
 class TIRScopedBlockStatement extends TIRBlockStatement {
     constructor(ops: TIRStatement[], isterminal: boolean,) {
         super(ops, isterminal);
-    }
-
-    bsqemit(): any {
-        return ["TreeIR::ScopedBlockStatement", this.bsqemit_blck()];
-    }
-    static bsqparse(jv: any): TIRScopedBlockStatement {
-        return new TIRScopedBlockStatement(jv[1].ops.map((op: any) => TIRStatement.bsqparse(op)), jv[1].isterminal);
     }
 }
 

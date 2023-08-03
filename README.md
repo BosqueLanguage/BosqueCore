@@ -148,6 +148,8 @@ entity Counter {
 
     method ref generateNextID(): Nat {
         let id = this.ctr;
+        
+        //TODO: this syntax is not final
         this = Counter{this.ctr + 1n};
 
         return id;
@@ -257,6 +259,7 @@ In order to install/build the project the following are needed:
 
 - 64 bit Operating System (Ubuntu or MacOS)
 - Version 16+ of [node.js](https://nodejs.org/en/download/) ( According to your OS )
+- Deno runtime [deno](https://deno.land/)
 - Typescript (install with: `npm i typescript -g`)
 - Git and [git-lfs](https://git-lfs.github.com/) setup
 

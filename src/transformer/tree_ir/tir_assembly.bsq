@@ -1,25 +1,25 @@
 namespace TreeIR;
 
-typedecl TypeKeyIdentifierValidator = /[A-Z].+/;
-typedecl TypeKey = StringOf<TypeKeyIdentifierValidator>;
+typedecl ValidTypeKey = /[A-Z].+/;
+typedecl TypeKey = StringOf<ValidTypeKey>;
 
-typedecl InvokeKeyIdentifierValidator = /[a-z].*/;
-typedecl InvokeKey = StringOf<InvokeKeyIdentifierValidator>;
+typedecl ValidInvokeKey = /[a-z].*/;
+typedecl InvokeKey = StringOf<ValidInvokeKey>;
 
-typedecl FieldKeyIdentifierValidator = /[a-z].*/;
-typedecl FieldKey = StringOf<FieldKeyIdentifierValidator>;
+typedecl ValidFieldKey = /[a-z].*/;
+typedecl FieldKey = StringOf<ValidFieldKey>;
 
-typedecl PCodeKeyIdentifierValidator = /[a-z].*/;
-typedecl PCodeKey = StringOf<PCodeKeyIdentifierValidator>;
+typedecl ValidPCodeKey = /[a-z].*/;
+typedecl PCodeKey = StringOf<ValidPCodeKey>;
 
-typedecl NamespaceIdentifierValidator = /[A-Z][A-Za-z0-9_]+/;
-typedecl NamespaceIdentifier = StringOf<NamespaceIdentifierValidator>;
+typedecl ValidNamespace = /[A-Z][A-Za-z0-9_]+/;
+typedecl NamespaceIdentifier = StringOf<ValidNamespace>;
 
-typedecl IdentifierValidator = /[$a-z_][A-Za-z0-9_]*/;
-typedecl Identifier = StringOf<IdentifierValidator>;
+typedecl ValidIdentifier = /[$a-z_][A-Za-z0-9_]*/;
+typedecl Identifier = StringOf<ValidIdentifier>;
 
-typedecl TypeNameIdentifierValidator = /[A-Z][A-Za-z0-9_:]*/;
-typedecl TypeNameIdentifier = StringOf<TypeNameIdentifierValidator>;
+typedecl ValidTypeName = /[A-Z][A-Za-z0-9_:]*/;
+typedecl TypeNameIdentifier = StringOf<ValidTypeName>;
 
 entity TypeName {
     field ns: NamespaceIdentifier;
@@ -28,7 +28,7 @@ entity TypeName {
 }
 
 entity FunctionParameter {
-    field name: String;
+    field name: Identifier;
     field type: TypeKey;
     field ddlit: LiteralValue?;
 }
@@ -41,6 +41,19 @@ entity PreConditionDecl {
 entity PostConditionDecl {
     field exp: Expression;
     field args: List<FunctionParameter>;
+}
+
+entity InlineSampleDecl {
+    field sinfo: SourceInfo;
+    field istest: Bool;
+    field argtuple: String;
+    field output: String;
+}
+
+entity FileSampleDecl {
+    field sinfo: SourceInfo;
+    field istest: Bool;
+    field filepath: string; //may use the $root and $src meta variables
 }
 
 entity ObjectInvariantDecl {
@@ -117,6 +130,9 @@ concept Invoke {
 
     field preconditions: List<PreConditionDecl>;
     field postconditions: List<PostConditionDecl>;
+
+    field inlinesamples: List<InlineSampleDecl>;
+    field filesamples: List<FileSamepleDecl>;
 }
 
 entity InvokeAbstractDeclaration provides Invoke {
@@ -132,7 +148,7 @@ entity InvokePrimitive provides Invoke {
 
 concept MemberDecl {
     field tkey: TypeKey;
-    field name: String;
+    field name: Identifier;
 
     field sinfo: SourceInfo;
     field srcFile: String;
@@ -198,7 +214,7 @@ entity ObjectEntityType provides EntityType {
 
 entity EnumEntityType provides EntityType {
     field enums: List<Identifier>;
-    field litvals: Map<String, LiteralValue>;
+    field litvals: Map<Identifier, LiteralValue>;
 }
 
 typedecl PathKindValidator = /path|pathfragment|pathglob/;
@@ -454,7 +470,10 @@ entity NamespaceDeclaration {
 
 entity Assembly {
     field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
+    
     field typeMap: Map<TypeKey, Type>;
+    field recursiveTypes: List<List<TypeKey>>;
+
     field fieldMap: Map<FieldKey, MemberFieldDecl>;
     field invokeMap: Map<InvokeKey, Invoke>;
     field pcodemap: Map<PCodeKey, CodePack>;
