@@ -7,113 +7,73 @@ import Fraction from "npm:fraction.js@4.2.0";
 import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
 
 enum NotationMode {
-    NOTATION_MODE_DEFAULT = "BSQ_OBJ_NOTATION_DEFAULT",
-    NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON",
-    NOTATION_MODE_FULL = "BSQ_OBJ_NOTATION_FULL"
+    NOTATION_MODE_BSQON = "BSQ_OBJ_NOTATION_DEFAULT",
+    NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON"
 }
-
-function slashEscapeString(ll: string): string {
-    let ret = "";
-    for (let i = 0; i < ll.length; i++) {
-        if (ll[i] === "\n") {
-            ret += "\\n";
-        }
-        else if (ll[i] === "\r") {
-            ret += "\\r";
-        }
-        else if (ll[i] === "\t") {
-            ret += "\\t";
-        }
-        else if (ll[i] === "\0") {
-            ret += "\\0";
-        }
-        //TODO: hex codes???
-        else if (ll[i] === "\"") {
-            ret += "\\\"";
-        }
-        else {
-            ret += ll[i];
-        }
-    }
-
-    return ret;
-}
-
-function slashUnescapeString(ll: string): string {
-    let ret = "";
-    for (let i = 0; i < ll.length; i++) {
-        if (ll[i] === "\\") {
-            i++;
-            if (ll[i] === "n") {
-                ret += "\n";
-            }
-            else if (ll[i] === "r") {
-                ret += "\r";
-            }
-            else if (ll[i] === "t") {
-                ret += "\t";
-            }
-            else if (ll[i] === "0") {
-                ret += "\0";
-            }
-            else if (ll[i] === "x") {
-                const hex = ll.substring(i + 1, i + 3);
-                ret += String.fromCharCode(parseInt(hex, 16));
-                i += 2;
-            }
-            else {
-                ret += ll[i];
-            }
-        }
-        else {
-            ret += ll[i];
-        }
-    }
-
-    return ret;
-}
-
-function htmlEscapeString(str: string): string {
-    return str.replace(/&|<|>|'|"|\n/g, 
-    tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;',
-        '\n': "&#10;"
-      }[tag] as string));
-}
-
-function htmlUnescapeString(str: string): string {
-    return str.replace(/&amp;|&lt;|&gt;|&#39;|&quot;|&#10;/g, 
-    tag => ({
-        '&amp;': '&',
-        '&lt;': '<',
-        '&gt;': '>',
-        '&#39;': "'",
-        '&quot;': '"',
-        '&#10;': "\n"
-      }[tag] as string));
-}
-
 
 function bsqonEscapeString(str: string): string {
-    return str.replace(/%|"|\n/g, 
-    tag => ({
-        '%': '%p;',
-        '"': '%q;',
-        '\n': "%n;"
-      }[tag] as string));
+    let ret = "";
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === "%") {
+            ret += "%%";
+        }
+        else if(str[i] === "\"") {
+            ret += "%q;";
+        }
+        else if(str[i] === "`") {
+            ret += "%b;";
+        }
+        else {
+            ret += str[i];
+        }
+    }
+
+    return ret;
 }
 
 function bsqonUnescapeString(str: string): string {
-    return str.replace(/%p;|%q;|%n;/g, 
-    tag => ({
-        '%p;': '%',
-        '%q;': '"',
-        '&n;': "\n"
-      }[tag] as string));
+    let ret = "";
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === "%") {
+            i++;
+            if (str[i] === "%") {
+                ret += "%";
+            }
+            else if (str[i] === "n") {
+                ret += "\n";
+                i++;
+            }
+            else if (str[i] === "r") {
+                ret += "\r";
+                i++;
+            }
+            else if (str[i] === "t") {
+                ret += "\t";
+                i++;
+            }
+            else if (str[i] === "b") {
+                ret += "`";
+                i++;
+            }
+            else if (str[i] === "q") {
+                ret += "\"";
+                i++;
+            }
+            else {
+                //should be a u 
+                i++;
+                const epos = str.indexOf(";", i);
+                const hex = str.substring(i, epos);
+                ret += String.fromCharCode(parseInt(hex, 16));
+                i = epos;
+            }
+        }
+        else {
+            ret += str[i];
+        }
+    }
+
+    return ret;
 }
 
 enum BSQErrorKind {
@@ -664,7 +624,7 @@ function setScratchValue(scratch: any[], sidx: number, value: any): number {
 export {
     Decimal, Fraction, IList, IMap,
 
-    NotationMode, slashEscapeString, slashUnescapeString, htmlEscapeString, htmlUnescapeString, bsqonEscapeString, bsqonUnescapeString,
+    NotationMode, bsqonEscapeString, bsqonUnescapeString,
     BSQError, raiseRuntimeError, raiseRuntimeErrorIf, raiseUserAssert, raiseUserAssertIf,
     BSQDateTime, BSQDate, BSQTime,
     keyEqualsBase, hashcodeBase, keyLessBase, 

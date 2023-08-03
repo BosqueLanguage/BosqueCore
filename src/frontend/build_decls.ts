@@ -15,13 +15,6 @@ class SourceInfo {
     static implicitSourceInfo(): SourceInfo {
         return new SourceInfo(-1, -1, -1, -1);
     }
-
-    bsqemit(): any {
-        return {line: this.line, column: this.column, pos: this.pos, span: this.span};
-    }
-    static bsqparse(jv: any): SourceInfo {
-        return new SourceInfo(jv.line, jv.column, jv.pos, jv.span);
-    }
 }
 
 type CodeFileInfo = { 
@@ -47,61 +40,66 @@ function logLevelNumber(ll: string): LoggerLevel {
     return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"].indexOf(ll);
 }
 
-function escapeString(ll: string): string {
+
+function escapeString(str: string): string {
     let ret = "";
-    for (let i = 0; i < ll.length; i++) {
-        if (ll[i] === "\n") {
-            ret += "\\n";
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === "%") {
+            ret += "%%";
         }
-        else if (ll[i] === "\r") {
-            ret += "\\r";
+        else if(str[i] === "\"") {
+            ret += "%q;";
         }
-        else if (ll[i] === "\t") {
-            ret += "\\t";
-        }
-        else if (ll[i] === "\0") {
-            ret += "\\0";
-        }
-        //TODO: hex codes???
-        else if (ll[i] === "\"") {
-            ret += "\\\"";
+        else if(str[i] === "`") {
+            ret += "%b;";
         }
         else {
-            ret += ll[i];
+            ret += str[i];
         }
     }
 
     return ret;
 }
 
-function unescapeString(ll: string): string {
+function unescapeString(str: string): string {
     let ret = "";
-    for (let i = 0; i < ll.length; i++) {
-        if (ll[i] === "\\") {
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === "%") {
             i++;
-            if (ll[i] === "n") {
+            if (str[i] === "%") {
+                ret += "%";
+            }
+            else if (str[i] === "n") {
                 ret += "\n";
+                i++;
             }
-            else if (ll[i] === "r") {
+            else if (str[i] === "r") {
                 ret += "\r";
+                i++;
             }
-            else if (ll[i] === "t") {
+            else if (str[i] === "t") {
                 ret += "\t";
+                i++;
             }
-            else if (ll[i] === "0") {
-                ret += "\0";
+            else if (str[i] === "b") {
+                ret += "`";
+                i++;
             }
-            else if (ll[i] === "x") {
-                const hex = ll.substring(i + 1, i + 3);
-                ret += String.fromCharCode(parseInt(hex, 16));
-                i += 2;
+            else if (str[i] === "q") {
+                ret += "\"";
+                i++;
             }
             else {
-                ret += ll[i];
+                //should be a u 
+                i++;
+                const epos = str.indexOf(";", i);
+                const hex = str.substring(i, epos);
+                ret += String.fromCharCode(parseInt(hex, 16));
+                i = epos;
             }
         }
         else {
-            ret += ll[i];
+            ret += str[i];
         }
     }
 
@@ -119,8 +117,8 @@ function extractLiteralASCIIStringValue(str: string, unescape: boolean): string 
 
 function cleanCommentsStringsFromFileContents(str: string): string {
     const commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/ug;
-    const stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/ug;
-    const typedStringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/ug;
+    const stringRe = /"[^"]*"/ug;
+    const typedStringRe = /`[^`]*`/ug;
 
     return str
         .replace(commentRe, "")

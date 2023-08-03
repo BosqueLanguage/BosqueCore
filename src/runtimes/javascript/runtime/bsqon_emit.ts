@@ -8,7 +8,6 @@ import * as $Runtime from "./runtime.ts";
 
 class BSQONEmitter {
     readonly m_emitmode: $Runtime.NotationMode;
-    readonly m_escapemode: "slash" | "html" | "bsqon";
 
     readonly m_assembly: $TypeInfo.AssemblyInfo;
     readonly m_defaultns: string;
@@ -18,9 +17,8 @@ class BSQONEmitter {
         return this.m_assembly.typerefs.get(tname) as $TypeInfo.BSQType;
     }
 
-    constructor(emitmode: $Runtime.NotationMode, escapemode: "slash" | "html" | "bsqon", defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo) {
+    constructor(emitmode: $Runtime.NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo) {
         this.m_emitmode = emitmode;
-        this.m_escapemode = escapemode;
 
         this.m_assembly = assembly;
         this.m_defaultns = defaultns;
@@ -32,15 +30,7 @@ class BSQONEmitter {
     }
 
     private escapeString(str: string): string {
-        if(this.m_escapemode === "slash") {
-            $Runtime.slashEscapeString(str);
-        }
-        else if(this.m_escapemode === "html") {
-            $Runtime.htmlEscapeString(str);
-        }
-        else {
-            return $Runtime.bsqonEscapeString(str);
-        }
+        return $Runtime.bsqonEscapeString(str);
     }
 
     private simplifyTypeName(tkey: $TypeInfo.BSQTypeKey): string {
@@ -427,7 +417,7 @@ class BSQONEmitter {
 
     private emitSomething(ttype: $TypeInfo.SomethingType, v: any, fullmode: boolean): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            if (fullmode || this.m_emitmode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
+            if (fullmode) {
                 return `Something<${this.emitType(this.lookupMustDefType(ttype.oftype))}>(${this.emitValue(this.lookupMustDefType(ttype.oftype), v)})`;
             }
             else {
@@ -441,7 +431,7 @@ class BSQONEmitter {
 
     private emitOk(ttype: $TypeInfo.OkType, v: any, fullmode: boolean): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            if (fullmode || this.m_emitmode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
+            if (fullmode) {
                 return `Result<${this.emitType(this.lookupMustDefType(ttype.ttype))}, ${this.emitType(this.lookupMustDefType(ttype.etype))}>::Ok{${this.emitValue(this.lookupMustDefType(ttype.ttype), v)}}`;
             }
             else {
@@ -455,7 +445,7 @@ class BSQONEmitter {
 
     private emitErr(ttype: $TypeInfo.ErrorType, v: any, fullmode: boolean): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            if (fullmode || this.m_emitmode === $Runtime.NotationMode.NOTATION_MODE_FULL) {
+            if (fullmode) {
                 return `Result<${this.emitType(this.lookupMustDefType(ttype.ttype))}, ${this.emitType(this.lookupMustDefType(ttype.etype))}>::Err{${this.emitValue(this.lookupMustDefType(ttype.etype), v)}}`;
             }
             else {
@@ -806,14 +796,14 @@ class BSQONEmitter {
     }
 
     static emit(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, mode: $Runtime.NotationMode, escapemode: "slash" | "html"): string {
-        const emitter = new BSQONEmitter(mode, escapemode, defaultns, importmap, assembly);
+        const emitter = new BSQONEmitter(mode, defaultns, importmap, assembly);
         const result = emitter.emitValue(emitter.lookupMustDefType(ttype), v);
 
         return result;
     }
 
     static emitStd(v: any, ttype: $TypeInfo.BSQTypeKey, defaultns: string, assembly: $TypeInfo.AssemblyInfo): string {
-        const emitter = new BSQONEmitter($Runtime.NotationMode.NOTATION_MODE_DEFAULT, "bsqon", defaultns, new Map<string, string>(), assembly);
+        const emitter = new BSQONEmitter($Runtime.NotationMode.NOTATION_MODE_BSQON, defaultns, new Map<string, string>(), assembly);
         const result = emitter.emitValue(emitter.lookupMustDefType(ttype), v);
 
         return result;

@@ -62,6 +62,24 @@ class BSQPathValidator {
         );
     }
 
+    bsqonemit(): string {
+        return `TreeIR::BSQPathValidator{`
+        + `scheme: ${this.scheme ? `"${this.scheme}"` : "none"}, `
+        + `userinfo: ${this.userinfo ? this.userinfo.bsqonemit() : "none"}, `
+        + `host: ${this.host ? this.host.bsqonemit() : "none"}, `
+        + `port: ${this.port ? `${this.port}n` : "none"}, `
+        + `path: {`
+        + `prefix: ${this.path.prefix ? this.path.prefix.bsqonemit() : "none"}, `
+        + `segments: ${this.path.segments ? this.path.segments.bsqonemit() : "none"}, `
+        + `suffix: ${this.path.suffix ? this.path.suffix.bsqonemit() : "none"}, `
+        + `file: ${this.path.file ? this.path.file.bsqonemit() : "none"}, `
+        + `extension: ${this.path.extension ? this.path.extension.bsqonemit() : "none"}`
+        + `}, `
+        + `query: ${this.query ? `Map{${[...this.query].map((e) => `"${e[0]}": ${e[1].bsqonemit()}`).join(", ")}}` : "none"}, `
+        + `fragment: ${this.fragment ? this.fragment.bsqonemit() : "none"}`
+        + `}`;
+    }
+
     acceptsPath(pth: string): boolean {
         //TODO: implement
         return false;

@@ -655,10 +655,10 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_stringRe = /"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"/uy;
-    private static readonly _s_ascii_stringRe = /ascii\{"[^"\\\r\n]*(\\(.|\r?\n)[^"\\\r\n]*)*"\}/uy;
-    private static readonly _s_template_stringRe = /'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'/uy;
-    private static readonly _s_ascii_template_stringRe = /ascii\{'[^'\\\r\n]*(\\(.|\r?\n)[^'\\\r\n]*)*'\}/uy;
+    private static readonly _s_stringRe = /"[^"]*"/uy;
+    private static readonly _s_ascii_stringRe = /ascii\{"[^"]*"\}/uy;
+    private static readonly _s_template_stringRe = /`[^`]*`/uy;
+    private static readonly _s_ascii_template_stringRe = /ascii\{`[^`]*`\}/uy;
 
     private tryLexString() {
         Lexer._s_template_stringRe.lastIndex = this.m_cpos;
@@ -4513,7 +4513,7 @@ class Parser {
 
             const lfuncs = {
                 logStart: memberMethods.find((mf) => mf.name === "logStart"),
-                logEnd: memberMethods.find((mf) => mf.name === "onFailure"), 
+                logEnd: memberMethods.find((mf) => mf.name === "logEnd"), 
                 taskEnsures: memberMethods.find((mf) => mf.name === "taskEnsures"),
                 taskWarns: memberMethods.find((mf) => mf.name === "taskWarns")
             };
