@@ -1311,7 +1311,14 @@ class TIRNamespaceLambdaDecl {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::NamespaceLambdaDecl", { ikey: this.ikey, pcid: this.pcid, sinfo: this.sourceLocation, srcFile: this.srcFile, attributes: this.attributes, invoke: this.invoke.bsqemit() }];
+        return `TreeIR::NamespaceLambdaDecl{`
+        + `\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.pcid}"ValidPCodeKey`
+        + `,\n${ii + s_iident}${sinfo_bsqemit(this.sourceLocation)}`
+        + `,\n${ii + s_iident}"${this.srcFile}"`
+        + `,\n${ii + s_iident}List{${this.attributes.map((aa) => `"${aa}"`).join(", ")}}`
+        + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1340,7 +1347,16 @@ class TIRCodePack {
     }
 
     bsqemit(ii: string): string {
-        xxxx;
+        return `TreeIR::CodePack{`
+        + `\n${ii + s_iident}"${this.ns}"ValidNamespace`
+        + `,\n${ii + s_iident}"${this.codekey}"ValidPCodeKey`
+        + `,\n${ii + s_iident}"${this.invk}"ValidInvokeKey`
+        + `,\n${ii + s_iident}${this.recursive ? "true" : "false"}`
+        + `,\n${ii + s_iident}List{${this.terms.map((tt) => `"${tt}"ValidTypeKey`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.pcodes.map((pp) => `"${pp}ValidPCodeKey"`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.capturedValues.map((cv) => `{cname="${cv.cname}"ValidIdentifier, ctype="${cv.ctype}"ValidTypeKey}`).join(", ")}}`
+        + `,\n${ii + s_iident}List{${this.capturedCodePacks.map((cc) => `{cpname="${cc.cpname}"ValidIdentifier, cpval="${cc.cpval}"ValidPCodeKey}`).join(", ")}}`
+        + `\n${ii}}`;
     }
 }
 
@@ -1357,7 +1373,8 @@ class TIRInfoTemplateRecord extends TIRInfoTemplate {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::InfoTemplateRecord", { entries: this.entries.map((e) => ({ name: e.name, value: e.value.bsqemit() })) }];
+        const trinfo = this.entries.map((e) => `{\n${ii + s_iident + s_iident}name="${e.name}"ValidIdentifier,\n${ii + s_iident + s_iident}value=${e.value.bsqemit(ii + s_iident + s_iident)}\n${ii + s_iident}}`);
+        return `TreeIR::InfoTemplateRecord{\n${ii + s_iident}${trinfo.join(",\n" + ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1370,7 +1387,8 @@ class TIRInfoTemplateTuple extends TIRInfoTemplate {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::InfoTemplateTuple", { entries: this.entries.map((e) => e.bsqemit()) }];
+        const trinfo = this.entries.map((e) => e.bsqemit(ii + s_iident));
+        return `TreeIR::InfoTemplateTuple{\n${ii + s_iident}${trinfo.join(", " + ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1383,7 +1401,7 @@ class TIRInfoTemplateConst extends TIRInfoTemplate {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::InfoTemplateConst", { litexp: this.litexp.bsqemit() }];
+        return `TreeIR::InfoTemplateConst{\n${ii + s_iident}${this.litexp.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1396,7 +1414,7 @@ class TIRInfoTemplateMacro extends TIRInfoTemplate {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::InfoTemplateMacro", { macro: this.macro }];
+        return `TreeIR::InfoTemplateMacro{"${this.macro}"}`;
     }
 }
 
@@ -1411,7 +1429,7 @@ class TIRInfoTemplateValue extends TIRInfoTemplate {
     }
 
     bsqemit(ii: string): string {
-        return ["TreeIR::InfoTemplateValue", { argpos: this.argpos, argtype: this.argtype }];
+        return `TreeIR::InfoTemplateValue{${this.argpos}n, "${this.argtype}"ValidTypeKey}`;
     }
 }
 
@@ -1426,8 +1444,8 @@ class TIRStringTemplate {
         this.str = str;
     }
 
-    bsqemit(ii: string): string {
-        return ["TreeIR::StringTemplate", { str: this.str }];
+    bsqemit(): string {
+        return `TreeIR::StringTemplate{"${this.str}"}`;
     }
 }
 
@@ -1465,20 +1483,117 @@ class TIRNamespaceDeclaration {
         this.stringformats = new Map<string, TIRStringTemplate>();
     }
 
+    private bsqemitconstmap(ii: string): string {
+        if(this.consts.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const constdeclsi = [...this.consts].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${constdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitfuncmap(ii: string): string {
+        if(this.functions.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const funcdeclsi = [...this.functions].map((e) => {
+                const ffs = e[1].map((f) => f.bsqemit(ii + s_iident + s_iident)).join((",\n" + ii + s_iident + s_iident));
+                return `"${e[0]}"ValidIdentifier => List{${ii + s_iident + s_iident}${ffs}${ii + s_iident}}`
+            });
+            return `Map{\n${ii + s_iident}${funcdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitopmap(ii: string): string {
+        if(this.operators.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const funcdeclsi = [...this.operators].map((e) => {
+                const ffs = e[1].map((f) => f.bsqemit(ii + s_iident + s_iident)).join((",\n" + ii + s_iident + s_iident));
+                return `"${e[0]}"ValidIdentifier => List{${ii + s_iident + s_iident}${ffs}${ii + s_iident}}`
+            });
+            return `Map{\n${ii + s_iident}${funcdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitconceptmap(ii: string): string {
+        if(this.concepts.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const entries = [...this.concepts].map((e) => `"${e[0]}"ValidIdentifier => List{${e[1].map((t) => `"${t}"ValidTypeKey`)}}`);
+            return `Map{${entries.join(", ")}}`;
+        }
+    }
+    private bsqemitentitymap(ii: string): string {
+        if(this.objects.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const entries = [...this.objects].map((e) => `"${e[0]}"ValidIdentifier => List{${e[1].map((t) => `"${t}"ValidTypeKey`)}}`);
+            return `Map{${entries.join(", ")}}`;
+        }
+    }
+    private bsqemittaskmap(ii: string): string {
+        if(this.tasks.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const entries = [...this.tasks].map((e) => `"${e[0]}"ValidIdentifier => "${e[1]}"ValidTypeKey`);
+            return `Map{${entries.join(", ")}}`;
+        }
+    }
+    private bsqemitlambdamap(ii: string): string {
+        if(this.lambdas.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const lamdasi = [...this.lambdas].map((e) => `"${e[0]}"ValidInvokeKey => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${lamdasi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitcodepackmap(ii: string): string {
+        if(this.codepacks.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const codei = [...this.codepacks].map((e) => `"${e[0]}"ValidPCodeKey => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${codei.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitmsgmap(ii: string): string {
+        if(this.msgformats.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const msgi = [...this.msgformats].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${msgi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitformatmap(ii: string): string {
+        if(this.stringformats.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const entries = [...this.stringformats].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit()})`);
+            return `Map{${entries.join(", ")}}`;
+        }
+    }
+
     bsqemit(ii: string): string {
-        return {
-            ns: this.ns,
-            consts: [...this.consts.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            functions: [...this.functions.entries()].map((e) => [e[0], e[1].map((f) => f.bsqemit())]),
-            operators: [...this.operators.entries()].map((e) => [e[0], e[1].map((f) => f.bsqemit())]),
-            concepts: [...this.concepts.entries()].map((e) => [e[0], e[1]]),
-            objects: [...this.objects.entries()].map((e) => [e[0], e[1]]),
-            tasks: [...this.tasks.entries()].map((e) => [e[0], e[1]]),
-            lambdas: [...this.lambdas.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            codepacks: [...this.codepacks.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            msgformats: [...this.msgformats.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            stringformats: [...this.stringformats.entries()].map((e) => [e[0], e[1].bsqemit()])
-        };
+        return `TreeIR::NamespaceDeclaration{`
+            + `\n${ii + s_iident}"${this.ns}"ValidNamespace`
+            + `,\n${ii + s_iident}${this.bsqemitconstmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitfuncmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitopmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitconceptmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitentitymap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemittaskmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitlambdamap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitcodepackmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitmsgmap(ii + s_iident)}`
+            + `,\n${ii + s_iident}${this.bsqemitformatmap(ii + s_iident)}`
+            + `\n${ii}}`;
     }
 }
 
@@ -1675,7 +1790,7 @@ class TIRAssembly {
         }
     }
 
-    private computeEntryPointRecursiveTypeInfo(entrytypes: TIRTypeKey[], subtinfo: Map<TIRTypeKey, TIRTypeKey[]>): Map<TIRTypeKey, boolean> {
+    private computeEntryPointRecursiveTypeInfo(entrytypes: TIRTypeKey[], subtinfo: Map<TIRTypeKey, TIRTypeKey[]>): [Map<TIRTypeKey, boolean>, Set<TIRTypeKey>[]] {
         let visited = new Set<TIRTypeKey>();
         let tordered: TIRTypeKey[] = [];
         entrytypes.forEach((tt) => {
@@ -1702,7 +1817,7 @@ class TIRAssembly {
             recursiveMap.set(tt, scc !== undefined);
         });
 
-        return recursiveMap;
+        return [recursiveMap, recursive];
     }
 
     private generateExportedTypeInfoForTIRType(tt: TIRType, recursiveMap: Map<TIRTypeKey, boolean>, subtinfo: Map<TIRTypeKey, TIRTypeKey[]>): TypeInfo.BSQType {
@@ -1821,7 +1936,7 @@ class TIRAssembly {
 
         let typerefs = new Map<TypeInfo.BSQTypeKey, TypeInfo.BSQType>();
         this.typeMap.forEach((v, k) => {
-            typerefs.set(k, this.generateExportedTypeInfoForTIRType(v, rescursiveMap, subtinfo));
+            typerefs.set(k, this.generateExportedTypeInfoForTIRType(v, rescursiveMap[0], subtinfo));
         });
 
         let aliasmap = new Map<string, TypeInfo.BSQType>();
@@ -1860,20 +1975,116 @@ class TIRAssembly {
             pthvalidators.set(k, "[TODO]");
         });
 
-        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators);
+        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators, rescursiveMap[1]);
+    }
+
+    private bsqemitnamespacemap(ii: string): string {
+        if(this.namespaceMap.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const nsdeclsi = [...this.namespaceMap].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${nsdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemittypemap(ii: string): string {
+        if(this.typeMap.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const typedeclsi = [...this.typeMap].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${typedeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private static bsqemitrectypemap(ii: string, sccs: Set<TIRTypeKey>[]): string {
+        if(sccs.length === 0) {
+            return "List{}";
+        }
+        else {
+            const sccdeclsi = sccs.map((scc) => "List{" + [...scc].map((e) => `"${e}"ValidTypeKey`) + "}");
+            return `List{\n${ii + s_iident}${sccdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitfieldmap(ii: string): string {
+        if(this.fieldMap.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const fielddeclsi = [...this.fieldMap].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${fielddeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitinvokemap(ii: string): string {
+        if(this.invokeMap.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const invokedeclsi = [...this.invokeMap].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${invokedeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitpcodemap(ii: string): string {
+        if(this.pcodemap.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const pcodedeclsi = [...this.pcodemap].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqemit(ii + s_iident)}`);
+            return `Map{\n${ii + s_iident}${pcodedeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitregexs(ii: string): string {
+        if(this.literalRegexs.length === 0) {
+            return "List{}";
+        }
+        else {
+            const regexdeclsi = this.literalRegexs.map((e) => e.bsqonemit());
+            return `List{\n${ii + s_iident}${regexdeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitvremap(ii: string): string {
+        if(this.validatorRegexs.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const vredeclsi = [...this.validatorRegexs].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqonemit()}`);
+            return `Map{\n${ii + s_iident}${vredeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
+    }
+    private bsqemitvpemap(ii: string): string {
+        if(this.validatorPaths.size === 0) {
+            return "Map{}";
+        }
+        else {
+            const vpedeclsi = [...this.validatorPaths].map((e) => `"${e[0]}"ValidIdentifier => ${e[1].bsqonemit()}`);
+            return `Map{\n${ii + s_iident}${vpedeclsi.join(",\n" + ii + s_iident)}\n${ii}}`;
+        }
     }
 
     bsqemit(ii: string): string {
-        return {
-            namespaceMap: [...this.namespaceMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            typeMap: [...this.typeMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            fieldMap: [...this.fieldMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            invokeMap: [...this.invokeMap.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            pcodemap: [...this.pcodemap.entries()].map((e) => [e[0], e[1].bsqemit()]),
-            literalRegexs: this.literalRegexs.map((r) => r.jemit()),
-            validatorRegexs: [...this.validatorRegexs.entries()].map((e) => [e[0], e[1].jemit()]),
-            validatorPaths: [...this.validatorPaths.entries()].map((e) => [e[0], e[1].jemit()])
-        };
+        let subtinfo = new Map<TIRTypeKey, TypeInfo.BSQTypeKey[]>();
+        let alltypes: TIRTypeKey[] = [];
+        this.typeMap.forEach((v) => {
+            alltypes.push(v.tkey);
+
+            if(!this.isConcreteType(v)) {
+                const csinfo = this.getConcreteSubtypes(v);
+                subtinfo.set(v.tkey, csinfo);
+            }
+        });
+
+        const [, rsets] = this.computeEntryPointRecursiveTypeInfo(alltypes, subtinfo);
+
+        return `TreeIR::Assembly{`
+        + `\n${ii + s_iident}${this.bsqemitnamespacemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}typeMap = ${this.bsqemittypemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${TIRAssembly.bsqemitrectypemap(ii + s_iident, rsets)}`
+        + `,\n${ii + s_iident}${this.bsqemitfieldmap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitinvokemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitpcodemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitregexs(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitvremap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitvpemap(ii + s_iident)}`
+        + `${ii}\n}`;
     }
 }
 

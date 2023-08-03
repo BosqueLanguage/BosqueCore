@@ -792,10 +792,6 @@ class BSQONParser {
         return this.peekToken() !== undefined && this.peekToken()!.kind === tkind;
     }
 
-    private testToken_TypedeclUnder(): boolean {
-        return this.m_cpos < this.m_input.length && this.m_input[this.m_cpos] === '_';
-    }
-
     private testTokens(...tkinds: string[]): boolean {
         const opos = this.m_cpos;
         const olt = this.m_lastToken;
@@ -855,10 +851,17 @@ class BSQONParser {
         return this.popToken() as {kind: string, value: string};
     }
 
-    private expectTokenAndPop_TypedeclUnder() {
-        this.raiseErrorIf(this.m_cpos >= this.m_input.length || this.m_input[this.m_cpos] !== "_", "Expected token _");
-        this.m_cpos += 1;
-        this.m_lastToken = undefined;
+    private testAndPop_TypedeclUnder(): boolean {
+        if(this.m_cpos < this.m_input.length && this.m_input[this.m_cpos] !== "_", "Expected token _") {
+            return false;
+        }
+        else {
+            this.raiseErrorIf(this.m_cpos >= this.m_input.length || this.m_input[this.m_cpos] !== "_", "Expected token _");
+            this.m_cpos += 1;
+            this.m_lastToken = undefined;
+
+            return true;
+        }
     }
 
     private resolveTypeFromNameList(tt: string[], terms: $TypeInfo.BSQType[]): $TypeInfo.BSQType  {
@@ -1166,6 +1169,11 @@ class BSQONParser {
 
     private parseResultTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType]): $TypeInfo.BSQType {
         return this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>`);
+    }
+
+    private isNominalTypePrefix(): boolean {
+        const ntok = this.peekToken();
+        return ntok !== undefined && ntok.kind === TokenKind.TOKEN_TYPE;
     }
 
     private parseNominalType(): $TypeInfo.BSQType {
@@ -1917,8 +1925,11 @@ class BSQONParser {
         let sval: string | undefined = undefined;
         if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value.slice(1, -1);
-            const st = this.parseNominalType();
-            this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.oftype} but got StringOf<${st.tkey}>`);
+
+            if(this.isNominalTypePrefix()) {
+                const st = this.parseNominalType();
+                this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.oftype} but got StringOf<${st.tkey}>`);
+            }
 
             sval = this.unescapeString(tk);
         }
@@ -1949,8 +1960,11 @@ class BSQONParser {
         let sval: string | undefined = undefined;
         if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             const tk = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value;
-            const st = this.parseASCIIStringOfType();
-            this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.tag} but got ASCIIStringOf<${st.tkey}>`);
+
+            if (this.isNominalTypePrefix()) {
+                const st = this.parseASCIIStringOfType();
+                this.raiseErrorIf(st.tkey !== ttype.oftype, `Expected ${ttype.tag} but got ASCIIStringOf<${st.tkey}>`);
+            }
 
             const rawtk = tk.slice(7, -2);
             sval = this.unescapeString(rawtk);
@@ -2205,10 +2219,10 @@ class BSQONParser {
     private parseTypedecl(ttype: $TypeInfo.TypedeclType, whistory: boolean): BSQONParseResult {
         const vv = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
 
-        this.expectTokenAndPop_TypedeclUnder();
-        const ntype = this.parseType();
-
-        this.raiseErrorIf(ttype.tkey !== ntype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
+        if (this.testAndPop_TypedeclUnder()) {
+            const ntype = this.parseType();
+            this.raiseErrorIf(ttype.tkey !== ntype.tkey, `Expected typedecl of type ${ttype.tkey} but got ${ntype.tkey}`);
+        }
 
         if(ttype.hasvalidations) {
             this.m_typedeclChecks.push({ttype: ttype.tkey, tvalue: vv});
@@ -2962,8 +2976,7 @@ class BSQONParser {
                     this.raiseError(`Expected a primitive value but got ${tk}`);
                 }
 
-                if(this.testToken_TypedeclUnder()) {
-                    this.expectTokenAndPop_TypedeclUnder();
+                if(this.testAndPop_TypedeclUnder()) {
                     const tdtype = this.parseType();
                     this.raiseErrorIf(!(tdtype instanceof $TypeInfo.TypedeclType), `Expected a typedecl type but got ${tdtype.tkey}`);
                     this.raiseErrorIf((tdtype as $TypeInfo.TypedeclType).basetype !== tt, `Typedecl has a basetype of ${tdtype.tkey} but got ${tt}`);

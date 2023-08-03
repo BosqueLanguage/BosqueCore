@@ -470,7 +470,10 @@ entity NamespaceDeclaration {
 
 entity Assembly {
     field namespaceMap: Map<NamespaceIdentifier, NamespaceDeclaration>;
+    
     field typeMap: Map<TypeKey, Type>;
+    field recursiveTypes: List<List<TypeKey>>;
+
     field fieldMap: Map<FieldKey, MemberFieldDecl>;
     field invokeMap: Map<InvokeKey, Invoke>;
     field pcodemap: Map<PCodeKey, CodePack>;

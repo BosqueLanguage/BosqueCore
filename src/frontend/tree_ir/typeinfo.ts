@@ -556,13 +556,15 @@ class AssemblyInfo {
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly revalidators: Map<BSQTypeKey, string>;
     readonly pthvalidators: Map<BSQTypeKey, string>;
+    readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>, recursiveSets: Set<BSQTypeKey>[]) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
         this.revalidators = revalidators;
         this.pthvalidators = pthvalidators;
+        this.recursiveSets = recursiveSets;
     }
 
     emit(): any {
@@ -571,7 +573,8 @@ class AssemblyInfo {
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
             revalidators: [...this.revalidators.entries()],
-            pthvalidators: [...this.pthvalidators.entries()]
+            pthvalidators: [...this.pthvalidators.entries()],
+            recursiveSets: this.recursiveSets.map((s) => [...s])
         };
     }
 
@@ -603,7 +606,12 @@ class AssemblyInfo {
             pthvalidators.set(pv[0], pv[1]);
         });
 
-        return new AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators);
+        const recursiveSets: Set<BSQTypeKey>[] = [];
+        jv.recursiveSets.forEach((rs: any) => {
+            recursiveSets.push(new Set<BSQTypeKey>(rs));
+        });
+
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators, recursiveSets);
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {
