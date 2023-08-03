@@ -656,7 +656,7 @@ class Lexer {
     }
 
     private static readonly _s_stringRe = /"[^"]*"/uy;
-    private static readonly _s_ascii_stringRe = /ascii\{""[^"]*"\}/uy;
+    private static readonly _s_ascii_stringRe = /ascii\{"[^"]*"\}/uy;
     private static readonly _s_template_stringRe = /`[^`]*`/uy;
     private static readonly _s_ascii_template_stringRe = /ascii\{`[^`]*`\}/uy;
 
