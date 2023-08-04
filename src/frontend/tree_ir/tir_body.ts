@@ -172,11 +172,11 @@ abstract class TIRExpression {
     }
 
     bsqemit_exp(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)},\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
+        return `TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)},\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
     }
 
     bsqemit_exp_il(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}, ${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
+        return `TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}, "${this.etype}"TreeIR::ValidTypeKey`;
     }
 
     abstract bsqemit(ii: string): string;
@@ -273,7 +273,7 @@ class TIRLiteralStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -299,7 +299,7 @@ class TIRLiteralASCIIStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -314,7 +314,7 @@ class TIRLiteralTypedStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, ${this.value}}`;
     }
 }
 
@@ -329,7 +329,7 @@ class TIRLiteralASCIITypedStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, ${this.value}}`;
     }
 }
 
@@ -1994,11 +1994,11 @@ abstract class TIRStatement {
     }
 
     bsqemit_stmt(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`;
+        return `TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`;
     }
 
     bsqemit_stmt_il(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}`;
+        return `TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}`;
     }
 
     abstract bsqemit(ii: string): string;

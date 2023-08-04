@@ -2,6 +2,7 @@
 
 const { exec } = require("child_process");
 const path = require("path");
+const glob = require("glob");
 
 const builddir = __dirname;
 const tscdir = path.dirname(__dirname);
@@ -28,9 +29,15 @@ function doneop(iserror, msg) {
 }
 
 const srcfile = process.argv[2];
-const outfile = path.join("./bsqbin", "ir.json");
+const outfile = path.join("./bsqbin", "ir.bsqon");
 
-exec("node ./bin/runtimes/javascript/cmd.js --fileasm --namespace=SMTEmit --outdir ./bsqbin ./src/transformer/tree_ir/*.bsq ./src/transformer/rewriter/*.bsq ./src/transformer/solver/*.bsq ./src/transformer/solver/smt_emitter/*.bsq", {cwd: tscdir}, (err, stdout, stderr) => {
+const srcdirs = ["./src/transformer/tree_ir/", "./src/transformer/rewriter/", "./src/transformer/solver/", "./src/transformer/solver/smt_emitter/"];
+let srcfiles = [];
+for(let i = 0; i < srcdirs.length; ++i) {
+    srcfiles.push(...glob.sync(path.join(srcdirs[i], "*.bsq")));
+}
+
+exec(`node ./bin/runtimes/javascript/cmd.js --namespace=SMTEmit --outdir ./bsqbin ${srcfiles.join(" ")}`, {cwd: tscdir}, (err, stdout, stderr) => {
     donesmtimpl = true;
     doneop(err !== null, err !== null ? err + stderr + stdout : "done build compiler pass..."); 
 });

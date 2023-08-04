@@ -33,7 +33,7 @@ function workflowLoadUserSrc(files: string[]): CodeFileInfo[] {
         return code;
     }
     catch (ex) {
-        process.stderr.write("Failed to load file!\n");
+        process.stderr.write(`Failed to load user src file!\n`);
         process.exit(1);
     }
 }
@@ -52,7 +52,7 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
         return code;
     }
     catch (ex) {
-        process.stderr.write("Failed to load file!\n");
+        process.stderr.write(`Failed to load core src file!\n`);
         process.exit(1);
     }
 }

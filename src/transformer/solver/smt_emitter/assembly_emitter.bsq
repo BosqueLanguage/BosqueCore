@@ -173,7 +173,9 @@ entity AssemblyEmitter {
             let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
             let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
-            let args = i.params.map<String>(fn(p) => String::concat(List<String>{"(", p.name, " ", emitTypeName(p.type), ")"}));
+            let args = i.params.map<String>(fn(p) => {
+                return String::concat(List<String>{"(", p.name.value().value(), " ", emitTypeName(p.type), ")"});
+            });
 
             let body = match (i) {
                 TreeIR::InvokeImplementation => bemitter.emitBodyStatementList($.body)

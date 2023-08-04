@@ -50,7 +50,7 @@ function workflowLoadCoreSrc(): CodeFileInfo[] {
 
 function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]): [TIRAssembly, Map<string, string[]>] {
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
-    const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
+    const coreconfig = new PackageConfig(["CHECK_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
     const { tasm, errors } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, true, entrypoints, depsmap);
@@ -75,7 +75,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         
         process.stdout.write(`writing IR code into ${into}...\n`);
         const ppth = Path.normalize(into);
-        FS.writeFileSync(ppth, JSON.stringify(ircode, undefined, 2));
+        FS.writeFileSync(ppth, ircode);
 
     } catch(e) {
         process.stderr.write(`JS emit error -- ${e}\n`);
@@ -86,7 +86,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
 function buildIRDefault(into: string, srcfiles: string[]) {
     process.stdout.write("loading user sources...\n");
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
-    const userpackage = new PackageConfig([], usersrcinfo);
+    const userpackage = new PackageConfig(["CHECK_LIBS"], usersrcinfo);
 
     workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
 

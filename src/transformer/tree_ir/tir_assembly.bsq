@@ -53,7 +53,7 @@ entity InlineSampleDecl {
 entity FileSampleDecl {
     field sinfo: SourceInfo;
     field istest: Bool;
-    field filepath: string; //may use the $root and $src meta variables
+    field filepath: String; //may use the $root and $src meta variables
 }
 
 entity ObjectInvariantDecl {
@@ -132,7 +132,7 @@ concept Invoke {
     field postconditions: List<PostConditionDecl>;
 
     field inlinesamples: List<InlineSampleDecl>;
-    field filesamples: List<FileSamepleDecl>;
+    field filesamples: List<FileSampleDecl>;
 }
 
 entity InvokeAbstractDeclaration provides Invoke {
@@ -140,6 +140,9 @@ entity InvokeAbstractDeclaration provides Invoke {
 
 entity InvokeImplementation provides Invoke {
     field body: List<Statement>;
+}
+
+entity InvokeSynthesis provides Invoke {
 }
 
 entity InvokePrimitive provides Invoke {
