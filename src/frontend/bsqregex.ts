@@ -415,7 +415,7 @@ class RegexCharRange extends RegexComponent {
 
     bsqonemit(): string {
         const rngl = this.range.map((rr) => `{lb=${rr.lb}, ub=${rr.ub}}`);
-        const rng = `List{${rngl.join(", ")}}`;
+        const rng = `[${rngl.join(", ")}]`;
         return `TreeIR::RegexCharRange{${this.compliment}, ${rng}}`;
     }
 }

@@ -570,8 +570,8 @@ class BSQONEmitter {
             return ltv;
         }
         else {
-            const ltv = "{" + v.entrySeq().toList().map((vv) => `${this.emitValue(ktype, vv[0])} => ${this.emitValue(vtype, vv[1])}`).join(", ") + "}";
-            return (tagged ? this.emitType(ttype) : "Map") + ltv;
+            const ltv = v.entrySeq().toList().map((vv) => `${this.emitValue(ktype, vv[0])} => ${this.emitValue(vtype, vv[1])}`).join(", ");
+            return tagged ? (this.emitType(ttype) + "{" + ltv + "}") : ("[" + ltv + "]");
         }
     }
 

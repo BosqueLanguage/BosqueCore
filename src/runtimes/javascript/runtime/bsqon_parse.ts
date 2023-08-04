@@ -797,7 +797,10 @@ class BSQONParser {
         const olt = this.m_lastToken;
 
         for (let i = 0; i < tkinds.length; ++i) {
-            if (!this.testToken(tkinds[i])) {
+            if (this.testToken(tkinds[i])) {
+                this.popToken();
+            }
+            else {
                 this.m_cpos = opos;
                 this.m_lastToken = olt;
 
@@ -874,7 +877,7 @@ class BSQONParser {
             scopedname = `${this.m_importmap.get(tt[0])}::${tt.slice(1).join("::")}`;
         }
         else {
-            if (tt[0] === this.m_defaultns) {
+            if (this.m_assembly.namespaces.has(tt[0])) {
                 scopedname = tt.join("::");
             }
             else {
@@ -2217,7 +2220,7 @@ class BSQONParser {
     }
     
     private parseTypedecl(ttype: $TypeInfo.TypedeclType, whistory: boolean): BSQONParseResult {
-        const vv = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
+        const vv = this.parseValue(this.lookupMustDefType(ttype.basetype), whistory);
 
         if (this.testAndPop_TypedeclUnder()) {
             const ntype = this.parseType();
@@ -2479,7 +2482,8 @@ class BSQONParser {
             const ltype = this.parseMapType(ttype);
             this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
-            if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
+            if(this.testToken(TokenKind.TOKEN_RBRACE)) {
                 this.popToken();
 
                 return [BSQONParseResultInfo.create(IMap<any, any>(), ltype as $TypeInfo.MapType, [], whistory), ltype];
@@ -2511,7 +2515,7 @@ class BSQONParser {
                         ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
                     }
                 }
-                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
                 return [BSQONParseResultInfo.create(IMap<any, any>(vv), ltype as $TypeInfo.MapType, ptree, whistory), ltype];
             }

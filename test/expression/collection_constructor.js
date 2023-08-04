@@ -32,12 +32,12 @@ describe('Map constructor', function () {
 
     describe('Map<Int, String>{}', function () {
         it('expected Map<Int, String>{}', function () {
-            expect(invokeExecutionOn(jsmain, true)).to.eql("Map{}");
+            expect(invokeExecutionOn(jsmain, true)).to.eql("[]");
         });
     });
     describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, "false")).to.eql('Map{1i => "one", 2i => "two"}');
+            expect(invokeExecutionOn(jsmain, "false")).to.eql('[1i => "one", 2i => "two"]');
         });
     });
 });
@@ -56,7 +56,7 @@ describe('Map specific constructor', function () {
     });
     describe('Map<Int, String>{1i => "one", 2i => "two"}', function () {
         it('expected Map<Int, String>{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain, "false")).to.eql('Map{1i => "one", 2i => "two"}');
+            expect(invokeExecutionOn(jsmain, "false")).to.eql('[1i => "one", 2i => "two"]');
         });
     });
 });
