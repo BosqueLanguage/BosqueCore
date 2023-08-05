@@ -836,7 +836,8 @@ class BSQONParser {
     }
 
     private raiseError(msg: string) {
-        throw new BSQONParseError(msg, this.m_cpos);
+        const mm = this.m_input.slice(0, this.m_cpos).match(/[\n]/g);
+        throw new BSQONParseError(msg, (mm?.length ?? 0) + 1);
     }
 
     private raiseErrorIf(cond: boolean, msg: string) {
@@ -1269,7 +1270,10 @@ class BSQONParser {
                 this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
             }
 
-            return this.resolveTypeFromNameList(tnames, terms);
+            const lltype = this.resolveTypeFromNameList(tnames, terms);
+            this.raiseErrorIf(lltype === undefined, `Could not resolve nominal type ${tnames.join("::")}`);
+
+            return lltype;
         }
     }
 
@@ -2189,7 +2193,7 @@ class BSQONParser {
                 }
                 
                 const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
-                this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+                this.expectTokenAndPop(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON ? TokenKind.TOKEN_COLON : TokenKind.TOKEN_EQUALS);
 
                 const ptype = ttype.entries.find((ee) => ee.pname === pname);
                 this.raiseErrorIf(ptype === undefined, `Unexpected property ${pname} in record`);
@@ -2759,31 +2763,40 @@ class BSQONParser {
         return (tt !== undefined && oftags.includes(tt.tag)) ? tt : undefined;
     }
 
+    private isNoneableParse(ttype: $TypeInfo.UnionType): boolean {
+        return ttype.types.length === 2 && ttype.types.includes("None");
+    }
+
+    private getNoneableRealType(ttype: $TypeInfo.UnionType): $TypeInfo.BSQType {
+        return this.lookupMustDefType(ttype.types[0] === "None" ? ttype.types[1] : ttype.types[0]);
+    }
+
     private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
         //everyone has a none special format option
-        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            if (this.testToken(TokenKind.TOKEN_NULL) && ttype.types.includes("None")) {
-                const nonep = this.parseNone(whistory);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
-            }
-            else {
-                this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-                const tt = this.parseType();
-                this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-                const vv = this.parseValue(tt, whistory);
-                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+        if(this.testToken(TokenKind.TOKEN_NONE)) {
+            const nonep = this.parseNone(whistory);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
+        }
 
-                this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
-                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
-            }
+        //Check for special nonable form as well "T | none"
+        if(this.isNoneableParse(ttype)) {
+            //from previous check we know that the type is not none
+            const vtt = this.parseValueDirect(this.getNoneableRealType(ttype), whistory);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(this.getNoneableRealType(ttype).tkey, BSQONParseResultInfo.getParseValue(vtt, whistory)), this.getNoneableRealType(ttype), BSQONParseResultInfo.getHistory(vtt, whistory), whistory);
+        }
+
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
+            const tt = this.parseType();
+            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            const vv = this.parseValue(tt, whistory);
+            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+            this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
         }
         else {
-            if (this.testToken(TokenKind.TOKEN_NONE) && ttype.types.includes("None")) {
-                const nonep = this.parseNone(whistory);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
-            }
-
             //it isn't none so now we start looking at prefixes
             const tk = this.peekToken()?.kind ?? "EOF";
 

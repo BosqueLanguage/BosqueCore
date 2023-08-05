@@ -153,7 +153,7 @@ enum TIRExpressionTag {
 const s_iident = "  ";
 
 function sinfo_bsqemit(sinfo: SourceInfo): string {
-    return `TreeIR::SourceInfo{${sinfo.line}, ${sinfo.column}, ${sinfo.pos}, ${sinfo.span}}`;
+    return `TreeIR::SourceInfo{${sinfo.line}n, ${sinfo.column}n, ${sinfo.pos}n, ${sinfo.span}n}`;
 }
 
 abstract class TIRExpression {
@@ -234,7 +234,7 @@ class TIRLiteralIntegralExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -247,7 +247,7 @@ class TIRLiteralRationalExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -260,7 +260,7 @@ class TIRLiteralFloatPointExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -736,8 +736,9 @@ abstract class TIRCallFunctionExpression extends TIRExpression {
             return pfx + `, \n${fci}\n${ii}}`;
         }
         else {
-            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
-            return pfx + `,\n${ii + s_iident}` + args + `, \n${fci}\n${ii}}`;
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident + s_iident)).join(`,\n${ii + s_iident + s_iident}`);
+            const agstr = args.length !== 0 ? `[\n${ii + s_iident + s_iident}${args}\n${ii + s_iident}]` : "[]";
+            return pfx + `,\n${ii + s_iident}` + agstr + `, \n${fci}\n${ii}}`;
         }
     }
 }
@@ -753,7 +754,7 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_call(ii, `"${this.ns}",\n${ii + s_iident}"${this.fname}"`);
+        return this.bsqemit_call(ii, `${ii + s_iident}"${this.ns}",\n${ii + s_iident}"${this.fname}"`);
     }
 }
 

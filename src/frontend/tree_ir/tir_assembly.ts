@@ -16,7 +16,7 @@ const s_iident = "  ";
 
 
 function sinfo_bsqemit(sinfo: SourceInfo): string {
-    return `TreeIR::SourceInfo{${sinfo.line}, ${sinfo.column}, ${sinfo.pos}, ${sinfo.span}}`;
+    return `TreeIR::SourceInfo{${sinfo.line}n, ${sinfo.column}n, ${sinfo.pos}n, ${sinfo.span}n}`;
 }
 
 type TIRTypeKey = string;
@@ -36,7 +36,7 @@ class TIRTypeName {
     }
 
     bsqemit(): string {
-        let pfx = `TIRTree:TypeName{"${this.ns}", "${this.name}"`;
+        let pfx = `TreeIR::TypeName{"${this.ns}", "${this.name}"`;
         if(this.templates !== undefined) {
             const ttstr = this.templates.map((t) => `"${t}"`).join(", ");
             pfx += `, [${ttstr}]`;
@@ -60,7 +60,7 @@ class TIRFunctionParameter {
 
     bsqemit(): string {
         if(this.ddlit === undefined) {
-            return `TIRTree:FunctionParameter{"${this.name}", "${this.type}"}`;
+            return `TreeIR::FunctionParameter{"${this.name}", "${this.type}", none}`;
         }
         else {
             return "[NOT IMPLEMENTED -- function param with literal default value]";
@@ -365,26 +365,26 @@ abstract class TIRInvoke {
         const fsamples = fsampleopts.length !== 0 ? `[${ii + s_iident + s_iident}${fsampleopts.join("\n, " + ii + s_iident + s_iident)}\n${ii + s_iident}]` : "[]";
 
         return `TreeIR::${kind}{`
-        + `\n${ii + s_iident}"${this.invkey}"TreeIR::ValidTypeKey`
-        + `\n${ii + s_iident}"${this.name}"`
-        + `\n${ii + s_iident}${sinfo_bsqemit(this.startSourceLocation)}`
-        + `\n${ii + s_iident}${sinfo_bsqemit(this.endSourceLocation)}`
-        + `\n${ii + s_iident}"${this.srcFile}"`
-        + `\n${ii + s_iident}${"[" + this.attributes.map((attr) => `"${attr}"`).join(", ") + "]"}`
-        + `\n${ii + s_iident}${this.isrecursive ? "true" : "false"}`
-        + `\n${ii + s_iident}${binds}`
-        + `\n${ii + s_iident}${pcodes}`
-        + `\n${ii + s_iident}${this.isMemberMethod ? "true" : "false"}`
-        + `\n${ii + s_iident}${this.isVirtual ? "true" : "false"}`
-        + `\n${ii + s_iident}${this.isDynamicOperator ? "true" : "false"}`
-        + `\n${ii + s_iident}${this.isLambda ? "true" : "false"}`
-        + `\n${ii + s_iident}${this.isThisRef ? "true" : "false"}`
-        + `\n${ii + s_iident}${params}`
-        + `\n${ii + s_iident}"${this.resultType}"`
-        + `\n${ii + s_iident}${preconds}`
-        + `\n${ii + s_iident}${postconds}`
-        + `\n${ii + s_iident}${isamples}`
-        + `\n${ii + s_iident}${fsamples}`;
+        + `\n${ii + s_iident}"${this.invkey}"`
+        + `, \n${ii + s_iident}"${this.name}"`
+        + `, \n${ii + s_iident}${sinfo_bsqemit(this.startSourceLocation)}`
+        + `, \n${ii + s_iident}${sinfo_bsqemit(this.endSourceLocation)}`
+        + `, \n${ii + s_iident}"${this.srcFile}"`
+        + `, \n${ii + s_iident}${"[" + this.attributes.map((attr) => `"${attr}"`).join(", ") + "]"}`
+        + `, \n${ii + s_iident}${this.isrecursive ? "true" : "false"}`
+        + `, \n${ii + s_iident}${binds}`
+        + `, \n${ii + s_iident}${pcodes}`
+        + `, \n${ii + s_iident}${this.isMemberMethod ? "true" : "false"}`
+        + `, \n${ii + s_iident}${this.isVirtual ? "true" : "false"}`
+        + `, \n${ii + s_iident}${this.isDynamicOperator ? "true" : "false"}`
+        + `, \n${ii + s_iident}${this.isLambda ? "true" : "false"}`
+        + `, \n${ii + s_iident}${this.isThisRef ? "true" : "false"}`
+        + `, \n${ii + s_iident}${params}`
+        + `, \n${ii + s_iident}"${this.resultType}"`
+        + `, \n${ii + s_iident}${preconds}`
+        + `, \n${ii + s_iident}${postconds}`
+        + `, \n${ii + s_iident}${isamples}`
+        + `, \n${ii + s_iident}${fsamples}`;
     }
 
     abstract bsqemit(ii: string): string;
@@ -509,7 +509,7 @@ class TIRStaticFunctionDecl extends TIRMemberDecl {
 
     bsqemit(ii: string): string {
         return this.bsqemit_decl(ii)
-        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.ikey}"`
         + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
@@ -527,7 +527,7 @@ class TIRMemberFieldDecl extends TIRMemberDecl {
 
     bsqemit(ii: string): string {
         return this.bsqemit_decl(ii)
-        + `,\n${ii + s_iident}"${this.fkey}"ValidFieldKey`
+        + `,\n${ii + s_iident}"${this.fkey}"`
         + `,\n${ii + s_iident}"${this.declaredType}"`
         + `\n${ii}}`;
     }
@@ -545,7 +545,7 @@ class TIRMemberMethodDecl extends TIRMemberDecl {
 
     bsqemit(ii: string): string {
         return this.bsqemit_decl(ii)
-        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.ikey}"`
         + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
@@ -565,7 +565,7 @@ abstract class TIRType {
     bsqemit_type(ii: string, kind: string): string {
         const superopts = this.supertypes !== undefined ? ("[" + [...this.supertypes].map((st) => `"${st}"`).join(", ") + "]") : "none";
 
-        return `${kind}{`
+        return `TreeIR::${kind}{`
         + `\n${ii + s_iident}"${this.tkey}"`
         + `,\n${ii + s_iident}${superopts}`;
     }
@@ -652,7 +652,7 @@ class TIRObjectEntityType extends TIREntityType {
     }
 
     bsqemit(ii: string): string {
-        const allfopts = "[" + this.allfields.map((af) => `{fkey="${af.fkey}"ValidFieldKey, ftype="${af.ftype}"ValidFieldType}`).join(", ") + "]";
+        const allfopts = "[" + this.allfields.map((af) => `{fkey="${af.fkey}", ftype="${af.ftype}"}`).join(", ") + "]";
         
         const consinvopts = this.consinvariants.map((ci) => ci.bsqemit(ii + s_iident + s_iident));
         const consinvariants = consinvopts.length !== 0 ? `[\n${ii + s_iident + s_iident}${consinvopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}]` : "[]";
@@ -660,7 +660,7 @@ class TIRObjectEntityType extends TIREntityType {
         const apivalidateopts = this.apivalidates.map((av) => av.bsqemit(ii + s_iident + s_iident));
         const apivalidates = apivalidateopts.length !== 0 ? `[\n${ii + s_iident + s_iident}${apivalidateopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}]` : "[]";
 
-        const vtableopts = "[" + [...this.vtable].map((v) => `"${v[0]}" => "${v[1]}"ValidInvokeKey`).join(", ") + "]";
+        const vtableopts = "[" + [...this.vtable].map((v) => `"${v[0]}" => "${v[1]}"`).join(", ") + "]";
         const bindopts = "[" + [...this.binds].map((b) => `"${b[0]}" => "${b[1]}"`).join(", ") + "]";
 
         return this.bsqemit_entitytype(ii, "ObjectEntityType")
@@ -1267,7 +1267,7 @@ class TIRNamespaceFunctionDecl extends TIRNamespaceDecl {
 
     bsqemit(ii: string): string {
         return this.bsqemit_nsdecl(ii, "NamespaceFunctionDecl")
-        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.ikey}"`
         + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
@@ -1285,7 +1285,7 @@ class TIRNamespaceOperatorDecl extends TIRNamespaceDecl {
 
     bsqemit(ii: string): string {
         return this.bsqemit_nsdecl(ii, "NamespaceOperatorDecl")
-        + `,\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.ikey}"`
         + `,\n${ii + s_iident}${this.invoke.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
@@ -1312,7 +1312,7 @@ class TIRNamespaceLambdaDecl {
 
     bsqemit(ii: string): string {
         return `TreeIR::NamespaceLambdaDecl{`
-        + `\n${ii + s_iident}"${this.ikey}"ValidInvokeKey`
+        + `\n${ii + s_iident}"${this.ikey}"`
         + `,\n${ii + s_iident}"${this.pcid}"`
         + `,\n${ii + s_iident}${sinfo_bsqemit(this.sourceLocation)}`
         + `,\n${ii + s_iident}"${this.srcFile}"`
@@ -1350,7 +1350,7 @@ class TIRCodePack {
         return `TreeIR::CodePack{`
         + `\n${ii + s_iident}"${this.ns}"`
         + `,\n${ii + s_iident}"${this.codekey}"`
-        + `,\n${ii + s_iident}"${this.invk}"ValidInvokeKey`
+        + `,\n${ii + s_iident}"${this.invk}"`
         + `,\n${ii + s_iident}${this.recursive ? "true" : "false"}`
         + `,\n${ii + s_iident}[${this.terms.map((tt) => `"${tt}"`).join(", ")}]`
         + `,\n${ii + s_iident}[${this.pcodes.map((pp) => `"${pp}ValidPCodeKey"`).join(", ")}]`
@@ -1548,7 +1548,7 @@ class TIRNamespaceDeclaration {
             return "[]";
         }
         else {
-            const lamdasi = [...this.lambdas].map((e) => `"${e[0]}"ValidInvokeKey => ${e[1].bsqemit(ii + s_iident)}`);
+            const lamdasi = [...this.lambdas].map((e) => `"${e[0]}" => ${e[1].bsqemit(ii + s_iident)}`);
             return `[\n${ii + s_iident}${lamdasi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
@@ -2010,7 +2010,7 @@ class TIRAssembly {
             return "[]";
         }
         else {
-            const fielddeclsi = [...this.fieldMap].map((e) => `"${e[0]}"ValidFieldKey => ${e[1].bsqemit(ii + s_iident)}`);
+            const fielddeclsi = [...this.fieldMap].map((e) => `"${e[0]}" => ${e[1].bsqemit(ii + s_iident)}`);
             return `[\n${ii + s_iident}${fielddeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
@@ -2019,7 +2019,7 @@ class TIRAssembly {
             return "[]";
         }
         else {
-            const invokedeclsi = [...this.invokeMap].map((e) => `"${e[0]}"ValidInvokeKey => ${e[1].bsqemit(ii + s_iident)}`);
+            const invokedeclsi = [...this.invokeMap].map((e) => `"${e[0]}" => ${e[1].bsqemit(ii + s_iident)}`);
             return `[\n${ii + s_iident}${invokedeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
