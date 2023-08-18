@@ -2771,6 +2771,18 @@ class BSQONParser {
         return this.lookupMustDefType(ttype.types[0] === "None" ? ttype.types[1] : ttype.types[0]);
     }
 
+    private parseValueSimple(ttype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
+        if (ttype instanceof $TypeInfo.PrimitiveType) {
+            return this.parseValuePrimitive(ttype, whistory);
+        }
+        else if ((ttype instanceof $TypeInfo.ConceptType) || (ttype instanceof $TypeInfo.ConceptSetType)) {
+            return this.parseValueConcept(ttype, whistory);
+        }
+        else {
+            return this.parseValueDirect(ttype, whistory);
+        }
+    }
+
     private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
         //everyone has a none special format option
         if(this.testToken(TokenKind.TOKEN_NONE)) {
@@ -2781,7 +2793,7 @@ class BSQONParser {
         //Check for special nonable form as well "T | none"
         if(this.isNoneableParse(ttype)) {
             //from previous check we know that the type is not none
-            const vtt = this.parseValueDirect(this.getNoneableRealType(ttype), whistory);
+            const vtt = this.parseValueSimple(this.getNoneableRealType(ttype), whistory);
             return BSQONParseResultInfo.create(new $Runtime.UnionValue(this.getNoneableRealType(ttype).tkey, BSQONParseResultInfo.getParseValue(vtt, whistory)), this.getNoneableRealType(ttype), BSQONParseResultInfo.getHistory(vtt, whistory), whistory);
         }
 
@@ -3049,17 +3061,11 @@ class BSQONParser {
             return this.parseExpression(ttype, whistory);
         }
         else {
-            if (ttype instanceof $TypeInfo.PrimitiveType) {
-                return this.parseValuePrimitive(ttype, whistory);
-            }
-            else if ((ttype instanceof $TypeInfo.ConceptType) || (ttype instanceof $TypeInfo.ConceptSetType)) {
-                return this.parseValueConcept(ttype, whistory);
-            }
-            else if (ttype instanceof $TypeInfo.UnionType) {
+            if (ttype instanceof $TypeInfo.UnionType) {
                 return this.parseValueUnion(ttype, whistory);
             }
             else {
-                return this.parseValueDirect(ttype, whistory);
+                return this.parseValueSimple(ttype, whistory);
             }
         }
     }
