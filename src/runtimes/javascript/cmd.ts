@@ -144,7 +144,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
         const iext = asdeno ? ".ts" : "";
 
         const mainf = Path.join(into, "_main.ts");
-        FS.writeFileSync(mainf, `import * as process from "node:process"; import {Buffer} from "node:buffer";\n import fs from "node:fs";\n`
+        FS.writeFileSync(mainf, `import * as process from "node:process"; import {Buffer} from "node:buffer";\n import fs from "node:fs";\nimport path from "node:path";\n`
             + `import * as $TypeInfo from "./typeinfo${iext}";\n`
             + `import * as $JASM from "./metadata${iext}";\n`
             + `import * as $Runtime from "./runtime${iext}";\n`
@@ -156,8 +156,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `$TypeInfo.setLoadedTypeInfo(assembly);\n\n`
             + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
             + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
-            + `const input_stream = filearg !== undefined ? fs.createReadStream(filearg.substring(8)) : process.stdin;\n`
-            + (epf.params.length === 0 ? `const arg_string = "";\n\n` : `const arg_string = await read(input_stream);\n\n`)
+            + (epf.params.length === 0 ? `const arg_string = "";\n\n` : `const arg_string = filearg === undefined ? await read(process.stdin) : fs.readFileSync(path.normalize(filearg.substring(8)));\n\n`)
             + `let bsq_args: any[] = [];\n`
             + `try {\n`
             + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`
