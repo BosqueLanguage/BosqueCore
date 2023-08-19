@@ -42,7 +42,7 @@ exec(`node ./bin/runtimes/javascript/cmd.js --namespace=SMTEmit --outdir ./bsqbi
     doneop(err !== null, err !== null ? err + stderr + stdout : "done build compiler pass..."); 
 });
 
-exec(`node ./bin/runtimes/javascript/emit.js --outfile ${outfile} ${srcfile}`, {cwd: tscdir}, (err, stdout, stderr) => {
+exec(`node ./bin/transformer/solver.js --outfile ${outfile} ${srcfile}`, {cwd: tscdir}, (err, stdout, stderr) => {
     donesmtimpl = true;
     doneop(err !== null, err !== null ? err + stderr + stdout : "done emit ir..."); 
 });
