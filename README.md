@@ -15,6 +15,10 @@ The **_Bosque Development Stack_** provides state of the art observability and d
 
 The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector ([prototype implementation](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/icpp/interpreter/runtime)) that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using stable [log-time persistent structures](https://immutable-js.com)). Depending on the application Bosque supports transpilation/compilation to JavaScript/Node.js [TODO], Morphir [TODO], and an AOT compiler ([prototype implementation](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/icpp)). The semantics of the language also open interesting compiler work on eliminating cache conflicts, trusted computation offloading, and compilation for accelerator (e.g. FPGA or dataflow) architectures.
 
+# News
+August 22 -- [new paper](https://github.com/BosqueLanguage/BosqueCore/blob/main/docs/research/papers/bosque.pdf) with overview of the Bosque language and some current priorities to appear 
+[Splash Onward!](https://2023.splashcon.org/track/splash-2023-Onward-papers)
+
 # Documentation
 
 Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and Tooling [TODO] sections. Complete documenation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively.
