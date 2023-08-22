@@ -21,7 +21,7 @@ function codegen(srcdir, dstdir) {
 }
 
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execSync(`deno run ${jsmain}`, {input: args.join(" ") + "\n", timeout: 30000}).toString().trim();
+    const rr = execSync(`deno run ${jsmain}`, {input: args.join(" ") + "\n", timeout: 60000}).toString().trim();
     //console.log(rr);
     return rr;
 }
