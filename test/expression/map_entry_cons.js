@@ -26,8 +26,8 @@ describe('Collection MapEntry Constructor', function () {
     after(function () { cleanTest(dstdir); });
 
     describe('As Collection Entries', function () {
-        it('expected Map{1i => "one", 2i => "two"}', function () {
-            expect(invokeExecutionOn(jsmain)).to.eql('Map{1i => "one", 2i => "two"}');
+        it('expected [1i => "one", 2i => "two"]', function () {
+            expect(invokeExecutionOn(jsmain)).to.eql('[1i => "one", 2i => "two"]');
         });
     });
 });

@@ -19,5 +19,6 @@ function copyResourceDir(dirfrom, dirto) {
 process.stdout.write(`Copying resources...\n`);
 
 copyResourceDir("core", "core");
+copyResourceDir("transformer/solver/smt_runtime", "smt");
 
 process.stdout.write(`done!\n`);

@@ -75,7 +75,7 @@ class BSQPathValidator {
         + `file: ${this.path.file ? this.path.file.bsqonemit() : "none"}, `
         + `extension: ${this.path.extension ? this.path.extension.bsqonemit() : "none"}`
         + `}, `
-        + `query: ${this.query ? `Map{${[...this.query].map((e) => `"${e[0]}": ${e[1].bsqonemit()}`).join(", ")}}` : "none"}, `
+        + `query: ${this.query ? `[${[...this.query].map((e) => `"${e[0]}": ${e[1].bsqonemit()}`).join(", ")}]` : "none"}, `
         + `fragment: ${this.fragment ? this.fragment.bsqonemit() : "none"}`
         + `}`;
     }

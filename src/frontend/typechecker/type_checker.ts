@@ -7856,7 +7856,13 @@ class TypeChecker {
                 if(!depsmap.has(deps.ns)) {
                     depsmap.set(deps.ns, []);
                 }
-                depsmap.set(deps.ns, [...(depsmap.get(deps.ns) as string[]), ...deps.deps].sort());
+                let ddm = depsmap.get(deps.ns) as string[];
+                deps.deps.forEach((dep) => {
+                    if(!ddm.includes(dep)) {
+                        ddm.push(dep);
+                    }
+                });
+                ddm.sort();
 
                 if(!nsfilemap.has(deps.ns)) {
                     nsfilemap.set(deps.ns, []);

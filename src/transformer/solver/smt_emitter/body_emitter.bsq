@@ -314,7 +314,6 @@ entity BodyEmitter {
     recursive method emitCallNamespaceFunctionExpression(exp: TreeIR::CallNamespaceFunctionExpression): [String, TreeIR::ErrorKind] {
         let invks = this.assembly.namespaceMap.get(exp.ns).functions.get(exp.fname);
         let invk = invks.find(pred(ii) => ii.ikey === exp.fkey);
-        let invdecl = this.assembly.invokeMap.get(invk.ikey);
 
         let opexp = BodyEmitter::buildGeneralOp(smtifyInvokeKey(invk.ikey), this.processArgs[recursive](exp.args));
         let callerr = this.invokeResultErrMap.get(invk.ikey);
