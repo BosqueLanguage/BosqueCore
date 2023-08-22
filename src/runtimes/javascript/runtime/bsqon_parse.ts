@@ -797,7 +797,10 @@ class BSQONParser {
         const olt = this.m_lastToken;
 
         for (let i = 0; i < tkinds.length; ++i) {
-            if (!this.testToken(tkinds[i])) {
+            if (this.testToken(tkinds[i])) {
+                this.popToken();
+            }
+            else {
                 this.m_cpos = opos;
                 this.m_lastToken = olt;
 
@@ -833,7 +836,8 @@ class BSQONParser {
     }
 
     private raiseError(msg: string) {
-        throw new BSQONParseError(msg, this.m_cpos);
+        const mm = this.m_input.slice(0, this.m_cpos).match(/[\n]/g);
+        throw new BSQONParseError(msg, (mm?.length ?? 0) + 1);
     }
 
     private raiseErrorIf(cond: boolean, msg: string) {
@@ -874,7 +878,7 @@ class BSQONParser {
             scopedname = `${this.m_importmap.get(tt[0])}::${tt.slice(1).join("::")}`;
         }
         else {
-            if (tt[0] === this.m_defaultns) {
+            if (this.m_assembly.namespaces.has(tt[0])) {
                 scopedname = tt.join("::");
             }
             else {
@@ -1266,7 +1270,10 @@ class BSQONParser {
                 this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
             }
 
-            return this.resolveTypeFromNameList(tnames, terms);
+            const lltype = this.resolveTypeFromNameList(tnames, terms);
+            this.raiseErrorIf(lltype === undefined, `Could not resolve nominal type ${tnames.join("::")}`);
+
+            return lltype;
         }
     }
 
@@ -2186,7 +2193,7 @@ class BSQONParser {
                 }
                 
                 const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
-                this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+                this.expectTokenAndPop(this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON ? TokenKind.TOKEN_COLON : TokenKind.TOKEN_EQUALS);
 
                 const ptype = ttype.entries.find((ee) => ee.pname === pname);
                 this.raiseErrorIf(ptype === undefined, `Unexpected property ${pname} in record`);
@@ -2217,7 +2224,7 @@ class BSQONParser {
     }
     
     private parseTypedecl(ttype: $TypeInfo.TypedeclType, whistory: boolean): BSQONParseResult {
-        const vv = this.parseValue(this.lookupMustDefType(ttype.oftype), whistory);
+        const vv = this.parseValue(this.lookupMustDefType(ttype.basetype), whistory);
 
         if (this.testAndPop_TypedeclUnder()) {
             const ntype = this.parseType();
@@ -2479,7 +2486,8 @@ class BSQONParser {
             const ltype = this.parseMapType(ttype);
             this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(ltype, chktype), `Expected a type ${chktype.tkey} but got ${ltype.tkey}`);
 
-            if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
+            if(this.testToken(TokenKind.TOKEN_RBRACE)) {
                 this.popToken();
 
                 return [BSQONParseResultInfo.create(IMap<any, any>(), ltype as $TypeInfo.MapType, [], whistory), ltype];
@@ -2511,7 +2519,7 @@ class BSQONParser {
                         ptree.push([BSQONParseResultInfo.getValueType(entry, whistory), BSQONParseResultInfo.getHistory(entry, whistory)]);
                     }
                 }
-                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+                this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
 
                 return [BSQONParseResultInfo.create(IMap<any, any>(vv), ltype as $TypeInfo.MapType, ptree, whistory), ltype];
             }
@@ -2755,31 +2763,52 @@ class BSQONParser {
         return (tt !== undefined && oftags.includes(tt.tag)) ? tt : undefined;
     }
 
-    private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
-        //everyone has a none special format option
-        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            if (this.testToken(TokenKind.TOKEN_NULL) && ttype.types.includes("None")) {
-                const nonep = this.parseNone(whistory);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
-            }
-            else {
-                this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-                const tt = this.parseType();
-                this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-                const vv = this.parseValue(tt, whistory);
-                this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+    private isNoneableParse(ttype: $TypeInfo.UnionType): boolean {
+        return ttype.types.length === 2 && ttype.types.includes("None");
+    }
 
-                this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
-                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
-            }
+    private getNoneableRealType(ttype: $TypeInfo.UnionType): $TypeInfo.BSQType {
+        return this.lookupMustDefType(ttype.types[0] === "None" ? ttype.types[1] : ttype.types[0]);
+    }
+
+    private parseValueSimple(ttype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
+        if (ttype instanceof $TypeInfo.PrimitiveType) {
+            return this.parseValuePrimitive(ttype, whistory);
+        }
+        else if ((ttype instanceof $TypeInfo.ConceptType) || (ttype instanceof $TypeInfo.ConceptSetType)) {
+            return this.parseValueConcept(ttype, whistory);
         }
         else {
-            if (this.testToken(TokenKind.TOKEN_NONE) && ttype.types.includes("None")) {
-                const nonep = this.parseNone(whistory);
-                return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
-            }
+            return this.parseValueDirect(ttype, whistory);
+        }
+    }
 
+    private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
+        //everyone has a none special format option
+        if(this.testToken(TokenKind.TOKEN_NONE)) {
+            const nonep = this.parseNone(whistory);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
+        }
+
+        //Check for special nonable form as well "T | none"
+        if(this.isNoneableParse(ttype)) {
+            //from previous check we know that the type is not none
+            const vtt = this.parseValueSimple(this.getNoneableRealType(ttype), whistory);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(this.getNoneableRealType(ttype).tkey, BSQONParseResultInfo.getParseValue(vtt, whistory)), this.getNoneableRealType(ttype), BSQONParseResultInfo.getHistory(vtt, whistory), whistory);
+        }
+
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
+            const tt = this.parseType();
+            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            const vv = this.parseValue(tt, whistory);
+            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+            this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
+        }
+        else {
             //it isn't none so now we start looking at prefixes
             const tk = this.peekToken()?.kind ?? "EOF";
 
@@ -3032,17 +3061,11 @@ class BSQONParser {
             return this.parseExpression(ttype, whistory);
         }
         else {
-            if (ttype instanceof $TypeInfo.PrimitiveType) {
-                return this.parseValuePrimitive(ttype, whistory);
-            }
-            else if ((ttype instanceof $TypeInfo.ConceptType) || (ttype instanceof $TypeInfo.ConceptSetType)) {
-                return this.parseValueConcept(ttype, whistory);
-            }
-            else if (ttype instanceof $TypeInfo.UnionType) {
+            if (ttype instanceof $TypeInfo.UnionType) {
                 return this.parseValueUnion(ttype, whistory);
             }
             else {
-                return this.parseValueDirect(ttype, whistory);
+                return this.parseValueSimple(ttype, whistory);
             }
         }
     }

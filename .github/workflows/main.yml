@@ -16,7 +16,7 @@ jobs:
         lfs: 'true'
     - uses: denoland/setup-deno@v1
       with:
-        deno-version: v1.x
+        deno-version: v1.34
     - name: Setup
       uses: actions/setup-node@v1
       with:

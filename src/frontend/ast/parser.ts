@@ -4938,6 +4938,12 @@ class Parser {
             const valuedecl = new InvokeDecl("Core", sinfo, sinfo, this.m_penv.getCurrentFile(), ["__safe"], "no", [], undefined, [], false, idval, [], [], [], false, false, new Set<string>(), new Set<string>(), valuebody);
             const value = new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["__safe"], "value", valuedecl);
 
+            //
+            //TODO: maybe want to do a special underlying operator that looks like a method to just get the base type
+            //      we will need to do some fancy resolution on the type since we don't know the base type yet
+            //      maybe even make this a string, int, float as the name of the method
+            //
+
             memberMethods.push(value);
 
             attributes.push("__typedprimitive", "__constructable");

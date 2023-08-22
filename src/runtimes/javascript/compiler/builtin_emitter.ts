@@ -84,6 +84,17 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         case "s_string_removeend": {
             return `{ return ${func.invoke.params[0].name}.slice(0, ${func.invoke.params[1].name}.length); }`;
         }
+        case "s_string_contains": {
+            return `{ return ${func.invoke.params[0].name}.includes(${func.invoke.params[1].name}); }`;
+        }
+        case "s_string_replaceunique": {
+            //TODO: need to check that there is in fact a unique replacement
+            return `{ return ${func.invoke.params[0].name}.replace(${func.invoke.params[1].name}, ${func.invoke.params[2].name}); }`;
+        }
+        case "s_string_replaceall": {
+            //TODO: need to check that there are not ambigious replacements (e.g. ab#ab#a and ab#a then do we replace first or second?) 
+            return `{ return ${func.invoke.params[0].name}.replace(new RegExp(${func.invoke.params[1].name}, "g"), ${func.invoke.params[2].name}); }`;
+        }
 
         case "s_list_empty": {
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;
@@ -121,13 +132,13 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv) => $$pcf(${["p", "$$vv"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1; }`;
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) ?? -1; }`;
         }
         case "s_list_find_pred_idx": {
             const pcode = resolveCodePack(asm, func.invoke, "p");
             const pcodeinvk = generatePCodeInvokeName(pcode);
             const pred = `($$vv, $$ii) => $$pcf(${["p", "$$vv", "$$ii"].join(", ")})`;
-            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) || -1; }`;
+            return `{ const $$pcf = ${pcodeinvk}; return ${func.invoke.params[0].name}.findKey(${pred}) ?? -1; }`;
         }
         case "s_list_filter_pred": {
             const pcode = resolveCodePack(asm, func.invoke, "p");

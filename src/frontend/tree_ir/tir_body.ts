@@ -153,7 +153,7 @@ enum TIRExpressionTag {
 const s_iident = "  ";
 
 function sinfo_bsqemit(sinfo: SourceInfo): string {
-    return `TreeIR::SourceInfo{${sinfo.line}, ${sinfo.column}, ${sinfo.pos}, ${sinfo.span}}`;
+    return `TreeIR::SourceInfo{${sinfo.line}n, ${sinfo.column}n, ${sinfo.pos}n, ${sinfo.span}n}`;
 }
 
 abstract class TIRExpression {
@@ -172,11 +172,11 @@ abstract class TIRExpression {
     }
 
     bsqemit_exp(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)},\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
+        return `TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)},\n${ii + s_iident}"${this.etype}"`;
     }
 
     bsqemit_exp_il(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}, ${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey`;
+        return `TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}, "${this.etype}"`;
     }
 
     abstract bsqemit(ii: string): string;
@@ -234,7 +234,7 @@ class TIRLiteralIntegralExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -247,7 +247,7 @@ class TIRLiteralRationalExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -260,7 +260,7 @@ class TIRLiteralFloatPointExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
     }
 }
 
@@ -273,7 +273,7 @@ class TIRLiteralStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -299,7 +299,7 @@ class TIRLiteralASCIIStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value}}`;
     }
 }
 
@@ -314,7 +314,7 @@ class TIRLiteralTypedStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}", ${this.value}}`;
     }
 }
 
@@ -329,7 +329,7 @@ class TIRLiteralASCIITypedStringExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.oftype}"TreeIR::ValidTypeKey, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.oftype}", ${this.value}}`;
     }
 }
 
@@ -374,7 +374,7 @@ class TIRLiteralTypedPrimitiveDirectExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}"TreeIR::ValidTypeKey, "${this.basetype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}", "${this.basetype}"}`;
     }
 }
 
@@ -393,7 +393,7 @@ class TIRLiteralTypedPrimitiveConstructorExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}"TreeIR::ValidTypeKey, "${this.basetype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value.bsqemit("")}, "${this.constype}", "${this.basetype}"}`;
     }
 
     //
@@ -429,7 +429,7 @@ class TIRAccessEnvValueExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.keyname}", "${this.valtype}"TreeIR::ValidType, "${this.restype}"TreeIR::ValidType, ${this.orNoneMode}}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.keyname}", "${this.valtype}", "${this.restype}", ${this.orNoneMode}}`;
     }
 }
 
@@ -444,7 +444,7 @@ class TIRAccessNamespaceConstantExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.ns}"TreeIR::ValidNamespace, "${this.cname}"TreeIR::ValidIdentifier}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.ns}", "${this.cname}"}`;
     }
 }
 
@@ -459,7 +459,7 @@ class TIRAccessConstMemberFieldExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.tkey}"TreeIR::ValidTypeKey, "${this.cname}"TreeIR::ValidIdentifier}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.tkey}", "${this.cname}"}`;
     }
 }
 
@@ -472,7 +472,7 @@ class TIRAccessVariableExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.name}"TreeIR::ValidIdentifier}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.name}"}`;
     }
 }
 
@@ -485,7 +485,7 @@ class TIRAccessCapturedVariableExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.name}"TreeIR::ValidIdentifier}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.name}"}`;
     }
 }
 
@@ -529,7 +529,7 @@ abstract class TIRLoadSingleExpression extends TIRExpression {
     }
 
     bsqemit_loadsingle(ii: string, accs: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.tkey}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}${accs}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.tkey}",\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}${accs}\n${ii}}`;
     }
 }
 
@@ -555,7 +555,7 @@ class TIRLoadPropertyExpression extends TIRLoadSingleExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_loadsingle(ii, `"${this.property}"TreeIR::ValidIdentifier`);
+        return this.bsqemit_loadsingle(ii, `"${this.property}"`);
     }
 }
 
@@ -568,7 +568,7 @@ class TIRLoadFieldExpression extends TIRLoadSingleExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"TreeIR::ValidFieldKey`);
+        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"`);
     }
 }
 
@@ -581,7 +581,7 @@ class TIRLoadFieldVirtualExpression extends TIRLoadSingleExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"TreeIR::ValidFieldKey`);
+        return this.bsqemit_loadsingle(ii, `"${this.fieldkey}"`);
     }
 }
 
@@ -597,7 +597,7 @@ abstract class TIRConstructorExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey`;
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}"`;
         
         if(this.args.length === 0) {
             return pfx + `\n${ii}}`;
@@ -635,13 +635,13 @@ class TIRConstructorRecordExpression extends TIRConstructorExpression {
 
 class TIRConstructorListExpression  extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
-        super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, args, `List{${args.map((arg) => arg.expstr).join(", ")}}`);
+        super(TIRExpressionTag.ConstructorListExpression, sinfo, oftype, args, `[${args.map((arg) => arg.expstr).join(", ")}]`);
     }
 }
     
 class TIRConstructorMapExpression extends TIRConstructorExpression {
     constructor(sinfo: SourceInfo, oftype: TIRTypeKey, args: TIRExpression[]) {
-        super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, args, `Map{${args.map((arg) => arg.expstr).join(", ")}}`);
+        super(TIRExpressionTag.ConstructorMapExpression, sinfo, oftype, args, `[${args.map((arg) => arg.expstr).join(", ")}]`);
     }
 }
 
@@ -680,7 +680,7 @@ abstract class TIRConstructorOfExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.arg.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.oftype}",\n${ii + s_iident}${this.arg.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -730,14 +730,15 @@ abstract class TIRCallFunctionExpression extends TIRExpression {
     }
 
     bsqemit_call(ii: string, fci: string): string {
-        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`;
+        const pfx = this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.fkey}"`;
 
         if (this.args.length === 0) {
             return pfx + `, \n${fci}\n${ii}}`;
         }
         else {
-            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
-            return pfx + `,\n${ii + s_iident}` + args + `, \n${fci}\n${ii}}`;
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident + s_iident)).join(`,\n${ii + s_iident + s_iident}`);
+            const agstr = args.length !== 0 ? `[\n${ii + s_iident + s_iident}${args}\n${ii + s_iident}]` : "[]";
+            return pfx + `,\n${ii + s_iident}` + agstr + `, \n${fci}\n${ii}}`;
         }
     }
 }
@@ -753,7 +754,7 @@ class TIRCallNamespaceFunctionExpression extends TIRCallFunctionExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_call(ii, `"${this.ns}"TreeIR::ValidNamespace,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`);
+        return this.bsqemit_call(ii, `${ii + s_iident}"${this.ns}",\n${ii + s_iident}"${this.fname}"`);
     }
 }
 
@@ -768,7 +769,7 @@ class TIRCallNamespaceOperatorExpression extends TIRCallFunctionExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_call(ii, `"${this.ns}"TreeIR::ValidNamespace,\n${ii + s_iident}"${this.oname}"TreeIR::ValidIdentifier`);
+        return this.bsqemit_call(ii, `"${this.ns}",\n${ii + s_iident}"${this.oname}"`);
     }
 }
 
@@ -783,7 +784,7 @@ class TIRCallStaticFunctionExpression extends TIRCallFunctionExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_call(ii, `"${this.tkey}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`);
+        return this.bsqemit_call(ii, `"${this.tkey}",\n${ii + s_iident}"${this.fname}"`);
     }
 }
 
@@ -850,7 +851,7 @@ class TIRPrefixNegateExpression extends TIRUnaryExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.optype}"\n${ii}}`;
     }
 }
 
@@ -868,7 +869,7 @@ abstract class TIRBinOpExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -885,7 +886,7 @@ class TIRBinSubExpression extends TIRBinOpExpression {
 
     
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
     }
 }
 
@@ -901,7 +902,7 @@ class TIRBinDivExpression extends TIRBinOpExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)},\n${ii + s_iident}-1i\n${ii}}`;
     }
 }
 
@@ -918,7 +919,7 @@ class TIRBinKeyEqBothUniqueExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -940,8 +941,8 @@ class TIRBinKeyEqOneUniqueExpression extends TIRExpression {
 
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii) 
-        + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}"${this.gtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.oftype}",\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.gtype}",\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
 }
@@ -964,8 +965,8 @@ class TIRBinKeyEqGeneralExpression extends TIRExpression {
 
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii) 
-        + `,\n${ii + s_iident}"${this.lhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}"${this.rhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.lhstype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.rhstype}",\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
 }
@@ -983,7 +984,7 @@ class TIRBinKeyNeqBothUniqueExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1005,8 +1006,8 @@ class TIRBinKeyNeqOneUniqueExpression extends TIRExpression {
 
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii)
-        + `,\n${ii + s_iident}"${this.oftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}"${this.gtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.oftype}",\n${ii + s_iident}${this.uarg.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.gtype}",\n${ii + s_iident}${this.garg.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
 }
@@ -1029,8 +1030,8 @@ class TIRBinKeyNeqGeneralExpression extends TIRExpression {
 
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii)
-        + `,\n${ii + s_iident}"${this.lhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}"${this.rhstype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.lhstype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)}`
+        + `,\n${ii + s_iident}"${this.rhstype}",\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
 }
@@ -1048,7 +1049,7 @@ class TIRBinKeyUniqueLessExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1065,7 +1066,7 @@ class TIRBinKeyGeneralLessExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1083,7 +1084,7 @@ abstract class TIRNumericBinCmpExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): any {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}"${this.optype}",\n${ii + s_iident}${this.lhs.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.rhs.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -1177,7 +1178,7 @@ class TIRMapEntryConstructorExpression extends TIRExpression {
 
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii) 
-        + `,\n${ii + s_iident}"${this.ktype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.oftype}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.ktype}",\n${ii + s_iident}${this.vtype}",\n${ii + s_iident}${this.oftype}"`
         + `,\n${ii + s_iident}${this.kexp.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)}`
         + `\n${ii}}`;
     }
@@ -1205,7 +1206,7 @@ class TIRIfExpression extends TIRExpression {
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
             + `,\n${iident}${bb[1]}n`
             + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[3]}"`
             + `\n${ii}]`;
         }
     }
@@ -1230,9 +1231,9 @@ class TIRIfExpression extends TIRExpression {
     private bsqemit_elifentries(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.elifentries.map((e) => TIRIfExpression.bsqemit_elifentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_elseentry(ii: string): string {
         const iident = ii + s_iident;
@@ -1280,7 +1281,7 @@ class TIRSwitchExpression extends TIRExpression {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"`
             + `\n${ii}]`;
         }
     }
@@ -1296,9 +1297,9 @@ class TIRSwitchExpression extends TIRExpression {
     private bsqemit_clauses(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.clauses.map((e) => TIRSwitchExpression.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_default(ii: string): string {
         const iident = ii + s_iident;
@@ -1351,7 +1352,7 @@ class TIRMatchExpression extends TIRExpression {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"`
             + `\n${ii}]`;
         }
     }
@@ -1367,9 +1368,9 @@ class TIRMatchExpression extends TIRExpression {
     private bsqemit_clauses(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.clauses.map((e) => TIRMatchExpression.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_default(ii: string): string {
         const iident = ii + s_iident;
@@ -1411,7 +1412,7 @@ class TIRTaskSelfFieldExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}"TreeIR::ValidTypeKey, "${this.fieldkey}"TreeIR::ValidFieldKey, "${this.fname}"TreeIR::ValidIdentifier}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}", "${this.fieldkey}", "${this.fname}"}`;
     }
 }
 
@@ -1437,7 +1438,7 @@ class TIRTaskGetIDExpression extends TIRExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.tasktype}"}`;
     }
 }
 
@@ -1461,7 +1462,7 @@ class TIRCoerceSafeExpression extends TIRCoerceSafeSingleExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.fromtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.totype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.fromtype}",\n${ii + s_iident}"${this.totype}"\n${ii}}`;
     }
 }
 
@@ -1477,7 +1478,7 @@ abstract class TIRInjectExtractExpression extends TIRExpression {
     }
     
     bsqemit(ii: string): string {
-        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.totype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_exp(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.totype}"\n${ii}}`;
     }
 }
 
@@ -1513,10 +1514,10 @@ class TIRCreateCodePackExpression extends TIRExpression {
     bsqemit(ii: string): string {
         return this.bsqemit_exp(ii)
         + `,\n${ii + s_iident}${this.pcodepack.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}List{${this.capturedirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
-        + `,\n${ii + s_iident}List{${this.captureindirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
-        + `,\n${ii + s_iident}List{${this.capturepackdirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
-        + `,\n${ii + s_iident}List{${this.capturepackindirect.map((c) => `"${c}"TreeIR::ValidIdentifier`).join(", ")}}`
+        + `,\n${ii + s_iident}[${this.capturedirect.map((c) => `"${c}"`).join(", ")}]`
+        + `,\n${ii + s_iident}[${this.captureindirect.map((c) => `"${c}"`).join(", ")}]`
+        + `,\n${ii + s_iident}[${this.capturepackdirect.map((c) => `"${c}"`).join(", ")}]`
+        + `,\n${ii + s_iident}[${this.capturepackindirect.map((c) => `"${c}"`).join(", ")}]`
         + `\n${ii}}`;
     }
 }
@@ -1579,7 +1580,7 @@ class TIRIsOkSpecialExpression  extends TIRITestIsSpecialExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.oktype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.oktype}"\n${ii}}`;
     }
 }
 
@@ -1592,7 +1593,7 @@ class TIRIsErrSpecialExpression extends TIRITestIsSpecialExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.errtype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_ti(ii) + `,\n${ii + s_iident}"${this.errtype}"\n${ii}}`;
     }
 }
 
@@ -1632,7 +1633,7 @@ abstract class TIRITestIsTypeExpression extends TIRTestIsExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"}`;
     }
 }
 
@@ -1716,7 +1717,7 @@ class TIRAsOkSpecialExpression extends TIRAsSpecialExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"\n${ii}}`;
     }
 }
 
@@ -1727,7 +1728,7 @@ class TIRAsErrSpecialExpression extends TIRAsSpecialExpression {
 
     
     bsqemit(ii: string): string {
-        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"TreeIR::ValidTypeKey\n${ii}}`;
+        return this.bsqemit_ae(ii) + `,\n${ii + s_iident}"${this.etype}"\n${ii}}`;
     }
 }
 
@@ -1767,7 +1768,7 @@ abstract class TIRITestAsTypeExpression extends TIRAsExpression {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_exp_il(ii) + `, "${this.ttype}"}`;
     }
 }
 
@@ -1817,12 +1818,12 @@ abstract class TIRIMemberFunctionExpression extends TIRExpression {
     bsqemit_mf(ii: string): string {
         const argl = this.args.map((arg) => arg.bsqemit(ii + s_iident));
         return this.bsqemit_exp(ii)
-        + `,\n${ii + s_iident}"${this.tkey}"TreeIR::ValidTypeKey`
-        + `,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`
-        + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`
-        + `,\n${ii + s_iident}"${this.fdecltype}"TreeIR::ValidTypeKey`
+        + `,\n${ii + s_iident}"${this.tkey}"`
+        + `,\n${ii + s_iident}"${this.fname}"`
+        + `,\n${ii + s_iident}"${this.fkey}"`
+        + `,\n${ii + s_iident}"${this.fdecltype}"`
         + `,\n${ii + s_iident}${this.thisarg.bsqemit(ii + s_iident)}`
-        + `,\n${ii + s_iident}List{${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}}`;
+        + `,\n${ii + s_iident}[${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}]`;
     }
 
     bsqemit(ii: string): string {
@@ -1853,7 +1854,7 @@ class TIRCallMemberFunctionSelfRefExpression extends TIRIMemberFunctionExpressio
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_mf(ii) + `,\n${ii + s_iident}${this.scidx},\n${ii + s_iident}"${this.thisref}"TreeIR::ValidIdentifier\n${ii}}`;
+        return this.bsqemit_mf(ii) + `,\n${ii + s_iident}${this.scidx},\n${ii + s_iident}"${this.thisref}"\n${ii}}`;
     }
 }
 
@@ -1875,10 +1876,10 @@ abstract class TIRFunctionTaskExpression extends TIRExpression {
     bsqemit_tf(ii: string): string {
         const argl = this.args.map((arg) => arg.bsqemit(ii + s_iident));
         return this.bsqemit_exp(ii)
-        + `,\n${ii + s_iident}"${this.fname}"TreeIR::ValidIdentifier`
-        + `,\n${ii + s_iident}"${this.fkey}"TreeIR::ValidInvokeKey`
-        + `,\n${ii + s_iident}"${this.tsktype}"TreeIR::ValidTypeKey`
-        + `,\n${ii + s_iident}List{${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}}`;
+        + `,\n${ii + s_iident}"${this.fname}"`
+        + `,\n${ii + s_iident}"${this.fkey}"`
+        + `,\n${ii + s_iident}"${this.tsktype}"`
+        + `,\n${ii + s_iident}[${argl.length !== 0 ? ("\n" + ii + s_iident + s_iident + argl.join(",\n" + ii + s_iident + s_iident) + "\n" + ii + s_iident) : ""}]`;
     }
 
     bsqemit(ii: string): string {
@@ -1994,11 +1995,11 @@ abstract class TIRStatement {
     }
 
     bsqemit_stmt(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`;
+        return `TreeIR::${this.tag}{\n${ii + s_iident}${sinfo_bsqemit(this.sinfo)}`;
     }
 
     bsqemit_stmt_il(ii: string): string {
-        return `${ii}TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}`;
+        return `TreeIR::${this.tag}{${sinfo_bsqemit(this.sinfo)}`;
     }
 
     abstract bsqemit(ii: string): string;
@@ -2066,7 +2067,7 @@ class TIRVarDeclareStatement extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt_il(ii) + `, "${this.vname}"TreeIR::ValidIdentifier, "${this.vtype}"TreeIR::ValidTypeKey}`;
+        return this.bsqemit_stmt_il(ii) + `, "${this.vname}", "${this.vtype}"}`;
     }
 }
 
@@ -2085,7 +2086,7 @@ class TIRVarDeclareAndAssignStatement extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.isConst ? "true" : "false"}\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}",\n${ii + s_iident}"${this.vtype}",\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}${this.isConst ? "true" : "false"}\n${ii}}`;
     }
 }
 
@@ -2102,7 +2103,7 @@ class TIRVarAssignStatement extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}",\n${ii + s_iident}"${this.vtype}",\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -2119,7 +2120,7 @@ class TIRStoreToScratch extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.exp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.vtype}",\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2136,7 +2137,7 @@ class TIRVarRefAssignFromScratch extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}",\n${ii + s_iident}"${this.vtype}",\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2151,7 +2152,7 @@ class TIRTaskRefAssignFromScratch extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.scidx}n\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vtype}",\n${ii + s_iident}${this.scidx}n\n${ii}}`;
     }
 }
 
@@ -2171,7 +2172,7 @@ abstract class TIRCallWRefStatementGeneral extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.restype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.reftype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.sidx}n\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}${this.vexp.bsqemit(ii + s_iident)},\n${ii + s_iident}"${this.restype}",\n${ii + s_iident}"${this.reftype}",\n${ii + s_iident}${this.sidx}n\n${ii}}`;
     }
 }
 
@@ -2208,7 +2209,7 @@ class TIRVariableRetypeStatement extends TIRStatement {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}"${this.newtype}"TreeIR::ValidTypeKey,\n${ii + s_iident}${this.asconv.bsqemit(ii + s_iident)}\n${ii}}`;
+        return this.bsqemit_stmt(ii) + `,\n${ii + s_iident}"${this.vname}",\n${ii + s_iident}"${this.origtype}",\n${ii + s_iident}"${this.newtype}",\n${ii + s_iident}${this.asconv.bsqemit(ii + s_iident)}\n${ii}}`;
     }
 }
 
@@ -2233,12 +2234,12 @@ class TIRVariableSCRetypeStatement extends TIRStatement {
     bsqemit(ii: string): string {
         let binfo: string = "none";
         if(this.binderinfo !== undefined) {
-            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"TreeIR::ValidIdentifier\n${ii + s_iident }]`;
+            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"\n${ii + s_iident }]`;
         }
 
         return this.bsqemit_stmt(ii) 
-            + `,\n${ii + s_iident}"${this.vname}"TreeIR::ValidIdentifier`
-            + `,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey`
+            + `,\n${ii + s_iident}"${this.vname}"`
+            + `,\n${ii + s_iident}"${this.origtype}"`
             + `,\n${ii + s_iident}${this.test.bsqemit(ii + s_iident)}`
             + `,\n${ii + s_iident}${this.asconv.bsqemit(ii + s_iident)}`
             + `,\n${ii + s_iident}${this.resexp.bsqemit(ii + s_iident)}`
@@ -2268,13 +2269,13 @@ class TIRScratchSCStatement extends TIRStatement {
     bsqemit(ii: string): string {
         let binfo: string = "none";
         if(this.binderinfo !== undefined) {
-            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"TreeIR::ValidIdentifier\n${ii + s_iident }]`;
+            binfo = `[\n${ii + s_iident + s_iident}${this.binderinfo[0].bsqemit(ii + s_iident + s_iident)},\n${ii + s_iident + s_iident}"${this.binderinfo[1]}"\n${ii + s_iident }]`;
         }
 
         return this.bsqemit_stmt(ii) 
             + `,\n${ii + s_iident}${this.sidx}n`
             + `,\n${ii + s_iident}${this.pos !== undefined ? (this.pos.toString() + "n") : "none"}`
-            + `,\n${ii + s_iident}"${this.origtype}"TreeIR::ValidTypeKey`
+            + `,\n${ii + s_iident}"${this.origtype}"`
             + `,\n${ii + s_iident}${this.test.bsqemit(ii + s_iident)}`
             + `,\n${ii + s_iident}${this.resexp.bsqemit(ii + s_iident)}`
             + `,\n${ii + s_iident}${binfo}`
@@ -2341,13 +2342,13 @@ class TIRIfStatement extends TIRStatement {
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
             + `,\n${iident}${bb[1]}n`
             + `,\n${iident}${bb[2].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[3]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[3]}"`
             + `\n${ii}]`;
         }
     }
     private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
         if(rc.length === 0) {
-            return "List{}";
+            return "[]";
         }
         else {
             const iident = ii + s_iident;
@@ -2358,7 +2359,7 @@ class TIRIfStatement extends TIRStatement {
                 + `\n${iident}}`
             );
 
-            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+            return `[\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}]`;
         }
     }
     private bsqemit_ifentry(ii: string): string {
@@ -2384,9 +2385,9 @@ class TIRIfStatement extends TIRStatement {
     private bsqemit_elifentries(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.elifentries.map((e) => TIRIfStatement.bsqemit_elifentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_elseentry(ii: string): string {
         const iident = ii + s_iident;
@@ -2435,13 +2436,13 @@ class TIRSwitchStatement extends TIRStatement {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"`
             + `\n${ii}]`;
         }
     }
     private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
         if(rc.length === 0) {
-            return "List{}";
+            return "[]";
         }
         else {
             const iident = ii + s_iident;
@@ -2452,7 +2453,7 @@ class TIRSwitchStatement extends TIRStatement {
                 + `\n${iident}}`
             );
 
-            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+            return `[\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}]`;
         }
     }
     private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
@@ -2468,9 +2469,9 @@ class TIRSwitchStatement extends TIRStatement {
     private bsqemit_clauses(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.clauses.map((e) => TIRSwitchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_default(ii: string): string {
         const iident = ii + s_iident;
@@ -2523,13 +2524,13 @@ class TIRMatchStatement extends TIRStatement {
             const iident = ii + s_iident;
             return `[`
             + `\n${iident}${bb[0].bsqemit(iident + s_iident)}`
-            + `,\n${iident}"${bb[1]}"TreeIR::ValidIdentifier`
+            + `,\n${iident}"${bb[1]}"`
             + `\n${ii}]`;
         }
     }
     private static bsqemit_recast(ii: string, rc: {vname: string, cast: TIRExpression}[]): string {
         if(rc.length === 0) {
-            return "List{}";
+            return "[]";
         }
         else {
             const iident = ii + s_iident;
@@ -2540,7 +2541,7 @@ class TIRMatchStatement extends TIRStatement {
                 + `\n${iident}}`
             );
 
-            return `List{\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}}`;
+            return `[\n${iident}${rcc.join(`,\n${iident}`)}\n${ii}]`;
         }
     }
     private static bsqemit_clauseentry(ii: string, entry: {match: TIRExpression, value: TIRScopedBlockStatement, binderinfo: [TIRExpression, string] | undefined, recasttypes: {vname: string, cast: TIRExpression}[]}): string {
@@ -2556,9 +2557,9 @@ class TIRMatchStatement extends TIRStatement {
     private bsqemit_clauses(ii: string): string {
         const iident = ii + s_iident;
 
-        return `List{`
+        return `[`
         + this.clauses.map((e) => TIRMatchStatement.bsqemit_clauseentry(iident + s_iident, e)).join(`,\n${iident}`)
-        + `\n${ii}}`;
+        + `\n${ii}]`;
     }
     private bsqemit_default(ii: string): string {
         const iident = ii + s_iident;
@@ -2807,7 +2808,7 @@ class TIRBlockStatement {
     }
 
     bsqemit(ii: string): string {
-        const ops = this.ops.length !== 0 ? ("List{" + this.ops.map((op) => op.bsqemit(ii + s_iident + s_iident)).join(",\n" + ii + s_iident + s_iident) + ii + s_iident + "}") : "List{}";
+        const ops = this.ops.length !== 0 ? ("[" + this.ops.map((op) => op.bsqemit(ii + s_iident + s_iident)).join(",\n" + ii + s_iident + s_iident) + ii + s_iident + "]") : "[]";
         return `TreeIR::BlockStatement{\n${ii + s_iident}${ops},\n${ii + s_iident}${this.isterminal}\n${ii}}`;
     }
 } 

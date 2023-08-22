@@ -177,6 +177,30 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
         return StringOps::s_removeEnd(this, s);
     }
 
+    method contains(s: String): Bool {
+        return StringOps::s_contains(this, s);
+    }
+
+    method replaceUnique(str: String, withstr: String): String 
+        requires this.contains(str);
+    {
+        return StringOps::s_replaceUnique(this, str, withstr);
+    }
+
+    method replaceUniqueTry(str: String, withstr: String): String {
+        return StringOps::s_replaceUnique(this, str, withstr);
+    }
+
+    method replaceAll(str: String, withstr: String): String
+        requires this.contains(str);
+    {
+        return StringOps::s_replaceAll(this, str, withstr);
+    }
+
+    method replaceAllTry(str: String, withstr: String): String {
+        return StringOps::s_replaceAll(this, str, withstr);
+    }
+
     function interpolate(): String = special_method;
 
     /*

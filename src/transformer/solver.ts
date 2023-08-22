@@ -2,11 +2,12 @@ import * as FS from "fs";
 import * as Path from "path";
 
 
-import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
-import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
-import { TypeChecker } from "../../frontend/typechecker/type_checker";
+import { BuildLevel, CodeFileInfo, PackageConfig } from "../frontend/build_decls";
+import { TIRAssembly } from "../frontend/tree_ir/tir_assembly";
+import { TypeChecker } from "../frontend/typechecker/type_checker";
+import { escapeString } from "../frontend/build_decls";
 
-const bosque_dir: string = Path.join(__dirname, "../../../");
+const bosque_dir: string = Path.join(__dirname, "../../");
 
 let fullargs = process.argv;
 
@@ -65,17 +66,18 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
     return [tasm as TIRAssembly, depsmap];
 }
 
-function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
+function workflowEmitToDir(into: string, usercode: PackageConfig, smtfile: string, buildlevel: BuildLevel, entrypoints: {ns: string, fname: string}[]) {
     try {
         process.stdout.write("generating assembly...\n");
         const [tasm] = generateTASM(usercode, buildlevel, entrypoints);
 
         process.stdout.write("emitting IR code...\n");
         const ircode = tasm.bsqemit("");
+        const smtcode = "\"" + escapeString(smtfile) + "\"";
         
         process.stdout.write(`writing IR code into ${into}...\n`);
         const ppth = Path.normalize(into);
-        FS.writeFileSync(ppth, ircode);
+        FS.writeFileSync(ppth, ircode + "\n\n" + smtcode);
 
     } catch(e) {
         process.stderr.write(`JS emit error -- ${e}\n`);
@@ -88,7 +90,10 @@ function buildIRDefault(into: string, srcfiles: string[]) {
     const usersrcinfo = workflowLoadUserSrc(srcfiles);
     const userpackage = new PackageConfig(["CHECK_LIBS"], usersrcinfo);
 
-    workflowEmitToDir(into, userpackage, "test", [{ns: mainNamespace, fname: mainFunction}]);
+    const smtdir = Path.join(bosque_dir, "bin/smt/bosque.smt2");
+    const smtcode = FS.readFileSync(smtdir).toString();
+
+    workflowEmitToDir(into, userpackage, smtcode, "spec", [{ns: mainNamespace, fname: mainFunction}]);
 
     process.stdout.write("done!\n");
 }

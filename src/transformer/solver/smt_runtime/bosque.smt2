@@ -423,7 +423,7 @@
 )
 
 ;;@INT_MIN, @INT_MAX, @NAT_MAX, @SLEN_MAX, @BLEN_MAX, @CSIZE_MAX
-;;V_MIN_MAX;;
+;;--V_MIN_MAX--;;
 
 (define-fun @entrypoint_cons_Bool ((ctx @HavocSequence)) (@ResultO Bool)
     (@ResultO-mk-ok (@Bool_UFCons_API ctx))
@@ -607,10 +607,10 @@
     ))
 )
 
-;;GLOBAL_DECLS;;
+;;--GLOBAL_DECLS--;;
 
-;;UF_DECLS;;
+;;--UF_DECLS--;;
 
-;;FUNCTION_DECLS;;
+;;--FUNCTION_DECLS--;;
 
-;;GLOBAL_DEFINITIONS;;
+;;--GLOBAL_DEFINITIONS--;;

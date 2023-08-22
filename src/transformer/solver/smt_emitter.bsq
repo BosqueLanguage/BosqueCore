@@ -16,14 +16,32 @@ typedef SMTParams = {
     global_definitions: String
 };
 
-export function main(asm: TreeIR::Assembly): SMTParams {
+function processSMTFile(params: SMTParams, smtcode: String): String {
+    let vmm = "(declare-const @INT_MIN Int) (assert (= @INT_MIN -255)) (declare-const @INT_MAX Int) (assert (= @INT_MAX 255)) (declare-const @NAT_MAX Int) (assert (= @NAT_MAX 255)) (declare-const @SLEN_MAX Int) (assert (= @SLEN_MAX 64)) (declare-const @BLEN_MAX Int) (assert (= @BLEN_MAX 64)) (declare-const @CSIZE_MAX Int) (assert (= @CSIZE_MAX 3))";
+
+    return smtcode
+        .replaceUnique(";;--TYPE_TAG_DECLS--;;", params.type_tag_decls)
+        .replaceUnique(";;--TYPE_TAG_DISTINCTS--;;", params.type_tag_distincts)
+        .replaceUnique(";;--KEY_TYPE_TAG_SORT--;;", params.key_type_tag_sort)
+        .replaceUnique(";;--TYPE_TAG_SUBTYPE--;;", params.type_tag_subtype)
+        .replaceUnique(";;--OO_DECLS--;;", params.oo_decls)
+        .replaceUnique(";;--OO_CONSTRUCTORS--;;", params.oo_constructors)
+        .replaceUnique(";;--TYPE_BOX_CONSTRUCTORS--;;", params.type_box_constructors)
+        .replaceUnique(";;--V_MIN_MAX--;;", vmm)
+        .replaceUnique(";;--GLOBAL_DECLS--;;", params.global_decls)
+        .replaceUnique(";;--UF_DECLS--;;", params.uf_decls)
+        .replaceUnique(";;--FUNCTION_DECLS--;;", params.function_decls)
+        .replaceUnique(";;--GLOBAL_DEFINITIONS--;;", params.global_definitions);
+}
+
+export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let flatasm = AssemblyEmitter::processAssembly(asm); //TODO should go into tree rewriter
 
     let type_tag_info = AssemblyEmitter::generateTypeTagInfo(flatasm);
     let type_decl_info = AssemblyEmitter::generateTypeDecls(flatasm);
     let function_decl_info = AssemblyEmitter::generateSMTCode(flatasm, Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
 
-    return {
+    let params = {
         type_tag_decls = type_tag_info.type_tag_decls,
         type_tag_distincts = type_tag_info.type_tag_distincts,
         key_type_tag_sort = type_tag_info.key_type_tag_sort,
@@ -36,4 +54,7 @@ export function main(asm: TreeIR::Assembly): SMTParams {
         function_decls = function_decl_info,
         global_definitions = "[NOT IMPLEMENTED]"
     };
+
+    let resolvedSMT = processSMTFile(params, smtcode);
+    return resolvedSMT;
 }
