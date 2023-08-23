@@ -16,7 +16,7 @@
 (declare-const @error-validate @ErrorKind)
 
 ;;Make sure they are all different values
-(assert (distinct @error-target @error-other @error-resource))
+(assert (distinct @error-target @error-other @error-resource @error-validate))
 
 ;;@Result datatypes
 (declare-datatypes 
@@ -161,7 +161,7 @@
 )
 
 (define-fun @Nat_checked_sub ((x Int) (y Int)) (@ResultO Int) 
-    (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-target))
+    (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-other))
 )
 
 (define-fun @BigNat_checked_trgt_sub ((x Int) (y Int)) (@ResultT Int) 
@@ -169,7 +169,7 @@
 )
 
 (define-fun @BigNat_checked_sub ((x Int) (y Int)) (@ResultO Int) 
-    (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-target))
+    (ite (<= y x) (@ResultO-mk-ok (- x y)) (@ResultO-mk-err @error-other))
 )
 
 (define-fun @Nat_checked_trgt_div ((x Int) (y Int)) (@ResultT Int) 
@@ -177,7 +177,7 @@
 )
 
 (define-fun @Nat_checked_div ((x Int) (y Int)) (@ResultO Int) 
-    (ite (= y 0) (@ResultO-mk-ok (@Nat_div x y)) (@ResultO-mk-err @error-target))
+    (ite (= y 0) (@ResultO-mk-ok (@Nat_div x y)) (@ResultO-mk-err @error-other))
 )
 
 (define-fun @BigNat_checked_trgt_div ((x Int) (y Int)) (@ResultT Int) 
@@ -185,7 +185,7 @@
 )
 
 (define-fun @BigNat_checked_div ((x Int) (y Int)) (@ResultO Int) 
-    (ite (= y 0) (@ResultO-mk-ok (@BigNat_div x y)) (@ResultO-mk-err @error-target))
+    (ite (= y 0) (@ResultO-mk-ok (@BigNat_div x y)) (@ResultO-mk-err @error-other))
 )
 
 (define-fun @Int_checked_trgt_div ((x Int) (y Int)) (@ResultT Int) 
@@ -193,7 +193,7 @@
 )
 
 (define-fun @Int_checked_div ((x Int) (y Int)) (@ResultO Int) 
-    (ite (= y 0) (@ResultO-mk-ok (@Int_div x y)) (@ResultO-mk-err @error-target))
+    (ite (= y 0) (@ResultO-mk-ok (@Int_div x y)) (@ResultO-mk-err @error-other))
 )
 
 (define-fun @BigInt_checked_trgt_div ((x Int) (y Int)) (@ResultT Int) 
@@ -201,7 +201,7 @@
 )
 
 (define-fun @BigInt_checked_div ((x Int) (y Int)) (@ResultO Int) 
-    (ite (= y 0) (@ResultO-mk-ok (@BigInt_div x y)) (@ResultO-mk-err @error-target))
+    (ite (= y 0) (@ResultO-mk-ok (@BigInt_div x y)) (@ResultO-mk-err @error-other))
 )
 
 ;;
@@ -280,7 +280,6 @@
 (declare-datatypes (
     (@None 0)
     (@Nothing 0)
-    ;;--OO_DECLS--;;
     ; Bool -> Bool
     ; Int -> Int
     ; Nat -> Int
@@ -303,6 +302,7 @@
     ; SHAContentHash -> (_ BitVec 16)
     ; LatLongCoordinate -> (@Tuple2 Float Float)
     ; Regex -> String
+    ;;--OO_DECLS--;;
     ) (
         ( (@none) ) 
         ( (@nothing) )

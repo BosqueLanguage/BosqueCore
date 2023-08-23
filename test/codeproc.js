@@ -20,10 +20,23 @@ function codegen(srcdir, dstdir) {
     execSync(`node ${genbin} --outdir ${dstdir} ${srcdir}`);
 }
 
+function invokeExecutionOnDirect(jsmain, ...args) {
+    return execSync(`node ${jsmain}`, {input: args.join(" ") + "\n", timeout: 30000}).toString().trim();
+}
+
+const retry = 2;
 function invokeExecutionOn(jsmain, ...args) {
-    const rr = execSync(`deno run ${jsmain}`, {input: args.join(" ") + "\n", timeout: 60000}).toString().trim();
-    //console.log(rr);
-    return rr;
+    let tries = 0;
+    while (tries < retry) {
+        try {
+            return execSync(`deno run ${jsmain}`, { input: args.join(" ") + "\n", timeout: 30000 }).toString().trim();
+        }
+        catch (e) {
+            tries++;
+        }
+    }
+
+    return "[--ERROR--]";
 }
 
 function cleanTest(dstdir) {

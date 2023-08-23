@@ -113,7 +113,7 @@ entity AssemblyEmitter {
         //TODO: flatten expressions -- error inducing expressions and calls are at top-level
         //TODO: inline as needed
         //TODO: ensure bodies are trees
-        //TODO: make are variable assignments unique
+        //TODO: make all variable assignments unique
 
         return asm;
     }
@@ -142,13 +142,20 @@ entity AssemblyEmitter {
             });
 
         let subtypeinfo = alltypes
-            .filter(pred(t) => TypeInfoEmitter::typeRequiresSubTypeTypeTagInfo(t));
+            .filter(pred(t) => TypeInfoEmitter::typeRequiresSubTypeTypeTagInfo(t))
+            .map<String>(fn(t) => {
+                let ttag = temitter.getTypeTag(t);
+                let stags = t.supertypes@!none.filter(pred(st) => st !== "Some"_TreeIR::TypeKey && st !== "Any"_TreeIR::TypeKey).map<String>(fn(st) => temitter.getTypeTag(flatasm.typeMap.get(st)));
+                let relations = stags.map<String>(fn(st) => String::concat(List<String>{"(assert (@subtypeof ", ttag, " ", st, "))"}));
+
+                return String::join(" ", relations);
+            });
 
         return {
             type_tag_decls = String::join("\n", tagdeclinfo.map<String>(fn(tg) => String::concat(List<String>{"(declare-const ", tg, " @TypeTag)"}))),
             type_tag_distincts = String::join("\n", tagdeclinfo),
             key_type_tag_sort = String::join("\n", korder),
-            type_tag_subtype = "[NOT IMPLEMENTED]"
+            type_tag_subtype = String::join("\n", subtypeinfo)
         };
     }
 

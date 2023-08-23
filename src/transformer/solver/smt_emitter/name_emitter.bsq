@@ -3,15 +3,15 @@ namespace SMTEmit;
 import TreeIR;
 
 entity SMTEncodingSymbol {
-    const coloncolon: String = "@cc-";
-    const comma: String = "@c-";
-    const commaspace: String = "@c_-";
-    const lparen: String = "@lp-";
-    const rparen: String = "@rp-";
-    const lbracket: String = "@lb-";
-    const rbracket: String = "@rb-";
-    const langle: String = "@la-";
-    const randle: String = "@ra-";
+    const coloncolon: String = "-cc-";
+    const comma: String = "-c-";
+    const lbrace: String = "-lc-";
+    const rbrace: String = "-rc-";
+    const lbracket: String = "-lb-";
+    const rbracket: String = "-rb-";
+    const langle: String = "-la-";
+    const rangle: String = "-ra-";
+    const space: String = "";
 }
 
 function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
@@ -19,8 +19,20 @@ function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
 }
 
 function smtifyType(tkey: TreeIR::TypeKey): String {
-    //eplace special characters with @enc@
-    return tkey.value().value();
+    //replace special characters with @enc@
+    let rawname = tkey.value().value();
+    let name = rawname
+        .replaceAllTry("::", SMTEncodingSymbol::coloncolon)
+        .replaceAllTry(",", SMTEncodingSymbol::comma)
+        .replaceAllTry("<", SMTEncodingSymbol::langle)
+        .replaceAllTry(">", SMTEncodingSymbol::rangle)
+        .replaceAllTry("[", SMTEncodingSymbol::lbracket)
+        .replaceAllTry("]", SMTEncodingSymbol::rbracket)
+        .replaceAllTry("{", SMTEncodingSymbol::lbrace)
+        .replaceAllTry("}", SMTEncodingSymbol::rbrace)
+        .replaceAllTry(" ", SMTEncodingSymbol::space);
+
+    return name;
 }
 
 function smtifyIdentifier(ii: TreeIR::Identifier): String {
@@ -28,8 +40,20 @@ function smtifyIdentifier(ii: TreeIR::Identifier): String {
 }
 
 function smtifyInvokeKey(ii: TreeIR::InvokeKey): String {
-    //TODO: replace special characters with @enc@
-    return ii.value().value();
+    //replace special characters with @enc@
+    let rawname = ii.value().value();
+    let name = rawname
+        .replaceAllTry("::", SMTEncodingSymbol::coloncolon)
+        .replaceAllTry(",", SMTEncodingSymbol::comma)
+        .replaceAllTry("<", SMTEncodingSymbol::langle)
+        .replaceAllTry(">", SMTEncodingSymbol::rangle)
+        .replaceAllTry("[", SMTEncodingSymbol::lbracket)
+        .replaceAllTry("]", SMTEncodingSymbol::rbracket)
+        .replaceAllTry("{", SMTEncodingSymbol::lbrace)
+        .replaceAllTry("}", SMTEncodingSymbol::rbrace)
+        .replaceAllTry(" ", SMTEncodingSymbol::space);
+
+    return name;
 }
 
 function emitTypeName(tkey: TreeIR::TypeKey): String {
