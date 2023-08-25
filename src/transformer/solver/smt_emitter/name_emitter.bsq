@@ -56,7 +56,13 @@ function smtifyInvokeKey(ii: TreeIR::InvokeKey): String {
     return name;
 }
 
-typedef SMTTypeNameInfo = {smtname: String, tagname: String, consname: String?, boxname: String, unboxname: String};
+typedef SMTTypeNameInfo = {
+    smtname: String, 
+    tagname: String, 
+    consname: String?, 
+    boxname: String, 
+    unboxname: String
+};
 
 entity NameEmitter {
     field assembly: TreeIR::Assembly;

@@ -72,38 +72,40 @@ entity TypeInfoEmitter {
         }
     }
 
-    method emitEnumEntityTypeDecl(t: TreeIR::EnumEntityType): TypeDeclInfo {
-        return {name="[ENUM]", consop="[ENUM_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    method emitEnumEntityTypeDeclAndConstructor(t: TreeIR::EnumEntityType): {decl: String, cons: String} {
+        let eninfo = this.nemitter.emitTypeNameInfo(t);
+
+        let tdecl = String::concat(List<String>{"(", eninfo.smtname, " 0)"});
+        let tcons = String::concat(List<String>{"( (", eninfo.consname@<String>, " (", eninfo.smtname , "-value Nat)) )"});
+
+        return {decl=tdecl, cons=tcons};
     }
 
-    method emitTypedeclEntityTypeDecl(t: TreeIR::TypedeclEntityType): TypeDeclInfo {
-        return {name="[TYPEDECL]", consop="[TYPEDECL_cons]", consargs=List<{cname: String, ctype: String}>{}};
-    }
-
-    method emitObjectEntityTypeDecl(t: TreeIR::ObjectEntityType): TypeDeclInfo {
+    method emitObjectEntityTypeDeclAndConstructor(t: TreeIR::ObjectEntityType): {decl: String, cons: String} {
         return {name="[OBJECT]", consop="[OBJECT_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    method emitTaskTypeDecl(t: TreeIR::TaskType): TypeDeclInfo {
-        return {name="[TASK]", consop="[TASK_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    method emitMapEntryEntityTypeDeclAndConstructor(t: TreeIR::MapEntryEntityType): {decl: String, cons: String} {
+        return {name="[MAPENTRY]", consop="[MAPENTRY_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    function typeRequiresOODeclInfo(t: TreeIR::Type): Bool {
-        match(t) {
-            TreeIR::EnumEntityType => return true;
-            | TreeIR::TypedeclEntityType => return true;
-            | TreeIR::ObjectEntityType => return true;
-            | TreeIR::TaskType => return true;
-            | _ => return false;
-        }
+    method emitTupleTypeDeclAndConstructor(t: TreeIR::TupleType): {decl: String, cons: String} {
+        return {name="[TUPLE]", consop="[TUPLE_cons]", consargs=List<{cname: String, ctype: String}>{}};
     }
 
-    method generateOOSMTDecl(t: TreeIR::Type): TypeDeclInfo {
+    method emitRecordTypeDeclAndConstructor(t: TreeIR::RecordType): {decl: String, cons: String} {
+        return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
+    }
+
+    method generateOOSMTDeclAndConstructor(t: TreeIR::Type): {decl: String, cons: String} {
         match(t) {
-            TreeIR::EnumEntityType => return this.emitEnumEntityTypeDecl($);
-            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityTypeDecl($);
-            | TreeIR::ObjectEntityType => return this.emitObjectEntityTypeDecl($);
-            | TreeIR::TaskType => return this.emitTaskTypeDecl($);
+            TreeIR::ObjectEntityType => return this.emitObjectEntityTypeDeclAndConstructor($);
+            | TreeIR::EnumEntityType => return this.emitEnumEntityTypeDeclAndConstructor($);
+            | TreeIR::MapEntryEntityType => return this.emitMapEntryEntityTypeDeclAndConstructor($);
+            | TreeIR::TupleType => return this.emitTupleTypeDeclAndConstructor($);
+            | TreeIR::RecordType => return this.emitRecordTypeDeclAndConstructor($);
+            | TreeIR::EListType => return {decl="[ELIST]", cons="[ELIST-mk]"};
+            | TreeIR::TaskType => return {decl="[TASK]", cons="[TASK-mk]"};
         }
     }
 
@@ -201,12 +203,12 @@ entity AssemblyEmitter {
     method generateTypeDecls(): {oo_decls: String, oo_constructors: String} {
         let alltypes = this.assembly.typeMap.values();
 
-        let oodecltypes = alltypes.filter(pred(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t));
-        let oodeclinfo = oodecltypes.map<TypeDeclInfo>(fn(t) => this.temitter.generateOOSMTDecl(t));
+        let oodecltypes = alltypes.filter(pred(t) => TypeInfoEmitter::typeRequiresConstructorInfo(t));
+        let oodeclinfo = oodecltypes.map<TypeDeclInfo>(fn(t) => this.temitter.generateOOSMTDeclAndConstructor(t));
         //let ooconsinfo = oodecltypes.map  
 
         return {
-            oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"}))),
+            oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.decl, " 0)"}))),
             oo_constructors = "[NOT IMPLEMENTED]"
         };
     }
