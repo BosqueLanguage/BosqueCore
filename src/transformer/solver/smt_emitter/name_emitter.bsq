@@ -18,7 +18,7 @@ function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
     return ns.value();
 }
 
-function smtifyType(tkey: TreeIR::TypeKey): String {
+function smtifyTypeKey(tkey: TreeIR::TypeKey): String {
     //replace special characters with @enc@
     let rawname = tkey.value().value();
     let name = rawname
@@ -56,53 +56,306 @@ function smtifyInvokeKey(ii: TreeIR::InvokeKey): String {
     return name;
 }
 
-function emitTypeName(tkey: TreeIR::TypeKey): String {
-    //TODO: mapping from types to special names and/or cleaning
-    if(tkey === "None"_TreeIR::TypeKey) {
-        return "None";
-    }
-    elif(tkey === "Bool"_TreeIR::TypeKey) {
-        return "Bool";
-    }
-    elif(tkey === "Int"_TreeIR::TypeKey) {
-        return "Int";
-    }
-    elif(tkey === "Nat"_TreeIR::TypeKey) {
-        return "Int";
-    }
-    elif(tkey === "BigInt"_TreeIR::TypeKey) {
-        return "Int";
-    }
-    elif(tkey === "BigNat"_TreeIR::TypeKey) {
-        return "Int";
-    }
-    elif(tkey === "Rational"_TreeIR::TypeKey) {
-        return "@Rational";
-    }
-    elif(tkey === "Float"_TreeIR::TypeKey) {
-        return "@Float";
-    }
-    elif(tkey === "Decimal"_TreeIR::TypeKey) {
-        return "@Decimal";
-    }
-    elif(tkey === "String"_TreeIR::TypeKey) {
-        return "String";
-    }
-    elif(tkey === "ASCIIString"_TreeIR::TypeKey) {
-        return "String";
-    }
-    elif(tkey === "ByteBuffer"_TreeIR::TypeKey) {
-        return "(Seq (_ BitVec 8))";
+typedef SMTTypeNameInfo = {smtname: String, tagname: String, consname: String?, boxname: String, unboxname: String};
+
+entity NameEmitter {
+    field assembly: TreeIR::Assembly;
+
+    method emitObjectEntityTypeNameInfo_Helper(tt: TreeIR::ObjectEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
     }
 
-    else {
-        //let ttype = this.assembly.typeMap.get(tt);
-        //match on type options here
-        return smtifyType(tkey);
-    }
-}
+    method emitTypedeclEntityTypeNameInfo_Helper(tt: TreeIR::TypedeclEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        let utype = this.assembly.typeMap.get(tt.representation);
+        let utninfo = this.emitTypeNameInfo(utype);
 
-function typeEncodedAsUnion(tt: TreeIR::TypeKey): Bool {
-    let ttype = this.assembly.typeMap.get(tt);
-    return (ttype?<TreeIR::ConceptType> || ttype?<TreeIR::UnionType>);
+        return {smtname=utninfo.smtname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitEnumEntityTypeNameInfo_Helper(tt: TreeIR::EnumEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        return {smtname="Int", tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitPrimitiveInternalEntityTypeNameInfo_Helper(tt: TreeIR::PrimitiveInternalEntityType): SMTTypeNameInfo {
+        let tkey = tt.tkey;
+
+        if(tkey === "None"_TreeIR::TypeKey) {
+            return {smtname="@None", tagname="@TypeTag-None", consname=none, boxname="@Term-box-None", unboxname="@Term-unbox-None"};
+        }
+        elif(tkey === "Nothing"_TreeIR::TypeKey) {
+            return {smtname="@Nothing", tagname="@TypeTag-Nothing", consname=none, boxname="@Term-box-Nothing", unboxname="@Term-unbox-Nothing"};
+        }
+        elif(tkey === "Bool"_TreeIR::TypeKey) {
+            return {smtname="Bool", tagname="@TypeTag-Bool", consname=none, boxname="@Term-box-Bool", unboxname="@Term-unbox-Bool"};
+        }
+        elif(tkey === "Int"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-Int", consname=none, boxname="@Term-box-Int", unboxname="@Term-unbox-Int"};
+        }
+        elif(tkey === "Nat"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-Nat", consname=none, boxname="@Term-box-Nat", unboxname="@Term-unbox-Nat"};
+        }
+        elif(tkey === "BigInt"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-BigInt", consname=none, boxname="@Term-box-BigInt", unboxname="@Term-unbox-BigInt"};
+        }
+        elif(tkey === "BigNat"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-BigNat", consname=none, boxname="@Term-box-BigNat", unboxname="@Term-unbox-BigNat"};
+        }
+        elif(tkey === "Rational"_TreeIR::TypeKey) {
+            return {smtname="@Rational", tagname="@TypeTag-Rational", consname=none, boxname="@Term-box-Rational", unboxname="@Term-unbox-Rational"};
+        }
+        elif(tkey === "Float"_TreeIR::TypeKey) {
+            return {smtname="@Float", tagname="@TypeTag-Float", consname=none, boxname="@Term-box-Float", unboxname="@Term-unbox-Float"};
+        }
+        elif(tkey === "Decimal"_TreeIR::TypeKey) {
+            return {smtname="@Decimal", tagname="@TypeTag-Decimal", consname=none, boxname="@Term-box-Decimal", unboxname="@Term-unbox-Decimal"};
+        }
+        elif(tkey === "String"_TreeIR::TypeKey) {
+            return {smtname="String", tagname="@TypeTag-String", consname=none, boxname="@Term-box-String", unboxname="@Term-unbox-String"};
+        }
+        elif(tkey === "ASCIIString"_TreeIR::TypeKey) {
+            return {smtname="String", tagname="@TypeTag-ASCIIString", consname=none, boxname="@Term-box-ASCIIString", unboxname="@Term-unbox-ASCIIString"};
+        }
+        elif(tkey === "ByteBuffer"_TreeIR::TypeKey) {
+            return {smtname="(Seq (_ BitVec 8))", tagname="@TypeTag-ByteBuffer", consname=none, boxname="@Term-box-ByteBuffer", unboxname="@Term-unbox-ByteBuffer"};
+        }
+        elif(tkey === "DateTime"_TreeIR::TypeKey) {
+            return {smtname="@IdealDateTime", tagname="@TypeTag-DateTime", consname=none, boxname="@Term-box-DateTime", unboxname="@Term-unbox-DateTime"};
+        }
+        elif(tkey === "UTCDateTime"_TreeIR::TypeKey) {
+            return {smtname="@IdealDateTime", tagname="@TypeTag-UTCDateTime", consname=none, boxname="@Term-box-UTCDateTime", unboxname="@Term-unbox-UTCDateTime"};
+        }
+        elif(tkey === "PlainDate"_TreeIR::TypeKey) {
+            return {smtname="@IdealDateTime", tagname="@TypeTag-PlainDate", consname=none, boxname="@Term-box-PlainDate", unboxname="@Term-unbox-PlainDate"};
+        }
+        elif(tkey === "PlainTime"_TreeIR::TypeKey) {
+            return {smtname="@IdealDateTime", tagname="@TypeTag-PlainTime", consname=none, boxname="@Term-box-PlainTime", unboxname="@Term-unbox-PlainTime"};
+        }
+        elif(tkey === "TickTime"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-TickTime", consname=none, boxname="@Term-box-TickTime", unboxname="@Term-unbox-TickTime"};
+        }
+        elif(tkey === "LogicalTime"_TreeIR::TypeKey) {
+            return {smtname="Int", tagname="@TypeTag-LogicalTime", consname=none, boxname="@Term-box-LogicalTime", unboxname="@Term-unbox-LogicalTime"};
+        }
+        elif(tkey === "ISOTimeStamp"_TreeIR::TypeKey) {
+            return {smtname="@IdealDateTime", tagname="@TypeTag-ISOTimeStamp", consname=none, boxname="@Term-box-ISOTimeStamp", unboxname="@Term-unbox-ISOTimeStamp"};
+        }
+        elif(tkey === "UUIDv4"_TreeIR::TypeKey) {
+            return {smtname="String", tagname="@TypeTag-UUIDv4", consname=none, boxname="@Term-box-UUIDv4", unboxname="@Term-unbox-UUIDv4"};
+        }
+        elif(tkey === "UUIDv7"_TreeIR::TypeKey) {
+            return {smtname="String", tagname="@TypeTag-UUIDv7", consname=none, boxname="@Term-box-UUIDv7", unboxname="@Term-unbox-UUIDv7"};
+        }
+        elif(tkey === "SHAContentHash"_TreeIR::TypeKey) {
+            return {smtname="(_ BitVec 16)", tagname="@TypeTag-SHAContentHash", consname=none, boxname="@Term-box-SHAContentHash", unboxname="@Term-unbox-SHAContentHash"};
+        }
+        elif(tkey === "LatLongCoordinate"_TreeIR::TypeKey) {
+            return {smtname="@LatLongCoordinate", tagname="@TypeTag-LatLongCoordinate", consname=none, boxname="@Term-box-LatLongCoordinate", unboxname="@Term-unbox-LatLongCoordinate"};
+        }
+        else {
+            _debug(tkey);
+            
+            assert(tkey === "Regex"_TreeIR::TypeKey);
+            return {smtname="String", tagname="@TypeTag-Regex", consname=none, boxname="@Term-box-Regex", unboxname="@Term-unbox-Regex"};
+        }
+    }
+
+    method emitStringOfEntityTypeNameInfo_Helper(tt: TreeIR::StringOfEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="String", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitASCIIStringOfEntityTypeNameInfo_Helper(tt: TreeIR::ASCIIStringOfEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="String", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitPathEntityTypeNameInfo_Helper(tt: TreeIR::PathEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="String", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitPathFragmentEntityTypeNameInfo_Helper(tt: TreeIR::PathFragmentEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="String", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitPathGlobEntityTypeNameInfo_Helper(tt: TreeIR::PathGlobEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="String", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitOkEntityTypeNameInfo_Helper(tt: TreeIR::OkEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let utype = this.assembly.typeMap.get(tt.typeT);
+        let utninfo = this.emitTypeNameInfo(utype);
+
+        return {smtname=utninfo.smtname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitErrEntityTypeNameInfo_Helper(tt: TreeIR::ErrEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let utype = this.assembly.typeMap.get(tt.typeE);
+        let utninfo = this.emitTypeNameInfo(utype);
+
+        return {smtname=utninfo.smtname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitSomethingEntityTypeNameInfo_Helper(tt: TreeIR::SomethingEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let utype = this.assembly.typeMap.get(tt.typeT);
+        let utninfo = this.emitTypeNameInfo(utype);
+
+        return {smtname=utninfo.smtname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitMapEntryEntityTypeNameInfo_Helper(tt: TreeIR::MapEntryEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey).prepend("@MapEntry-");
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitHavocEntityTypeNameInfo_Helper(tt: TreeIR::HavocEntityType): SMTTypeNameInfo {
+        return {smtname="@HavocSequence", tagname="@TypeTag-HavocSequence", consname=none, boxname="@Term-box-NA", unboxname="@Term-unbox-NA"};
+    }
+
+    method emitListEntityTypeNameInfo_Helper(tt: TreeIR::ListEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let ttype = this.assembly.typeMap.get(tt.typeT);
+        let ttninfo = this.emitTypeNameInfo(ttype);
+
+        return {smtname=String::concat(List<String>{"(Seq ", ttninfo.smtname, ")"}) , tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitStackEntityTypeNameInfo_Helper(tt: TreeIR::StackEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let ttype = this.assembly.typeMap.get(tt.typeT);
+        let ttninfo = this.emitTypeNameInfo(ttype);
+
+        return {smtname=String::concat(List<String>{"(Seq ", ttninfo.smtname, ")"}) , tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitQueueEntityTypeNameInfo_Helper(tt: TreeIR::QueueEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let ttype = this.assembly.typeMap.get(tt.typeT);
+        let ttninfo = this.emitTypeNameInfo(ttype);
+
+        return {smtname=String::concat(List<String>{"(Seq ", ttninfo.smtname, ")"}) , tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitSetEntityTypeNameInfo_Helper(tt: TreeIR::SetEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let ttype = this.assembly.typeMap.get(tt.typeT);
+        let ttninfo = this.emitTypeNameInfo(ttype);
+
+        return {smtname=String::concat(List<String>{"(Seq ", ttninfo.smtname, ")"}) , tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitMapEntityTypeNameInfo_Helper(tt: TreeIR::MapEntityType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+
+        let etype = this.assembly.typeMap.get(tt.typeEntry);
+        let etninfo = this.emitTypeNameInfo(etype);
+
+        return {smtname=String::concat(List<String>{"(Seq ", etninfo.smtname, ")"}) , tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitTaskTypeNameInfo_Helper(tt: TreeIR::TaskType): SMTTypeNameInfo {
+        return {smtname="@Task", tagname="@TypeTag-Task-NA", consname="@Task-mk-NA", boxname="@Term-box-Task-NA", unboxname="@Term-unbox-Task-NA"};
+    }
+
+    method emitConceptTypeNameInfo_Helper(tt: TreeIR::ConceptType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="@Term", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname="[CONCEPT-NA]", unboxname=ttname.prepend("[CONCEPT-NA]")};
+    }
+
+    method emitConceptSetTypeNameInfo_Helper(tt: TreeIR::ConceptSetType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey);
+        return {smtname="@Term", tagname=ttname.prepend("@TypeTag-"), consname=none, boxname="[CONCEPT_SET-NA]", unboxname=ttname.prepend("[CONCEPT_SET-NA]")};
+    }
+
+    method emitTupleTypeNameInfo_Helper(tt: TreeIR::TupleType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey).prepend("@Tuple-");
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitRecordTypeNameInfo_Helper(tt: TreeIR::RecordType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey).prepend("@Record-");
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=ttname.append("-mk"), boxname=ttname.prepend("@Term-box-"), unboxname=ttname.prepend("@Term-unbox-")};
+    }
+
+    method emitUnionTypeNameInfo_Helper(tt: TreeIR::UnionType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey).prepend("@Union-");
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("[UNION-NA]"), unboxname=ttname.prepend("[UNION-NA]")};
+    }
+
+    method emitEListTypeNameInfo_Helper(tt: TreeIR::EListType): SMTTypeNameInfo {
+        let ttname = smtifyTypeKey(tt.tkey).prepend("@EList-");
+        return {smtname=ttname, tagname=ttname.prepend("@TypeTag-"), consname=none, boxname=ttname.prepend("[ELIST-NA]"), unboxname=ttname.prepend("[ELIST-NA]")};
+    }
+
+    method emitTypeNameInfo(tt: TreeIR::Type): SMTTypeNameInfo {     
+        match(tt) {
+            TreeIR::ObjectEntityType => return this.emitObjectEntityTypeNameInfo_Helper($);
+            | TreeIR::TypedeclEntityType => return this.emitTypedeclEntityTypeNameInfo_Helper($);
+            | TreeIR::EnumEntityType => return this.emitEnumEntityTypeNameInfo_Helper($);
+            | TreeIR::PrimitiveInternalEntityType => return this.emitPrimitiveInternalEntityTypeNameInfo_Helper($);
+            | TreeIR::StringOfEntityType => return this.emitStringOfEntityTypeNameInfo_Helper($);
+            | TreeIR::ASCIIStringOfEntityType => return this.emitASCIIStringOfEntityTypeNameInfo_Helper($);
+            | TreeIR::PathEntityType => return this.emitPathEntityTypeNameInfo_Helper($);
+            | TreeIR::PathFragmentEntityType => return this.emitPathFragmentEntityTypeNameInfo_Helper($);
+            | TreeIR::PathGlobEntityType => return this.emitPathGlobEntityTypeNameInfo_Helper($);
+            | TreeIR::OkEntityType => return this.emitOkEntityTypeNameInfo_Helper($);
+            | TreeIR::ErrEntityType => return this.emitErrEntityTypeNameInfo_Helper($);
+            | TreeIR::SomethingEntityType => return this.emitSomethingEntityTypeNameInfo_Helper($);
+            | TreeIR::MapEntryEntityType => return this.emitMapEntryEntityTypeNameInfo_Helper($);
+            | TreeIR::HavocEntityType => return this.emitHavocEntityTypeNameInfo_Helper($);
+            | TreeIR::ListEntityType => return this.emitListEntityTypeNameInfo_Helper($);
+            | TreeIR::StackEntityType => return this.emitStackEntityTypeNameInfo_Helper($);
+            | TreeIR::QueueEntityType => return this.emitQueueEntityTypeNameInfo_Helper($);
+            | TreeIR::SetEntityType => return this.emitSetEntityTypeNameInfo_Helper($);
+            | TreeIR::ConceptType => return this.emitConceptTypeNameInfo_Helper($);
+            | TreeIR::ConceptSetType => return this.emitConceptSetTypeNameInfo_Helper($);
+            | TreeIR::TupleType => return this.emitTupleTypeNameInfo_Helper($);
+            | TreeIR::RecordType => return this.emitRecordTypeNameInfo_Helper($);
+            | TreeIR::UnionType => return this.emitUnionTypeNameInfo_Helper($);
+            | TreeIR::EListType => return this.emitEListTypeNameInfo_Helper($);
+        }
+    }
+
+    method emitFieldAccessorName(tt: TreeIR::Type, ii: TreeIR::FieldKey): String {
+        let ff = this.assembly.fieldMap.get(ii);
+        let tn = smtifyTypeKey(tt.tkey);
+
+        return tn.append("-").append(ff.name.value());
+    }
+
+    method emitPropertyAccessorName(tt: TreeIR::Type, ii: TreeIR::Identifier): String {
+        let tn = smtifyTypeKey(tt.tkey).prepend("@Record-");
+        return tn.append("-").append(ii.value());
+    }
+
+    method emitMapEntryKeyAccessorName(tt: TreeIR::Type): String {
+        let tn = smtifyTypeKey(tt.tkey).prepend("@MapEntry-");
+        return tn.append("-key");
+    }
+
+    method emitMapEntryValueAccessorName(tt: TreeIR::Type): String {
+        let tn = smtifyTypeKey(tt.tkey).prepend("@MapEntry-");
+        return tn.append("-value");
+    }
+
+    method emitIndexAccessorName(tt: TreeIR::Type, ii: Nat): String {
+        let tn = smtifyTypeKey(tt.tkey).prepend("@Tuple-");
+        return tn.append("-").append(String::fromNat(ii));
+    }
 }

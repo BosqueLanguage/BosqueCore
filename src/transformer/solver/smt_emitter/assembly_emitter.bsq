@@ -8,11 +8,23 @@ typedef TypeDeclInfo = {
     consargs: List<{cname: String, ctype: String}>
 };
 
+function typeEncodedAsUnion(tt: TreeIR::TypeKey): Bool {
+    let ttype = this.assembly.typeMap.get(tt);
+    return (ttype?<TreeIR::ConceptType> || ttype?<TreeIR::UnionType>);
+}
+
 entity TypeInfoEmitter {
     field assembly: TreeIR::Assembly;
+    field nemitter: NameEmitter;
 
-    method getTypeTag(t: TreeIR::Type): String {
-        return String::concat(List<String>{"@TypeTag-", smtifyType(t.tkey)});
+    method getSMTTypeTag(t: TreeIR::Type | TreeIR::TypeKey): String {
+        let ttype = if <TreeIR::Type> (t) then $ else this.assembly.typeMap.get($);
+        return this.nemitter.emitTypeNameInfo(ttype).tagname;
+    }
+
+    method getSMTTypeName(t: TreeIR::Type | TreeIR::TypeKey): String {
+        let ttype = if <TreeIR::Type> (t) then $ else this.assembly.typeMap.get($);
+        return this.nemitter.emitTypeNameInfo(ttype).smtname;
     }
 
     function typeRequiresTagInfo(t: TreeIR::Type): Bool {
@@ -34,6 +46,30 @@ entity TypeInfoEmitter {
         }
 
         return t.supertypes@!none.someOf(pred(st) => st !== "Any"_TreeIR::TypeKey && st !== "Some"_TreeIR::TypeKey);
+    }
+
+    function typeRequiresConstructorInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::ObjectEntityType => return true;
+            | TreeIR::EnumEntityType => return true;
+            | TreeIR::MapEntryEntityType => return true;
+            | TreeIR::TupleType => return true;
+            | TreeIR::RecordType => return true;
+            | TreeIR::EListType => return true;
+            | _ => return false;
+        }
+    }
+
+    function typeRequiresBoxingInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::PrimitiveInternalEntityType => return false;
+            | TreeIR::HavocEntityType => return false;
+            | TreeIR::TaskType => return false;
+            | TreeIR::ConceptType => return false;
+            | TreeIR::ConceptSetType => return false;
+            | TreeIR::UnionType => return false;
+            | _ => return true;
+        }
     }
 
     method emitEnumEntityTypeDecl(t: TreeIR::EnumEntityType): TypeDeclInfo {
@@ -108,6 +144,10 @@ entity TypeInfoEmitter {
 }
 
 entity AssemblyEmitter {
+    field assembly: TreeIR::Assembly;
+    field nemitter: NameEmitter;
+    field temitter: TypeInfoEmitter;
+
     function processAssembly(asm: TreeIR::Assembly): TreeIR::Assembly {
         //TODO: explicitly place code -- put validation/pre/post code in the right places
         //TODO: flatten expressions -- error inducing expressions and calls are at top-level
@@ -118,23 +158,22 @@ entity AssemblyEmitter {
         return asm;
     }
 
-    function generateTypeTagInfo(flatasm: TreeIR::Assembly): {type_tag_decls: String, type_tag_distincts: String, key_type_tag_sort: String, type_tag_subtype: String} {    
-        let temitter = TypeInfoEmitter{flatasm};
-        let alltypes = flatasm.typeMap.values();
+    method generateTypeTagInfo(): {type_tag_decls: String, type_tag_distincts: String, key_type_tag_sort: String, type_tag_subtype: String} {    
+        let alltypes = this.assembly.typeMap.values();
 
         let tagdeclinfo = alltypes
             .filter(pred(t) => TypeInfoEmitter::typeRequiresTagInfo(t))
-            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .map<String>(fn(t) => this.temitter.getSMTTypeTag(t))
             .keySort();
 
         let keytaginfo = alltypes
             .filter(pred(t) => TypeInfoEmitter::typeRequiresKeyTypeTagInfo(t))
-            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .map<String>(fn(t) => this.temitter.getSMTTypeTag(t))
             .keySort();
         
         let korder = alltypes
             .filter(pred(t) => TypeInfoEmitter::typeRequiresKeyTypeTagInfo(t) && !t?<TreeIR::PrimitiveInternalEntityType>)
-            .map<String>(fn(t) => temitter.getTypeTag(t))
+            .map<String>(fn(t) => this.temitter.getSMTTypeTag(t))
             .keySort()
             .mapIdx<String>(fn(kt, ii) => {
                 let ltt = if (ii == 0n) then "@TypeTag-SHAContentHash" else keytaginfo.get(ii - 1n);
@@ -144,8 +183,8 @@ entity AssemblyEmitter {
         let subtypeinfo = alltypes
             .filter(pred(t) => TypeInfoEmitter::typeRequiresSubTypeTypeTagInfo(t))
             .map<String>(fn(t) => {
-                let ttag = temitter.getTypeTag(t);
-                let stags = t.supertypes@!none.filter(pred(st) => st !== "Some"_TreeIR::TypeKey && st !== "Any"_TreeIR::TypeKey).map<String>(fn(st) => temitter.getTypeTag(flatasm.typeMap.get(st)));
+                let ttag = this.temitter.getSMTTypeTag(t);
+                let stags = t.supertypes@!none.filter(pred(st) => st !== "Some"_TreeIR::TypeKey && st !== "Any"_TreeIR::TypeKey).map<String>(fn(st) => this.temitter.getSMTTypeTag(st));
                 let relations = stags.map<String>(fn(st) => String::concat(List<String>{"(assert (@subtypeof ", ttag, " ", st, "))"}));
 
                 return String::join(" ", relations);
@@ -159,29 +198,31 @@ entity AssemblyEmitter {
         };
     }
 
-    function generateTypeDecls(flatasm: TreeIR::Assembly): {oo_decls: String, oo_constructors: String} {
-        let temitter = TypeInfoEmitter{flatasm};
-        let alltypes = flatasm.typeMap.values();
+    method generateTypeDecls(): {oo_decls: String, oo_constructors: String} {
+        let alltypes = this.assembly.typeMap.values();
 
-        let oodeclinfo = alltypes
-            .filter(pred(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t))
-            .map<TypeDeclInfo>(fn(t) => temitter.generateOOSMTDecl(t));
-            
+        let oodecltypes = alltypes.filter(pred(t) => TypeInfoEmitter::typeRequiresOODeclInfo(t));
+        let oodeclinfo = oodecltypes.map<TypeDeclInfo>(fn(t) => this.temitter.generateOOSMTDecl(t));
+        //let ooconsinfo = oodecltypes.map  
+
         return {
             oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.name, " 0)"}))),
             oo_constructors = "[NOT IMPLEMENTED]"
         };
     }
 
-    function generateSMTCode(flatasm: TreeIR::Assembly, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
-        let idecls = flatasm.invokeMap.mapFlat<String>(fn(k, i) => {
+    method generateSMTCode(invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
+        let idecls = this.assembly.invokeMap.mapFlat<String>(fn(k, i) => {
             let iname = smtifyInvokeKey(i.invkey);
             let rtype = i.resultType;
             let rerr = if(invokeResultErrMap.has(i.invkey)) then invokeResultErrMap.get(i.invkey) else TreeIR::ErrorKind::safe;
-            let bemitter = BodyEmitter{flatasm, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
+            let bemitter = BodyEmitter{this.assembly, this.nemitter, this.temitter, i.srcFile, -1i, invokeResultErrMap, rtype, rerr};
             
             let args = i.params.map<String>(fn(p) => {
-                return String::concat(List<String>{"(", p.name.value().value(), " ", emitTypeName(p.type), ")"});
+                let pname = p.name.value().value();
+                let ptype = this.temitter.getSMTTypeName(p.type);
+
+                return String::concat(List<String>{"(", pname, " ", ptype, ")"});
             });
 
             let body = match (i) {
@@ -194,7 +235,8 @@ entity AssemblyEmitter {
                 return "";
             }
             else {
-                return String::concat(List<String>{"(define-fun ", iname, " (", String::join(" ", args), ") ", emitTypeName(rtype), "\n", body, "\n)"});
+                let smtrtype = this.temitter.getSMTTypeName(rtype);
+                return String::concat(List<String>{"(define-fun ", iname, " (", String::join(" ", args), ") ", smtrtype, "\n", body, "\n)"});
             }
         });
 

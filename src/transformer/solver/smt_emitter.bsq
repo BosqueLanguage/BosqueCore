@@ -36,10 +36,14 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
 
 export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let flatasm = AssemblyEmitter::processAssembly(asm); //TODO should go into tree rewriter
+    
+    let nemitter = NameEmitter{flatasm};
+    let temitter = TypeInfoEmitter{flatasm, nemitter};
+    let asmemitter = AssemblyEmitter{flatasm, nemitter, temitter};
 
-    let type_tag_info = AssemblyEmitter::generateTypeTagInfo(flatasm);
-    let type_decl_info = AssemblyEmitter::generateTypeDecls(flatasm);
-    let function_decl_info = AssemblyEmitter::generateSMTCode(flatasm, Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
+    let type_tag_info = asmemitter.generateTypeTagInfo();
+    let type_decl_info = asmemitter.generateTypeDecls();
+    let function_decl_info = asmemitter.generateSMTCode(Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
 
     let params = {
         type_tag_decls = type_tag_info.type_tag_decls,

@@ -17,6 +17,8 @@ function extractLiteralASCIIStringValue(str: String, unescape: Bool): String {
 
 entity BodyEmitter {
     field assembly: TreeIR::Assembly;
+    field nemitter: NameEmitter;
+    field temitter: TypeInfoEmitter;
 
     field file: String;
 
@@ -214,7 +216,7 @@ entity BodyEmitter {
     }
 
     method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): String {
-        return String::concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
+        return String::concat(List<String>{smtifyTypeKey(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
     }
 
     method emitAccessVariableExpression(exp: TreeIR::AccessVariableExpression): [String, ArgExpErrorKind] {

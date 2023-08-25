@@ -1063,6 +1063,7 @@ class TIRMapEntityType extends TIRPrimitiveCollectionEntityType {
         return this.bsqemit_collection(ii, "MapEntityType")
         + `,\n${ii + s_iident}"${this.typeK}"`
         + `,\n${ii + s_iident}"${this.typeV}"`
+        + `,\n${ii + s_iident}"MapEntry<${this.typeK}, ${this.typeV}>"`
         + `\n${ii}}`;
     }
 }

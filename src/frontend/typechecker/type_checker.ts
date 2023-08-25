@@ -2429,7 +2429,7 @@ class TypeChecker {
     getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LatLongCoordinate"); }
     getSpecialRegexType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Regex"); }
     getSpecialNothingType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Nothing"); }
-    getSpecialTaskIDType(): ResolvedType { return this.internSpecialPrimitiveObjectType("TaskID"); }
+    getSpecialTaskIDType(): ResolvedType { return ResolvedType.createSingle(ResolvedTypedeclEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("TaskID") as EntityTypeDecl, this.getSpecialUUIDv4Type().options[0] as ResolvedPrimitiveInternalEntityAtomType, this.getSpecialUUIDv4Type().options[0] as ResolvedPrimitiveInternalEntityAtomType)); }
 
     getSpecialAnyConceptType(): ResolvedType { return this.internSpecialConceptType("Any"); }
     getSpecialSomeConceptType(): ResolvedType { return this.internSpecialConceptType("Some"); }
@@ -3233,9 +3233,12 @@ class TypeChecker {
                 capturepackdirect.push(v);
                 capturedpcodes.set(v, (env.lookupArgPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
             }
-            else {
+            else if(env.lookupCapturedPCode(v) !== null) {
                 capturepackindirect.push(v);
                 capturedpcodes.set(v, (env.lookupCapturedPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
+            }
+            else {
+                this.raiseError(exp.sinfo, `Could not find captured variable "${v}"`);
             }
         });
 

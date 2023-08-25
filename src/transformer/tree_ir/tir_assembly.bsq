@@ -336,6 +336,7 @@ entity SetEntityType provides PrimitiveCollectionEntityType {
 entity MapEntityType provides PrimitiveCollectionEntityType {
     field typeK: TypeKey;
     field typeV: TypeKey;
+    field typeEntry: TypeKey;
 }
 
 entity TaskType provides OOType {

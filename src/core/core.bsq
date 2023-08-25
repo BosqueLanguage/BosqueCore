@@ -203,12 +203,14 @@ __internal __enumable __litvaluetype __typedeclable __typebase entity String pro
 
     function interpolate(): String = special_method;
 
-    /*
-    fromNat(n: Nat): String {
+    function fromNat(n: Nat): String {
         return StringOps::s_natToStr(n);
     }
 
+    /*
     //TODO: other fromX operations
+
+    //TODO: other toX operations
 
     method startsWith(v: String | Regex): Bool {
         use RE(.*)

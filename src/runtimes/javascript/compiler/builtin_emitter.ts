@@ -95,6 +95,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             //TODO: need to check that there are not ambigious replacements (e.g. ab#ab#a and ab#a then do we replace first or second?) 
             return `{ return ${func.invoke.params[0].name}.replaceAll(${func.invoke.params[1].name}, ${func.invoke.params[2].name}); }`;
         }
+        case "s_nattostring": {
+            return `{ return ${func.invoke.params[0].name}.toString(); }`;
+        }
+        case "s_stringtonat": {
+            return `{ return parseInt(${func.invoke.params[0].name}); }`;
+        }
 
         case "s_list_empty": {
             return `{ return ${func.invoke.params[0].name}.size === 0; }`;

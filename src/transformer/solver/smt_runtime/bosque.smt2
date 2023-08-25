@@ -36,6 +36,10 @@
     )
 )
 
+
+;;@INT_MIN, @INT_MAX, @NAT_MAX, @SLEN_MAX, @BLEN_MAX, @CSIZE_MAX
+;;--V_MIN_MAX--;;
+
 ;;
 ;;Type tag decls and orders
 ;;
@@ -204,42 +208,6 @@
     (ite (= y 0) (@ResultO-mk-ok (@BigInt_div x y)) (@ResultO-mk-err @error-other))
 )
 
-;;
-;;@Structural datatypes
-;;
-(declare-datatypes 
-    (
-        (@Tuple0 0)
-        (@Tuple1 1)
-        (@Tuple2 2)
-        (@Tuple3 3)
-        ;;TODO: more tuples here when needed
-    ) 
-    (
-        (par () ( (@Tuple0-mk) ))
-        (par (T0) ( (@Tuple1-mk (@Tuple1-0 T0)) ))
-        (par (T0 T1) ( (@Tuple2-mk (@Tuple2-0 T0) (Tuple2-1 T1)) ))
-        (par (T0 T1 T2) ( (@Tuple3-mk (@Tuple3-0 T0) (Tuple3-1 T1) (Tuple3-2 T2)) ))
-        ;;TODO: more tuples here when needed
-    )
-)
-(declare-datatypes 
-    (
-        (@Record0 0)
-        (@Record1 1)
-        (@Record2 2)
-        (@Record3 3)
-        ;;TODO: more records here when needed
-    ) 
-    (
-        (par () ( (@Record0-mk) ))
-        (par (T0) ( (@Record1-mk (@Record1-0 T0)) ))
-        (par (T0 T1) ( (@Record2-mk (@Record2-0 T0) (Record2-1 T1)) ))
-        (par (T0 T1 T2) ( (@Record3-mk (@Record3-0 T0) (Record3-1 T1) (Record3-2 T2)) ))
-        ;;TODO: more records here when needed
-    )
-)
-
 (declare-datatype @IdealDateTime 
     (
         (@IdealDateTime-mk (@IdealDateTime-year Int) (@IdealDateTime-month Int) (@IdealDateTime-day Int) (@IdealDateTime-hour Int) (@IdealDateTime-min Int) (@IdealDateTime-sec Int) (@IdealDateTime-msec Int) (@IdealDateTime-tzdata String))
@@ -289,7 +257,8 @@
     ; Decimal -> @Decimal
     ; Rational -> @Rational
     ; String -> String
-    (@ByteBuffer 0)
+    ; ASCIIString -> String
+    ; (Seq (_ BitVec 8))
     ; DateTime -> @IdealDateTime 
     ; UTCDateTime -> @IdealDateTime 
     ; PlainDate -> @IdealDateTime 
@@ -300,13 +269,13 @@
     ; UUIDv4 -> String
     ; UUIDv7 -> String
     ; SHAContentHash -> (_ BitVec 16)
-    ; LatLongCoordinate -> (@Tuple2 Float Float)
+    (@LatLongCoordinate 0)
     ; Regex -> String
     ;;--OO_DECLS--;;
     ) (
         ( (@none) ) 
         ( (@nothing) )
-        ( (@bytebuffer-mk (@ByteBuffer-compress Int) (@ByteBuffer-format Int) (@ByteBuffer-bytes (Seq (_ BitVec 8)))) )
+        ( (@LatLongCoordinate-mk (@LatLongCoordinate-lat @Float) (@LatLongCoordinate-long @Float)) )
         ;;--OO_CONSTRUCTORS--;;
     )
 )
@@ -327,6 +296,29 @@
     (
         (@BoxedData-mk-none)
         (@BoxedData-mk-nothing)
+        (@BoxedData-mk-Bool (@BoxedData-Bool Bool))
+        (@BoxedData-mk-Int (@BoxedData-Int Int))
+        (@BoxedData-mk-Nat (@BoxedData-Nat Int))
+        (@BoxedData-mk-BigInt (@BoxedData-BigInt Int))
+        (@BoxedData-mk-BigNat (@BoxedData-BigNat Int))
+        (@BoxedData-mk-Float (@BoxedData-Float @Float))
+        (@BoxedData-mk-Decimal (@BoxedData-Decimal @Decimal))
+        (@BoxedData-mk-Rational (@BoxedData-Rational @Rational))
+        (@BoxedData-mk-String (@BoxedData-String String))
+        (@BoxedData-mk-ASCIIString (@BoxedData-ASCIIString String))
+        (@BoxedData-mk-ByteBuffer (@BoxedData-ByteBuffer (Seq (_ BitVec 8))))
+        (@BoxedData-mk-DateTime (@BoxedData-DateTime @IdealDateTime))
+        (@BoxedData-mk-UTCDateTime (@BoxedData-UTCDateTime @IdealDateTime))
+        (@BoxedData-mk-PlainDate (@BoxedData-PlainDate @IdealDateTime))
+        (@BoxedData-mk-PlainTime (@BoxedData-PlainTime @IdealDateTime))
+        (@BoxedData-mk-TickTime (@BoxedData-TickTime Int))
+        (@BoxedData-mk-LogicalTime (@BoxedData-LogicalTime Int))
+        (@BoxedData-mk-ISOTimeStamp (@BoxedData-ISOTimeStamp @IdealDateTime))
+        (@BoxedData-mk-UUIDv4 (@BoxedData-UUIDv4 String))
+        (@BoxedData-mk-UUIDv7 (@BoxedData-UUIDv7 String))
+        (@BoxedData-mk-SHAContentHash (@BoxedData-SHAContentHash (_ BitVec 16)))
+        (@BoxedData-mk-LatLongCoordinate (@BoxedData-LatLongCoordinate @LatLongCoordinate))
+        (@BoxedData-mk-Regex (@BoxedData-Regex String))
         ;;--TYPE_BOX_CONSTRUCTORS--;;
     )
 )
@@ -340,19 +332,60 @@
     )
 )
 
-(declare-const @Term-none @Term)
-(assert (= @Term-none (@Term-mk @TypeTag-None @BoxedData-mk-none @BoxedKey-mk-none)))
+(define-fun @Term-box-None ((v @none)) @Term (@Term-mk @TypeTag-None @BoxedData-mk-none @BoxedKey-mk-none))
+(define-fun @Term-box-Nothing ((v @nothing)) @Term (@Term-mk @TypeTag-Nothing @BoxedData-mk-nothing @BoxedKey-mk-NA))
+(define-fun @Term-box-Bool ((v Bool)) @Term (@Term-mk @TypeTag-Bool (@BoxedData-mk-Bool v) (@BoxedKey-mk-Bool v)))
+(define-fun @Term-box-Int ((v Int)) @Term (@Term-mk @TypeTag-Int (@BoxedData-mk-Int v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-Nat ((v Int)) @Term (@Term-mk @TypeTag-Nat (@BoxedData-mk-Nat v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-BigInt ((v Int)) @Term (@Term-mk @TypeTag-BigInt (@BoxedData-mk-BigInt v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-BigNat ((v Int)) @Term (@Term-mk @TypeTag-BigNat (@BoxedData-mk-BigNat v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-Float ((v @Float)) @Term (@Term-mk @TypeTag-Float (@BoxedData-mk-Float v) (@BoxedKey-mk-NA)))
+(define-fun @Term-box-Decimal ((v @Decimal)) @Term (@Term-mk @TypeTag-Decimal (@BoxedData-mk-Decimal v) (@BoxedKey-mk-NA)))
+(define-fun @Term-box-Rational ((v @Rational)) @Term (@Term-mk @TypeTag-Rational (@BoxedData-mk-Rational v) (@BoxedKey-mk-NA)))
+(define-fun @Term-box-String ((v String)) @Term (@Term-mk @TypeTag-String (@BoxedData-mk-String v) (@BoxedKey-mk-String v)))
+(define-fun @Term-box-ASCIIString ((v String)) @Term (@Term-mk @TypeTag-ASCIIString (@BoxedData-mk-ASCIIString v) (@BoxedKey-mk-String v)))
+(define-fun @Term-box-ByteBuffer ((v (Seq (_ BitVec 8)))) @Term (@Term-mk @TypeTag-ByteBuffer (@BoxedData-mk-ByteBuffer v) (@BoxedKey-mk-NA)))
+(define-fun @Term-box-DateTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-DateTime (@BoxedData-mk-DateTime v) (@BoxedKey-mk-IdealDateTime v)))
+(define-fun @Term-box-UTCDateTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-UTCDateTime (@BoxedData-mk-UTCDateTime v) (@BoxedKey-mk-IdealDateTime v)))
+(define-fun @Term-box-PlainDate ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-PlainDate (@BoxedData-mk-PlainDate v) (@BoxedKey-mk-IdealDateTime v)))
+(define-fun @Term-box-PlainTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-PlainTime (@BoxedData-mk-PlainTime v) (@BoxedKey-mk-IdealDateTime v)))
+(define-fun @Term-box-TickTime ((v Int)) @Term (@Term-mk @TypeTag-TickTime (@BoxedData-mk-TickTime v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-LogicalTime ((v Int)) @Term (@Term-mk @TypeTag-LogicalTime (@BoxedData-mk-LogicalTime v) (@BoxedKey-mk-Int v)))
+(define-fun @Term-box-ISOTimeStamp ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-ISOTimeStamp (@BoxedData-mk-ISOTimeStamp v) (@BoxedKey-mk-IdealDateTime v)))
+(define-fun @Term-box-UUIDv4 ((v String)) @Term (@Term-mk @TypeTag-UUIDv4 (@BoxedData-mk-UUIDv4 v) (@BoxedKey-mk-String v)))
+(define-fun @Term-box-UUIDv7 ((v String)) @Term (@Term-mk @TypeTag-UUIDv7 (@BoxedData-mk-UUIDv7 v) (@BoxedKey-mk-String v)))
+(define-fun @Term-box-SHAContentHash ((v (_ BitVec 16))) @Term (@Term-mk @TypeTag-SHAContentHash (@BoxedData-mk-SHAContentHash v) (@BoxedKey-mk-SHA v)))
+(define-fun @Term-box-LatLongCoordinate ((v @LatLongCoordinate)) @Term (@Term-mk @TypeTag-LatLongCoordinate (@BoxedData-mk-LatLongCoordinate v) (@BoxedKey-mk-NA)))
+(define-fun @Term-box-Regex ((v String)) @Term (@Term-mk @TypeTag-Regex (@BoxedData-mk-Regex v) (@BoxedKey-mk-NA)))
+(define-fun )
+;;--TERM_BOX_CONSTRUCTORS--;;
 
-(declare-const @Term-nothing @Term)
-(assert (= @Term-nothing (@Term-mk @TypeTag-Nothing @BoxedData-mk-nothing @BoxedKey-mk-NA)))
-
-(define-fun @boxkey ((tag @TypeTag) (data @BoxedData) (key @BoxedKey)) @Term 
-    (@Term-mk tag data key)
-)
-
-(define-fun @box ((tag @TypeTag) (data @BoxedData)) @Term 
-    (@Term-mk tag data @BoxedKey-mk-NA)
-)
+(define-fun @Term-unbox-None ((t Term)) @None @none)
+(define-fun @Term-unbox-Nothing ((t Term)) @Nothing @nothing)
+(define-fun @Term-unbox-Bool ((t Term)) Bool (@BoxedData-Bool (@Term-data t)))
+(define-fun @Term-unbox-Int ((t Term)) Int (@BoxedData-Int (@Term-data t)))
+(define-fun @Term-unbox-Nat ((t Term)) Int (@BoxedData-Nat (@Term-data t)))
+(define-fun @Term-unbox-BigInt ((t Term)) Int (@BoxedData-BigInt (@Term-data t)))
+(define-fun @Term-unbox-BigNat ((t Term)) Int (@BoxedData-BigNat (@Term-data t)))
+(define-fun @Term-unbox-Float ((t Term)) @Float (@BoxedData-Float (@Term-data t)))
+(define-fun @Term-unbox-Decimal ((t Term)) @Decimal (@BoxedData-Decimal (@Term-data t)))
+(define-fun @Term-unbox-Rational ((t Term)) @Rational (@BoxedData-Rational (@Term-data t)))
+(define-fun @Term-unbox-String ((t Term)) String (@BoxedData-String (@Term-data t)))
+(define-fun @Term-unbox-ASCIIString ((t Term)) String (@BoxedData-ASCIIString (@Term-data t)))
+(define-fun @Term-unbox-ByteBuffer ((t Term)) (Seq (_ BitVec 8)) (@BoxedData-ByteBuffer (@Term-data t)))
+(define-fun @Term-unbox-DateTime ((t Term)) @IdealDateTime (@BoxedData-DateTime (@Term-data t)))
+(define-fun @Term-unbox-UTCDateTime ((t Term)) @IdealDateTime (@BoxedData-UTCDateTime (@Term-data t)))
+(define-fun @Term-unbox-PlainDate ((t Term)) @IdealDateTime (@BoxedData-PlainDate (@Term-data t)))
+(define-fun @Term-unbox-PlainTime ((t Term)) @IdealDateTime (@BoxedData-PlainTime (@Term-data t)))
+(define-fun @Term-unbox-TickTime ((t Term)) Int (@BoxedData-TickTime (@Term-data t)))
+(define-fun @Term-unbox-LogicalTime ((t Term)) Int (@BoxedData-LogicalTime (@Term-data t)))
+(define-fun @Term-unbox-ISOTimeStamp ((t Term)) @IdealDateTime (@BoxedData-ISOTimeStamp (@Term-data t)))
+(define-fun @Term-unbox-UUIDv4 ((t Term)) String (@BoxedData-UUIDv4 (@Term-data t)))
+(define-fun @Term-unbox-UUIDv7 ((t Term)) String (@BoxedData-UUIDv7 (@Term-data t)))
+(define-fun @Term-unbox-SHAContentHash ((t Term)) (_ BitVec 16) (@BoxedData-SHAContentHash (@Term-data t)))
+(define-fun @Term-unbox-LatLongCoordinate ((t Term)) @LatLongCoordinate (@BoxedData-LatLongCoordinate (@Term-data t)))
+(define-fun @Term-unbox-Regex ((t Term)) String (@BoxedData-Regex (@Term-data t)))
+;;--TERM_BOX_UNBOXERS--;;
 
 (define-fun @keyless ((k1 @Term) (k2 @Term)) Bool 
     (let ((tt1 (@Term-tag k1)) (tt2 @Term-tag k2))
@@ -421,9 +454,6 @@
 (define-fun @entrypoint_cons_Nothing ((ctx @HavocSequence)) (@ResultO @Nothing)
     (@ResultO-mk-ok @nothing)
 )
-
-;;@INT_MIN, @INT_MAX, @NAT_MAX, @SLEN_MAX, @BLEN_MAX, @CSIZE_MAX
-;;--V_MIN_MAX--;;
 
 (define-fun @entrypoint_cons_Bool ((ctx @HavocSequence)) (@ResultO Bool)
     (@ResultO-mk-ok (@Bool_UFCons_API ctx))
