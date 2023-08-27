@@ -2,12 +2,6 @@ namespace SMTEmit;
 
 import TreeIR;
 
-typedef TypeDeclInfo = {
-    name: String,
-    consop: String,
-    consargs: List<{cname: String, ctype: String}>
-};
-
 function typeEncodedAsUnion(tt: TreeIR::TypeKey): Bool {
     let ttype = this.assembly.typeMap.get(tt);
     return (ttype?<TreeIR::ConceptType> || ttype?<TreeIR::UnionType>);
@@ -82,19 +76,31 @@ entity TypeInfoEmitter {
     }
 
     method emitObjectEntityTypeDeclAndConstructor(t: TreeIR::ObjectEntityType): {decl: String, cons: String} {
-        return {name="[OBJECT]", consop="[OBJECT_cons]", consargs=List<{cname: String, ctype: String}>{}};
+        let oninfo = this.nemitter.emitTypeNameInfo(t);
+
+        let tdecl = String::concat(List<String>{"(", oninfo.smtname, " 0)"});
+
+        let consops = t.allfields.map<String>(fn(f) => {
+            let fname = this.assembly.fieldMap.get(f.fkey).name.value().value();
+            let ftype = this.getSMTTypeName(f.ftype);
+
+            return String::concat(List<String>{"(", fname, " ", ftype, ")"});
+        });
+        let consdecl = String::concat(List<String>{"( (", oninfo.consname@<String>, " (", String::join(" ", consops), ")) )"});
+
+        return {decl=tdecl, cons=consdecl};
     }
 
     method emitMapEntryEntityTypeDeclAndConstructor(t: TreeIR::MapEntryEntityType): {decl: String, cons: String} {
-        return {name="[MAPENTRY]", consop="[MAPENTRY_cons]", consargs=List<{cname: String, ctype: String}>{}};
+        return {decl="[MAPENTRY]", cons="[MAPENTRY_cons]"};
     }
 
     method emitTupleTypeDeclAndConstructor(t: TreeIR::TupleType): {decl: String, cons: String} {
-        return {name="[TUPLE]", consop="[TUPLE_cons]", consargs=List<{cname: String, ctype: String}>{}};
+        return {decl="[TUPLE]", cons="[TUPLE_cons]"};
     }
 
     method emitRecordTypeDeclAndConstructor(t: TreeIR::RecordType): {decl: String, cons: String} {
-        return {name="[RECORD]", consop="[RECORD_cons]", consargs=List<{cname: String, ctype: String}>{}};
+        return {decl="[RECORD]", cons="[RECORD_cons]"};
     }
 
     method generateOOSMTDeclAndConstructor(t: TreeIR::Type): {decl: String, cons: String} {
@@ -204,11 +210,11 @@ entity AssemblyEmitter {
         let alltypes = this.assembly.typeMap.values();
 
         let oodecltypes = alltypes.filter(pred(t) => TypeInfoEmitter::typeRequiresConstructorInfo(t));
-        let oodeclinfo = oodecltypes.map<TypeDeclInfo>(fn(t) => this.temitter.generateOOSMTDeclAndConstructor(t));
+        let oodeclinfo = oodecltypes.map<{decl: String, cons: String}>(fn(t) => this.temitter.generateOOSMTDeclAndConstructor(t));
         //let ooconsinfo = oodecltypes.map  
 
         return {
-            oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => String::concat(List<String>{"(", vv.decl, " 0)"}))),
+            oo_decls = String::join("\n    ", oodeclinfo.map<String>(fn(vv) => vv.decl)),
             oo_constructors = "[NOT IMPLEMENTED]"
         };
     }

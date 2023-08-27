@@ -34,7 +34,7 @@ function processProroguedCall(file: string, line: number, name: string, ptypes: 
                 fs.writeFileSync(iifile, iicontents, { encoding: "utf8" });
                 execSync(`code -n -w ${iifile}`);
 
-                const ff = fs.readFileSync(iifile, { encoding: "utf8" });
+                const ff = fs.readFileSync(iifile, { encoding: "utf8" }).toString();
                 const rr = ff.slice(iicontents.length).trim();
 
                 const res = $BSQONParse.BSQONParser.parseValueStd(rr, rtype, ns, $TypeInfo.loaded_typeinfo);

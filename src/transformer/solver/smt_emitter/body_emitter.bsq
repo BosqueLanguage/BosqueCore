@@ -244,26 +244,37 @@ entity BodyEmitter {
     method emitLoadPropertyExpression(exp: TIRLoadPropertyExpression): String {
         return `${this.emitExpression(exp.exp)}.${exp.property}`;
     }
+    */
 
-    method emitLoadFieldExpression(exp: TIRLoadFieldExpression): String {
-        const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
-        return `${this.emitExpression(exp.exp)}.${fname}`;
+    recursive method emitLoadFieldExpression(exp: TreeIR::LoadFieldExpression): String {
+        let bexp = this.emitExpression[recursive](exp.exp);
+        let lfop = this.nemitter.emitFieldAccessorName(this.assembly.typeMap.get(exp.tkey), exp.fieldkey);
+
+        return String::concat(List<String>{"(", lfop, " ", bexp, ")"});
     }
 
+    /*
     method emitLoadFieldVirtualExpression(exp: TIRLoadFieldVirtualExpression): String {
         const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
         const bexp = (this.typeEncodedAsUnion(exp.exp.etype) ? `${this.emitExpression(exp.exp)}.value` : this.emitExpression(exp.exp));
 
         return `${bexp}.${fname}`;
     }
+    */
 
-    method emitConstructorPrimaryDirectExpression(exp: TIRConstructorPrimaryDirectExpression): String {
-        const tname = this.resolveTypeMemberAccess(exp.oftype);
-        const args = exp.args.map((arg) => this.emitExpression(arg, true));
+    recursive method emitConstructorPrimaryDirectExpression(exp: TreeIR::ConstructorPrimaryDirectExpression): String {
+        let ctname = this.nemitter.emitTypeNameInfo(this.assembly.typeMap.get(exp.oftype)).consname@<String>;
 
-        return `${tname}.$constructorDirect(${args.join(", ")})`;
+        if(exp.args.empty()) {
+            return ctname;
+        }
+        else {
+            let args = exp.args.map<String>(fn(arg) => this.emitExpression(arg));
+            return String::concat(List<String>{"(", ctname, " ", String::join(" ", args), ")"});
+        }
     }
 
+    /*
     method emitConstructorPrimaryCheckExpression(exp: TIRConstructorPrimaryCheckExpression): String {
         const tname = this.resolveTypeMemberAccess(exp.oftype);
         const args = exp.args.map((arg) => this.emitExpression(arg, true));
@@ -1187,15 +1198,15 @@ entity BodyEmitter {
             case TIRExpressionTag.LoadPropertyExpression: {
                 return this.emitLoadPropertyExpression(exp as TIRLoadPropertyExpression);
             }
-            case TIRExpressionTag.LoadFieldExpression: {
-                return this.emitLoadFieldExpression(exp as TIRLoadFieldExpression);
-            }
+            */
+            | TreeIR::LoadFieldExpression => this.emitLoadFieldExpression[recursive]($)
+            /*
             case TIRExpressionTag.LoadFieldVirtualExpression: {
                 return this.emitLoadFieldVirtualExpression(exp as TIRLoadFieldVirtualExpression);
             }
-            case TIRExpressionTag.ConstructorPrimaryDirectExpression: {
-                return this.emitConstructorPrimaryDirectExpression(exp as TIRConstructorPrimaryDirectExpression);
-            }
+            */
+            | TreeIR::ConstructorPrimaryDirectExpression => this.emitConstructorPrimaryDirectExpression[recursive]($)
+            /*
             case TIRExpressionTag.ConstructorPrimaryCheckExpression: {
                 return this.emitConstructorPrimaryCheckExpression(exp as TIRConstructorPrimaryCheckExpression);
             }

@@ -720,7 +720,7 @@ class BodyEmitter {
         }
         else {
             //we just ignore exp.isexhaustive -- maybe want to be more optimized in the future
-            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive switch statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
+            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive switch expression" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
         }
 
         return toplevel ? sstr : ("(" + sstr + ")");
@@ -757,7 +757,7 @@ class BodyEmitter {
         }
         else {
             //we just ignore exp.isexhaustive -- maybe want to be more optimized in the future
-            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${exp.sinfo.line}")`;
+            sstr += `$Runtime.raiseRuntimeError("Non-exhaustive match expression" + " -- " + $$scratch[${exp.scratchidx}].tkey + " ${this.m_file} @ line ${exp.sinfo.line}")`;
         }
 
         return toplevel ? sstr : ("(" + sstr + ")");
@@ -1669,7 +1669,7 @@ class BodyEmitter {
                 sstr += indent + BodyEmitter.s_body_indent + ";\n";
             }
             else {
-                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + " -- ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
+                sstr += indent + BodyEmitter.s_body_indent + `$Runtime.raiseRuntimeError("Non-exhaustive match statement" + + " -- " + $$scratch[${stmt.scratchidx}].tkey + " ${this.m_file} @ line ${stmt.sinfo.line}")` + ";\n"
             }
             sstr += indent + "}\n";
         }

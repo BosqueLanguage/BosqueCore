@@ -156,7 +156,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, buildlevel: Bu
             + `$TypeInfo.setLoadedTypeInfo(assembly);\n\n`
             + `async function read(stream) { const chunks = []; for await (const chunk of stream) chunks.push(chunk); return Buffer.concat(chunks).toString('utf8'); }\n`
             + `const filearg = process.argv.slice(2).find((aarg) => aarg.startsWith("--input="));\n`
-            + (epf.params.length === 0 ? `const arg_string = "";\n\n` : `const arg_string = filearg === undefined ? await read(process.stdin) : fs.readFileSync(path.normalize(filearg.substring(8)));\n\n`)
+            + (epf.params.length === 0 ? `const arg_string = "";\n\n` : `const arg_string = filearg === undefined ? await read(process.stdin) : fs.readFileSync(path.normalize(filearg.substring(8))).toString();\n\n`)
             + `let bsq_args: any[] = [];\n`
             + `try {\n`
             + `    bsq_args = $Parse.BSQONParser.parseInputsStd(arg_string, [${epf.params.map((pp) => '"' + pp.type + '"').join(", ")}], "${epns.ns}", assembly);\n`

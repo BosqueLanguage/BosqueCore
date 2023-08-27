@@ -342,12 +342,12 @@ entity NameEmitter {
         let ff = this.assembly.fieldMap.get(ii);
         let tn = smtifyTypeKey(tt.tkey);
 
-        return tn.append("-").append(ff.name.value());
+        return tn.append("-").append(ff.name.value().value());
     }
 
     method emitPropertyAccessorName(tt: TreeIR::Type, ii: TreeIR::Identifier): String {
         let tn = smtifyTypeKey(tt.tkey).prepend("@Record-");
-        return tn.append("-").append(ii.value());
+        return tn.append("-").append(ii.value().value());
     }
 
     method emitMapEntryKeyAccessorName(tt: TreeIR::Type): String {
