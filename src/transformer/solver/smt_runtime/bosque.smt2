@@ -43,62 +43,71 @@
 ;;
 ;;Type tag decls and orders
 ;;
-(declare-sort @TypeTag)
-(declare-const @TypeTag-None @TypeTag)
-(declare-const @TypeTag-Nothing @TypeTag)
-(declare-const @TypeTag-Bool @TypeTag)
-(declare-const @TypeTag-Nat @TypeTag)
-(declare-const @TypeTag-Int @TypeTag)
-(declare-const @TypeTag-BigNat @TypeTag)
-(declare-const @TypeTag-BigInt @TypeTag)
-(declare-const @TypeTag-Float @TypeTag)
-(declare-const @TypeTag-Decimal @TypeTag)
-(declare-const @TypeTag-Rational @TypeTag)
-(declare-const @TypeTag-String @TypeTag)
-(declare-const @TypeTag-ASCIIString @TypeTag)
-(declare-const @TypeTag-ByteBuffer @TypeTag)
-(declare-const @TypeTag-DateTime @TypeTag)
-(declare-const @TypeTag-UTCDateTime @TypeTag)
-(declare-const @TypeTag-PlainDate @TypeTag)
-(declare-const @TypeTag-PlainTime @TypeTag)
-(declare-const @TypeTag-TickTime @TypeTag)
-(declare-const @TypeTag-LogicalTime @TypeTag)
-(declare-const @TypeTag-ISOTimeStamp @TypeTag)
-(declare-const @TypeTag-UUIDv4 @TypeTag)
-(declare-const @TypeTag-UUIDv7 @TypeTag)
-(declare-const @TypeTag-SHAContentHash @TypeTag)
-(declare-const @TypeTag-LatLongCoordinate @TypeTag)
-(declare-const @TypeTag-Regex @TypeTag)
-;;--TYPE_TAG_DECLS--;;
+(declare-sort @KeyTypeTag)
+(declare-const @KeyTypeTag-NA @KeyTypeTag)
+(declare-const @KeyTypeTag-None @KeyTypeTag)
+(declare-const @KeyTypeTag-Bool @KeyTypeTag)
+(declare-const @KeyTypeTag-Nat @KeyTypeTag)
+(declare-const @KeyTypeTag-Int @KeyTypeTag)
+(declare-const @KeyTypeTag-BigNat @KeyTypeTag)
+(declare-const @KeyTypeTag-BigInt @KeyTypeTag)
+(declare-const @KeyTypeTag-String @KeyTypeTag)
+(declare-const @KeyTypeTag-ASCIIString @KeyTypeTag)
+(declare-const @KeyTypeTag-UTCDateTime @KeyTypeTag)
+(declare-const @KeyTypeTag-PlainDate @KeyTypeTag)
+(declare-const @KeyTypeTag-PlainTime @KeyTypeTag)
+(declare-const @KeyTypeTag-TickTime @KeyTypeTag)
+(declare-const @KeyTypeTag-LogicalTime @KeyTypeTag)
+(declare-const @KeyTypeTag-ISOTimeStamp @KeyTypeTag)
+(declare-const @KeyTypeTag-UUIDv4 @KeyTypeTag)
+(declare-const @KeyTypeTag-UUIDv7 @KeyTypeTag)
+(declare-const @KeyTypeTag-SHAContentHash @KeyTypeTag)
+;;--KEY_TYPE_TAG_DECLS--;;
+
+(assert 
+    (distinct 
+        @KeyTypeTag-NA
+        @KeyTypeTag-None @KeyTypeTag-Bool 
+        @KeyTypeTag-Nat @KeyTypeTag-Int @KeyTypeTag-BigNat @KeyTypeTag-BigInt 
+        @KeyTypeTag-String @KeyTypeTag-ASCIIString
+        @KeyTypeTag-UTCDateTime @KeyTypeTag-PlainDate @KeyTypeTag-PlainTime @KeyTypeTag-TickTime @KeyTypeTag-LogicalTime @KeyTypeTag-ISOTimeStamp 
+        @KeyTypeTag-UUIDv4 @KeyTypeTag-UUIDv7 @KeyTypeTag-SHAContentHash
+        ;;--KEY_TYPE_TAG_DISTINCTS--;;
+    )
+)
+
+(declare-sort @SuperTypeTag)
+(declare-const @SuperTypeTag-Any @SuperTypeTag)
+(declare-const @SuperTypeTag-Some @SuperTypeTag)
+(declare-const @SuperTypeTag-KeyType @SuperTypeTag)
+;;--SUPER_TYPE_TAG_DISTINCTS--;;
 
 
-(assert (distinct 
-@TypeTag-None @TypeTag-Nothing @TypeTag-Bool @TypeTag-Nat @TypeTag-Int @TypeTag-BigNat @TypeTag-BigInt @TypeTag-Float @TypeTag-Decimal @TypeTag-Rational @TypeTag-String @TypeTag-ASCIIString
-@TypeTag-ByteBuffer @TypeTag-DateTime @TypeTag-UTCDateTime @TypeTag-PlainDate @TypeTag-PlainTime @TypeTag-TickTime @TypeTag-LogicalTime @TypeTag-ISOTimeStamp @TypeTag-UUIDv4 @TypeTag-UUIDv7 @TypeTag-SHAContentHash @TypeTag-LatLongCoordinate @TypeTag-Regex
-;;--TYPE_TAG_DISTINCTS--;;
-))
+(assert 
+    (distinct 
+        @KeyTypeTag-Any @KeyTypeTag-Some @KeyTypeTag-KeyType
+        ;;--SUPER_TYPE_TAG_DISTINCTS--;;
+    )
+)
 
-(define-fun @key_type_sort_order ((x @TypeTag) (y @TypeTag)) Bool ((_ linear-order 0) x y))
-(assert (@key_type_sort_order @TypeTag-None @TypeTag-Bool))
-(assert (@key_type_sort_order @TypeTag-Bool @TypeTag-Nat))
-(assert (@key_type_sort_order @TypeTag-Nat @TypeTag-Int))
-(assert (@key_type_sort_order @TypeTag-Int @TypeTag-BigNat))
-(assert (@key_type_sort_order @TypeTag-BigNat @TypeTag-BigInt))
-(assert (@key_type_sort_order @TypeTag-BigInt @TypeTag-String))
-(assert (@Key_type_sort_order @TypeTag-String @TypeTag-ASCIIString))
-(assert (@key_type_sort_order @TypeTag-ASCIIString @TypeTag-UTCDateTime))
-(assert (@key_type_sort_order @TypeTag-UTCDateTime @TypeTag-PlainDate))
-(assert (@key_type_sort_order @TypeTag-PlainDate @TypeTag-PlainTime))
-(assert (@key_type_sort_order @TypeTag-PlainTime @TypeTag-TickTime))
-(assert (@key_type_sort_order @TypeTag-TickTime @TypeTag-LogicalTime))
-(assert (@key_type_sort_order @TypeTag-LogicalTime @TypeTag-ISOTimeStamp))
-(assert (@key_type_sort_order @TypeTag-ISOTimeStamp @TypeTag-UUIDv4))
-(assert (@key_type_sort_order @TypeTag-UUIDv4 @TypeTag-UUIDv7))
-(assert (@key_type_sort_order @TypeTag-UUIDv7 @TypeTag-SHAContentHash))
+(define-fun @key_type_sort_order ((x @KeyTypeTag) (y @KeyTypeTag)) Bool ((_ linear-order 0) x y))
+(assert (@key_type_sort_order @KeyTypeTag-None @KeyTypeTag-Bool))
+(assert (@key_type_sort_order @KeyTypeTag-Bool @KeyTypeTag-Nat))
+(assert (@key_type_sort_order @KeyTypeTag-Nat @KeyTypeTag-Int))
+(assert (@key_type_sort_order @KeyTypeTag-Int @KeyTypeTag-BigNat))
+(assert (@key_type_sort_order @KeyTypeTag-BigNat @KeyTypeTag-BigInt))
+(assert (@key_type_sort_order @KeyTypeTag-BigInt @KeyTypeTag-String))
+(assert (@Key_type_sort_order @KeyTypeTag-String @KeyTypeTag-ASCIIString))
+(assert (@key_type_sort_order @KeyTypeTag-ASCIIString @KeyTypeTag-UTCDateTime))
+(assert (@key_type_sort_order @KeyTypeTag-UTCDateTime @KeyTypeTag-PlainDate))
+(assert (@key_type_sort_order @KeyTypeTag-PlainDate @KeyTypeTag-PlainTime))
+(assert (@key_type_sort_order @KeyTypeTag-PlainTime @KeyTypeTag-TickTime))
+(assert (@key_type_sort_order @KeyTypeTag-TickTime @KeyTypeTag-LogicalTime))
+(assert (@key_type_sort_order @KeyTypeTag-LogicalTime @KeyTypeTag-ISOTimeStamp))
+(assert (@key_type_sort_order @KeyTypeTag-ISOTimeStamp @KeyTypeTag-UUIDv4))
+(assert (@key_type_sort_order @KeyTypeTag-UUIDv4 @KeyTypeTag-UUIDv7))
+(assert (@key_type_sort_order @KeyTypeTag-UUIDv7 @KeyTypeTag-SHAContentHash))
 ;;--KEY_TYPE_TAG_SORT--;;
-
-(define-fun @subtypeof ((x @TypeTag) (y @TypeTag)) Bool ((_ partial-order 1) x y))
-;;--TYPE_TAG_SUBTYPE--;;
 
 ;;
 ;;Support for numerics
@@ -136,13 +145,13 @@
 (declare-fun @Rational_mult (@Rational @Rational) @Rational)
 (declare-fun @Rational_div (@Rational @Rational) @Rational)
 
-(define-fun @Float_lteq ((x @Float) (y @Float)) Bool ((_ linear-order 2) x y))
+(define-fun @Float_lteq ((x @Float) (y @Float)) Bool ((_ linear-order 1) x y))
 (define-fun @Float_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Float_lteq x y)))
 
-(define-fun @Decimal_lteq ((x @Decimal) (y @Decimal)) Bool ((_ linear-order 3) x y))
+(define-fun @Decimal_lteq ((x @Decimal) (y @Decimal)) Bool ((_ linear-order 2) x y))
 (define-fun @Decimal_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Decimal_lteq x y)))
 
-(define-fun @Rational_lteq ((x @Rational) (y @Rational)) Bool ((_ linear-order 4) x y))
+(define-fun @Rational_lteq ((x @Rational) (y @Rational)) Bool ((_ linear-order 3) x y))
 (define-fun @Rational_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Rational_lteq x y)))
 
 ;;NLA options
@@ -280,17 +289,26 @@
     )
 )
 
+(declare-datatype @BoxedKeyValue
+    (
+        (@BoxedKeyValue-mk-NA)
+        (@BoxedKeyValue-mk-none)
+        (@BoxedKeyValue-mk-Bool (@BoxedKeyValue-Bool Bool))
+        (@BoxedKeyValue-mk-Int (@BoxedKeyValue-Int Int))
+        (@BoxedKeyValue-mk-String (@BoxedKeyValue-String String))
+        (@BoxedKeyValue-mk-SHAContentHash (@BoxedKeyValue-SHAContentHash (_ BitVec 16)))
+        (@BoxedKeyValue-mk-IdealDateTime (@BoxedKeyValue-IdealDateTime @IdealDateTime))
+    )
+)
+
 (declare-datatype @BoxedKey 
     (
         (@BoxedKey-mk-NA)
-        (@BoxedKey-mk-none)
-        (@BoxedKey-mk-Bool (@BoxedKey-Bool Bool))
-        (@BoxedKey-mk-Int (@BoxedKey-Int Int))
-        (@BoxedKey-mk-String (@BoxedKey-String String))
-        (@BoxedKey-mk-SHA (@BoxedKey-SHA (_ BitVec 16)))
-        (@BoxedKey-mk-IdealDateTime (@BoxedKey-IdealDateTime @IdealDateTime))
+        (@BoxedKey-mk-of (@BoxedKey-tag @KeyTypeTag) (@BoxedKey-value @BoxedKeyValue))
     )
 )
+(define-fun @BoxedKey-get-tag ((k @BoxedKey)) @KeyTypeTag (ite ((_ is @BoxedKey-mk-of) k) (@BoxedKey-tag k) @KeyTypeTag-NA))
+(define-fun @BoxedKey-get-value ((k @BoxedKey)) @BoxedKeyValue (ite ((_ is @BoxedKey-mk-of) k) (@BoxedKey-value k) @BoxedKeyValue-mk-NA))
 
 (declare-datatype @BoxedData 
     (
@@ -328,36 +346,35 @@
 ;;
 (declare-datatype @Term
     (
-        (@Term-mk (@Term-tag @TypeTag) (@Term-data @BoxedData) (@Term-key @BoxedKey))
+        (@Term-mk (@Term-data @BoxedData) (@Term-key @BoxedKey))
     )
 )
 
-(define-fun @Term-box-None ((v @none)) @Term (@Term-mk @TypeTag-None @BoxedData-mk-none @BoxedKey-mk-none))
-(define-fun @Term-box-Nothing ((v @nothing)) @Term (@Term-mk @TypeTag-Nothing @BoxedData-mk-nothing @BoxedKey-mk-NA))
-(define-fun @Term-box-Bool ((v Bool)) @Term (@Term-mk @TypeTag-Bool (@BoxedData-mk-Bool v) (@BoxedKey-mk-Bool v)))
-(define-fun @Term-box-Int ((v Int)) @Term (@Term-mk @TypeTag-Int (@BoxedData-mk-Int v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-Nat ((v Int)) @Term (@Term-mk @TypeTag-Nat (@BoxedData-mk-Nat v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-BigInt ((v Int)) @Term (@Term-mk @TypeTag-BigInt (@BoxedData-mk-BigInt v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-BigNat ((v Int)) @Term (@Term-mk @TypeTag-BigNat (@BoxedData-mk-BigNat v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-Float ((v @Float)) @Term (@Term-mk @TypeTag-Float (@BoxedData-mk-Float v) (@BoxedKey-mk-NA)))
-(define-fun @Term-box-Decimal ((v @Decimal)) @Term (@Term-mk @TypeTag-Decimal (@BoxedData-mk-Decimal v) (@BoxedKey-mk-NA)))
-(define-fun @Term-box-Rational ((v @Rational)) @Term (@Term-mk @TypeTag-Rational (@BoxedData-mk-Rational v) (@BoxedKey-mk-NA)))
-(define-fun @Term-box-String ((v String)) @Term (@Term-mk @TypeTag-String (@BoxedData-mk-String v) (@BoxedKey-mk-String v)))
-(define-fun @Term-box-ASCIIString ((v String)) @Term (@Term-mk @TypeTag-ASCIIString (@BoxedData-mk-ASCIIString v) (@BoxedKey-mk-String v)))
-(define-fun @Term-box-ByteBuffer ((v (Seq (_ BitVec 8)))) @Term (@Term-mk @TypeTag-ByteBuffer (@BoxedData-mk-ByteBuffer v) (@BoxedKey-mk-NA)))
-(define-fun @Term-box-DateTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-DateTime (@BoxedData-mk-DateTime v) (@BoxedKey-mk-IdealDateTime v)))
-(define-fun @Term-box-UTCDateTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-UTCDateTime (@BoxedData-mk-UTCDateTime v) (@BoxedKey-mk-IdealDateTime v)))
-(define-fun @Term-box-PlainDate ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-PlainDate (@BoxedData-mk-PlainDate v) (@BoxedKey-mk-IdealDateTime v)))
-(define-fun @Term-box-PlainTime ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-PlainTime (@BoxedData-mk-PlainTime v) (@BoxedKey-mk-IdealDateTime v)))
-(define-fun @Term-box-TickTime ((v Int)) @Term (@Term-mk @TypeTag-TickTime (@BoxedData-mk-TickTime v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-LogicalTime ((v Int)) @Term (@Term-mk @TypeTag-LogicalTime (@BoxedData-mk-LogicalTime v) (@BoxedKey-mk-Int v)))
-(define-fun @Term-box-ISOTimeStamp ((v @IdealDateTime)) @Term (@Term-mk @TypeTag-ISOTimeStamp (@BoxedData-mk-ISOTimeStamp v) (@BoxedKey-mk-IdealDateTime v)))
-(define-fun @Term-box-UUIDv4 ((v String)) @Term (@Term-mk @TypeTag-UUIDv4 (@BoxedData-mk-UUIDv4 v) (@BoxedKey-mk-String v)))
-(define-fun @Term-box-UUIDv7 ((v String)) @Term (@Term-mk @TypeTag-UUIDv7 (@BoxedData-mk-UUIDv7 v) (@BoxedKey-mk-String v)))
-(define-fun @Term-box-SHAContentHash ((v (_ BitVec 16))) @Term (@Term-mk @TypeTag-SHAContentHash (@BoxedData-mk-SHAContentHash v) (@BoxedKey-mk-SHA v)))
-(define-fun @Term-box-LatLongCoordinate ((v @LatLongCoordinate)) @Term (@Term-mk @TypeTag-LatLongCoordinate (@BoxedData-mk-LatLongCoordinate v) (@BoxedKey-mk-NA)))
-(define-fun @Term-box-Regex ((v String)) @Term (@Term-mk @TypeTag-Regex (@BoxedData-mk-Regex v) (@BoxedKey-mk-NA)))
-(define-fun )
+(define-fun @Term-box-None ((v @none)) @Term (@Term-mk @BoxedData-mk-none (@BoxedKey-mk-of @KeyTypeTag-None @BoxedKeyValue-mk-none)))
+(define-fun @Term-box-Nothing ((v @nothing)) @Term (@Term-mk @BoxedData-mk-nothing @BoxedKey-mk-NA))
+(define-fun @Term-box-Bool ((v Bool)) @Term (@Term-mk (@BoxedData-mk-Bool v) (@BoxedKey-mk-of @KeyTypeTag-Bool (@BoxedKeyValue-mk-Bool v))))
+(define-fun @Term-box-Int ((v Int)) @Term (@Term-mk (@BoxedData-mk-Int v) (@BoxedKey-mk-of @KeyTypeTag-Int (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-Nat ((v Int)) @Term (@Term-mk (@BoxedData-mk-Nat v) (@BoxedKey-mk-of @KeyTypeTag-Nat (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-BigInt ((v Int)) @Term (@Term-mk (@BoxedData-mk-BigInt v) (@BoxedKey-mk-of @KeyTypeTag-BigInt (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-BigNat ((v Int)) @Term (@Term-mk (@BoxedData-mk-BigNat v) (@BoxedKey-mk-of @KeyTypeTag-BigNat (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-Float ((v @Float)) @Term (@Term-mk (@BoxedData-mk-Float v) @BoxedKey-mk-NA))
+(define-fun @Term-box-Decimal ((v @Decimal)) @Term (@Term-mk (@BoxedData-mk-Decimal v) @BoxedKey-mk-NA))
+(define-fun @Term-box-Rational ((v @Rational)) @Term (@Term-mk (@BoxedData-mk-Rational v) @BoxedKey-mk-NA))
+(define-fun @Term-box-String ((v String)) @Term (@Term-mk (@BoxedData-mk-String v) (@BoxedKey-mk-of @KeyTypeTag-String (@BoxedKeyValue-mk-String v))))
+(define-fun @Term-box-ASCIIString ((v String)) @Term (@Term-mk (@BoxedData-mk-ASCIIString v) (@BoxedKey-mk-of @KeyTypeTag-ASCIIString (@BoxedKeyValue-mk-String v))))
+(define-fun @Term-box-ByteBuffer ((v (Seq (_ BitVec 8)))) @Term (@Term-mk (@BoxedData-mk-ByteBuffer v) @BoxedKey-mk-NA))
+(define-fun @Term-box-DateTime ((v @IdealDateTime)) @Term (@Term-mk (@BoxedData-mk-DateTime v) @BoxedKey-mk-NA))
+(define-fun @Term-box-UTCDateTime ((v @IdealDateTime)) @Term (@Term-mk (@BoxedData-mk-UTCDateTime v) (@BoxedKey-mk-of @KeyTypeTag-UTCDateTime (@BoxedKeyValue-mk-IdealDateTime v))))
+(define-fun @Term-box-PlainDate ((v @IdealDateTime)) @Term (@Term-mk (@BoxedData-mk-PlainDate v) (@BoxedKey-mk-of @KeyTypeTag-PlainDate (@BoxedKeyValue-mk-IdealDateTime v))))
+(define-fun @Term-box-PlainTime ((v @IdealDateTime)) @Term (@Term-mk (@BoxedData-mk-PlainTime v) (@BoxedKey-mk-of @KeyTypeTag-PlainTime (@BoxedKeyValue-mk-IdealDateTime v))))
+(define-fun @Term-box-TickTime ((v Int)) @Term (@Term-mk (@BoxedData-mk-TickTime v) (@BoxedKey-mk-of @KeyTypeTag-TickTime (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-LogicalTime ((v Int)) @Term (@Term-mk (@BoxedData-mk-LogicalTime v) (@BoxedKey-mk-of @KeyTypeTag-LogicalTime (@BoxedKeyValue-mk-Int v))))
+(define-fun @Term-box-ISOTimeStamp ((v @IdealDateTime)) @Term (@Term-mk (@BoxedData-mk-ISOTimeStamp v) (@BoxedKey-mk-of @KeyTypeTag-ISOTimeStamp (@BoxedKeyValue-mk-IdealDateTime v))))
+(define-fun @Term-box-UUIDv4 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv4 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv4 (@BoxedKeyValue-mk-String v))))
+(define-fun @Term-box-UUIDv7 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv7 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv7 (@BoxedKeyValue-mk-String v))))
+(define-fun @Term-box-SHAContentHash ((v (_ BitVec 16))) @Term (@Term-mk (@BoxedData-mk-SHAContentHash v) (@BoxedKey-mk-of @KeyTypeTag-SHAContentHash (@BoxedKeyValue-mk-SHAContentHash v))))
+(define-fun @Term-box-LatLongCoordinate ((v @LatLongCoordinate)) @Term (@Term-mk (@BoxedData-mk-LatLongCoordinate v) @BoxedKey-mk-NA))
+(define-fun @Term-box-Regex ((v String)) @Term (@Term-mk (@BoxedData-mk-Regex v) @BoxedKey-mk-NA))
 ;;--TERM_BOX_CONSTRUCTORS--;;
 
 (define-fun @Term-unbox-None ((t Term)) @None @none)
@@ -388,21 +405,24 @@
 ;;--TERM_BOX_UNBOXERS--;;
 
 (define-fun @keyless ((k1 @Term) (k2 @Term)) Bool 
-    (let ((tt1 (@Term-tag k1)) (tt2 @Term-tag k2))
-    (ite (not (= ttv1 ttv2))
-        (key_type_sort_order ttv1 ttv2)
-        (let ((vv1 (@Term-key k1)) (vv2 (@Term-key k2)))
-        (ite (and ((_ is @BoxedKey-mk-none) vv1) ((_ is @BoxedKey-mk-none) vv2))
+    (let ((tk1 (@BoxedKey-get-tag (@Term-key k1))) (tk2 (@BoxedKey-get-tag (@Term-key k2))))
+    (ite (not (= tk1 tk2))
+        (@key_type_sort_order tk1 tk2)
+        (let ((vv1 (@BoxedKey-get-value (@Term-key k1))) (vv2 (@BoxedKey-get-value (@Term-key k2))))
+        (ite (and (= vv1 @BoxedKeyValue-mk-none) (= vv2 @BoxedKeyValue-mk-none))
             false
-            (ite (and ((_ is @BoxedKey-mk-Bool) vv1) ((_ is @BoxedKey-mk-Bool) vv2))
-                    (and (not (@BoxedKey-Bool vv1)) (@BoxedKey-Bool vv2))
-                (ite (and ((_ is @BoxedKey-mk-Int) vv1) ((_ is @BoxedKey-mk-Int) vv2))
-                    (< (@BoxedKey-Int vv1) (@BoxedKey-Int vv2))
-                    (ite (and ((_ is @BoxedKey-mk-String) vv1) ((_ is @BoxedKey-mk-String) vv2))
-                        (str.< (bsqkey_nat_value vv1) (bsqkey_nat_value vv2))
-                        (ite (and ((_ is @BoxedKey-mk-SHA) vv1) ((_ is @BoxedKey-mk-SHA) vv2))
-                            (bvult (@BoxedKey-SHA vv1) (@BoxedKey-SHA vv2))
-                            (@IdealDateTime_less (@BoxedKey-IdealDateTime vv1) (@BoxedKey-IdealDateTime vv2)) 
+            (ite (and ((_ is @BoxedKeyValue-mk-Bool) vv1) ((_ is @BoxedKeyValue-mk-Bool) vv2))
+                (and (not (@BoxedKeyValue-Bool vv1)) (@BoxedKeyValue-Bool vv2))
+                (ite (and ((_ is @BoxedKeyValue-mk-Int) vv1) ((_ is @BoxedKeyValue-mk-Int) vv2))
+                    (< (@BoxedKeyValue-Int vv1) (@BoxedKeyValue-Int vv2))
+                    (ite (and ((_ is @BoxedKeyValue-mk-String) vv1) ((_ is @BoxedKeyValue-mk-String) vv2))
+                        (str.< (@BoxedKeyValue-String vv1) (@BoxedKeyValue-String vv2))
+                        (ite (and ((_ is @BoxedKeyValue-mk-SHAContentHash) vv1) ((_ is @BoxedKeyValue-mk-SHAContentHash) vv2))
+                            (bvult (@BoxedKeyValue-SHAContentHash vv1) (@BoxedKeyValue-SHAContentHash vv2))
+                            (ite (and ((_ is @BoxedKeyValue-mk-IdealDateTime) vv1) ((_ is @BoxedKeyValue-mk-IdealDateTime) vv2))
+                                (@IdealDateTime_less (@BoxedKey-IdealDateTime vv1) (@BoxedKey-IdealDateTime vv2)) 
+                                false
+                            )
                         )
                     )
                 )
@@ -410,6 +430,10 @@
         ))
     ))
 )
+
+(define-fun @subtypeof ((x @Term) (y @TypeTag)) Bool ((_ partial-order 1) x y))
+;;--TYPE_TAG_SUBTYPE--;;
+
 
 ;;
 ;; Value extraction and binding

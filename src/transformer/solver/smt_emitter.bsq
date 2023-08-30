@@ -6,7 +6,6 @@ typedef SMTParams = {
     type_tag_decls: String,
     type_tag_distincts: String,
     key_type_tag_sort: String,
-    type_tag_subtype: String,
     oo_decls: String,
     oo_constructors: String,
     type_box_constructors: String,
@@ -23,7 +22,6 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
         .replaceUnique(";;--TYPE_TAG_DECLS--;;", params.type_tag_decls)
         .replaceUnique(";;--TYPE_TAG_DISTINCTS--;;", params.type_tag_distincts)
         .replaceUnique(";;--KEY_TYPE_TAG_SORT--;;", params.key_type_tag_sort)
-        .replaceUnique(";;--TYPE_TAG_SUBTYPE--;;", params.type_tag_subtype)
         .replaceUnique(";;--OO_DECLS--;;", params.oo_decls)
         .replaceUnique(";;--OO_CONSTRUCTORS--;;", params.oo_constructors)
         .replaceUnique(";;--TYPE_BOX_CONSTRUCTORS--;;", params.type_box_constructors)
@@ -49,7 +47,6 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
         type_tag_decls = type_tag_info.type_tag_decls,
         type_tag_distincts = type_tag_info.type_tag_distincts,
         key_type_tag_sort = type_tag_info.key_type_tag_sort,
-        type_tag_subtype = type_tag_info.type_tag_subtype,
         oo_decls = type_decl_info.oo_decls,
         oo_constructors = type_decl_info.oo_constructors,
         type_box_constructors = "[NOT IMPLEMENTED]",
