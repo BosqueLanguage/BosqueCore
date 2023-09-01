@@ -76,20 +76,6 @@
     )
 )
 
-(declare-sort @SuperTypeTag)
-(declare-const @SuperTypeTag-Any @SuperTypeTag)
-(declare-const @SuperTypeTag-Some @SuperTypeTag)
-(declare-const @SuperTypeTag-KeyType @SuperTypeTag)
-;;--SUPER_TYPE_TAG_DISTINCTS--;;
-
-
-(assert 
-    (distinct 
-        @KeyTypeTag-Any @KeyTypeTag-Some @KeyTypeTag-KeyType
-        ;;--SUPER_TYPE_TAG_DISTINCTS--;;
-    )
-)
-
 (define-fun @key_type_sort_order ((x @KeyTypeTag) (y @KeyTypeTag)) Bool ((_ linear-order 0) x y))
 (assert (@key_type_sort_order @KeyTypeTag-None @KeyTypeTag-Bool))
 (assert (@key_type_sort_order @KeyTypeTag-Bool @KeyTypeTag-Nat))
@@ -255,8 +241,8 @@
 ;; Primitive datatypes 
 ;;
 (declare-datatypes (
-    (@None 0)
-    (@Nothing 0)
+    (None 0)
+    (Nothing 0)
     ; Bool -> Bool
     ; Int -> Int
     ; Nat -> Int
@@ -278,13 +264,13 @@
     ; UUIDv4 -> String
     ; UUIDv7 -> String
     ; SHAContentHash -> (_ BitVec 16)
-    (@LatLongCoordinate 0)
+    (LatLongCoordinate 0)
     ; Regex -> String
     ;;--OO_DECLS--;;
     ) (
-        ( (@none) ) 
-        ( (@nothing) )
-        ( (@LatLongCoordinate-mk (@LatLongCoordinate-lat @Float) (@LatLongCoordinate-long @Float)) )
+        ( (none) ) 
+        ( (nothing) )
+        ( (LatLongCoordinate@mk (LatLongCoordinate-lat @Float) (LatLongCoordinate-long @Float)) )
         ;;--OO_CONSTRUCTORS--;;
     )
 )
@@ -292,7 +278,7 @@
 (declare-datatype @BoxedKeyValue
     (
         (@BoxedKeyValue-mk-NA)
-        (@BoxedKeyValue-mk-none)
+        (@BoxedKeyValue-mk-None)
         (@BoxedKeyValue-mk-Bool (@BoxedKeyValue-Bool Bool))
         (@BoxedKeyValue-mk-Int (@BoxedKeyValue-Int Int))
         (@BoxedKeyValue-mk-String (@BoxedKeyValue-String String))
@@ -312,8 +298,8 @@
 
 (declare-datatype @BoxedData 
     (
-        (@BoxedData-mk-none)
-        (@BoxedData-mk-nothing)
+        (@BoxedData-mk-None)
+        (@BoxedData-mk-Nothing)
         (@BoxedData-mk-Bool (@BoxedData-Bool Bool))
         (@BoxedData-mk-Int (@BoxedData-Int Int))
         (@BoxedData-mk-Nat (@BoxedData-Nat Int))
@@ -350,8 +336,8 @@
     )
 )
 
-(define-fun @Term-box-None ((v @none)) @Term (@Term-mk @BoxedData-mk-none (@BoxedKey-mk-of @KeyTypeTag-None @BoxedKeyValue-mk-none)))
-(define-fun @Term-box-Nothing ((v @nothing)) @Term (@Term-mk @BoxedData-mk-nothing @BoxedKey-mk-NA))
+(define-fun @Term-box-None ((v None)) @Term (@Term-mk @BoxedData-mk-None (@BoxedKey-mk-of @KeyTypeTag-None @BoxedKeyValue-mk-None)))
+(define-fun @Term-box-Nothing ((v Nothing)) @Term (@Term-mk @BoxedData-mk-Nothing @BoxedKey-mk-NA))
 (define-fun @Term-box-Bool ((v Bool)) @Term (@Term-mk (@BoxedData-mk-Bool v) (@BoxedKey-mk-of @KeyTypeTag-Bool (@BoxedKeyValue-mk-Bool v))))
 (define-fun @Term-box-Int ((v Int)) @Term (@Term-mk (@BoxedData-mk-Int v) (@BoxedKey-mk-of @KeyTypeTag-Int (@BoxedKeyValue-mk-Int v))))
 (define-fun @Term-box-Nat ((v Int)) @Term (@Term-mk (@BoxedData-mk-Nat v) (@BoxedKey-mk-of @KeyTypeTag-Nat (@BoxedKeyValue-mk-Int v))))
@@ -373,12 +359,12 @@
 (define-fun @Term-box-UUIDv4 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv4 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv4 (@BoxedKeyValue-mk-String v))))
 (define-fun @Term-box-UUIDv7 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv7 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv7 (@BoxedKeyValue-mk-String v))))
 (define-fun @Term-box-SHAContentHash ((v (_ BitVec 16))) @Term (@Term-mk (@BoxedData-mk-SHAContentHash v) (@BoxedKey-mk-of @KeyTypeTag-SHAContentHash (@BoxedKeyValue-mk-SHAContentHash v))))
-(define-fun @Term-box-LatLongCoordinate ((v @LatLongCoordinate)) @Term (@Term-mk (@BoxedData-mk-LatLongCoordinate v) @BoxedKey-mk-NA))
+(define-fun @Term-box-LatLongCoordinate ((v LatLongCoordinate)) @Term (@Term-mk (@BoxedData-mk-LatLongCoordinate v) @BoxedKey-mk-NA))
 (define-fun @Term-box-Regex ((v String)) @Term (@Term-mk (@BoxedData-mk-Regex v) @BoxedKey-mk-NA))
 ;;--TERM_BOX_CONSTRUCTORS--;;
 
-(define-fun @Term-unbox-None ((t Term)) @None @none)
-(define-fun @Term-unbox-Nothing ((t Term)) @Nothing @nothing)
+(define-fun @Term-unbox-None ((t Term)) None none)
+(define-fun @Term-unbox-Nothing ((t Term)) Nothing nothing)
 (define-fun @Term-unbox-Bool ((t Term)) Bool (@BoxedData-Bool (@Term-data t)))
 (define-fun @Term-unbox-Int ((t Term)) Int (@BoxedData-Int (@Term-data t)))
 (define-fun @Term-unbox-Nat ((t Term)) Int (@BoxedData-Nat (@Term-data t)))
@@ -400,7 +386,7 @@
 (define-fun @Term-unbox-UUIDv4 ((t Term)) String (@BoxedData-UUIDv4 (@Term-data t)))
 (define-fun @Term-unbox-UUIDv7 ((t Term)) String (@BoxedData-UUIDv7 (@Term-data t)))
 (define-fun @Term-unbox-SHAContentHash ((t Term)) (_ BitVec 16) (@BoxedData-SHAContentHash (@Term-data t)))
-(define-fun @Term-unbox-LatLongCoordinate ((t Term)) @LatLongCoordinate (@BoxedData-LatLongCoordinate (@Term-data t)))
+(define-fun @Term-unbox-LatLongCoordinate ((t Term)) LatLongCoordinate (@BoxedData-LatLongCoordinate (@Term-data t)))
 (define-fun @Term-unbox-Regex ((t Term)) String (@BoxedData-Regex (@Term-data t)))
 ;;--TERM_BOX_UNBOXERS--;;
 
@@ -431,59 +417,56 @@
     ))
 )
 
-(define-fun @subtypeof ((x @Term) (y @TypeTag)) Bool ((_ partial-order 1) x y))
-;;--TYPE_TAG_SUBTYPE--;;
+;;--TYPE_SUBTYPE--;;
 
 
 ;;
 ;; Value extraction and binding
 ;;
 
-(define-sort @HavocSequence () (Seq Int))
+(declare-fun @Bool_UFCons_API ((Seq Int)) Bool)
+(declare-fun @Nat_UFCons_API ((Seq Int)) Int)
+(declare-fun @Int_UFCons_API ((Seq Int)) Int)
+(declare-fun @BigInt_UFCons_API ((Seq Int)) Int)
+(declare-fun @BigNat_UFCons_API ((Seq Int)) Int)
+(declare-fun @Float_UFCons_API ((Seq Int)) @Float)
+(declare-fun @Decimal_UFCons_API ((Seq Int)) @Decimal)
+(declare-fun @Rational_UFCons_API ((Seq Int)) @Rational)
+(declare-fun @String_UFCons_API ((Seq Int)) String)
+(declare-fun @ASCIIString_UFCons_API ((Seq Int)) String)
+(declare-fun @ByteBuffer_UFCons_API ((Seq Int)) (Seq (_ BitVec 8)))
+(declare-fun @IdealDateYear_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateMonth_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateDay_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateHour_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateMinute_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateSecond_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateMillis_UFCons_API ((Seq Int)) Int)
+(declare-fun @IdealDateTZName_UFCons_API ((Seq Int)) String)
+(declare-fun @TickTime_UFCons_API ((Seq Int)) Int)
+(declare-fun @LogicalTime_UFCons_API ((Seq Int)) Int)
+(declare-fun @UUIDv4_UFCons_API ((Seq Int)) String)
+(declare-fun @UUIDv7_UFCons_API ((Seq Int)) String)
+(declare-fun @SHAContentHash_UFCons_API ((Seq Int)) (_ BitVec 16))
+(declare-fun @Latitude_UFCons_API ((Seq Int)) @Float)
+(declare-fun @Longitude_UFCons_API ((Seq Int)) @Float)
+(declare-fun @ContainerSize_UFCons_API ((Seq Int)) Int)
+(declare-fun @Enum_UFCons_API ((Seq Int)) Int)
+(declare-fun @TypeChoice_UFCons_API ((Seq Int)) Int)
 
-(declare-fun @Bool_UFCons_API (@HavocSequence) Bool)
-(declare-fun @Nat_UFCons_API (@HavocSequence) Int)
-(declare-fun @Int_UFCons_API (@HavocSequence) Int)
-(declare-fun @BigInt_UFCons_API (@HavocSequence) Int)
-(declare-fun @BigNat_UFCons_API (@HavocSequence) Int)
-(declare-fun @Float_UFCons_API (@HavocSequence) @Float)
-(declare-fun @Decimal_UFCons_API (@HavocSequence) @Decimal)
-(declare-fun @Rational_UFCons_API (@HavocSequence) @Rational)
-(declare-fun @String_UFCons_API (@HavocSequence) String)
-(declare-fun @ASCIIString_UFCons_API (@HavocSequence) String)
-(declare-fun @ByteBuffer_UFCons_API (@HavocSequence) (Seq (_ BitVec 8)))
-(declare-fun @IdealDateYear_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateMonth_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateDay_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateHour_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateMinute_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateSecond_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateMillis_UFCons_API (@HavocSequence) Int)
-(declare-fun @IdealDateTZName_UFCons_API (@HavocSequence) String)
-(declare-fun @TickTime_UFCons_API (@HavocSequence) Int)
-(declare-fun @LogicalTime_UFCons_API (@HavocSequence) Int)
-(declare-fun @UUIDv4_UFCons_API (@HavocSequence) String)
-(declare-fun @UUIDv7_UFCons_API (@HavocSequence) String)
-(declare-fun @SHAContentHash_UFCons_API (@HavocSequence) (_ BitVec 16))
-(declare-fun @Latitude_UFCons_API (@HavocSequence) @Float)
-(declare-fun @Longitude_UFCons_API (@HavocSequence) @Float)
-(declare-fun @ContainerSize_UFCons_API (@HavocSequence) Int)
-(declare-fun @Enum_UFCons_API (@HavocSequence) Int)
-(declare-fun @TypeChoice_UFCons_API (@HavocSequence) Int)
-
-(define-fun @entrypoint_cons_None ((ctx @HavocSequence)) (@ResultO @None)
-    (@ResultO-mk-ok @none)
+(define-fun @entrypoint_cons_None ((ctx (Seq Int))) (@ResultO None)
+    (@ResultO-mk-ok none)
 )
 
-(define-fun @entrypoint_cons_Nothing ((ctx @HavocSequence)) (@ResultO @Nothing)
-    (@ResultO-mk-ok @nothing)
+(define-fun @entrypoint_cons_Nothing ((ctx (Seq Int))) (@ResultO Nothing)
+    (@ResultO-mk-ok nothing)
 )
 
-(define-fun @entrypoint_cons_Bool ((ctx @HavocSequence)) (@ResultO Bool)
+(define-fun @entrypoint_cons_Bool ((ctx (Seq Int))) (@ResultO Bool)
     (@ResultO-mk-ok (@Bool_UFCons_API ctx))
 )
 
-(define-fun @entrypoint_cons_Nat ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_Nat ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@Nat_UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv @INT_MAX))
         (@ResultO-mk-ok iv)
@@ -491,7 +474,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_Int ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_Int ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@Int_UFCons_API ctx)))
     (ite (and (<= @INT_MIN iv) (<= iv @INT_MAX))
         (@ResultO-mk-ok iv)
@@ -499,7 +482,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_BigNat ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_BigNat ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@BigNat_UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv (+ @INT_MAX @INT_MAX)))
         (@ResultO-mk-ok iv)
@@ -507,7 +490,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_BigInt ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_BigInt ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@BigInt_UFCons_API ctx)))
     (ite (and (<= (+ @INT_MIN @INT_MIN) iv) (<= iv (+ @INT_MAX @INT_MAX)))
         (@ResultO-mk-ok iv)
@@ -515,19 +498,19 @@
     ))
 )
 
-(define-fun @entrypoint_cons_Float ((ctx @HavocSequence)) (@ResultO @Float)
+(define-fun @entrypoint_cons_Float ((ctx (Seq Int))) (@ResultO @Float)
     (@ResultO-mk-ok (@Float_UFCons_API ctx))
 )
 
-(define-fun @entrypoint_cons_Decimal ((ctx @HavocSequence)) (@ResultO @Decimal)
+(define-fun @entrypoint_cons_Decimal ((ctx (Seq Int))) (@ResultO @Decimal)
     (@ResultO-mk-ok (@Decimal_UFCons_API ctx))
 )
 
-(define-fun @entrypoint_cons_Rational ((ctx @HavocSequence)) (@ResultO @Rational)
+(define-fun @entrypoint_cons_Rational ((ctx (Seq Int))) (@ResultO @Rational)
     (@ResultO-mk-ok (@Rational_UFCons_API ctx))
 )
 
-(define-fun _@@cons_String_entrypoint ((ctx @HavocSequence)) (@ResultO String)
+(define-fun _@@cons_String_entrypoint ((ctx (Seq Int))) (@ResultO String)
     (let ((sv (@String_UFCons_API ctx)))
     (ite (<= (str.len sv) @SLEN_MAX)
         (@ResultO-mk-ok sv)
@@ -535,7 +518,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_ByteBuffer ((ctx @HavocSequence)) (@ResultO (Seq (_ BitVec 8)))
+(define-fun @entrypoint_cons_ByteBuffer ((ctx (Seq Int))) (@ResultO (Seq (_ BitVec 8)))
     (let ((compress (@Enum_UFCons_API (seq.++ ctx (seq.unit 0)))) (format (@Enum_UFCons_API (seq.++ ctx (seq.unit 1)))) (buff (@ByteBuffer_UFCons_API ctx)))
     (ite (and (< compress 2) (< format 4) (<= (seq.len buff) @BLEN_MAX))
         (@ResultO-mk-ok (@ByteBuffer-mk buff compress format))
@@ -561,7 +544,7 @@
     (str.in.re tzname ((_ re.loop 3 3) (re.range "A" "Z")))
 )
 
-(define-fun @entrypoint_cons_DateTime ((ctx @HavocSequence)) (@ResultO @IdealDateTime)
+(define-fun @entrypoint_cons_DateTime ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((y (@IdealDateYear_UFCons_API ctx)) (m (@IdealDateMonth_UFCons_API ctx)) (d (@IdealDateDay_UFCons_API ctx)) (hh (@IdealDateHour_UFCons_API ctx)) (mm (@IdealDateMinute_UFCons_API ctx)) (ss (@IdealDateSecond_UFCons_API ctx)) (millis (@IdealDateMillis_UFCons_API ctx)) (tzinfo (@IdealDateTZName_UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (<= 0 ss) (<= ss 59) (<= 0 millis) (<= millis 999) (@istzname tzinfo))
         (@ResultO-mk-ok (@IdealDateTime-mk y m d hh mm ss millis tzinfo))
@@ -569,7 +552,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_UTCDateTime ((ctx @HavocSequence)) (@ResultO @IdealDateTime)
+(define-fun @entrypoint_cons_UTCDateTime ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((y (@IdealDateYear_UFCons_API ctx)) (m (@IdealDateMonth_UFCons_API ctx)) (d (@IdealDateDay_UFCons_API ctx)) (hh (@IdealDateHour_UFCons_API ctx)) (mm (@IdealDateMinute_UFCons_API ctx)) (ss (@IdealDateSecond_UFCons_API ctx)) (millis (@IdealDateMillis_UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (<= 0 ss) (<= ss 59) (<= 0 millis) (<= millis 999))
         (@ResultO-mk-ok (@IdealDateTime-mk y m d hh mm ss millis @IdealDateTime-UTC))
@@ -577,7 +560,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_PlainDate ((ctx @HavocSequence)) (@ResultO @IdealDateTime)
+(define-fun @entrypoint_cons_PlainDate ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((y (@IdealDateYear_UFCons_API ctx)) (m (@IdealDateMonth_UFCons_API ctx)) (d (@IdealDateDay_UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@check_DayInMonth d m y))
         (@ResultO-mk-ok (@IdealDateTime-mk y m d hh 0 0 0 @IdealDateTime-UTC))
@@ -585,7 +568,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_PlainTime ((ctx @HavocSequence)) (@ResultO @IdealDateTime)
+(define-fun @entrypoint_cons_PlainTime ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((hh (@IdealDateHour_UFCons_API ctx)) (mm (@IdealDateMinute_UFCons_API ctx)) (ss (@IdealDateSecond_UFCons_API ctx)) (millis (@IdealDateMillis_UFCons_API ctx)))
     (ite (and (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (<= 0 ss) (<= ss 59) (<= 0 millis) (<= millis 999))
         (@ResultO-mk-ok (@IdealDateTime-mk 0 0 0 hh mm ss millis @IdealDateTime-UTC))
@@ -593,7 +576,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_TickTime ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_TickTime ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@TickTime_UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv (+ @INT_MAX @INT_MAX)))
         (@ResultO-mk-ok iv)
@@ -601,7 +584,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_LogicalTime ((ctx @HavocSequence)) (@ResultO Int)
+(define-fun @entrypoint_cons_LogicalTime ((ctx (Seq Int))) (@ResultO Int)
     (let ((iv (@LogicalTime_UFCons_API ctx)))
     (ite (and (<= 0 iv) (<= iv (+ @INT_MAX @INT_MAX)))
         (@ResultO-mk-ok iv)
@@ -609,7 +592,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_ISOTimeStamp ((ctx @HavocSequence)) (@ResultO @IdealDateTime)
+(define-fun @entrypoint_cons_ISOTimeStamp ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((y (@IdealDateYear_UFCons_API ctx)) (m (@IdealDateMonth_UFCons_API ctx)) (d (@IdealDateDay_UFCons_API ctx)) (hh (@IdealDateHour_UFCons_API ctx)) (mm (@IdealDateMinute_UFCons_API ctx)) (ss (@IdealDateSecond_UFCons_API ctx)) (millis (@IdealDateMillis_UFCons_API ctx)) (tzinfo (@IdealDateTZName_UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@check_DayInMonth d m y) (<= 0 hh) (<= hh 23) (<= 0 mm) (<= mm 59) (<= 0 ss) (<= ss 60) (<= 0 millis) (<= millis 999) (@istzname tzinfo))
         (@ResultO-mk-ok (@IdealDateTime-mk y m d hh mm ss millis tzinfo))
@@ -633,7 +616,7 @@
     )
 )
 
-(define-fun @entrypoint_cons_UUIDv4 ((ctx @HavocSequence)) (@ResultO String)
+(define-fun @entrypoint_cons_UUIDv4 ((ctx (Seq Int))) (@ResultO String)
     (let ((uuv (@UUIDv4_UFCons_API ctx)))
     (ite @isUUIDFormat(uuv)
         (@ResultO-mk-ok uuv)
@@ -641,7 +624,7 @@
     ))
 )
 
-(define-fun @entrypoint_cons_UUIDv7 ((ctx @HavocSequence)) (@ResultO String)
+(define-fun @entrypoint_cons_UUIDv7 ((ctx (Seq Int))) (@ResultO String)
     (let ((uuv (@UUIDv7_UFCons_API ctx)))
     (ite @isUUIDFormat(uuv)
         (@ResultO-mk-ok uuv)
@@ -649,11 +632,11 @@
     ))
 )
 
-(define-fun @entrypoint_cons_ContentHash ((ctx @HavocSequence)) (@ResultO (_ BitVec 16))
+(define-fun @entrypoint_cons_ContentHash ((ctx (Seq Int))) (@ResultO (_ BitVec 16))
     (@ResultO-mk-ok (@SHAContentHash_UFCons_API ctx))
 )
 
-(define-fun @entrypoint_cons_LatLongCoordinate ((ctx @HavocSequence)) (@ResultO (@Tuple2 Float Float))
+(define-fun @entrypoint_cons_LatLongCoordinate ((ctx (Seq Int))) (@ResultO (@Tuple2 Float Float))
     (let ((lat (@Latitude_UFCons_API ctx)) (long (@Longitude_UFCons_API ctx)))
     (ite (and (<= -90.0 lat) (<= lat 90.0) (< -180.0 long) (<= long 180.0))
         (@ResultO-mk-ok (@Tuple2 lat long))

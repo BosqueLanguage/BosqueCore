@@ -2339,7 +2339,7 @@ class Parser {
                 //
                 //TODO: maybe a better error here -- slice the string at the position...
                 //
-                this.raiseError(line, "Unknown token sequence in parsing expression");
+                this.raiseError(line, `Unknown token sequence in parsing expression -- ${tk}`);
                 return [new InvalidExpression(sinfo), false];
             }
         }

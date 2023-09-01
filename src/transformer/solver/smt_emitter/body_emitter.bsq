@@ -248,7 +248,7 @@ entity BodyEmitter {
 
     recursive method emitLoadFieldExpression(exp: TreeIR::LoadFieldExpression): String {
         let bexp = this.emitExpression[recursive](exp.exp);
-        let lfop = this.nemitter.emitFieldAccessorName(this.assembly.typeMap.get(exp.tkey), exp.fieldkey);
+        let lfop = this.nemitter.getFieldAccessorName(exp.tkey, exp.fieldkey);
 
         return String::concat(List<String>{"(", lfop, " ", bexp, ")"});
     }
@@ -263,13 +263,13 @@ entity BodyEmitter {
     */
 
     recursive method emitConstructorPrimaryDirectExpression(exp: TreeIR::ConstructorPrimaryDirectExpression): String {
-        let ctname = this.nemitter.emitTypeNameInfo(this.assembly.typeMap.get(exp.oftype)).consname@<String>;
+        let ctname = this.temitter.getSMTTypeName(exp.oftype);
 
         if(exp.args.empty()) {
             return ctname;
         }
         else {
-            let args = exp.args.map<String>(fn(arg) => this.emitExpression(arg));
+            let args = exp.args.map<String>(fn(arg) => this.emitExpression[recursive](arg));
             return String::concat(List<String>{"(", ctname, " ", String::join(" ", args), ")"});
         }
     }

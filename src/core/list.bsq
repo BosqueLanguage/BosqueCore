@@ -202,9 +202,8 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    //TODO: want algebraic here
     //TODO: accumulate as parallel merge processing -- + associative checking!!!
-    method {when T unique Int|Nat|BigInt|BigNat|Float|Decimal|Rational} sum(): T {
+    method sum(): T {
         assert !ListOps::s_list_empty<T>(this);
 
         let iv = ListOps::s_list_front<T>(this);
@@ -277,6 +276,15 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
         else {
             return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v?<U>, fn(vv: T): U => s_safeAs<T, U>(vv));
+        }
+    }
+
+    method filterSome(): List<T!Some> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T!Some>{};
+        }
+        else {
+            return ListOps::s_list_filter_map_fn<T, T!Some>(this, pred(v: T): Bool => v?<T!Some>, fn(vv: T): T!Some => s_safeAs<T, T!Some>(vv));
         }
     }
 

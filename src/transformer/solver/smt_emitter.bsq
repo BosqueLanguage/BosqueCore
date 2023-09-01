@@ -3,12 +3,15 @@ namespace SMTEmit;
 import TreeIR;
 
 typedef SMTParams = {
-    type_tag_decls: String,
-    type_tag_distincts: String,
+    key_type_tag_decls: String,
+    key_type_tag_distincts: String,
     key_type_tag_sort: String,
     oo_decls: String,
     oo_constructors: String,
     type_box_constructors: String,
+    term_box_constructors: String,
+    term_unbox_constructors: String,
+    type_subtype: String,
     global_decls: String,
     uf_decls: String,
     function_decls: String,
@@ -19,12 +22,15 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
     let vmm = "(declare-const @INT_MIN Int) (assert (= @INT_MIN -255)) (declare-const @INT_MAX Int) (assert (= @INT_MAX 255)) (declare-const @NAT_MAX Int) (assert (= @NAT_MAX 255)) (declare-const @SLEN_MAX Int) (assert (= @SLEN_MAX 64)) (declare-const @BLEN_MAX Int) (assert (= @BLEN_MAX 64)) (declare-const @CSIZE_MAX Int) (assert (= @CSIZE_MAX 3))";
 
     return smtcode
-        .replaceUnique(";;--TYPE_TAG_DECLS--;;", params.type_tag_decls)
-        .replaceUnique(";;--TYPE_TAG_DISTINCTS--;;", params.type_tag_distincts)
+        .replaceUnique(";;--KEY_TYPE_TAG_DECLS--;;", params.key_type_tag_decls)
+        .replaceUnique(";;--KEY_TYPE_TAG_DISTINCTS--;;", params.key_type_tag_distincts)
         .replaceUnique(";;--KEY_TYPE_TAG_SORT--;;", params.key_type_tag_sort)
         .replaceUnique(";;--OO_DECLS--;;", params.oo_decls)
         .replaceUnique(";;--OO_CONSTRUCTORS--;;", params.oo_constructors)
         .replaceUnique(";;--TYPE_BOX_CONSTRUCTORS--;;", params.type_box_constructors)
+        .replaceUnique(";;--TERM_BOX_CONSTRUCTORS--;;", params.term_box_constructors)
+        .replaceUnique(";;--TERM_BOX_UNBOXERS--;;", params.term_unbox_constructors)
+        .replaceUnique(";;--TYPE_SUBTYPE--;;", params.type_subtype)
         .replaceUnique(";;--V_MIN_MAX--;;", vmm)
         .replaceUnique(";;--GLOBAL_DECLS--;;", params.global_decls)
         .replaceUnique(";;--UF_DECLS--;;", params.uf_decls)
@@ -39,17 +45,20 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let temitter = TypeInfoEmitter{flatasm, nemitter};
     let asmemitter = AssemblyEmitter{flatasm, nemitter, temitter};
 
-    let type_tag_info = asmemitter.generateTypeTagInfo();
-    let type_decl_info = asmemitter.generateTypeDecls();
+    let key_tag_info = asmemitter.generateKeyTypeTagInfo();
+
     let function_decl_info = asmemitter.generateSMTCode(Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
 
     let params = {
-        type_tag_decls = type_tag_info.type_tag_decls,
-        type_tag_distincts = type_tag_info.type_tag_distincts,
-        key_type_tag_sort = type_tag_info.key_type_tag_sort,
-        oo_decls = type_decl_info.oo_decls,
-        oo_constructors = type_decl_info.oo_constructors,
+        key_type_tag_decls = key_tag_info.key_type_tag_decls,
+        key_type_tag_distincts = key_tag_info.key_type_tag_distincts,
+        key_type_tag_sort = key_tag_info.key_type_tag_sort,
+        oo_decls = "[NOT IMPLEMENTED]",
+        oo_constructors = "[NOT IMPLEMENTED]",
         type_box_constructors = "[NOT IMPLEMENTED]",
+        term_box_constructors = "[NOT IMPLEMENTED]",
+        term_unbox_constructors = "[NOT IMPLEMENTED]",
+        type_subtype = "[NOT IMPLEMENTED]",
         global_decls = "[NOT IMPLEMENTED]",
         uf_decls = "[NOT IMPLEMENTED]",
         function_decls = function_decl_info,
