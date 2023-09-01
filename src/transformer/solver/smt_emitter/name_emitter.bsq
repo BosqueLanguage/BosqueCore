@@ -223,6 +223,11 @@ entity NameEmitter {
         return tn.append("-").append(ii.value().value());
     }
 
+    method getEnumValueAccessorName(tkey: TreeIR::TypeKey): String {
+        let tn = smtifyTypeKey(tkey);
+        return tn.append("-value");
+    }
+
     method getMapEntryKeyAccessorName(tkey: TreeIR::TypeKey): String {
         let tn = smtifyTypeKey(tkey);
         return tn.append("-key");
@@ -233,7 +238,7 @@ entity NameEmitter {
         return tn.append("-value");
     }
 
-    method emitIndexAccessorName(tkey: TreeIR::TypeKey, ii: Nat): String {
+    method getIndexAccessorName(tkey: TreeIR::TypeKey, ii: Nat): String {
         let tn = smtifyTypeKey(tkey);
         return tn.append("-").append(String::fromNat(ii));
     }

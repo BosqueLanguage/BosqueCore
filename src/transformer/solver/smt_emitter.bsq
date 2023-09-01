@@ -46,18 +46,20 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let asmemitter = AssemblyEmitter{flatasm, nemitter, temitter};
 
     let key_tag_info = asmemitter.generateKeyTypeTagInfo();
-
+    let decls_cons = asmemitter.generateDeclAndConsInfo();
+    let bxops = asmemitter.generateBoxAndUnboxInfo();
+    
     let function_decl_info = asmemitter.generateSMTCode(Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
 
     let params = {
         key_type_tag_decls = key_tag_info.key_type_tag_decls,
         key_type_tag_distincts = key_tag_info.key_type_tag_distincts,
         key_type_tag_sort = key_tag_info.key_type_tag_sort,
-        oo_decls = "[NOT IMPLEMENTED]",
-        oo_constructors = "[NOT IMPLEMENTED]",
-        type_box_constructors = "[NOT IMPLEMENTED]",
-        term_box_constructors = "[NOT IMPLEMENTED]",
-        term_unbox_constructors = "[NOT IMPLEMENTED]",
+        oo_decls = decls_cons.decls,
+        oo_constructors = decls_cons.cons,
+        type_box_constructors = bxops.typebox,
+        term_box_constructors = bxops.box,
+        term_unbox_constructors = bxops.unbox,
         type_subtype = "[NOT IMPLEMENTED]",
         global_decls = "[NOT IMPLEMENTED]",
         uf_decls = "[NOT IMPLEMENTED]",
