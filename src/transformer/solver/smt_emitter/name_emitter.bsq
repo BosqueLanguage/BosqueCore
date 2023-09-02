@@ -208,6 +208,10 @@ entity NameEmitter {
         return smtifyTypeKey(tkey).prepend("@BoxedData-");
     }
 
+    method getSubtypeOfName(tkey: TreeIR::TypeKey): String {
+        return smtifyTypeKey(tkey).prepend("@SubtypeOf-");
+    }
+
     ////
     //String mangle to get various accessor names for types
 

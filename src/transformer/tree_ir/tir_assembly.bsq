@@ -381,6 +381,8 @@ entity EListType provides Type {
     field types: List<TypeKey>;
 }
 
+typedef AbstractType = TreeIR::ConceptType | TreeIR::ConceptSetType | TreeIR::UnionType;
+
 concept NamespaceDecl {
     field ns: NamespaceIdentifier;
     field name: Identifier;

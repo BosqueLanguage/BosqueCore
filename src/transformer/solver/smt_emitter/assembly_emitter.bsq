@@ -16,6 +16,18 @@ entity TypeInfoEmitter {
         return this.nemitter.getSMTTypeName(ttype);
     }
 
+    recursive method isSubtypeOf(t: TreeIR::Type, oftype: TreeIR::AbstractType): Bool {
+        if(t.tkey === oftype.tkey) {
+            return true;
+        }
+        elif(t.supertypes?none) {
+            return false;
+        }
+        else {
+            return t.supertypes@!none.someOf(pred(st) => this.isSubtypeOf[recursive](this.assembly.typeMap.get(st), oftype));
+        }
+    }
+
     method emitKeyTypeTagDecl(t: TreeIR::Type): String? {
         if(!t?<OOType> || t?<TreeIR::PrimitiveInternalEntityType>) {
             return none;
@@ -123,31 +135,40 @@ entity TypeInfoEmitter {
         return {box=box, unbox=unbox, typebox=typebox};
     }
 
-
-
-
-
-
-    function typeRequiresSuperTypeTypeTagInfo(t: TreeIR::Type): Bool {
-        if(t.tkey == "Any"_TreeIR::TypeKey || t.tkey == "Some"_TreeIR::TypeKey) {
+    recursive method typeRequiresSubtypeInfo(t: TreeIR::Type): Bool {
+        if !<TreeIR::AbstractType> (t) {
             return false;
         }
 
-        return match(t) {
-            TreeIR::ConceptType => true
-            | TreeIR::ConceptSetType => true
-            | TreeIR::UnionType => true
-            | _ => false
-        };
+        match(t) {
+            TreeIR::ConceptType => return !$.attributes.contains("__universal");
+            | TreeIR::ConceptSetType => return $.conceptTypes.allOf(pred(ct) => this.typeRequiresSubtypeInfo[recursive](this.assembly.typeMap.get(ct)));
+            | TreeIR::UnionType => return $.options.allOf(pred(tt) => this.typeRequiresSubtypeInfo[recursive](this.assembly.typeMap.get(tt)));
+        }
     }
 
-    function typeRequiresIOBinder(t: TreeIR::Type): Bool {
-        match(t) {
-            TreeIR::EnumEntityType => return true;
-            | TreeIR::TypedeclEntityType => return true;
-            | TreeIR::ObjectEntityType => return true;
-            | TreeIR::PrimitiveInternalEntityType => return true;
-            | _ => return false;
+    method generateSubtypeInfo(t: TreeIR::Type): String? {
+        if(!this.typeRequiresSubtypeInfo(t)) {
+            return none;
+        }
+
+        let smtname = this.getSMTTypeName(t);
+        let smttype = smtifyTypeKey(t.tkey);
+        let csubtypes = this.assembly.typeMap.values().filter(pred(st) => !st?<TreeIR::AbstractType> && this.isSubtypeOf[recursive](st, t@<TreeIR::AbstractType>));
+
+        if(csubtypes.empty()) {
+            return none;
+        }
+        else {
+            let subtfn = this.nemitter.getSubtypeOfName(t.tkey);
+            let stags = if (csubtypes.size() === 1n) 
+                then 
+                    String::concat(List<String>{"((_ is ", this.nemitter.getBoxDataMKName(csubtypes.front().tkey), ") tt)"})
+                else
+                    String::concat(List<String>{"(or ", String::join(" ", csubtypes.map<String>(fn(st) => String::concat(List<String>{"((_ is ", this.nemitter.getBoxDataMKName(st.tkey), ") tt)"}))), ")"});
+                ;
+
+            return String::concat(List<String>{"(define-fun ", subtfn, " ((t @Term)) Bool (let (tt (@Term-data t)) ", stags, "))"});
         }
     }
 }
@@ -198,6 +219,13 @@ entity AssemblyEmitter {
         let ubbox = String::join("\n", bbinfo.map<String>(fn(vv) => vv.unbox));
 
         return {box=bbox, unbox=ubbox, typebox=tbox};
+    }
+
+    method generateSubtypeInfo(): String {
+        let alltypes = this.assembly.typeMap.values();
+
+        let stinfo = alltypes.map<String?>(fn(t) => this.temitter.generateSubtypeInfo(t)).filterSome();
+        return String::join("\n", stinfo);
     }
 
     /*
