@@ -4390,9 +4390,6 @@ class Parser {
                 else if(ename === "MapEntry") {
                     attributes.push("__mapentry_type");
                 }
-                else if(ename === "HavocSequence") {
-                    attributes.push("__havoc_type");
-                }
                 else if(ename === "List") {
                     attributes.push("__list_type");
                 }

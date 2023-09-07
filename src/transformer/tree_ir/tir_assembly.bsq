@@ -161,7 +161,7 @@ concept MemberDecl {
 
 entity ConstMemberDecl provides MemberDecl {
     field declaredType: TypeKey;
-    field value: Expression;
+    field value: Expression | ScopedBlockStatement;
 }
 
 entity StaticFunctionDecl provides MemberDecl {
@@ -304,10 +304,6 @@ entity MapEntryEntityType provides ConstructableEntityType {
     field typeV: TypeKey;
 }
 
-//class representing special havoc type
-entity HavocEntityType provides InternalEntityType {
-}
-
 //abstract class for all the builtin collection types
 concept PrimitiveCollectionEntityType provides InternalEntityType {
 }
@@ -394,7 +390,7 @@ concept NamespaceDecl {
 
 entity NamespaceConstDecl provides NamespaceDecl {
     field declaredType: TypeKey;
-    field value: Expression;
+    field value: Expression | ScopedBlockStatement;
 }
 
 entity NamespaceFunctionDecl provides NamespaceDecl {

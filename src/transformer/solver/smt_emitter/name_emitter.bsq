@@ -162,7 +162,6 @@ entity NameEmitter {
             | TreeIR::ErrEntityType => return this.getSMTTypeName[recursive](this.assembly.typeMap.get($.typeE));
             | TreeIR::SomethingEntityType => return this.getSMTTypeName[recursive](this.assembly.typeMap.get($.typeT));
             | TreeIR::MapEntryEntityType => return smtifyTypeKey($.tkey);
-            | TreeIR::HavocEntityType => return "(Seq Int)";
             | TreeIR::ListEntityType => return String::concat(List<String>{"(Seq ", this.getSMTTypeName[recursive](this.assembly.typeMap.get($.typeT)), ")"});
             | TreeIR::StackEntityType => return String::concat(List<String>{"(Seq ", this.getSMTTypeName[recursive](this.assembly.typeMap.get($.typeT)), ")"});
             | TreeIR::QueueEntityType => return String::concat(List<String>{"(Seq ", this.getSMTTypeName[recursive](this.assembly.typeMap.get($.typeT)), ")"});

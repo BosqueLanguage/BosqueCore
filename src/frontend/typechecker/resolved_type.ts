@@ -309,18 +309,6 @@ class ResolvedMapEntryEntityAtomType extends ResolvedConstructableEntityAtomType
     }
 }
 
-//class representing special havoc type
-class ResolvedHavocEntityAtomType extends ResolvedInternalEntityAtomType {
-    constructor(typeID: string, object: EntityTypeDecl) {
-        super(typeID, object);
-    }
-
-    static create(object: EntityTypeDecl): ResolvedHavocEntityAtomType {
-        let name = (object.ns !== "Core" ? (object.ns + "::") : "") + object.name;
-        return new ResolvedHavocEntityAtomType(name, object);
-    }
-}
-
 //abstract class for all the builtin collection types
 abstract class ResolvedPrimitiveCollectionEntityAtomType extends ResolvedInternalEntityAtomType {
     constructor(typeID: string, object: EntityTypeDecl) {
@@ -870,7 +858,6 @@ export {
     ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
     ResolvedPathValidatorEntityAtomType, ResolvedPathEntityAtomType, ResolvedPathFragmentEntityAtomType, ResolvedPathGlobEntityAtomType,
     ResolvedConstructableEntityAtomType, ResolvedOkEntityAtomType, ResolvedErrEntityAtomType, ResolvedSomethingEntityAtomType, ResolvedMapEntryEntityAtomType,
-    ResolvedHavocEntityAtomType,
     ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType,

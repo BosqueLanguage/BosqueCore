@@ -1,5 +1,5 @@
 
-import { TIRExpression, TIRLiteralValue, TIRStatement } from "./tir_body";
+import { TIRExpression, TIRLiteralValue, TIRScopedBlockStatement, TIRStatement } from "./tir_body";
 
 import { SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
@@ -481,7 +481,7 @@ abstract class TIRMemberDecl {
 
 class TIRConstMemberDecl extends TIRMemberDecl {
     readonly declaredType: TIRTypeKey;
-    readonly value: TIRExpression;
+    readonly value: TIRExpression | TIRScopedBlockStatement;
 
     constructor(tkey: TIRTypeKey, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
         super(tkey, name, srcInfo, srcFile, attributes);
@@ -962,17 +962,6 @@ class TIRMapEntryEntityType extends TIRConstructableEntityType {
     }
 }
 
-//class representing special havoc type
-class TIRHavocEntityType extends TIRInternalEntityType {
-    constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[]) {
-        super(tkey, tname, srcInfo, srcFile, attributes, [], false);
-    }
-
-    bsqemit(ii: string): string {
-        return this.bsqemit_internalentity(ii, "HavocEntityType") + `\n${ii}}`;
-    }
-}
-
 //abstract class for all the builtin collection types
 abstract class TIRPrimitiveCollectionEntityType extends TIRInternalEntityType {
     constructor(tkey: TIRTypeKey, tname: TIRTypeName, srcInfo: SourceInfo, srcFile: string, attributes: string[], supertypes: TIRTypeKey[]) {
@@ -1240,7 +1229,7 @@ abstract class TIRNamespaceDecl {
 
 class TIRNamespaceConstDecl extends TIRNamespaceDecl {
     readonly declaredType: TIRTypeKey;
-    readonly value: TIRExpression;
+    readonly value: TIRExpression | TIRScopedBlockStatement;
 
     constructor(ns: string, name: string, srcInfo: SourceInfo, srcFile: string, attributes: string[], declaredtype: TIRTypeKey, value: TIRExpression) {
         super(ns, name, srcInfo, srcFile, attributes);
@@ -2102,7 +2091,6 @@ export {
     TIRValidatorEntityType, TIRStringOfEntityType, TIRASCIIStringOfEntityType,
     TIRPathValidatorEntityType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType,
     TIRConstructableEntityType, TIROkEntityType, TIRErrEntityType, TIRSomethingEntityType, TIRMapEntryEntityType,
-    TIRHavocEntityType,
     TIRPrimitiveCollectionEntityType, TIRListEntityType, TIRStackEntityType, TIRQueueEntityType, TIRSetEntityType, TIRMapEntityType,
     TIRTaskType,
     TIRConceptType, TIRConceptSetType,

@@ -43,6 +43,8 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
 export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let flatasm = AssemblyEmitter::processAssembly(asm); //TODO should go into tree rewriter
     
+    let invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind> = Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{};
+
     let nemitter = NameEmitter{flatasm};
     let temitter = TypeInfoEmitter{flatasm, nemitter};
     let asmemitter = AssemblyEmitter{flatasm, nemitter, temitter};
@@ -53,8 +55,9 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let subtypeof = asmemitter.generateSubtypeInfo();
     
     let global_decls = asmemitter.generateGlobalDecls();
+    let global_defs = asmemitter.generateGlobalDefs(invokeResultErrMap);
 
-    let function_decl_info = asmemitter.generateSMTCode(Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
+    let function_decl_info = asmemitter.generateSMTCode(invokeResultErrMap);
 
     let params = {
         key_type_tag_decls = key_tag_info.key_type_tag_decls,
@@ -69,8 +72,8 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
         global_decls = global_decls,
         uf_decls = ";;---------------------------- UF DECLS SOMETHING ----------------------------;;",
         function_decls = function_decl_info,
-        global_definitions = "[NOT IMPLEMENTED]",
-        io_cons_decls = "[NOT IMPLEMENTED]"
+        global_definitions = global_defs,
+        io_cons_decls = ";;---------------------------- IO CONS DECLS SOMETHING ----------------------------;;"
     };
 
     let resolvedSMT = processSMTFile(params, smtcode);

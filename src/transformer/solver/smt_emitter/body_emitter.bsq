@@ -50,6 +50,15 @@ entity BodyEmitter {
         }
     }
 
+    function buildOkIsTest(evar: String, errkind: TreeIR::ErrorKind): String {
+        if(isOtherErrorKind(errkind)) {
+            return String::concat(List<String>{"((_ is) @ResultO-mk-ok ", evar, ")"});
+        }
+        else {
+            return String::concat(List<String>{"((_ is) @ResultT-mk-ok ", evar, ")"});
+        }
+    }
+
     function buildValueExtract(okvar: String, errkind: TreeIR::ErrorKind): String {
         if(isOtherErrorKind(errkind)) {
             return String::concat(List<String>{"(@ResultO-value ", okvar, ")"});

@@ -97,7 +97,6 @@ entity TypeInfoEmitter {
     function typeRequiresBoxingInfo(t: TreeIR::Type): Bool {
         match(t) {
             TreeIR::PrimitiveInternalEntityType => return false;
-            | TreeIR::HavocEntityType => return false;
             | TreeIR::TaskType => return false;
             | TreeIR::ConceptType => return false;
             | TreeIR::ConceptSetType => return false;
@@ -235,7 +234,11 @@ entity AssemblyEmitter {
         }
 
         let ddecls = dtypes.map<String>(fn(t) => {
-            let tdecls = t.constMembers.map<String>(fn(cm) => String::concat(List<String>{"(declare-const ", this.nemitter.getOOMemberConstantName(t.tkey, cm.name), " ", this.temitter.getSMTTypeName(cm.declaredType), ")"}));
+            let tdecls = t.constMembers.map<String>(fn(cm) => {
+                let cname = this.nemitter.getOOMemberConstantName(t.tkey, cm.name);
+                let ctype = this.temitter.getSMTTypeName(cm.declaredType);
+                return String::concat(List<String>{"(declare-const ", cname, " ", ctype, ")"});
+            });
             return String::join(" ", tdecls);
         });
 
@@ -246,9 +249,79 @@ entity AssemblyEmitter {
         let allns = this.assembly.namespaceMap.values();
 
         let nscdecls = allns.map<String>(fn(ns) => {
-            let ndecls = ns.consts.values().map<String>(fn(nsc) => String::concat(List<String>{ "(declare-const ", this.nemitter.getNamespaceConstantName(nsc.ns, nsc.name), " ", this.temitter.getSMTTypeName(nsc.declaredType), ")" }));
+            let ndecls = ns.consts.values().map<String>(fn(nsc) => {
+                let cname = this.nemitter.getNamespaceConstantName(nsc.ns, nsc.name);
+                let ctype = this.temitter.getSMTTypeName(nsc.declaredType);
+                return String::concat(List<String>{ "(declare-const ", cname, " ", ctype, ")" });
+            });
+
             let edecls = ns.objects.values().map<String?>(fn(nsel) => this.generateGlobalDeclsForEntityOrConceptList(nsel)).filterSome();
             let cdecls = ns.concepts.values().map<String?>(fn(nscl) => this.generateGlobalDeclsForEntityOrConceptList(nscl)).filterSome();
+
+            return String::join("\n", ListOp::concat<String>(List<List<String>>{List<String>{ String::join(" ", ndecls) }, edecls, cdecls}));
+        });
+
+        return String::join("\n\n", nscdecls);
+    }
+
+    method generateGlobalDefsForEntityOrConceptList(el: List<TypeKey>, invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String? {
+        let dtypes = el.project<Type>(this.assembly.typeMap).castType<OOType>().filter(pred(t) => !t.constMembers.empty());
+        if(dtypes.empty()) {
+            return none;
+        }
+
+        let ddefs = dtypes.map<String>(fn(t) => {
+            let tdecls = t.constMembers.map<String>(fn(cm) => {
+                let cname = this.nemitter.getOOMemberConstantName(t.tkey, cm.name);
+
+                if <TreeIR::Expression>(cm.value) {
+                    let bemit = BodyEmitter{this.assembly, this.nemitter, this.temitter, cm.srcFile, -1i, invokeResultErrMap, cm.declaredType, TreeIR::ErrorKind::safe};
+                    let cval = bemit.emitExpression($);
+
+                    return String::concat(List<String>{"(assert (= ", cname, " ", cval, "))"});
+                }
+                else {
+                    let bemit = BodyEmitter{this.assembly, this.nemitter, this.temitter, cm.srcFile, -1i, invokeResultErrMap, cm.declaredType, TreeIR::ErrorKind::any};
+                    let cval = bemit.emitBodyStatementList($.ops);
+
+                    return String::concat(List<String>{
+                        "(assert ", BodyEmitter::buildOkIsTest(cname, TreeIR::ErrorKind::any), ")",
+                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, TreeIR::ErrorKind::any), "))"
+                    });
+                }
+            });
+            return String::join(" ", tdecls);
+        });
+
+        return String::join("\n", ddefs);
+    }
+
+    method generateGlobalDefs(invokeResultErrMap: Map<TreeIR::InvokeKey, TreeIR::ErrorKind>): String {
+        let allns = this.assembly.namespaceMap.values();
+
+        let nscdecls = allns.map<String>(fn(ns) => {
+            let ndecls = ns.consts.values().map<String>(fn(nsc) => {
+                let cname = this.nemitter.getNamespaceConstantName(nsc.ns, nsc.name);
+
+                if <TreeIR::Expression>(nsc.value) {
+                    let bemit = BodyEmitter{this.assembly, this.nemitter, this.temitter, nsc.srcFile, -1i, invokeResultErrMap, nsc.declaredType, TreeIR::ErrorKind::safe};
+                    let cval = bemit.emitExpression($);
+
+                    return String::concat(List<String>{"(assert (= ", cname, " ", cval, "))"});
+                }
+                else {
+                    let bemit = BodyEmitter{this.assembly, this.nemitter, this.temitter, nsc.srcFile, -1i, invokeResultErrMap, nsc.declaredType, TreeIR::ErrorKind::any};
+                    let cval = bemit.emitBodyStatementList($.ops);
+
+                    return String::concat(List<String>{
+                        "(assert ", BodyEmitter::buildOkIsTest(cname, TreeIR::ErrorKind::any), ")",
+                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, TreeIR::ErrorKind::any), "))"
+                    });
+                }
+            });
+
+            let edecls = ns.objects.values().map<String?>(fn(nsel) => this.generateGlobalDefsForEntityOrConceptList(nsel, invokeResultErrMap)).filterSome();
+            let cdecls = ns.concepts.values().map<String?>(fn(nscl) => this.generateGlobalDefsForEntityOrConceptList(nscl, invokeResultErrMap)).filterSome();
 
             return String::join("\n", ListOp::concat<String>(List<List<String>>{List<String>{ String::join(" ", ndecls) }, edecls, cdecls}));
         });
