@@ -26,6 +26,24 @@ function rangeNat(start: Nat, end: Nat): List<Nat>
 */
 
 entity ListOp provides Some {
+    function concat<T>(ll: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(ll)) {
+            return List<T>{};
+        }
+        else {
+            let ilist = ListOps::s_list_front<List<T>>(ll);
+            let tl = ListOps::s_list_pop_front<List<T>>(ll);
+            if(ListOps::s_list_empty<List<T>>(tl)) {
+                return ilist;
+            }
+            else {
+                return ListOps::s_list_reduce<List<T>, List<T>>(tl, ilist, fn(acc: List<T>, argl: List<T>): List<T> => {
+                    return List<T>::s_append_helper(acc, argl);
+                });
+            }
+        }
+    }
+
     function zip<T, U>(l1: List<T>, l2: List<U>): List<[T, U]>
         requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
     {

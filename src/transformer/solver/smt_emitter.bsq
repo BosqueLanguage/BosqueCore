@@ -15,7 +15,8 @@ typedef SMTParams = {
     global_decls: String,
     uf_decls: String,
     function_decls: String,
-    global_definitions: String
+    global_definitions: String,
+    io_cons_decls: String
 };
 
 function processSMTFile(params: SMTParams, smtcode: String): String {
@@ -35,7 +36,8 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
         .replaceUnique(";;--GLOBAL_DECLS--;;", params.global_decls)
         .replaceUnique(";;--UF_DECLS--;;", params.uf_decls)
         .replaceUnique(";;--FUNCTION_DECLS--;;", params.function_decls)
-        .replaceUnique(";;--GLOBAL_DEFINITIONS--;;", params.global_definitions);
+        .replaceUnique(";;--GLOBAL_DEFINITIONS--;;", params.global_definitions)
+        .replaceUnique(";;--IO_CONSTRUCTOR_EXTRACTOR_DEFINITIONS--;;", params.io_cons_decls);
 }
 
 export function main(asm: TreeIR::Assembly, smtcode: String): String {
@@ -50,6 +52,8 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let bxops = asmemitter.generateBoxAndUnboxInfo();
     let subtypeof = asmemitter.generateSubtypeInfo();
     
+    let global_decls = asmemitter.generateGlobalDecls();
+
     let function_decl_info = asmemitter.generateSMTCode(Map<TreeIR::InvokeKey, TreeIR::ErrorKind>{});
 
     let params = {
@@ -62,10 +66,11 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
         term_box_constructors = bxops.box,
         term_unbox_constructors = bxops.unbox,
         type_subtype = subtypeof,
-        global_decls = "[NOT IMPLEMENTED]",
-        uf_decls = "[NOT IMPLEMENTED]",
+        global_decls = global_decls,
+        uf_decls = ";;---------------------------- UF DECLS SOMETHING ----------------------------;;",
         function_decls = function_decl_info,
-        global_definitions = "[NOT IMPLEMENTED]"
+        global_definitions = "[NOT IMPLEMENTED]",
+        io_cons_decls = "[NOT IMPLEMENTED]"
     };
 
     let resolvedSMT = processSMTFile(params, smtcode);

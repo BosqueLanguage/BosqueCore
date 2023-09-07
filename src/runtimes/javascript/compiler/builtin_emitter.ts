@@ -1,6 +1,6 @@
 import { BSQRegex } from "../../../frontend/bsqregex";
 
-import { TIRAssembly, TIRCodePack, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
+import { TIRAssembly, TIRCodePack, TIREntityType, TIRInvoke, TIRInvokePrimitive, TIRNamespaceFunctionDecl, TIROOType, TIRPCodeKey, TIRStaticFunctionDecl, TIRType, TIRTypeKey } from "../../../frontend/tree_ir/tir_assembly";
 import { BodyEmitter } from "./body_emitter";
 
 function resolveCodePack(asm: TIRAssembly, inv: TIRInvoke, pcname: string): TIRCodePack {
@@ -220,7 +220,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             let lt: string = "[UNDEF]";
             let gt: string = "[UNDEF]";
 
-            if(ttype instanceof TIROOType) {
+            if(ttype instanceof TIREntityType) {
                 lt = `$Runtime.keyLessStrict(a, b)`;
                 gt = `$Runtime.keyLessStrict(b, a)`;
             }
@@ -265,7 +265,20 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             return `{ return ${func.invoke.params[0].name}.get(${func.invoke.params[1].name}); }`;
         }
         case "s_map_entries": {
-            return `{ return ${func.invoke.params[0].name}.entrySeq().toList(); }`;
+            const ttype = asm.typeMap.get(func.invoke.tbinds.get("K") as TIRTypeKey) as TIRType;
+            let lt: string = "[UNDEF]";
+            let gt: string = "[UNDEF]";
+
+            if(ttype instanceof TIREntityType) {
+                lt = `$Runtime.keyLessStrict(a[0], b[0])`;
+                gt = `$Runtime.keyLessStrict(b[0], a[0])`;
+            }
+            else {
+                lt = `$Runtime.keyLessUnion(a[0], b[0])`;
+                gt = `$Runtime.keyLessUnion(b[0], a[0])`;
+            }
+
+            return `{ return ${func.invoke.params[0].name}.entrySeq().toList().sort((a, b) => { if(${lt}) return -1; else if(${gt}) return 1; else return 0; }); }`;
         }
 
         case "s_while": {

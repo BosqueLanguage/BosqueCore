@@ -17,7 +17,7 @@ entity SMTEncodingSymbol {
 }
 
 function smtifyNamespace(ns: TreeIR::NamespaceIdentifier): String {
-    return ns.value();
+    return ns.value().value();
 }
 
 function smtifyTypeKey(tkey: TreeIR::TypeKey): String {
@@ -245,5 +245,15 @@ entity NameEmitter {
     method getIndexAccessorName(tkey: TreeIR::TypeKey, ii: Nat): String {
         let tn = smtifyTypeKey(tkey);
         return tn.append("-").append(String::fromNat(ii));
+    }
+
+    method getNamespaceConstantName(ns: TreeIR::NamespaceIdentifier, ii: TreeIR::Identifier): String {
+        let tn = smtifyNamespace(ns);
+        return tn.append("-").append(ii.value().value());
+    }
+
+    method getOOMemberConstantName(tt: TreeIR::TypeKey, ii: TreeIR::Identifier): String {
+        let tn = smtifyTypeKey(tt);
+        return tn.append("-").append(ii.value().value());
     }
 }
