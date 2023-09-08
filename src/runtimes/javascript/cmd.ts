@@ -62,7 +62,7 @@ function generateTASM(usercode: PackageConfig, buildlevel: BuildLevel, entrypoin
     const coreconfig = new PackageConfig(["EXEC_LIBS"], corecode);
 
     let depsmap = new Map<string, string[]>();
-    const { tasm, errors, aliasmap } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, false, entrypoints, depsmap);
+    const { tasm, errors, aliasmap } = TypeChecker.generateTASM([coreconfig, usercode], buildlevel, entrypoints, depsmap);
     if (errors.length !== 0) {
         for (let i = 0; i < errors.length; ++i) {
             process.stdout.write(`Parse error -- ${errors[i]}\n`);

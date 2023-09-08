@@ -83,7 +83,7 @@
 (assert (@key_type_sort_order @KeyTypeTag-Int @KeyTypeTag-BigNat))
 (assert (@key_type_sort_order @KeyTypeTag-BigNat @KeyTypeTag-BigInt))
 (assert (@key_type_sort_order @KeyTypeTag-BigInt @KeyTypeTag-String))
-(assert (@Key_type_sort_order @KeyTypeTag-String @KeyTypeTag-ASCIIString))
+(assert (@key_type_sort_order @KeyTypeTag-String @KeyTypeTag-ASCIIString))
 (assert (@key_type_sort_order @KeyTypeTag-ASCIIString @KeyTypeTag-UTCDateTime))
 (assert (@key_type_sort_order @KeyTypeTag-UTCDateTime @KeyTypeTag-PlainDate))
 (assert (@key_type_sort_order @KeyTypeTag-PlainDate @KeyTypeTag-PlainTime))
@@ -135,23 +135,23 @@
 (define-fun @Float_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Float_lteq x y)))
 
 (define-fun @Decimal_lteq ((x @Decimal) (y @Decimal)) Bool ((_ linear-order 2) x y))
-(define-fun @Decimal_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Decimal_lteq x y)))
+(define-fun @Decimal_lt ((x @Decimal) (y @Decimal)) Bool (and (not (= x y)) (@Decimal_lteq x y)))
 
 (define-fun @Rational_lteq ((x @Rational) (y @Rational)) Bool ((_ linear-order 3) x y))
-(define-fun @Rational_lt ((x @Float) (y @Float)) Bool (and (not (= x y)) (@Rational_lteq x y)))
+(define-fun @Rational_lt ((x @Rational) (y @Rational)) Bool (and (not (= x y)) (@Rational_lteq x y)))
 
 ;;NLA options
-(declare-fun @Nat_mult (@Nat @Nat) @Nat)
-(declare-fun @Nat_div (@Nat @Nat) @Nat)
+(declare-fun @Nat_mult (Int Int) Int)
+(declare-fun @Nat_div (Int Int) Int)
 
-(declare-fun @Int_mult (@Int @Int) @Int)
-(declare-fun @Int_div (@Int @Int) @Int)
+(declare-fun @Int_mult (Int Int) Int)
+(declare-fun @Int_div (Int Int) Int)
 
-(declare-fun @BigNat_mult (@BigNat @BigNat) @BigNat)
-(declare-fun @BigNat_div (@BigNat @BigNat) @BigNat)
+(declare-fun @BigNat_mult (Int Int) Int)
+(declare-fun @BigNat_div (Int Int) Int)
 
-(declare-fun @BigInt_mult (@BigInt @BigInt) @BigInt)
-(declare-fun @BigInt_div (@BigInt @BigInt) @BigInt)
+(declare-fun @BigInt_mult (Int Int) Int)
+(declare-fun @BigInt_div (Int Int) Int)
 
 ;;Checked arith operations
 
@@ -227,7 +227,7 @@
                             (< (@IdealDateTime-sec k1) (@IdealDateTime-sec k2))
                             (ite (not (= (@IdealDateTime-msec k1) (@IdealDateTime-msec k2)))
                                 (< (@IdealDateTime-msec k1) (@IdealDateTime-msec k2))
-                                (< (@IdealDateTime-tzdata k1) (@IdealDateTime-tzdata k2))
+                                (str.< (@IdealDateTime-tzdata k1) (@IdealDateTime-tzdata k2))
                             )
                         )
                     )
@@ -321,7 +321,7 @@
         (@BoxedData-mk-UUIDv4 (@BoxedData-UUIDv4 String))
         (@BoxedData-mk-UUIDv7 (@BoxedData-UUIDv7 String))
         (@BoxedData-mk-SHAContentHash (@BoxedData-SHAContentHash (_ BitVec 16)))
-        (@BoxedData-mk-LatLongCoordinate (@BoxedData-LatLongCoordinate @LatLongCoordinate))
+        (@BoxedData-mk-LatLongCoordinate (@BoxedData-LatLongCoordinate LatLongCoordinate))
         (@BoxedData-mk-Regex (@BoxedData-Regex String))
         ;;--TYPE_BOX_CONSTRUCTORS--;;
     )
@@ -395,7 +395,7 @@
     (ite (not (= tk1 tk2))
         (@key_type_sort_order tk1 tk2)
         (let ((vv1 (@BoxedKey-get-value (@Term-key k1))) (vv2 (@BoxedKey-get-value (@Term-key k2))))
-        (ite (and (= vv1 @BoxedKeyValue-mk-none) (= vv2 @BoxedKeyValue-mk-none))
+        (ite (and (= vv1 @BoxedKeyValue-mk-None) (= vv2 @BoxedKeyValue-mk-None))
             false
             (ite (and ((_ is @BoxedKeyValue-mk-Bool) vv1) ((_ is @BoxedKeyValue-mk-Bool) vv2))
                 (and (not (@BoxedKeyValue-Bool vv1)) (@BoxedKeyValue-Bool vv2))
@@ -406,7 +406,7 @@
                         (ite (and ((_ is @BoxedKeyValue-mk-SHAContentHash) vv1) ((_ is @BoxedKeyValue-mk-SHAContentHash) vv2))
                             (bvult (@BoxedKeyValue-SHAContentHash vv1) (@BoxedKeyValue-SHAContentHash vv2))
                             (ite (and ((_ is @BoxedKeyValue-mk-IdealDateTime) vv1) ((_ is @BoxedKeyValue-mk-IdealDateTime) vv2))
-                                (@IdealDateTime_less (@BoxedKey-IdealDateTime vv1) (@BoxedKey-IdealDateTime vv2)) 
+                                (@IdealDateTime_less (@BoxedKeyValue-IdealDateTime vv1) (@BoxedKeyValue-IdealDateTime vv2)) 
                                 false
                             )
                         )
@@ -519,9 +519,9 @@
 )
 
 (define-fun @entrypoint_cons_ByteBuffer ((ctx (Seq Int))) (@ResultO (Seq (_ BitVec 8)))
-    (let ((compress (@Enum_UFCons_API (seq.++ ctx (seq.unit 0)))) (format (@Enum_UFCons_API (seq.++ ctx (seq.unit 1)))) (buff (@ByteBuffer_UFCons_API ctx)))
-    (ite (and (< compress 2) (< format 4) (<= (seq.len buff) @BLEN_MAX))
-        (@ResultO-mk-ok (@ByteBuffer-mk buff compress format))
+    (let ((buff (@ByteBuffer_UFCons_API ctx)))
+    (ite (<= (seq.len buff) @BLEN_MAX)
+        (@ResultO-mk-ok buff)
         (@ResultO-mk-err @error-validate)
     ))
 )
@@ -563,7 +563,7 @@
 (define-fun @entrypoint_cons_PlainDate ((ctx (Seq Int))) (@ResultO @IdealDateTime)
     (let ((y (@IdealDateYear_UFCons_API ctx)) (m (@IdealDateMonth_UFCons_API ctx)) (d (@IdealDateDay_UFCons_API ctx)))
     (ite (and (<= 1900 y) (<= y 2200) (<= 0 m) (<= m 11) (<= 1 d) (@check_DayInMonth d m y))
-        (@ResultO-mk-ok (@IdealDateTime-mk y m d hh 0 0 0 @IdealDateTime-UTC))
+        (@ResultO-mk-ok (@IdealDateTime-mk y m d 0 0 0 0 @IdealDateTime-UTC))
         (@ResultO-mk-err @error-validate)
     ))
 )
@@ -618,7 +618,7 @@
 
 (define-fun @entrypoint_cons_UUIDv4 ((ctx (Seq Int))) (@ResultO String)
     (let ((uuv (@UUIDv4_UFCons_API ctx)))
-    (ite @isUUIDFormat(uuv)
+    (ite (@isUUIDFormat uuv)
         (@ResultO-mk-ok uuv)
         (@ResultO-mk-err @error-validate)
     ))
@@ -626,7 +626,7 @@
 
 (define-fun @entrypoint_cons_UUIDv7 ((ctx (Seq Int))) (@ResultO String)
     (let ((uuv (@UUIDv7_UFCons_API ctx)))
-    (ite @isUUIDFormat(uuv)
+    (ite (@isUUIDFormat uuv)
         (@ResultO-mk-ok uuv)
         (@ResultO-mk-err @error-validate)
     ))
@@ -636,12 +636,10 @@
     (@ResultO-mk-ok (@SHAContentHash_UFCons_API ctx))
 )
 
-(define-fun @entrypoint_cons_LatLongCoordinate ((ctx (Seq Int))) (@ResultO (@Tuple2 Float Float))
+(define-fun @entrypoint_cons_LatLongCoordinate ((ctx (Seq Int))) (@ResultO LatLongCoordinate)
     (let ((lat (@Latitude_UFCons_API ctx)) (long (@Longitude_UFCons_API ctx)))
-    (ite (and (<= -90.0 lat) (<= lat 90.0) (< -180.0 long) (<= long 180.0))
-        (@ResultO-mk-ok (@Tuple2 lat long))
-        (@ResultO-mk-err @error-validate)
-    ))
+        (@ResultO-mk-ok (LatLongCoordinate@mk lat long))
+    )
 )
 
 ;;--GLOBAL_DECLS--;;

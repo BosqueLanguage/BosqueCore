@@ -144,7 +144,6 @@ enum ReturnMode {
 class TypeChecker {
     private readonly m_assembly: Assembly;
     private m_buildLevel: BuildLevel;
-    private m_issmtbuild: boolean;
 
     private m_file: string;
     private m_ns: string;
@@ -190,11 +189,10 @@ class TypeChecker {
 
     private m_scratchCtr = 0;
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, issmtbuild: boolean) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel) {
         this.m_assembly = assembly;
 
         this.m_buildLevel = buildlevel;
-        this.m_issmtbuild = issmtbuild;
 
         this.m_file = "[No File]";
         this.m_ns = "[NOT SET]";
@@ -7683,8 +7681,8 @@ class TypeChecker {
         this.toTIRTypeKey(this.getSpecialObjectConceptType());
     }
 
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, issmtbuild: boolean, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
-        let tchecker = new TypeChecker(asm, buildlevel, issmtbuild);
+    static processAssembly(asm: Assembly, buildlevel: BuildLevel, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
+        let tchecker = new TypeChecker(asm, buildlevel);
 
         //Must always have Core namespace and special types registered -- even if just as default values
         tchecker.m_tirNamespaceMap.set("Core", new TIRNamespaceDeclaration("Core"));
@@ -7817,7 +7815,7 @@ class TypeChecker {
         }
     }
 
-    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, issmtbuild: boolean, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
+    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
         ////////////////
         //Parse the contents and generate the assembly
         const assembly = new Assembly();
@@ -7908,7 +7906,7 @@ class TypeChecker {
         //TODO: compute hash of sources here -- maybe bundle for debugging or something too?
         //
 
-        return TypeChecker.processAssembly(assembly, buildLevel, issmtbuild, entrypoints);
+        return TypeChecker.processAssembly(assembly, buildLevel, entrypoints);
     }
 }
 

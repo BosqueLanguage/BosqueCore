@@ -122,14 +122,14 @@ entity TypeInfoEmitter {
 
         var box: String;
         if (!t?<OOType> || !t@<OOType>.iskeytype) {
-            box = String::concat(List<String>{"(define-fun ", bname, " ((v ", smtname, ")) @Term (@Term-mk (", btfname, " v) @BoxedKey-mk-NA))"});
+            box = String::concat(List<String>{"(define-fun ", bname, " ((v ", smtname, ")) @Term (@Term-mk (", btname, " v) @BoxedKey-mk-NA))"});
         }
         else {
             let bkk = String::concat(List<String>{"(@BoxedKey-mk-of @KeyTypeTag-", smtname, " (@BoxedKeyValue-mk-", smtname, " v))"});
-            box = String::concat(List<String>{"(define-fun ", bname, " ((v ", smtname, ")) @Term (@Term-mk (", btfname, " v) ", bkk, "))"});
+            box = String::concat(List<String>{"(define-fun ", bname, " ((v ", smtname, ")) @Term (@Term-mk (", btname, " v) ", bkk, "))"});
         }
 
-        let unbox = String::concat(List<String>{"(", ubname, " ((t @Term)) ", smtname, " (",  btfname, " (@Term-data t)))"});
+        let unbox = String::concat(List<String>{"(define-fun ", ubname, " ((t @Term)) ", smtname, " (",  btfname, " (@Term-data t)))"});
 
         return {box=box, unbox=unbox, typebox=typebox};
     }
