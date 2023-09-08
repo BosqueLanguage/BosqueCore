@@ -101,6 +101,7 @@ entity TypeInfoEmitter {
             | TreeIR::ConceptType => return false;
             | TreeIR::ConceptSetType => return false;
             | TreeIR::UnionType => return false;
+            | TreeIR::EListType => return false;
             | _ => return true;
         }
     }
@@ -132,6 +133,32 @@ entity TypeInfoEmitter {
         let unbox = String::concat(List<String>{"(define-fun ", ubname, " ((t @Term)) ", smtname, " (",  btfname, " (@Term-data t)))"});
 
         return {box=box, unbox=unbox, typebox=typebox};
+    }
+
+    function typeRequiresResultInfo(t: TreeIR::Type): Bool {
+        match(t) {
+            TreeIR::PrimitiveInternalEntityType => return false;
+            | TreeIR::TaskType => return false;
+            | TreeIR::EListType => return false;
+            | _ => return true;
+        }
+    }
+
+    method generateResultInfo(t: TreeIR::Type): {odecl: String, ocons: String, tdecl: String, tcons: String}? {
+        if(!TypeInfoEmitter::typeRequiresResultInfo(t)) {
+            return none;
+        }
+
+        let smtname = this.getSMTTypeName(t);
+        let smttype = smtifyTypeKey(t.tkey);
+
+        let odecl = String::concat(List<String>{"(@ResultO-", smttype, " 0)"});
+        let ocons = String::concat(List<String>{"( (@ResultO-mk-ok-", smttype, " ", "(@ResultO-", smttype, "-val ", smtname, ")) (@ResultO-mk-err-", smttype, " ", "(@ResultO-", smttype, "-err @ErrorKind)) )"});
+
+        let tdecl = String::concat(List<String>{"(@ResultT-", smttype, " 0)"});
+        let tcons = String::concat(List<String>{"( (@ResultT-mk-ok-", smttype, " ", "(@ResultT-", smttype, "-val ", smtname, ")) (@ResultT-mk-err-", smttype, " ", "(@ResultT-", smttype, "-err @ErrorKind)) )"});
+
+        return {odecl=odecl, ocons=ocons, tdecl=tdecl, tcons=tcons};
     }
 
     recursive method typeRequiresSubtypeInfo(t: TreeIR::Type): Bool {
@@ -220,6 +247,18 @@ entity AssemblyEmitter {
         return {box=bbox, unbox=ubbox, typebox=tbox};
     }
 
+    method generateResultInfo(): {odecls: String, ocons: String, tdecls: String, tcons: String} {
+        let alltypes = this.assembly.typeMap.values();
+
+        let bbinfo = alltypes.map<{odecl: String, ocons: String, tdecl: String, tcons: String}?>(fn(t) => this.temitter.generateResultInfo(t)).filterSome();
+        let odecls = String::join("\n    ", bbinfo.map<String>(fn(vv) => vv.odecl));
+        let ocons = String::join("\n        ", bbinfo.map<String>(fn(vv) => vv.ocons));
+        let tdecls = String::join("\n    ", bbinfo.map<String>(fn(vv) => vv.tdecl));
+        let tcons = String::join("\n        ", bbinfo.map<String>(fn(vv) => vv.tcons));
+
+        return {odecls=odecls, ocons=ocons, tdecls=tdecls, tcons=tcons};
+    }
+
     method generateSubtypeInfo(): String {
         let alltypes = this.assembly.typeMap.values();
 
@@ -285,8 +324,8 @@ entity AssemblyEmitter {
                     let cval = bemit.emitBodyStatementList($.ops);
 
                     return String::concat(List<String>{
-                        "(assert ", BodyEmitter::buildOkIsTest(cname, TreeIR::ErrorKind::any), ")",
-                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, TreeIR::ErrorKind::any), "))"
+                        "(assert ", BodyEmitter::buildOkIsTest(cname, cm.declaredType, TreeIR::ErrorKind::any), ")",
+                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, cm.declaredType, TreeIR::ErrorKind::any), "))"
                     });
                 }
             });
@@ -314,8 +353,8 @@ entity AssemblyEmitter {
                     let cval = bemit.emitBodyStatementList($.ops);
 
                     return String::concat(List<String>{
-                        "(assert ", BodyEmitter::buildOkIsTest(cname, TreeIR::ErrorKind::any), ")",
-                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, TreeIR::ErrorKind::any), "))"
+                        "(assert ", BodyEmitter::buildOkIsTest(cname, nsc.declaredType, TreeIR::ErrorKind::any), ")",
+                        "(assert (= ", cname, " ", BodyEmitter::buildValueExtract(cval, nsc.declaredType, TreeIR::ErrorKind::any), "))"
                     });
                 }
             });

@@ -11,6 +11,10 @@ typedef SMTParams = {
     type_box_constructors: String,
     term_box_constructors: String,
     term_unbox_constructors: String,
+    result_info_odecls: String,
+    result_info_ocons: String,
+    result_info_tdecls: String,
+    result_info_tcons: String,
     type_subtype: String,
     global_decls: String,
     uf_decls: String,
@@ -31,6 +35,10 @@ function processSMTFile(params: SMTParams, smtcode: String): String {
         .replaceUnique(";;--TYPE_BOX_CONSTRUCTORS--;;", params.type_box_constructors)
         .replaceUnique(";;--TERM_BOX_CONSTRUCTORS--;;", params.term_box_constructors)
         .replaceUnique(";;--TERM_BOX_UNBOXERS--;;", params.term_unbox_constructors)
+        .replaceUnique(";;--RESULT_O_DECLS--;;", params.result_info_odecls)
+        .replaceUnique(";;--RESULT_O_CONSTRUCTORS--;;", params.result_info_ocons)
+        .replaceUnique(";;--RESULT_T_DECLS--;;", params.result_info_tdecls)
+        .replaceUnique(";;--RESULT_T_CONSTRUCTORS--;;", params.result_info_tcons)
         .replaceUnique(";;--TYPE_SUBTYPE--;;", params.type_subtype)
         .replaceUnique(";;--V_MIN_MAX--;;", vmm)
         .replaceUnique(";;--GLOBAL_DECLS--;;", params.global_decls)
@@ -52,6 +60,7 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
     let key_tag_info = asmemitter.generateKeyTypeTagInfo();
     let decls_cons = asmemitter.generateDeclAndConsInfo();
     let bxops = asmemitter.generateBoxAndUnboxInfo();
+    let result_info = asmemitter.generateResultInfo();
     let subtypeof = asmemitter.generateSubtypeInfo();
     
     let global_decls = asmemitter.generateGlobalDecls();
@@ -68,6 +77,10 @@ export function main(asm: TreeIR::Assembly, smtcode: String): String {
         type_box_constructors = bxops.typebox,
         term_box_constructors = bxops.box,
         term_unbox_constructors = bxops.unbox,
+        result_info_odecls = result_info.odecls,
+        result_info_ocons = result_info.ocons,
+        result_info_tdecls = result_info.tdecls,
+        result_info_tcons = result_info.tcons,
         type_subtype = subtypeof,
         global_decls = global_decls,
         uf_decls = ";;---------------------------- UF DECLS SOMETHING ----------------------------;;",
