@@ -17,6 +17,8 @@ function extractLiteralASCIIStringValue(str: String, unescape: Bool): String {
 
 entity BodyEmitter {
     field assembly: TreeIR::Assembly;
+    field nemitter: NameEmitter;
+    field temitter: TypeInfoEmitter;
 
     field file: String;
 
@@ -30,48 +32,69 @@ entity BodyEmitter {
         return this.trgtError === errid;
     }
 
-    function buildErrorIsTest(evar: String, errkind: TreeIR::ErrorKind): String {
+    function buildErrorIsTest(evar: String, etype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let etname = smtifyTypeKey(etype);
+
         if(isOtherErrorKind(errkind)) {
-            return String::concat(List<String>{"((_ is) @ResultO-mk-err ", evar, ")"});
+            return String::concat(List<String>{"((_ is) @ResultO-mk-err-", etname, " ", evar, ")"});
         }
         else {
-            return String::concat(List<String>{"((_ is) @ResultT-mk-err ", evar, ")"});
+            return String::concat(List<String>{"((_ is) @ResultT-mk-err-", etname, " ", evar, ")"});
         }
     }
 
-    function buildErrorExtract(evar: String, errkind: TreeIR::ErrorKind): String {
+    function buildErrorExtract(evar: String, etype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let etname = smtifyTypeKey(etype);
+
         if(isOtherErrorKind(errkind)) {
-            return String::concat(List<String>{"(@ResultO-error ", evar, ")"});
+            return String::concat(List<String>{"(@ResultO-", etname, "-error ", evar, ")"});
         }
         else {
-            return String::concat(List<String>{"(@ResultT-error ", evar, ")"});
+            return String::concat(List<String>{"(@ResultT-", etname, "-error ", evar, ")"});
         }
     }
 
-    function buildValueExtract(okvar: String, errkind: TreeIR::ErrorKind): String {
+    function buildOkIsTest(evar: String, etype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let etname = smtifyTypeKey(etype);
+
         if(isOtherErrorKind(errkind)) {
-            return String::concat(List<String>{"(@ResultO-value ", okvar, ")"});
+            return String::concat(List<String>{"((_ is) @ResultO-mk-ok-", etname, " ", evar, ")"});
         }
         else {
-            return String::concat(List<String>{"(@ResultT-value ", okvar, ")"});
+            return String::concat(List<String>{"((_ is) @ResultT-mk-ok-", etname, " ", evar, ")"});
+        }
+    }
+
+    function buildValueExtract(okvar: String, etype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let etname = smtifyTypeKey(etype);
+
+        if(isOtherErrorKind(errkind)) {
+            return String::concat(List<String>{"(@ResultO-", etname, "-val ", okvar, ")"});
+        }
+        else {
+            return String::concat(List<String>{"(@ResultT-", etname, "-val ", okvar, ")"});
         }
     }
 
     function buildMakeError(evar: String, oftype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let oftname = smtifyTypeKey(oftype);
+
         if(isOtherErrorKind(errkind)) {
-            return String::concat(List<String>{"(@ResultO-mk-err ", evar, ")"});
+            return String::concat(List<String>{"(@ResultO-mk-err-", oftname, " ", evar, ")"});
         }
         else {
-            return String::concat(List<String>{"(@ResultT-mk-err ", evar, ")"});
+            return String::concat(List<String>{"(@ResultT-mk-err-", oftname, " ", evar, ")"});
         }
     }
 
     function buildMakeOk(okvar: String, oftype: TreeIR::TypeKey, errkind: TreeIR::ErrorKind): String {
+        let oftname = smtifyTypeKey(oftype);
+        
         if(isOtherErrorKind(errkind)) {
-            return String::concat(List<String>{"(@ResultO-mk-ok ", okvar, ")"});
+            return String::concat(List<String>{"(@ResultO-mk-ok-", oftname, " ", okvar, ")"});
         }
         else {
-            return String::concat(List<String>{"(@ResultT-mk-ok ", okvar, ")"});
+            return String::concat(List<String>{"(@ResultT-mk-ok-", oftname, " ", okvar, ")"});
         }
     }
 
@@ -88,7 +111,7 @@ entity BodyEmitter {
             return exp;
         }
         else {
-            return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, experr), this.bodyResultType, this.bodyResultErrKind);
+            return BodyEmitter::buildMakeError(BodyEmitter::buildErrorExtract(exp, exptype, experr), this.bodyResultType, this.bodyResultErrKind);
         }
     }
 
@@ -214,7 +237,7 @@ entity BodyEmitter {
     }
 
     method emitAccessConstMemberFieldExpression(exp: TreeIR::AccessConstMemberFieldExpression): String {
-        return String::concat(List<String>{smtifyType(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
+        return String::concat(List<String>{smtifyTypeKey(exp.tkey), SMTEncodingSymbol::coloncolon, smtifyIdentifier(exp.cname)});
     }
 
     method emitAccessVariableExpression(exp: TreeIR::AccessVariableExpression): [String, ArgExpErrorKind] {
@@ -242,26 +265,37 @@ entity BodyEmitter {
     method emitLoadPropertyExpression(exp: TIRLoadPropertyExpression): String {
         return `${this.emitExpression(exp.exp)}.${exp.property}`;
     }
+    */
 
-    method emitLoadFieldExpression(exp: TIRLoadFieldExpression): String {
-        const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
-        return `${this.emitExpression(exp.exp)}.${fname}`;
+    recursive method emitLoadFieldExpression(exp: TreeIR::LoadFieldExpression): String {
+        let bexp = this.emitExpression[recursive](exp.exp);
+        let lfop = this.nemitter.getFieldAccessorName(exp.tkey, exp.fieldkey);
+
+        return String::concat(List<String>{"(", lfop, " ", bexp, ")"});
     }
 
+    /*
     method emitLoadFieldVirtualExpression(exp: TIRLoadFieldVirtualExpression): String {
         const fname = (this.m_assembly.fieldMap.get(exp.fieldkey) as TIRMemberFieldDecl).name;
         const bexp = (this.typeEncodedAsUnion(exp.exp.etype) ? `${this.emitExpression(exp.exp)}.value` : this.emitExpression(exp.exp));
 
         return `${bexp}.${fname}`;
     }
+    */
 
-    method emitConstructorPrimaryDirectExpression(exp: TIRConstructorPrimaryDirectExpression): String {
-        const tname = this.resolveTypeMemberAccess(exp.oftype);
-        const args = exp.args.map((arg) => this.emitExpression(arg, true));
+    recursive method emitConstructorPrimaryDirectExpression(exp: TreeIR::ConstructorPrimaryDirectExpression): String {
+        let ctname = this.nemitter.getConstructorName(exp.oftype);
 
-        return `${tname}.$constructorDirect(${args.join(", ")})`;
+        if(exp.args.empty()) {
+            return ctname;
+        }
+        else {
+            let args = exp.args.map<String>(fn(arg) => this.emitExpression[recursive](arg));
+            return String::concat(List<String>{"(", ctname, " ", String::join(" ", args), ")"});
+        }
     }
 
+    /*
     method emitConstructorPrimaryCheckExpression(exp: TIRConstructorPrimaryCheckExpression): String {
         const tname = this.resolveTypeMemberAccess(exp.oftype);
         const args = exp.args.map((arg) => this.emitExpression(arg, true));
@@ -1185,15 +1219,15 @@ entity BodyEmitter {
             case TIRExpressionTag.LoadPropertyExpression: {
                 return this.emitLoadPropertyExpression(exp as TIRLoadPropertyExpression);
             }
-            case TIRExpressionTag.LoadFieldExpression: {
-                return this.emitLoadFieldExpression(exp as TIRLoadFieldExpression);
-            }
+            */
+            | TreeIR::LoadFieldExpression => this.emitLoadFieldExpression[recursive]($)
+            /*
             case TIRExpressionTag.LoadFieldVirtualExpression: {
                 return this.emitLoadFieldVirtualExpression(exp as TIRLoadFieldVirtualExpression);
             }
-            case TIRExpressionTag.ConstructorPrimaryDirectExpression: {
-                return this.emitConstructorPrimaryDirectExpression(exp as TIRConstructorPrimaryDirectExpression);
-            }
+            */
+            | TreeIR::ConstructorPrimaryDirectExpression => this.emitConstructorPrimaryDirectExpression[recursive]($)
+            /*
             case TIRExpressionTag.ConstructorPrimaryCheckExpression: {
                 return this.emitConstructorPrimaryCheckExpression(exp as TIRConstructorPrimaryCheckExpression);
             }
@@ -1541,10 +1575,10 @@ entity BodyEmitter {
             let fstr = this.emitStatementList(follow, indent.append("    "));
             let tvstr = String::concat(List<String>{"@", smtifyIdentifier(stmt.vname), "@"});
 
-            let errchk = BodyEmitter::buildErrorIsTest(tvstr, eeval.1);
+            let errchk = BodyEmitter::buildErrorIsTest(tvstr, stmt.vexp.etype, eeval.1);
             let errstr = BodyEmitter::buildMakeError(this.rewrapError(tvstr, stmt.vexp.etype, eeval.1), this.bodyResultType, this.bodyResultErrKind);
 
-            let normalflow = BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), BodyEmitter::buildValueExtract(tvstr, eeval.1), fstr, indent.append("    "));
+            let normalflow = BodyEmitter::buildLetOp(smtifyIdentifier(stmt.vname), BodyEmitter::buildValueExtract(tvstr, stmt.vexp.etype, eeval.1), fstr, indent.append("    "));
             let errctrl = BodyEmitter::buildErrorBailOp(errchk, errstr, normalflow, indent);
 
             return BodyEmitter::buildLetOp(tvstr, eeval.0, errctrl, indent);

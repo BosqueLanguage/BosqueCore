@@ -1,7 +1,7 @@
 import * as path from "path";
 
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokePrimitive, TIRInvokeSynthesis, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRSetEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRTaskType, TIRType, TIRTypedeclEntityType, TIRTypeKey, TIRUnionType, TIRValidatorEntityType } from "../../../frontend/tree_ir/tir_assembly";
-import { TIRCodePack } from "../../../frontend/tree_ir/tir_body";
+import { TIRCodePack, TIRExpression } from "../../../frontend/tree_ir/tir_body";
 import { BodyEmitter } from "./body_emitter";
 import { emitBuiltinMemberFunction, emitBuiltinNamespaceFunction } from "./builtin_emitter";
 import { resolveTypeMemberAccess } from "./type_emitter";
@@ -29,7 +29,7 @@ class NamespaceEmitter {
 
     private emitMemberConst(ootype: TIROOType, cdecl: TIRConstMemberDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(cdecl.srcFile), this.m_ns); 
-        return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!this.$CF_${cdecl.name}) { this.$CF_${cdecl.name} = true; this.$CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value, true)}; } return this.$CV_${cdecl.name}; }`;
+        return `$CF_${cdecl.name}: false, $CV_${cdecl.name}: undefined, ${cdecl.name}: function() { if(!this.$CF_${cdecl.name}) { this.$CF_${cdecl.name} = true; this.$CV_${cdecl.name} = ${bemitter.emitExpression(cdecl.value as TIRExpression, true)}; } return this.$CV_${cdecl.name}; }`;
     }
 
     private emitMemberFunction(ootype: TIROOType, fdecl: TIRStaticFunctionDecl, indent: string): string {
@@ -296,7 +296,7 @@ class NamespaceEmitter {
 
     private emitConst(nsconst: TIRNamespaceConstDecl): string {
         const bemitter = new BodyEmitter(this.m_assembly, path.basename(nsconst.srcFile), this.m_ns);
-        return `let $CF_${nsconst.name} = false; let $CV_${nsconst.name} = undefined; function ${nsconst.name}() { if(!$CF_${nsconst.name}) { $CF_${nsconst.name} = true; $CV_${nsconst.name} = ${bemitter.emitExpression(nsconst.value, true)}; } return $CV_${nsconst.name}; }`;
+        return `let $CF_${nsconst.name} = false; let $CV_${nsconst.name} = undefined; function ${nsconst.name}() { if(!$CF_${nsconst.name}) { $CF_${nsconst.name} = true; $CV_${nsconst.name} = ${bemitter.emitExpression(nsconst.value as TIRExpression, true)}; } return $CV_${nsconst.name}; }`;
     }
 
     private emitNamespaceFunction(fdecl: TIRNamespaceFunctionDecl, indent: string): string {

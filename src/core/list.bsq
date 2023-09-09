@@ -26,6 +26,24 @@ function rangeNat(start: Nat, end: Nat): List<Nat>
 */
 
 entity ListOp provides Some {
+    function concat<T>(ll: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(ll)) {
+            return List<T>{};
+        }
+        else {
+            let ilist = ListOps::s_list_front<List<T>>(ll);
+            let tl = ListOps::s_list_pop_front<List<T>>(ll);
+            if(ListOps::s_list_empty<List<T>>(tl)) {
+                return ilist;
+            }
+            else {
+                return ListOps::s_list_reduce<List<T>, List<T>>(tl, ilist, fn(acc: List<T>, argl: List<T>): List<T> => {
+                    return List<T>::s_append_helper(acc, argl);
+                });
+            }
+        }
+    }
+
     function zip<T, U>(l1: List<T>, l2: List<U>): List<[T, U]>
         requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
     {
@@ -202,9 +220,8 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    //TODO: want algebraic here
     //TODO: accumulate as parallel merge processing -- + associative checking!!!
-    method {when T unique Int|Nat|BigInt|BigNat|Float|Decimal|Rational} sum(): T {
+    method sum(): T {
         assert !ListOps::s_list_empty<T>(this);
 
         let iv = ListOps::s_list_front<T>(this);
@@ -277,6 +294,15 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
         else {
             return ListOps::s_list_filter_map_fn<T, U>(this, pred(v: T): Bool => v?<U>, fn(vv: T): U => s_safeAs<T, U>(vv));
+        }
+    }
+
+    method filterSome(): List<T!Some> {
+        if(ListOps::s_list_empty<T>(this)) {
+            return List<T!Some>{};
+        }
+        else {
+            return ListOps::s_list_filter_map_fn<T, T!Some>(this, pred(v: T): Bool => v?<T!Some>, fn(vv: T): T!Some => s_safeAs<T, T!Some>(vv));
         }
     }
 
