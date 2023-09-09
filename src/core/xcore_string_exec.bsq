@@ -14,10 +14,12 @@ internal entity StringOps provides Some {
     __safe function s_extractEnd(s: String, suffix: String): String = s_string_extractend;
     __safe function s_removeEnd(s: String, suffix: String): String = s_string_removeend;
 
-
     __safe function s_contains(s: String, substr: String): Bool = s_string_contains;
     __safe function s_replaceUnique(s: String, str: String, withstr: String): String = s_string_replaceunique;
     __safe function s_replaceAll(s: String, str: String, withstr: String): String = s_string_replaceall;
+
+    __safe function s_natToStr(n: Nat): String = s_nattostring;
+    __safe function s_strToNat(s: String): Nat = s_stringtonat;
 
     function s_strconcat(l: List<String>): String {
         if(ListOps::s_list_empty<String>(l)) {

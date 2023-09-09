@@ -603,8 +603,8 @@ abstract class TIRConstructorExpression extends TIRExpression {
             return pfx + `\n${ii}}`;
         }
         else {
-            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
-            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident + s_iident)).join(`,\n${ii + s_iident + s_iident}`);
+            return pfx + `,\n${ii + s_iident}[\n${ii + s_iident + s_iident}` + args + `\n${ii + s_iident}]\n${ii}}`;
         }
     }
 }
@@ -662,8 +662,8 @@ class TIRCodePackInvokeExpression extends TIRExpression {
             return pfx + `\n${ii}}`;
         }
         else {
-            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
-            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident + s_iident)).join(`,\n${ii + s_iident + s_iident}`);
+            return pfx + `,\n${ii + s_iident}[\n${ii + s_iident + s_iident}` + args + `\n${ii + s_iident}]\n${ii}}`;
         }
     }
 }
@@ -804,8 +804,8 @@ abstract class TIRLogicActionExpression extends TIRExpression {
             return pfx + `\n${ii}}`;
         }
         else {
-            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident)).join(`,\n${ii + s_iident}`);
-            return pfx + `,\n${ii + s_iident}` + args + `\n${ii}}`;
+            const args = this.args.map((arg) => arg.bsqemit(ii + s_iident + s_iident)).join(`,\n${ii + s_iident + s_iident}`);
+            return pfx + `,\n${ii + s_iident}[\n${ii + s_iident + s_iident}` + args + `\n${ii + s_iident}]\n${ii}}`;
         }
     }
 }

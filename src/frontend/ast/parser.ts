@@ -2339,7 +2339,7 @@ class Parser {
                 //
                 //TODO: maybe a better error here -- slice the string at the position...
                 //
-                this.raiseError(line, "Unknown token sequence in parsing expression");
+                this.raiseError(line, `Unknown token sequence in parsing expression -- ${tk}`);
                 return [new InvalidExpression(sinfo), false];
             }
         }
@@ -4389,9 +4389,6 @@ class Parser {
                 }
                 else if(ename === "MapEntry") {
                     attributes.push("__mapentry_type");
-                }
-                else if(ename === "HavocSequence") {
-                    attributes.push("__havoc_type");
                 }
                 else if(ename === "List") {
                     attributes.push("__list_type");

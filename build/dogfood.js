@@ -2,6 +2,7 @@
 
 const { exec } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 const glob = require("glob");
 
 const builddir = __dirname;
@@ -11,6 +12,51 @@ let doneemitimpl = false;
 let donesmtimpl = false
 
 let haderror = false;
+
+function unescapeString(str) {
+    let ret = "";
+    for (let i = 0; i < str.length; i++) {
+        if (str[i] === "%") {
+            i++;
+            if (str[i] === "%") {
+                ret += "%";
+            }
+            else if (str[i] === "n") {
+                ret += "\n";
+                i++;
+            }
+            else if (str[i] === "r") {
+                ret += "\r";
+                i++;
+            }
+            else if (str[i] === "t") {
+                ret += "\t";
+                i++;
+            }
+            else if (str[i] === "b") {
+                ret += "`";
+                i++;
+            }
+            else if (str[i] === "q") {
+                ret += "\"";
+                i++;
+            }
+            else {
+                //should be a u 
+                i++;
+                const epos = str.indexOf(";", i);
+                const hex = str.substring(i, epos);
+                ret += String.fromCharCode(parseInt(hex, 16));
+                i = epos;
+            }
+        }
+        else {
+            ret += str[i];
+        }
+    }
+
+    return ret;
+}
 
 function doneop(iserror, msg) {
     haderror = haderror || iserror;
@@ -30,6 +76,7 @@ function doneop(iserror, msg) {
 
 const srcfile = process.argv[2];
 const outfile = path.join("./bsqbin", "ir.bsqon");
+const smtfile = path.join("./bsqbin", "doit.smt2");
 
 const srcdirs = ["./src/transformer/tree_ir/", "./src/transformer/rewriter/", "./src/transformer/solver/", "./src/transformer/solver/smt_emitter/"];
 let srcfiles = [];
@@ -43,6 +90,23 @@ exec(`node ./bin/runtimes/javascript/cmd.js --namespace=SMTEmit --outdir ./bsqbi
 });
 
 exec(`node ./bin/transformer/solver.js --outfile ${outfile} ${srcfile}`, {cwd: tscdir}, (err, stdout, stderr) => {
-    donesmtimpl = true;
-    doneop(err !== null, err !== null ? err + stderr + stdout : "done emit ir..."); 
+    if(err !== null) {
+        donesmtimpl = true;
+        doneop(true, err + stderr + stdout); 
+    }
+    else {
+        doneop(false, "done emit ir..."); 
+        
+        exec(`deno run --allow-all ./bsqbin/_main.ts --input=${outfile}`, {cwd: tscdir}, (smterr, smtstdout, smtstderr) => {
+            donesmtimpl = true;
+            try {
+                fs.writeFileSync(smtfile, unescapeString(smtstdout.slice(1, -1)));
+            }
+            catch(e) {
+                smterr = e;
+            }
+
+            doneop(smterr !== null, smterr !== null ? smterr + smtstderr + smtstdout : "done emit smt...");
+        });
+    }
 });
