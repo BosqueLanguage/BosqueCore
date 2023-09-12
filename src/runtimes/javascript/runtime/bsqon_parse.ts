@@ -1372,7 +1372,7 @@ class BSQONParser {
                 opts.push(this.parseUnionType());
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("|"));
+            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
         }
     }
 

@@ -171,7 +171,7 @@ class UnionTypeSignature extends TypeSignature {
     }
 
     getDiagnosticName(): string {
-        return this.types.map((tt) => tt.getDiagnosticName()).join("|");
+        return this.types.map((tt) => tt.getDiagnosticName()).join(" | ");
     }
 }
 

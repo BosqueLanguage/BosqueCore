@@ -636,7 +636,7 @@ class ResolvedType {
         }
         else {
             const atoms = types.sort((a, b) => ((a.typeID !== b.typeID) ? (a.typeID < b.typeID ? -1 : 1) : 0));
-            const name = atoms.map((arg) => arg.typeID).join("|");
+            const name = atoms.map((arg) => arg.typeID).join(" | ");
 
             return new ResolvedType(name, atoms);
         }
