@@ -47,8 +47,7 @@ namespace BSQON
 
         virtual void advanceChar(CharCode c, const std::vector<NFAOpt*>& nfaopts, std::vector<StateID>& nstates) const override final
         {
-            if(this->c == c)
-            {
+            if(this->c == c) {
                 nstates.push_back(this->follow);
             }
         }
@@ -107,8 +106,7 @@ namespace BSQON
 
         virtual void advanceEpsilon(const std::vector<NFAOpt*>& nfaopts, std::vector<StateID>& nstates) const override final
         {
-            for(size_t i = 0; i < this->follows.size(); ++i)
-            {
+            for(size_t i = 0; i < this->follows.size(); ++i) {
                 nfaopts[this->follows[i]]->advanceEpsilon(nfaopts, nstates);
             }
         }
@@ -145,8 +143,7 @@ namespace BSQON
         
         ~NFA() 
         {
-            for(size_t i = 0; i < this->nfaopts.size(); ++i)
-            {
+            for(size_t i = 0; i < this->nfaopts.size(); ++i) {
                 delete this->nfaopts[i];
             }
         }
@@ -156,14 +153,12 @@ namespace BSQON
             std::vector<StateID> cstates;
             this->nfaopts[this->startstate]->advanceEpsilon(this->nfaopts, cstates);
             
-            while(cci.valid())
-            {
+            while(cci.valid()) {
                 auto cc = cci.get();
                 cci.advance();
 
                 std::vector<StateID> nstates;
-                for(size_t i = 0; i < cstates.size(); ++i)
-                {
+                for(size_t i = 0; i < cstates.size(); ++i) {
                     this->nfaopts[cstates[i]]->advanceChar(cc, this->nfaopts, nstates);
                 }
 
@@ -172,8 +167,7 @@ namespace BSQON
                 nstates.erase(nend, nstates.end());
 
                 std::vector<StateID> estates;
-                for(size_t i = 0; i < nstates.size(); ++i)
-                {
+                for(size_t i = 0; i < nstates.size(); ++i) {
                     this->nfaopts[nstates[i]]->advanceEpsilon(this->nfaopts, estates);
                 }
 
@@ -182,8 +176,7 @@ namespace BSQON
                 estates.erase(eend, estates.end());
 
                 cstates = std::move(estates);
-                if(cstates.empty())
-                {
+                if(cstates.empty()) {
                     return false;
                 }
             }
@@ -205,10 +198,9 @@ namespace BSQON
     class BSQLiteralRe : public BSQRegexOpt
     {
     public:
-        const std::string litstr;
-        const std::vector<uint8_t> utf8codes;
+        const UnicodeString litstr;
 
-        BSQLiteralRe(std::string litstr, std::vector<uint8_t> utf8codes) : BSQRegexOpt(), litstr(litstr), utf8codes(utf8codes) {;}
+        BSQLiteralRe(UnicodeString litstr) : BSQRegexOpt(), litstr(litstr) {;}
         virtual ~BSQLiteralRe() {;}
 
         static BSQLiteralRe* parse(json j);
@@ -309,8 +301,7 @@ namespace BSQON
 
         virtual ~BSQAlternationRe()
         {
-            for(size_t i = 0; i < this->opts.size(); ++i)
-            {
+            for(size_t i = 0; i < this->opts.size(); ++i) {
                 delete this->opts[i];
             }
         }
@@ -328,8 +319,7 @@ namespace BSQON
 
         virtual ~BSQSequenceRe()
         {
-            for(size_t i = 0; i < this->opts.size(); ++i)
-            {
+            for(size_t i = 0; i < this->opts.size(); ++i) {
                 delete this->opts[i];
             }
         }
@@ -341,11 +331,11 @@ namespace BSQON
     class BSQRegex
     {
     public:
-        const std::string restr;
+        const UnicodeString restr;
         const BSQRegexOpt* re;
         const NFA* nfare;
 
-        BSQRegex(std::string restr, const BSQRegexOpt* re, NFA* nfare): restr(restr), re(re), nfare(nfare) {;}
+        BSQRegex(UnicodeString restr, const BSQRegexOpt* re, NFA* nfare): restr(restr), re(re), nfare(nfare) {;}
         ~BSQRegex() {;}
 
         static BSQRegex* jparse(json j);
@@ -355,9 +345,9 @@ namespace BSQON
             return this->nfare->test(cci);
         }
 
-        bool test(std::string& s)
+        bool test(UnicodeString& s)
         {
-            StdStringCodeIterator siter(s);
+            CharCodeIterator siter(s);
             return this->nfare->test(siter);
         }
     };

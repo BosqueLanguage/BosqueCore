@@ -5,40 +5,31 @@ namespace BSQON
     BSQRegexOpt* BSQRegexOpt::parse(json j)
     {
     auto tag = j["tag"].get<std::string>();
-        if(tag == "TreeIR::RegexLiteral")
-        {
+        if(tag == "TreeIR::RegexLiteral") {
             return BSQLiteralRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexCharRange")
-        {
+        else if(tag == "TreeIR::RegexCharRange") {
             return BSQCharRangeRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexDotCharClass")
-        {
+        else if(tag == "TreeIR::RegexDotCharClass") {
             return BSQCharClassDotRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexStarRepeat")
-        {
+        else if(tag == "TreeIR::RegexStarRepeat") {
             return BSQStarRepeatRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexPlusRepeat")
-        {
+        else if(tag == "TreeIR::RegexPlusRepeat") {
             return BSQPlusRepeatRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexRangeRepeat")
-        {
+        else if(tag == "TreeIR::RegexRangeRepeat") {
             return BSQRangeRepeatRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexOptional")
-        {
+        else if(tag == "TreeIR::RegexOptional") {
             return BSQOptionalRe::parse(j);
         }
-        else if(tag == "TreeIR::RegexAlternation")
-        {
+        else if(tag == "TreeIR::RegexAlternation") {
             return BSQAlternationRe::parse(j);
         }
-        else
-        {
+        else {
             return BSQSequenceRe::parse(j);
         }
     }
@@ -46,21 +37,16 @@ namespace BSQON
     BSQLiteralRe* BSQLiteralRe::parse(json j)
     {
         auto litstr = j[1]["escstr"].get<std::string>();
-        std::vector<uint8_t> utf8;
-        std::transform(litstr.cbegin(), litstr.cend(), std::back_inserter(utf8), [](const char cc) {
-            //TODO: this is ascii only
-            return (uint8_t)cc;
-        });
+        std::u32string utf32 = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(litstr);
 
-        return new BSQLiteralRe(litstr, utf8);
+        return new BSQLiteralRe(utf32);
     }
 
     StateID BSQLiteralRe::compile(StateID follows, std::vector<NFAOpt*>& states) const
     {
-        for(int64_t i = this->utf8codes.size() - 1; i >= 0; --i)
-        {
+        for(int64_t i = this->litstr.size() - 1; i >= 0; --i) {
             auto thisstate = (StateID)states.size();
-            states.push_back(new NFAOptCharCode(thisstate, this->utf8codes[i], follows));
+            states.push_back(new NFAOptCharCode(thisstate, this->litstr[i], follows));
 
             follows = thisstate;
         }
@@ -156,8 +142,7 @@ namespace BSQON
     StateID BSQRangeRepeatRe::compile(StateID follows, std::vector<NFAOpt*>& states) const
     {
         auto followfinal = follows;
-        for(int64_t i = this->high; i > this->low; --i)
-        {
+        for(int64_t i = this->high; i > this->low; --i) {
             auto followopt = this->opt->compile(follows, states);
 
             auto thisstate = (StateID)states.size();
@@ -166,8 +151,7 @@ namespace BSQON
             follows = thisstate;
         }
 
-        for(int64_t i = this->low; i > 0; --i)
-        {
+        for(int64_t i = this->low; i > 0; --i) {
             follows = this->opt->compile(follows, states);
         }
 
@@ -205,8 +189,7 @@ namespace BSQON
     StateID BSQAlternationRe::compile(StateID follows, std::vector<NFAOpt*>& states) const
     {
         std::vector<StateID> followopts;
-        for(size_t i = 0; i < this->opts.size(); ++i)
-        {
+        for(size_t i = 0; i < this->opts.size(); ++i) {
             followopts.push_back(this->opts[i]->compile(follows, states));
         }
 
@@ -229,8 +212,7 @@ namespace BSQON
 
     StateID BSQSequenceRe::compile(StateID follows, std::vector<NFAOpt*>& states) const
     {
-        for(int64_t i = this->opts.size() - 1; i >= 0; --i)
-        {
+        for(int64_t i = this->opts.size() - 1; i >= 0; --i) {
             follows = this->opts[i]->compile(follows, states);
         }
 
@@ -240,12 +222,14 @@ namespace BSQON
     BSQRegex* BSQRegex::jparse(json j)
     {
         auto restr = j["regexstr"].get<std::string>();
+        std::u32string utf32 = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(restr);
+        
         auto bsqre = BSQRegexOpt::parse(j["re"]);
 
         std::vector<NFAOpt*> nfastates = { new NFAOptAccept(0) };
         auto nfastart = bsqre->compile(0, nfastates);
 
         auto nfare = new NFA(nfastart, 0, nfastates);
-        return new BSQRegex(restr, bsqre, nfare);
+        return new BSQRegex(utf32, bsqre, nfare);
     }
 }
