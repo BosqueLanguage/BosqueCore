@@ -21,6 +21,9 @@ namespace BSQON
         const std::string m_defaultns;
         std::map<std::string, std::string> m_importmap;
 
+        void recoverErrorAssumeTokenFound(UnicodeString expected, const LexerToken& found);
+        void recoverErrorConsumeUntil(UnicodeString expected, const LexerToken& found, std::vector<TokenKind> tks);
+
         Type* resolveTypeFromNameList(UnicodeString basenominal, std::vector<Type*> terms)
         {
             std::string asciibasename = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(basenominal);
@@ -68,23 +71,53 @@ namespace BSQON
 
             this->m_lex.popToken();
             auto ttype = this->parseType();
-            this.expectTokenAndPop(TokenKind::TOKEN_RANGLE);
 
-            return ttype;
+            if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
+                if(this->m_lex.testToken(TokenKind::TOKEN_COMMA)) {
+                    //probably trying to do 2 args but we just expected one -- consume to matching ">" or up the bracket stack
+                    xxxx;
+                }
+                else {
+                    this->recoverErrorAssumeTokenFound(U">", this->m_lex.peekToken());
+                }
+            }
+
+            return std::make_optional(ttype);
         }
 
-    private parseTemplateTermPair(): [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined {
-        if(!this.testToken(TokenKind.TOKEN_LANGLE)) {
-            return undefined;
+    std::optional<std::pair<Type*, Type*>> parseTemplateTermPair()
+    {
+        if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+            return std::nullopt;
         }
 
-        this.expectTokenAndPop(TokenKind.TOKEN_LANGLE);
-        const ttype1 = this.parseType();
-        this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-        const ttype2 = this.parseType();
+        this->m_lex.popToken();
+        auto ttype1 = this.parseType();
+
+        if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_COMMA)) {
+            if(this->m_lex.testToken(TokenKind::TOKEN_RANGLE)) {
+                //probably trying to do 1 arg but we expected 2
+                xxxx;
+            }
+            else {
+                xxxx;
+            }
+        }
+
+        auto ttype2 = this.parseType();
+
         this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
+        if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
+            if(this->m_lex.testToken(TokenKind::TOKEN_COMMA)) {
+                //probably trying to do 3 args but we just expected one -- consume to matching ">" or up the bracket stack
+                xxxx;
+            }
+            else {
+                this->recoverErrorAssumeTokenFound(U">", this->m_lex.peekToken());
+            }
+        }
 
-        return [ttype1, ttype2];
+        return std::make_optional(std::make_pair(ttype1, ttype2));
     }
 
     private parseStringOfType(): $TypeInfo.BSQType {

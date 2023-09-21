@@ -5,28 +5,56 @@
 
 namespace BSQON
 {
-    ParseError ParseError::createUnclosedMultiLineComment(TextPosition spos, TextPosition epos) {
+    ParseError ParseError::createUnclosedMultiLineComment(TextPosition spos, TextPosition epos) 
+    {
         return ParseError(U"Unclosed multi-line comment", spos, epos);
     }
 
-    ParseError ParseError::createUnclosedPath(TextPosition spos, TextPosition epos) {
+    ParseError ParseError::createUnclosedPath(TextPosition spos, TextPosition epos) 
+    {
         return ParseError(U"Unclosed Path", spos, epos);
     }
 
-    ParseError ParseError::createUnclosedString(TextPosition spos, TextPosition epos) {
+    ParseError ParseError::createUnclosedString(TextPosition spos, TextPosition epos) 
+    {
         return ParseError(U"Unclosed String", spos, epos);
     }
 
-    ParseError ParseError::createUnclosedRegex(TextPosition spos, TextPosition epos) {
+    ParseError ParseError::createUnclosedRegex(TextPosition spos, TextPosition epos) 
+    {
         return ParseError(U"Unclosed Regex", spos, epos);
     }
 
-    ParseError ParseError::createUnknownToken(TextPosition spos, TextPosition epos) {
+    ParseError ParseError::createUnknownToken(TextPosition spos, TextPosition epos) 
+    {
         return ParseError(U"Unknown Token", spos, epos);
     }
 
-    LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0, 0, 0);
-    LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0, 0, 0);
+    ParseError ParseError::createExpectedMissing(UnicodeString expected, TextPosition spos, TextPosition epos)
+    {
+        return ParseError(U"Missing \"" + expected + U"\"", spos, epos);
+    }
+
+    ParseError ParseError::createExpectedButGot(UnicodeString expected, const LexerToken& tk, TextPosition spos, TextPosition epos)
+    {
+        return ParseError(U"Expected \"" + expected + U"\" but got: \"" + tk.convertToPrintable() + U"\"", spos, epos);
+    }
+
+    LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0);
+    LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0);
+
+    UnicodeString LexerToken::convertToPrintable() const
+    {
+        if(this->kind == TokenKind::TOKEN_EOF) {
+            return U"[EOF]";
+        }
+        else if(this->kind == TokenKind::TOKEN_INVALID) {
+            return U"[INVALID]";
+        }
+        else {
+            return this->input->substr(this->spos, std::min<int64_t>(this->epos - this->spos, 30));
+        }
+    }
 
     UnicodeRegex LexerRegex::whitespaceRe = UnicodeRegex(U"^\\s+", BSQON_LEXER_RE_MODE);
     UnicodeRegex LexerRegex::commentStartRe = UnicodeRegex(U"^(//)|(/\\*)", BSQON_LEXER_RE_MODE);

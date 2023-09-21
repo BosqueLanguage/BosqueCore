@@ -101,21 +101,6 @@ namespace BSQON
         uint16_t millis; // 0-999
     };
 
-    class TextPosition
-    {
-    public:
-        size_t line;
-        size_t column;
-        size_t offset;
-
-        TextPosition() = default;
-        TextPosition(const TextPosition& other) = default;
-        TextPosition(TextPosition&& other) = default;
-
-        TextPosition& operator=(const TextPosition& other) = default;
-        TextPosition& operator=(TextPosition&& other) = default;
-
-        TextPosition(size_t line, size_t column, size_t offset) : line(line), column(column), offset(offset) {;}
-    };
+    using TextPosition = int64_t;
 }
 

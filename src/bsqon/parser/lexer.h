@@ -42,6 +42,9 @@ namespace BSQON
         static ParseError createUnclosedString(TextPosition spos, TextPosition epos);
         static ParseError createUnclosedRegex(TextPosition spos, TextPosition epos);
         static ParseError createUnknownToken(TextPosition spos, TextPosition epos);
+
+        static ParseError createExpectedMissing(UnicodeString expected, TextPosition spos, TextPosition epos);
+        static ParseError createExpectedButGot(UnicodeString expected, const LexerToken& tk, TextPosition spos, TextPosition epos);
     };
 
     enum class TokenKind 
@@ -119,9 +122,6 @@ namespace BSQON
         int64_t spos;
         int64_t epos;
 
-        int64_t startline;
-        int64_t startcol;
-
         LexerToken() = default;
         LexerToken(const LexerToken& other) = default;
         LexerToken(LexerToken&& other) = default;
@@ -129,7 +129,7 @@ namespace BSQON
         LexerToken& operator=(const LexerToken& other) = default;
         LexerToken& operator=(LexerToken&& other) = default;
 
-        LexerToken(TokenKind kind, UnicodeString* input, int64_t spos, int64_t epos, int64_t startline, int64_t startcol) : kind(kind), input(input), spos(spos), epos(epos), startline(startline), startcol(startcol) {;}
+        LexerToken(TokenKind kind, UnicodeString* input, int64_t spos, int64_t epos) : kind(kind), input(input), spos(spos), epos(epos) {;}
 
         bool isValid() const {
             return this->kind != TokenKind::TOKEN_INVALID;
@@ -139,16 +139,18 @@ namespace BSQON
             return this->kind == TokenKind::TOKEN_UNKNOWN;
         }
 
-        UnicodeString::iterator tokenBegin() {
+        UnicodeString::iterator tokenBegin() const {
             return this->input->begin() + this->spos;
         }
 
-        UnicodeString::iterator tokenEnd() {
+        UnicodeString::iterator tokenEnd() const {
             return this->input->begin() + this->epos;
         }
 
         static LexerToken singletonInvalidToken;
         static LexerToken singletonEOFToken;
+
+        UnicodeString convertToPrintable() const;
     };
 
     class LexerRegex
@@ -253,12 +255,9 @@ namespace BSQON
         const bool m_parse_suggest;
 
         UnicodeString m_input;
-        int64_t m_line;
-        int64_t m_col;
-
         std::vector<ParseError> m_errors;
 
-        Lexer(UnicodeString input, bool parse_bsqon, bool parse_suggest) : m_cpos(input.begin()), m_lastToken(), m_parse_bsqon(parse_bsqon), m_parse_suggest(parse_suggest), m_input(input), m_line(1), m_col(0), m_errors() {;}
+        Lexer(UnicodeString input, bool parse_bsqon, bool parse_suggest) : m_cpos(input.begin()), m_lastToken(), m_parse_bsqon(parse_bsqon), m_parse_suggest(parse_suggest), m_input(input), m_errors() {;}
 
     private:
         inline bool chkRegexMatch(const UnicodeRegex& re, UnicodeString::iterator& spos, UnicodeString::iterator& epos)
@@ -294,11 +293,6 @@ namespace BSQON
             }
         }
 
-        void computeWSMove(UnicodeString::iterator spos, UnicodeString::iterator epos)
-        {
-            Lexer::computeWSMoveExplicit(spos, epos, this->m_line, this->m_col);
-        }
-
         template<unsigned int N>
         inline static bool chkConstantMatch(UnicodeString::iterator spos, UnicodeString::iterator epos, const char32_t (&cc)[N])
         {
@@ -307,10 +301,8 @@ namespace BSQON
 
         inline void setToken(TokenKind kind, UnicodeString::iterator spos, UnicodeString::iterator epos) 
         {
-            this->computeWSMove(spos, epos);
             this->m_cpos = epos;
-
-            this->m_lastToken = LexerToken(kind, &this->m_input, spos - this->m_input.begin(), epos - this->m_input.begin(), this->m_line, this->m_col);
+            this->m_lastToken = LexerToken(kind, &this->m_input, spos - this->m_input.begin(), epos - this->m_input.begin());
         }
 
         UnicodeString::iterator scanStringContents(UnicodeString::iterator spos)
@@ -348,25 +340,23 @@ namespace BSQON
     public:
         TextPosition toTextPos(UnicodeString::iterator ii)
         {
-            assert(std::distance(this->m_cpos, ii) >= 0);
+            return std::distance(this->m_input.begin(), ii);
+        }
 
-            if(this->m_cpos == ii) {
-                return TextPosition(this->m_line, this->m_col, std::distance(this->m_input.begin(), ii));
-            }
-            else {
-                auto oline = this->m_line;
-                auto ocol = this->m_col;
-                Lexer::computeWSMoveExplicit(this->m_cpos, ii, oline, ocol);
+        TextPosition tokenStartToTextPos(const LexerToken& tk)
+        {
+            return this->toTextPos(tk.tokenBegin());
+        }
 
-                return TextPosition(oline, ocol, std::distance(this->m_input.begin(), ii));
-            }
+        TextPosition tokenEndToTextPos(const LexerToken& tk)
+        {
+            return this->toTextPos(tk.tokenEnd());
         }
 
         bool lexWS() 
         {
             UnicodeString::iterator spos, epos;
             if(this->chkRegexMatch(LexerRegex::whitespaceRe, spos, epos)) {
-                this->computeWSMove(spos, epos);
                 this->m_cpos = epos;
             }
             else {
@@ -380,7 +370,6 @@ namespace BSQON
                 if(chkConstantMatch(spos, epos, U"//")) {
                     epos = std::find(spos, this->m_input.end(), '\n');
 
-                    this->computeWSMove(spos, epos);
                     this->m_cpos = epos;
                     return true;
                 }
@@ -394,7 +383,6 @@ namespace BSQON
                         this->m_errors.push_back(ParseError::createUnclosedMultiLineComment(this->toTextPos(spos), this->toTextPos(epos)));
                     }
                     
-                    this->computeWSMove(spos, epos);
                     this->m_cpos = epos;
                     return true;
                 }
@@ -916,6 +904,15 @@ namespace BSQON
 
         inline bool testToken(TokenKind tkind) {
             return this->peekToken().kind == tkind;
+        }
+
+        inline bool testAndConsumeToken(TokenKind tkind) {
+            if(this->peekToken().kind != tkind) {
+                return false;
+            }
+
+            this->m_lastToken = LexerToken::singletonInvalidToken;
+            return true;
         }
 
 /*
