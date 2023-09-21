@@ -592,6 +592,11 @@ namespace BSQON
         }
 
         static NamespaceDecl* parse(json j);
+
+        bool hasTypenameDecl(const UnicodeString& name) const
+        {
+            return std::binary_search(this->typenames.begin(), this->typenames.end(), name);
+        }
     };
 
     class AssemblyInfo

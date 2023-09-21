@@ -21,7 +21,12 @@ namespace BSQON
         return ParseError(U"Unclosed Regex", spos, epos);
     }
 
+    ParseError ParseError::createUnknownToken(TextPosition spos, TextPosition epos) {
+        return ParseError(U"Unknown Token", spos, epos);
+    }
+
     LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0, 0, 0);
+    LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0, 0, 0);
 
     UnicodeRegex LexerRegex::whitespaceRe = UnicodeRegex(U"^\\s+", BSQON_LEXER_RE_MODE);
     UnicodeRegex LexerRegex::commentStartRe = UnicodeRegex(U"^(//)|(/\\*)", BSQON_LEXER_RE_MODE);
@@ -60,12 +65,8 @@ namespace BSQON
     UnicodeRegex LexerRegex::floatNumberinoRe = UnicodeRegex(U"^[+-]?([0-9]*\\.[0-9]+)([eE][-+]?[0-9]+)?", BSQON_LEXER_RE_MODE);
 
     UnicodeRegex LexerRegex::stringStartRe = UnicodeRegex(U"^\"", BSQON_LEXER_RE_MODE);
-    UnicodeRegex LexerRegex::stringEndRe = UnicodeRegex(U"\"", BSQON_LEXER_RE_MODE);
     UnicodeRegex LexerRegex::asciistringStartRe = UnicodeRegex(U"^ascii\\{\"", BSQON_LEXER_RE_MODE);
-    UnicodeRegex LexerRegex::asciistringEndRe = UnicodeRegex(U"\"\\}", BSQON_LEXER_RE_MODE);
-
     UnicodeRegex LexerRegex::regexStartRe = UnicodeRegex(U"^regex\\{\"", BSQON_LEXER_RE_MODE);
-    UnicodeRegex LexerRegex::regexEndRe = UnicodeRegex(U"\"}", BSQON_LEXER_RE_MODE);
 
     UnicodeRegex LexerRegex::bracketBSQONRe = UnicodeRegex(U"^[()<>{}\\[\\]]", BSQON_LEXER_RE_MODE);
     UnicodeRegex LexerRegex::symbolBSQONRe = UnicodeRegex(U"^[.:,&|!=>@]+", BSQON_LEXER_RE_MODE);
@@ -73,14 +74,14 @@ namespace BSQON
 
     UnicodeRegex LexerRegex::bracketJSONRe = UnicodeRegex(U"^[{}\\[\\]]", BSQON_LEXER_RE_MODE);
     UnicodeRegex LexerRegex::symbolJSONRe = UnicodeRegex(U"^[:,]+", BSQON_LEXER_RE_MODE);
-    UnicodeRegex LexerRegex::keywordRe = UnicodeRegex(U"^(none|null|some|true|false|nothing|something|ok|err|in|let)", BSQON_LEXER_RE_MODE);
+    UnicodeRegex LexerRegex::keywordJSONRe = UnicodeRegex(U"^null|true|false)", BSQON_LEXER_RE_MODE);
 
     UnicodeRegex LexerRegex::nameSrcRe = UnicodeRegex(U"\\$src");
-    UnicodeRegex LexerRegex::nameRefRe = UnicodeRegex(U"#\\w+");
+    UnicodeRegex LexerRegex::nameRefRe = UnicodeRegex(U"#[a-z]|[a-z_][a-zA-Z0-9_]+");
 
-    UnicodeRegex unscopedType = UnicodeRegex(U"[A-Z]([a-zA-Z0-9_])+", BSQON_LEXER_RE_MODE);
-    UnicodeRegex scopedTypeRe = UnicodeRegex(U"[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)*", BSQON_LEXER_RE_MODE);
-    UnicodeRegex namePropertyRE = UnicodeRegex(U"[a-z_][a-zA-Z0-9_]*");
+    UnicodeRegex LexerRegex::typeNameRe = UnicodeRegex(U"[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)*", BSQON_LEXER_RE_MODE);
+    UnicodeRegex LexerRegex::propertyNameRE = UnicodeRegex(U"[a-z]|[a-z_][a-zA-Z0-9_]*");
+    UnicodeRegex LexerRegex::specialUnderscoreRE = UnicodeRegex(U"_", BSQON_LEXER_RE_MODE);
 
     std::set<UnicodeString> LexerRegex::coretypes = {
         U"None", U"Bool", U"Int", U"Nat", U"BigInt", U"BigNat", U"Rational", U"Float", U"Decimal", U"String", U"ASCIIString",

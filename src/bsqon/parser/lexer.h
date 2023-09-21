@@ -41,15 +41,18 @@ namespace BSQON
         static ParseError createUnclosedPath(TextPosition spos, TextPosition epos);
         static ParseError createUnclosedString(TextPosition spos, TextPosition epos);
         static ParseError createUnclosedRegex(TextPosition spos, TextPosition epos);
+        static ParseError createUnknownToken(TextPosition spos, TextPosition epos);
     };
 
     enum class TokenKind 
     {
         TOKEN_INVALID = 0x0,
+        TOKEN_EOF,
         TOKEN_UNKNOWN, 
 
         TOKEN_NULL,
         TOKEN_NONE,
+        TOKEN_SOME,
         TOKEN_NOTHING,
         TOKEN_TYPE,
         TOKEN_SOMETHING,
@@ -104,6 +107,7 @@ namespace BSQON
         TOKEN_SHA_HASH,
         TOKEN_PATH_ITEM,
         TOKEN_PROPERTY,
+        TOKEN_UNDERSCORE
     };
 
     class LexerToken
@@ -144,6 +148,7 @@ namespace BSQON
         }
 
         static LexerToken singletonInvalidToken;
+        static LexerToken singletonEOFToken;
     };
 
     class LexerRegex
@@ -186,12 +191,8 @@ namespace BSQON
         static UnicodeRegex floatNumberinoRe;
 
         static UnicodeRegex stringStartRe;
-        static UnicodeRegex stringEndRe;
         static UnicodeRegex asciistringStartRe;
-        static UnicodeRegex asciistringEndRe;
-
         static UnicodeRegex regexStartRe;
-        static UnicodeRegex regexEndRe;
 
         static UnicodeRegex bracketBSQONRe;
         static UnicodeRegex symbolBSQONRe;
@@ -204,9 +205,9 @@ namespace BSQON
         static UnicodeRegex nameSrcRe;
         static UnicodeRegex nameRefRe;
 
-        static UnicodeRegex unscopedTypeRe;
-        static UnicodeRegex scopedTypeRe;
-        static UnicodeRegex namePropertyREy;
+        static UnicodeRegex typeNameRe;
+        static UnicodeRegex propertyNameRE;
+        static UnicodeRegex specialUnderscoreRE;
 
         static std::set<UnicodeString> coretypes;
     };
@@ -310,6 +311,38 @@ namespace BSQON
             this->m_cpos = epos;
 
             this->m_lastToken = LexerToken(kind, &this->m_input, spos - this->m_input.begin(), epos - this->m_input.begin(), this->m_line, this->m_col);
+        }
+
+        UnicodeString::iterator scanStringContents(UnicodeString::iterator spos)
+        {
+            UnicodeString::iterator epos = this->m_input.end();
+
+            if(this->m_parse_bsqon) {
+                return std::find(spos, epos, U'"');
+            }
+            else {
+                while(spos != epos) {
+                    auto c = *spos;
+                    if(c == U'"') {
+                        break;
+                    }
+
+                    spos++;
+                    if((spos != epos) & (c == U'\\')) {
+                        auto escc = *spos;
+                        if(escc != U'u') {
+                            spos++;
+                        }
+                        else {
+                            //TODO: if one of these is a " then we will skip it and swallow stuff 
+                            //      -- the input is invalid anyway so no problem there but error reporting could be better
+                            spos += std::min<ptrdiff_t>(5, std::distance(spos, epos));
+                        }
+                    }
+                }
+
+                return spos;
+            }
         }
 
     public:
@@ -565,9 +598,9 @@ namespace BSQON
             UnicodeString::iterator spos, epos;
 
             if(this->chkRegexMatch(LexerRegex::stringStartRe, spos, epos)) {
-                epos = std::search(epos, this->m_input.end(), LexerRegex::stringEndRe);
+                epos = this->scanStringContents(epos);
 
-                if(epos != this->m_input.end()) {
+                if(chkConstantMatch(epos, this->m_input.end(), U"\"")) {
                     epos += 1;
                     this->setToken(TokenKind::TOKEN_STRING, spos, epos);
                 }
@@ -580,9 +613,9 @@ namespace BSQON
             }
 
             if(this->chkRegexMatch(LexerRegex::asciistringStartRe, spos, epos)) {
-                epos = std::search(epos, this->m_input.end(), LexerRegex::asciistringEndRe);
+                epos = this->scanStringContents(epos);
 
-                if(epos != this->m_input.end()) {
+                if(chkConstantMatch(epos, this->m_input.end(), U"\"}")) {
                     epos += 2;
                     this->setToken(TokenKind::TOKEN_ASCII_STRING, spos, epos);
                 }
@@ -602,9 +635,9 @@ namespace BSQON
             UnicodeString::iterator spos, epos;
 
             if(this->chkRegexMatch(LexerRegex::regexStartRe, spos, epos)) {
-                epos = std::search(epos, this->m_input.end(), LexerRegex::regexEndRe);
+                epos = this->scanStringContents(epos);
 
-                if(epos != this->m_input.end()) {
+                if(chkConstantMatch(epos, this->m_input.end(), U"\"}")) {
                     epos += 2;
                     this->setToken(TokenKind::TOKEN_REGEX, spos, epos);
                 }
@@ -619,32 +652,11 @@ namespace BSQON
             return false;
         }
 
-        bool lexSymbol() 
+        bool lexSymbol(bool nokeyword) 
         {
             UnicodeString::iterator spos, epos;
-
-            if(this->chkRegexMatch(LexerRegex::symbolRe, spos, epos)) {
-                auto ddist = std::distance(spos, epos);
-                assert((1 <= ddist) & (ddist <= 3));
-
-                if(ddist == 3) {
-                    assert(this->chkConstantMatch(spos, epos, U"..."));
-
-                    this->setToken(TokenKind::TOKEN_LDOTS, spos, epos);
-                    return true;
-                }
-                else if(ddist == 2) {
-                    if(this->chkConstantMatch(spos, epos, U"::")) {
-                        this->setToken(TokenKind::TOKEN_COLON_COLON, spos, epos);
-                        return true;
-                    }
-                    else {
-                        assert(this->chkConstantMatch(spos, epos, U"=>"));
-                        this->setToken(TokenKind::TOKEN_ENTRY, spos, epos);
-                        return true;
-                    }
-                }
-                else {
+            if(this->m_parse_bsqon) {
+                if(this->chkRegexMatch(LexerRegex::bracketBSQONRe, spos, epos)) {
                     if(*spos == U'{') {
                         this->setToken(TokenKind::TOKEN_LBRACE, spos, epos);
                         return true;
@@ -673,15 +685,15 @@ namespace BSQON
                         this->setToken(TokenKind::TOKEN_LANGLE, spos, epos);
                         return true;
                     }
-                    else if(*spos == U'>') {
+                    else {
+                        assert(*spos == U'>');
                         this->setToken(TokenKind::TOKEN_RANGLE, spos, epos);
                         return true;
                     }
-                    else if(*spos == U':') {
-                        this->setToken(TokenKind::TOKEN_COLON, spos, epos);
-                        return true;
-                    }
-                    else if(*spos == U',') {
+                }
+
+                if(this->chkRegexMatch(LexerRegex::symbolBSQONRe, spos, epos)) {
+                    if(*spos == U',') {
                         this->setToken(TokenKind::TOKEN_COMMA, spos, epos);
                         return true;
                     }
@@ -697,204 +709,217 @@ namespace BSQON
                         this->setToken(TokenKind::TOKEN_BANG, spos, epos);
                         return true;
                     }
-                    else if(*spos == U'=') {
-                        this->setToken(TokenKind::TOKEN_EQUALS, spos, epos);
+                    else if(*spos == U'@') {
+                        this->setToken(TokenKind::TOKEN_AT, spos, epos);
                         return true;
                     }
-                    else if(*spos == U'.') {
-                        this->setToken(TokenKind::TOKEN_DOT, spos, epos);
+                    else if(*spos == U':') {
+                        if(this->chkConstantMatch(spos, epos, U"::")) {
+                            this->setToken(TokenKind::TOKEN_COLON_COLON, spos, epos);
+                            return true;
+                        }
+                        else {
+                            this->setToken(TokenKind::TOKEN_COLON, spos, epos);
+                            return true;
+                        }
+                    }
+                    else if(*spos == U'=') {
+                        if(this->chkConstantMatch(spos, epos, U"=>")) {
+                            this->setToken(TokenKind::TOKEN_LDOTS, spos, epos);
+                            return true;
+                        }
+                        else {
+                            this->setToken(TokenKind::TOKEN_DOT, spos, epos);
+                            return true;
+                        }
+                    }
+                    else {
+                        assert(*spos == U'.');
+                        if(this->chkConstantMatch(spos, epos, U"...")) {
+                            this->setToken(TokenKind::TOKEN_LDOTS, spos, epos);
+                            return true;
+                        }
+                        else {
+                            this->setToken(TokenKind::TOKEN_DOT, spos, epos);
+                            return true;
+                        }
+                    }
+                }
+
+                if(!nokeyword && this->chkRegexMatch(LexerRegex::keywordBSQONRe, spos, epos)) {
+                    if(this->chkConstantMatch(spos, epos, U"true")) {
+                        this->setToken(TokenKind::TOKEN_TRUE, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"false")) {
+                        this->setToken(TokenKind::TOKEN_FALSE, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"nothing")) {
+                        this->setToken(TokenKind::TOKEN_NOTHING, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"something")) {
+                        this->setToken(TokenKind::TOKEN_SOMETHING, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"none")) {
+                        this->setToken(TokenKind::TOKEN_NONE, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"some")) {
+                        this->setToken(TokenKind::TOKEN_SOME, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"ok")) {
+                        this->setToken(TokenKind::TOKEN_OK, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"err")) {
+                        this->setToken(TokenKind::TOKEN_ERR, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"in")) {
+                        this->setToken(TokenKind::TOKEN_IN, spos, epos);
                         return true;
                     }
                     else {
-                        assert(*spos == U'@');
-                        this->setToken(TokenKind::TOKEN_AT, spos, epos);
+                        assert(this->chkConstantMatch(spos, epos, U"let"));
+                        this->setToken(TokenKind::TOKEN_LET, spos, epos);
+                        return true;
+                    }
+                }
+            }
+            else {
+                if(this->chkRegexMatch(LexerRegex::bracketBSQONRe, spos, epos)) {
+                    if(*spos == U'{') {
+                        this->setToken(TokenKind::TOKEN_LBRACE, spos, epos);
+                        return true;
+                    }
+                    else if(*spos == U'}') {
+                        this->setToken(TokenKind::TOKEN_RBRACE, spos, epos);
+                        return true;
+                    }
+                    else if(*spos == U'[') {
+                        this->setToken(TokenKind::TOKEN_LBRACKET, spos, epos);
+                        return true;
+                    }
+                    else {
+                        assert(*spos == U']');
+                        this->setToken(TokenKind::TOKEN_RBRACKET, spos, epos);
                         return true;
                     }
                 }
 
+                if(this->chkRegexMatch(LexerRegex::symbolBSQONRe, spos, epos)) {
+                    if(*spos == U',') {
+                        this->setToken(TokenKind::TOKEN_COMMA, spos, epos);
+                        return true;
+                    }
+                    else {
+                        this->setToken(TokenKind::TOKEN_COLON, spos, epos);
+                        return true;
+                    }
+                }
+
+                if(!nokeyword && this->chkRegexMatch(LexerRegex::keywordBSQONRe, spos, epos)) {
+                    if(this->chkConstantMatch(spos, epos, U"true")) {
+                        this->setToken(TokenKind::TOKEN_TRUE, spos, epos);
+                        return true;
+                    }
+                    else if(this->chkConstantMatch(spos, epos, U"false")) {
+                        this->setToken(TokenKind::TOKEN_FALSE, spos, epos);
+                        return true;
+                    }
+                    else {
+                        this->setToken(TokenKind::TOKEN_NULL, spos, epos);
+                        return true;
+                    }
+                }
             }
-
-            if(this->chkRegexMatch(LexerRegex::keywordRe, spos, epos)) {
-                xxxx;
-            }
-        TOKEN_LET,
-        TOKEN_IN,
-
-            TOKEN_NULL,
-        TOKEN_NONE,
-        TOKEN_NOTHING,
-        TOKEN_TYPE,
-        TOKEN_SOMETHING,
-        TOKEN_OK,
-        TOKEN_ERR,
-
-        TOKEN_TRUE, 
-        TOKEN_FALSE,
 
             return false;
-/*
-
-const SymbolStrings = [
-    TokenKind.TOKEN_LBRACE,
-    TokenKind.TOKEN_RBRACE,
-    TokenKind.TOKEN_LBRACKET,
-    TokenKind.TOKEN_RBRACKET,
-    TokenKind.TOKEN_LPAREN,
-    TokenKind.TOKEN_RPAREN,
-    TokenKind.TOKEN_LANGLE, 
-    TokenKind.TOKEN_RANGLE,
-
-    //length 3
-    TokenKind.TOKEN_LDOTS,
-
-    //length 2
-    TokenKind.TOKEN_COLON_COLON,
-    TokenKind.TOKEN_ENTRY,
-
-    //length 1
-    TokenKind.TOKEN_COLON,
-    TokenKind.TOKEN_AMP,
-    TokenKind.TOKEN_BAR,
-    TokenKind.TOKEN_COMMA,
-    TokenKind.TOKEN_EQUALS
-];
-
-const KWStrings = [
-    TokenKind.TOKEN_NULL,
-    TokenKind.TOKEN_NONE,
-    TokenKind.TOKEN_TRUE,
-    TokenKind.TOKEN_FALSE,
-    
-    TokenKind.TOKEN_NOTHING,
-    TokenKind.TOKEN_SOMETHING,
-    TokenKind.TOKEN_OK,
-    TokenKind.TOKEN_ERR,
-    
-    TokenKind.TOKEN_LET,
-    TokenKind.TOKEN_IN
-];
-
-*/
-
-
-        _s_symbolRe.lastIndex = this.m_cpos;
-        const ms = _s_symbolRe.exec(this.m_input);
-        if (ms !== null) {
-            const sym = SymbolStrings.find((value) => ms[0].startsWith(value));
-            if (sym !== undefined) {
-                this.m_cpos += sym.length;
-                this.m_lastToken = createToken(sym, sym);
-                return true;
-            }
         }
-
-        _s_keywordRe.lastIndex = this.m_cpos;
-        const mk = _s_keywordRe.exec(this.m_input);
-        if (mk !== null) {
-            const kw = KWStrings.find((value) => mk[0].startsWith(value));
-            if (kw !== undefined) {
-                this.m_cpos += kw.length;
-                this.m_lastToken = createToken(kw, kw);
-                return true;
-            }
-        }
-    
-        return false;
-    }
 
         bool lexName() {
-        _s_nameSrcRe.lastIndex = this.m_cpos;
-        const msrc = _s_nameSrcRe.exec(this.m_input);
-        if(msrc !== null) {
-            this.m_cpos += msrc[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_SRC, msrc[0]);
-            return true;
-        }
-    
-        _s_nameRefRe.lastIndex = this.m_cpos;
-        const mref = _s_nameRefRe.exec(this.m_input);
-        if(mref !== null) {
-            this.m_cpos += mref[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_REFERENCE, mref[0]);
-            return true;
-        }
-    
-        _s_nameTypeRe.lastIndex = this.m_cpos;
-        const mtype = _s_nameTypeRe.exec(this.m_input);
-        if(mtype !== null) {
-            this.m_cpos += mtype[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_TYPE, mtype[0]);
-            return true;
-        }
-    
-        _s_namePropertyRE.lastIndex = this.m_cpos;
-        const pname = _s_namePropertyRE.exec(this.m_input);
-        if(pname !== null) {
-            this.m_cpos += pname[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_PROPERTY, pname[0]);
-            return true;
-        }
-    
-        return false;
-    }
+            UnicodeString::iterator spos, epos;
 
-        bool lexAccess() {
-        _s_dotNameAccessRe.lastIndex = this.m_cpos;
-        const dotname = _s_dotNameAccessRe.exec(this.m_input);
-        if(dotname !== null) {
-            this.m_cpos += dotname[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_NAME, dotname[0].slice(1));
-            return true;
-        }
-    
-        _s_dotIdxAccessRe.lastIndex = this.m_cpos;
-        const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
-        if(dotidx !== null) {
-            this.m_cpos += dotidx[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_IDX, dotidx[0].slice(1));
-            return true;
-        }
-    
-        return false;
-    }
+            if(this->chkRegexMatch(LexerRegex::nameSrcRe, spos, epos)) {
+                this->setToken(TokenKind::TOKEN_SRC, spos, epos);
+                return true;
+            }
 
+            if(this->chkRegexMatch(LexerRegex::nameRefRe, spos, epos)) {
+                this->setToken(TokenKind::TOKEN_REFERENCE, spos, epos);
+                return true;
+            }
 
-        void peekToken(): {kind: string, value: string} | undefined {
-        if (this.m_lastToken !== undefined) {
-            return this.m_lastToken;
+            if(this->chkRegexMatch(LexerRegex::typeNameRe, spos, epos)) {
+                this->setToken(TokenKind::TOKEN_TYPE, spos, epos);
+                return true;
+            }
+
+            if(this->chkRegexMatch(LexerRegex::propertyNameRE, spos, epos)) {
+                this->setToken(TokenKind::TOKEN_PROPERTY, spos, epos);
+                return true;
+            }
+
+            if(this->chkRegexMatch(LexerRegex::specialUnderscoreRE, spos, epos)) {
+                this->setToken(TokenKind::TOKEN_UNDERSCORE, spos, epos);
+                return true;
+            }
+    
+            return false;
         }
 
-        while (this.lexWS() || this.lexComment()) {
-            ; //eat the token
+        bool peekTokenDoWork() {
+            if (this->m_lastToken.isValid()) {
+                return true;
+            }
+
+            while (this->lexWS() || this->lexComment()) {
+                ; //eat the token
+            }   
+
+            return this->lexBytebuff() || this->lexTimeInfo() || this->lexLogicalTime() || this->lexTickTime() || this->lexTimestamp() ||
+                this->lexUUID() || this->lexSHACode() || this->lexPath() ||
+                this->lexNumber() || this->lexString() || this->lexRegex() ||
+                this->lexSymbol(false) || this->lexName();
         }
 
-        if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
-            this.lexUUID() || this.lexSHACode() || this.lexPath() ||
-            this.lexNumber() || this.lexString() || this.lexRegex() ||
-            this.lexSymbol() || this.lexName() || this.lexAccess()) {
-            return this.m_lastToken;
-        }
-        else {
-            return undefined;
-        }
-    }
+        LexerToken peekToken() 
+        {
+            while (!this->peekTokenDoWork()) {
+                if(this->m_cpos == this->m_input.end()) {
+                    this->m_lastToken = LexerToken::singletonEOFToken;
+                    return this->m_lastToken;
+                }
 
-        void popToken(): {kind: string, value: string} | undefined {
-        const tt = this.peekToken();
+                //save first unparseable position, now try to find a token boundary -- whitespace, a symbol, or a comment
+                auto spos = this->m_cpos;
+                while(!this->lexWS() && !this->lexComment() && !this->lexSymbol(true)) {
+                    this->m_cpos++;
+                }
+
+                this->m_errors.push_back(ParseError::createUnknownToken(this->toTextPos(spos), this->toTextPos(this->m_cpos)));
+            }
+
+            return this->m_lastToken;
+        }
+
+        LexerToken popToken() {
+            auto tt = this->peekToken();
         
-        this.m_lastToken = undefined;
-        return tt;
-    }
+            this->m_lastToken = LexerToken::singletonInvalidToken;
+            return tt;
+        }
 
-        void popTokenSafe(): {kind: string, value: string} {
-        return this.popToken()!;
-    }
+        inline bool testToken(TokenKind tkind) {
+            return this->peekToken().kind == tkind;
+        }
 
-        void testToken(tkind: string): boolean {
-        return this.peekToken() !== undefined && this.peekToken()!.kind === tkind;
-    }
-
-        void testTokens(...tkinds: string[]): boolean {
+/*
+        bool testTokens(...tkinds: string[]) {
         const opos = this.m_cpos;
         const olt = this.m_lastToken;
 
@@ -937,24 +962,14 @@ const KWStrings = [
         return true;
     }
 
-    private raiseError(msg: string) {
-        const mm = this.m_input.slice(0, this.m_cpos).match(/[\n]/g);
-        throw new BSQONParseError(msg, (mm?.length ?? 0) + 1);
-    }
-
-    private raiseErrorIf(cond: boolean, msg: string) {
-        if (cond) {
-            this.raiseError(msg);
-        }
-    }
-
-    private expectToken(tkind: string) {
+    bool expectToken(tkind: string) {
         this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()?.value ?? "[Unknown]"}`);
     }
 
-    private expectTokenAndPop(tkind: string): {kind: string, value: string} {
+    bool expectTokenAndPop(tkind: string): {kind: string, value: string} {
         this.expectToken(tkind);
         return this.popToken() as {kind: string, value: string};
     }
+*/
     };
 }
