@@ -914,59 +914,5 @@ namespace BSQON
             this->m_lastToken = LexerToken::singletonInvalidToken;
             return true;
         }
-
-/*
-        bool testTokens(...tkinds: string[]) {
-        const opos = this.m_cpos;
-        const olt = this.m_lastToken;
-
-        for (let i = 0; i < tkinds.length; ++i) {
-            if (this.testToken(tkinds[i])) {
-                this.popToken();
-            }
-            else {
-                this.m_cpos = opos;
-                this.m_lastToken = olt;
-
-                return false;
-            }
-        }
-
-        this.m_cpos = opos;
-        this.m_lastToken = olt;
-        return true;
-    }
-
-        void testTokenWValue(tk: {kind: TokenKind, value: string}): boolean {
-        return this.peekToken() !== undefined && this.peekToken()!.kind === tk.kind && this.peekToken()!.value === tk.value;
-    }
-
-        void testTokensWValue(...tks: {kind: TokenKind, value: string}[]): boolean {
-        const opos = this.m_cpos;
-        const olt = this.m_lastToken;
-
-        for (let i = 0; i < tks.length; ++i) {
-            if (!this.testTokenWValue(tks[i])) {
-                this.m_cpos = opos;
-                this.m_lastToken = olt;
-
-                return false;
-            }
-        }
-
-        this.m_cpos = opos;
-        this.m_lastToken = olt;
-        return true;
-    }
-
-    bool expectToken(tkind: string) {
-        this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()?.value ?? "[Unknown]"}`);
-    }
-
-    bool expectTokenAndPop(tkind: string): {kind: string, value: string} {
-        this.expectToken(tkind);
-        return this.popToken() as {kind: string, value: string};
-    }
-*/
     };
 }

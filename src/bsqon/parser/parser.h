@@ -14,6 +14,8 @@ namespace BSQON
         AssemblyInfo* m_assembly;
         Lexer m_lex;
 
+        std::list<std::vector<TokenKind>> m_recoverStack;
+
         const bool m_parse_bsqon;
         const bool m_parse_suggest;
         std::vector<ParseError> m_errors;
@@ -22,7 +24,7 @@ namespace BSQON
         std::map<std::string, std::string> m_importmap;
 
         void recoverErrorAssumeTokenFound(UnicodeString expected, const LexerToken& found);
-        void recoverErrorConsumeUntil(UnicodeString expected, const LexerToken& found, std::vector<TokenKind> tks);
+        void Parser::recoverErrorConsumeUntil(UnicodeString expected, const LexerToken& found);
 
         Type* resolveTypeFromNameList(UnicodeString basenominal, std::vector<Type*> terms)
         {
@@ -82,14 +84,14 @@ namespace BSQON
                 }
             }
 
-            return std::make_optional(ttype);
+            return ttype;
         }
 
-    std::optional<std::pair<Type*, Type*>> parseTemplateTermPair()
-    {
-        if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
-            return std::nullopt;
-        }
+        std::optional<std::pair<Type*, Type*>> parseTemplateTermPair()
+        {
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                return std::nullopt;
+            }
 
         this->m_lex.popToken();
         auto ttype1 = this.parseType();
@@ -117,6 +119,7 @@ namespace BSQON
             }
         }
 
+        xxxx;
         return std::make_optional(std::make_pair(ttype1, ttype2));
     }
 
