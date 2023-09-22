@@ -8,13 +8,35 @@
 
 namespace BSQON
 {
+    class FollowSet
+    {
+    public:
+        TokenKind follows[4];
+
+
+        FollowSet() : follows{TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1) : follows{f1, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2) : follows{f1, f2, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2, TokenKind f3) : follows{f1, f2, f3, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2, TokenKind f3, TokenKind f4) : follows{f1, f2, f3, f4} {;}
+
+        FollowSet(const FollowSet& other) = default;
+        FollowSet(FollowSet&& other) = default;
+        
+        FollowSet& operator=(const FollowSet& other) = default;
+        FollowSet& operator=(FollowSet&& other) = default;
+
+        bool contains(TokenKind tk) const
+        {
+            return (this->follows[0] == tk) | (this->follows[1] == tk) | (this->follows[2] == tk) | (this->follows[3] == tk); 
+        }
+    };
+
     class Parser
     {
     private:
         AssemblyInfo* m_assembly;
         Lexer m_lex;
-
-        std::list<std::vector<TokenKind>> m_recoverStack;
 
         const bool m_parse_bsqon;
         const bool m_parse_suggest;
@@ -23,8 +45,8 @@ namespace BSQON
         const std::string m_defaultns;
         std::map<std::string, std::string> m_importmap;
 
-        void recoverErrorAssumeTokenFound(UnicodeString expected, const LexerToken& found);
-        void Parser::recoverErrorConsumeUntil(UnicodeString expected, const LexerToken& found);
+        void recoverErrorInsertExpected(UnicodeString expected, const LexerToken& found);
+        void Parser::recoverErrorSynchronizeToken(UnicodeString expected, const LexerToken& found, FollowSet syncTokens);
 
         Type* resolveTypeFromNameList(UnicodeString basenominal, std::vector<Type*> terms)
         {
@@ -56,8 +78,24 @@ namespace BSQON
                 return titer->second;
             }
             else {
-                return this->m_assembly->aliasmap.at(scopedname);
+                auto aiter = this->m_assembly->aliasmap.find(scopedname);
+                if(aiter != this->m_assembly->aliasmap.end()) {
+                    return aiter->second;
+                }
+                else {
+                    return UnresolvedType::singleton;
+                }
             }
+        }
+
+        Type* resolveAndCheckType(TypeKey tkey, TextPosition spos, TextPosition epos)
+        {
+            auto tt = this->m_assembly->resolveType(tkey);
+            if(tt->isUnresolved()) {
+                this->m_errors.push_back(ParseError::createUnresolvedType(tkey, spos, epos));
+            }
+            
+            return tt;
         }
 
         Type* processCoreType(UnicodeString tname) 
@@ -65,92 +103,105 @@ namespace BSQON
             return this->resolveTypeFromNameList(tname, {});
         }
 
-        std::optional<Type*> parseTemplateTerm() 
+        bool parseTemplateTermList(std::vector<Type*>& terms) 
         {
             if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
-                return std::nullopt;
+                return true;
             }
 
             this->m_lex.popToken();
-            auto ttype = this->parseType();
+            auto ttype = this->parseType({TokenKind::TOKEN_COMMA, TokenKind::TOKEN_RANGLE});
+            while(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
+                if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_COMMA)) {
+                    //probably just missing a "," so report and error and continue as if it was there
+                    this->recoverErrorInsertExpected(U">", this->m_lex.peekToken());
+                }
 
-            if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
-                if(this->m_lex.testToken(TokenKind::TOKEN_COMMA)) {
-                    //probably trying to do 2 args but we just expected one -- consume to matching ">" or up the bracket stack
-                    xxxx;
-                }
-                else {
-                    this->recoverErrorAssumeTokenFound(U">", this->m_lex.peekToken());
-                }
+                ttype = this->parseType({TokenKind::TOKEN_COMMA, TokenKind::TOKEN_RANGLE});
+                terms.push_back(ttype);
             }
 
-            return ttype;
+            return std::find_if(terms.begin(), terms.end(), [](Type* tt) { return tt->isUnresolved(); }) == terms.end();
         }
 
-        std::optional<std::pair<Type*, Type*>> parseTemplateTermPair()
+        Type* parseTemplateTermList_One(TextPosition spos, TextPosition epos) 
         {
-            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
-                return std::nullopt;
-            }
+            std::vector<Type*> terms;
+            bool ok = this->parseTemplateTermList(terms);
 
-        this->m_lex.popToken();
-        auto ttype1 = this.parseType();
-
-        if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_COMMA)) {
-            if(this->m_lex.testToken(TokenKind::TOKEN_RANGLE)) {
-                //probably trying to do 1 arg but we expected 2
-                xxxx;
+            if(ok && terms.size() == 1) {
+                terms[0];
             }
             else {
-                xxxx;
+                if(terms.size() != 1) {
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(1, terms.size(), spos, epos));
+                }
+                return UnresolvedType::singleton;
             }
         }
 
-        auto ttype2 = this.parseType();
+        std::pair<Type*, Type*> parseTemplateTermList_Two(TextPosition spos, TextPosition epos) 
+        {
+            std::vector<Type*> terms;
+            bool ok = this->parseTemplateTermList(terms);
 
-        this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
-        if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
-            if(this->m_lex.testToken(TokenKind::TOKEN_COMMA)) {
-                //probably trying to do 3 args but we just expected one -- consume to matching ">" or up the bracket stack
-                xxxx;
+            if(ok && terms.size() == 2) {
+                std::make_pair(terms[0], terms[1]);
             }
             else {
-                this->recoverErrorAssumeTokenFound(U">", this->m_lex.peekToken());
+                if(terms.size() != 2) {
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(2, terms.size(), spos, epos));
+                }
+                return std::make_pair(UnresolvedType::singleton, UnresolvedType::singleton);
             }
         }
 
-        xxxx;
-        return std::make_optional(std::make_pair(ttype1, ttype2));
-    }
+        Type* parseStringOfType()
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testConstantValue(U"StringOf");
+            if(!okbasetype) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"StringOf", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
 
-    private parseStringOfType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "StringOf", `Not a StringOf type`);
+            auto oftype = this->parseTemplateTermList_One(llt.spos, llt.epos);
+            
+            if(!okbasetype || oftype->isUnresolved()) {
+                return UnresolvedType::singleton;
+            }
+            else {
+                auto tkey = "StringOf<" + oftype->tkey + ">";
+                return this->resolveAndCheckType(tkey, llt.spos, this->m_lex.toTextPosCurrent());
+            }
+        }
 
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorREType), `Type StringOf requires a validator type argument`);
+        Type* parseASCIIStringOfType()
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testConstantValue(U"ASCIIStringOf");
+            if(!okbasetype) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"ASCIIStringOf", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
 
-        return this.lookupMustDefType(`StringOf<${(oftype as $TypeInfo.ValidatorREType).tkey}>`);
-    }
+            auto oftype = this->parseTemplateTermList_One(llt.spos, llt.epos);
+            
+            if(!okbasetype || oftype->isUnresolved()) {
+                return UnresolvedType::singleton;
+            }
+            else {
+                auto tkey = "StringOf<" + oftype->tkey + ">";
+                return this->resolveAndCheckType(tkey, llt.spos, this->m_lex.toTextPosCurrent());
+            }
+        }
 
-    private parseASCIIStringOfType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "ASCIIStringOf", `Not a ASCIIStringOf type`);
+        Type* parseSomethingType(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
+            const llt = this.popToken()!.value;
+            this.raiseErrorIf(llt !== "Something", `Not a Something type`);
 
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorREType), `Type ASCIIStringOf requires a validator type argument`);
+            return this.parseSomethingTypeComplete(opt);
+        }
 
-        return this.lookupMustDefType(`ASCIIStringOf<${(oftype as $TypeInfo.ValidatorREType).tkey}>`);
-    }
-/*
-    private parseSomethingType(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Something", `Not a Something type`);
-
-        return this.parseSomethingTypeComplete(opt);
-    }
-
-    private parseSomethingTypeComplete(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
+    Type* parseSomethingTypeComplete(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
         const oftype = this.parseTemplateTerm();
         if(oftype !== undefined) {
             const t = this.lookupMustDefType(`Something<${oftype.tkey}>`);
@@ -166,7 +217,7 @@ namespace BSQON
         }
     }
 
-    private parseOptionType(): $TypeInfo.BSQType {
+    Type* parseOptionType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Option", `Not a Option type`);
 
@@ -176,7 +227,7 @@ namespace BSQON
         return this.lookupMustDefType(`Option<${(oftype as $TypeInfo.BSQType).tkey}>`);
     }
 
-    private parsePathType(): $TypeInfo.BSQType {
+    Type* parsePathType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Path", `Not a Path type`);
 
@@ -186,7 +237,7 @@ namespace BSQON
         return this.lookupMustDefType(`Path<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
     }
 
-    private parsePathFragmentType(): $TypeInfo.BSQType {
+    Type* parsePathFragmentType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "PathFragement", `Not a PathFragment type`);
 
@@ -196,7 +247,7 @@ namespace BSQON
         return this.lookupMustDefType(`PathFragment<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
     }
 
-    private parsePathGlobType(): $TypeInfo.BSQType {
+    Type* parsePathGlobType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "PathGlob", `Not a PathGlob type`);
 
@@ -206,7 +257,7 @@ namespace BSQON
         return this.lookupMustDefType(`PathGlob<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
     }
 
-    private parseListType(opt: $TypeInfo.ListType | undefined): $TypeInfo.BSQType {
+    Type* parseListType(opt: $TypeInfo.ListType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "List", `Not a List type`);
 
@@ -225,7 +276,7 @@ namespace BSQON
         }
     }
 
-    private parseStackType(opt: $TypeInfo.StackType | undefined): $TypeInfo.BSQType {
+    Type* parseStackType(opt: $TypeInfo.StackType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Stack", `Not a Stack type`);
 
@@ -244,7 +295,7 @@ namespace BSQON
         }
     }
 
-    private parseQueueType(opt: $TypeInfo.QueueType | undefined): $TypeInfo.BSQType {
+    Type* parseQueueType(opt: $TypeInfo.QueueType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Queue", `Not a Queue type`);
 
@@ -263,7 +314,7 @@ namespace BSQON
         }
     }
 
-    private parseSetType(opt: $TypeInfo.SetType | undefined): $TypeInfo.BSQType {
+    Type* parseSetType(opt: $TypeInfo.SetType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Set", `Not a Set type`);
 
@@ -282,7 +333,7 @@ namespace BSQON
         }
     }
 
-    private parseMapEntryType(): $TypeInfo.BSQType {
+    Type* parseMapEntryType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "MapEntry", `Not a MapEntry type`);
 
@@ -292,7 +343,7 @@ namespace BSQON
         return this.lookupMustDefType(`MapEntry<${kvtype![0].tkey}, ${kvtype![1].tkey}>`);
     }
 
-    private parseMapType(opt: $TypeInfo.MapType | undefined): $TypeInfo.BSQType {
+    Type* parseMapType(opt: $TypeInfo.MapType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Map", `Not a Map type`);
 
@@ -311,7 +362,7 @@ namespace BSQON
         }
     }
 
-    private parseOkType(opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
+    Type* parseOkType(opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Result", `Not a Result::Ok type`);
 
@@ -322,7 +373,7 @@ namespace BSQON
         return this.parseOkTypeComplete(tts, opt);
     }
 
-    private parseOkTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
+    Type* parseOkTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
        if(tts !== undefined) {
             const t = this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>::Ok`);
             this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
@@ -337,7 +388,7 @@ namespace BSQON
         }
     }
 
-    private parseErrType(opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
+    Type* parseErrType(opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Result", `Not a Result::Err type`);
 
@@ -348,7 +399,7 @@ namespace BSQON
         return this.parseErrTypeComplete(tts, opt);
     }
 
-    private parseErrTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
+    Type* parseErrTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
         if(tts !== undefined) {
             const t = this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>::Err`);
             this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
@@ -363,10 +414,10 @@ namespace BSQON
         }
     }
 
-    private parseResultTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType]): $TypeInfo.BSQType {
+    Type* parseResultTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType]): $TypeInfo.BSQType {
         return this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>`);
     }
-
+/*
     private isNominalTypePrefix(): boolean {
         const ntok = this.peekToken();
         return ntok !== undefined && ntok.kind === TokenKind.TOKEN_TYPE;
@@ -567,22 +618,23 @@ namespace BSQON
             return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
         }
     }
+*/
+        Type* parseType(FollowSet syncTokens)
+        {
+            if (this->m_parse_bsqon) {
+                return this.parseUnionType();
+            }
+            else {
+                this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value ?? "EOF"}`);
+                this.m_cpos++; //eat the "
+                const tt = this.parseUnionType();
+                this.m_cpos++; //eat the "
 
-    private parseType(): $TypeInfo.BSQType {
-        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return this.parseUnionType();
+                return tt;
+            }
         }
-        else {
-            this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value ?? "EOF"}`);
-            this.m_cpos++; //eat the "
-            const tt = this.parseUnionType();
-            this.m_cpos++; //eat the "
-
-            return tt;
-        }
-    }
-
-    private peekType(): $TypeInfo.BSQType {
+/*
+        Type* peekType(): $TypeInfo.BSQType {
         const opos = this.m_cpos;
         const olt = this.m_lastToken;
 
@@ -593,7 +645,7 @@ namespace BSQON
 
         return tt;
     }
-/*
+
     private parseSrc(oftype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
         this.expectTokenAndPop(TokenKind.TOKEN_SRC);
 

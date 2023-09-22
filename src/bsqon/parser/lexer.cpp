@@ -40,6 +40,19 @@ namespace BSQON
         return ParseError(U"Expected \"" + expected + U"\" but got: \"" + tk.convertToPrintable() + U"\"", spos, epos);
     }
 
+    ParseError ParseError::createUnresolvedType(TypeKey tkey, TextPosition spos, TextPosition epos)
+    {
+        auto tname = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(tkey);
+        return ParseError(U"Unknown Type: \"" + tname + U"\"", spos, epos);
+    }
+
+    ParseError ParseError::createIncorrectNumberOfArgs(size_t expectedCount, size_t actualCount, TextPosition spos, TextPosition epos)
+    {
+        auto ecount = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(std::to_string(expectedCount));
+        auto acount = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(std::to_string(actualCount));
+        return ParseError(U"Expected " + ecount + U" arguments but got " + acount, spos, epos);
+    }
+
     LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0);
     LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0);
 

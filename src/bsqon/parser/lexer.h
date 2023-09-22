@@ -3,7 +3,6 @@
 #include "../common.h"
 #include "../regex/bsqregex.h"
 
-#include "lexer.h"
 #include "../info/type_info.h"
 
 namespace BSQON
@@ -45,11 +44,15 @@ namespace BSQON
 
         static ParseError createExpectedMissing(UnicodeString expected, TextPosition spos, TextPosition epos);
         static ParseError createExpectedButGot(UnicodeString expected, const LexerToken& tk, TextPosition spos, TextPosition epos);
+
+        static ParseError createUnresolvedType(TypeKey tkey, TextPosition spos, TextPosition epos);
+        static ParseError createIncorrectNumberOfArgs(size_t expectedCount, size_t actualCount, TextPosition spos, TextPosition epos);
     };
 
     enum class TokenKind 
     {
-        TOKEN_INVALID = 0x0,
+        TOKEN_CLEAR = 0x0,
+        TOKEN_INVALID,
         TOKEN_EOF,
         TOKEN_UNKNOWN, 
 
@@ -145,6 +148,20 @@ namespace BSQON
 
         UnicodeString::iterator tokenEnd() const {
             return this->input->begin() + this->epos;
+        }
+
+        UnicodeString getTokenValue() const {
+            return UnicodeString(this->tokenBegin(), this->tokenEnd());
+        }
+
+        template<unsigned int N>
+        inline bool testConstantValue(const char32_t (&cc)[N])
+        {
+            return std::equal(this->tokenBegin(), this->tokenEnd(), cc, cc + N - 1);
+        }
+
+        inline bool testTokenValue(UnicodeString value) const {
+            return std::equal(this->tokenBegin(), this->tokenEnd(), value.begin(), value.end());
         }
 
         static LexerToken singletonInvalidToken;
@@ -351,6 +368,11 @@ namespace BSQON
         TextPosition tokenEndToTextPos(const LexerToken& tk)
         {
             return this->toTextPos(tk.tokenEnd());
+        }
+
+        TextPosition toTextPosCurrent()
+        {
+            return std::distance(this->m_input.begin(), this->m_cpos);
         }
 
         bool lexWS() 

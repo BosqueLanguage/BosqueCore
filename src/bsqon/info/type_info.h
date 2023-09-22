@@ -68,6 +68,11 @@ namespace BSQON
         }
 
         static Type* parse(json j);
+
+        inline bool isUnresolved() const
+        {
+            return this->tag == TypeTag::TYPE_UNRESOLVED;
+        }
     };
 
     class UnresolvedType : public Type
@@ -654,7 +659,15 @@ namespace BSQON
 
         Type* resolveType(TypeKey tkey)
         {
-            return this->typerefs[tkey];
+            auto tt = this->typerefs.find(tkey);
+            if(tt != this->typerefs.end())
+            {
+                return tt->second;
+            }
+            else
+            {
+                return UnresolvedType::singleton;
+            }
         }
     };
 

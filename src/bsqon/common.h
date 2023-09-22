@@ -14,7 +14,10 @@
 #include <regex>
 #include <optional>
 
+#include <vector>
+#include <list>
 #include <set>
+#include <map>
 
 #include "json.hpp"
 typedef nlohmann::json json;
