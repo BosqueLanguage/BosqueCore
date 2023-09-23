@@ -134,10 +134,19 @@ namespace BSQON
             }
             else {
                 if(terms.size() != 1) {
-                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(1, terms.size(), spos, epos));
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(1, terms.size(), spos, ok ? epos : this->m_lex.toTextPosCurrent()));
                 }
                 return UnresolvedType::singleton;
             }
+        }
+
+        std::optional<Type*> parseTemplateTermList_OneOptional(TextPosition spos, TextPosition epos) 
+        {
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                return std::nullopt;
+            }
+            
+            return std::make_optional(this->parseTemplateTermList_One(spos, epos));
         }
 
         std::pair<Type*, Type*> parseTemplateTermList_Two(TextPosition spos, TextPosition epos) 
@@ -150,7 +159,7 @@ namespace BSQON
             }
             else {
                 if(terms.size() != 2) {
-                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(2, terms.size(), spos, epos));
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(2, terms.size(), spos, ok ? epos : this->m_lex.toTextPosCurrent()));
                 }
                 return std::make_pair(UnresolvedType::singleton, UnresolvedType::singleton);
             }
@@ -194,28 +203,36 @@ namespace BSQON
             }
         }
 
-        Type* parseSomethingType(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
-            const llt = this.popToken()!.value;
-            this.raiseErrorIf(llt !== "Something", `Not a Something type`);
+        Type* parseSomethingTypeComplete(Type* opt /*Something | Option | null*/, bool okbasetype, TextPosition spos, TextPosition epos)
+        {
+            auto oftype = this->parseTemplateTermList_OneOptional(spos, epos);
+            if(oftype.has_value()) {
+                auto t = this->resolveAndCheckType("Something<" + oftype.value()->tkey + ">", spos, this->m_lex.toTextPosCurrent());
+                if(opt != nullptr && xxx) { 
+                    this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
+                }
 
-            return this.parseSomethingTypeComplete(opt);
+                return t;
+            }
+            else {
+                if(opt == nullptr) {
+                    this.raiseErrorIf(opt === undefined, `Type Something requires one type argument *OR* can be used in a inferable context`);
+                }
+                
+                return this->resolveAndCheckType("Something<" + opt.oftype->tkey + ">", spos, this->m_lex.toTextPosCurrent());
+            }
         }
 
-    Type* parseSomethingTypeComplete(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`Something<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
+        Type* parseSomethingType(Type* opt /*Something | Option | null*/)
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testConstantValue(U"Something");
+            if(!okbasetype) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"Something", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
 
-            return t;
+            return this->parseSomethingTypeComplete(opt);
         }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Something requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Something<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
 
     Type* parseOptionType(): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;
