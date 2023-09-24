@@ -53,6 +53,16 @@ namespace BSQON
         return ParseError(U"Expected " + ecount + U" arguments but got " + acount, spos, epos);
     }
 
+    ParseError ParseError::createGivenTypeDoesNotMatchExpected(TypeKey expectedtype, TypeKey giventype, TextPosition spos, TextPosition epos)
+    {
+        xxxx;
+    }
+
+    ParseError ParseError::createTypeInfoCannotBeInferredInContext(UnicodeString tinfo, TextPosition spos, TextPosition epos)
+    {
+        return ParseError(U"Type \"" + tinfo + U"\" cannot be inferred in this context -- an explicitly typed value is required", spos, epos);
+    }
+
     LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0);
     LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0);
 

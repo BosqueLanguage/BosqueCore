@@ -140,15 +140,6 @@ namespace BSQON
             }
         }
 
-        std::optional<Type*> parseTemplateTermList_OneOptional(TextPosition spos, TextPosition epos) 
-        {
-            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
-                return std::nullopt;
-            }
-            
-            return std::make_optional(this->parseTemplateTermList_One(spos, epos));
-        }
-
         std::pair<Type*, Type*> parseTemplateTermList_Two(TextPosition spos, TextPosition epos) 
         {
             std::vector<Type*> terms;
@@ -203,48 +194,85 @@ namespace BSQON
             }
         }
 
-        Type* parseSomethingTypeComplete(Type* opt /*Something | Option | null*/, bool okbasetype, TextPosition spos, TextPosition epos)
-        {
-            auto oftype = this->parseTemplateTermList_OneOptional(spos, epos);
-            if(oftype.has_value()) {
-                auto t = this->resolveAndCheckType("Something<" + oftype.value()->tkey + ">", spos, this->m_lex.toTextPosCurrent());
-                if(opt != nullptr && xxx) { 
-                    this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-                }
-
-                return t;
-            }
-            else {
-                if(opt == nullptr) {
-                    this.raiseErrorIf(opt === undefined, `Type Something requires one type argument *OR* can be used in a inferable context`);
-                }
-                
-                return this->resolveAndCheckType("Something<" + opt.oftype->tkey + ">", spos, this->m_lex.toTextPosCurrent());
-            }
-        }
-
         Type* parseSomethingType(Type* opt /*Something | Option | null*/)
         {
             auto llt = this->m_lex.popToken();
             bool okbasetype = llt.testConstantValue(U"Something");
-            if(!okbasetype) {
-                this->m_errors.push_back(ParseError::createExpectedButGot(U"Something", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+        
+            if(!okbasetype || !this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"Something<T>", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
             }
 
-            return this->parseSomethingTypeComplete(opt);
+            Type* oftype = UnresolvedType::singleton;
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                oftype = this->parseTemplateTermList_One(this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt));
+            }
+
+            if(opt != nullptr && !oftype->isUnresolved()) {
+                TypeKey t = (opt->tag == TypeTag::TYPE_OPTION) ? static_cast<OptionType*>(opt)->oftype : static_cast<SomethingType*>(opt)->oftype;
+
+                if(!this->m_assembly->checkConcreteSubtype(this->m_assembly->resolveType(t), oftype)) {
+                    this->m_errors.push_back(ParseError::createGivenTypeDoesNotMatchExpected(oftype->tkey, this->m_assembly->resolveType(t)->tkey, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+                }
+            }
+            
+            if(!okbasetype || (oftype->isUnresolved() && opt == nullptr)) {
+                return UnresolvedType::singleton;
+            } 
+            else {
+                if(!oftype->isUnresolved()) {
+                    return this->resolveAndCheckType("Something<" + oftype->tkey + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+                }
+                else {
+                    TypeKey t = (opt->tag == TypeTag::TYPE_OPTION) ? static_cast<OptionType*>(opt)->oftype : static_cast<SomethingType*>(opt)->oftype;
+                    return this->resolveAndCheckType("Something<" + t + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+                }
+            }
         }
 
-    Type* parseOptionType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Option", `Not a Option type`);
 
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined, `Type Option requires a type argument`);
+        //------------------------------------------------------------------------------------------------Use this code later but only in actual value parsing
+        // Type* parseSomethingContextualType(Type* opt /*Something | Option | null*/)
+        // {
+        //     auto llt = this->m_lex.popToken();
+        //     bool okbasetype = llt.testConstantValue(U"something");
+        //     if(!okbasetype) {
+        //         this->m_errors.push_back(ParseError::createExpectedButGot(U"something", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+        //     }
 
-        return this.lookupMustDefType(`Option<${(oftype as $TypeInfo.BSQType).tkey}>`);
-    }
+        //     if(opt == nullptr) {
+        //         this->m_errors.push_back(ParseError::createTypeInfoCannotBeInferredInContext(U"Something", this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+        //         return UnresolvedType::singleton;
+        //     }
+        //     else {
+        //         TypeKey t = (opt->tag == TypeTag::TYPE_OPTION) ? static_cast<OptionType*>(opt)->oftype : static_cast<SomethingType*>(opt)->oftype;
+        //         return this->resolveAndCheckType("Something<" + t + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+        //     }
+        // }
 
-    Type* parsePathType(): $TypeInfo.BSQType {
+        Type* parseOptionType()
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testConstantValue(U"Option");
+            if(!okbasetype || !this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"Option<T>", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
+
+            Type* oftype = UnresolvedType::singleton;
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                oftype = this->parseTemplateTermList_One(this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt));
+            }
+
+            if(!okbasetype || oftype->isUnresolved()) {
+                return UnresolvedType::singleton;
+            } 
+            else {
+                return this->resolveAndCheckType("Something<" + oftype->tkey + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+            }
+        }
+
+        Type* parsePathType()
+        {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "Path", `Not a Path type`);
 
@@ -252,9 +280,10 @@ namespace BSQON
         this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type Path requires a validator type argument`);
 
         return this.lookupMustDefType(`Path<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
+        }
 
-    Type* parsePathFragmentType(): $TypeInfo.BSQType {
+        Type* parsePathFragmentType()
+        {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "PathFragement", `Not a PathFragment type`);
 
@@ -262,9 +291,10 @@ namespace BSQON
         this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type PathFragement requires a validator type argument`);
 
         return this.lookupMustDefType(`PathFragment<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
+        }
 
-    Type* parsePathGlobType(): $TypeInfo.BSQType {
+        Type* parsePathGlobType()
+        {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "PathGlob", `Not a PathGlob type`);
 
@@ -272,9 +302,10 @@ namespace BSQON
         this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type PathGlob requires a validator type argument`);
 
         return this.lookupMustDefType(`PathGlob<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
+        }
 
-    Type* parseListType(opt: $TypeInfo.ListType | undefined): $TypeInfo.BSQType {
+        Type* parseListType(Type* opt /*List | null*/)
+        {
         const llt = this.popToken()!.value;
         this.raiseErrorIf(llt !== "List", `Not a List type`);
 
@@ -291,7 +322,7 @@ namespace BSQON
 
             return t;
         }
-    }
+        }
 
     Type* parseStackType(opt: $TypeInfo.StackType | undefined): $TypeInfo.BSQType {
         const llt = this.popToken()!.value;

@@ -47,6 +47,9 @@ namespace BSQON
 
         static ParseError createUnresolvedType(TypeKey tkey, TextPosition spos, TextPosition epos);
         static ParseError createIncorrectNumberOfArgs(size_t expectedCount, size_t actualCount, TextPosition spos, TextPosition epos);
+
+        static ParseError createGivenTypeDoesNotMatchExpected(TypeKey expectedtype, TypeKey giventype, TextPosition spos, TextPosition epos);
+        static ParseError createTypeInfoCannotBeInferredInContext(UnicodeString tinfo, TextPosition spos, TextPosition epos);
     };
 
     enum class TokenKind 
