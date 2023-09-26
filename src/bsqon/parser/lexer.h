@@ -11,8 +11,6 @@ namespace BSQON
     {
     public:
         UnicodeString message;
-        std::optional<Type*> expectedTypeInfo;
-        std::optional<std::vector<UnicodeString>> completionsOptions;
 
         TextPosition spos;
         TextPosition epos;
@@ -26,16 +24,6 @@ namespace BSQON
 
         ParseError(UnicodeString message, TextPosition spos, TextPosition epos) : message(message), spos(spos), epos(epos) {;}
 
-        void addExpectedTypeInfo(Type* tinfo)
-        {
-            this->expectedTypeInfo = tinfo;
-        }
-
-        void addCompletionOption(std::vector<UnicodeString> options)
-        {
-            this->completionsOptions = options;
-        }
-
         static ParseError createUnclosedMultiLineComment(TextPosition spos, TextPosition epos);
         static ParseError createUnclosedPath(TextPosition spos, TextPosition epos);
         static ParseError createUnclosedString(TextPosition spos, TextPosition epos);
@@ -48,8 +36,8 @@ namespace BSQON
         static ParseError createUnresolvedType(TypeKey tkey, TextPosition spos, TextPosition epos);
         static ParseError createIncorrectNumberOfArgs(size_t expectedCount, size_t actualCount, TextPosition spos, TextPosition epos);
 
-        static ParseError createGivenTypeDoesNotMatchExpected(TypeKey expectedtype, TypeKey giventype, TextPosition spos, TextPosition epos);
-        static ParseError createTypeInfoCannotBeInferredInContext(UnicodeString tinfo, TextPosition spos, TextPosition epos);
+        static ParseError createValueOfWrongType(TypeKey expected, TypeKey actual, TextPosition spos, TextPosition epos);
+        static ParseError createValueOfWrongType_WithCompletions(TypeKey expected, TypeKey actual, TextPosition spos, TextPosition epos);
     };
 
     enum class TokenKind 
@@ -137,33 +125,33 @@ namespace BSQON
 
         LexerToken(TokenKind kind, UnicodeString* input, int64_t spos, int64_t epos) : kind(kind), input(input), spos(spos), epos(epos) {;}
 
-        bool isValid() const {
+        bool isValid() const 
+        {
             return this->kind != TokenKind::TOKEN_INVALID;
         }
 
-        bool isUnknownToken() const {
+        bool isUnknownToken() const 
+        {
             return this->kind == TokenKind::TOKEN_UNKNOWN;
         }
 
-        UnicodeString::iterator tokenBegin() const {
+        UnicodeString::iterator tokenBegin() const 
+        {
             return this->input->begin() + this->spos;
         }
 
-        UnicodeString::iterator tokenEnd() const {
+        UnicodeString::iterator tokenEnd() const 
+        {
             return this->input->begin() + this->epos;
         }
 
-        UnicodeString getTokenValue() const {
+        UnicodeString getTokenValue() const 
+        {
             return UnicodeString(this->tokenBegin(), this->tokenEnd());
         }
 
-        template<unsigned int N>
-        inline bool testConstantValue(const char32_t (&cc)[N])
+        inline bool testTokenValue(UnicodeString value) const 
         {
-            return std::equal(this->tokenBegin(), this->tokenEnd(), cc, cc + N - 1);
-        }
-
-        inline bool testTokenValue(UnicodeString value) const {
             return std::equal(this->tokenBegin(), this->tokenEnd(), value.begin(), value.end());
         }
 
@@ -377,6 +365,8 @@ namespace BSQON
         {
             return std::distance(this->m_input.begin(), this->m_cpos);
         }
+
+        static std::vector<UnicodeString> s_coreTypes;
 
         bool lexWS() 
         {
@@ -854,7 +844,7 @@ namespace BSQON
             return false;
         }
 
-        bool lexName() {
+        bool lexProperName() {
             UnicodeString::iterator spos, epos;
 
             if(this->chkRegexMatch(LexerRegex::nameSrcRe, spos, epos)) {
@@ -871,6 +861,13 @@ namespace BSQON
                 this->setToken(TokenKind::TOKEN_TYPE, spos, epos);
                 return true;
             }
+    
+            return false;
+        }
+
+        bool lexGeneralName() {
+            UnicodeString::iterator spos, epos;
+
 
             if(this->chkRegexMatch(LexerRegex::propertyNameRE, spos, epos)) {
                 this->setToken(TokenKind::TOKEN_PROPERTY, spos, epos);
@@ -897,12 +894,12 @@ namespace BSQON
             return this->lexBytebuff() || this->lexTimeInfo() || this->lexLogicalTime() || this->lexTickTime() || this->lexTimestamp() ||
                 this->lexUUID() || this->lexSHACode() || this->lexPath() ||
                 this->lexNumber() || this->lexString() || this->lexRegex() ||
-                this->lexSymbol(false) || this->lexName();
+                this->lexProperName() || this->lexSymbol(false) || this->lexGeneralName();
         }
 
         LexerToken peekToken() 
         {
-            while (!this->peekTokenDoWork()) {
+            if(!this->peekTokenDoWork()) {
                 if(this->m_cpos == this->m_input.end()) {
                     this->m_lastToken = LexerToken::singletonEOFToken;
                     return this->m_lastToken;
@@ -910,11 +907,12 @@ namespace BSQON
 
                 //save first unparseable position, now try to find a token boundary -- whitespace, a symbol, or a comment
                 auto spos = this->m_cpos;
-                while(!this->lexWS() && !this->lexComment() && !this->lexSymbol(true)) {
+                while(this->m_cpos != this->m_input.end() && !this->lexWS() && !this->lexComment() && !this->lexSymbol(true)) {
                     this->m_cpos++;
                 }
 
                 this->m_errors.push_back(ParseError::createUnknownToken(this->toTextPos(spos), this->toTextPos(this->m_cpos)));
+                this->setToken(TokenKind::TOKEN_UNKNOWN, spos, this->m_cpos);
             }
 
             return this->m_lastToken;

@@ -53,16 +53,6 @@ namespace BSQON
         return ParseError(U"Expected " + ecount + U" arguments but got " + acount, spos, epos);
     }
 
-    ParseError ParseError::createGivenTypeDoesNotMatchExpected(TypeKey expectedtype, TypeKey giventype, TextPosition spos, TextPosition epos)
-    {
-        xxxx;
-    }
-
-    ParseError ParseError::createTypeInfoCannotBeInferredInContext(UnicodeString tinfo, TextPosition spos, TextPosition epos)
-    {
-        return ParseError(U"Type \"" + tinfo + U"\" cannot be inferred in this context -- an explicitly typed value is required", spos, epos);
-    }
-
     LexerToken LexerToken::singletonInvalidToken = LexerToken(TokenKind::TOKEN_INVALID, nullptr, 0, 0);
     LexerToken LexerToken::singletonEOFToken = LexerToken(TokenKind::TOKEN_EOF, nullptr, 0, 0);
 
@@ -131,7 +121,7 @@ namespace BSQON
     UnicodeRegex LexerRegex::nameRefRe = UnicodeRegex(U"#[a-z]|[a-z_][a-zA-Z0-9_]+");
 
     UnicodeRegex LexerRegex::typeNameRe = UnicodeRegex(U"[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)*", BSQON_LEXER_RE_MODE);
-    UnicodeRegex LexerRegex::propertyNameRE = UnicodeRegex(U"[a-z]|[a-z_][a-zA-Z0-9_]*");
+    UnicodeRegex LexerRegex::propertyNameRE = UnicodeRegex(U"[a-z]|[a-z_][a-zA-Z0-9_]+");
     UnicodeRegex LexerRegex::specialUnderscoreRE = UnicodeRegex(U"_", BSQON_LEXER_RE_MODE);
 
     std::set<UnicodeString> LexerRegex::coretypes = {
@@ -293,4 +283,10 @@ namespace BSQON
 
         return std::make_optional(ISOTimeStamp(year.value(), month.value(), day.value(), hour.value(), minute.value(), second.value(), millis.value()));
     }
+
+    std::vector<UnicodeString> Lexer::s_coreTypes = {
+        U"None", U"Bool", U"Int", U"Nat", U"BigInt", U"BigNat", U"Rational", U"Float", U"Decimal", U"String", U"ASCIIString",
+        U"ByteBuffer", U"DateTime", U"UTCDateTime", U"PlainDate", U"PlainTime", U"TickTime", U"LogicalTime", U"ISOTimeStamp", U"UUIDv4", U"UUIDv7", U"SHAContentHash", 
+        U"LatLongCoordinate", U"Regex", U"Nothing"
+    };
 }
