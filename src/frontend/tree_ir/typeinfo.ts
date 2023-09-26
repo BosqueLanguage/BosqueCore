@@ -523,7 +523,7 @@ class UnionType extends BSQType {
     readonly types: BSQTypeKey[];
 
     constructor(types: BSQTypeKey[], isrecursive: boolean) {
-        super(BSQTypeTag.TYPE_UNION, types.sort().join("|"), isrecursive, false);
+        super(BSQTypeTag.TYPE_UNION, types.sort().join(" | "), isrecursive, false);
         this.types = types;
     }
 

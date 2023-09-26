@@ -1,1283 +1,433 @@
-import {Decimal} from "npm:decimal.js@10.4.3";
-import Fraction from "npm:fraction.js@4.2.0";
+#pragma once
 
-import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
+#include "../common.h"
+#include "../regex/bsqregex.h"
 
-import * as $Constants from "./constants.ts";
-import * as $TypeInfo from "./typeinfo.ts";
-import * as $Runtime from "./runtime.ts";
+#include "lexer.h"
+#include "../info/type_info.h"
 
+namespace BSQON
+{
+    class FollowSet
+    {
+    public:
+        TokenKind follows[4];
 
-class BSQONParseError extends Error {
-    readonly msg: string;
-    readonly pos: number;
 
-    constructor(message: string, pos: number) {
-        super(`Parse Error -- ${message}`);
-        Object.setPrototypeOf(this, new.target.prototype);
+        FollowSet() : follows{TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1) : follows{f1, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2) : follows{f1, f2, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2, TokenKind f3) : follows{f1, f2, f3, TokenKind::TOKEN_CLEAR} {;}
+        FollowSet(TokenKind f1, TokenKind f2, TokenKind f3, TokenKind f4) : follows{f1, f2, f3, f4} {;}
 
-        this.msg = message;
-        this.pos = pos;
-    }
-}
-
-enum TokenKind {
-    TOKEN_NULL = "null",
-    TOKEN_NONE = "none",
-    TOKEN_NOTHING = "nothing",
-    TOKEN_TYPE = "type",
-    TOKEN_SOMETHING = "something",
-    TOKEN_OK = "ok",
-    TOKEN_ERR = "err",
-
-    TOKEN_LBRACE = "{",
-    TOKEN_RBRACE = "}",
-    TOKEN_LBRACKET = "[",
-    TOKEN_RBRACKET = "]",
-    TOKEN_LPAREN = "(",
-    TOKEN_RPAREN = ")",
-    TOKEN_LANGLE = "<",
-    TOKEN_RANGLE = ">",
-    TOKEN_COLON = ":",
-    TOKEN_COLON_COLON = "::",
-    TOKEN_COMMA = ",",
-    TOKEN_AMP = "&",
-    TOKEN_BAR = "|",
-    TOKEN_ENTRY = "=>",
-    TOKEN_LDOTS = "...",
-    TOKEN_EQUALS = "=",
-    TOKEN_LET = "let",
-    TOKEN_IN = "in",
-
-    TOKEN_SRC = "$SRC",
-    TOKEN_REFERENCE = "#REF",
-    TOKEN_PROPERTY = "PROPERTY",
-    TOKEN_DOT_NAME = "DOT_NAME",
-    TOKEN_DOT_IDX = "DOT_IDX",
-
-    TOKEN_TRUE = "true", 
-    TOKEN_FALSE = "false",
-    TOKEN_NAT = "NAT",
-    TOKEN_INT = "INT",
-    TOKEN_BIG_NAT = "BIG_NAT",
-    TOKEN_BIG_INT = "BIG_INT",
-    TOKEN_FLOAT = "FLOAT",
-    TOKEN_DECIMAL = "DECIMAL",
-    TOKEN_RATIONAL = "RATIONAL",
-    TOKEN_STRING = "STRING",
-    TOKEN_ASCII_STRING = "ASCII_STRING",
-    TOKEN_BYTE_BUFFER = "BYTE_BUFFER",
-    TOKEN_REGEX = "REGEX",
-    TOKEN_ISO_DATE_TIME = "DATE_TIME",
-    TOKEN_ISO_UTC_DATE_TIME = "DATE_TIME_UTC",
-    TOKEN_ISO_DATE = "DATE",
-    TOKEN_ISO_TIME = "TIME",
-    TOKEN_TICK_TIME = "TICK_TIME",
-    TOKEN_LOGICAL_TIME = "LOGICAL_TIME",
-    TOKEN_ISO_TIMESTAMP = "ISO_TIMESTAMP",
-    TOKEN_UUID = "UUID",
-    TOKEN_SHA_HASH = "HASH",
-    TOKEN_PATH_ITEM = "PATH"
-}
-
-function createToken(kind: string, value: string): {kind: string, value: string} {
-    return {
-        kind: kind,
-        value: value
-    };
-}
-
-const _s_whitespaceRe = /\s+/y;
-const _s_commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/uy;
-
-const _s_bytebuffRe = /0x\[[a-zA-Z0-9]*\]/uy;
-const _s_bytebuffCheckRe = /^[a-zA-Z0-9]*$/;
-
-const _s_fullTimeRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})(\[[a-zA-Z/ _-]+\])/y;
-const _s_fullTimeUTCRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})/y;
-const _s_dateOnlyRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})/y;
-const _s_timeOnlyRE = /([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})/y;
-
-const _s_fullTimeCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})(\[[a-zA-Z/ _-]+\])?$/;
-const _s_fullTimeUTCCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})$/;
-const _s_dateOnlyCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
-const _s_timeOnlyCheckRE = /^([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})$/;
-
-const _s_tickTimeRE = /[0-9]+t/y;
-const _s_logicalTimeRE = /[0-9]+l/y;
-const _s_isostampRE = /([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z/;
-
-const _s_tickTimeCheckRE = /^[0-9]+t$/;
-const _s_logicalTimeCheckRE = /^[0-9]+l$/;
-const _s_isoStampCheckRE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})\.([0-9]{3})Z$/;
-
-const _s_uuidRE = /uuid(4|7)\{[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}\}/y;
-const _s_shahashRE = /sha3\{0x[a-z0-9]{128}\}/y;
-
-const _s_uuidCheckRE = /^[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}$/;
-const _s_shahashCheckRE = /^0x[a-z0-9]{128}$/;
-
-//TODO: needs support for the [TYPE] part and impl
-const _s_pathRe = /(path|fragment|glob)\[[a-zA-Z0-9_:]\]\{[^\}]*\}/uy;
-
-const _s_intRe = /(0|-?[1-9][0-9]*)i/y;
-const _s_natRe = /(0|[1-9][0-9]*)n/y;
-
-const _s_floatRe = /([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?f/y;
-const _s_decimalRe = /([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?d/y;
-
-const _s_bigintRe = /(0|-?[1-9][0-9]*)I/y;
-const _s_bignatRe = /(0|[1-9][0-9]*)N/y;
-const _s_rationalRe = /((0|-?[1-9][0-9]*)|(0|-?[1-9][0-9]*)\/([1-9][0-9]*))R/y;
-
-const _s_intNumberinoRe = /0|-?[1-9][0-9]*/y;
-const _s_floatNumberinoRe = /([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?/y;
-
-const _s_stringRe = /"[^"]*"/uy;
-const _s_ascii_stringRe = /ascii\{"[^]*"\}/uy;
-
-const _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
-const _s_regexCheckRe = /^\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\/$/y;
-
-const _s_keywordRe = /([a-z]*)/y;
-const _s_symbolRe = /[\W]+/y;
-const _s_nameSrcRe = /[$]src/y;
-const _s_nameRefRe = /[#]\w+/y;
-const _s_nameTypeRe = /[A-Z]([a-zA-Z0-9_])+/y;
-const _s_namePropertyRE = /[a-z_][a-zA-Z0-9_]*/y;
-
-const _s_intCheckRe = /^0|-?[1-9][0-9]*$/;
-const _s_natCheckRe = /^0|[1-9][0-9]*$/;
-const _s_floatCheckRe = /^([+-]?[0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?$/;
-const _s_rationalCheckRe = /^((0|-?[1-9][0-9]*)|(0|-?[1-9][0-9]*)\/([1-9][0-9]*))$/;
-
-const _s_asciiStringCheckRe = /^\"[.]*\"$/;
-
-const _s_dotNameAccessRe = /[.][a-z_][a-zA-Z0-9_]*/y;
-const _s_dotIdxAccessRe = /[.][0-9]+/y;
-
-const SymbolStrings = [
-    TokenKind.TOKEN_LBRACE,
-    TokenKind.TOKEN_RBRACE,
-    TokenKind.TOKEN_LBRACKET,
-    TokenKind.TOKEN_RBRACKET,
-    TokenKind.TOKEN_LPAREN,
-    TokenKind.TOKEN_RPAREN,
-    TokenKind.TOKEN_LANGLE, 
-    TokenKind.TOKEN_RANGLE,
-
-    //length 3
-    TokenKind.TOKEN_LDOTS,
-
-    //length 2
-    TokenKind.TOKEN_COLON_COLON,
-    TokenKind.TOKEN_ENTRY,
-
-    //length 1
-    TokenKind.TOKEN_COLON,
-    TokenKind.TOKEN_AMP,
-    TokenKind.TOKEN_BAR,
-    TokenKind.TOKEN_COMMA,
-    TokenKind.TOKEN_EQUALS
-];
-
-const KWStrings = [
-    TokenKind.TOKEN_NULL,
-    TokenKind.TOKEN_NONE,
-    TokenKind.TOKEN_TRUE,
-    TokenKind.TOKEN_FALSE,
-    
-    TokenKind.TOKEN_NOTHING,
-    TokenKind.TOKEN_SOMETHING,
-    TokenKind.TOKEN_OK,
-    TokenKind.TOKEN_ERR,
-    
-    TokenKind.TOKEN_LET,
-    TokenKind.TOKEN_IN
-];
-
-
-const _s_core_types = [
-    "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
-    "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "LatLongCoordinate", "Regex", "Nothing"
-];
-
-const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
-
-function _extractDateTimeYear(m: RegExpMatchArray): number | undefined {
-    const year = Number.parseInt(m.groups!.year);
-    return (1900 <= year && year <= 2200) ? year : undefined; 
-}
-
-function _extractDateTimeMonth(m: RegExpMatchArray): number | undefined {
-    const month = Number.parseInt(m.groups!.month);
-    return (0 <= month && month <= 11) ? month : undefined;
-}
-
-function _extractDateTimeDay(m: RegExpMatchArray): number | undefined {
-    const year = Number.parseInt(m.groups!.year);
-    const month = Number.parseInt(m.groups!.month);
-    const day = Number.parseInt(m.groups!.day);
-    
-    if(month !== 1) {
-        const mday = (month === 3 || month === 5 || month === 8 || month === 10) ? 30 : 31;
-        return day <= mday ? day : undefined;
-    }
-    else {
-        const isleapyear = !(year === 1900 || year === 2100 || year === 2200) && (year % 4 === 0);
-        const mday = isleapyear ? 29 : 28;
-        return day <= mday ? day : undefined;
-    }
-}
-
-function _extractDateTimeHour(m: RegExpMatchArray): number | undefined {
-    const hour = Number.parseInt(m.groups!.hour);
-    return (0 <= hour && hour <= 23) ? hour : undefined;
-}
-
-function _extractDateTimeMinute(m: RegExpMatchArray): number | undefined {
-    const minute = Number.parseInt(m.groups!.minute);
-    return (0 <= minute && minute <= 59) ? minute : undefined;
-}
-
-function _extractDateTimeSecond(m: RegExpMatchArray): number | undefined {
-    const second = Number.parseInt(m.groups!.second);
-    return (0 <= second && second <= 60) ? second : undefined;
-}
-
-function _extractDateTimeMillis(m: RegExpMatchArray): number | undefined {
-    const millis = Number.parseInt(m.groups!.millis);
-    return (0 <= millis && millis <= 999) ? millis : undefined;
-}
-
-function _extractDateTimeTZ(m: RegExpMatchArray): string {
-    const tzinfo = m.groups!.timezone;
-    if(tzinfo === "Z") {
-        return "UTC";
-    }
-    else {
-        return tzinfo.slice(1, -1);
-    }
-}
-
-function isValidBSQDate(dstr: string): boolean {
-    if(/0-9/.test(dstr)) {
-        dstr = dstr + "Z";
-    }
-
-    const m = _s_dateTimeNamedExtractRE.exec(dstr);
-    if(m === null) {
-        return false;
-    }
-
-    const year = _extractDateTimeYear(m);
-    const month = _extractDateTimeMonth(m);
-    const day = _extractDateTimeDay(m);
-    const hour = _extractDateTimeHour(m);
-    const minute = _extractDateTimeMinute(m);
-    const second = _extractDateTimeSecond(m);
-    const millis = _extractDateTimeMillis(m);
-
-    return (year !== undefined && month !== undefined && day !== undefined && hour !== undefined && minute !== undefined && second !== undefined && millis !== undefined);
-}
-
-function generateDate(dstr: string): $Runtime.BSQDate | undefined {
-    dstr = dstr + "T00:00:00.000Z";
-    if(!isValidBSQDate(dstr)) {
-        return undefined;
-    }
-
-    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
-    const year = _extractDateTimeYear(m) as number;
-    const month = _extractDateTimeMonth(m) as number;
-    const day = _extractDateTimeDay(m) as number;
-
-    return new $Runtime.BSQDate(year, month, day);
-}
-
-function generateTime(dstr: string): $Runtime.BSQTime | undefined {
-    dstr = "2000-01-01" + "T" + dstr + "Z";
-    if(!isValidBSQDate(dstr)) {
-        return undefined;
-    }
-
-    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
-    const hour = _extractDateTimeHour(m) as number;
-    const minute = _extractDateTimeMinute(m) as number;
-    const second = _extractDateTimeSecond(m) as number;
-    const millis = _extractDateTimeMillis(m) as number;
-
-    return new $Runtime.BSQTime(hour, minute, second, millis);
-}
-
-function generateDateTime(dstr: string): $Runtime.BSQDateTime | undefined {
-    if(!isValidBSQDate(dstr)) {
-        return undefined;
-    }
-
-    const m = _s_dateTimeNamedExtractRE.exec(dstr) as RegExpMatchArray;
-    const year = _extractDateTimeYear(m) as number;
-    const month = _extractDateTimeMonth(m) as number;
-    const day = _extractDateTimeDay(m) as number;
-    const hour = _extractDateTimeHour(m) as number;
-    const minute = _extractDateTimeMinute(m) as number;
-    const second = _extractDateTimeSecond(m) as number;
-    const millis = _extractDateTimeMillis(m) as number;
-    const tz = _extractDateTimeTZ(m) as string;
-
-    return new $Runtime.BSQDateTime(year, month, day, hour, minute, second, millis, tz);
-}
-
-class BSQONParseResultInfo {
-    readonly value: any;
-    readonly vtype: $TypeInfo.BSQType;
-    readonly parsetree: any;
-
-    constructor(val: any, vtype: $TypeInfo.BSQType, parsetree: any) {
-        this.value = val;
-        this.vtype = vtype;
-        this.parsetree = parsetree;
-    }
-
-    static create(val: any, vtype: $TypeInfo.BSQType, parsetree: any, whistory: boolean): BSQONParseResultInfo | any {
-        if(!whistory) {
-            return val;
-        }
-        else {
-            return new BSQONParseResultInfo(val, vtype, parsetree);
-        }
-    }
-
-    static getParseValue(parseinfo: any, whistory: boolean): any {
-        return !whistory ? parseinfo : parseinfo.value;
-    }
-    
-    static getValueType(parseinfo: any, whistory: boolean): $TypeInfo.BSQType {
-        return !whistory ? undefined : parseinfo.vtype;
-    }
-    
-    static getHistory(parseinfo: any, whistory: boolean): any {
-        return !whistory ? undefined : parseinfo.parsetree;
-    }
-}
-
-type BSQONParseResult = BSQONParseResultInfo | any;
-
-class BSQONParser {
-    readonly m_parsemode: $Runtime.NotationMode;
-
-    readonly m_defaultns: string;
-    readonly m_importmap: Map<string, string>;
-    readonly m_assembly: $TypeInfo.AssemblyInfo;
-
-    readonly m_input: string;
-    m_cpos: number;
-    m_lastToken: {kind: string, value: string} | undefined;
-
-    readonly m_stdentityChecks: {etype: $TypeInfo.BSQTypeKey, evalue: object}[];
-    readonly m_typedeclChecks: {ttype: $TypeInfo.BSQTypeKey, tvalue: any}[];
-
-    readonly m_srcbind: [any, $TypeInfo.BSQType, any] | undefined; //a [value, type, ttree] where type is always a concrete type
-    readonly m_refs: Map<string, [any, $TypeInfo.BSQType, any]>; //maps from names to [value, type, ttree] where type is always a concrete type
-
-    constructor(mode: $Runtime.NotationMode, defaultns: string, importmap: Map<string, string>, assembly: $TypeInfo.AssemblyInfo, str: string, srcbind: [any, $TypeInfo.BSQType, any] | undefined) {
-        this.m_parsemode = mode;
-
-        this.m_defaultns = defaultns;
-        this.m_importmap = importmap;
-        this.m_assembly = assembly;
-
-        this.m_input = str;
-        this.m_cpos = 0;
-        this.m_lastToken = undefined;
-
-        this.m_stdentityChecks = [];
-        this.m_typedeclChecks = [];
-
-        this.m_srcbind = srcbind;
-        this.m_refs = new Map<string, [any, $TypeInfo.BSQType, any]>();
-    }
-
-    private lookupMustDefType(tname: $TypeInfo.BSQTypeKey): $TypeInfo.BSQType {
-        const rtype = this.m_assembly.typerefs.get(tname);
-        this.raiseErrorIf(rtype === undefined, `Type ${tname} is not defined in this assembly`);
-
-        return rtype as $TypeInfo.BSQType;
-    }
-
-    private unescapeString(str: string): string {
-        return $Runtime.bsqonUnescapeString(str);
-    }
-
-    private lexWS() {
-        _s_whitespaceRe.lastIndex = this.m_cpos;
-        const m = _s_whitespaceRe.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            return true;
-        }
-    }
-
-    private lexComment() {
-        _s_commentRe.lastIndex = this.m_cpos;
-        const m = _s_commentRe.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            return true;
-        }
-    }
-
-    private lexBytebuff() {
-        _s_bytebuffRe.lastIndex = this.m_cpos;
-        const m = _s_bytebuffRe.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_BYTE_BUFFER, m[0]);
-            return true;
-        }
-    }
-
-    private lexTimeInfo() {
-        _s_fullTimeRE.lastIndex = this.m_cpos;
-        const ftm = _s_fullTimeRE.exec(this.m_input);
-        if(ftm !== null) {
-            this.m_cpos += ftm[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_DATE_TIME, ftm[0]);
-            return true;
-        }
-    
-        _s_fullTimeUTCRE.lastIndex = this.m_cpos;
-        const ftutc = _s_fullTimeUTCRE.exec(this.m_input);
-        if(ftutc !== null) {
-            this.m_cpos += ftutc[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_UTC_DATE_TIME, ftutc[0]);
-            return true;
-        }
-    
-        _s_dateOnlyRE.lastIndex = this.m_cpos;
-        const dm = _s_dateOnlyRE.exec(this.m_input);
-        if(dm !== null) {
-            this.m_cpos += dm[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_DATE, dm[0]);
-            return true;
-        }
-    
-        _s_timeOnlyRE.lastIndex = this.m_cpos;
-        const tm = _s_timeOnlyRE.exec(this.m_input);
-        if(tm !== null) {
-            this.m_cpos += tm[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_TIME, tm[0]);
-            return true;
-        }
-    
-        return false;
-    }
-
-    private lexLogicalTime() {
-        _s_logicalTimeRE.lastIndex = this.m_cpos;
-        const m = _s_logicalTimeRE.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_LOGICAL_TIME, m[0]);
-            return true;
-        }
-    }
-
-    private lexTickTime() {
-        _s_tickTimeRE.lastIndex = this.m_cpos;
-        const m = _s_tickTimeRE.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_TICK_TIME, m[0]);
-            return true;
-        }
-    }
-
-    private lexISOTimestamp() {
-        _s_isostampRE.lastIndex = this.m_cpos;
-        const m = _s_isostampRE.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_ISO_TIMESTAMP, m[0]);
-            return true;
-        }
-    }
-
-    private lexUUID() {
-        _s_uuidRE.lastIndex = this.m_cpos;
-        const m = _s_uuidRE.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_UUID, m[0]);
-            return true;
-        }
-    }
-
-    private lexSHACode() {
-        _s_shahashRE.lastIndex = this.m_cpos;
-        const m = _s_shahashRE.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_SHA_HASH, m[0]);
-            return true;
-        }
-    }
-
-    private lexPath() {
-        _s_pathRe.lastIndex = this.m_cpos;
-        const m = _s_pathRe.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
-        else {
-            this.m_cpos += m[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_PATH_ITEM, m[0]);
-            return true;
-        }
-    }
-
-    private lexNumber() {
-        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            _s_intNumberinoRe.lastIndex = this.m_cpos;
-            const inio = _s_intNumberinoRe.exec(this.m_input);
-            if (inio !== null) {
-                this.m_cpos += inio[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_INT, inio[0]);
-                return true;
-            }
-    
-            _s_floatNumberinoRe.lastIndex = this.m_cpos;
-            const fnio = _s_floatNumberinoRe.exec(this.m_input);
-            if (fnio !== null) {
-                this.m_cpos += fnio[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_FLOAT, fnio[0]);
-                return true;
-            }
-        }
-        else {
-            _s_rationalRe.lastIndex = this.m_cpos;
-            const mr = _s_rationalRe.exec(this.m_input);
-            if (mr !== null) {
-                this.m_cpos += mr[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_RATIONAL, mr[0]);
-                return true;
-            }
-    
-            _s_bignatRe.lastIndex = this.m_cpos;
-            const mbn = _s_bignatRe.exec(this.m_input);
-            if (mbn !== null) {
-                this.m_cpos += mbn[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_BIG_NAT, mbn[0]);
-                return true;
-            }
-    
-            _s_bigintRe.lastIndex = this.m_cpos;
-            const mbi = _s_bigintRe.exec(this.m_input);
-            if (mbi !== null) {
-                this.m_cpos += mbi[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_BIG_INT, mbi[0]);
-                return true;
-            }
-    
-            _s_decimalRe.lastIndex = this.m_cpos;
-            const md = _s_decimalRe.exec(this.m_input);
-            if (md !== null) {
-                this.m_cpos += md[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_DECIMAL, md[0]);
-                return true;
-            }
-    
-            _s_floatRe.lastIndex = this.m_cpos;
-            const mf = _s_floatRe.exec(this.m_input);
-            if (mf !== null) {
-                this.m_cpos += mf[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_FLOAT, mf[0]);
-                return true;
-            }
-    
-            _s_natRe.lastIndex = this.m_cpos;
-            const mn = _s_natRe.exec(this.m_input);
-            if (mn !== null) {
-                this.m_cpos += mn[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_NAT, mn[0]);
-                return true;
-            }
-    
-            _s_intRe.lastIndex = this.m_cpos;
-            const mi = _s_intRe.exec(this.m_input);
-            if (mi !== null) {
-                this.m_cpos += mi[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_INT, mi[0]);
-                return true;
-            }
-        }
-    
-        return false;
-    }
-
-    private lexString() {
-        _s_stringRe.lastIndex = this.m_cpos;
-        const ms = _s_stringRe.exec(this.m_input);
-        if (ms !== null) {
-            this.m_cpos += ms[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_STRING, ms[0]);
-            return true;
-        }
-    
-        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            _s_ascii_stringRe.lastIndex = this.m_cpos;
-            const mas = _s_ascii_stringRe.exec(this.m_input);
-            if (mas !== null) {
-                this.m_cpos += mas[0].length;
-                this.m_lastToken = createToken(TokenKind.TOKEN_ASCII_STRING, mas[0]);
-                return true;
-            }
-        }
-    
-        return false;
-    }
-
-    private lexRegex() {
-        _s_regexRe.lastIndex = this.m_cpos;
-        const ms = _s_regexRe.exec(this.m_input);
-        if (ms !== null) {
-            this.m_cpos += ms[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_REGEX, ms[0]);
-            return true;
-        }
-    
-        return false;
-    }
-
-    private lexSymbol() {
-        _s_symbolRe.lastIndex = this.m_cpos;
-        const ms = _s_symbolRe.exec(this.m_input);
-        if (ms !== null) {
-            const sym = SymbolStrings.find((value) => ms[0].startsWith(value));
-            if (sym !== undefined) {
-                this.m_cpos += sym.length;
-                this.m_lastToken = createToken(sym, sym);
-                return true;
-            }
-        }
-
-        _s_keywordRe.lastIndex = this.m_cpos;
-        const mk = _s_keywordRe.exec(this.m_input);
-        if (mk !== null) {
-            const kw = KWStrings.find((value) => mk[0].startsWith(value));
-            if (kw !== undefined) {
-                this.m_cpos += kw.length;
-                this.m_lastToken = createToken(kw, kw);
-                return true;
-            }
-        }
-    
-        return false;
-    }
-
-    private lexName() {
-        _s_nameSrcRe.lastIndex = this.m_cpos;
-        const msrc = _s_nameSrcRe.exec(this.m_input);
-        if(msrc !== null) {
-            this.m_cpos += msrc[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_SRC, msrc[0]);
-            return true;
-        }
-    
-        _s_nameRefRe.lastIndex = this.m_cpos;
-        const mref = _s_nameRefRe.exec(this.m_input);
-        if(mref !== null) {
-            this.m_cpos += mref[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_REFERENCE, mref[0]);
-            return true;
-        }
-    
-        _s_nameTypeRe.lastIndex = this.m_cpos;
-        const mtype = _s_nameTypeRe.exec(this.m_input);
-        if(mtype !== null) {
-            this.m_cpos += mtype[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_TYPE, mtype[0]);
-            return true;
-        }
-    
-        _s_namePropertyRE.lastIndex = this.m_cpos;
-        const pname = _s_namePropertyRE.exec(this.m_input);
-        if(pname !== null) {
-            this.m_cpos += pname[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_PROPERTY, pname[0]);
-            return true;
-        }
-    
-        return false;
-    }
-
-    private lexAccess() {
-        _s_dotNameAccessRe.lastIndex = this.m_cpos;
-        const dotname = _s_dotNameAccessRe.exec(this.m_input);
-        if(dotname !== null) {
-            this.m_cpos += dotname[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_NAME, dotname[0].slice(1));
-            return true;
-        }
-    
-        _s_dotIdxAccessRe.lastIndex = this.m_cpos;
-        const dotidx = _s_dotIdxAccessRe.exec(this.m_input);
-        if(dotidx !== null) {
-            this.m_cpos += dotidx[0].length;
-            this.m_lastToken = createToken(TokenKind.TOKEN_DOT_IDX, dotidx[0].slice(1));
-            return true;
-        }
-    
-        return false;
-    }
-
-
-    private peekToken(): {kind: string, value: string} | undefined {
-        if (this.m_lastToken !== undefined) {
-            return this.m_lastToken;
-        }
-
-        while (this.lexWS() || this.lexComment()) {
-            ; //eat the token
-        }
-
-        if (this.lexBytebuff() || this.lexTimeInfo() || this.lexLogicalTime() || this.lexTickTime() || this.lexISOTimestamp() ||
-            this.lexUUID() || this.lexSHACode() || this.lexPath() ||
-            this.lexNumber() || this.lexString() || this.lexRegex() ||
-            this.lexSymbol() || this.lexName() || this.lexAccess()) {
-            return this.m_lastToken;
-        }
-        else {
-            return undefined;
-        }
-    }
-
-    private popToken(): {kind: string, value: string} | undefined {
-        const tt = this.peekToken();
+        FollowSet(const FollowSet& other) = default;
+        FollowSet(FollowSet&& other) = default;
         
-        this.m_lastToken = undefined;
-        return tt;
-    }
+        FollowSet& operator=(const FollowSet& other) = default;
+        FollowSet& operator=(FollowSet&& other) = default;
 
-    private popTokenSafe(): {kind: string, value: string} {
-        return this.popToken()!;
-    }
+        bool empty() const
+        {
+            return (this->follows[0] == TokenKind::TOKEN_CLEAR) & (this->follows[1] == TokenKind::TOKEN_CLEAR) & (this->follows[2] == TokenKind::TOKEN_CLEAR) & (this->follows[3] == TokenKind::TOKEN_CLEAR);
+        }
 
-    private testToken(tkind: string): boolean {
-        return this.peekToken() !== undefined && this.peekToken()!.kind === tkind;
-    }
+        bool contains(TokenKind tk) const
+        {
+            return (this->follows[0] == tk) | (this->follows[1] == tk) | (this->follows[2] == tk) | (this->follows[3] == tk); 
+        }
+    };
 
-    private testTokens(...tkinds: string[]): boolean {
-        const opos = this.m_cpos;
-        const olt = this.m_lastToken;
+    //template <typename ValueRepr, typename State>
+    class Parser
+    {
+    private:
+        AssemblyInfo* m_assembly;
+        Lexer m_lex;
 
-        for (let i = 0; i < tkinds.length; ++i) {
-            if (this.testToken(tkinds[i])) {
-                this.popToken();
+        const bool m_parse_bsqon;
+        const bool m_parse_suggest;
+        std::vector<ParseError> m_errors;
+
+        const std::string m_defaultns;
+        std::map<std::string, std::string> m_importmap;
+
+        Parser(AssemblyInfo* assembly, UnicodeString& input, bool parse_bsqon, bool parse_suggest, std::string defaultns, std::map<std::string, std::string> importmap) : m_assembly(assembly), m_lex(input), m_parse_bsqon(parse_bsqon), m_parse_suggest(parse_suggest), m_defaultns(defaultns), m_importmap(importmap) {;}
+        virtual ~Parser() {;}
+
+        using ValueRepr = uint8_t;
+        using State = int64_t;
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        virtual void implParseNone(ValueRepr value, State& ctx) = 0;
+        virtual void implParseNothing(ValueRepr value, State& ctx) = 0;
+        virtual void implParseBool(bool b, ValueRepr value, State& ctx) = 0;
+        virtual void implParseNat(uint64_t n, ValueRepr value, State& ctx) = 0;
+        virtual void implParseInt(int64_t i, ValueRepr value, State& ctx) = 0;
+        virtual void implParseBigNat(std::string n, ValueRepr value, State& ctx) = 0;
+        virtual void implParseBigInt(std::string i, ValueRepr value, State& ctx) = 0;
+        virtual void implParseFloat(std::string f, ValueRepr value, State& ctx) = 0;
+        virtual void implParseDecimal(std::string d, ValueRepr value, State& ctx) = 0;
+        virtual void implParseRational(std::string n, uint64_t d, ValueRepr value, State& ctx) = 0;
+        virtual void implParseString(std::string s, ValueRepr value, State& ctx) = 0;
+        virtual void implParseByteBuffer(std::vector<uint8_t>& data, ValueRepr value, State& ctx) = 0;
+        virtual void implParseDateTime(DateTime t, ValueRepr value, State& ctx) = 0;
+        virtual void implParseUTCDateTime(UTCDateTime t, ValueRepr value, State& ctx) = 0;
+        virtual void implParsePlainDate(PlainDate t, ValueRepr value, State& ctx) = 0;
+        virtual void implParsePlainTime(PlainTime t, ValueRepr value, State& ctx) = 0;
+        virtual void implParseTickTime(uint64_t t, ValueRepr value, State& ctx) = 0;
+        virtual void implParseLogicalTime(uint64_t j, ValueRepr value, State& ctx) = 0;
+        virtual void implParseISOTimeStamp(ISOTimeStamp t, ValueRepr value, State& ctx) = 0;
+        virtual void implParseUUID4(std::vector<uint8_t> v, ValueRepr value, State& ctx) = 0;
+        virtual void implParseUUID7(std::vector<uint8_t> v, ValueRepr value, State& ctx) = 0;
+        virtual void implParseSHAContentHash(std::vector<uint8_t> v, ValueRepr value, State& ctx) = 0;
+        virtual void implParseLatLongCoordinate(float latitude, float longitude, ValueRepr value, State& ctx) = 0;
+
+        virtual void implParseEnumImpl(const Type* itype, uint64_t n, ValueRepr value, State& ctx) = 0;
+
+        virtual void implPrepareParseTuple(const Type* itype, State& ctx) = 0;
+        virtual ValueRepr implGetValueForTupleIndex(const Type* itype, ValueRepr value, size_t i, State& ctx) = 0;
+        virtual void implCompleteParseTuple(const Type* itype, ValueRepr value, State& ctx) = 0;
+
+        virtual void implPrepareParseRecord(const Type* itype, State& ctx) = 0;
+        virtual ValueRepr implGetValueForRecordProperty(const Type* itype, ValueRepr value, std::string pname, State& ctx) = 0;
+        virtual void implCompleteParseRecord(const Type* itype, ValueRepr value, State& ctx) = 0;
+
+        virtual void implPrepareParseContainer(const Type* itype, ValueRepr value, size_t count, State& ctx) = 0;
+        virtual ValueRepr implGetValueForContainerElementParse_T(const Type* itype, ValueRepr value, size_t i, State& ctx) = 0;
+        virtual std::pair<ValueRepr, ValueRepr> implGetValueForContainerElementParse_KV(const Type* itype, ValueRepr value, size_t i, State& ctx) = 0;
+        virtual void implCompleteParseContainer(const Type* itype, ValueRepr value, State& ctx) = 0;
+
+        virtual void implPrepareParseEntity(const Type* itype, State& ctx) = 0;
+        virtual ValueRepr implGetValueForEntityField(const Type* itype, ValueRepr value, std::pair<std::string, std::string> fnamefkey, State& ctx) = 0;
+        virtual void implCompleteParseEntity(const Type* itype, ValueRepr value, State& ctx) = 0;
+
+        virtual ValueRepr implParseUnionChoice(const Type* itype, ValueRepr value, size_t pick, const IType* picktype, State& ctx) = 0;
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        void recoverErrorInsertExpected(UnicodeString expected, const LexerToken& found);
+        void Parser::recoverErrorSynchronizeToken(UnicodeString expected, const LexerToken& found, FollowSet syncTokens, TokenKind openParen, TokenKind closeParen);
+
+        Type* resolveTypeFromNameList(UnicodeString basenominal, std::vector<Type*> terms)
+        {
+            std::string asciibasename = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(basenominal);
+            std::string baseprefix = asciibasename.substr(0, asciibasename.find("::"));
+
+            std::string scopedname;
+            if (this->m_assembly->namespaces.at("Core")->hasTypenameDecl(basenominal)) {
+                scopedname = asciibasename;
+            }
+            else if (this->m_importmap.find(baseprefix) != this->m_importmap.end()) {
+                scopedname = this->m_importmap.at(baseprefix) + asciibasename.substr(baseprefix.size());
             }
             else {
-                this.m_cpos = opos;
-                this.m_lastToken = olt;
-
-                return false;
-            }
-        }
-
-        this.m_cpos = opos;
-        this.m_lastToken = olt;
-        return true;
-    }
-
-    private testTokenWValue(tk: {kind: TokenKind, value: string}): boolean {
-        return this.peekToken() !== undefined && this.peekToken()!.kind === tk.kind && this.peekToken()!.value === tk.value;
-    }
-
-    private testTokensWValue(...tks: {kind: TokenKind, value: string}[]): boolean {
-        const opos = this.m_cpos;
-        const olt = this.m_lastToken;
-
-        for (let i = 0; i < tks.length; ++i) {
-            if (!this.testTokenWValue(tks[i])) {
-                this.m_cpos = opos;
-                this.m_lastToken = olt;
-
-                return false;
-            }
-        }
-
-        this.m_cpos = opos;
-        this.m_lastToken = olt;
-        return true;
-    }
-
-    private raiseError(msg: string) {
-        const mm = this.m_input.slice(0, this.m_cpos).match(/[\n]/g);
-        throw new BSQONParseError(msg, (mm?.length ?? 0) + 1);
-    }
-
-    private raiseErrorIf(cond: boolean, msg: string) {
-        if (cond) {
-            this.raiseError(msg);
-        }
-    }
-
-    private expectToken(tkind: string) {
-        this.raiseErrorIf(!this.testToken(tkind), `Expected token ${tkind} but got ${this.peekToken()?.value ?? "[Unknown]"}`);
-    }
-
-    private expectTokenAndPop(tkind: string): {kind: string, value: string} {
-        this.expectToken(tkind);
-        return this.popToken() as {kind: string, value: string};
-    }
-
-    private testAndPop_TypedeclUnder(): boolean {
-        if(this.m_cpos < this.m_input.length && this.m_input[this.m_cpos] !== "_", "Expected token _") {
-            return false;
-        }
-        else {
-            this.raiseErrorIf(this.m_cpos >= this.m_input.length || this.m_input[this.m_cpos] !== "_", "Expected token _");
-            this.m_cpos += 1;
-            this.m_lastToken = undefined;
-
-            return true;
-        }
-    }
-
-    private resolveTypeFromNameList(tt: string[], terms: $TypeInfo.BSQType[]): $TypeInfo.BSQType  {
-        let scopedname = "[uninit]";
-
-        if (this.m_assembly.namespaces.get("Core")!.typenames.includes(tt.join("::"))) {
-            scopedname = tt.join("::");
-        }
-        else if (this.m_importmap.has(tt[0])) {
-            scopedname = `${this.m_importmap.get(tt[0])}::${tt.slice(1).join("::")}`;
-        }
-        else {
-            if (this.m_assembly.namespaces.has(tt[0])) {
-                scopedname = tt.join("::");
-            }
-            else {
-                scopedname = `${this.m_defaultns}::${tt.join("::")}`;
-            }
-        }
-
-        if (terms.length !== 0) {
-            scopedname = scopedname + `<${terms.map((t) => t.tkey).join(", ")}>`;
-        }
-
-        if (!this.m_assembly.aliasmap.has(scopedname)) {
-            return this.m_assembly.typerefs.get(scopedname) as $TypeInfo.BSQType;
-        }
-        else {
-            return this.m_assembly.aliasmap.get(scopedname) as $TypeInfo.BSQType;
-        }
-    }
-
-    private processCoreType(tname: string): $TypeInfo.BSQType {
-        const ttk = this.popToken()!.value;
-        this.raiseErrorIf(!_s_core_types.includes(ttk), `Invalid core type ${ttk}`);
-
-        return this.resolveTypeFromNameList([tname], []);
-    }
-
-    private parseTemplateTerm(): $TypeInfo.BSQType | undefined {
-        if(!this.testToken(TokenKind.TOKEN_LANGLE)) {
-            return undefined;
-        }
-
-        this.expectTokenAndPop(TokenKind.TOKEN_LANGLE);
-        const ttype = this.parseType();
-        this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
-
-        return ttype;
-    }
-
-    private parseTemplateTermPair(): [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined {
-        if(!this.testToken(TokenKind.TOKEN_LANGLE)) {
-            return undefined;
-        }
-
-        this.expectTokenAndPop(TokenKind.TOKEN_LANGLE);
-        const ttype1 = this.parseType();
-        this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-        const ttype2 = this.parseType();
-        this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
-
-        return [ttype1, ttype2];
-    }
-
-    private parseStringOfType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "StringOf", `Not a StringOf type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorREType), `Type StringOf requires a validator type argument`);
-
-        return this.lookupMustDefType(`StringOf<${(oftype as $TypeInfo.ValidatorREType).tkey}>`);
-    }
-
-    private parseASCIIStringOfType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "ASCIIStringOf", `Not a ASCIIStringOf type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorREType), `Type ASCIIStringOf requires a validator type argument`);
-
-        return this.lookupMustDefType(`ASCIIStringOf<${(oftype as $TypeInfo.ValidatorREType).tkey}>`);
-    }
-
-    private parseSomethingType(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Something", `Not a Something type`);
-
-        return this.parseSomethingTypeComplete(opt);
-    }
-
-    private parseSomethingTypeComplete(opt: $TypeInfo.SomethingType | $TypeInfo.OptionType | undefined): $TypeInfo.BSQType {
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`Something<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Something requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Something<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
-
-    private parseOptionType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Option", `Not a Option type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined, `Type Option requires a type argument`);
-
-        return this.lookupMustDefType(`Option<${(oftype as $TypeInfo.BSQType).tkey}>`);
-    }
-
-    private parsePathType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Path", `Not a Path type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type Path requires a validator type argument`);
-
-        return this.lookupMustDefType(`Path<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
-
-    private parsePathFragmentType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "PathFragement", `Not a PathFragment type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type PathFragement requires a validator type argument`);
-
-        return this.lookupMustDefType(`PathFragment<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
-
-    private parsePathGlobType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "PathGlob", `Not a PathGlob type`);
-
-        const oftype = this.parseTemplateTerm();
-        this.raiseErrorIf(oftype === undefined || !(oftype instanceof $TypeInfo.ValidatorPthType), `Type PathGlob requires a validator type argument`);
-
-        return this.lookupMustDefType(`PathGlob<${(oftype as $TypeInfo.ValidatorPthType).tkey}>`);
-    }
-
-    private parseListType(opt: $TypeInfo.ListType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "List", `Not a List type`);
-
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`List<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type List requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`List<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
-
-    private parseStackType(opt: $TypeInfo.StackType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Stack", `Not a Stack type`);
-
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`Stack<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Stack requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Stack<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
-
-    private parseQueueType(opt: $TypeInfo.QueueType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Queue", `Not a Queue type`);
-
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`Queue<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Queue requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Queue<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
-
-    private parseSetType(opt: $TypeInfo.SetType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Set", `Not a Set type`);
-
-        const oftype = this.parseTemplateTerm();
-        if(oftype !== undefined) {
-            const t = this.lookupMustDefType(`Set<${oftype.tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Set requires one type argument *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Set<${opt!.oftype}>`);
-
-            return t;
-        }
-    }
-
-    private parseMapEntryType(): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "MapEntry", `Not a MapEntry type`);
-
-        const kvtype = this.parseTemplateTermPair();
-        this.raiseErrorIf(kvtype === undefined, `Type MapEntry requires two type arguments`);
-
-        return this.lookupMustDefType(`MapEntry<${kvtype![0].tkey}, ${kvtype![1].tkey}>`);
-    }
-
-    private parseMapType(opt: $TypeInfo.MapType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Map", `Not a Map type`);
-
-        const kvtype = this.parseTemplateTermPair();
-        if(kvtype !== undefined) {
-            const t = this.lookupMustDefType(`Map<${kvtype[0].tkey}, ${kvtype[1].tkey}>`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Map requires two type arguments *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Map<${opt!.ktype}, ${opt!.vtype}>`);
-
-            return t;
-        }
-    }
-
-    private parseOkType(opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Result", `Not a Result::Ok type`);
-
-        const tts = this.parseTemplateTermPair();
-        const okn = this.popToken()!.value;
-        this.raiseErrorIf(okn !== "Ok", `Not a Result::Ok type`);
-
-        return this.parseOkTypeComplete(tts, opt);
-    }
-
-    private parseOkTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.OkType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
-       if(tts !== undefined) {
-            const t = this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>::Ok`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Result::Ok requires two type arguments *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Result<${opt!.ttype}, ${opt!.etype}>::Ok`);
-
-            return t;
-        }
-    }
-
-    private parseErrType(opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
-        const llt = this.popToken()!.value;
-        this.raiseErrorIf(llt !== "Result", `Not a Result::Err type`);
-
-        const tts = this.parseTemplateTermPair();
-        const okn = this.popToken()!.value;
-        this.raiseErrorIf(okn !== "Err", `Not a Result::Err type`);
-
-        return this.parseErrTypeComplete(tts, opt);
-    }
-
-    private parseErrTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType] | undefined, opt: $TypeInfo.ErrorType | $TypeInfo.ResultType | undefined): $TypeInfo.BSQType {
-        if(tts !== undefined) {
-            const t = this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>::Err`);
-            this.raiseErrorIf(opt !== undefined && !this.m_assembly.checkConcreteSubtype(t, opt), `Type ${t.tkey} is not a subtype of expected type`);
-
-            return t;
-        }
-        else {
-            this.raiseErrorIf(opt === undefined, `Type Result::Err requires two type arguments *OR* can be used in a inferable context`);
-            const t = this.lookupMustDefType(`Result<${opt!.ttype}, ${opt!.etype}>::Err`);
-
-            return t;
-        }
-    }
-
-    private parseResultTypeComplete(tts: [$TypeInfo.BSQType, $TypeInfo.BSQType]): $TypeInfo.BSQType {
-        return this.lookupMustDefType(`Result<${tts[0].tkey}, ${tts[1].tkey}>`);
-    }
-
-    private isNominalTypePrefix(): boolean {
-        const ntok = this.peekToken();
-        return ntok !== undefined && ntok.kind === TokenKind.TOKEN_TYPE;
-    }
-
-    private parseNominalType(): $TypeInfo.BSQType {
-        const ntok = this.peekToken();
-        this.raiseErrorIf(ntok === undefined || ntok.kind !== TokenKind.TOKEN_TYPE, `Expected nominal type name but found ${ntok?.value ?? "EOF"}`);
-
-        const tname = ntok!.value;
-        if (_s_core_types.includes(tname)) {
-            return this.processCoreType(tname);
-        }
-        else if (tname === "StringOf") {
-            return this.parseStringOfType();
-        }
-        else if (tname === "ASCIIStringOf") {
-            return this.parseASCIIStringOfType();
-        }
-        else if (tname === "Something") {
-            return this.parseSomethingType(undefined);
-        }
-        else if (tname === "Option") {
-            return this.parseOptionType();
-        }
-        else if (tname === "Path") {
-            return this.parsePathType();
-        }
-        else if (tname === "PathFragment") {
-            return this.parsePathFragmentType();
-        }
-        else if (tname === "PathGlob") {
-            return this.parsePathGlobType();
-        }
-        else if (tname === "List") {
-            return this.parseListType(undefined);
-        }
-        else if (tname === "Stack") {
-            return this.parseStackType(undefined);
-        }
-        else if (tname === "Queue") {
-            return this.parseQueueType(undefined);
-        }
-        else if (tname === "Set") {
-            return this.parseSetType(undefined);
-        }
-        else if (tname === "MapEntry") {
-            return this.parseMapEntryType();
-        }
-        else if (tname === "Set") {
-            return this.parseMapType(undefined);
-        }
-        else if (tname === "Result") {
-            this.popToken();
-            const tts = this.parseTemplateTermPair();
-
-            if (!this.testToken(TokenKind.TOKEN_COLON_COLON)) {
-                this.raiseErrorIf(tts === undefined, `Type Result requires two type arguments`);
-                return this.parseResultTypeComplete(tts!);
-            }
-            else {
-                this.expectTokenAndPop(TokenKind.TOKEN_COLON_COLON);
-                const tname = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
-                this.raiseErrorIf(tname !== "Ok" && tname !== "Err", `Unknown type (expected Ok or Err)`);
-
-                if(tname === "Ok") {
-                    return this.parseOkTypeComplete(tts, undefined);
+                if (this->m_assembly->namespaces.find(baseprefix) != this->m_assembly->namespaces.end()) {
+                    scopedname = asciibasename;
                 }
                 else {
-                    return this.parseErrTypeComplete(tts, undefined);
+                    scopedname = this->m_defaultns + "::" + asciibasename;
+                }
+            }
+
+            if (!terms.empty()) {
+                scopedname = scopedname + "<" + std::accumulate(terms.begin(), terms.end(), std::string(), [](std::string& a, Type* b) { return a + ", " + b->tkey; }) + ">";
+            }
+
+            auto titer = this->m_assembly->typerefs.find(scopedname);
+            if (titer != this->m_assembly->typerefs.end()) {
+                return titer->second;
+            }
+            else {
+                auto aiter = this->m_assembly->aliasmap.find(scopedname);
+                if(aiter != this->m_assembly->aliasmap.end()) {
+                    return aiter->second;
+                }
+                else {
+                    return UnresolvedType::singleton;
                 }
             }
         }
-        else {
-            this.popToken();
-            let tnames = [tname];
-            while (this.testTokens(TokenKind.TOKEN_COLON_COLON, TokenKind.TOKEN_TYPE)) {
-                this.popToken();
-                tnames.push(this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value);
+
+        Type* resolveAndCheckType(TypeKey tkey, TextPosition spos, TextPosition epos)
+        {
+            auto tt = this->m_assembly->resolveType(tkey);
+            if(tt->isUnresolved()) {
+                this->m_errors.push_back(ParseError::createUnresolvedType(tkey, spos, epos));
+            }
+            
+            return tt;
+        }
+
+        Type* processCoreType(UnicodeString tname) 
+        {
+            return this->resolveTypeFromNameList(tname, {});
+        }
+
+        bool parseTemplateTermList(std::vector<Type*>& terms) 
+        {
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                return true;
             }
 
-            let terms: $TypeInfo.BSQType[] = [];
-            if (this.testToken(TokenKind.TOKEN_LANGLE)) {
-                this.popToken();
+            this->m_lex.popToken();
+            auto ttype = this->parseType({TokenKind::TOKEN_COMMA, TokenKind::TOKEN_RANGLE}, TokenKind::TOKEN_LANGLE, TokenKind::TOKEN_RANGLE);
+            while(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RANGLE)) {
+                if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_COMMA)) {
+                    //probably just missing a "," so report and error and continue as if it was there
+                    this->recoverErrorInsertExpected(U">", this->m_lex.peekToken());
+                }
 
-                while (terms.length === 0 || this.testToken(TokenKind.TOKEN_COMMA)) {
-                    if (this.testToken(TokenKind.TOKEN_COMMA)) {
-                        this.popToken();
+                ttype = this->parseType({TokenKind::TOKEN_COMMA, TokenKind::TOKEN_RANGLE}, TokenKind::TOKEN_LANGLE, TokenKind::TOKEN_RANGLE);
+                terms.push_back(ttype);
+            }
+
+            return std::find_if(terms.begin(), terms.end(), [](Type* tt) { return tt->isUnresolved(); }) == terms.end();
+        }
+
+        Type* parseTemplateTermList_One(TextPosition spos, TextPosition epos) 
+        {
+            std::vector<Type*> terms;
+            bool ok = this->parseTemplateTermList(terms);
+
+            if(ok && terms.size() == 1) {
+                terms[0];
+            }
+            else {
+                if(terms.size() != 1) {
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(1, terms.size(), spos, ok ? epos : this->m_lex.toTextPosCurrent()));
+                }
+                return UnresolvedType::singleton;
+            }
+        }
+
+        std::pair<Type*, Type*> parseTemplateTermList_Two(TextPosition spos, TextPosition epos) 
+        {
+            std::vector<Type*> terms;
+            bool ok = this->parseTemplateTermList(terms);
+
+            if(ok && terms.size() == 2) {
+                std::make_pair(terms[0], terms[1]);
+            }
+            else {
+                if(terms.size() != 2) {
+                    this->m_errors.push_back(ParseError::createIncorrectNumberOfArgs(2, terms.size(), spos, ok ? epos : this->m_lex.toTextPosCurrent()));
+                }
+                return std::make_pair(UnresolvedType::singleton, UnresolvedType::singleton);
+            }
+        }
+
+        Type* parseTemplateTypeHelper_One(UnicodeString uname, std::string sname)
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testTokenValue(uname);
+        
+            if(!okbasetype || !this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(uname + U"<T>", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
+
+            Type* oftype = UnresolvedType::singleton;
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                oftype = this->parseTemplateTermList_One(this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt));
+            }
+            
+            if(!okbasetype || oftype->isUnresolved()) {
+                return UnresolvedType::singleton;
+            } 
+            else {
+                return this->resolveAndCheckType(sname + "<" + oftype->tkey + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+            }
+        }
+
+        Type* parseTemplateTypeHelper_Two(UnicodeString uname, std::string sname, UnicodeString t1, UnicodeString t2)
+        {
+            auto llt = this->m_lex.popToken();
+            bool okbasetype = llt.testTokenValue(uname);
+        
+            if(!okbasetype || !this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(uname + U"<" + t1 + U", " + t2 + U">", llt, this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt)));
+            }
+
+            std::pair<Type*, Type*> oftype = std::make_pair(UnresolvedType::singleton, UnresolvedType::singleton);
+            if(!this->m_lex.testToken(TokenKind::TOKEN_LANGLE)) {
+                oftype = this->parseTemplateTermList_Two(this->m_lex.tokenStartToTextPos(llt), this->m_lex.tokenEndToTextPos(llt));
+            }
+            
+            if(!okbasetype || oftype.first->isUnresolved() || oftype.second->isUnresolved()) {
+                return UnresolvedType::singleton;
+            } 
+            else {
+                return this->resolveAndCheckType(sname + "<" + oftype.first->tkey + ", " + oftype.second->tkey + ">", this->m_lex.tokenStartToTextPos(llt), this->m_lex.toTextPosCurrent());
+            }
+        }
+
+        Type* parseTemplateTypeHelper_OkErr(Type* tresult, TextPosition spos, UnicodeString uname, std::string sname)
+        {
+            auto llr = this->m_lex.popToken();
+            bool okresttype = llr.testTokenValue(uname);
+
+            if(!okresttype) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"Result<T, E>::" + uname, llr, spos, this->m_lex.tokenEndToTextPos(llr)));
+            }
+
+            if(tresult->isUnresolved() || !okresttype) {
+                return UnresolvedType::singleton;
+            } 
+            else {
+                return this->resolveAndCheckType(tresult->tkey + "::" + sname , spos, this->m_lex.toTextPosCurrent());
+            }
+        }
+
+        Type* parseStringOfType()
+        {
+            return this->parseTemplateTypeHelper_One(U"StringOf", "StringOf");
+        }
+
+        Type* parseASCIIStringOfType()
+        {
+            return this->parseTemplateTypeHelper_One(U"ASCIIStringOf", "ASCIIStringOf");
+        }
+
+        Type* parseSomethingType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Something", "Something");
+        }
+
+        Type* parseOptionType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Option", "Option");
+        }
+
+        Type* parsePathType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Path", "Path");
+        }
+
+        Type* parsePathFragmentType()
+        {
+            return this->parseTemplateTypeHelper_One(U"PathFragment", "PathFragment");
+        }
+
+        Type* parsePathGlobType()
+        {
+            return this->parseTemplateTypeHelper_One(U"PathGlob", "PathGlob");
+        }
+
+        Type* parseListType()
+        {
+            return this->parseTemplateTypeHelper_One(U"List", "List");
+        }
+
+        Type* parseStackType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Stack", "Stack");
+        }
+
+        Type* parseQueueType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Queue", "Queue");
+        }
+
+        Type* parseSetType()
+        {
+            return this->parseTemplateTypeHelper_One(U"Set", "Set");
+        }
+
+        Type* parseMapEntryType()
+        {
+            return this->parseTemplateTypeHelper_Two(U"MapEntry", "MapEntry", U"K", U"V");
+        }
+
+        Type* parseMapType()
+        {
+            return this->parseTemplateTypeHelper_Two(U"Map", "Map", U"K", U"V");
+        }
+
+        Type* parseNominalType()
+        {
+            auto ntok = this->m_lex.popToken();
+            auto tname = ntok.getTokenValue();
+
+            bool iscore = std::find(Lexer::s_coreTypes.begin(), Lexer::s_coreTypes.end(), tname) != Lexer::s_coreTypes.end();
+            if (iscore) {
+                return this->processCoreType(tname);
+            }
+            else if (tname == U"StringOf") {
+                return this->parseStringOfType();
+            }
+            else if (tname == U"ASCIIStringOf") {
+                return this->parseASCIIStringOfType();
+            }
+            else if (tname == U"Something") {
+                return this->parseSomethingType();
+            }
+            else if (tname == U"Option") {
+                return this->parseOptionType();
+            }
+            else if (tname == U"Path") {
+                return this->parsePathType();
+            }
+            else if (tname == U"PathFragment") {
+                return this->parsePathFragmentType();
+            }
+            else if (tname == U"PathGlob") {
+                return this->parsePathGlobType();
+            }
+            else if (tname == U"List") {
+                return this->parseListType();
+            }
+            else if (tname == U"Stack") {
+                return this->parseStackType();
+            }
+            else if (tname == U"Queue") {
+                return this->parseQueueType();
+            }
+            else if (tname == U"Set") {
+                return this->parseSetType();
+            }
+            else if (tname == U"MapEntry") {
+                return this->parseMapEntryType();
+            }
+            else if (tname == U"Set") {
+                return this->parseMapType();
+            }
+            else if (tname == U"Result") {
+                TextPosition rspos = this->m_lex.toTextPosCurrent();
+                Type* tresult = this->parseTemplateTypeHelper_Two(U"Result", "Result", U"T", U"E");
+
+                if(!this->m_lex.testToken(TokenKind::TOKEN_COLON_COLON)) {
+                    return tresult;
+                }
+                else {
+                    this->m_lex.popToken();
+                    auto tk = this->m_lex.peekToken();
+
+                    if(tk.kind == TokenKind::TOKEN_TYPE && tk.testTokenValue(U"Ok")) {
+                        return this->parseTemplateTypeHelper_OkErr(tresult, rspos, U"Ok", "Ok");
                     }
-
-                    terms.push(this.parseType());
+                    else if(tk.kind == TokenKind::TOKEN_TYPE && tk.testTokenValue(U"Ok")) {
+                        return this->parseTemplateTypeHelper_OkErr(tresult, rspos, U"Err", "Err");
+                    }
+                    else {
+                        this->m_errors.push_back(ParseError::createExpectedButGot(U"Ok or Err", tk, this->m_lex.tokenStartToTextPos(tk), this->m_lex.tokenEndToTextPos(tk)));
+                        return UnresolvedType::singleton;
+                    }
                 }
-                this.expectTokenAndPop(TokenKind.TOKEN_RANGLE);
             }
-
-            const lltype = this.resolveTypeFromNameList(tnames, terms);
-            this.raiseErrorIf(lltype === undefined, `Could not resolve nominal type ${tnames.join("::")}`);
-
-            return lltype;
+            else {
+                std::vector<Type*> terms;
+                this->parseTemplateTermList(terms);
+                
+                if(std::any_of(terms.begin(), terms.end(), [](Type* tt) { return tt->isUnresolved(); })) {
+                    return UnresolvedType::singleton;
+                }
+                else {
+                    return this->resolveTypeFromNameList(tname, terms);
+                }
+            }
         }
-    }
 
-    private parseTupleType(): $TypeInfo.BSQType {
+        Type* parseTupleType()
+        {
+            /*
         let entries: $TypeInfo.BSQType[] = [];
         this.popToken();
         if(this.testToken(TokenKind.TOKEN_RBRACKET)) {
@@ -1299,9 +449,12 @@ class BSQONParser {
 
             return this.lookupMustDefType(`[${entries.map((ee) => ee.tkey).join(", ")}]`);
         }
-    }
+        */
+        }
 
-    private parseRecordType(): $TypeInfo.BSQType {
+        Type* parseRecordType() 
+        {
+            /*
         let entries: {pname: string, rtype: $TypeInfo.BSQType}[] = [];
         this.popToken();
         if(this.testToken(TokenKind.TOKEN_RBRACE)) {
@@ -1326,71 +479,88 @@ class BSQONParser {
             const ees = entries.sort((a, b) => ((a.pname !== b.pname) ? (a.pname < b.pname ? -1 : 1) : 0)).map((ee) => `${ee.pname}: ${ee.rtype.tkey}`);
             return this.lookupMustDefType(`{${ees.join(", ")}}`);
         }
-    }
+        */
+        }
 
-    private parseBaseType(): $TypeInfo.BSQType {
-        if (this.testToken(TokenKind.TOKEN_TYPE)) {
-            return this.parseNominalType();
-        }
-        else if (this.testToken(TokenKind.TOKEN_LBRACKET)) {
-            return this.parseTupleType();
-        }
-        else if (this.testToken(TokenKind.TOKEN_LBRACE)) {
-            return this.parseRecordType();
-        }
-        else {
-            this.raiseError(`Unexpected token when parsing type: ${this.peekToken()?.value ?? "EOF"}`);
-            return $TypeInfo.UnresolvedType.singleton;
-        }
-    }
-
-    private parseConceptSetType(): $TypeInfo.BSQType {
-        const lt = this.parseBaseType();
-        if (!this.testToken(TokenKind.TOKEN_AMP)) {
-            return lt;
-        }
-        else {
-            let opts = [lt];
-            while (this.testToken(TokenKind.TOKEN_AMP)) {
-                this.popToken();
-                opts.push(this.parseConceptSetType());
+        Type* parseConceptSetType(Type* rtype, FollowSet syncTokens) 
+        {
+            std::vector<Type*> opts = {rtype};
+            while (this->m_lex.testAndConsumeToken(TokenKind::TOKEN_AMP)) {
+                opts.push_back(this->parseBaseType(syncTokens));
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("&"));
+            xxxx;
+                return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("&"));
         }
-    }
 
-    private parseUnionType(): $TypeInfo.BSQType {
-        const lt = this.parseConceptSetType();
-        if (!this.testToken(TokenKind.TOKEN_BAR)) {
-            return lt;
-        }
-        else {
-            let opts = [lt];
-            while (this.testToken(TokenKind.TOKEN_BAR)) {
-                this.popToken();
-                opts.push(this.parseUnionType());
+        Type* parseBaseType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
+        {
+            Type* rtype = UnresolvedType::singleton;
+            if (this->m_lex.testToken(TokenKind::TOKEN_TYPE)) {
+                rtype = this->parseNominalType();
+            }
+            else if (this->m_lex.testToken(TokenKind::TOKEN_LBRACKET)) {
+                rtype = this->parseTupleType();
+            }
+            else if (this->m_lex.testToken(TokenKind::TOKEN_LBRACE)) {
+                rtype = this->parseRecordType();
+            }
+            else if(this->m_lex.testAndConsumeToken(TokenKind::TOKEN_LPAREN)) {
+                rtype = this->parseType({TokenKind::TOKEN_RPAREN});
+
+                if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RPAREN)) {
+                    this->recoverErrorInsertExpected(U")", this->m_lex.peekToken());
+                }
+            }
+            else {
+                this->recoverErrorSynchronizeToken(U"Type", this->m_lex.peekToken(), syncTokens);
             }
 
-            return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
+            if(this->m_lex.testAndConsumeToken(TokenKind::TOKEN_AMP)) {
+                return this->parseConceptSetType(rtype, syncTokens);
+            }
+            else {
+                return rtype;
+            }
         }
-    }
 
-    private parseType(): $TypeInfo.BSQType {
-        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return this.parseUnionType();
+        Type* parseUnionType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
+        {
+            Type* lt = this->parseBaseType(syncTokens, openParen, closeParen);
+            if (!this->m_lex.testToken(TokenKind::TOKEN_BAR)) {
+                return lt;
+            }
+            else {
+                std::vector<Type*> opts = {lt};
+                while (this->m_lex.testAndConsumeToken(TokenKind::TOKEN_BAR)) {
+                    opts.push_back(this->parseBaseType(syncTokens));
+                }
+
+                return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
+            }
         }
-        else {
-            this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value ?? "EOF"}`);
-            this.m_cpos++; //eat the "
-            const tt = this.parseUnionType();
-            this.m_cpos++; //eat the "
 
-            return tt;
+        Type* parseType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
+        {
+            return this->parseUnionType(syncTokens, openParen, closeParen);
         }
-    }
 
-    private peekType(): $TypeInfo.BSQType {
+        Type* ParseRootType()
+        {
+            if (this->m_parse_bsqon) {
+                return this->parseType({}, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR);
+            }
+            else {
+                this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value ?? "EOF"}`);
+                this->m_lex.m_cpos++; //eat the "
+                Type* tt = parseType({}, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR);
+                this->m_lex.m_cpos++; //eat the "
+
+                return tt;
+            }
+        }
+/*
+        Type* peekType(): $TypeInfo.BSQType {
         const opos = this.m_cpos;
         const olt = this.m_lastToken;
 
@@ -1538,40 +708,57 @@ class BSQONParser {
     private parseExpression(oftype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
         return this.parsePostfixOp(oftype, whistory);
     }
+*/
 
-    private parseNone(whistory: boolean): BSQONParseResult {
-        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            this.expectTokenAndPop(TokenKind.TOKEN_NONE);
+    void parseNone(ValueRepr value, State& ctx) 
+    {
+        if(this->m_parse_bsqon) {
+            if(!this->m_lex.testToken(TokenKind::TOKEN_NONE)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"none", this->m_lex.peekToken(), this->m_lex.tokenStartToTextPos(this->m_lex.peekToken()), this->m_lex.tokenEndToTextPos(this->m_lex.peekToken())));
+            }
         }
         else {
-            this.expectTokenAndPop(TokenKind.TOKEN_NULL);
+            if(!this->m_lex.testToken(TokenKind::TOKEN_NULL)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"null", this->m_lex.peekToken(), this->m_lex.tokenStartToTextPos(this->m_lex.peekToken()), this->m_lex.tokenEndToTextPos(this->m_lex.peekToken())));
+            }
         }
-        return BSQONParseResultInfo.create(null, this.lookupMustDefType("None"), undefined, whistory);
+
+        this->m_lex.popToken();
+        this->implParseNone(value, ctx);
     }
 
-    private parseNothing(whistory: boolean): BSQONParseResult {
-        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            this.expectTokenAndPop(TokenKind.TOKEN_NOTHING);
+    void parseNothing(ValueRepr value, State& ctx) 
+    {
+        if(this->m_parse_bsqon) {
+            if(!this->m_lex.testToken(TokenKind::TOKEN_NOTHING)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"none", this->m_lex.peekToken(), this->m_lex.tokenStartToTextPos(this->m_lex.peekToken()), this->m_lex.tokenEndToTextPos(this->m_lex.peekToken())));
+            }
         }
         else {
-            this.expectTokenAndPop(TokenKind.TOKEN_NULL);
+            if(!this->m_lex.testToken(TokenKind::TOKEN_NULL)) {
+                this->m_errors.push_back(ParseError::createExpectedButGot(U"null", this->m_lex.peekToken(), this->m_lex.tokenStartToTextPos(this->m_lex.peekToken()), this->m_lex.tokenEndToTextPos(this->m_lex.peekToken())));
+            }
         }
-        return BSQONParseResultInfo.create(undefined, this.lookupMustDefType("Nothing"), undefined, whistory);
+
+        this->m_lex.popToken();
+        this->implParseNothing(value, ctx);
     }
 
-    private parseBool(whistory: boolean): BSQONParseResult {
-        const tk = this.popToken();
-        this.raiseErrorIf(tk === undefined || (tk.kind !== TokenKind.TOKEN_TRUE && tk.kind !== TokenKind.TOKEN_FALSE), `Expected boolean value but got -- ${tk?.value ?? "EOF"}`);
-
-        return BSQONParseResultInfo.create(tk!.kind === TokenKind.TOKEN_TRUE, this.lookupMustDefType("Bool"), undefined, whistory);
+    void parseBool(ValueRepr value, State& ctx) 
+    {
+        LexerToken tk = this->m_lex.popToken();
+        this->implParseBool(tk.kind == TokenKind::TOKEN_TRUE, value, ctx);
     }
     
-    private parseNat(whistory: boolean): BSQONParseResult {
-        let tkval: string | undefined = undefined;
-        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
+    void parseNat(ValueRepr value, State& ctx) 
+    {
+        UnicodeString tkval;
+        if(this->m_parse_bsqon) {
+            
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_NAT).value.slice(0, -1);
         }
         else {
+            tkval = this->m_lex.popToken().getTokenValue();
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_INT).value;
         }
     
@@ -1687,7 +874,7 @@ class BSQONParser {
         return BSQONParseResultInfo.create(rstr, this.lookupMustDefType("String"), undefined, whistory);
     }
 
-    private parseASCIIString(whistory: boolean): BSQONParseResult {
+    ParseResult parseASCIIString(whistory: boolean): BSQONParseResult {
         let tkval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             tkval = this.expectTokenAndPop(TokenKind.TOKEN_ASCII_STRING).value.slice(7, -2);
@@ -1700,7 +887,7 @@ class BSQONParser {
         const rstr = this.unescapeString(tkval);
         return BSQONParseResultInfo.create(rstr, this.lookupMustDefType("ASCIIString"), undefined, whistory);
     }
-
+/*
     private parseByteBuffer(whistory: boolean): BSQONParseResult {
         let tbval: string | undefined = undefined;
         if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
@@ -1989,15 +1176,6 @@ class BSQONParser {
 
     private parsePath(ttype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
         this.raiseError("NOT IMPLEMENTED: PATH");
-        /*
-        let pth = undefined;
-        if(this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const ptk = this.expectTokenAndPop(TokenKind.TOKEN_PATH_ITEM).value;
-        }
-        else {
-            const ptk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value;
-        }
-        */
     }
 
     private parsePathFragment(ttype: $TypeInfo.BSQType, whistory: boolean): BSQONParseResult {
@@ -2785,6 +1963,7 @@ class BSQONParser {
 
     private parseValueUnion(ttype: $TypeInfo.UnionType, whistory: boolean): BSQONParseResult {
         //everyone has a none special format option
+        xxxx; NULL in JSON
         if(this.testToken(TokenKind.TOKEN_NONE)) {
             const nonep = this.parseNone(whistory);
             return BSQONParseResultInfo.create(new $Runtime.UnionValue("None", BSQONParseResultInfo.getParseValue(nonep, whistory)), this.lookupMustDefType("None"), BSQONParseResultInfo.getHistory(nonep, whistory), whistory);
@@ -3094,9 +2273,6 @@ class BSQONParser {
         }
 
         return {result: result, entityChecks: parser.m_stdentityChecks, typedeclChecks: parser.m_typedeclChecks};
-    }
-}
-
-export {
-    BSQONParser, BSQONParseError
+    }*/
+    };
 }
