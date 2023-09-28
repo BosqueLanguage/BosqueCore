@@ -8,3 +8,8 @@
 
 **/.DS_Store
 **/output/*
+
+*.yy.c
+*.tab.h
+*.tab.c
+a.out
