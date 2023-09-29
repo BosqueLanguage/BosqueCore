@@ -2,15 +2,20 @@
 %{
 #include "bsqon.tab.h"
 
+#include "bytestring.h"
+
 #define MAX_STR_CONST 4096
 
 int yycolumn = 1;
 
-char string_buf[MAX_STR_CONST];
-char* string_buf_ptr;
+uint8_t string_buf[MAX_STR_CONST];
+struct ByteString string_buf_bs = { string_buf, 0 };
 
 /* Forward declarations */
-void yyerror(char* s, ...);
+void ByteStringStoreChar(char c);
+void ByteStringStoreText(const char* c, size_t len);
+
+void yyerror(const char* s, ...);
 
 /* This is executed before every action. */
 #define YY_USER_ACTION                                                   \
@@ -120,45 +125,45 @@ uuid7"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V7; }
 sha3"{"[a-z0-9]{128}"}" { yylval.str = yytext; return TOKEN_SHA_HASH; }
 
 <INITIAL>{
-\"       { BEGIN(STRING); string_buf_ptr = string_buf; }
+\"       { BEGIN(STRING); string_buf_bs.len = 0; }
 }
 <STRING>{
-\"       { BEGIN(INITIAL); *string_buf_ptr = '\0'; yylval.str = string_buf; return TOKEN_STRING; }
+\"       { BEGIN(INITIAL); ByteStringStoreChar('"'); yylval.bstr = &string_buf_bs; return TOKEN_STRING; }
 <<EOF>>  { BEGIN(INITIAL); yyerror("Unclosed String"); return YYEOF; }
-\\\\     { *string_buf_ptr++ = yytext[0]; *string_buf_ptr++ = yytext[1]; } /* JSON Strings */
-\\\"     { *string_buf_ptr++ = yytext[0]; *string_buf_ptr++ = yytext[1]; } /* JSON Strings */
-[^"]     { *string_buf_ptr++ = yytext[0]; }
+\\\\     { ByteStringStoreText(yytext, yyleng); } /* JSON Strings */
+\\\"     { ByteStringStoreText(yytext, yyleng); } /* JSON Strings */
+[^"]     { ByteStringStoreChar(yytext[0]); }
 }
 
 <INITIAL>{
-ascii\{\" { BEGIN(ASCII_STRING); }
+ascii\{\" { BEGIN(ASCII_STRING); string_buf_bs.len = 0; }
 }
 <ASCII_STRING>{
-\"\}      { BEGIN(INITIAL); *string_buf_ptr = '\0'; yylval.str = string_buf; return TOKEN_ASCII_STRING; }
+\"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_ASCII_STRING; }
 <<EOF>>   { BEGIN(INITIAL); yyerror("Unclosed ASCIIString"); return YYEOF; }
-.|\n      { *string_buf_ptr++ = yytext[0]; }
+.|\n      { ByteStringStoreChar(yytext[0]); }
 }
 
 <INITIAL>{
-regex\{\" { BEGIN(REGEX); }
+regex\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
 }
 <REGEX>{
-\"\}      { BEGIN(INITIAL); *string_buf_ptr = '\0'; yylval.str = string_buf; return TOKEN_REGEX; }
+\"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_REGEX; }
 <<EOF>>   { BEGIN(INITIAL); yyerror("Unclosed Regex"); return YYEOF; }
-\\\\      { *string_buf_ptr++ = yytext[0]; *string_buf_ptr++ = yytext[1]; } /* JSON Strings */
-\\\"      { *string_buf_ptr++ = yytext[0]; *string_buf_ptr++ = yytext[1]; } /* JSON Strings */
+\\\\      { ByteStringStoreText(yytext, yyleng); } /* JSON Strings */
+\\\"      { ByteStringStoreText(yytext, yyleng); } /* JSON Strings */
 \n        { yyerror("Newline in Path Item"); return YYerror; }
-.         { *string_buf_ptr++ = yytext[0]; }
+.         { ByteStringStoreChar(yytext[0]); }
 }
 
 <INITIAL>{
-(path|fragment|glob)\{\" { BEGIN(REGEX); }
+(path|fragment|glob)\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
 }
 <PATH_ITEM>{
-\"\}      { BEGIN(INITIAL); *string_buf_ptr = '\0'; yylval.str = string_buf; return TOKEN_PATH_ITEM; }
+\"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_PATH_ITEM; }
 <<EOF>>   { BEGIN(INITIAL); yyerror("Unclosed Path Item"); return YYEOF; }
 \n        { yyerror("Newline in Path Item"); return YYerror; }
-.         { *string_buf_ptr++ = yytext[0]; }
+.         { ByteStringStoreChar(yytext[0]); }
 }
 
  /* dates */
@@ -198,3 +203,28 @@ regex\{\" { BEGIN(REGEX); }
 
 %%
 
+void ByteStringStoreChar(char c)
+{
+    if (string_buf_bs.len == MAX_STR_CONST) {
+        yyerror("String constant too long");
+        string_buf_bs.len++;
+    }
+
+    if(string_buf_bs.len < MAX_STR_CONST) {
+        string_buf[string_buf_bs.len++] = (uint8_t)c;
+    }
+}
+
+void ByteStringStoreText(const char* c, size_t len)
+{
+    if (string_buf_bs.len < MAX_STR_CONST && MAX_STR_CONST <= string_buf_bs.len + len) {
+        yyerror("String constant too long");
+        string_buf_bs.len += len;
+    }
+
+    if(MAX_STR_CONST <= string_buf_bs.len + len) {
+        for(size_t i = 0; i < len; i++) {
+            string_buf[string_buf_bs.len++] = (uint8_t)c[i];
+        }
+    }
+}

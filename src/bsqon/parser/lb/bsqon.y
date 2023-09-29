@@ -4,17 +4,20 @@
 #include <stdarg.h>
 #include <string.h>
 
-//#include "bsqon.h"
+#include "bsqon_ast.h"
 
 int yylex(void);
-void yyerror(char* s, ...);
+void yyerror(const char* s, ...);
+
+struct BSQON_AST_Node* yybsqonval;
 
 #define YYDEBUG 1
 %}
 
 %union {
-  int bsqon;
-  char* str;
+   struct BSQON_AST_Node* bsqon;
+   struct ByteString* bstr;
+   char* str;
 }
 
 /* declare tokens */
@@ -29,7 +32,7 @@ void yyerror(char* s, ...);
 %token <str> TOKEN_INT_NUMBERINO TOKEN_FLOAT_NUMBERINO
 
 %token <str> TOKEN_BYTE_BUFFER TOKEN_UUID_V4 TOKEN_UUID_V7 TOKEN_SHA_HASH
-%token <str> TOKEN_STRING TOKEN_ASCII_STRING TOKEN_REGEX TOKEN_PATH_ITEM
+%token <bstr> TOKEN_STRING TOKEN_ASCII_STRING TOKEN_REGEX TOKEN_PATH_ITEM
 
 %token <str> TOKEN_DATE_TIME TOKEN_UTC_DATE_TIME TOKEN_PLAIN_DATE TOKEN_PLAIN_TIME
 %token <str> TOKEN_LOGICAL_TIME TOKEN_TICK_TIME TOKEN_TIMESTAMP
@@ -46,23 +49,45 @@ void yyerror(char* s, ...);
 %%
 
 bsqonliteral: 
-   KW_NONE { printf("%s\n", "null"); $$ = 1; }
-   | KW_TRUE           { printf("%s\n", "true"); $$ = 1; }
-   | KW_FALSE           { printf("%s\n", "false"); $$ = 1; }
-   | TOKEN_NAT           { printf("%s\n", $1); $$ = 1; }
-   | TOKEN_INT                { printf("%s\n", $1); $$ = 1; }
-   | TOKEN_BIG_NAT           { printf("%s\n", $1); $$ = 1; }
-   | TOKEN_BIG_INT           { printf("%s\n", $1); $$ = 1; }
+   KW_NONE                 { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_None); }
+   | KW_NULL               { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_Null); }
+   | KW_NOTHING            { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_Nothing); }
+   | KW_TRUE               { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_True); }
+   | KW_FALSE              { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_False); }
+   | TOKEN_NAT             { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Nat, $1); }
+   | TOKEN_INT             { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Int, $1); }
+   | TOKEN_BIG_NAT         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_BigNat, $1); }
+   | TOKEN_BIG_INT         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_BigInt, $1); }
+   | TOKEN_RATIONAL        { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Rational, $1); }
+   | TOKEN_FLOAT           { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Float, $1); }
+   | TOKEN_DOUBLE          { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Double, $1); }
+   | TOKEN_INT_NUMBERINO   { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_IntNumberino, $1); }
+   | TOKEN_FLOAT_NUMBERINO { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_FloatNumberino, $1); }
+   | TOKEN_BYTE_BUFFER     { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_ByteBuffer, $1); }
+   | TOKEN_UUID_V4         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv4, $1); }
+   | TOKEN_UUID_V7         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv7, $1); }
+   | TOKEN_SHA_HASH        { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_SHAHashcode, $1); }
+   | TOKEN_STRING          { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_String, $1); }
+   | TOKEN_ASCII_STRING    { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_ASCIIString, $1); }
+   | TOKEN_REGEX           { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_Regex, $1); }
+   | TOKEN_PATH_ITEM       { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_PathItem, $1); }
+   | TOKEN_DATE_TIME       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_DateTime, $1); }
+   | TOKEN_UTC_DATE_TIME   { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UTCDateTime, $1); }
+   | TOKEN_PLAIN_DATE      { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_PlainDate, $1); }
+   | TOKEN_PLAIN_TIME      { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_PlainTime, $1); }
+   | TOKEN_LOGICAL_TIME    { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_LogicalTime, $1); }
+   | TOKEN_TICK_TIME       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_TickTime, $1); }
+   | TOKEN_TIMESTAMP       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Timestamp, $1); }
 ;
 
 bsqonval: 
-  bsqonliteral
+  bsqonliteral { yybsqonval = $1; $$ = $1; }
  ;
 %%
 
 extern FILE* yyin;
 
-void yyerror(char *s, ...)
+void yyerror(const char *s, ...)
 {
    va_list ap;
    va_start(ap, s);
@@ -79,19 +104,16 @@ void yyerror(char *s, ...)
 
 int main(int argc, char** argv)
 {
-   if(argc == 0) {
-      printf("Usage: %s [-d] file\n", argv[0]);
-      perror(argv[1]);
-      exit(1);
-   }
-
    if(argc > 1 && !strcmp(argv[1], "-d")) {
       yydebug = 1; argc--; argv++;
    }
 
     //see page 34 of book
 
-   if(argc > 1) {
+   if(argc == 1) {
+      yyin = stdin;
+   }
+   else {
       if((yyin = fopen(argv[1], "r")) == NULL) {
          perror(argv[1]);
          exit(1);
@@ -102,6 +124,8 @@ int main(int argc, char** argv)
 
    if(!yyparse()) {
       printf("Parse ok!\n");
+      BSQON_AST_print(yybsqonval);
+      printf("\n");
    }
    else {
       printf("Parse errors...\n");
