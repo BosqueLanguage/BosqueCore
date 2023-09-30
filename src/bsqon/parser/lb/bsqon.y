@@ -37,7 +37,7 @@ struct BSQON_AST_Node* yybsqonval;
 %token <str> TOKEN_DATE_TIME TOKEN_UTC_DATE_TIME TOKEN_PLAIN_DATE TOKEN_PLAIN_TIME
 %token <str> TOKEN_LOGICAL_TIME TOKEN_TICK_TIME TOKEN_TIMESTAMP
 
-%token <str> TOKEN_IDENTIFIER TOKEN_REF TOKEN_TYPE_COMPONENT
+%token <str> TOKEN_IDENTIFIER TOKEN_REF TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
 
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
@@ -102,6 +102,7 @@ void yyerror(const char *s, ...)
    fprintf(stderr, "\n");
 }
 
+#ifndef EXPORT
 int main(int argc, char** argv)
 {
    if(argc > 1 && !strcmp(argv[1], "-d")) {
@@ -123,7 +124,7 @@ int main(int argc, char** argv)
    }
 
    if(!yyparse()) {
-      printf("Parse ok!\n");
+      //printf("Parse ok!\n");
       BSQON_AST_print(yybsqonval);
       printf("\n");
    }
@@ -131,3 +132,4 @@ int main(int argc, char** argv)
       printf("Parse errors...\n");
    }
 }
+#endif

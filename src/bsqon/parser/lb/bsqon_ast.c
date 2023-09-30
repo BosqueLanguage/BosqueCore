@@ -32,6 +32,21 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
 {
     switch (node->tag)
     {
+    case BSQON_AST_TAG_None:
+        printf("none");
+        break;
+    case BSQON_AST_TAG_Null:
+        printf("null");
+        break;
+    case BSQON_AST_TAG_Nothing:
+        printf("nothing");
+        break;
+    case BSQON_AST_TAG_True:
+        printf("true");
+        break;
+    case BSQON_AST_TAG_False:
+        printf("false");
+        break;
     default:
         BSQON_AST_LiteralNode_print(BSQON_AST_asLiteralNode(node));
         break;

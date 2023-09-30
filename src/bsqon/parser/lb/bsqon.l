@@ -179,7 +179,8 @@ regex\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
 
  /* names */
 {IDENTIFIER}    { yylval.str = yytext; return TOKEN_IDENTIFIER; }
-[#]{IDENTIFIER} { yylval.str = yytext; return TOKEN_REF; }
+#{IDENTIFIER} { yylval.str = yytext; return TOKEN_REF; }
+_"$"{IDENTIFIER} { yylval.str = yytext; return TOKEN_UNSPEC_IDENTIFIER; }
 
 [A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)* { yylval.str = yytext; return TOKEN_TYPE_COMPONENT; }
 
