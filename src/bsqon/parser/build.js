@@ -15,7 +15,7 @@ fsx.ensureDirSync(outobj);
 
 let doneyy = false;
 let donetest = false;
-let doneexport = true;
+let doneexport = false;
 
 let haderror = false;
 
@@ -42,13 +42,13 @@ exec(`bison -d${mode === "debug" ? " -Wcex" : ""} bsqon.y && flex bsqon.l`, {cwd
     doneyy = true;
     doneop(err !== null, err !== null ? err + stderr + stdout : "done parser gen..."); 
 
-    exec(`gcc -Og -DEXPORT -o ${outobj}/bsqon.tab.o -c bsqon.tab.c && gcc -Og -DEXPORT -o ${outobj}/lex.yy.o -c lex.yy.c`, {cwd: srcdir}, (err, stdout, stderr) => {
+    exec(`gcc -Og -DEXPORT -o ${outobj}/bsqon.tab.o -c bsqon.tab.c && gcc -Og -DEXPORT -o ${outobj}/lex.yy.o -c lex.yy.c`, {cwd: srcdir}, (oerr, ostdout, ostderr) => {
         donetest = true;
-        doneop(err !== null, err !== null ? err + stderr + stdout : "done obj file build...");
+        doneop(oerr !== null, oerr !== null ? oerr + ostderr + ostdout : "done obj file build...");
     });
 
-    exec(`gcc -O1 -g -ggdb -o ${outexec}/bsqon_parser bsqon_ast.c bsqon.tab.c lex.yy.c -lfl`, {cwd: srcdir}, (err, stdout, stderr) => {
+    exec(`gcc -O1 -g -ggdb -o ${outexec}/bsqon_parser bsqon_ast.c bsqon.tab.c lex.yy.c -lfl`, {cwd: srcdir}, (eerr, estdout, estderr) => {
         doneexport = true;
-        doneop(err !== null, err !== null ? err + stderr + stdout : "done test executable...");
+        doneop(eerr !== null, eerr !== null ? eerr + estderr + estdout : "done test executable...");
     });
 });

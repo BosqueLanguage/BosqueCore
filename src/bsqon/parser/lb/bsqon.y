@@ -10,6 +10,14 @@ int yylex(void);
 void yyerror(const char* s, ...);
 
 struct BSQON_AST_Node* yybsqonval;
+char* filename = "<stdin>";
+
+#define MAX_PARSER_ERRORS 128
+#define MAX_ERROR_LENGTH 1024
+
+char errorbuf[MAX_ERROR_LENGTH];
+char* errors[MAX_PARSER_ERRORS];
+int errorcount = 0;
 
 #define YYDEBUG 1
 %}
@@ -19,6 +27,8 @@ struct BSQON_AST_Node* yybsqonval;
    struct ByteString* bstr;
    char* str;
 }
+
+%locations
 
 /* declare tokens */
 %left SYM_BAR
@@ -92,14 +102,13 @@ void yyerror(const char *s, ...)
    va_list ap;
    va_start(ap, s);
 
-/*
    if(yylloc.first_line) {
-      fprintf(stderr, "%s:%d.%d-%d.%d: error: ", yylloc.filename, yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column);
-   }
-*/
+      int ccount = snprintf(errorbuf, MAX_ERROR_LENGTH, "%s @ %d.%d-%d.%d -- %s", s, yylloc.first_line, yylloc.first_column, yylloc.last_line, yylloc.last_column, filename);
 
-   vfprintf(stderr, s, ap);
-   fprintf(stderr, "\n");
+      if(errorcount < MAX_PARSER_ERRORS) {
+         errors[errorcount++] = strndup(errorbuf, ccount);
+      }
+   }
 }
 
 #ifndef EXPORT
@@ -113,6 +122,7 @@ int main(int argc, char** argv)
 
    if(argc == 1) {
       yyin = stdin;
+      filename = "<stdin>";
    }
    else {
       if((yyin = fopen(argv[1], "r")) == NULL) {
@@ -120,7 +130,7 @@ int main(int argc, char** argv)
          exit(1);
       }
 
-      //filename = av[1];
+      filename = argv[1];
    }
 
    if(!yyparse()) {
@@ -129,7 +139,9 @@ int main(int argc, char** argv)
       printf("\n");
    }
    else {
-      printf("Parse errors...\n");
+      for(size_t i = 0; i < errorcount; ++i) {
+         printf("%s\n", errors[i]);
+      }
    }
 }
 #endif

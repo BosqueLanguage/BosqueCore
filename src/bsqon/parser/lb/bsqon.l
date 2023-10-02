@@ -1,4 +1,5 @@
 %option noyywrap nodefault nounput noinput yylineno
+
 %{
 #include "bsqon.tab.h"
 
@@ -24,7 +25,9 @@ void yyerror(const char* s, ...);
   else {                                                                 \
     for (yycolumn = 1; yytext[yyleng - yycolumn] != '\n'; ++yycolumn) {} \
     prev_yylineno = yylineno;                                            \
-  }
+  }                                                                      \
+  yylloc.first_line = start_line; yylloc.first_column = start_column;      \
+  yylloc.last_line = yylineno; yylloc.last_column = yycolumn;              
 
 %}
 
@@ -101,8 +104,17 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 (0|[+]?{NON_ZERO_INTEGRAL})N   { yylval.str = yytext; return TOKEN_BIG_NAT; }
 (0|[+-]?{NON_ZERO_INTEGRAL})I  { yylval.str = yytext; return TOKEN_BIG_INT; }
 
-(0|[+-]?{NON_ZERO_INTEGRAL})R |
+(0|[+-]?{NON_ZERO_INTEGRAL})R                        { yylval.str = yytext; return TOKEN_RATIONAL; }
 ((0|[+-]?{NON_ZERO_INTEGRAL})\/{NON_ZERO_INTEGRAL})R { yylval.str = yytext; return TOKEN_RATIONAL; }
+
+[-]0[niNIR]                                      { yyerror("Zero cannot be negative"); return YYerror; }
+[-]{NON_ZERO_INTEGRAL}[nN]                       { yyerror("Cannot have negative natural number"); return YYerror; }
+[+]?0+{NON_ZERO_INTEGRAL}[nN]                    { yyerror("Leading zero is not allowed"); return YYerror; }
+[+-]?0+{NON_ZERO_INTEGRAL}[iIR]                  { yyerror("Leading zero is not allowed"); return YYerror; }
+[+-]?0+{NON_ZERO_INTEGRAL}\/{NON_ZERO_INTEGRAL}R { yyerror("Leading zero is not allowed"); return YYerror; }
+[+]?0+[nN]                                       { yyerror("Leading zero is not allowed"); return YYerror; }
+[+-]?0+[iIR]                                     { yyerror("Leading zero is not allowed"); return YYerror; }
+((0|[+-]?{NON_ZERO_INTEGRAL})\/0)R               { yyerror("Zero as divisor"); return YYerror; }
 
 [+-]?"0."[0-9]+{EXP}?f |
 [+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?f { yylval.str = yytext; return TOKEN_FLOAT; }
