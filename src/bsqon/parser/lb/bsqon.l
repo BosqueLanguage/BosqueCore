@@ -112,22 +112,33 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 [+]?0+{NON_ZERO_INTEGRAL}[nN]                    { yyerror("Leading zero is not allowed"); return YYerror; }
 [+-]?0+{NON_ZERO_INTEGRAL}[iIR]                  { yyerror("Leading zero is not allowed"); return YYerror; }
 [+-]?0+{NON_ZERO_INTEGRAL}\/{NON_ZERO_INTEGRAL}R { yyerror("Leading zero is not allowed"); return YYerror; }
-[+]?0+[nN]                                       { yyerror("Leading zero is not allowed"); return YYerror; }
-[+-]?0+[iIR]                                     { yyerror("Leading zero is not allowed"); return YYerror; }
+[+]?00+[nN]                                      { yyerror("Leading zero is not allowed"); return YYerror; }
+[+-]?00+[iIR]                                    { yyerror("Leading zero is not allowed"); return YYerror; }
 ((0|[+-]?{NON_ZERO_INTEGRAL})\/0)R               { yyerror("Zero as divisor"); return YYerror; }
 
-[+-]?"0."[0-9]+{EXP}?f |
+[+-]?"0."[0-9]+{EXP}?f                   { yylval.str = yytext; return TOKEN_FLOAT; }
 [+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?f { yylval.str = yytext; return TOKEN_FLOAT; }
 
-[+-]?"0."[0-9]+{EXP}?d |
+[+-]?"0."[0-9]+{EXP}?d                   { yylval.str = yytext; return TOKEN_DOUBLE; }
 [+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?d { yylval.str = yytext; return TOKEN_DOUBLE; }
+
+[+-]?0+"0."[0-9]+{EXP}?[fd]                   { yyerror("Redundant leading zero is not allowed"); return YYerror; }
+[+-]?0+{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?[fd] { yyerror("Leading zero is not allowed"); return YYerror; }
+[+-]?"."[0-9]+{EXP}?[fd]                      { yyerror("Leading decimal is not allowed"); return YYerror; }
 
  /* numberinos */
 0|[+-]?{NON_ZERO_INTEGRAL} { yylval.str = yytext; return TOKEN_INT_NUMBERINO; }
 
-[+-]?"."[0-9]+{EXP}? |
-[+-]?"0."[0-9]+{EXP}? |
+[-]0                       { yyerror("Zero cannot be negative"); return YYerror; }
+[+-]?0+{NON_ZERO_INTEGRAL} { yyerror("Leading zero is not allowed"); return YYerror; }
+[+]?00+                    { yyerror("Leading zero is not allowed"); return YYerror; }
+
+[+-]?"."[0-9]+{EXP}?                    { yylval.str = yytext; return TOKEN_FLOAT_NUMBERINO; }
+[+-]?"0."[0-9]+{EXP}?                   { yylval.str = yytext; return TOKEN_FLOAT_NUMBERINO; }
 [+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}? { yylval.str = yytext; return TOKEN_FLOAT_NUMBERINO; }
+
+[+-]?0+"0."[0-9]+{EXP}?                   { yyerror("Redundant leading zero is not allowed"); return YYerror; }
+[+-]?0+{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}? { yyerror("Leading zero is not allowed"); return YYerror; }
 
  /* strings */
 
@@ -137,7 +148,7 @@ uuid7"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V7; }
 sha3"{"[a-z0-9]{128}"}" { yylval.str = yytext; return TOKEN_SHA_HASH; }
 
 <INITIAL>{
-\"       { BEGIN(STRING); string_buf_bs.len = 0; }
+\"       { BEGIN(STRING); string_buf_bs.len = 0; ByteStringStoreChar('"'); }
 }
 <STRING>{
 \"       { BEGIN(INITIAL); ByteStringStoreChar('"'); yylval.bstr = &string_buf_bs; return TOKEN_STRING; }
@@ -148,7 +159,7 @@ sha3"{"[a-z0-9]{128}"}" { yylval.str = yytext; return TOKEN_SHA_HASH; }
 }
 
 <INITIAL>{
-ascii\{\" { BEGIN(ASCII_STRING); string_buf_bs.len = 0; }
+ascii\{\" { BEGIN(ASCII_STRING); string_buf_bs.len = 0; ByteStringStoreText(yytext, yyleng); }
 }
 <ASCII_STRING>{
 \"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_ASCII_STRING; }
@@ -157,7 +168,7 @@ ascii\{\" { BEGIN(ASCII_STRING); string_buf_bs.len = 0; }
 }
 
 <INITIAL>{
-regex\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
+regex\{\" { BEGIN(REGEX); string_buf_bs.len = 0; ByteStringStoreText(yytext, yyleng); }
 }
 <REGEX>{
 \"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_REGEX; }
@@ -169,7 +180,7 @@ regex\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
 }
 
 <INITIAL>{
-(path|fragment|glob)\{\" { BEGIN(REGEX); string_buf_bs.len = 0; }
+(path|fragment|glob)\{\" { BEGIN(REGEX); string_buf_bs.len = 0; ByteStringStoreText(yytext, yyleng); }
 }
 <PATH_ITEM>{
 \"\}      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_PATH_ITEM; }

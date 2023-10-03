@@ -96,63 +96,115 @@ function runall(alltests) {
     }
 }
 
-const literaltests = {
-    name: "LiteralParses",
+const literaltests_numbers = {
+    name: "Literal Numeric Parses",
     succeed: true,
     tests: [
-        ["none", "none", "none"],
-        ["true", "true", "true"],
-        ["false", "false", "false"],
+        ['none', 'none', 'none'],
+        ['true', 'true', 'true'],
+        ['false', 'false', 'false'],
 
-        ["0n", "0n", "0n"],
-        ["5n", "5n", "5n"],
+        ['0n', '0n', '0n'],
+        ['5n', '5n', '5n'],
     
-        ["-1i", "-1i", "-1i"],
-        ["1i", "1i", "1i"],
-        ["+3i", "+3i", "+3i"],
+        ['-1i', '-1i', '-1i'],
+        ['1i', '1i', '1i'],
+        ['+3i', '+3i', '+3i'],
 
-        ["0N", "0N", "0N"],
-        ["5N", "5N", "5N"],
+        ['0N', '0N', '0N'],
+        ['5N', '5N', '5N'],
     
-        ["-1I", "-1I", "-1I"],
-        ["1I", "1I", "1I"],
-        ["+3I", "+3I", "+3I"],
+        ['-1I', '-1I', '-1I'],
+        ['1I', '1I', '1I'],
+        ['+3I', '+3I', '+3I'],
 
-        ["0R", "0R", "0R"],
-        ["-1R", "-1R", "-1R"],
-        ["1/1R", "1/1R", "1/1R"],
-        ["+3/2R", "+3/2R", "+3/2R"],
+        ['0R', '0R', '0R'],
+        ['-1R', '-1R', '-1R'],
+        ['1/1R', '1/1R', '1/1R'],
+        ['+3/2R', '+3/2R', '+3/2R'],
 
-        ["-1.0f", "-1.0f", "-1.0f"],
-        ["1.0ff", "1.0f", "1.0f"],
-        ["+0.3f", "+0.3f", "+0.3f"],
+        ['-1.0f', '-1.0f', '-1.0f'],
+        ['1.0f', '1.0f', '1.0f'],
+        ['+0.3f', '+0.3f', '+0.3f'],
 
-        ["-1.0d", "-1.0d", "-1.0d"],
-        ["1.0fd", "1.0d", "1.0d"],
-        ["+0.3d", "+0.3d", "+0.3d"]
+        ['-1.0d', '-1.0d', '-1.0d'],
+        ['1.0fd', '1.0d', '1.0d'],
+        ['+0.3d', '+0.3d', '+0.3d'],
+
+        ['-1', '-1', '-1'],
+        ['1', '1', '1'],
+        ['+3', '+3', '+3']
     ]
 };
 
-const literalerrortests = {
-    name: "LiteralParses",
+const literalerrortests_numbers = {
+    name: "Literal Numeric Errors",
     succeed: false,
     tests: [
-        ["00n", "00n", "Leading zero"],
-        ["-0n", "-0n", "Zero cannot be negative"],
-        ["-5n", "-5n", "Cannot have negative natural number"],
+        ['00n', '00n', 'Leading zero'],
+        ['-0n', '-0n', 'Zero cannot be negative'],
+        ['-5n', '-5n', 'Cannot have negative natural number'],
     
-        ["-01i", "-01i", "Leading zero"],
-        ["01i", "01i", "Leading zero"],
+        ['-01i', '-01i', 'Leading zero'],
+        ['01i', '01i', 'Leading zero'],
 
-        ["00N", "00N", "Leading zero"],
-        ["-5N", "-5N", "Cannot have negative natural number"],
+        ['00N', '00N', 'Leading zero'],
+        ['-5N', '-5N', 'Cannot have negative natural number'],
     
-        ["01I", "01I", "Leading zero"],
-        ["+03I", "+03I", "Leading zero"]
+        ['01I', '01I', 'Leading zero'],
+        ['+03I', '+03I', 'Leading zero'],
+
+        ['01R', '01R', 'Leading zero'],
+        ['+03/1R', '+03/1R', 'Leading zero'],
+        ['1/0R', '1/0R', 'Zero as divisor'],
+
+        ['-01.0f', '-01.0f', 'Leading zero'],
+        ['.0f', '.0f', 'Leading decimal is not allowed'],
+        ['00.3f', '00.3f', 'Redundant leading zero is not allowed'],
+
+        ['-01.0d', '-01.0d', 'Leading zero'],
+        ['.0d', '.0d', 'Leading decimal is not allowed'],
+        ['00.3d', '00.3d', 'Redundant leading zero is not allowed'],
+
+        ['-01', '-01', 'Leading zero'],
+        ['01', '01', 'Leading zero'],
+        ['00', '00', 'Leading zero'],
+
+        ['-01.0', '-01.0', 'Leading zero'],
+        ['00.3', '00.3', 'Redundant leading zero is not allowed']
+    ]
+};
+
+const literaltests_strings = {
+    name: "Literal String-like Parses",
+    succeed: true,
+    tests: [
+        ['"none"', '"none"', '"none"'],
+        ['"ok %q;"', '"ok %q;"', '"ok %q;"'],
+        ['""', '""', '""'],
+
+        ['ascii{"none"}', 'ascii{"none"}', 'ascii{"none"}'],
+        ['ascii{"ok %q;"}', 'ascii{"ok %q;"}', 'ascii{"ok %q;"}'],
+        ['ascii{""}', 'ascii{""}', 'ascii{""}']
+    ]
+};
+
+
+const literalerrortests_strings = {
+    name: "Literal String-like Errors",
+    succeed: false,
+    tests: [
+        ['"ok', '"ok', 'Unclosed String'],
+
+        ['ascii{"ok"', 'ascii{"ok"', 'Unclosed ASCIIString'],
+        ['ascii{"ok}', 'ascii{"ok}', 'Unclosed ASCIIString'],
+        ['ascii{"ok}"', 'ascii{"ok}"', 'Unclosed ASCIIString'],
     ]
 };
 
 runall([
-    literaltests,
-    literalerrortests
+    literaltests_numbers,
+    literalerrortests_numbers,
+    literaltests_strings,
+    literalerrortests_strings
 ]);

@@ -15,7 +15,7 @@ function bsqonEscapeString(str: string): string {
     let ret = "";
     for (let i = 0; i < str.length; i++) {
         if (str[i] === "%") {
-            ret += "%%";
+            ret += "%p;";
         }
         else if(str[i] === "\"") {
             ret += "%q;";
@@ -36,8 +36,9 @@ function bsqonUnescapeString(str: string): string {
     for (let i = 0; i < str.length; i++) {
         if (str[i] === "%") {
             i++;
-            if (str[i] === "%") {
+            if (str[i] === "p") {
                 ret += "%";
+                i++;
             }
             else if (str[i] === "n") {
                 ret += "\n";
