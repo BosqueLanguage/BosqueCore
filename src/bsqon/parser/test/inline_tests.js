@@ -267,6 +267,28 @@ const literalerrortests_idhash = {
     ]
 };
 
+const identifiertests = {
+    name: "Name Parses",
+    succeed: true,
+    tests: [
+        ['$src', '$src', '$src'],
+        ['bob', 'bob', 'bob'],
+        ['foo', 'foo', 'foo'],
+        ['_$us', '_$us', '_$us'],
+        ['Foo', 'Foo', 'Foo'],
+        ['Foo::Bar', 'Foo::Bar', 'Foo::Bar']
+    ]
+};
+
+const identifiererrortests = {
+    name: "Name Errors",
+    succeed: false,
+    tests: [
+        ['foo::bar', 'foo::bar', 'syntax error'],
+        ['u$s', 'u$s', 'syntax error']
+    ]
+};
+
 runall([
     literaltests_numbers,
     literalerrortests_numbers,
@@ -275,5 +297,7 @@ runall([
     literaltests_times,
     literalerrortests_times,
     literaltests_idhash,
-    literalerrortests_idhash
+    literalerrortests_idhash,
+    identifiertests,
+    identifiererrortests
 ]);

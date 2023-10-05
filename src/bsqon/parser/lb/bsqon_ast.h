@@ -34,7 +34,12 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_PlainTime,
     BSQON_AST_TAG_LogicalTime,
     BSQON_AST_TAG_TickTime,
-    BSQON_AST_TAG_Timestamp
+    BSQON_AST_TAG_Timestamp,
+
+    BSQON_AST_TAG_Identifier,
+    BSQON_AST_TAG_UnspecIdentifier,
+
+    BSQON_AST_TAG_TypeComponent
 };
 
 struct BSQON_AST_Node
@@ -48,6 +53,13 @@ struct BSQON_AST_LiteralNode
     struct ByteString data;
 };
 
+struct BSQON_AST_NameNode
+{
+    //Identifier | UnspecIdentifier | TypeComponent
+    struct BSQON_AST_Node base;
+    struct ByteString data;
+};
+
 enum BSQON_AST_TAG getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_delete(struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
@@ -57,3 +69,8 @@ struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateEmpty(enum BSQON_AST_TAG tag);
 struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateChars(enum BSQON_AST_TAG tag, const char* data);
 struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateBytes(enum BSQON_AST_TAG tag, struct ByteString* data);
 void BSQON_AST_LiteralNode_print(struct BSQON_AST_LiteralNode* node);
+
+//Identifier | UnspecIdentifier | TypeComponent
+struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, const char* data);
+void BSQON_AST_NameNode_print(struct BSQON_AST_NameNode* node);

@@ -47,14 +47,15 @@ int errorcount = 0;
 %token <str> TOKEN_DATE_TIME TOKEN_UTC_DATE_TIME TOKEN_PLAIN_DATE TOKEN_PLAIN_TIME
 %token <str> TOKEN_LOGICAL_TIME TOKEN_TICK_TIME TOKEN_TIMESTAMP
 
-%token <str> TOKEN_IDENTIFIER TOKEN_REF TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
+%token <str> TOKEN_IDENTIFIER TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
 
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
 
-%type <bsqon> bsqonliteral bsqonval
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqontypecomponent
+%type <bsqon> bsqonroot
 
-%start bsqonval
+%start bsqonroot
 
 %%
 
@@ -88,9 +89,24 @@ bsqonliteral:
    | TOKEN_TIMESTAMP       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Timestamp, $1); }
 ;
 
+bsqonunspecvar: 
+   TOKEN_UNSPEC_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_UnspecIdentifier, $1); }
+;
+
+bsqonidentifier: 
+   KW_SRC       { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, "$src"); }
+   | TOKEN_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, $1); }
+;
+
+bsqontypecomponent: 
+   TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_TypeComponent, $1); }
+;
+
 bsqonval: 
-  bsqonliteral { yybsqonval = $1; $$ = $1; }
+  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqontypecomponent { $$ = $1; }
  ;
+
+bsqonroot: bsqonval { yybsqonval = $1; $$ = $1; }
 %%
 
 extern FILE* yyin;
