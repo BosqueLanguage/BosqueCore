@@ -43,7 +43,7 @@ DATE ([0-9]{4})-([0-9]{2})-([0-9]{2})
 TIME ([0-9]{2}):([0-9]{2}):([0-9]{2})
 TZNAME (\{[a-zA-Z0-9/, _-]+\})
 
-UUID ([a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12})
+UUID ([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})
 
 IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 
@@ -133,10 +133,18 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 
  /* strings */
 
-0x"["[A-Z0-9]*"]"       { yylval.str = yytext; return TOKEN_BYTE_BUFFER; }
+0x"["[a-fA-F0-9]*"]"    { yylval.str = yytext; return TOKEN_BYTE_BUFFER; }
 uuid4"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V4; }
 uuid7"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V7; }
-sha3"{"[a-z0-9]{128}"}" { yylval.str = yytext; return TOKEN_SHA_HASH; }
+sha3"{"[a-f0-9]{64}"}"  { yylval.str = yytext; return TOKEN_SHA_HASH; }
+
+0x"["[^\]]*"]"        { yyerror("Invalid buffer contents"); return YYerror; }
+uuid(4|7)"{"[^\}]*"}" { yyerror("Invalid UUID value"); return YYerror; }
+sha3"{"[^\}]*"}"      { yyerror("Invalid SHA3 value"); return YYerror; }
+
+0x"["[a-zA-Z0-9]*          { yyerror("Missing close bracket"); return YYerror; }
+uuid(4|7)"{"[a-zA-Z0-9-]+  { yyerror("Missing close bracket"); return YYerror; }
+sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 
 <INITIAL>{
 \"            { BEGIN(STRING); string_buf_bs.len = 0; ByteStringStoreChar('"'); }
@@ -198,8 +206,8 @@ sha3"{"[a-z0-9]{128}"}" { yylval.str = yytext; return TOKEN_SHA_HASH; }
 {DATE}T{TIME}("."[0-9]{3})Z { yylval.str = yytext; return TOKEN_TIMESTAMP; }
 
  /* names */
-{IDENTIFIER}    { yylval.str = yytext; return TOKEN_IDENTIFIER; }
-#{IDENTIFIER} { yylval.str = yytext; return TOKEN_REF; }
+{IDENTIFIER}     { yylval.str = yytext; return TOKEN_IDENTIFIER; }
+#{IDENTIFIER}    { yylval.str = yytext; return TOKEN_REF; }
 _"$"{IDENTIFIER} { yylval.str = yytext; return TOKEN_UNSPEC_IDENTIFIER; }
 
 [A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)* { yylval.str = yytext; return TOKEN_TYPE_COMPONENT; }

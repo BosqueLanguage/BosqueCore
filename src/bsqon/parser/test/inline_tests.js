@@ -241,11 +241,39 @@ const literalerrortests_times = {
     ]
 };
 
+const literaltests_idhash = {
+    name: "Literal ID and Hash Parses",
+    succeed: true,
+    tests: [
+        ['bytebuff', '0x[000111f]', '0x[000111f]'],
+        ['uuid4', 'uuid4{550e8400-e29b-41d4-a716-446655440000}', 'uuid4{550e8400-e29b-41d4-a716-446655440000}'],
+        ['uuid7', 'uuid7{550e8400-e29b-41d4-a716-446655440000}', 'uuid7{550e8400-e29b-41d4-a716-446655440000}'],
+        ['sha', 'sha3{a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a}', 'sha3{a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a}']
+    ]
+};
+
+const literalerrortests_idhash = {
+    name: "Literal ID and Hash Errors",
+    succeed: false,
+    tests: [
+        ['bytebuff_value', '0x[000 111f]', 'Invalid buffer contents'],
+        ['bytebuff_bracket', '0x[000111f', 'Missing close bracket'],
+        ['uuid_value', 'uuid4{550e8400-e29b41d4-a716-446655440000}', 'Invalid UUID value'],
+        ['uuid_bracket', 'uuid4{550e8400-e29b41d4-a716-446655440000', 'Missing close bracket'],
+        ['uuid_value2', 'uuid7{550e8400-e29b-414P-a716-446655440000}', 'Invalid UUID value'],
+        ['sha_value', 'sha3{a7ffc6f8bf1ed76651cX4756a061d662f580ff4de43b49fa82d80a4b80f8434a}', 'Invalid SHA3 value'],
+        ['sha_value2', 'sha3{a7ffc6f8bf1ed766X1c4756a061d662f580ff4de43b49fa82d80a4b80f8434a}', 'Invalid SHA3 value'],
+        ['sha_bracket', 'sha3{a7ffc6f8bf1ed76651c14756a061d662f580ff4de43b49fa82d80a4b80f8434a', 'Missing close bracket']
+    ]
+};
+
 runall([
     literaltests_numbers,
     literalerrortests_numbers,
     literaltests_strings,
     literalerrortests_strings,
     literaltests_times,
-    literalerrortests_times
+    literalerrortests_times,
+    literaltests_idhash,
+    literalerrortests_idhash
 ]);
