@@ -35,11 +35,11 @@ int errorcount = 0;
 %left SYM_AMP
 
 %token SYM_ELLIPSIS SYM_DOUBLE_COLON SYM_ENTRY SYM_COLON SYM_COMMA SYM_BANG SYM_EQUALS SYM_DOT SYM_AT SYM_UNDERSCORE
-%token KW_SOMETHING KW_NOTHING KW_FALSE KW_SRC KW_NONE KW_NULL KW_SOME KW_TRUE KW_ERR KW_LET KW_IN KW_OK
+%token KW_SOMETHING KW_NOTHING KW_FALSE KW_SRC KW_NONE KW_SOME KW_TRUE KW_ERR KW_LET KW_IN KW_OK
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
-%token <str> TOKEN_INT_NUMBERINO TOKEN_FLOAT_NUMBERINO
+%token <str> TOKEN_NUMBERINO
 
 %token <str> TOKEN_BYTE_BUFFER TOKEN_UUID_V4 TOKEN_UUID_V7 TOKEN_SHA_HASH
 %token <bstr> TOKEN_STRING TOKEN_ASCII_STRING TOKEN_REGEX TOKEN_PATH_ITEM
@@ -60,7 +60,6 @@ int errorcount = 0;
 
 bsqonliteral: 
    KW_NONE                 { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_None); }
-   | KW_NULL               { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_Null); }
    | KW_NOTHING            { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_Nothing); }
    | KW_TRUE               { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_True); }
    | KW_FALSE              { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_False); }
@@ -71,8 +70,7 @@ bsqonliteral:
    | TOKEN_RATIONAL        { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Rational, $1); }
    | TOKEN_FLOAT           { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Float, $1); }
    | TOKEN_DOUBLE          { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Double, $1); }
-   | TOKEN_INT_NUMBERINO   { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_IntNumberino, $1); }
-   | TOKEN_FLOAT_NUMBERINO { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_FloatNumberino, $1); }
+   | TOKEN_NUMBERINO       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Numberino, $1); }
    | TOKEN_BYTE_BUFFER     { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_ByteBuffer, $1); }
    | TOKEN_UUID_V4         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv4, $1); }
    | TOKEN_UUID_V7         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv7, $1); }
@@ -137,10 +135,12 @@ int main(int argc, char** argv)
       //printf("Parse ok!\n");
       BSQON_AST_print(yybsqonval);
       printf("\n");
+      fflush(stdout);
    }
    else {
       for(size_t i = 0; i < errorcount; ++i) {
          printf("%s\n", errors[i]);
+         fflush(stdout);
       }
    }
 }

@@ -9,7 +9,6 @@
 enum BSQON_AST_TAG
 {
     BSQON_AST_TAG_None = 1,
-    BSQON_AST_TAG_Null,
     BSQON_AST_TAG_Nothing,
     BSQON_AST_TAG_True,
     BSQON_AST_TAG_False,
@@ -20,8 +19,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_Rational,
     BSQON_AST_TAG_Float,
     BSQON_AST_TAG_Double,
-    BSQON_AST_TAG_IntNumberino,
-    BSQON_AST_TAG_FloatNumberino,
+    BSQON_AST_TAG_Numberino,
     BSQON_AST_TAG_ByteBuffer,
     BSQON_AST_TAG_UUIDv4,
     BSQON_AST_TAG_UUIDv7,

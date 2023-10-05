@@ -131,9 +131,8 @@ const literaltests_numbers = {
         ['1.0fd', '1.0d', '1.0d'],
         ['+0.3d', '+0.3d', '+0.3d'],
 
-        ['-1', '-1', '-1'],
-        ['1', '1', '1'],
-        ['+3', '+3', '+3']
+        ['0', '0', '0'],
+        ['3', '3', '3']
     ]
 };
 
@@ -166,12 +165,10 @@ const literalerrortests_numbers = {
         ['.0d', '.0d', 'Leading decimal is not allowed'],
         ['00.3d', '00.3d', 'Redundant leading zero is not allowed'],
 
-        ['-01', '-01', 'Leading zero'],
+        ['-1', '-1', 'Cannot have sign'],
+        ['+1', '+1', 'Cannot have sign'],
         ['01', '01', 'Leading zero'],
         ['00', '00', 'Leading zero'],
-
-        ['-01.0', '-01.0', 'Leading zero'],
-        ['00.3', '00.3', 'Redundant leading zero is not allowed']
     ]
 };
 
@@ -180,25 +177,67 @@ const literaltests_strings = {
     succeed: true,
     tests: [
         ['"none"', '"none"', '"none"'],
-        ['"ok %q;"', '"ok %q;"', '"ok %q;"'],
+        ['"ok%quote;"', '"ok%quote;"', '"ok%quote;"'],
         ['""', '""', '""'],
+        ['unicode', '"🌵"', '"🌵"'],
+        ['multiline', '"abc\ndef"', '"abc\ndef"'],
+        ['multiline-set', '"abc\n  \\ def"', '"abc\n def"'],
 
-        ['ascii{"none"}', 'ascii{"none"}', 'ascii{"none"}'],
-        ['ascii{"ok %q;"}', 'ascii{"ok %q;"}', 'ascii{"ok %q;"}'],
-        ['ascii{""}', 'ascii{""}', 'ascii{""}']
+        ['\'none\'', '\'none\'', '\'none\''],
+        ['\'ok%tick;\'', '\'ok%tick;\'', '\'ok%tick;\''],
+        ['\'\'', '\'\'', '\'\''],
+
+        ['/none/', '/none/', '/none/'],
+        ['/[0-9]+/', '/[0-9]+/', '/[0-9]+/'],
+        ['/a b/', '/a b/', '/a b/'],
+
+        ['`file://mark.com`', '`file://mark.com`', '`file://mark.com`'],
+        ['`file://mark.com/**`g', '`file://mark.com/**`g', '`file://mark.com/**`g'],
+        ['`mark.com`f', '`mark.com`f', '`mark.com`f'],
     ]
 };
-
 
 const literalerrortests_strings = {
     name: "Literal String-like Errors",
     succeed: false,
     tests: [
         ['"ok', '"ok', 'Unclosed String'],
+        ['\'ok', '\'ok', 'Unclosed ASCIIString'],
 
-        ['ascii{"ok"', 'ascii{"ok"', 'Unclosed ASCIIString'],
-        ['ascii{"ok}', 'ascii{"ok}', 'Unclosed ASCIIString'],
-        ['ascii{"ok}"', 'ascii{"ok}"', 'Unclosed ASCIIString'],
+        ['/ok', '/ok', 'Unclosed Regex'],
+        ['newline', '/ok\n', 'Newline in Regex'],
+        ['`file://mark.com', '`file://mark.com', 'Unclosed Path Item'],
+        ['whitespace', '`file:// mark.com`', 'Whitespace in Path Item'],
+    ]
+};
+
+const literaltests_times = {
+    name: "Literal time Parses",
+    succeed: true,
+    tests: [
+        ['DateTime', '2023-10-05T20:06:24@{Lexington, Ky}', '2023-10-05T20:06:24@{Lexington, Ky}'],
+        ['UTCDateTime', '2023-10-05T20:06:24', '2023-10-05T20:06:24'],
+        ['UTCDateTimeZ', '2023-10-05T20:06:24Z', '2023-10-05T20:06:24Z'],
+        ['PlainDate"', '2023-10-05', '2023-10-05'],
+        ['PlainTime', '20:06:24', '20:06:24'],
+        ['Timestamp', '2023-10-05T20:06:24.000Z', '2023-10-05T20:06:24.000Z'],
+
+        ['TickTime', '52t', '52t'],
+        ['LogicalTime', '1l', '1l']
+    ]
+};
+
+const literalerrortests_times = {
+    name: "Literal time Errors",
+    succeed: false,
+    tests: [
+        ['00t', '00t', 'Leading zero'],
+        ['01t', '01t', 'Leading zero'],
+        ['-5l', '-5l', 'Cannot have sign/negative time'],
+
+        ['00l', '00l', 'Leading zero'],
+        ['01l', '01l', 'Leading zero'],
+        ['-5l', '-5l', 'Cannot have sign/negative time']
     ]
 };
 
@@ -206,5 +245,7 @@ runall([
     literaltests_numbers,
     literalerrortests_numbers,
     literaltests_strings,
-    literalerrortests_strings
+    literalerrortests_strings,
+    literaltests_times,
+    literalerrortests_times
 ]);
