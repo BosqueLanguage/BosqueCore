@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "bytestring.h"
 
 enum BSQON_AST_TAG
@@ -59,7 +55,6 @@ struct BSQON_AST_NameNode
 };
 
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
-void BSQON_AST_delete(struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
 
 struct BSQON_AST_LiteralNode* BSQON_AST_asLiteralNode(const struct BSQON_AST_Node* node);

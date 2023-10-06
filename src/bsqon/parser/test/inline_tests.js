@@ -274,9 +274,7 @@ const identifiertests = {
         ['$src', '$src', '$src'],
         ['bob', 'bob', 'bob'],
         ['foo', 'foo', 'foo'],
-        ['_$us', '_$us', '_$us'],
-        ['Foo', 'Foo', 'Foo'],
-        ['Foo::Bar', 'Foo::Bar', 'Foo::Bar']
+        ['_$us', '_$us', '_$us']
     ]
 };
 
@@ -284,7 +282,6 @@ const identifiererrortests = {
     name: "Name Errors",
     succeed: false,
     tests: [
-        ['foo::bar', 'foo::bar', 'syntax error'],
         ['u$s', 'u$s', 'syntax error']
     ]
 };

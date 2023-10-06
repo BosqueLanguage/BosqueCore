@@ -97,13 +97,13 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 "ok"        { return KW_OK; }
 
  /* numbers */
-(0|[+]?{NON_ZERO_INTEGRAL})n   { yylval.str = yytext; return TOKEN_NAT; }
-(0|[+-]?{NON_ZERO_INTEGRAL})i  { yylval.str = yytext; return TOKEN_INT; }
-(0|[+]?{NON_ZERO_INTEGRAL})N   { yylval.str = yytext; return TOKEN_BIG_NAT; }
-(0|[+-]?{NON_ZERO_INTEGRAL})I  { yylval.str = yytext; return TOKEN_BIG_INT; }
+(0|[+]?{NON_ZERO_INTEGRAL})n   { yylval.str = AST_STRDUP(yytext); return TOKEN_NAT; }
+(0|[+-]?{NON_ZERO_INTEGRAL})i  { yylval.str = AST_STRDUP(yytext); return TOKEN_INT; }
+(0|[+]?{NON_ZERO_INTEGRAL})N   { yylval.str = AST_STRDUP(yytext); return TOKEN_BIG_NAT; }
+(0|[+-]?{NON_ZERO_INTEGRAL})I  { yylval.str = AST_STRDUP(yytext); return TOKEN_BIG_INT; }
 
-(0|[+-]?{NON_ZERO_INTEGRAL})R                        { yylval.str = yytext; return TOKEN_RATIONAL; }
-((0|[+-]?{NON_ZERO_INTEGRAL})\/{NON_ZERO_INTEGRAL})R { yylval.str = yytext; return TOKEN_RATIONAL; }
+(0|[+-]?{NON_ZERO_INTEGRAL})R                        { yylval.str = AST_STRDUP(yytext); return TOKEN_RATIONAL; }
+((0|[+-]?{NON_ZERO_INTEGRAL})\/{NON_ZERO_INTEGRAL})R { yylval.str = AST_STRDUP(yytext); return TOKEN_RATIONAL; }
 
 [-]0[niNIR]                                      { yyerror("Zero cannot be negative"); return YYerror; }
 [-]{NON_ZERO_INTEGRAL}[nN]                       { yyerror("Cannot have negative natural number"); return YYerror; }
@@ -114,18 +114,18 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 [+-]?00+[iIR]                                    { yyerror("Leading zero is not allowed"); return YYerror; }
 ((0|[+-]?{NON_ZERO_INTEGRAL})\/0)R               { yyerror("Zero as divisor"); return YYerror; }
 
-[+-]?"0."[0-9]+{EXP}?f                   { yylval.str = yytext; return TOKEN_FLOAT; }
-[+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?f { yylval.str = yytext; return TOKEN_FLOAT; }
+[+-]?"0."[0-9]+{EXP}?f                   { yylval.str = AST_STRDUP(yytext); return TOKEN_FLOAT; }
+[+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?f { yylval.str = AST_STRDUP(yytext); return TOKEN_FLOAT; }
 
-[+-]?"0."[0-9]+{EXP}?d                   { yylval.str = yytext; return TOKEN_DOUBLE; }
-[+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?d { yylval.str = yytext; return TOKEN_DOUBLE; }
+[+-]?"0."[0-9]+{EXP}?d                   { yylval.str = AST_STRDUP(yytext); return TOKEN_DOUBLE; }
+[+-]?{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?d { yylval.str = AST_STRDUP(yytext); return TOKEN_DOUBLE; }
 
 [+-]?0+"0."[0-9]+{EXP}?[fd]                   { yyerror("Redundant leading zero is not allowed"); return YYerror; }
 [+-]?0+{NON_ZERO_INTEGRAL}"."[0-9]+{EXP}?[fd] { yyerror("Leading zero is not allowed"); return YYerror; }
 [+-]?"."[0-9]+{EXP}?[fd]                      { yyerror("Leading decimal is not allowed"); return YYerror; }
 
  /* numberinos */
-0|{NON_ZERO_INTEGRAL}       { yylval.str = yytext; return TOKEN_NUMBERINO; }
+0|{NON_ZERO_INTEGRAL}       { yylval.str = AST_STRDUP(yytext); return TOKEN_NUMBERINO; }
 
 [+-](0|{NON_ZERO_INTEGRAL}) { yyerror("Cannot have sign on indexer"); return YYerror; }
 0+{NON_ZERO_INTEGRAL}       { yyerror("Leading zero is not allowed"); return YYerror; }
@@ -133,10 +133,10 @@ IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
 
  /* strings */
 
-0x"["[a-fA-F0-9]*"]"    { yylval.str = yytext; return TOKEN_BYTE_BUFFER; }
-uuid4"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V4; }
-uuid7"{"{UUID}"}"       { yylval.str = yytext; return TOKEN_UUID_V7; }
-sha3"{"[a-f0-9]{64}"}"  { yylval.str = yytext; return TOKEN_SHA_HASH; }
+0x"["[a-fA-F0-9]*"]"    { yylval.str = AST_STRDUP(yytext); return TOKEN_BYTE_BUFFER; }
+uuid4"{"{UUID}"}"       { yylval.str = AST_STRDUP(yytext); return TOKEN_UUID_V4; }
+uuid7"{"{UUID}"}"       { yylval.str = AST_STRDUP(yytext); return TOKEN_UUID_V7; }
+sha3"{"[a-f0-9]{64}"}"  { yylval.str = AST_STRDUP(yytext); return TOKEN_SHA_HASH; }
 
 0x"["[^\]]*"]"        { yyerror("Invalid buffer contents"); return YYerror; }
 uuid(4|7)"{"[^\}]*"}" { yyerror("Invalid UUID value"); return YYerror; }
@@ -190,26 +190,26 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 }
 
  /* dates */
-{DATE}T{TIME}@{TZNAME} { yylval.str = yytext; return TOKEN_DATE_TIME; }
-{DATE}T{TIME}Z?        { yylval.str = yytext; return TOKEN_UTC_DATE_TIME; }
-{DATE}                 { yylval.str = yytext; return TOKEN_PLAIN_DATE; }
-{TIME}                 { yylval.str = yytext; return TOKEN_PLAIN_TIME; }
+{DATE}T{TIME}@{TZNAME} { yylval.str = AST_STRDUP(yytext); return TOKEN_DATE_TIME; }
+{DATE}T{TIME}Z?        { yylval.str = AST_STRDUP(yytext); return TOKEN_UTC_DATE_TIME; }
+{DATE}                 { yylval.str = AST_STRDUP(yytext); return TOKEN_PLAIN_DATE; }
+{TIME}                 { yylval.str = AST_STRDUP(yytext); return TOKEN_PLAIN_TIME; }
 
-(0|{NON_ZERO_INTEGRAL})t { yylval.str = yytext; return TOKEN_TICK_TIME; }
-(0|{NON_ZERO_INTEGRAL})l { yylval.str = yytext; return TOKEN_LOGICAL_TIME; }
+(0|{NON_ZERO_INTEGRAL})t { yylval.str = AST_STRDUP(yytext); return TOKEN_TICK_TIME; }
+(0|{NON_ZERO_INTEGRAL})l { yylval.str = AST_STRDUP(yytext); return TOKEN_LOGICAL_TIME; }
 
 [+-]0[tl]                                        { yyerror("Cannot have sign/negative time"); return YYerror; }
 [+-]{NON_ZERO_INTEGRAL}[tl]                      { yyerror("Cannot have sign/negative time"); return YYerror; }
 0+{NON_ZERO_INTEGRAL}[tl]                        { yyerror("Leading zero is not allowed"); return YYerror; }
 [+-]?00+[tl]                                     { yyerror("Leading zero is not allowed"); return YYerror; }
 
-{DATE}T{TIME}("."[0-9]{3})Z { yylval.str = yytext; return TOKEN_TIMESTAMP; }
+{DATE}T{TIME}("."[0-9]{3})Z { yylval.str = AST_STRDUP(yytext); return TOKEN_TIMESTAMP; }
 
  /* names */
-{IDENTIFIER}     { yylval.str = yytext; return TOKEN_IDENTIFIER; }
-_"$"{IDENTIFIER} { yylval.str = yytext; return TOKEN_UNSPEC_IDENTIFIER; }
+{IDENTIFIER}     { yylval.str = AST_STRDUP(yytext); return TOKEN_IDENTIFIER; }
+_"$"{IDENTIFIER} { yylval.str = AST_STRDUP(yytext); return TOKEN_UNSPEC_IDENTIFIER; }
 
-[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)* { yylval.str = yytext; return TOKEN_TYPE_COMPONENT; }
+[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)* { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
 
  /* comments */
 "%%"[^\n]*    /* line comment */

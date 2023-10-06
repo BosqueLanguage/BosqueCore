@@ -10,6 +10,7 @@
 int yylex(void);
 void yyerror(const char* s, ...);
 
+struct BSQON_TYPE_AST_Node* yybsqonval_type;
 struct BSQON_AST_Node* yybsqonval;
 char* filename = "<stdin>";
 
@@ -59,11 +60,14 @@ int errorcount = 0;
 %type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t_namedlist> bsqonnametypel
 %type <bsqon_t> bsqontype bsqonnominaltype
+%type <bsqon_t> bsqontyperoot
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier
 %type <bsqon> bsqonroot
 
-%start bsqonroot
+  //----------------------------
+  //%start bsqonroot
+  %start bsqontyperoot
 
 %%
 
@@ -76,8 +80,8 @@ bsqontermslist:
    '<' bsqontypel '>' { $$ = BSQON_TYPE_AST_ListCompleteParse($2); }
 
 bsqontypel:
-   bsqontypel SYM_COMMA bsqontype { $$ = BSQON_TYPE_AST_ListCreate($1, $3); }
-   | bsqontype { $$ = BSQON_TYPE_AST_ListCreate(NULL, $1); }
+   bsqontypel SYM_COMMA bsqontype { $$ = BSQON_TYPE_AST_ListCons($3, $1); }
+   | bsqontype { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
 ;
 
 bsqonnametypel:
@@ -85,6 +89,10 @@ bsqonnametypel:
 
 bsqontype:
    bsqonnominaltype { $$ = $1; }
+;
+
+bsqontyperoot:
+   bsqontype { yybsqonval_type = $1; $$ = $1; }
 ;
 
 bsqonliteral: 
@@ -172,8 +180,10 @@ int main(int argc, char** argv)
    }
 
    if(!yyparse()) {
-      //printf("Parse ok!\n");
-      BSQON_AST_print(yybsqonval);
+      //----------------------------
+      //BSQON_AST_print(yybsqonval);
+      BSQON_TYPE_AST_print(yybsqonval_type);
+
       printf("\n");
       fflush(stdout);
    }

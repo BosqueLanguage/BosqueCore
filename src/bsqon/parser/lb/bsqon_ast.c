@@ -2,31 +2,9 @@
 
 #include <stdio.h>
 
-void buff_clear(char* src, size_t len)
-{
-    memset(src, 0, len);
-}
-
-void chars_copy(struct ByteString* dst, const char* src, size_t len)
-{
-    memcpy(dst->bytes, src, len);
-    dst->len = len;
-}
-
-void bytes_copy(struct ByteString* dst, struct ByteString* src)
-{
-    memcpy(dst->bytes, src->bytes, src->len);
-    dst->len = src->len;
-}
-
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node)
 {
     return node->tag;
-}
-
-void BSQON_AST_delete(struct BSQON_AST_Node* node)
-{
-    AST_FREE(node);
 }
 
 void BSQON_AST_print(struct BSQON_AST_Node* node)

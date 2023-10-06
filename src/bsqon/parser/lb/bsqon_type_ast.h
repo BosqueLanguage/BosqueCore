@@ -1,9 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "bytestring.h"
 
 enum BSQON_TYPE_AST_TAG
@@ -71,7 +67,6 @@ struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_NamedListCons(struct ByteString name,
 struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCompleteParse(struct BSQON_TYPE_AST_NamedList* ll);
 
 enum BSQON_TYPE_AST_TAG BSQON_TYPE_AST_getTag(const struct BSQON_TYPE_AST_Node* node);
-void BSQON_TYPE_AST_delete(struct BSQON_TYPE_AST_Node* node);
 void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node);
 
 struct BSQON_TYPE_AST_NominalNode* BSQON_AST_asNominalNode(const struct BSQON_TYPE_AST_Node* node);
