@@ -37,9 +37,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_Timestamp,
 
     BSQON_AST_TAG_Identifier,
-    BSQON_AST_TAG_UnspecIdentifier,
-
-    BSQON_AST_TAG_TypeComponent
+    BSQON_AST_TAG_UnspecIdentifier
 };
 
 struct BSQON_AST_Node
@@ -60,7 +58,7 @@ struct BSQON_AST_NameNode
     struct ByteString data;
 };
 
-enum BSQON_AST_TAG getTag(const struct BSQON_AST_Node* node);
+enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_delete(struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
 

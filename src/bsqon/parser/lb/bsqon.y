@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "bsqon_type_ast.h"
 #include "bsqon_ast.h"
 
 int yylex(void);
@@ -23,6 +24,9 @@ int errorcount = 0;
 %}
 
 %union {
+   struct BSQON_TYPE_AST_List* bsqon_t_list;
+   struct BSQON_TYPE_AST_NamedList* bsqon_t_namedlist;
+   struct BSQON_TYPE_AST_Node* bsqon_t;
    struct BSQON_AST_Node* bsqon;
    struct ByteString* bstr;
    char* str;
@@ -52,12 +56,36 @@ int errorcount = 0;
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
 
-%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqontypecomponent
+%type <bsqon_t_list> bsqontypel bsqontermslist
+%type <bsqon_t_namedlist> bsqonnametypel
+%type <bsqon_t> bsqontype bsqonnominaltype
+
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier
 %type <bsqon> bsqonroot
 
 %start bsqonroot
 
 %%
+
+bsqonnominaltype:
+   TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalNodeCreate($1, NULL); }
+   | TOKEN_TYPE_COMPONENT bsqontermslist { $$ = BSQON_AST_NominalNodeCreate($1, $2); }
+;
+
+bsqontermslist:
+   '<' bsqontypel '>' { $$ = BSQON_TYPE_AST_ListCompleteParse($2); }
+
+bsqontypel:
+   bsqontypel SYM_COMMA bsqontype { $$ = BSQON_TYPE_AST_ListCreate($1, $3); }
+   | bsqontype { $$ = BSQON_TYPE_AST_ListCreate(NULL, $1); }
+;
+
+bsqonnametypel:
+;
+
+bsqontype:
+   bsqonnominaltype { $$ = $1; }
+;
 
 bsqonliteral: 
    KW_NONE                 { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_None); }
@@ -98,12 +126,8 @@ bsqonidentifier:
    | TOKEN_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, $1); }
 ;
 
-bsqontypecomponent: 
-   TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_TypeComponent, $1); }
-;
-
 bsqonval: 
-  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqontypecomponent { $$ = $1; }
+  bsqonliteral | bsqonunspecvar | bsqonidentifier { $$ = $1; }
  ;
 
 bsqonroot: bsqonval { yybsqonval = $1; $$ = $1; }

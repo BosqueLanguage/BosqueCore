@@ -2,10 +2,6 @@
 
 #include <stdio.h>
 
-#define AST_ALLOC_ALIGN_8(size) (((size) + 7) & ~7)
-#define AST_ALLOC(size) malloc(AST_ALLOC_ALIGN_8(size))
-#define AST_FREE(ptr) free(ptr)
-
 void buff_clear(char* src, size_t len)
 {
     memset(src, 0, len);
@@ -23,7 +19,7 @@ void bytes_copy(struct ByteString* dst, struct ByteString* src)
     dst->len = src->len;
 }
 
-enum BSQON_AST_TAG getTag(const struct BSQON_AST_Node* node)
+enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node)
 {
     return node->tag;
 }
@@ -51,7 +47,6 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
         break;
     case BSQON_AST_TAG_Identifier:
     case BSQON_AST_TAG_UnspecIdentifier:
-    case BSQON_AST_TAG_TypeComponent:
         BSQON_AST_NameNode_print(BSQON_AST_asNameNode(node));
         break;
     default:
