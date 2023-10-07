@@ -48,14 +48,27 @@ void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node)
 {
     switch (node->tag)
     {
-    case BSQON_TYPE_AST_TAG_Nominal:
+    case BSQON_TYPE_AST_TAG_Error: {
+        printf("^ERROR_TYPE^");
+        break;
+    }
+    case BSQON_TYPE_AST_TAG_Nominal: {
         BSQON_AST_TYPE_printNominalNode(BSQON_AST_asNominalNode(node));
         break;
+    }
     default: {
         printf("unknown");
         assert(false);
     }
     }
+}
+
+struct BSQON_TYPE_AST_Node* BSQON_AST_ErrorNodeCreate()
+{
+    struct BSQON_TYPE_AST_ErrorNode* node = (struct BSQON_TYPE_AST_ErrorNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_ErrorNode));
+    node->base.tag = BSQON_TYPE_AST_TAG_Error;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 struct BSQON_TYPE_AST_NominalNode* BSQON_AST_asNominalNode(const struct BSQON_TYPE_AST_Node* node)

@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define AST_ALLOC_ALIGN_8(size) (((size) + 7) & ~7)

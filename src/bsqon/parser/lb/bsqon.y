@@ -33,6 +33,7 @@ int errorcount = 0;
    char* str;
 }
 
+%error-verbose
 %locations
 
 /* declare tokens */
@@ -52,12 +53,14 @@ int errorcount = 0;
 %token <str> TOKEN_DATE_TIME TOKEN_UTC_DATE_TIME TOKEN_PLAIN_DATE TOKEN_PLAIN_TIME
 %token <str> TOKEN_LOGICAL_TIME TOKEN_TICK_TIME TOKEN_TIMESTAMP
 
-%token <str> TOKEN_IDENTIFIER TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
+%token <str> TOKEN_IDENTIFIER "identifier"
+%token <str> TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
 
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
 
 %type <bsqon_t_list> bsqontypel bsqontermslist
+%type <bsqon_t> bsqontypel_entry
 %type <bsqon_t_namedlist> bsqonnametypel
 %type <bsqon_t> bsqontype bsqonnominaltype
 %type <bsqon_t> bsqontyperoot
@@ -78,10 +81,17 @@ bsqonnominaltype:
 
 bsqontermslist:
    '<' bsqontypel '>' { $$ = BSQON_TYPE_AST_ListCompleteParse($2); }
+   | '<' error '>' { $$ = BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL); yyerrok; }
+;
 
 bsqontypel:
-   bsqontypel SYM_COMMA bsqontype { $$ = BSQON_TYPE_AST_ListCons($3, $1); }
-   | bsqontype { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
+   bsqontypel SYM_COMMA bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($3, $1); }
+   | bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
+;
+
+bsqontypel_entry:
+   bsqontype { $$ = $1; }
+   | error SYM_COMMA { $$ = BSQON_AST_ErrorNodeCreate(); yyerrok; }
 ;
 
 bsqonnametypel:
@@ -187,11 +197,10 @@ int main(int argc, char** argv)
       printf("\n");
       fflush(stdout);
    }
-   else {
-      for(size_t i = 0; i < errorcount; ++i) {
-         printf("%s\n", errors[i]);
-         fflush(stdout);
-      }
+      
+   for(size_t i = 0; i < errorcount; ++i) {
+      printf("%s\n", errors[i]);
+      fflush(stdout);
    }
 }
 #endif
