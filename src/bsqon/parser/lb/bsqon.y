@@ -33,7 +33,7 @@ int errorcount = 0;
    char* str;
 }
 
-%error-verbose
+%define parse.error verbose
 %locations
 
 /* declare tokens */
@@ -62,7 +62,7 @@ int errorcount = 0;
 %type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t> bsqontypel_entry
 %type <bsqon_t_namedlist> bsqonnametypel
-%type <bsqon_t> bsqontype bsqonnominaltype
+%type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype
 %type <bsqon_t> bsqontyperoot
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier
@@ -80,17 +80,27 @@ bsqonnominaltype:
 ;
 
 bsqontermslist:
-   '<' bsqontypel '>' { $$ = BSQON_TYPE_AST_ListCompleteParse($2); }
+   '<' bsqontype '>' { $$ = BSQON_TYPE_AST_ListCons($2, NULL); }
+   | '<' bsqontypel bsqontype '>' { $$ = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2)); }
    | '<' error '>' { $$ = BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL); yyerrok; }
+   | '<' bsqontypel error '>' { $$ = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), $2)); yyerrok; }
+;
+
+bsqontupletype:
+   '[' ']' { $$ = BSQON_AST_TupleNodeCreate(NULL); }
+   | '[' bsqontype ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons($2, NULL)); }
+   | '[' bsqontypel bsqontype ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2))); }
+   | '[' error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL)); yyerrok; }
+   | '[' bsqontypel error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), $2))); yyerrok; }
 ;
 
 bsqontypel:
-   bsqontypel SYM_COMMA bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($3, $1); }
+   bsqontypel bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($2, $1); }
    | bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
 ;
 
 bsqontypel_entry:
-   bsqontype { $$ = $1; }
+   bsqontype SYM_COMMA { $$ = $1; }
    | error SYM_COMMA { $$ = BSQON_AST_ErrorNodeCreate(); yyerrok; }
 ;
 
@@ -99,6 +109,7 @@ bsqonnametypel:
 
 bsqontype:
    bsqonnominaltype { $$ = $1; }
+   | bsqontupletype { $$ = $1; }
 ;
 
 bsqontyperoot:

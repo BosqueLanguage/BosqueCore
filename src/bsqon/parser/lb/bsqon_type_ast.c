@@ -56,6 +56,10 @@ void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node)
         BSQON_AST_TYPE_printNominalNode(BSQON_AST_asNominalNode(node));
         break;
     }
+    case BSQON_TYPE_AST_TAG_Tuple: {
+        BSQON_AST_TYPE_printTupleNode(BSQON_AST_asTupleNode(node));
+        break;
+    }
     default: {
         printf("unknown");
         assert(false);
@@ -114,13 +118,24 @@ struct BSQON_TYPE_AST_TupleNode* BSQON_AST_asTupleNode(const struct BSQON_TYPE_A
 
 struct BSQON_TYPE_AST_Node* BSQON_AST_TupleNodeCreate(struct BSQON_TYPE_AST_List* types)
 {
-    assert(false);
-    return NULL;
+    struct BSQON_TYPE_AST_TupleNode* node = (struct BSQON_TYPE_AST_TupleNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_TupleNode));
+    node->base.tag = BSQON_TYPE_AST_TAG_Tuple;
+    node->types = types;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printTupleNode(struct BSQON_TYPE_AST_TupleNode* node)
 {
-    assert(false);
+    printf("[");
+    for(struct BSQON_TYPE_AST_List* ll = node->types; ll != NULL; ll = ll->next)
+        {
+        BSQON_TYPE_AST_print(ll->value);
+        if(ll->next != NULL) {
+            printf(", ");
+        }
+    }
+    printf("]");
 }
 
 struct BSQON_TYPE_AST_RecordNode* BSQON_AST_asRecordNode(const struct BSQON_TYPE_AST_Node* node)
