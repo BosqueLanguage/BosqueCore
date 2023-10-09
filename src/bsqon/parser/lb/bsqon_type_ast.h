@@ -23,6 +23,12 @@ struct BSQON_TYPE_AST_List
     struct BSQON_TYPE_AST_List* next;
 };
 
+struct BSQON_TYPE_AST_NamedListEntry
+{
+    struct ByteString name;
+    struct BSQON_TYPE_AST_Node* value;
+};
+
 struct BSQON_TYPE_AST_NamedList
 {
     struct ByteString name;
@@ -69,13 +75,14 @@ struct BSQON_TYPE_AST_Union
 struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_ListCons(struct BSQON_TYPE_AST_Node* value, struct BSQON_TYPE_AST_List* next);
 struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_ListCompleteParse(struct BSQON_TYPE_AST_List* ll);
 
-struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_NamedListCons(struct ByteString name, struct BSQON_TYPE_AST_Node* value, struct BSQON_TYPE_AST_List* next);
+struct BSQON_TYPE_AST_NamedListEntry* BSQON_TYPE_AST_NamedListEntryCreate(struct ByteString name, struct BSQON_TYPE_AST_Node* value);
+struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCons(struct BSQON_TYPE_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next);
 struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCompleteParse(struct BSQON_TYPE_AST_NamedList* ll);
 
 enum BSQON_TYPE_AST_TAG BSQON_TYPE_AST_getTag(const struct BSQON_TYPE_AST_Node* node);
 void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node);
 
-struct BSQON_TYPE_AST_Node* BSQON_AST_ErrorNodeCreate();
+struct BSQON_TYPE_AST_Node* BSQON_TYPE_AST_ErrorNodeCreate();
 
 struct BSQON_TYPE_AST_NominalNode* BSQON_AST_asNominalNode(const struct BSQON_TYPE_AST_Node* node);
 struct BSQON_TYPE_AST_Node* BSQON_AST_NominalNodeCreate(const char* name, struct BSQON_TYPE_AST_List* terms);

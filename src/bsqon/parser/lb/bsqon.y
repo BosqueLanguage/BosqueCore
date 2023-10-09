@@ -26,6 +26,7 @@ int errorcount = 0;
 
 %union {
    struct BSQON_TYPE_AST_List* bsqon_t_list;
+   struct BSQON_TYPE_AST_NamedListEntry* bsqon_t_nametypel_entry;
    struct BSQON_TYPE_AST_NamedList* bsqon_t_namedlist;
    struct BSQON_TYPE_AST_Node* bsqon_t;
    struct BSQON_AST_Node* bsqon;
@@ -59,10 +60,11 @@ int errorcount = 0;
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
 
-%type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t> bsqontypel_entry
+%type <bsqon_t_nametypel_entry> bsqonnametypel_entry
+%type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t_namedlist> bsqonnametypel
-%type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype
+%type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype
 %type <bsqon_t> bsqontyperoot
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier
@@ -74,6 +76,26 @@ int errorcount = 0;
 
 %%
 
+bsqontypel:
+   bsqontypel bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($2, $1); }
+   | bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
+;
+
+bsqontypel_entry:
+   bsqontype SYM_COMMA { $$ = $1; }
+   | error SYM_COMMA { $$ = BSQON_TYPE_AST_ErrorNodeCreate(); yyerrok; }
+;
+
+bsqonnametypel:
+   bsqonnametypel bsqonnametypel_entry { $$ = BSQON_TYPE_AST_NamedListCons($2, $1); }
+   | bsqonnametypel_entry { $$ = BSQON_TYPE_AST_NamedListCons($1, NULL); }
+;
+
+bsqonnametypel_entry:
+   TOKEN_IDENTIFIER SYM_COLON bsqontype SYM_COMMA { $$ = BSQON_TYPE_AST_NamedListEntryCreate($1, $3); }
+   | TOKEN_IDENTIFIER SYM_COLON error SYM_COMMA { $$ = BSQON_TYPE_AST_NamedListEntryCreate($1, BSQON_TYPE_AST_ErrorNodeCreate()); yyerrok; }
+;
+
 bsqonnominaltype:
    TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalNodeCreate($1, NULL); }
    | TOKEN_TYPE_COMPONENT bsqontermslist { $$ = BSQON_AST_NominalNodeCreate($1, $2); }
@@ -82,29 +104,24 @@ bsqonnominaltype:
 bsqontermslist:
    '<' bsqontype '>' { $$ = BSQON_TYPE_AST_ListCons($2, NULL); }
    | '<' bsqontypel bsqontype '>' { $$ = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2)); }
-   | '<' error '>' { $$ = BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL); yyerrok; }
-   | '<' bsqontypel error '>' { $$ = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), $2)); yyerrok; }
+   | '<' error '>' { $$ = BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), NULL); yyerrok; }
+   | '<' bsqontypel error '>' { $$ = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), $2)); yyerrok; }
 ;
 
 bsqontupletype:
    '[' ']' { $$ = BSQON_AST_TupleNodeCreate(NULL); }
    | '[' bsqontype ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons($2, NULL)); }
    | '[' bsqontypel bsqontype ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2))); }
-   | '[' error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL)); yyerrok; }
-   | '[' bsqontypel error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_AST_ErrorNodeCreate(), $2))); yyerrok; }
+   | '[' error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), NULL)); yyerrok; }
+   | '[' bsqontypel error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), $2))); yyerrok; }
 ;
 
-bsqontypel:
-   bsqontypel bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($2, $1); }
-   | bsqontypel_entry { $$ = BSQON_TYPE_AST_ListCons($1, NULL); }
-;
-
-bsqontypel_entry:
-   bsqontype SYM_COMMA { $$ = $1; }
-   | error SYM_COMMA { $$ = BSQON_AST_ErrorNodeCreate(); yyerrok; }
-;
-
-bsqonnametypel:
+bsqonrecordtype:
+   '{' '}' { $$ = BSQON_AST_RecordNodeCreate(NULL); }
+   | '{' TOKEN_IDENTIFIER SYM_COLON bsqontype '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, $4), NULL)); }
+   | '{' bsqonnametypel TOKEN_IDENTIFIER SYM_COLON bsqontype '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($3, $5), $2))); }
+   | '{' TOKEN_IDENTIFIER SYM_COLON error '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()), NULL)); yyerrok; }
+   | '{' bsqonnametypel TOKEN_IDENTIFIER SYM_COLON error '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()), $2))); yyerrok; }
 ;
 
 bsqontype:
