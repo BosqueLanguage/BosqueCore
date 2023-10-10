@@ -193,7 +193,11 @@ bsqontypeliteral:
    bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
       enum BSQON_AST_TAG tag = BSQON_AST_getTag($1);
       if(tag == BSQON_AST_TAG_Numberino) {
-         yyerror("missing numeric specifier");
+         yyerror("Missing numeric specifier");
+         $$ = BSQON_AST_ErrorNodeCreate();
+      }
+      else if(tag == BSQON_AST_TAG_None || tag == BSQON_AST_TAG_Nothing) {
+         yyerror("Cannot have a typedecl of none or nothing");
          $$ = BSQON_AST_ErrorNodeCreate();
       }
       else {
@@ -212,6 +216,26 @@ bsqonroot:
 %%
 
 extern FILE* yyin;
+
+size_t isSpecialTypedLiteralIdConflict(const char* txt)
+{
+   size_t tlen = strlen(txt);
+   if(strncmp("none_", txt, 5) == 0  && tlen >= 6 && isupper(txt[5])) {
+      return tlen - 4;
+   }
+   else if(strncmp("true_", txt, 5) == 0  && tlen >= 6 && isupper(txt[5])) {
+      return tlen - 4;
+   }
+   else if(strncmp("false_", txt, 6) == 0  && tlen >= 7 && isupper(txt[6])) {
+      return tlen - 5;
+   }
+   else if(strncmp("nothing_", txt, 8) == 0  && tlen >= 9 && isupper(txt[8])) {
+      return tlen - 7;
+   }
+   else {
+      return 0;
+   }
+}
 
 void yyerror(const char *s, ...)
 {

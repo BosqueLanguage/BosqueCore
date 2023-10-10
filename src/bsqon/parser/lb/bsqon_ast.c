@@ -134,7 +134,7 @@ struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Literal
 
 void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node)
 {
-    BSQON_AST_print(node->data);
+    BSQON_AST_print((struct BSQON_AST_Node*)node->data);
     printf("_");
     BSQON_TYPE_AST_print(node->type);
 }

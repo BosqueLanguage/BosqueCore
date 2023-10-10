@@ -16,6 +16,8 @@ struct ByteString string_buf_bs = { string_buf, 0 };
 void ByteStringStoreChar(char c);
 void ByteStringStoreText(const char* c, size_t len);
 
+size_t isSpecialTypedLiteralIdConflict(const char* txt);
+
 void yyerror(const char* s, ...);
 
 /* This is executed before every action. */
@@ -45,7 +47,7 @@ TZNAME (\{[a-zA-Z0-9/, _-]+\})
 
 UUID ([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})
 
-IDENTIFIER ([_]?[a-z]([a-zA-Z0-9]+(_[a-z0-9_])?)*)
+IDENTIFIER ([_]?[a-z][a-zA-Z0-9_]*)
 TYPE_IDENTIFIER ([A-Z][a-zA-Z0-9_]*)
 
 %%
@@ -207,8 +209,36 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 {DATE}T{TIME}("."[0-9]{3})Z { yylval.str = AST_STRDUP(yytext); return TOKEN_TIMESTAMP; }
 
  /* names */
-{IDENTIFIER}     { yylval.str = AST_STRDUP(yytext); return TOKEN_IDENTIFIER; }
-_"$"{IDENTIFIER} { yylval.str = AST_STRDUP(yytext); return TOKEN_UNSPEC_IDENTIFIER; }
+{IDENTIFIER} { 
+    size_t conflict = isSpecialTypedLiteralIdConflict(yytext);
+    if(conflict != 0) {
+        char buff[16];
+        memcpy(buff, yytext, conflict);
+
+        yyless(strlen(yytext) - conflict);
+        if(strncmp("none", buff, 4) == 0) {
+            return KW_NONE;
+        }
+        else if(strncmp("true", buff, 4) == 0) {
+            return KW_TRUE;
+        }
+        else if(strncmp("false", buff, 5) == 0) {
+            return KW_FALSE;
+        }
+        else {
+            return KW_NOTHING;
+        }
+    } 
+    else { 
+        yylval.str = AST_STRDUP(yytext); 
+        return TOKEN_IDENTIFIER; 
+    } 
+  }
+
+_"$"{IDENTIFIER} { 
+    yylval.str = AST_STRDUP(yytext); 
+    return TOKEN_UNSPEC_IDENTIFIER; 
+  }
 
 {TYPE_IDENTIFIER}(::{TYPE_IDENTIFIER})* { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
 
