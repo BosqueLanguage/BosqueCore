@@ -29,19 +29,43 @@ struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_ListCompleteParse(struct BSQON_TYPE_A
     return lp;
 }
 
-struct BSQON_TYPE_AST_NamedListEntry* BSQON_TYPE_AST_NamedListEntryCreate(struct ByteString name, struct BSQON_TYPE_AST_Node* value)
+struct BSQON_TYPE_AST_NamedListEntry* BSQON_TYPE_AST_NamedListEntryCreate(const char* name, struct BSQON_TYPE_AST_Node* value)
 {
-    assert(false);
+    size_t length = strlen(name);
+
+    struct BSQON_TYPE_AST_NamedListEntry* node = (struct BSQON_TYPE_AST_NamedListEntry*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NamedListEntry) + length + 1);
+    node->name.bytes = ((uint8_t*)node) + sizeof(struct BSQON_TYPE_AST_NamedListEntry);
+    node->value = value;
+
+    buff_clear(node->name.bytes, length + 1);
+    chars_copy(&(node->name), name, length);
+
+    return (struct BSQON_TYPE_AST_NamedListEntry*)node;
 }
 
 struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCons(struct BSQON_TYPE_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next)
 {
-    assert(false);
+    struct BSQON_TYPE_AST_NamedList* node = (struct BSQON_TYPE_AST_NamedList*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NamedList));
+    node->value = value;
+    node->next = next;
+
+    return node;
 }
 
 struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCompleteParse(struct BSQON_TYPE_AST_NamedList* ll)
 {
-    assert(false);
+    assert(ll != NULL);
+
+    struct BSQON_TYPE_AST_List* lp = NULL;
+    while(ll != NULL) {
+        struct BSQON_TYPE_AST_List* lc = ll;
+        ll = ll->next;
+
+        lc->next = lp;
+        lp = lc;
+    }
+
+    return lp;
 }
 
 enum BSQON_TYPE_AST_TAG BSQON_TYPE_AST_getTag(const struct BSQON_TYPE_AST_Node* node)
@@ -63,6 +87,18 @@ void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node)
     }
     case BSQON_TYPE_AST_TAG_Tuple: {
         BSQON_AST_TYPE_printTupleNode(BSQON_AST_asTupleNode(node));
+        break;
+    }
+    case BSQON_TYPE_AST_TAG_Record: {
+        BSQON_AST_TYPE_printRecordNode(BSQON_AST_asRecordNode(node));
+        break;
+    }
+    case BSQON_TYPE_AST_TAG_Conjunction: {
+        BSQON_AST_TYPE_printConjunction(BSQON_AST_asConjunction(node));
+        break;
+    }
+    case BSQON_TYPE_AST_TAG_Union: {
+        BSQON_AST_TYPE_printUnion(BSQON_AST_asUnion(node));
         break;
     }
     default: {
@@ -116,6 +152,22 @@ void BSQON_AST_TYPE_printNominalNode(struct BSQON_TYPE_AST_NominalNode* node)
     }
 }
 
+struct BSQON_TYPE_AST_NominalExtNode* BSQON_AST_asNominalExtNode(const struct BSQON_TYPE_AST_Node* node)
+{
+    return (struct BSQON_TYPE_AST_NominalExtNode*)node;
+}
+
+struct BSQON_TYPE_AST_Node* BSQON_AST_NominalExtNodeCreate(struct BSQON_TYPE_AST_NominalNode* base, const char* ext)
+{
+    assert(false);
+}
+
+void BSQON_AST_TYPE_printNominalExtNode(struct BSQON_TYPE_AST_NominalExtNode* node)
+{
+    BSQON_AST_TYPE_printNominalNode(node->root);
+    printf("::%s", node->ext.bytes);
+}
+
 struct BSQON_TYPE_AST_TupleNode* BSQON_AST_asTupleNode(const struct BSQON_TYPE_AST_Node* node)
 {
     return (struct BSQON_TYPE_AST_TupleNode*)node;
@@ -133,9 +185,9 @@ struct BSQON_TYPE_AST_Node* BSQON_AST_TupleNodeCreate(struct BSQON_TYPE_AST_List
 void BSQON_AST_TYPE_printTupleNode(struct BSQON_TYPE_AST_TupleNode* node)
 {
     printf("[");
-    for(struct BSQON_TYPE_AST_List* ll = node->types; ll != NULL; ll = ll->next)
-        {
+    for(struct BSQON_TYPE_AST_List* ll = node->types; ll != NULL; ll = ll->next) {
         BSQON_TYPE_AST_print(ll->value);
+
         if(ll->next != NULL) {
             printf(", ");
         }
@@ -150,13 +202,25 @@ struct BSQON_TYPE_AST_RecordNode* BSQON_AST_asRecordNode(const struct BSQON_TYPE
 
 struct BSQON_TYPE_AST_Node* BSQON_AST_RecordNodeCreate(struct BSQON_TYPE_AST_NamedList* entries)
 {
-    assert(false);
-    return NULL;
+    struct BSQON_TYPE_AST_RecordNode* node = (struct BSQON_TYPE_AST_RecordNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_RecordNode));
+    node->base.tag = BSQON_TYPE_AST_TAG_Record;
+    node->entries = entries;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printRecordNode(struct BSQON_TYPE_AST_RecordNode* node)
 {
-    assert(false);
+    printf("{");
+    for(struct BSQON_TYPE_AST_NamedList* ll = node->entries; ll != NULL; ll = ll->next) {
+        printf("%s: ", ll->value->name.bytes);
+        BSQON_TYPE_AST_print(ll->value->value);
+
+        if(ll->next != NULL) {
+            printf(", ");
+        }
+    }
+    printf("}");
 }
 
 struct BSQON_TYPE_AST_Conjunction* BSQON_AST_asConjunction(const struct BSQON_TYPE_AST_Node* node)
@@ -164,15 +228,21 @@ struct BSQON_TYPE_AST_Conjunction* BSQON_AST_asConjunction(const struct BSQON_TY
     return (struct BSQON_TYPE_AST_Conjunction*)node;
 }
 
-struct BSQON_TYPE_AST_Node* BSQON_AST_ConjunctionCreate(struct BSQON_TYPE_AST_List* opts)
+struct BSQON_TYPE_AST_Node* BSQON_AST_ConjunctionCreate(struct BSQON_TYPE_AST_Node* left, struct BSQON_TYPE_AST_Node* right)
 {
-    assert(false);
-    return NULL;
+    struct BSQON_TYPE_AST_Conjunction* node = (struct BSQON_TYPE_AST_Conjunction*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_Conjunction));
+    node->base.tag = BSQON_TYPE_AST_TAG_Conjunction;
+    node->left = left;
+    node->right = right;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printConjunction(struct BSQON_TYPE_AST_Conjunction* node)
 {
-    assert(false);
+    BSQON_TYPE_AST_print(node->left);
+    printf(" & ");
+    BSQON_TYPE_AST_print(node->right);
 }
 
 struct BSQON_TYPE_AST_Union* BSQON_AST_asUnion(const struct BSQON_TYPE_AST_Node* node)
@@ -180,13 +250,36 @@ struct BSQON_TYPE_AST_Union* BSQON_AST_asUnion(const struct BSQON_TYPE_AST_Node*
     return (struct BSQON_TYPE_AST_Union*)node;
 }
 
-struct BSQON_TYPE_AST_Node* BSQON_AST_UnionCreate(struct BSQON_TYPE_AST_List* opts)
+struct BSQON_TYPE_AST_Node* BSQON_AST_UnionCreate(struct BSQON_TYPE_AST_Node* left, struct BSQON_TYPE_AST_Node* right)
 {
-    assert(false);
-    return NULL;
+    struct BSQON_TYPE_AST_Union* node = (struct BSQON_TYPE_AST_Union*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_Union));
+    node->base.tag = BSQON_TYPE_AST_TAG_Union;
+    node->left = left;
+    node->right = right;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printUnion(struct BSQON_TYPE_AST_Union* node)
 {
-    assert(false);
+    
+    if(BSQON_TYPE_AST_getTag(node->left) != BSQON_TYPE_AST_TAG_Conjunction) {
+        BSQON_TYPE_AST_print(node->left);
+    }
+    else {
+        printf("(");
+        BSQON_TYPE_AST_print(node->left);
+        printf(")");
+    }
+        
+    printf(" | ");
+
+    if(BSQON_TYPE_AST_getTag(node->right) != BSQON_TYPE_AST_TAG_Conjunction) {
+        BSQON_TYPE_AST_print(node->right);
+    }
+    else {
+        printf("(");
+        BSQON_TYPE_AST_print(node->right);
+        printf(")");
+    }
 }

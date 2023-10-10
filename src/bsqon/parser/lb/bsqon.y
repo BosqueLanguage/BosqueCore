@@ -38,11 +38,21 @@ int errorcount = 0;
 %locations
 
 /* declare tokens */
-%left SYM_BAR
-%left SYM_AMP
+%left SYM_BAR "|"
+%left SYM_AMP "&"
 
-%token SYM_ELLIPSIS SYM_DOUBLE_COLON SYM_ENTRY SYM_COLON SYM_COMMA SYM_BANG SYM_EQUALS SYM_DOT SYM_AT SYM_UNDERSCORE
-%token KW_SOMETHING KW_NOTHING KW_FALSE KW_SRC KW_NONE KW_SOME KW_TRUE KW_ERR KW_LET KW_IN KW_OK
+%token SYM_COLON ":"
+%token SYM_COMMA ","
+
+%token KW_NONE "none"
+%token KW_NOTHING "nothing"
+%token KW_TRUE "true"
+%token KW_FALSE "false"
+
+%token SYM_DOUBLE_COLON "::"
+
+%token SYM_ELLIPSIS SYM_ENTRY SYM_BANG SYM_EQUALS SYM_DOT SYM_AT SYM_UNDERSCORE
+%token KW_SOMETHING KW_SRC KW_SOME KW_ERR KW_LET KW_IN KW_OK
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
@@ -55,7 +65,8 @@ int errorcount = 0;
 %token <str> TOKEN_LOGICAL_TIME TOKEN_TICK_TIME TOKEN_TIMESTAMP
 
 %token <str> TOKEN_IDENTIFIER "identifier"
-%token <str> TOKEN_UNSPEC_IDENTIFIER TOKEN_TYPE_COMPONENT
+%token <str> TOKEN_TYPE_COMPONENT "type name"
+%token <str> TOKEN_UNSPEC_IDENTIFIER "unspec identifier"
 
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
@@ -67,12 +78,12 @@ int errorcount = 0;
 %type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype
 %type <bsqon_t> bsqontyperoot
 
-%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqontypeliteral
 %type <bsqon> bsqonroot
 
   //----------------------------
-  //%start bsqonroot
-  %start bsqontyperoot
+  %start bsqonroot
+  //%start bsqontyperoot
 
 %%
 
@@ -99,6 +110,7 @@ bsqonnametypel_entry:
 bsqonnominaltype:
    TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalNodeCreate($1, NULL); }
    | TOKEN_TYPE_COMPONENT bsqontermslist { $$ = BSQON_AST_NominalNodeCreate($1, $2); }
+   | bsqonnominaltype SYM_DOUBLE_COLON TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalExtNodeCreate($1, $3); }
 ;
 
 bsqontermslist:
@@ -127,6 +139,11 @@ bsqonrecordtype:
 bsqontype:
    bsqonnominaltype { $$ = $1; }
    | bsqontupletype { $$ = $1; }
+   | bsqonrecordtype { $$ = $1; }
+   | bsqontype SYM_AMP bsqontype { $$ = BSQON_AST_ConjunctionCreate($1, $3); }
+   | bsqontype SYM_BAR bsqontype { $$ = BSQON_AST_UnionCreate($1, $3); }
+   | '(' bsqontype ')' { $$ = $2; }
+   | '(' error ')' { $$ = BSQON_TYPE_AST_ErrorNodeCreate(); yyerrok; }
 ;
 
 bsqontyperoot:
@@ -172,8 +189,12 @@ bsqonidentifier:
    | TOKEN_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, $1); }
 ;
 
+bsqontypeliteral:
+   bsqonliteral SYM_UNDERSCORE bsqonnominaltype { $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3); }
+;
+
 bsqonval: 
-  bsqonliteral | bsqonunspecvar | bsqonidentifier { $$ = $1; }
+  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqontypeliteral { $$ = $1; }
  ;
 
 bsqonroot: bsqonval { yybsqonval = $1; $$ = $1; }
@@ -219,8 +240,8 @@ int main(int argc, char** argv)
 
    if(!yyparse()) {
       //----------------------------
-      //BSQON_AST_print(yybsqonval);
-      BSQON_TYPE_AST_print(yybsqonval_type);
+      BSQON_AST_print(yybsqonval);
+      //BSQON_TYPE_AST_print(yybsqonval_type);
 
       printf("\n");
       fflush(stdout);

@@ -27,6 +27,9 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_UnspecIdentifier:
         BSQON_AST_NameNode_print(BSQON_AST_asNameNode(node));
         break;
+    case BSQON_AST_TAG_TypedLiteral:
+        BSQON_AST_TypedLiteralNode_print(BSQON_AST_asTypedLiteralNode(node));
+        break;
     default:
         BSQON_AST_LiteralNode_print(BSQON_AST_asLiteralNode(node));
         break;
@@ -101,4 +104,26 @@ struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, const ch
 void BSQON_AST_NameNode_print(struct BSQON_AST_NameNode* node)
 {
     printf("%s", node->data.bytes);
+}
+
+struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_TypedLiteralNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_LiteralNode* data, struct BSQON_TYPE_AST_Node* type)
+{
+    struct BSQON_AST_TypedLiteralNode* node = (struct BSQON_AST_TypedLiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedLiteralNode));
+    node->base.tag = BSQON_AST_TAG_TypedLiteral;
+    node->data = data;
+    node->type = type;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node)
+{
+    BSQON_AST_LiteralNode_print(node->data);
+    printf("_");
+    BSQON_TYPE_AST_print(node->type);
 }

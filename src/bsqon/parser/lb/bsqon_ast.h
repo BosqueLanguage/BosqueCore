@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bytestring.h"
+#include "bsqon_type_ast.h"
 
 enum BSQON_AST_TAG
 {
@@ -33,7 +34,9 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_Timestamp,
 
     BSQON_AST_TAG_Identifier,
-    BSQON_AST_TAG_UnspecIdentifier
+    BSQON_AST_TAG_UnspecIdentifier,
+    
+    BSQON_AST_TAG_TypedLiteral
 };
 
 struct BSQON_AST_Node
@@ -54,6 +57,13 @@ struct BSQON_AST_NameNode
     struct ByteString data;
 };
 
+struct BSQON_AST_TypedLiteralNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_AST_LiteralNode* data;
+    struct BSQON_TYPE_AST_Node* type;
+};
+
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
 
@@ -67,3 +77,7 @@ void BSQON_AST_LiteralNode_print(struct BSQON_AST_LiteralNode* node);
 struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, const char* data);
 void BSQON_AST_NameNode_print(struct BSQON_AST_NameNode* node);
+
+struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_LiteralNode* data, struct BSQON_TYPE_AST_Node* type);
+void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node);

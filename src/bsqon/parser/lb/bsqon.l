@@ -45,7 +45,7 @@ TZNAME (\{[a-zA-Z0-9/, _-]+\})
 
 UUID ([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})
 
-IDENTIFIER ([a-z][a-zA-Z0-9_]*|[_][a-zA-Z0-9_]+)
+IDENTIFIER [_]?[a-z][a-zA-Z0-9_]*
 
 %%
 
