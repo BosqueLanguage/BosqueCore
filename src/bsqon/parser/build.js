@@ -36,7 +36,7 @@ function doneop(iserror, msg) {
 }
 
 console.log(srcdir);
-const mode = process.argv[2] || "debug";
+const mode = process.argv[2] || "default";
 
 exec(`bison -d${mode === "debug" ? " -Wcex" : ""} bsqon.y && flex bsqon.l`, {cwd: srcdir}, (err, stdout, stderr) => {
     doneyy = true;
@@ -47,7 +47,7 @@ exec(`bison -d${mode === "debug" ? " -Wcex" : ""} bsqon.y && flex bsqon.l`, {cwd
         doneop(oerr !== null, oerr !== null ? oerr + ostderr + ostdout : "done obj file build...");
     });
 
-    exec(`gcc -O1 -g -ggdb -fsanitize=address -fno-omit-frame-pointer -o ${outexec}/bsqon_parser bytestring.c bsqon_type_ast.c bsqon_ast.c bsqon.tab.c lex.yy.c -lfl`, {cwd: srcdir}, (eerr, estdout, estderr) => {
+    exec(`gcc -O1 -g -ggdb ${mode === "debug" ? " -fsanitize=address" : ""} -fno-omit-frame-pointer -o ${outexec}/bsqon_parser bytestring.c bsqon_type_ast.c bsqon_ast.c bsqon.tab.c lex.yy.c -lfl`, {cwd: srcdir}, (eerr, estdout, estderr) => {
         doneexport = true;
         doneop(eerr !== null, eerr !== null ? eerr + estderr + estdout : "done test executable...");
     });

@@ -110,7 +110,7 @@ bsqonnametypel_entry:
 bsqonnominaltype:
    TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalNodeCreate($1, NULL); }
    | TOKEN_TYPE_COMPONENT bsqontermslist { $$ = BSQON_AST_NominalNodeCreate($1, $2); }
-   | bsqonnominaltype SYM_DOUBLE_COLON TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalExtNodeCreate($1, $3); }
+   | bsqonnominaltype SYM_DOUBLE_COLON TOKEN_TYPE_COMPONENT { $$ = BSQON_AST_NominalExtNodeCreate(BSQON_AST_asNominalNode($1), $3); }
 ;
 
 bsqontermslist:
@@ -133,7 +133,7 @@ bsqonrecordtype:
    | '{' TOKEN_IDENTIFIER SYM_COLON bsqontype '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, $4), NULL)); }
    | '{' bsqonnametypel TOKEN_IDENTIFIER SYM_COLON bsqontype '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($3, $5), $2))); }
    | '{' TOKEN_IDENTIFIER SYM_COLON error '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()), NULL)); yyerrok; }
-   | '{' bsqonnametypel TOKEN_IDENTIFIER SYM_COLON error '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()), $2))); yyerrok; }
+   | '{' bsqonnametypel TOKEN_IDENTIFIER SYM_COLON error '}' { $$ = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate($3, BSQON_TYPE_AST_ErrorNodeCreate()), $2))); yyerrok; }
 ;
 
 bsqontype:
@@ -191,12 +191,13 @@ bsqonidentifier:
 
 bsqontypeliteral:
    bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
-      BSQON_AST_TAG tag = BSQON_AST_getTag($1);
-      if(tag == BSQON_AST_TAG_None || tag == BSQON_AST_TAG_Nothing) {
-         YYERROR("Cannot had a typedecl of none/nothing");
+      enum BSQON_AST_TAG tag = BSQON_AST_getTag($1);
+      if(tag == BSQON_AST_TAG_Numberino) {
+         yyerror("missing numeric specifier");
+         $$ = BSQON_AST_ErrorNodeCreate();
       }
       else {
-         $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3);
+         $$ = BSQON_AST_TypedLiteralNodeCreate(BSQON_AST_asLiteralNode($1), $3);
       }
    }
 ;
@@ -205,7 +206,9 @@ bsqonval:
   bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqontypeliteral { $$ = $1; }
  ;
 
-bsqonroot: bsqonval { yybsqonval = $1; $$ = $1; }
+bsqonroot: 
+   bsqonval { yybsqonval = $1; $$ = $1; }
+   | error {yybsqonval = BSQON_AST_ErrorNodeCreate(); $$ = BSQON_AST_ErrorNodeCreate(); }
 %%
 
 extern FILE* yyin;

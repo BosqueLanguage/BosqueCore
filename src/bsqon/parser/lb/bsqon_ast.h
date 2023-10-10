@@ -5,7 +5,8 @@
 
 enum BSQON_AST_TAG
 {
-    BSQON_AST_TAG_None = 1,
+    BSQON_AST_TAG_Error = 1,
+    BSQON_AST_TAG_None,
     BSQON_AST_TAG_Nothing,
     BSQON_AST_TAG_True,
     BSQON_AST_TAG_False,
@@ -44,6 +45,11 @@ struct BSQON_AST_Node
     enum BSQON_AST_TAG tag;
 };
 
+struct BSQON_AST_ErrorNode
+{
+    struct BSQON_AST_Node base;
+};
+
 struct BSQON_AST_LiteralNode
 {
     struct BSQON_AST_Node base;
@@ -66,6 +72,8 @@ struct BSQON_AST_TypedLiteralNode
 
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
+
+struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate();
 
 struct BSQON_AST_LiteralNode* BSQON_AST_asLiteralNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateEmpty(enum BSQON_AST_TAG tag);

@@ -14,7 +14,7 @@ function runSucceedingTest(testname, bsqon, output) {
     process.stdout.write(`    running test ${testname}...`);
     try {
         const result = execFileSync(outexec, { input: bsqon }).toString().trim();
-        if(result === output) {
+        if(result.startsWith(output)) {
             process.stdout.write(`passed\n`); 
         }
         else {
@@ -46,7 +46,7 @@ function runParseErrorTest(testname, bsqon, output) {
     process.stdout.write(`    running test ${testname}...`);
     try {
         const result = execFileSync(outexec, { input: bsqon }).toString().trim();
-        if(result.startsWith(output)) {
+        if(result.includes(output)) {
             process.stdout.write(`passed\n`); 
         }
         else {

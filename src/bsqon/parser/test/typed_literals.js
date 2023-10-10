@@ -30,8 +30,8 @@ const typederrortests_numbers = {
     name: "Typed Numeric Errors",
     succeed: false,
     tests: [
-        ['2iFoo', '2iFoo', 'error'],
-        ['2_Foo', '2_Foo', 'error']
+        ['2iFoo', '2iFoo', 'syntax error'],
+        ['2_Foo', '2_Foo', 'missing numeric specifier']
     ]
 };
 
@@ -53,7 +53,7 @@ const typedtests_misc = {
     name: "Typed Misc Parses",
     succeed: true,
     tests: [
-        ['true_Flag', 'true_Flag', 'True_Flag']
+        ['true_Flag', 'true_Flag', 'true_Flag']
     ]
 };
 

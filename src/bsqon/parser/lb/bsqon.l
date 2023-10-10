@@ -45,7 +45,8 @@ TZNAME (\{[a-zA-Z0-9/, _-]+\})
 
 UUID ([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})
 
-IDENTIFIER [_]?[a-z][a-zA-Z0-9_]*
+IDENTIFIER ([_]?[a-z]([a-zA-Z0-9]+(_[a-z0-9_])?)*)
+TYPE_IDENTIFIER ([A-Z][a-zA-Z0-9_]*)
 
 %%
 
@@ -209,7 +210,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 {IDENTIFIER}     { yylval.str = AST_STRDUP(yytext); return TOKEN_IDENTIFIER; }
 _"$"{IDENTIFIER} { yylval.str = AST_STRDUP(yytext); return TOKEN_UNSPEC_IDENTIFIER; }
 
-[A-Z]([a-zA-Z0-9_])+(::[A-Z]([a-zA-Z0-9_])+)* { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
+{TYPE_IDENTIFIER}(::{TYPE_IDENTIFIER})* { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
 
  /* comments */
 "%%"[^\n]*    /* line comment */

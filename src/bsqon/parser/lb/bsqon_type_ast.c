@@ -56,9 +56,9 @@ struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCompleteParse(struct BS
 {
     assert(ll != NULL);
 
-    struct BSQON_TYPE_AST_List* lp = NULL;
+    struct BSQON_TYPE_AST_NamedList* lp = NULL;
     while(ll != NULL) {
-        struct BSQON_TYPE_AST_List* lc = ll;
+        struct BSQON_TYPE_AST_NamedList* lc = ll;
         ll = ll->next;
 
         lc->next = lp;

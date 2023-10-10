@@ -11,6 +11,9 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
 {
     switch (node->tag)
     {
+    case BSQON_AST_TAG_Error:
+        printf("^ERROR_EXP^");
+        break;
     case BSQON_AST_TAG_None:
         printf("none");
         break;
@@ -34,6 +37,14 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
         BSQON_AST_LiteralNode_print(BSQON_AST_asLiteralNode(node));
         break;
     }
+}
+
+struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate()
+{
+    struct BSQON_AST_ErrorNode* node = (struct BSQON_AST_ErrorNode*)AST_ALLOC(sizeof(struct BSQON_AST_ErrorNode));
+    node->base.tag = BSQON_AST_TAG_Error;
+
+    return (struct BSQON_AST_Node*)node;
 }
 
 struct BSQON_AST_LiteralNode* BSQON_AST_asLiteralNode(const struct BSQON_AST_Node* node)
@@ -123,7 +134,7 @@ struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Literal
 
 void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node)
 {
-    BSQON_AST_LiteralNode_print(node->data);
+    BSQON_AST_print(node->data);
     printf("_");
     BSQON_TYPE_AST_print(node->type);
 }
