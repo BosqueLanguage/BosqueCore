@@ -190,7 +190,15 @@ bsqonidentifier:
 ;
 
 bsqontypeliteral:
-   bsqonliteral SYM_UNDERSCORE bsqonnominaltype { $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3); }
+   bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
+      BSQON_AST_TAG tag = BSQON_AST_getTag($1);
+      if(tag == BSQON_AST_TAG_None || tag == BSQON_AST_TAG_Nothing) {
+         YYERROR("Cannot had a typedecl of none/nothing");
+      }
+      else {
+         $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3);
+      }
+   }
 ;
 
 bsqonval: 
