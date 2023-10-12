@@ -142,8 +142,8 @@ uuid7"{"{UUID}"}"       { yylval.str = AST_STRDUP(yytext); return TOKEN_UUID_V7;
 sha3"{"[a-f0-9]{64}"}"  { yylval.str = AST_STRDUP(yytext); return TOKEN_SHA_HASH; }
 
 0x"["[^\]]*"]"        { yyerror("Invalid buffer contents"); return YYerror; }
-uuid(4|7)"{"[^\}]*"}" { yyerror("Invalid UUID value"); return YYerror; }
-sha3"{"[^\}]*"}"      { yyerror("Invalid SHA3 value"); return YYerror; }
+uuid(4|7)"{"[^}]*"}" { yyerror("Invalid UUID value"); return YYerror; }
+sha3"{"[^}]*"}"      { yyerror("Invalid SHA3 value"); return YYerror; }
 
 0x"["[a-zA-Z0-9]*          { yyerror("Missing close bracket"); return YYerror; }
 uuid(4|7)"{"[a-zA-Z0-9-]+  { yyerror("Missing close bracket"); return YYerror; }
@@ -153,7 +153,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 \"            { BEGIN(STRING); string_buf_bs.len = 0; ByteStringStoreChar('"'); }
 }
 <STRING>{
-\"            { BEGIN(INITIAL); ByteStringStoreChar('"'); yylval.bstr = &string_buf_bs; return TOKEN_STRING; }
+\"            { BEGIN(INITIAL); ByteStringStoreChar('"'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_STRING; }
 <<EOF>>       { BEGIN(INITIAL); yyerror("Unclosed String"); return YYEOF; }
 \n[ \t\r]*\\  { ByteStringStoreChar('\n'); /*ignore whitespace till alignment on multi-line string*/ }
 [^"]          { ByteStringStoreChar(yytext[0]); }
@@ -163,7 +163,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 '             { BEGIN(ASCII_STRING); string_buf_bs.len = 0; ByteStringStoreChar('\''); }
 }
 <ASCII_STRING>{
-'             { BEGIN(INITIAL); ByteStringStoreChar('\''); yylval.bstr = &string_buf_bs; return TOKEN_ASCII_STRING; }
+'             { BEGIN(INITIAL); ByteStringStoreChar('\''); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_ASCII_STRING; }
 <<EOF>>       { BEGIN(INITIAL); yyerror("Unclosed ASCIIString"); return YYEOF; }
 \n[ \t\r]*\\  { ByteStringStoreChar('\n'); /*ignore whitespace till alignment on multi-line string*/ }
 [!-~ \t]      { ByteStringStoreChar(yytext[0]); }
@@ -174,7 +174,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 "/"         { BEGIN(REGEX); string_buf_bs.len = 0; ByteStringStoreChar('/'); }
 }
 <REGEX>{
-"/"         { BEGIN(INITIAL); ByteStringStoreChar('/'); yylval.bstr = &string_buf_bs; return TOKEN_REGEX; }
+"/"         { BEGIN(INITIAL); ByteStringStoreChar('/'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_REGEX; }
 <<EOF>>     { BEGIN(INITIAL); yyerror("Unclosed Regex"); return YYEOF; }
 \n          { yyerror("Newline in Regex"); return YYerror; }
 [!-~ \t]    { ByteStringStoreChar(yytext[0]); }
@@ -182,10 +182,10 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 }
 
 <INITIAL>{
-`           { BEGIN(PATH_ITEM); string_buf_bs.len = 0; ByteStringStoreChar('`'); }
+[gf]?`      { BEGIN(PATH_ITEM); string_buf_bs.len = 0; ByteStringStoreText(yytext, yyleng); }
 }
 <PATH_ITEM>{
-`[gf]?      { BEGIN(INITIAL); ByteStringStoreText(yytext, yyleng); yylval.bstr = &string_buf_bs; return TOKEN_PATH_ITEM; }
+`           { BEGIN(INITIAL); ByteStringStoreChar('`'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_PATH_ITEM; }
 <<EOF>>     { BEGIN(INITIAL); yyerror("Unclosed Path Item"); return YYEOF; }
 [ \t\n\r]   { yyerror("Whitespace in Path Item"); return YYerror; }
 [!-~]       { ByteStringStoreChar(yytext[0]); }

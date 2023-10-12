@@ -31,14 +31,9 @@ struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_ListCompleteParse(struct BSQON_TYPE_A
 
 struct BSQON_TYPE_AST_NamedListEntry* BSQON_TYPE_AST_NamedListEntryCreate(const char* name, struct BSQON_TYPE_AST_Node* value)
 {
-    size_t length = strlen(name);
-
-    struct BSQON_TYPE_AST_NamedListEntry* node = (struct BSQON_TYPE_AST_NamedListEntry*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NamedListEntry) + length + 1);
-    node->name.bytes = ((uint8_t*)node) + sizeof(struct BSQON_TYPE_AST_NamedListEntry);
+    struct BSQON_TYPE_AST_NamedListEntry* node = (struct BSQON_TYPE_AST_NamedListEntry*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NamedListEntry));
+    node->name = name;
     node->value = value;
-
-    buff_clear(node->name.bytes, length + 1);
-    chars_copy(&(node->name), name, length);
 
     return (struct BSQON_TYPE_AST_NamedListEntry*)node;
 }
@@ -123,22 +118,17 @@ struct BSQON_TYPE_AST_NominalNode* BSQON_AST_asNominalNode(const struct BSQON_TY
 
 struct BSQON_TYPE_AST_Node* BSQON_AST_NominalNodeCreate(const char* name, struct BSQON_TYPE_AST_List* terms)
 {
-    size_t length = strlen(name);
-
-    struct BSQON_TYPE_AST_NominalNode* node = (struct BSQON_TYPE_AST_NominalNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NominalNode) + length + 1);
+    struct BSQON_TYPE_AST_NominalNode* node = (struct BSQON_TYPE_AST_NominalNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NominalNode));
     node->base.tag = BSQON_TYPE_AST_TAG_Nominal;
-    node->name.bytes = ((uint8_t*)node) + sizeof(struct BSQON_TYPE_AST_NominalNode);
+    node->name = name;
     node->terms = terms;
-
-    buff_clear(node->name.bytes, length + 1);
-    chars_copy(&(node->name), name, length);
 
     return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printNominalNode(struct BSQON_TYPE_AST_NominalNode* node)
 {
-    printf("%s", node->name.bytes);
+    printf("%s", node->name);
     if(node->terms != NULL) {
         printf("<");
         for(struct BSQON_TYPE_AST_List* ll = node->terms; ll != NULL; ll = ll->next)
@@ -213,7 +203,7 @@ void BSQON_AST_TYPE_printRecordNode(struct BSQON_TYPE_AST_RecordNode* node)
 {
     printf("{");
     for(struct BSQON_TYPE_AST_NamedList* ll = node->entries; ll != NULL; ll = ll->next) {
-        printf("%s: ", ll->value->name.bytes);
+        printf("%s: ", ll->value->name);
         BSQON_TYPE_AST_print(ll->value->value);
 
         if(ll->next != NULL) {

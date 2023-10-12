@@ -1,18 +1,13 @@
 #include "./bytestring.h"
 
-void buff_clear(char* src, size_t len)
+struct ByteString* bstrAlloc(struct ByteString dst)
 {
-    memset(src, 0, len);
-}
+    struct ByteString* res = (struct ByteString*)malloc(sizeof(struct ByteString) + dst.len + 1);
+    memset((char*)res, 0, sizeof(struct ByteString) + dst.len + 1);
 
-void chars_copy(struct ByteString* dst, const char* src, size_t len)
-{
-    memcpy(dst->bytes, src, len);
-    dst->len = len;
-}
+    res->bytes = (uint8_t*)res + sizeof(struct ByteString);
+    memcpy(res->bytes, dst.bytes, dst.len);
+    res->len = dst.len;
 
-void bytes_copy(struct ByteString* dst, struct ByteString* src)
-{
-    memcpy(dst->bytes, src->bytes, src->len);
-    dst->len = src->len;
+    return res;
 }

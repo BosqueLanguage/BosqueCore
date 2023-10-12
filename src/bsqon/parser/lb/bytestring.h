@@ -17,7 +17,4 @@ struct ByteString
     uint64_t len;
 };
 
-void buff_clear(char* src, size_t len);
-
-void chars_copy(struct ByteString* dst, const char* src, size_t len);
-void bytes_copy(struct ByteString* dst, struct ByteString* src);
+struct ByteString* bstrAlloc(struct ByteString dst);

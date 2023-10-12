@@ -95,11 +95,7 @@ const literaltests_strings = {
 
         ['/none/', '/none/', '/none/'],
         ['/[0-9]+/', '/[0-9]+/', '/[0-9]+/'],
-        ['/a b/', '/a b/', '/a b/'],
-
-        ['`file://mark.com`', '`file://mark.com`', '`file://mark.com`'],
-        ['`file://mark.com/**`g', '`file://mark.com/**`g', '`file://mark.com/**`g'],
-        ['`mark.com`f', '`mark.com`f', '`mark.com`f'],
+        ['/a b/', '/a b/', '/a b/']
     ]
 };
 

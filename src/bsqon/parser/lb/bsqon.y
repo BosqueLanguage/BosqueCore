@@ -56,7 +56,7 @@ int errorcount = 0;
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
-%token <str> TOKEN_NUMBERINO
+%token <str> TOKEN_NUMBERINO "numerino"
 
 %token <str> TOKEN_BYTE_BUFFER TOKEN_UUID_V4 TOKEN_UUID_V7 TOKEN_SHA_HASH
 %token <bstr> TOKEN_STRING TOKEN_ASCII_STRING TOKEN_REGEX TOKEN_PATH_ITEM
@@ -70,7 +70,7 @@ int errorcount = 0;
 
   /* %type <a> exp stmt list explist */
   /* %type <sl> symlist */
-
+ 
 %type <bsqon_t> bsqontypel_entry
 %type <bsqon_t_nametypel_entry> bsqonnametypel_entry
 %type <bsqon_t_list> bsqontypel bsqontermslist
@@ -78,7 +78,7 @@ int errorcount = 0;
 %type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype
 %type <bsqon_t> bsqontyperoot
 
-%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqontypeliteral
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral
 %type <bsqon> bsqonroot
 
   //----------------------------
@@ -151,33 +151,32 @@ bsqontyperoot:
 ;
 
 bsqonliteral: 
-   KW_NONE                 { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_None); }
-   | KW_NOTHING            { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_Nothing); }
-   | KW_TRUE               { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_True); }
-   | KW_FALSE              { $$ = BSQON_AST_LiteralNodeCreateEmpty(BSQON_AST_TAG_False); }
-   | TOKEN_NAT             { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Nat, $1); }
-   | TOKEN_INT             { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Int, $1); }
-   | TOKEN_BIG_NAT         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_BigNat, $1); }
-   | TOKEN_BIG_INT         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_BigInt, $1); }
-   | TOKEN_RATIONAL        { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Rational, $1); }
-   | TOKEN_FLOAT           { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Float, $1); }
-   | TOKEN_DOUBLE          { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Double, $1); }
-   | TOKEN_NUMBERINO       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Numberino, $1); }
-   | TOKEN_BYTE_BUFFER     { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_ByteBuffer, $1); }
-   | TOKEN_UUID_V4         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv4, $1); }
-   | TOKEN_UUID_V7         { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UUIDv7, $1); }
-   | TOKEN_SHA_HASH        { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_SHAHashcode, $1); }
-   | TOKEN_STRING          { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_String, $1); }
-   | TOKEN_ASCII_STRING    { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_ASCIIString, $1); }
-   | TOKEN_REGEX           { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_Regex, $1); }
-   | TOKEN_PATH_ITEM       { $$ = BSQON_AST_LiteralNodeCreateBytes(BSQON_AST_TAG_PathItem, $1); }
-   | TOKEN_DATE_TIME       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_DateTime, $1); }
-   | TOKEN_UTC_DATE_TIME   { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_UTCDateTime, $1); }
-   | TOKEN_PLAIN_DATE      { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_PlainDate, $1); }
-   | TOKEN_PLAIN_TIME      { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_PlainTime, $1); }
-   | TOKEN_LOGICAL_TIME    { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_LogicalTime, $1); }
-   | TOKEN_TICK_TIME       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_TickTime, $1); }
-   | TOKEN_TIMESTAMP       { $$ = BSQON_AST_LiteralNodeCreateChars(BSQON_AST_TAG_Timestamp, $1); }
+   KW_NONE                 { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_None); }
+   | KW_NOTHING            { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_Nothing); }
+   | KW_TRUE               { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_True); }
+   | KW_FALSE              { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_False); }
+   | TOKEN_NAT             { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Nat, $1); }
+   | TOKEN_INT             { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Int, $1); }
+   | TOKEN_BIG_NAT         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_BigNat, $1); }
+   | TOKEN_BIG_INT         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_BigInt, $1); }
+   | TOKEN_RATIONAL        { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Rational, $1); }
+   | TOKEN_FLOAT           { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Float, $1); }
+   | TOKEN_DOUBLE          { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Double, $1); }
+   | TOKEN_NUMBERINO       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Numberino, $1); }
+   | TOKEN_BYTE_BUFFER     { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_ByteBuffer, $1); }
+   | TOKEN_UUID_V4         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv4, $1); }
+   | TOKEN_UUID_V7         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv7, $1); }
+   | TOKEN_SHA_HASH        { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_SHAHashcode, $1); }
+   | TOKEN_STRING          { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_String, $1); }
+   | TOKEN_ASCII_STRING    { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_ASCIIString, $1); }
+   | TOKEN_REGEX           { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_Regex, $1); }
+   | TOKEN_DATE_TIME       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_DateTime, $1); }
+   | TOKEN_UTC_DATE_TIME   { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UTCDateTime, $1); }
+   | TOKEN_PLAIN_DATE      { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_PlainDate, $1); }
+   | TOKEN_PLAIN_TIME      { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_PlainTime, $1); }
+   | TOKEN_LOGICAL_TIME    { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_LogicalTime, $1); }
+   | TOKEN_TICK_TIME       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_TickTime, $1); }
+   | TOKEN_TIMESTAMP       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Timestamp, $1); }
 ;
 
 bsqonunspecvar: 
@@ -187,6 +186,15 @@ bsqonunspecvar:
 bsqonidentifier: 
    KW_SRC       { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, "$src"); }
    | TOKEN_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, $1); }
+;
+
+bsqonstringof:
+   TOKEN_STRING bsqonnominaltype { $$ = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_StringOf, $1, $2); }
+   | TOKEN_ASCII_STRING bsqonnominaltype { $$ = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_ASCIIStringOf, $1, $2); }
+;
+
+bsqonpath:
+   TOKEN_PATH_ITEM bsqonnominaltype { $$ = BSQON_AST_PathNodeCreate($1, $2); }
 ;
 
 bsqontypeliteral:
@@ -201,13 +209,13 @@ bsqontypeliteral:
          $$ = BSQON_AST_ErrorNodeCreate();
       }
       else {
-         $$ = BSQON_AST_TypedLiteralNodeCreate(BSQON_AST_asLiteralNode($1), $3);
+         $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3);
       }
    }
 ;
 
 bsqonval: 
-  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqontypeliteral { $$ = $1; }
+  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
  ;
 
 bsqonroot: 

@@ -26,7 +26,7 @@ struct BSQON_TYPE_AST_List
 
 struct BSQON_TYPE_AST_NamedListEntry
 {
-    struct ByteString name;
+    const char* name;
     struct BSQON_TYPE_AST_Node* value;
 };
 
@@ -44,7 +44,7 @@ struct BSQON_TYPE_AST_ErrorNode
 struct BSQON_TYPE_AST_NominalNode
 {
     struct BSQON_TYPE_AST_Node base;
-    struct ByteString name;
+    const char* name;
     struct BSQON_TYPE_AST_List* terms;
 };
 

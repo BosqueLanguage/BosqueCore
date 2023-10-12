@@ -26,15 +26,27 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_False:
         printf("false");
         break;
+    case BSQON_AST_TAG_String:
+    case BSQON_AST_TAG_ASCIIString:
+    case BSQON_AST_TAG_Regex:
+        BSQON_AST_LiteralStringNode_print(BSQON_AST_asLiteralStringNode(node));
+        break;
     case BSQON_AST_TAG_Identifier:
     case BSQON_AST_TAG_UnspecIdentifier:
         BSQON_AST_NameNode_print(BSQON_AST_asNameNode(node));
+        break;
+    case BSQON_AST_TAG_StringOf:
+    case BSQON_AST_TAG_ASCIIStringOf:
+        BSQON_AST_StringOfNode_print(BSQON_AST_asStringOfNode(node));
+        break;
+    case BSQON_AST_TAG_Path:
+        BSQON_AST_PathNode_print(BSQON_AST_asPathNode(node));
         break;
     case BSQON_AST_TAG_TypedLiteral:
         BSQON_AST_TypedLiteralNode_print(BSQON_AST_asTypedLiteralNode(node));
         break;
     default:
-        BSQON_AST_LiteralNode_print(BSQON_AST_asLiteralNode(node));
+        BSQON_AST_LiteralStandardNode_print(BSQON_AST_asLiteralStandardNode(node));
         break;
     }
 }
@@ -47,50 +59,55 @@ struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate()
     return (struct BSQON_AST_Node*)node;
 }
 
-struct BSQON_AST_LiteralNode* BSQON_AST_asLiteralNode(const struct BSQON_AST_Node* node)
+struct BSQON_AST_LiteralSingletonNode* BSQON_AST_asLiteralSingletonNode(const struct BSQON_AST_Node* node)
 {
-    return (struct BSQON_AST_LiteralNode*)node;
+    return (struct BSQON_AST_LiteralSingletonNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateEmpty(enum BSQON_AST_TAG tag)
+struct BSQON_AST_Node* BSQON_AST_LiteralSingletonNodeCreate(enum BSQON_AST_TAG tag)
 {
-    struct BSQON_AST_LiteralNode* node = (struct BSQON_AST_LiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralNode));
+    struct BSQON_AST_LiteralSingletonNode* node = (struct BSQON_AST_LiteralSingletonNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralSingletonNode));
     node->base.tag = tag;
-    node->data.bytes = NULL;
-    node->data.len = 0;
 
     return (struct BSQON_AST_Node*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateChars(enum BSQON_AST_TAG tag, const char* data)
+struct BSQON_AST_LiteralStringNode* BSQON_AST_asLiteralStringNode(const struct BSQON_AST_Node* node)
 {
-    size_t length = strlen(data);
+    return (struct BSQON_AST_LiteralStringNode*)node;
+}
 
-    struct BSQON_AST_LiteralNode* node = (struct BSQON_AST_LiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralNode) + length + 1);
+struct BSQON_AST_Node* BSQON_AST_LiteralStringNodeCreate(enum BSQON_AST_TAG tag, struct ByteString* data)
+{
+    struct BSQON_AST_LiteralStringNode* node = (struct BSQON_AST_LiteralStringNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralStringNode));
     node->base.tag = tag;
-    node->data.bytes = ((uint8_t*)node) + sizeof(struct BSQON_AST_LiteralNode);
-
-    buff_clear(node->data.bytes, length + 1);
-    chars_copy(&(node->data), data, length);
+    node->data = data;
 
     return (struct BSQON_AST_Node*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralNodeCreateBytes(enum BSQON_AST_TAG tag, struct ByteString* data)
+void BSQON_AST_LiteralStringNode_print(struct BSQON_AST_LiteralStringNode* node)
 {
-    struct BSQON_AST_LiteralNode* node = (struct BSQON_AST_LiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralNode) + data->len + 1);
-    node->base.tag = tag;
-    node->data.bytes = ((uint8_t*)node) + sizeof(struct BSQON_AST_LiteralNode);
+    printf("%s", node->data->bytes);
+}
 
-    buff_clear(node->data.bytes, data->len + 1);
-    bytes_copy(&(node->data), data);
+struct BSQON_AST_LiteralStandardNode* BSQON_AST_asLiteralStandardNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_LiteralStandardNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_LiteralStandardNodeCreate(enum BSQON_AST_TAG tag, const char* data)
+{
+    struct BSQON_AST_LiteralStandardNode* node = (struct BSQON_AST_LiteralStandardNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralStandardNode));
+    node->base.tag = tag;
+    node->data = data;
 
     return (struct BSQON_AST_Node*)node;
 }
 
-void BSQON_AST_LiteralNode_print(struct BSQON_AST_LiteralNode* node)
+void BSQON_AST_LiteralStandardNode_print(struct BSQON_AST_LiteralStandardNode* node)
 {
-   printf("%s", node->data.bytes);
+    printf("%s", node->data);
 }
 
 struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* node)
@@ -100,21 +117,58 @@ struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* nod
 
 struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, const char* data)
 {
-    size_t length = strlen(data);
-
-    struct BSQON_AST_NameNode* node = (struct BSQON_AST_NameNode*)AST_ALLOC(sizeof(struct BSQON_AST_NameNode) + length + 1);
+    struct BSQON_AST_NameNode* node = (struct BSQON_AST_NameNode*)AST_ALLOC(sizeof(struct BSQON_AST_NameNode));
     node->base.tag = tag;
-    node->data.bytes = ((uint8_t*)node) + sizeof(struct BSQON_AST_NameNode);
-
-    buff_clear(node->data.bytes, length + 1);
-    chars_copy(&(node->data), data, length);
+    node->data = data;
 
     return (struct BSQON_AST_Node*)node;
 }
 
 void BSQON_AST_NameNode_print(struct BSQON_AST_NameNode* node)
 {
-    printf("%s", node->data.bytes);
+    printf("%s", node->data);
+}
+
+struct BSQON_AST_StringOfNode* BSQON_AST_asStringOfNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_StringOfNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
+{
+    struct BSQON_AST_StringOfNode* node = (struct BSQON_AST_StringOfNode*)AST_ALLOC(sizeof(struct BSQON_AST_StringOfNode));
+    node->base.tag = tag;
+    node->data = str;
+    node->type = type;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_StringOfNode_print(struct BSQON_AST_StringOfNode* node)
+{
+    printf("%s", node->data->bytes);
+    BSQON_TYPE_AST_print(node->type);
+}
+
+struct BSQON_AST_PathNode* BSQON_AST_asPathNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_PathNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
+{
+    struct BSQON_AST_PathNode* node = (struct BSQON_AST_PathNode*)AST_ALLOC(sizeof(struct BSQON_AST_PathNode));
+    node->base.tag = BSQON_AST_TAG_Path;
+    node->data = str;
+    node->type = type;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node)
+{
+    printf("%s", node->data->bytes);
+    BSQON_TYPE_AST_print(node->type);
 }
 
 struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node)
@@ -122,7 +176,7 @@ struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQ
     return (struct BSQON_AST_TypedLiteralNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_LiteralNode* data, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_TypedLiteralNode* node = (struct BSQON_AST_TypedLiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedLiteralNode));
     node->base.tag = BSQON_AST_TAG_TypedLiteral;
