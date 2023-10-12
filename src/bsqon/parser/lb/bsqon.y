@@ -75,10 +75,11 @@ int errorcount = 0;
 %type <bsqon_t_nametypel_entry> bsqonnametypel_entry
 %type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t_namedlist> bsqonnametypel
-%type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype
+%type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype bsqontspec
 %type <bsqon_t> bsqontyperoot
 
-%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
+%type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
 %type <bsqon> bsqonroot
 
   //----------------------------
@@ -144,6 +145,12 @@ bsqontype:
    | bsqontype SYM_BAR bsqontype { $$ = BSQON_AST_UnionCreate($1, $3); }
    | '(' bsqontype ')' { $$ = $2; }
    | '(' error ')' { $$ = BSQON_TYPE_AST_ErrorNodeCreate(); yyerrok; }
+;
+
+bsqontspec: 
+   bsqonnominaltype { $$ = $1; }
+   | bsqontupletype { $$ = $1; }
+   | bsqonrecordtype { $$ = $1; }
 ;
 
 bsqontyperoot:
@@ -214,9 +221,40 @@ bsqontypeliteral:
    }
 ;
 
+bsqonterminal: 
+   bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
+;
+
+bsqonbracketvalue:
+   '[' ']' { $$ = BSQON_AST_TupleNodeCreate(NULL); }
+   | '[' bsqonval ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons($2, NULL)); }
+   | '[' bsqonvall bsqonval ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2))); }
+   | '[' error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), NULL)); yyerrok; }
+   | '[' bsqonvall error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), $2))); yyerrok; }
+;
+
+bsqonbracevalue:
+   '{' xxxx '}' { xxxx; }
+;
+
+bsqonbracketbracevalue:
+   bsqonbracketvalue | bsqonbracevalue { $$ = $1; }
+;
+
+bsqontypedvalue:
+   '<' bsqontspec '>' bsqonbracketbracevalue { xxxx; }
+   | bsqonnominaltype bsqonbracketbracevalue { xxxx; }
+   | '<' error '>' bsqonbracketbracevalue { xxxx; }
+   | error bsqonbracketbracevalue { xxxx; }
+; 
+
+bsqonstructvalue:
+   bsqonbracketbracevalue | bsqontypedvalue { $$ = $1; }
+;
+
 bsqonval: 
-  bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
- ;
+  bsqonterminal | bsqonstructvalue { $$ = $1; }
+;
 
 bsqonroot: 
    bsqonval { yybsqonval = $1; $$ = $1; }
