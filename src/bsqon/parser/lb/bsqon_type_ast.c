@@ -1,7 +1,6 @@
 #include "./bsqon_type_ast.h"
 
 #include <stdio.h>
-
 #include <assert.h>
 
 struct BSQON_TYPE_AST_List* BSQON_TYPE_AST_ListCons(struct BSQON_TYPE_AST_Node* value, struct BSQON_TYPE_AST_List* next)

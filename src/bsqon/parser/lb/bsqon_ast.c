@@ -1,6 +1,7 @@
 #include "./bsqon_ast.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next)
 {
@@ -29,17 +30,36 @@ struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll)
 
 struct BSQON_AST_NamedListEntry* BSQON_AST_NamedListEntryCreate(const char* name, struct BSQON_AST_Node* value)
 {
-    xxxx;
+    struct BSQON_AST_NamedListEntry* node = (struct BSQON_AST_NamedListEntry*)AST_ALLOC(sizeof(struct BSQON_AST_NamedListEntry));
+    node->name = name;
+    node->value = value;
+
+    return (struct BSQON_AST_NamedListEntry*)node;
 }
 
-struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next)
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_AST_NamedList* next)
 {
-    xxxx;
+    struct BSQON_AST_NamedList* node = (struct BSQON_AST_NamedList*)AST_ALLOC(sizeof(struct BSQON_AST_NamedList));
+    node->value = value;
+    node->next = next;
+
+    return node;
 }
 
 struct BSQON_AST_NamedList* BSQON_AST_NamedListCompleteParse(struct BSQON_AST_NamedList* ll)
 {
-    xxxx;
+    assert(ll != NULL);
+
+    struct BSQON_AST_NamedList* lp = NULL;
+    while(ll != NULL) {
+        struct BSQON_AST_NamedList* lc = ll;
+        ll = ll->next;
+
+        lc->next = lp;
+        lp = lc;
+    }
+
+    return lp;
 }
 
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node)
@@ -84,6 +104,15 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
         break;
     case BSQON_AST_TAG_TypedLiteral:
         BSQON_AST_TypedLiteralNode_print(BSQON_AST_asTypedLiteralNode(node));
+        break;
+    case BSQON_AST_TAG_BracketValue:
+        BSQON_AST_BracketValueNode_print(BSQON_AST_asBracketValueNode(node));
+        break;
+    case BSQON_AST_TAG_BraceValue:
+        BSQON_AST_BraceValueNode_print(BSQON_AST_asBraceValueNode(node));
+        break;
+    case BSQON_AST_TAG_TypedValue:
+        BSQON_AST_TypedValueNode_print(BSQON_AST_asTypedValueNode(node));
         break;
     default:
         BSQON_AST_LiteralStandardNode_print(BSQON_AST_asLiteralStandardNode(node));
@@ -232,3 +261,92 @@ void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node)
     printf("_");
     BSQON_TYPE_AST_print(node->type);
 }
+
+struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_BracketValueNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct BSQON_AST_List* data)
+{
+    struct BSQON_AST_BracketValueNode* node = (struct BSQON_AST_BracketValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BracketValueNode));
+    node->base.tag = BSQON_AST_TAG_BracketValue;
+    node->values = data;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_BracketValueNode_print(struct BSQON_AST_BracketValueNode* node)
+{
+    printf("[");
+    for(struct BSQON_AST_List* ll = node->values; ll != NULL; ll = ll->next) {
+        BSQON_AST_print(ll->value);
+
+        if(ll->next != NULL) {
+            printf(", ");
+        }
+    }
+    printf("]");
+}
+
+struct BSQON_AST_BraceValueNode* BSQON_AST_asBraceValueNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_BraceValueNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct BSQON_AST_NamedList* data)
+{
+    struct BSQON_AST_BraceValueNode* node = (struct BSQON_AST_BraceValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BraceValueNode));
+    node->base.tag = BSQON_AST_TAG_BraceValue;
+    node->entries = data;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_BraceValueNode_print(struct BSQON_AST_BraceValueNode* node)
+{
+    printf("{");
+    for(struct BSQON_AST_NamedList* ll = node->entries; ll != NULL; ll = ll->next) {
+        if(ll->value->name != NULL) {
+            printf("%s=", ll->value->name);
+        }
+
+        BSQON_AST_print(ll->value->value);
+
+        if(ll->next != NULL) {
+            printf(", ");
+        }
+    }
+    printf("}");
+}
+
+struct BSQON_AST_TypedValueNode* BSQON_AST_asTypedValueNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_TypedValueNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
+{
+    struct BSQON_AST_TypedValueNode* node = (struct BSQON_AST_TypedValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedValueNode));
+    node->base.tag = BSQON_AST_TAG_TypedValue;
+    node->type = type;
+    node->value = data;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_TypedValueNode_print(struct BSQON_AST_TypedValueNode* node)
+{
+    if(node->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+        printf("<");
+    }
+
+    BSQON_TYPE_AST_print(node->type);
+    
+    if(node->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+        printf(">");
+    }
+
+    BSQON_AST_print((struct BSQON_AST_Node*)node->value);
+}
+

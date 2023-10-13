@@ -39,7 +39,11 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_StringOf,
     BSQON_AST_TAG_ASCIIStringOf,
     BSQON_AST_TAG_Path,
-    BSQON_AST_TAG_TypedLiteral
+    BSQON_AST_TAG_TypedLiteral,
+
+    BSQON_AST_TAG_BracketValue,
+    BSQON_AST_TAG_BraceValue,
+    BSQON_AST_TAG_TypedValue
 };
 
 struct BSQON_AST_Node
@@ -115,11 +119,30 @@ struct BSQON_AST_TypedLiteralNode
     struct BSQON_TYPE_AST_Node* type;
 };
 
+struct BSQON_AST_BracketValueNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_AST_List* values;
+};
+
+struct BSQON_AST_BraceValueNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_AST_NamedList* entries;
+};
+
+struct BSQON_AST_TypedValueNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_TYPE_AST_Node* type;
+    struct BSQON_AST_Node* value;
+};
+
 struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next);
 struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll);
 
 struct BSQON_AST_NamedListEntry* BSQON_AST_NamedListEntryCreate(const char* name, struct BSQON_AST_Node* value);
-struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next);
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_AST_NamedList* next);
 struct BSQON_AST_NamedList* BSQON_AST_NamedListCompleteParse(struct BSQON_AST_NamedList* ll);
 
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
@@ -154,3 +177,16 @@ void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node);
 struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node);
+
+struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct BSQON_AST_List* data);
+void BSQON_AST_BracketValueNode_print(struct BSQON_AST_BracketValueNode* node);
+
+struct BSQON_AST_BraceValueNode* BSQON_AST_asBraceValueNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct BSQON_AST_NamedList* data);
+void BSQON_AST_BraceValueNode_print(struct BSQON_AST_BraceValueNode* node);
+
+struct BSQON_AST_TypedValueNode* BSQON_AST_asTypedValueNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
+void BSQON_AST_TypedValueNode_print(struct BSQON_AST_TypedValueNode* node);
+

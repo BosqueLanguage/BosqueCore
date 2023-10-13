@@ -29,6 +29,11 @@ int errorcount = 0;
    struct BSQON_TYPE_AST_NamedListEntry* bsqon_t_nametypel_entry;
    struct BSQON_TYPE_AST_NamedList* bsqon_t_namedlist;
    struct BSQON_TYPE_AST_Node* bsqon_t;
+
+   struct BSQON_AST_NamedListEntry* bsqon_nameval_entry;
+   struct BSQON_AST_List* bsqon_list;
+   struct BSQON_AST_NamedList* bsqon_namedlist;
+
    struct BSQON_AST_Node* bsqon;
    struct ByteString* bstr;
    char* str;
@@ -77,6 +82,11 @@ int errorcount = 0;
 %type <bsqon_t_namedlist> bsqonnametypel
 %type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype bsqontspec
 %type <bsqon_t> bsqontyperoot
+
+%type <bsqon> bsqonl_entry
+%type <bsqon_nameval_entry> bsqonnameval_entry
+%type <bsqon_list> bsqonvall
+%type <bsqon_namedlist> bsqonnamevall
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
@@ -169,7 +179,6 @@ bsqonliteral:
    | TOKEN_RATIONAL        { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Rational, $1); }
    | TOKEN_FLOAT           { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Float, $1); }
    | TOKEN_DOUBLE          { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Double, $1); }
-   | TOKEN_NUMBERINO       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Numberino, $1); }
    | TOKEN_BYTE_BUFFER     { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_ByteBuffer, $1); }
    | TOKEN_UUID_V4         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv4, $1); }
    | TOKEN_UUID_V7         { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv7, $1); }
@@ -225,16 +234,46 @@ bsqonterminal:
    bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
 ;
 
+bsqonvall:
+   bsqonvall bsqonl_entry { $$ = BSQON_AST_ListCons($2, $1); }
+   | bsqonl_entry { $$ = BSQON_AST_ListCons($1, NULL); }
+;
+
+bsqonl_entry:
+   bsqonval SYM_COMMA { $$ = $1; }
+   | error SYM_COMMA { $$ = BSQON_AST_ErrorNodeCreate(); yyerrok; }
+;
+
 bsqonbracketvalue:
-   '[' ']' { $$ = BSQON_AST_TupleNodeCreate(NULL); }
-   | '[' bsqonval ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons($2, NULL)); }
-   | '[' bsqonvall bsqonval ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons($3, $2))); }
-   | '[' error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), NULL)); yyerrok; }
-   | '[' bsqonvall error ']' { $$ = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(), $2))); yyerrok; }
+   '[' ']' { $$ = BSQON_AST_BracketValueNodeCreate(NULL); }
+   | '[' bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCons($2, NULL)); }
+   | '[' bsqonvall bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCompleteParse(BSQON_AST_ListCons($3, $2))); }
+   | '[' error ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(), NULL)); yyerrok; }
+   | '[' bsqonvall error ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCompleteParse(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(), $2))); yyerrok; }
+;
+
+bsqonnamevall:
+   bsqonnamevall bsqonnameval_entry { $$ = BSQON_AST_NamedListCons($2, $1); }
+   | bsqonnameval_entry { $$ = BSQON_AST_NamedListCons($1, NULL); }
+;
+
+bsqonnameval_entry:
+   TOKEN_IDENTIFIER SYM_EQUALS bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate($1, $3); }
+   | TOKEN_IDENTIFIER SYM_EQUALS error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate($1, BSQON_AST_ErrorNodeCreate()); yyerrok; }
+   | bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, $1); }
+   | error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()); yyerrok; }
 ;
 
 bsqonbracevalue:
-   '{' xxxx '}' { xxxx; }
+   '{' '}' { $$ = BSQON_AST_BraceValueNodeCreate(NULL); }
+   | '{' TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, $4), NULL)); }
+   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, $5), $2))); }
+   | '{' TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, BSQON_AST_ErrorNodeCreate()), NULL)); yyerrok; }
+   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, BSQON_AST_ErrorNodeCreate()), $2))); yyerrok; }
+   | '{' bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $2), NULL)); }
+   | '{' bsqonnamevall bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $3), $2))); }
+   | '{' error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()), NULL)); yyerrok; }
+   | '{' bsqonnamevall error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()), $2))); yyerrok; }
 ;
 
 bsqonbracketbracevalue:
@@ -242,10 +281,10 @@ bsqonbracketbracevalue:
 ;
 
 bsqontypedvalue:
-   '<' bsqontspec '>' bsqonbracketbracevalue { xxxx; }
-   | bsqonnominaltype bsqonbracketbracevalue { xxxx; }
-   | '<' error '>' bsqonbracketbracevalue { xxxx; }
-   | error bsqonbracketbracevalue { xxxx; }
+   '<' bsqontspec '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, $2); }
+   | bsqonnominaltype bsqonbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, $1); }
+   | '<' error '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, BSQON_TYPE_AST_ErrorNodeCreate()); }
+   | error bsqonbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()); }
 ; 
 
 bsqonstructvalue:
