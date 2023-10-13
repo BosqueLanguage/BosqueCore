@@ -88,6 +88,8 @@ const mixederrortests = {
     name: "Mixed Value Errors",
     succeed: false,
     tests: [
+        ['{f=2i, g=[3n, 0], h=true}', '{f=2i, g=[3n, 0], h=true}', '{f=2i, g=[3n, ^ERROR_EXP^], h=true}'],
+        ['[2i, {f=3, g=0i}, true]', '[2i, {f=3, g=0i}, true]', '[2i, {f=^ERROR_EXP^, g=0i}, true]']
     ]
 };
 
