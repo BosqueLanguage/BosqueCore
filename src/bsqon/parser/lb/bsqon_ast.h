@@ -47,6 +47,24 @@ struct BSQON_AST_Node
     enum BSQON_AST_TAG tag;
 };
 
+struct BSQON_AST_List
+{
+    struct BSQON_AST_Node* value;
+    struct BSQON_AST_List* next;
+};
+
+struct BSQON_AST_NamedListEntry
+{
+    const char* name;
+    struct BSQON_AST_Node* value;
+};
+
+struct BSQON_AST_NamedList
+{
+    struct BSQON_AST_NamedListEntry* value;
+    struct BSQON_AST_NamedList* next;
+};
+
 struct BSQON_AST_ErrorNode
 {
     struct BSQON_AST_Node base;
@@ -96,6 +114,13 @@ struct BSQON_AST_TypedLiteralNode
     struct BSQON_AST_Node* data; //Singleton | String | Standard
     struct BSQON_TYPE_AST_Node* type;
 };
+
+struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next);
+struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll);
+
+struct BSQON_AST_NamedListEntry* BSQON_AST_NamedListEntryCreate(const char* name, struct BSQON_AST_Node* value);
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next);
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCompleteParse(struct BSQON_AST_NamedList* ll);
 
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);

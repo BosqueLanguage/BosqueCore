@@ -2,6 +2,46 @@
 
 #include <stdio.h>
 
+struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next)
+{
+    struct BSQON_AST_List* node = (struct BSQON_AST_List*)AST_ALLOC(sizeof(struct BSQON_AST_List));
+    node->value = value;
+    node->next = next;
+
+    return node;
+}
+
+struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll)
+{
+    assert(ll != NULL);
+
+    struct BSQON_AST_List* lp = NULL;
+    while(ll != NULL) {
+        struct BSQON_AST_List* lc = ll;
+        ll = ll->next;
+
+        lc->next = lp;
+        lp = lc;
+    }
+
+    return lp;
+}
+
+struct BSQON_AST_NamedListEntry* BSQON_AST_NamedListEntryCreate(const char* name, struct BSQON_AST_Node* value)
+{
+    xxxx;
+}
+
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCons(struct BSQON_AST_NamedListEntry* value, struct BSQON_TYPE_AST_NamedList* next)
+{
+    xxxx;
+}
+
+struct BSQON_AST_NamedList* BSQON_AST_NamedListCompleteParse(struct BSQON_AST_NamedList* ll)
+{
+    xxxx;
+}
+
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node)
 {
     return node->tag;
