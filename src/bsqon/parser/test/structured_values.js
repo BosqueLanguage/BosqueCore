@@ -54,6 +54,14 @@ const typedtests = {
     name: "Typed Value Parses",
     succeed: true,
     tests: [
+        ['Foo{3i}', 'Foo{3i}', 'Foo{3i}'],
+        ['<Foo>{3i}', '<Foo>{3i}', 'Foo{3i}'],
+        ['List<Int>{3i}', 'List<Int>{3i}', 'List<Int>{3i}'],
+        ['<{f: Int}>{f=3i}', '<{f: Int}>{f=3i}', '<{f: Int}>{f=3i}'],
+        ['<[Int, Bool]>[3i, false]', '<[Int, Bool]>[3i, false]', '<[Int, Bool]>[3i, false]'],
+        ['List[3i]', 'List[3i]', 'List[3i]'],
+        ['List<Int>[3i]', 'List<Int>[3i]', 'List<Int>[3i]'],
+        ['<List<Int>>[3i]', '<List<Int>>[3i]', 'List<Int>[3i]'],
     ]
 };
 
@@ -61,6 +69,8 @@ const typederrortests = {
     name: "Typed Value Errors",
     succeed: false,
     tests: [
+        ['[Int, Bool][3i, false]', '[Int, Bool][3i, false]', 'syntax error'],
+        ['<[Int, Bool][3i, false]', '<[Int, Bool][3i, false]', 'syntax error']
     ]
 };
 
@@ -68,6 +78,9 @@ const mixedtests = {
     name: "Mixed Value Parses",
     succeed: true,
     tests: [
+        ['{f=2i, g=[3n, 0i], h=true}', '{f=2i, g=[3n, 0i], h=true}', '{f=2i, g=[3n, 0i], h=true}'],
+        ['[2i, {f=3n, g=0i}, true]', '[2i, {f=3n, g=0i}, true]', '[2i, {f=3n, g=0i}, true]'],
+        ['[2i, Foo{3n, g=0i}, true]', '[2i, Foo{3n, g=0i}, true]', '[2i, Foo{3n, g=0i}, true]']
     ]
 };
 

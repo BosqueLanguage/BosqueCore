@@ -282,9 +282,9 @@ bsqonbracketbracevalue:
 
 bsqontypedvalue:
    '<' bsqontspec '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, $2); }
-   | bsqonnominaltype bsqonbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, $1); }
+   | bsqonnominaltype bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, $1); }
    | '<' error '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, BSQON_TYPE_AST_ErrorNodeCreate()); }
-   | error bsqonbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()); }
+   | error bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, BSQON_TYPE_AST_ErrorNodeCreate()); }
 ; 
 
 bsqonstructvalue:
