@@ -28,22 +28,21 @@ namespace BSQON
     //TODO: wstring is not that great for unicode -- at some point we need to switch to UTF8 etc.
     //
     typedef std::u32string UnicodeString;
-    typedef std::basic_regex<char32_t> UnicodeRegex;
-
+ 
     typedef uint32_t CharCode;
     typedef size_t StateID;
 
     class CharCodeIterator
     {
     public:
-        const UnicodeString sstr;
-        int64_t curr;
+        const UnicodeString* sstr;
+        UnicodeString::const_iterator curr;
 
-        CharCodeIterator(UnicodeString& sstr) : sstr(sstr), curr(0) {;}
+        CharCodeIterator(const UnicodeString* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
         
         bool valid() const
         {
-            return this->curr != (int64_t)this->sstr.size();
+            return this->curr != this->sstr->cend();
         }
 
         void advance()
@@ -53,7 +52,7 @@ namespace BSQON
 
         CharCode get() const
         {
-            return this->sstr.at(this->curr);
+            return *this->curr;
         }
     };
 
@@ -103,7 +102,5 @@ namespace BSQON
         uint8_t sec;     // 0-60
         uint16_t millis; // 0-999
     };
-
-    using TextPosition = int64_t;
 }
 

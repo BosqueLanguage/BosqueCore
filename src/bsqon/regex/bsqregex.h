@@ -331,21 +331,25 @@ namespace BSQON
     class BSQRegex
     {
     public:
-        const UnicodeString restr;
         const BSQRegexOpt* re;
         const NFA* nfare;
 
-        BSQRegex(UnicodeString restr, const BSQRegexOpt* re, NFA* nfare): restr(restr), re(re), nfare(nfare) {;}
+        BSQRegex(const BSQRegexOpt* re, NFA* nfare): re(re), nfare(nfare) {;}
         ~BSQRegex() {;}
 
         static BSQRegex* jparse(json j);
 
-        bool test(CharCodeIterator& cci)
+        std::string toString() const 
+        {
+            xxxx; //see also StringValue toString
+        }
+
+        bool test(CharCodeIterator& cci) const
         {
             return this->nfare->test(cci);
         }
 
-        bool test(UnicodeString& s)
+        bool test(const UnicodeString* s) const
         {
             CharCodeIterator siter(s);
             return this->nfare->test(siter);

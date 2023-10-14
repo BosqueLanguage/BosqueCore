@@ -221,15 +221,12 @@ namespace BSQON
 
     BSQRegex* BSQRegex::jparse(json j)
     {
-        auto restr = j["regexstr"].get<std::string>();
-        std::u32string utf32 = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(restr);
-        
         auto bsqre = BSQRegexOpt::parse(j["re"]);
 
         std::vector<NFAOpt*> nfastates = { new NFAOptAccept(0) };
         auto nfastart = bsqre->compile(0, nfastates);
 
         auto nfare = new NFA(nfastart, 0, nfastates);
-        return new BSQRegex(utf32, bsqre, nfare);
+        return new BSQRegex(bsqre, nfare);
     }
 }

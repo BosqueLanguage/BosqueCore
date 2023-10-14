@@ -49,15 +49,8 @@ namespace BSQON
         TypeTag tag;
         TypeKey tkey;
 
-        Type(TypeTag tag, TypeKey tkey) : tag(tag), tkey(tkey)
-        {
-            ;
-        }
-
-        virtual ~Type()
-        {
-            ;
-        }
+        Type(TypeTag tag, TypeKey tkey) : tag(tag), tkey(tkey) { ; }
+        virtual ~Type() = default;
 
         static const int64_t MIN_SAFE_NUMBER = -9007199254740991;
         static const int64_t MAX_SAFE_NUMBER = 9007199254740991;
@@ -78,15 +71,8 @@ namespace BSQON
     class UnresolvedType : public Type
     {
     public:
-        UnresolvedType() : Type(TypeTag::TYPE_UNRESOLVED, "[UNRESOLVED]")
-        {
-            ;
-        }
-
-        virtual ~UnresolvedType()
-        {
-            ;
-        }
+        UnresolvedType() : Type(TypeTag::TYPE_UNRESOLVED, "[UNRESOLVED]") { ; }
+        virtual ~UnresolvedType() = default;
 
         static UnresolvedType* singleton;
     };
@@ -96,15 +82,8 @@ namespace BSQON
     public:
         std::vector<TypeKey> entries;
 
-        TupleType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_TUPLE, "[" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string& a, TypeKey& b) { return a + ", " + b; }) + "]"), entries(entries)
-        {
-            ;
-        }
-        
-        virtual ~TupleType()
-        {
-            ;
-        }
+        TupleType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_TUPLE, "[" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string& a, TypeKey& b) { return a + ", " + b; }) + "]"), entries(entries) { ; }
+        virtual ~TupleType() = default;
     };
 
     class RecordTypeEntry
@@ -113,10 +92,7 @@ namespace BSQON
         std::string pname;
         TypeKey ptype;
 
-        RecordTypeEntry(std::string pname, TypeKey ptype) : pname(pname), ptype(ptype)
-        {
-            ;
-        }
+        RecordTypeEntry(std::string pname, TypeKey ptype) : pname(pname), ptype(ptype) { ; }
     };
 
     class RecordType : public Type
@@ -124,29 +100,15 @@ namespace BSQON
     public:
         std::vector<RecordTypeEntry> entries;
 
-        RecordType(std::vector<RecordTypeEntry> entries) : Type(TypeTag::TYPE_RECORD, "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string& a, RecordTypeEntry& b) { return a + ", " + b.pname + ": " + b.ptype; }) + "}"), entries(entries)
-        {
-            ;
-        }
-
-        virtual ~RecordType()
-        {
-            ;
-        }
+        RecordType(std::vector<RecordTypeEntry> entries) : Type(TypeTag::TYPE_RECORD, "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string& a, RecordTypeEntry& b) { return a + ", " + b.pname + ": " + b.ptype; }) + "}"), entries(entries) { ; }
+        virtual ~RecordType() = default;
     };
 
     class EntityType : public Type
     {
     public:
-        EntityType(TypeTag tag, TypeKey tkey) : Type(tag, tkey)
-        {
-            ;
-        }
-
-        virtual ~EntityType()
-        {
-            ;
-        }
+        EntityType(TypeTag tag, TypeKey tkey) : Type(tag, tkey) { ; }
+        virtual ~EntityType() = default;
     };
 
     class ConceptType : public Type
@@ -159,10 +121,7 @@ namespace BSQON
             std::sort(this->subtypes.begin(), this->subtypes.end());
         }
 
-        virtual ~ConceptType()
-        {
-            ;
-        }
+        virtual ~ConceptType() = default;
 
         virtual const std::vector<TypeKey>* getPossibleSubtypeKeys() const override final
         {
@@ -176,10 +135,7 @@ namespace BSQON
         std::string fname;
         TypeKey ftype;
 
-        EntityTypeFieldEntry(std::string fname, TypeKey ftype) : fname(fname), ftype(ftype)
-        {
-            ;
-        }
+        EntityTypeFieldEntry(std::string fname, TypeKey ftype) : fname(fname), ftype(ftype) { ; }
     };
 
     class StdEntityType : public EntityType
@@ -188,43 +144,22 @@ namespace BSQON
         std::vector<EntityTypeFieldEntry> fields;
         bool hasvalidations;
 
-        StdEntityType(TypeKey tkey, std::vector<EntityTypeFieldEntry> fields, bool hasvalidations) : EntityType(TypeTag::TYPE_STD_ENTITY, tkey), fields(fields), hasvalidations(hasvalidations)
-        {
-            ;
-        }
-
-        virtual ~StdEntityType()
-        {
-            ;
-        }
+        StdEntityType(TypeKey tkey, std::vector<EntityTypeFieldEntry> fields, bool hasvalidations) : EntityType(TypeTag::TYPE_STD_ENTITY, tkey), fields(fields), hasvalidations(hasvalidations) { ; }
+        virtual ~StdEntityType() = default;
     };
 
     class StdConceptType : public ConceptType
     {
     public:
-        StdConceptType(TypeKey tkey, std::vector<TypeKey> subtypes) : ConceptType(TypeTag::TYPE_STD_CONCEPT, tkey, subtypes)
-        {
-            ;
-        }
-
-        virtual ~StdConceptType()
-        {
-            ;
-        }
+        StdConceptType(TypeKey tkey, std::vector<TypeKey> subtypes) : ConceptType(TypeTag::TYPE_STD_CONCEPT, tkey, subtypes) { ; }
+        virtual ~StdConceptType() = default;
     };
 
     class PrimitiveType : public EntityType
     {
     public:
-        PrimitiveType(TypeKey tkey) : EntityType(TypeTag::TYPE_PRIMITIVE, tkey)
-        {
-            ;
-        }
-
-        virtual ~PrimitiveType()
-        {
-            ;
-        }
+        PrimitiveType(TypeKey tkey) : EntityType(TypeTag::TYPE_PRIMITIVE, tkey) { ; }
+        virtual ~PrimitiveType() = default;
     };
 
     class EnumType : public EntityType
@@ -267,29 +202,15 @@ namespace BSQON
     class ValidatorREType : public EntityType
     {
     public:
-        ValidatorREType(TypeKey tkey) : EntityType(TypeTag::TYPE_VALIDATOR_RE, tkey)
-        {
-            ;
-        }
-
-        virtual ~ValidatorREType()
-        {
-            ;
-        }
+        ValidatorREType(TypeKey tkey) : EntityType(TypeTag::TYPE_VALIDATOR_RE, tkey) { ; }
+        virtual ~ValidatorREType() = default;
     };
 
     class ValidatorPthType : public EntityType
     {
     public: 
-        ValidatorPthType(TypeKey tkey) : EntityType(TypeTag::TYPE_VALIDATOR_PTH, tkey)
-        {
-            ;
-        }
-
-        virtual ~ValidatorPthType()
-        {
-            ;
-        }
+        ValidatorPthType(TypeKey tkey) : EntityType(TypeTag::TYPE_VALIDATOR_PTH, tkey) { ; }
+        virtual ~ValidatorPthType() = default;
     };
 
     class StringOfType : public EntityType
@@ -297,15 +218,8 @@ namespace BSQON
     public:
         TypeKey oftype;
 
-        StringOfType(TypeKey oftype) : EntityType(TypeTag::TYPE_STRING_OF, "StringOf<" + oftype + ">"), oftype(oftype)
-        {
-            ;
-        }
-
-        virtual ~StringOfType()
-        {
-            ;
-        }
+        StringOfType(TypeKey oftype) : EntityType(TypeTag::TYPE_STRING_OF, "StringOf<" + oftype + ">"), oftype(oftype) { ; }
+        virtual ~StringOfType() = default;
     };
 
     class ASCIIStringOfType : public EntityType
@@ -313,15 +227,8 @@ namespace BSQON
     public:
         TypeKey oftype;
 
-        ASCIIStringOfType(TypeKey oftype) : EntityType(TypeTag::TYPE_ASCII_STRING_OF, "ASCIIStringOf<" + oftype + ">"), oftype(oftype)
-        {
-            ;
-        }
-
-        virtual ~ASCIIStringOfType()
-        {
-            ;
-        }
+        ASCIIStringOfType(TypeKey oftype) : EntityType(TypeTag::TYPE_ASCII_STRING_OF, "ASCIIStringOf<" + oftype + ">"), oftype(oftype) { ; }
+        virtual ~ASCIIStringOfType() = default;
     };
 
     class SomethingType : public EntityType
@@ -329,15 +236,8 @@ namespace BSQON
     public:
         TypeKey oftype;
 
-        SomethingType(TypeKey oftype) : EntityType(TypeTag::TYPE_SOMETHING, "Something<" + oftype + ">"), oftype(oftype)
-        {
-            ;
-        }
-
-        virtual ~SomethingType()
-        {
-            ;
-        }
+        SomethingType(TypeKey oftype) : EntityType(TypeTag::TYPE_SOMETHING, "Something<" + oftype + ">"), oftype(oftype) { ; }
+        virtual ~SomethingType() = default;
     };
 
     class OptionType : public ConceptType
@@ -345,15 +245,8 @@ namespace BSQON
     public:
         TypeKey oftype;
 
-        OptionType(TypeKey oftype) : ConceptType(TypeTag::TYPE_OPTION, "Option<" + oftype + ">", { "Nothing", "Something<" + oftype + ">" }), oftype(oftype)
-        {
-            ;
-        }
-
-        virtual ~OptionType()
-        {
-            ;
-        }
+        OptionType(TypeKey oftype) : ConceptType(TypeTag::TYPE_OPTION, "Option<" + oftype + ">", { "Nothing", "Something<" + oftype + ">" }), oftype(oftype) { ; }
+        virtual ~OptionType() = default;
     };
 
     class OkType : public EntityType
@@ -362,15 +255,8 @@ namespace BSQON
         TypeKey ttype;
         TypeKey etype;
 
-        OkType(TypeKey ttype, TypeKey etype) : EntityType(TypeTag::TYPE_OK, "Result<" + ttype + ", " + etype + ">::Ok"), ttype(ttype), etype(etype)
-        {
-            ;
-        }
-
-        virtual ~OkType()
-        {
-            ;
-        }
+        OkType(TypeKey ttype, TypeKey etype) : EntityType(TypeTag::TYPE_OK, "Result<" + ttype + ", " + etype + ">::Ok"), ttype(ttype), etype(etype) { ; }
+        virtual ~OkType() = default;
     };
 
     class ErrorType : public EntityType
@@ -379,15 +265,8 @@ namespace BSQON
         TypeKey ttype;
         TypeKey etype;
 
-        ErrorType(TypeKey ttype, TypeKey etype) : EntityType(TypeTag::TYPE_ERROR, "Result<" + ttype + ", " + etype + ">::Err"), ttype(ttype), etype(etype)
-        {
-            ;
-        }
-
-        virtual ~ErrorType()
-        {
-            ;
-        }
+        ErrorType(TypeKey ttype, TypeKey etype) : EntityType(TypeTag::TYPE_ERROR, "Result<" + ttype + ", " + etype + ">::Err"), ttype(ttype), etype(etype) { ; }
+        virtual ~ErrorType() = default;
     };
 
     class ResultType : public ConceptType
@@ -396,15 +275,8 @@ namespace BSQON
         TypeKey ttype;
         TypeKey etype;
 
-        ResultType(TypeKey ttype, TypeKey etype) : ConceptType(TypeTag::TYPE_RESULT, "Result<" + ttype + ", " + etype + ">", { "Result<" + ttype + ", " + etype + ">::Ok", "Result<" + ttype + ", " + etype + ">::Err" }), ttype(ttype), etype(etype)
-        {
-            ;
-        }
-
-        virtual ~ResultType()
-        {
-            ;
-        }
+        ResultType(TypeKey ttype, TypeKey etype) : ConceptType(TypeTag::TYPE_RESULT, "Result<" + ttype + ", " + etype + ">", { "Result<" + ttype + ", " + etype + ">::Ok", "Result<" + ttype + ", " + etype + ">::Err" }), ttype(ttype), etype(etype) { ; }
+        virtual ~ResultType() = default;
     };
 
     class PathType : public EntityType
@@ -658,6 +530,19 @@ namespace BSQON
         }
 
         Type* resolveType(TypeKey tkey)
+        {
+            auto tt = this->typerefs.find(tkey);
+            if(tt != this->typerefs.end())
+            {
+                return tt->second;
+            }
+            else
+            {
+                return UnresolvedType::singleton;
+            }
+        }
+
+        const Type* resolveType(TypeKey tkey) const
         {
             auto tt = this->typerefs.find(tkey);
             if(tt != this->typerefs.end())
