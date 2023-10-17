@@ -129,7 +129,7 @@ namespace BSQON
             }
 
             if (!terms.empty()) {
-                scopedname = scopedname + "<" + std::accumulate(terms.begin(), terms.end(), std::string(), [](std::string& a, Type* b) { return a + ", " + b->tkey; }) + ">";
+                scopedname = scopedname + "<" + std::accumulate(terms.begin(), terms.end(), std::string(), [](std::string& a, Type* b) { return (a == "" ? "" :  a + ", ") + b->tkey; }) + ">";
             }
 
             auto titer = this->m_assembly->typerefs.find(scopedname);

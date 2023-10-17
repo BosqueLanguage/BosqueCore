@@ -20,12 +20,17 @@ namespace BSQON
                 });
                 return new RecordType(entries);
             }
+            case TypeTag::TYPE_ELIST: {
+                std::vector<TypeKey> entries;
+                std::transform(j["entries"].begin(), j["entries"].end(), std::back_inserter(entries), [](const json& jv) { return jv.get<TypeKey>(); });
+                return new EListType(entries);
+            }
             case TypeTag::TYPE_STD_ENTITY: {
                 std::vector<EntityTypeFieldEntry> fields;
                 std::transform(j["fields"].begin(), j["fields"].end(), std::back_inserter(fields), [](const json& jv) { 
                     return EntityTypeFieldEntry(jv["fname"].get<std::string>(), jv["ftype"].get<TypeKey>()); 
                 });
-                return new StdEntityType(j["tkey"].get<TypeKey>(), fields, j["hasvalidations"].get<bool>());
+                return new StdEntityType(j["tkey"].get<TypeKey>(), fields);
             }
             case TypeTag::TYPE_STD_CONCEPT: {
                 std::vector<TypeKey> subtypes;
@@ -44,7 +49,7 @@ namespace BSQON
                 std::optional<TypeKey> optStringOfValidator = !j["optStringOfValidator"].is_null() ? std::make_optional(j["optStringOfValidator"].get<std::string>()) : std::nullopt;
                 std::optional<TypeKey> optPathOfValidator = !j["optPathOfValidator"].is_null() ? std::make_optional(j["optPathOfValidator"].get<std::string>()) : std::nullopt;
 
-                return new TypedeclType(j["tkey"].get<TypeKey>(), j["basetype"].get<TypeKey>(), j["oftype"].get<TypeKey>(), optStringOfValidator, optPathOfValidator, j["hasvalidations"].get<bool>());
+                return new TypedeclType(j["tkey"].get<TypeKey>(), j["basetype"].get<TypeKey>(), j["oftype"].get<TypeKey>(), optStringOfValidator, optPathOfValidator);
             }
             case TypeTag::TYPE_VALIDATOR_RE: {
                 return new ValidatorREType(j["tkey"].get<TypeKey>());

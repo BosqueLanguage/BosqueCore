@@ -263,7 +263,7 @@ bsqonnameval_entry:
    | bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, $1); }
    | error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()); yyerrok; }
 ;
-
+  // <-------------------------- TODO we need to add a => option as well
 bsqonbracevalue:
    '{' '}' { $$ = BSQON_AST_BraceValueNodeCreate(NULL); }
    | '{' TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, $4), NULL)); }
