@@ -41,6 +41,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_Path,
     BSQON_AST_TAG_TypedLiteral,
 
+    BSQON_AST_TAG_MapEntry,
     BSQON_AST_TAG_BracketValue,
     BSQON_AST_TAG_BraceValue,
     BSQON_AST_TAG_TypedValue
@@ -119,6 +120,13 @@ struct BSQON_AST_TypedLiteralNode
     struct BSQON_TYPE_AST_Node* type;
 };
 
+struct BSQON_AST_MapEntryNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_AST_Node* key;
+    struct BSQON_AST_Node* value;
+};
+
 struct BSQON_AST_BracketValueNode
 {
     struct BSQON_AST_Node base;
@@ -177,6 +185,10 @@ void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node);
 struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node);
+
+struct BSQON_AST_MapEntryNode* BSQON_AST_asMapEntryNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_MapEntryNodeCreate(struct BSQON_AST_Node* key, struct BSQON_AST_Node* data);
+void BSQON_AST_MapEntryNode_print(struct BSQON_AST_MapEntryNode* node);
 
 struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct BSQON_AST_List* data);

@@ -61,7 +61,7 @@ int errorcount = 0;
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
-%token <str> TOKEN_NUMBERINO "numerino"
+%token <str> TOKEN_NUMBERINO "numberino"
 
 %token <str> TOKEN_BYTE_BUFFER TOKEN_UUID_V4 TOKEN_UUID_V7 TOKEN_SHA_HASH
 %token <bstr> TOKEN_STRING TOKEN_ASCII_STRING TOKEN_REGEX TOKEN_PATH_ITEM
@@ -89,6 +89,7 @@ int errorcount = 0;
 %type <bsqon_namedlist> bsqonnamevall
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
+%type <bsqon> bsqon_mapentry
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
 %type <bsqon> bsqonroot
 
@@ -214,24 +215,32 @@ bsqonpath:
 ;
 
 bsqontypeliteral:
-   bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
-      enum BSQON_AST_TAG tag = BSQON_AST_getTag($1);
-      if(tag == BSQON_AST_TAG_Numberino) {
-         yyerror("Missing numeric specifier");
-         $$ = BSQON_AST_ErrorNodeCreate();
-      }
-      else if(tag == BSQON_AST_TAG_None || tag == BSQON_AST_TAG_Nothing) {
-         yyerror("Cannot have a typedecl of none or nothing");
-         $$ = BSQON_AST_ErrorNodeCreate();
-      }
-      else {
-         $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3);
-      }
+   TOKEN_NUMBERINO SYM_UNDERSCORE bsqonnominaltype {
+      yyerror("Missing numeric specifier");
+      $$ = BSQON_AST_ErrorNodeCreate();
+   }
+   | KW_NONE SYM_UNDERSCORE bsqonnominaltype {
+      yyerror("Cannot have a typedecl of none or nothing");
+      $$ = BSQON_AST_ErrorNodeCreate();
+   }
+   | KW_NOTHING SYM_UNDERSCORE bsqonnominaltype {
+      yyerror("Cannot have a typedecl of none or nothing");
+      $$ = BSQON_AST_ErrorNodeCreate();
+   }
+   | bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
+      $$ = BSQON_AST_TypedLiteralNodeCreate($1, $3);
    }
 ;
 
 bsqonterminal: 
    bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
+;
+
+bsqon_mapentry:
+   bsqonval SYM_ENTRY bsqonval { $$ = BSQON_AST_MapEntryNodeCreate($1, $3); }
+   | error SYM_ENTRY bsqonval { $$ = BSQON_AST_MapEntryNodeCreate(BSQON_AST_ErrorNodeCreate(), $3); yyerrok; }
+   | bsqonval SYM_ENTRY error { $$ = BSQON_AST_MapEntryNodeCreate($1, BSQON_AST_ErrorNodeCreate()); yyerrok; }
+   | error SYM_ENTRY error { $$ = BSQON_AST_MapEntryNodeCreate(BSQON_AST_ErrorNodeCreate(), BSQON_AST_ErrorNodeCreate()); yyerrok; }
 ;
 
 bsqonvall:
@@ -263,7 +272,7 @@ bsqonnameval_entry:
    | bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, $1); }
    | error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()); yyerrok; }
 ;
-  // <-------------------------- TODO we need to add a => option as well
+
 bsqonbracevalue:
    '{' '}' { $$ = BSQON_AST_BraceValueNodeCreate(NULL); }
    | '{' TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, $4), NULL)); }
@@ -292,7 +301,7 @@ bsqonstructvalue:
 ;
 
 bsqonval: 
-  bsqonterminal | bsqonstructvalue { $$ = $1; }
+  bsqonterminal | bsqon_mapentry | bsqonstructvalue { $$ = $1; }
 ;
 
 bsqonroot: 
