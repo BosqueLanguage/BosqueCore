@@ -335,6 +335,8 @@ namespace BSQON
     class RegexValue : public PrimtitiveValue 
     {
     public:
+        //This is a bit tricky as we map from the string in the BSQON format to the statically declared regex in the assembly.
+        //TODO: we should normalize this (by parsing and then formatting) to eliminate any simple differences (although we are not going to do regex equality)
         const BSQRegex tv;
     
         RegexValue(const Type* vtype, BSQRegex tv) : PrimtitiveValue(vtype), tv(tv) { ; }
@@ -535,7 +537,7 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : a + ", ") + v->toString(); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
         }
 
         const ListType* getListType() const
@@ -554,7 +556,7 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : a + ", ") + v->toString(); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
         }
 
         const StackType* getStackType() const
@@ -573,7 +575,7 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : a + ", ") + v->toString(); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
         }
 
         const QueueType* getQueueType() const
@@ -592,7 +594,7 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : a + ", ") + v->toString(); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
         }
 
         const SetType* getSetType() const
@@ -631,7 +633,7 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const MapEntryValue* v) { return (a == "" ? "" : a + ", ") + v->toString(); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->vals.begin(), this->vals.end(), std::string(), [](std::string&& a, const MapEntryValue* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
         }
 
         const MapType* getMapType() const
@@ -690,12 +692,69 @@ namespace BSQON
         
         virtual std::string toString() const override
         {
-            return this->vtype->tkey + "{" + std::accumulate(this->fieldvalues.begin(), this->fieldvalues.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : a + ", ") + (v != nullptr ? v->toString() : "^DEFAULT_INITIALIZER^"); }) + "}";
+            return this->vtype->tkey + "{" + std::accumulate(this->fieldvalues.begin(), this->fieldvalues.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + (v != nullptr ? v->toString() : "^DEFAULT_INITIALIZER^"); }) + "}";
         }
 
         const EntityType* getEntityType() const
         {
             return (const EntityType*)this->vtype;
+        }
+    };
+
+    class TupleValue : public Value
+    {
+    public:
+        const std::vector<Value*> values;
+
+        TupleValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        virtual ~TupleValue() = default;
+        
+        virtual std::string toString() const override
+        {
+            return "<" + this->vtype->tkey + ">[" + std::accumulate(this->values.begin(), this->values.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "]";
+        }
+
+        const TupleType* getTupleType() const
+        {
+            return (const TupleType*)this->vtype;
+        }
+    };
+
+    class RecordValue : public Value
+    {
+    public:
+        const std::vector<Value*> values;
+
+        RecordValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        virtual ~RecordValue() = default;
+        
+        virtual std::string toString() const override
+        {
+            return "<" + this->vtype->tkey + ">{" + std::accumulate(this->values.begin(), this->values.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "}";
+        }
+
+        const RecordType* getRecordType() const
+        {
+            return (const RecordType*)this->vtype;
+        }
+    };
+
+    class EListValue : public Value
+    {
+    public:
+        const std::vector<Value*> values;
+
+        EListValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        virtual ~EListValue() = default;
+        
+        virtual std::string toString() const override
+        {
+            return "(|" + std::accumulate(this->values.begin(), this->values.end(), std::string(), [](std::string&& a, const Value* v) { return (a == "" ? "" : std::move(a) + ", ") + v->toString(); }) + "|)";
+        }
+
+        const EListType* getEListType() const
+        {
+            return (const EListType*)this->vtype;
         }
     };
 }

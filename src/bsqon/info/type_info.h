@@ -83,7 +83,7 @@ namespace BSQON
     public:
         std::vector<TypeKey> entries;
 
-        TupleType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_TUPLE, "[" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : a + ", ") + b; }) + "]"), entries(entries) { ; }
+        TupleType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_TUPLE, "[" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + ", ") + b; }) + "]"), entries(entries) { ; }
         virtual ~TupleType() = default;
     };
 
@@ -101,7 +101,7 @@ namespace BSQON
     public:
         std::vector<RecordTypeEntry> entries;
 
-        RecordType(std::vector<RecordTypeEntry> entries) : Type(TypeTag::TYPE_RECORD, "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, RecordTypeEntry& b) { return (a == "" ? "" : a + ", ") + b.pname + ": " + b.ptype; }) + "}"), entries(entries) { ; }
+        RecordType(std::vector<RecordTypeEntry> entries) : Type(TypeTag::TYPE_RECORD, "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, RecordTypeEntry& b) { return (a == "" ? "" : std::move(a) + ", ") + b.pname + ": " + b.ptype; }) + "}"), entries(entries) { ; }
         virtual ~RecordType() = default;
     };
 
@@ -110,7 +110,7 @@ namespace BSQON
     public:
         std::vector<TypeKey> entries;
 
-        EListType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_ELIST, "(|" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : a + ", ") + b; }) + "|)"), entries(entries) { ; }
+        EListType(std::vector<TypeKey> entries) : Type(TypeTag::TYPE_ELIST, "(|" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + ", ") + b; }) + "|)"), entries(entries) { ; }
         virtual ~EListType() = default;
     };
 
@@ -361,7 +361,7 @@ namespace BSQON
     public:
         std::vector<TypeKey> concepts;
 
-        ConceptSetType(std::vector<TypeKey> concepts) : Type(TypeTag::TYPE_CONCEPT_SET, std::accumulate(concepts.begin(), concepts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : a + "&") + b; })), concepts(concepts) { ; }
+        ConceptSetType(std::vector<TypeKey> concepts) : Type(TypeTag::TYPE_CONCEPT_SET, std::accumulate(concepts.begin(), concepts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + "&") + b; })), concepts(concepts) { ; }
         virtual ~ConceptSetType() = default;
     };
 
@@ -370,7 +370,7 @@ namespace BSQON
     public:
         std::vector<TypeKey> types;
 
-        UnionType(std::vector<TypeKey> types) : Type(TypeTag::TYPE_UNION, std::accumulate(types.begin(), types.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : a + " | ") + b; })), types(types) { ; }
+        UnionType(std::vector<TypeKey> types) : Type(TypeTag::TYPE_UNION, std::accumulate(types.begin(), types.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + " | ") + b; })), types(types) { ; }
         virtual ~UnionType() = default;
     };
 
