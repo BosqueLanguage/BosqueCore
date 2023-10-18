@@ -50,6 +50,7 @@ enum BSQON_AST_TAG
 struct BSQON_AST_Node
 {
     enum BSQON_AST_TAG tag;
+    struct SourcePos pos;
 };
 
 struct BSQON_AST_List
@@ -156,38 +157,38 @@ struct BSQON_AST_NamedList* BSQON_AST_NamedListCompleteParse(struct BSQON_AST_Na
 enum BSQON_AST_TAG BSQON_AST_getTag(const struct BSQON_AST_Node* node);
 void BSQON_AST_print(struct BSQON_AST_Node* node);
 
-struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate();
+struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate(struct SourcePos pos);
 
 struct BSQON_AST_LiteralSingletonNode* BSQON_AST_asLiteralSingletonNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_LiteralSingletonNodeCreate(enum BSQON_AST_TAG tag);
+struct BSQON_AST_Node* BSQON_AST_LiteralSingletonNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos);
 
 struct BSQON_AST_LiteralStringNode* BSQON_AST_asLiteralStringNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_LiteralStringNodeCreate(enum BSQON_AST_TAG tag, struct ByteString* data);
+struct BSQON_AST_Node* BSQON_AST_LiteralStringNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, struct ByteString* data);
 void BSQON_AST_LiteralStringNode_print(struct BSQON_AST_LiteralStringNode* node);
 
 struct BSQON_AST_LiteralStandardNode* BSQON_AST_asLiteralStandardNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_LiteralStandardNodeCreate(enum BSQON_AST_TAG tag, const char* data);
+struct BSQON_AST_Node* BSQON_AST_LiteralStandardNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, const char* data);
 void BSQON_AST_LiteralStandardNode_print(struct BSQON_AST_LiteralStandardNode* node);
 
 //Identifier | UnspecIdentifier | TypeComponent
 struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, const char* data);
+struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, const char* data);
 void BSQON_AST_NameNode_print(struct BSQON_AST_NameNode* node);
 
 struct BSQON_AST_StringOfNode* BSQON_AST_asStringOfNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, struct ByteString* str, struct BSQON_TYPE_AST_Node* type);
+struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_StringOfNode_print(struct BSQON_AST_StringOfNode* node);
 
 struct BSQON_AST_PathNode* BSQON_AST_asPathNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct ByteString* str, struct BSQON_TYPE_AST_Node* type);
+struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node);
 
 struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
+struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_TypedLiteralNode_print(struct BSQON_AST_TypedLiteralNode* node);
 
 struct BSQON_AST_MapEntryNode* BSQON_AST_asMapEntryNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_MapEntryNodeCreate(struct BSQON_AST_Node* key, struct BSQON_AST_Node* data);
+struct BSQON_AST_Node* BSQON_AST_MapEntryNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* key, struct BSQON_AST_Node* data);
 void BSQON_AST_MapEntryNode_print(struct BSQON_AST_MapEntryNode* node);
 
 struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQON_AST_Node* node);

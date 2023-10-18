@@ -18,3 +18,13 @@ struct ByteString
 };
 
 struct ByteString* bstrAlloc(struct ByteString dst);
+
+struct SourcePos
+{
+    uint32_t first_line;
+    uint32_t first_column;
+    uint32_t last_line;
+    uint32_t last_column;
+};
+
+struct SourcePos createSourcePos(uint32_t first_line, uint32_t first_column, uint32_t last_line, uint32_t last_column);
