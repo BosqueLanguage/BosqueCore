@@ -35,6 +35,8 @@ const bracetests = {
         ['{2i, 3n}', '{2i, 3n}', '{2i, 3n}'],
         ['{2i, 3n, true}', '{2i, 3n, true}', '{2i, 3n, true}'],
         ['{2i, g=3n}', '{2i, g=3n}', '{2i, g=3n}'],
+        ['{2i=>3n}', '{2i=>3n}', '{2i=>3n}'],
+        ['{2i=>3n, 4i=>6n}', '{2i=>3n, 4i=>6n}', '{2i=>3n, 4i=>6n}']
     ]
 };
 
@@ -46,7 +48,10 @@ const braceerrortests = {
         ['{f:1i}', '{f:1i}', 'syntax error'],
         ['{:1i}', '{:1i}', 'syntax error'],
         ['{f=1i, g=0}', '{f=1i, g=0}', '{f=1i, g=^ERROR_EXP^}'],
-        ['{1i, 0}', '{1i, 0}', '{1i, ^ERROR_EXP^}']
+        ['{1i, 0}', '{1i, 0}', '{1i, ^ERROR_EXP^}'],
+        ['{2i=>3}', '{2i=>3}', '{2i=>^ERROR_EXP^}'],
+        ['{2=>3, 4i=>6n}', '{2=>3, 4i=>6n}', '{^ERROR_EXP^=>^ERROR_EXP^, 4i=>6n}'],
+        ['{2i=>3i, Foo}', '{2i=>3i, Foo}', '{2i=>3i, ^ERROR_EXP^}']
     ]
 };
 

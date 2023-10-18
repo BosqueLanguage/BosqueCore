@@ -90,6 +90,7 @@ int errorcount = 0;
 
 %type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
 %type <bsqon> bsqon_mapentry
+%type <bsqon> bsqon_braceval
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
 %type <bsqon> bsqonroot
 
@@ -266,10 +267,14 @@ bsqonnamevall:
    | bsqonnameval_entry { $$ = BSQON_AST_NamedListCons($1, NULL); }
 ;
 
+bsqon_braceval:
+   bsqonval | bsqon_mapentry { $$ = $1; }
+;
+
 bsqonnameval_entry:
    TOKEN_IDENTIFIER SYM_EQUALS bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate($1, $3); }
    | TOKEN_IDENTIFIER SYM_EQUALS error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate($1, BSQON_AST_ErrorNodeCreate()); yyerrok; }
-   | bsqonval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, $1); }
+   | bsqon_braceval SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, $1); }
    | error SYM_COMMA { $$ = BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()); yyerrok; }
 ;
 
@@ -279,8 +284,8 @@ bsqonbracevalue:
    | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, $5), $2))); }
    | '{' TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, BSQON_AST_ErrorNodeCreate()), NULL)); yyerrok; }
    | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, BSQON_AST_ErrorNodeCreate()), $2))); yyerrok; }
-   | '{' bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $2), NULL)); }
-   | '{' bsqonnamevall bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $3), $2))); }
+   | '{' bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $2), NULL)); }
+   | '{' bsqonnamevall bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $3), $2))); }
    | '{' error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()), NULL)); yyerrok; }
    | '{' bsqonnamevall error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate()), $2))); yyerrok; }
 ;
@@ -301,7 +306,7 @@ bsqonstructvalue:
 ;
 
 bsqonval: 
-  bsqonterminal | bsqon_mapentry | bsqonstructvalue { $$ = $1; }
+  bsqonterminal | bsqonstructvalue { $$ = $1; }
 ;
 
 bsqonroot: 
