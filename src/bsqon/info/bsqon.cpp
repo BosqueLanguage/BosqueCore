@@ -203,8 +203,7 @@ namespace BSQON
                         return std::nullopt;
                     }
 
-xxxx;
-                    acc = std::move(acc) + esc;
+                    acc = std::move(acc) + std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(esc.value());
                 }
                 else {
                     auto esc = resolveEscapeASCIIFromName(escc);
@@ -222,7 +221,7 @@ xxxx;
             }
         }
 
-        return std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(acc);
+        return std::make_optional(std::move(std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(acc)));
     }
 
     std::vector<uint8_t> StringValue::escapeString(const UnicodeString& sv)
@@ -231,7 +230,7 @@ xxxx;
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char32_t c = *ii;
 
-            if(c == '%' || c == '"' || c == '\n' || c == '\t' || c == '\r') {
+            if(c == U'%' || c == U'"' || c == U'\n' || c == U'\t' || c == U'\r') {
                 acc = std::move(acc) + resolveEscapeUnicodeFromCode(c);
             }
             else {
@@ -249,34 +248,92 @@ xxxx;
 
     StringValue* StringValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length)
     {
-        return new StringValue(vtype, spos, StringValue::unescapeString(bytes, length));
+        auto sv = std::move(StringValue::unescapeString(bytes, length));
+        if(!sv.has_value()) {
+            return nullptr;
+        }
+
+        return new StringValue(vtype, spos, std::move(sv.value()));
     }
 
     std::optional<std::string> ASCIIStringValue::unescapeString(const char* chars, size_t length)
     {
-        xxxx;
+        std::string acc;
+        for(size_t i = 0; i < length; ++i) {
+            char c = chars[i];
+
+            if(c == '%') {
+                auto sc = std::find(chars + i, chars + length, ';');
+                if(sc == chars + length) {
+                    return std::nullopt;
+                }
+
+                auto escc = std::string(chars + i + 1, sc);
+                auto esc = resolveEscapeASCIIFromName(escc);
+                if(esc == 0) {
+                    return std::nullopt;
+                }
+
+                acc = std::move(acc) + esc;
+
+                i += escc.size();
+            }
+            else {
+                acc = std::move(acc) + (char)c;
+            }
+        }
+
+        return std::make_optional(std::move(acc));
     }
 
     std::vector<uint8_t> ASCIIStringValue::escapeString(const std::string& sv)
     {
-        xxxx;
+        std::string acc;
+        for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
+            char c = *ii;
+
+            if(c == '%' || c == '\'' || c == '\n' || c == '\t' || c == '\r') {
+                acc = std::move(acc) + resolveEscapeASCIIFromCode(c);
+            }
+            else {
+                acc = std::move(acc) + c;
+            }
+        }
+
+        std::vector<uint8_t> res(acc.size());
+        std::transform(acc.cbegin(), acc.cend(), res.begin(), [](char c) { return (uint8_t)c; });
+
+        return std::move(res);
     }
 
     ASCIIStringValue* ASCIIStringValue::createFromParse(const Type* vtype, SourcePos spos, const char* bytes, size_t length)
     {
-        return new ASCIIStringValue(vtype, spos, ASCIIStringValue::unescapeString(bytes, length));
+        auto sv = std::move(ASCIIStringValue::unescapeString(bytes, length));
+        if(!sv.has_value()) {
+            return nullptr;
+        }
+
+        return new ASCIIStringValue(vtype, spos, std::move(sv.value()));
     }
 
     StringOfValue* StringOfValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length, const BSQRegex* validator)
     {
-        UnicodeString str = std::move(StringValue::unescapeString(bytes, length));
-        return validator->test(&str) ? new StringOfValue(vtype, spos, std::move(str)) : nullptr;
+        auto str = StringValue::unescapeString(bytes, length);
+        if(!str.has_value()) {
+            return nullptr;
+        }
+
+        return validator->test(&str.value()) ? new StringOfValue(vtype, spos, std::move(str.value())) : nullptr;
     }
 
     ASCIIStringOfValue* ASCIIStringOfValue::createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQRegex* validator)
     {
-        std::string str = std::move(ASCIIStringValue::unescapeString(chars, length));
-        return validator->test(&str) ? new ASCIIStringOfValue(vtype, spos, std::move(str)) : nullptr;
+        auto str = std::move(ASCIIStringValue::unescapeString(chars, length));
+        if(!str.has_value()) {
+            return nullptr;
+        }
+
+        return validator->test(&str.value()) ? new ASCIIStringOfValue(vtype, spos, std::move(str.value())) : nullptr;
     }
 }
 
