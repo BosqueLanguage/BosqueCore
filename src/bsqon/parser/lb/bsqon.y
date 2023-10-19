@@ -259,11 +259,11 @@ bsqonl_entry:
 ;
 
 bsqonbracketvalue:
-   '[' ']' { $$ = BSQON_AST_BracketValueNodeCreate(NULL); }
-   | '[' bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCons($2, NULL)); }
-   | '[' bsqonvall bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCompleteParse(BSQON_AST_ListCons($3, $2))); }
-   | '[' error ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@2)), NULL)); yyerrok; }
-   | '[' bsqonvall error ']' { $$ = BSQON_AST_BracketValueNodeCreate(BSQON_AST_ListCompleteParse(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@3)), $2))); yyerrok; }
+   '[' ']' { $$ = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R(@1, @2), NULL); }
+   | '[' bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R(@1, @3), BSQON_AST_ListCons($2, NULL)); }
+   | '[' bsqonvall bsqonval ']' { $$ = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R(@1, @4), BSQON_AST_ListCompleteParse(BSQON_AST_ListCons($3, $2))); }
+   | '[' error ']' { $$ = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R(@1, @3), BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@2)), NULL)); yyerrok; }
+   | '[' bsqonvall error ']' { $$ = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R(@1, @4), BSQON_AST_ListCompleteParse(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@3)), $2))); yyerrok; }
 ;
 
 bsqonnamevall:
@@ -283,15 +283,15 @@ bsqonnameval_entry:
 ;
 
 bsqonbracevalue:
-   '{' '}' { $$ = BSQON_AST_BraceValueNodeCreate(NULL); }
-   | '{' TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, $4), NULL)); }
-   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, $5), $2))); }
-   | '{' TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@4))), NULL)); yyerrok; }
-   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@5))), $2))); yyerrok; }
-   | '{' bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $2), NULL)); }
-   | '{' bsqonnamevall bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $3), $2))); }
-   | '{' error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@2))), NULL)); yyerrok; }
-   | '{' bsqonnamevall error '}' { $$ = BSQON_AST_BraceValueNodeCreate(BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@3))), $2))); yyerrok; }
+   '{' '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @2), NULL); }
+   | '{' TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @5), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, $4), NULL)); }
+   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS bsqonval '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @6), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, $5), $2))); }
+   | '{' TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @5), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($2, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@4))), NULL)); yyerrok; }
+   | '{' bsqonnamevall TOKEN_IDENTIFIER SYM_EQUALS error '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @6), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate($3, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@5))), $2))); yyerrok; }
+   | '{' bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @3), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $2), NULL)); }
+   | '{' bsqonnamevall bsqon_braceval '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @4), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, $3), $2))); }
+   | '{' error '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @3), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@2))), NULL)); yyerrok; }
+   | '{' bsqonnamevall error '}' { $$ = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R(@1, @4), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@3))), $2))); yyerrok; }
 ;
 
 bsqonbracketbracevalue:
@@ -299,10 +299,10 @@ bsqonbracketbracevalue:
 ;
 
 bsqontypedvalue:
-   '<' bsqontspec '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, $2); }
-   | bsqonnominaltype bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, $1); }
-   | '<' error '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($4, BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S(@2))); }
-   | error bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate($2, BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S(@1))); }
+   '<' bsqontspec '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R(@1, @4), $4, $2); }
+   | bsqonnominaltype bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R(@1, @2), $2, $1); }
+   | '<' error '>' bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R(@1, @4), $4, BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S(@2))); }
+   | error bsqonbracketbracevalue { $$ = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R(@1, @2), $2, BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S(@1))); }
 ; 
 
 bsqonstructvalue:

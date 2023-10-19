@@ -299,10 +299,11 @@ struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQ
     return (struct BSQON_AST_BracketValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct BSQON_AST_List* data)
+struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct SourcePos pos, struct BSQON_AST_List* data)
 {
     struct BSQON_AST_BracketValueNode* node = (struct BSQON_AST_BracketValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BracketValueNode));
     node->base.tag = BSQON_AST_TAG_BracketValue;
+    node->base.pos = pos;
     node->values = data;
 
     return (struct BSQON_AST_Node*)node;
@@ -326,10 +327,11 @@ struct BSQON_AST_BraceValueNode* BSQON_AST_asBraceValueNode(const struct BSQON_A
     return (struct BSQON_AST_BraceValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct BSQON_AST_NamedList* data)
+struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct SourcePos pos, struct BSQON_AST_NamedList* data)
 {
     struct BSQON_AST_BraceValueNode* node = (struct BSQON_AST_BraceValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BraceValueNode));
     node->base.tag = BSQON_AST_TAG_BraceValue;
+    node->base.pos = pos;
     node->entries = data;
 
     return (struct BSQON_AST_Node*)node;
@@ -357,10 +359,11 @@ struct BSQON_AST_TypedValueNode* BSQON_AST_asTypedValueNode(const struct BSQON_A
     return (struct BSQON_AST_TypedValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_TypedValueNode* node = (struct BSQON_AST_TypedValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedValueNode));
     node->base.tag = BSQON_AST_TAG_TypedValue;
+    node->base.pos = pos;
     node->type = type;
     node->value = data;
 
