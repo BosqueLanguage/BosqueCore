@@ -425,7 +425,13 @@ namespace BSQON
 
         bool test(const UnicodeString* s) const
         {
-            CharCodeIterator siter(s);
+            UnicodeIterator siter(s);
+            return this->nfare->test(siter);
+        }
+
+        bool test(const std::string* s) const
+        {
+            ASCIIIterator siter(s);
             return this->nfare->test(siter);
         }
     };

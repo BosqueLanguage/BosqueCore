@@ -7,12 +7,29 @@
 
 namespace BSQON
 {
+    std::optional<char32_t> decodeHexEscape(std::string escc);
+    
+    UnicodeString resolveEscapeUnicodeFromCode(char32_t c);
+    char32_t resolveEscapeUnicodeFromName(const UnicodeString& name);
+    std::string resolveEscapeASCIIFromCode(char c);
+    char resolveEscapeASCIIFromName(const std::string& name);
+
+    class SourcePos
+    {
+    public:
+        uint32_t first_line;
+        uint32_t first_column;
+        uint32_t last_line;
+        uint32_t last_column;
+    };
+
     class Value
     {
     public:
         const Type* vtype;
+        const SourcePos spos;
 
-        Value(const Type* vtype) : vtype(vtype) { ; }
+        Value(const Type* vtype, SourcePos spos) : vtype(vtype), spos(spos) { ; }
         virtual ~Value() = default;
 
         virtual std::string toString() const = 0;
@@ -21,7 +38,7 @@ namespace BSQON
     class PrimtitiveValue : public Value
     {
     public:
-        PrimtitiveValue(const Type* vtype) : Value(vtype) { ; }
+        PrimtitiveValue(const Type* vtype, SourcePos spos) : Value(vtype, spos) { ; }
         virtual ~PrimtitiveValue() = default;
 
         const PrimitiveType* getPrimitiveType() const
@@ -33,7 +50,7 @@ namespace BSQON
     class NoneValue : public PrimtitiveValue 
     {
     public:
-        NoneValue(const Type* vtype) : PrimtitiveValue(vtype) { ; }
+        NoneValue(const Type* vtype, SourcePos spos) : PrimtitiveValue(vtype, spos) { ; }
         virtual ~NoneValue() = default;
 
         virtual std::string toString() const override
@@ -45,7 +62,7 @@ namespace BSQON
     class NothingValue : public PrimtitiveValue 
     {
     public:
-        NothingValue(const Type* vtype) : PrimtitiveValue(vtype) { ; }
+        NothingValue(const Type* vtype, SourcePos spos) : PrimtitiveValue(vtype, spos) { ; }
         virtual ~NothingValue() = default;
 
         virtual std::string toString() const override
@@ -59,7 +76,7 @@ namespace BSQON
     public:
         const bool tv;
     
-        BoolValue(const Type* vtype, bool tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        BoolValue(const Type* vtype, SourcePos spos, bool tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~BoolValue() = default;
 
         virtual std::string toString() const override
@@ -74,7 +91,7 @@ namespace BSQON
         const uint64_t cnv;
         const std::string nv;
     
-        NatNumberValue(const Type* vtype, uint64_t cnv, std::string nv) : PrimtitiveValue(vtype), cnv(cnv), nv(nv) { ; }
+        NatNumberValue(const Type* vtype, SourcePos spos, uint64_t cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
         virtual ~NatNumberValue() = default;
 
         virtual std::string toString() const override
@@ -89,7 +106,7 @@ namespace BSQON
         const int64_t cnv;
         const std::string nv;
     
-        IntNumberValue(const Type* vtype, int64_t cnv, std::string nv) : PrimtitiveValue(vtype), cnv(cnv), nv(nv) { ; }
+        IntNumberValue(const Type* vtype, SourcePos spos, int64_t cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
         virtual ~IntNumberValue() = default;
 
         virtual std::string toString() const override
@@ -103,7 +120,7 @@ namespace BSQON
     public:
         const std::string nv;
     
-        FloatNumberValue(const Type* vtype, std::string nv) : PrimtitiveValue(vtype), nv(nv) { ; }
+        FloatNumberValue(const Type* vtype, SourcePos spos, std::string nv) : PrimtitiveValue(vtype, spos), nv(nv) { ; }
         virtual ~FloatNumberValue() = default;
 
         virtual std::string toString() const override
@@ -119,7 +136,7 @@ namespace BSQON
         const std::string numerator;
         const std::string denominator;
     
-        RationalNumberValue(const Type* vtype, int64_t ival, std::string numerator, std::string denominator) : PrimtitiveValue(vtype), ival(ival), numerator(numerator), denominator(denominator) { ; }
+        RationalNumberValue(const Type* vtype, SourcePos spos, int64_t ival, std::string numerator, std::string denominator) : PrimtitiveValue(vtype, spos), ival(ival), numerator(numerator), denominator(denominator) { ; }
         virtual ~RationalNumberValue() = default;
 
         virtual std::string toString() const override
@@ -140,10 +157,13 @@ namespace BSQON
     
         virtual ~StringValue() = default;
 
-        static StringValue* createFromParse(const Type* vtype, const uint8_t* bytes, size_t length);
+        static StringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
-        static UnicodeString unescapeString(const uint8_t* bytes, size_t length);
-        static std::vector<uint8_t> escapeString(UnicodeString sv);
+        //Take a utf8 string with escapes and convert to a utf32 string
+        static std::optional<UnicodeString> unescapeString(const uint8_t* bytes, size_t length);
+
+        //Convert a utf32 string to a utf8 string with escapes
+        static std::vector<uint8_t> escapeString(const UnicodeString& sv);
 
         virtual std::string toString() const override
         {
@@ -152,7 +172,7 @@ namespace BSQON
         }
 
     private:
-        StringValue(const Type* vtype, UnicodeString&& sv) : PrimtitiveValue(vtype), sv(std::move(sv)) { ; }
+        StringValue(const Type* vtype, SourcePos spos, UnicodeString&& sv) : PrimtitiveValue(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class ASCIIStringValue : public PrimtitiveValue
@@ -162,10 +182,13 @@ namespace BSQON
     
         virtual ~ASCIIStringValue() = default;
 
-        static ASCIIStringValue* createFromParse(const Type* vtype, const char* bytes, size_t length);
+        static ASCIIStringValue* createFromParse(const Type* vtype, SourcePos spos, const char* bytes, size_t length);
 
-        static std::string unescapeString(const char* chars, size_t length);
-        static std::vector<uint8_t> escapeString(std::string sv);
+        //Take an ascii string with escapes and convert to a true string
+        static std::optional<std::string> unescapeString(const char* chars, size_t length);
+
+        //Convert an ascii string to a ascii string with escapes
+        static std::vector<uint8_t> escapeString(const std::string& sv);
 
         virtual std::string toString() const override
         {
@@ -174,7 +197,7 @@ namespace BSQON
         }
 
     private:
-        ASCIIStringValue(const Type* vtype, std::string&& sv) : PrimtitiveValue(vtype), sv(std::move(sv)) { ; }
+        ASCIIStringValue(const Type* vtype, SourcePos spos, std::string&& sv) : PrimtitiveValue(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class ByteBufferValue : public PrimtitiveValue
@@ -182,7 +205,7 @@ namespace BSQON
     public:
         const std::vector<uint8_t> bytes;
     
-        ByteBufferValue(const Type* vtype, std::vector<uint8_t> bytes) : PrimtitiveValue(vtype), bytes(bytes) { ; }
+        ByteBufferValue(const Type* vtype, SourcePos spos, std::vector<uint8_t> bytes) : PrimtitiveValue(vtype, spos), bytes(bytes) { ; }
         virtual ~ByteBufferValue() = default;
 
         virtual std::string toString() const override
@@ -196,7 +219,7 @@ namespace BSQON
     public:
         const std::string uuidstr;
     
-        UUIDValue(const Type* vtype, std::string uuidstr) : PrimtitiveValue(vtype), uuidstr(uuidstr) { ; }
+        UUIDValue(const Type* vtype, SourcePos spos, std::string uuidstr) : PrimtitiveValue(vtype, spos), uuidstr(uuidstr) { ; }
         virtual ~UUIDValue() = default;
 
         virtual std::string toString() const override
@@ -210,7 +233,7 @@ namespace BSQON
     public:
         const std::string hashstr;
     
-        SHAContentHashValue(const Type* vtype, std::string hashstr) : PrimtitiveValue(vtype), hashstr(hashstr) { ; }
+        SHAContentHashValue(const Type* vtype, SourcePos spos, std::string hashstr) : PrimtitiveValue(vtype, spos), hashstr(hashstr) { ; }
         virtual ~SHAContentHashValue() = default;
 
         virtual std::string toString() const override
@@ -224,7 +247,7 @@ namespace BSQON
     public:
         const DateTime tv;
     
-        DateTimeValue(const Type* vtype, DateTime tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        DateTimeValue(const Type* vtype, SourcePos spos, DateTime tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~DateTimeValue() = default;
 
         virtual std::string toString() const override
@@ -241,7 +264,7 @@ namespace BSQON
     public:
         const UTCDateTime tv;
     
-        UTCDateTimeValue(const Type* vtype, UTCDateTime tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        UTCDateTimeValue(const Type* vtype, SourcePos spos, UTCDateTime tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~UTCDateTimeValue() = default;
 
         virtual std::string toString() const override
@@ -258,7 +281,7 @@ namespace BSQON
     public:
         const PlainDate tv;
     
-        PlainDateValue(const Type* vtype, PlainDate tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        PlainDateValue(const Type* vtype, SourcePos spos, PlainDate tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~PlainDateValue() = default;
 
         virtual std::string toString() const override
@@ -275,7 +298,7 @@ namespace BSQON
     public:
         const PlainTime tv;
     
-        PlainTimeValue(const Type* vtype, PlainTime tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        PlainTimeValue(const Type* vtype, SourcePos spos, PlainTime tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~PlainTimeValue() = default;
 
         virtual std::string toString() const override
@@ -292,7 +315,7 @@ namespace BSQON
     public:
         const uint64_t tv;
     
-        LogicalTimeValue(const Type* vtype, uint64_t tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        LogicalTimeValue(const Type* vtype, SourcePos spos, uint64_t tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~LogicalTimeValue() = default;
 
         virtual std::string toString() const override
@@ -306,7 +329,7 @@ namespace BSQON
     public:
         const uint64_t tv;
     
-        TickTimeValue(const Type* vtype, uint64_t tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        TickTimeValue(const Type* vtype, SourcePos spos, uint64_t tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~TickTimeValue() = default;
 
         virtual std::string toString() const override
@@ -320,7 +343,7 @@ namespace BSQON
     public:
         const ISOTimeStamp tv;
     
-        ISOTimeStampValue(const Type* vtype, ISOTimeStamp tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        ISOTimeStampValue(const Type* vtype, SourcePos spos, ISOTimeStamp tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~ISOTimeStampValue() = default;
 
         virtual std::string toString() const override
@@ -339,7 +362,7 @@ namespace BSQON
         //TODO: we should normalize this (by parsing and then formatting) to eliminate any simple differences (although we are not going to do regex equality)
         const BSQRegex tv;
     
-        RegexValue(const Type* vtype, BSQRegex tv) : PrimtitiveValue(vtype), tv(tv) { ; }
+        RegexValue(const Type* vtype, SourcePos spos, BSQRegex tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~RegexValue() = default;
 
         virtual std::string toString() const override
@@ -356,7 +379,7 @@ namespace BSQON
         virtual ~StringOfValue() = default;
 
         //null if validator fails
-        static StringOfValue* createFromParse(const Type* vtype, const uint8_t* bytes, size_t length, const BSQRegex* validator);
+        static StringOfValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length, const BSQRegex* validator);
 
         virtual std::string toString() const override
         {
@@ -370,7 +393,7 @@ namespace BSQON
         }
 
     private:
-        StringOfValue(const Type* vtype, UnicodeString&& sv) : Value(vtype), sv(std::move(sv)) { ; }
+        StringOfValue(const Type* vtype, SourcePos spos, UnicodeString&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class ASCIIStringOfValue : public Value
@@ -381,7 +404,7 @@ namespace BSQON
         virtual ~ASCIIStringOfValue() = default;
 
         //null if validator fails
-        static ASCIIStringOfValue* createFromParse(const Type* vtype, const char* chars, size_t length, const BSQRegex* validator);
+        static ASCIIStringOfValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQRegex* validator);
 
         virtual std::string toString() const override
         {
@@ -395,7 +418,7 @@ namespace BSQON
         }
 
     private:
-        ASCIIStringOfValue(const Type* vtype, std::string&& sv) : Value(vtype), sv(std::move(sv)) { ; }
+        ASCIIStringOfValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class SomethingValue : public Value
@@ -403,7 +426,7 @@ namespace BSQON
     public:
         const Value* v;
 
-        SomethingValue(const Type* vtype, const Value* v) : Value(vtype), v(v) { ; }
+        SomethingValue(const Type* vtype, SourcePos spos, const Value* v) : Value(vtype, spos), v(v) { ; }
         virtual ~SomethingValue() = default;
 
         virtual std::string toString() const override
@@ -422,7 +445,7 @@ namespace BSQON
     public:
         const Value* v;
 
-        OkValue(const Type* vtype, const Value* v) : Value(vtype), v(v) { ; }
+        OkValue(const Type* vtype, SourcePos spos, const Value* v) : Value(vtype, spos), v(v) { ; }
         virtual ~OkValue() = default;
 
         virtual std::string toString() const override
@@ -441,7 +464,7 @@ namespace BSQON
     public:
         const Value* v;
 
-        ErrValue(const Type* vtype, const Value* v) : Value(vtype), v(v) { ; }
+        ErrValue(const Type* vtype, SourcePos spos, const Value* v) : Value(vtype, spos), v(v) { ; }
         virtual ~ErrValue() = default;
 
         virtual std::string toString() const override
@@ -463,7 +486,7 @@ namespace BSQON
         virtual ~PathValue() = default;
 
         //null if validator fails
-        static PathValue* createFromParse(const Type* vtype, const char* chars, size_t length, const BSQPath* validator);
+        static PathValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {
@@ -476,7 +499,7 @@ namespace BSQON
         }
 
     private:
-        PathValue(const Type* vtype, std::string&& sv) : Value(vtype), sv(std::move(sv)) { ; }
+        PathValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class PathFragmentValue : public Value
@@ -487,7 +510,7 @@ namespace BSQON
         virtual ~PathFragmentValue() = default;
 
         //null if validator fails
-        static PathFragmentValue* createFromParse(const Type* vtype, const char* chars, size_t length, const BSQPath* validator);
+        static PathFragmentValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {
@@ -500,7 +523,7 @@ namespace BSQON
         }
 
     private:
-        PathFragmentValue(const Type* vtype, std::string&& sv) : Value(vtype), sv(std::move(sv)) { ; }
+        PathFragmentValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class PathGlobValue : public Value
@@ -511,7 +534,7 @@ namespace BSQON
         virtual ~PathGlobValue() = default;
 
         //null if validator fails
-        static PathGlobValue* createFromParse(const Type* vtype, const char* chars, size_t length, const BSQPath* validator);
+        static PathGlobValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {
@@ -524,7 +547,7 @@ namespace BSQON
         }
 
     private:
-        PathGlobValue(const Type* vtype, std::string&& sv) : Value(vtype), sv(std::move(sv)) { ; }
+        PathGlobValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
 
     class ListValue : public Value
@@ -532,7 +555,7 @@ namespace BSQON
     public:
         const std::vector<Value*> vals;
 
-        ListValue(const Type* vtype, std::vector<Value*>&& vals) : Value(vtype), vals(std::move(vals)) { ; }
+        ListValue(const Type* vtype, SourcePos spos, std::vector<Value*>&& vals) : Value(vtype, spos), vals(std::move(vals)) { ; }
         virtual ~ListValue() = default;
         
         virtual std::string toString() const override
@@ -551,7 +574,7 @@ namespace BSQON
     public:
         const std::vector<Value*> vals;
 
-        StackValue(const Type* vtype, std::vector<Value*>&& vals) : Value(vtype), vals(std::move(vals)) { ; }
+        StackValue(const Type* vtype, SourcePos spos, std::vector<Value*>&& vals) : Value(vtype, spos), vals(std::move(vals)) { ; }
         virtual ~StackValue() = default;
         
         virtual std::string toString() const override
@@ -570,7 +593,7 @@ namespace BSQON
     public:
         const std::vector<Value*> vals;
 
-        QueueValue(const Type* vtype, std::vector<Value*>&& vals) : Value(vtype), vals(std::move(vals)) { ; }
+        QueueValue(const Type* vtype, SourcePos spos, std::vector<Value*>&& vals) : Value(vtype, spos), vals(std::move(vals)) { ; }
         virtual ~QueueValue() = default;
         
         virtual std::string toString() const override
@@ -589,7 +612,7 @@ namespace BSQON
     public:
         const std::vector<Value*> vals;
 
-        SetValue(const Type* vtype, std::vector<Value*>&& vals) : Value(vtype), vals(std::move(vals)) { ; }
+        SetValue(const Type* vtype, SourcePos spos, std::vector<Value*>&& vals) : Value(vtype, spos), vals(std::move(vals)) { ; }
         virtual ~SetValue() = default;
         
         virtual std::string toString() const override
@@ -609,7 +632,7 @@ namespace BSQON
         const Value* key;
         const Value* val;
 
-        MapEntryValue(const Type* vtype, const Value* key, const Value* val) : Value(vtype), key(key), val(val) { ; }
+        MapEntryValue(const Type* vtype, SourcePos spos, const Value* key, const Value* val) : Value(vtype, spos), key(key), val(val) { ; }
         virtual ~MapEntryValue() = default;
         
         virtual std::string toString() const override
@@ -628,7 +651,7 @@ namespace BSQON
     public:
         const std::vector<MapEntryValue*> vals;
 
-        MapValue(const Type* vtype, std::vector<MapEntryValue*>&& vals) : Value(vtype), vals(std::move(vals)) { ; }
+        MapValue(const Type* vtype, SourcePos spos, std::vector<MapEntryValue*>&& vals) : Value(vtype, spos), vals(std::move(vals)) { ; }
         virtual ~MapValue() = default;
         
         virtual std::string toString() const override
@@ -648,7 +671,7 @@ namespace BSQON
         const std::string evname;
         const uint32_t ev;
 
-        EnumValue(const Type* vtype, std::string evname, uint32_t ev) : Value(vtype), evname(evname), ev(ev) { ; }
+        EnumValue(const Type* vtype, SourcePos spos, std::string evname, uint32_t ev) : Value(vtype, spos), evname(evname), ev(ev) { ; }
         virtual ~EnumValue() = default;
         
         virtual std::string toString() const override
@@ -667,7 +690,7 @@ namespace BSQON
     public:
         const Value* basevalue;
 
-        TypedeclValue(const Type* vtype, const Value* basevalue) : Value(vtype), basevalue(basevalue) { ; }
+        TypedeclValue(const Type* vtype, SourcePos spos, const Value* basevalue) : Value(vtype, spos), basevalue(basevalue) { ; }
         virtual ~TypedeclValue() = default;
         
         virtual std::string toString() const override
@@ -687,7 +710,7 @@ namespace BSQON
         //value is nullptr if we need to use the default constructor
         const std::vector<Value*> fieldvalues;
 
-        EntityValue(const Type* vtype, const std::vector<Value*>&& fieldvalues) : Value(vtype), fieldvalues(std::move(fieldvalues)) { ; }
+        EntityValue(const Type* vtype, SourcePos spos, const std::vector<Value*>&& fieldvalues) : Value(vtype, spos), fieldvalues(std::move(fieldvalues)) { ; }
         virtual ~EntityValue() = default;
         
         virtual std::string toString() const override
@@ -706,7 +729,7 @@ namespace BSQON
     public:
         const std::vector<Value*> values;
 
-        TupleValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        TupleValue(const Type* vtype, SourcePos spos, const std::vector<Value*>&& values) : Value(vtype, spos), values(std::move(values)) { ; }
         virtual ~TupleValue() = default;
         
         virtual std::string toString() const override
@@ -725,7 +748,7 @@ namespace BSQON
     public:
         const std::vector<Value*> values;
 
-        RecordValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        RecordValue(const Type* vtype, SourcePos spos, const std::vector<Value*>&& values) : Value(vtype, spos), values(std::move(values)) { ; }
         virtual ~RecordValue() = default;
         
         virtual std::string toString() const override
@@ -744,7 +767,7 @@ namespace BSQON
     public:
         const std::vector<Value*> values;
 
-        EListValue(const Type* vtype, const std::vector<Value*>&& values) : Value(vtype), values(std::move(values)) { ; }
+        EListValue(const Type* vtype, SourcePos spos, const std::vector<Value*>&& values) : Value(vtype, spos), values(std::move(values)) { ; }
         virtual ~EListValue() = default;
         
         virtual std::string toString() const override

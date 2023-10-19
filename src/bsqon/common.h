@@ -35,22 +35,56 @@ namespace BSQON
     class CharCodeIterator
     {
     public:
+        virtual bool valid() const = 0;
+        virtual void advance() = 0;
+        virtual CharCode get() const = 0;
+    };
+
+    class UnicodeIterator : public CharCodeIterator
+    {
+    public:
         const UnicodeString* sstr;
         UnicodeString::const_iterator curr;
 
-        CharCodeIterator(const UnicodeString* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
+        UnicodeIterator(const UnicodeString* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
+        ~UnicodeIterator() {;}
         
-        bool valid() const
+        bool valid() const override
         {
             return this->curr != this->sstr->cend();
         }
 
-        void advance()
+        void advance() override
         {
             this->curr++;
         }
 
-        CharCode get() const
+        CharCode get() const override
+        {
+            return *this->curr;
+        }
+    };
+
+    class ASCIIIterator : public CharCodeIterator
+    {
+    public:
+        const std::string* sstr;
+        std::string::const_iterator curr;
+
+        ASCIIIterator(const std::string* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
+        ~ASCIIIterator() {;}
+        
+        bool valid() const override
+        {
+            return this->curr != this->sstr->cend();
+        }
+
+        void advance() override
+        {
+            this->curr++;
+        }
+
+        CharCode get() const override
         {
             return *this->curr;
         }
