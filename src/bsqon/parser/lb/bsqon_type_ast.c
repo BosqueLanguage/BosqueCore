@@ -102,7 +102,7 @@ void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node)
     }
 }
 
-struct BSQON_TYPE_AST_Node* BSQON_TYPE_AST_ErrorNodeCreate(struct SourcePos pos)
+struct BSQON_TYPE_AST_Node* BSQON_TYPE_AST_ErrorNodeCreate(struct AST_SourcePos pos)
 {
     struct BSQON_TYPE_AST_ErrorNode* node = (struct BSQON_TYPE_AST_ErrorNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_ErrorNode));
     node->base.tag = BSQON_TYPE_AST_TAG_Error;

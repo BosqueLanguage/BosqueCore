@@ -123,7 +123,7 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     }
 }
 
-struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate(struct SourcePos pos)
+struct BSQON_AST_Node* BSQON_AST_ErrorNodeCreate(struct AST_SourcePos pos)
 {
     struct BSQON_AST_ErrorNode* node = (struct BSQON_AST_ErrorNode*)AST_ALLOC(sizeof(struct BSQON_AST_ErrorNode));
     node->base.tag = BSQON_AST_TAG_Error;
@@ -137,7 +137,7 @@ struct BSQON_AST_LiteralSingletonNode* BSQON_AST_asLiteralSingletonNode(const st
     return (struct BSQON_AST_LiteralSingletonNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralSingletonNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos)
+struct BSQON_AST_Node* BSQON_AST_LiteralSingletonNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos)
 {
     struct BSQON_AST_LiteralSingletonNode* node = (struct BSQON_AST_LiteralSingletonNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralSingletonNode));
     node->base.tag = tag;
@@ -151,7 +151,7 @@ struct BSQON_AST_LiteralStringNode* BSQON_AST_asLiteralStringNode(const struct B
     return (struct BSQON_AST_LiteralStringNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralStringNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, struct ByteString* data)
+struct BSQON_AST_Node* BSQON_AST_LiteralStringNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct ByteString* data)
 {
     struct BSQON_AST_LiteralStringNode* node = (struct BSQON_AST_LiteralStringNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralStringNode));
     node->base.tag = tag;
@@ -171,7 +171,7 @@ struct BSQON_AST_LiteralStandardNode* BSQON_AST_asLiteralStandardNode(const stru
     return (struct BSQON_AST_LiteralStandardNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_LiteralStandardNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, const char* data)
+struct BSQON_AST_Node* BSQON_AST_LiteralStandardNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, const char* data)
 {
     struct BSQON_AST_LiteralStandardNode* node = (struct BSQON_AST_LiteralStandardNode*)AST_ALLOC(sizeof(struct BSQON_AST_LiteralStandardNode));
     node->base.tag = tag;
@@ -191,7 +191,7 @@ struct BSQON_AST_NameNode* BSQON_AST_asNameNode(const struct BSQON_AST_Node* nod
     return (struct BSQON_AST_NameNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, const char* data)
+struct BSQON_AST_Node* BSQON_AST_NameNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, const char* data)
 {
     struct BSQON_AST_NameNode* node = (struct BSQON_AST_NameNode*)AST_ALLOC(sizeof(struct BSQON_AST_NameNode));
     node->base.tag = tag;
@@ -211,7 +211,7 @@ struct BSQON_AST_StringOfNode* BSQON_AST_asStringOfNode(const struct BSQON_AST_N
     return (struct BSQON_AST_StringOfNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, struct SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_StringOfNode* node = (struct BSQON_AST_StringOfNode*)AST_ALLOC(sizeof(struct BSQON_AST_StringOfNode));
     node->base.tag = tag;
@@ -232,7 +232,7 @@ struct BSQON_AST_PathNode* BSQON_AST_asPathNode(const struct BSQON_AST_Node* nod
     return (struct BSQON_AST_PathNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_PathNode* node = (struct BSQON_AST_PathNode*)AST_ALLOC(sizeof(struct BSQON_AST_PathNode));
     node->base.tag = BSQON_AST_TAG_Path;
@@ -253,7 +253,7 @@ struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQ
     return (struct BSQON_AST_TypedLiteralNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_TypedLiteralNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_TypedLiteralNode* node = (struct BSQON_AST_TypedLiteralNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedLiteralNode));
     node->base.tag = BSQON_AST_TAG_TypedLiteral;
@@ -276,7 +276,7 @@ struct BSQON_AST_MapEntryNode* BSQON_AST_asMapEntryNode(const struct BSQON_AST_N
     return (struct BSQON_AST_MapEntryNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_MapEntryNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* key, struct BSQON_AST_Node* data)
+struct BSQON_AST_Node* BSQON_AST_MapEntryNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_Node* key, struct BSQON_AST_Node* data)
 {
     struct BSQON_AST_MapEntryNode* node = (struct BSQON_AST_MapEntryNode*)AST_ALLOC(sizeof(struct BSQON_AST_MapEntryNode));
     node->base.tag = BSQON_AST_TAG_MapEntry;
@@ -299,7 +299,7 @@ struct BSQON_AST_BracketValueNode* BSQON_AST_asBracketValueNode(const struct BSQ
     return (struct BSQON_AST_BracketValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct SourcePos pos, struct BSQON_AST_List* data)
+struct BSQON_AST_Node* BSQON_AST_BracketValueNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_List* data)
 {
     struct BSQON_AST_BracketValueNode* node = (struct BSQON_AST_BracketValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BracketValueNode));
     node->base.tag = BSQON_AST_TAG_BracketValue;
@@ -327,7 +327,7 @@ struct BSQON_AST_BraceValueNode* BSQON_AST_asBraceValueNode(const struct BSQON_A
     return (struct BSQON_AST_BraceValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct SourcePos pos, struct BSQON_AST_NamedList* data)
+struct BSQON_AST_Node* BSQON_AST_BraceValueNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_NamedList* data)
 {
     struct BSQON_AST_BraceValueNode* node = (struct BSQON_AST_BraceValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_BraceValueNode));
     node->base.tag = BSQON_AST_TAG_BraceValue;
@@ -359,7 +359,7 @@ struct BSQON_AST_TypedValueNode* BSQON_AST_asTypedValueNode(const struct BSQON_A
     return (struct BSQON_AST_TypedValueNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_TypedValueNode* node = (struct BSQON_AST_TypedValueNode*)AST_ALLOC(sizeof(struct BSQON_AST_TypedValueNode));
     node->base.tag = BSQON_AST_TAG_TypedValue;

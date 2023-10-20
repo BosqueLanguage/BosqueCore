@@ -16,7 +16,7 @@ enum BSQON_TYPE_AST_TAG
 struct BSQON_TYPE_AST_Node
 {
     enum BSQON_TYPE_AST_TAG tag;
-    struct SourcePos pos
+    struct AST_SourcePos pos;
 };
 
 struct BSQON_TYPE_AST_List
@@ -92,7 +92,7 @@ struct BSQON_TYPE_AST_NamedList* BSQON_TYPE_AST_NamedListCompleteParse(struct BS
 enum BSQON_TYPE_AST_TAG BSQON_TYPE_AST_getTag(const struct BSQON_TYPE_AST_Node* node);
 void BSQON_TYPE_AST_print(struct BSQON_TYPE_AST_Node* node);
 
-struct BSQON_TYPE_AST_Node* BSQON_TYPE_AST_ErrorNodeCreate(struct SourcePos pos);
+struct BSQON_TYPE_AST_Node* BSQON_TYPE_AST_ErrorNodeCreate(struct AST_SourcePos pos);
 
 struct BSQON_TYPE_AST_NominalNode* BSQON_AST_asNominalNode(const struct BSQON_TYPE_AST_Node* node);
 struct BSQON_TYPE_AST_Node* BSQON_AST_NominalNodeCreate(const char* name, struct BSQON_TYPE_AST_List* terms);
