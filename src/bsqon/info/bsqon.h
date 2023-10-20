@@ -33,6 +33,28 @@ namespace BSQON
         virtual ~Value() = default;
 
         virtual std::string toString() const = 0;
+
+        virtual bool isErrorValue() const
+        {
+            return false;
+        }
+    };
+
+    class ErrorValue : public Value
+    {
+    public:
+        ErrorValue(const Type* vtype, SourcePos spos) : Value(vtype, spos) { ; }
+        virtual ~ErrorValue() = default;
+
+        virtual std::string toString() const override
+        {
+            return "error";
+        }
+
+        virtual bool isErrorValue() const override
+        {
+            return true;
+        }
     };
 
     class PrimtitiveValue : public Value
@@ -88,10 +110,10 @@ namespace BSQON
     class NatNumberValue : public PrimtitiveValue 
     {
     public:
-        const uint64_t cnv;
+        const std::optional<uint64_t> cnv;
         const std::string nv;
     
-        NatNumberValue(const Type* vtype, SourcePos spos, uint64_t cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
+        NatNumberValue(const Type* vtype, SourcePos spos, std::optional<uint64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
         virtual ~NatNumberValue() = default;
 
         virtual std::string toString() const override
@@ -103,10 +125,10 @@ namespace BSQON
     class IntNumberValue : public PrimtitiveValue 
     {
     public:
-        const int64_t cnv;
+        const std::optional<int64_t> cnv;
         const std::string nv;
     
-        IntNumberValue(const Type* vtype, SourcePos spos, int64_t cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
+        IntNumberValue(const Type* vtype, SourcePos spos, std::optional<int64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
         virtual ~IntNumberValue() = default;
 
         virtual std::string toString() const override

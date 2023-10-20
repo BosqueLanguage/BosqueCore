@@ -29,6 +29,14 @@ namespace BSQON
             return SourcePos(spos.first_line, spos.first_column, spos.last_line, spos.last_column);
         }
 
+        void addError(std::string message, SourcePos loc)
+        {
+            this->errors.push_back(ParseError(message, loc));
+        }
+
+        static bool isValidNat(const std::string nv, int64_t& vv);
+        static bool isValidInt(const std::string nv, int64_t& vv);
+
     public:
         const AssemblyInfo* assembly;
         std::vector<ParseError> errors;
@@ -36,17 +44,17 @@ namespace BSQON
         Parser(const AssemblyInfo* assembly) {;}
         virtual ~Parser() = default;
 
-        NoneValue* parseNone(const Type* t, struct BSQON_AST_Node* node);
-        NothingValue* parseNothing(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseNone(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseNothing(const Type* t, struct BSQON_AST_Node* node);
 
-        BoolValue* parseBool(const Type* t, struct BSQON_AST_Node* node);
-        NatNumberValue* parseNat(const Type* t, struct BSQON_AST_Node* node);
-        IntNumberValue* parseInt(const Type* t, struct BSQON_AST_Node* node);
-        NatNumberValue* parseBigNat(const Type* t, struct BSQON_AST_Node* node);
-        IntNumberValue* parseBigInt(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseBool(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseNat(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseInt(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseBigNat(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseBigInt(const Type* t, struct BSQON_AST_Node* node);
 
-        RationalNumberValue* parseRational(const Type* t, struct BSQON_AST_Node* node);
-        FloatNumberValue* parseFloat(const Type* t, struct BSQON_AST_Node* node);
-        FloatNumberValue* parseDecmial(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseRational(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseFloat(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseDecmial(const Type* t, struct BSQON_AST_Node* node);
     };
 }
