@@ -154,21 +154,15 @@ namespace BSQON
     class RationalNumberValue : public PrimtitiveValue 
     {
     public:
-        const int64_t ival;
         const std::string numerator;
-        const std::string denominator;
+        const uint64_t denominator;
     
-        RationalNumberValue(const Type* vtype, SourcePos spos, int64_t ival, std::string numerator, std::string denominator) : PrimtitiveValue(vtype, spos), ival(ival), numerator(numerator), denominator(denominator) { ; }
+        RationalNumberValue(const Type* vtype, SourcePos spos, std::string numerator, uint64_t denominator) : PrimtitiveValue(vtype, spos), numerator(numerator), denominator(denominator) { ; }
         virtual ~RationalNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            if(ival == 0) {
-                return "0R";
-            }
-            else {
-                return this->numerator + "/" + this->denominator + "R";
-            }
+            return this->numerator + "/" + std::to_string(this->denominator) + "R";
         }
     };
 

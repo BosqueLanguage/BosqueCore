@@ -16,7 +16,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_BigInt,
     BSQON_AST_TAG_Rational,
     BSQON_AST_TAG_Float,
-    BSQON_AST_TAG_Double,
+    BSQON_AST_TAG_Decimal,
     BSQON_AST_TAG_Numberino,
     BSQON_AST_TAG_ByteBuffer,
     BSQON_AST_TAG_UUIDv4,

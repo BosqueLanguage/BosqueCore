@@ -56,5 +56,25 @@ namespace BSQON
         Value* parseRational(const Type* t, struct BSQON_AST_Node* node);
         Value* parseFloat(const Type* t, struct BSQON_AST_Node* node);
         Value* parseDecmial(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseString(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseASCIIString(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseByteBuffer(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseUUIDv4(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseUUIDv7(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseSHAHashcode(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseDateTime(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseUTCDateTime(const Type* t, struct BSQON_AST_Node* node);
+        Value* parsePlainDate(const Type* t, struct BSQON_AST_Node* node);
+        Value* parsePlainTime(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseTickTime(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseLogicalTime(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseISOTimeStamp(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseRegex(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseStringOf(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseASCIIStringOf(const Type* t, struct BSQON_AST_Node* node);
     };
 }

@@ -56,7 +56,7 @@ BSQON::Value* BSQON::Parser::parseNat(const Type* t, struct BSQON_AST_Node* node
     nv.pop_back(); //remove the trailing 'n'
 
     if(!Parser::isValidNat(nv, vv)) {
-        this->addError("Nat value could not be parsed", Parser::convertSrcPos(node->pos));
+        this->addError("Nat value outside of valid range", Parser::convertSrcPos(node->pos));
         return new ErrorValue(t, Parser::convertSrcPos(node->pos));
     }
 
@@ -75,7 +75,7 @@ BSQON::Value* BSQON::Parser::parseInt(const Type* t, struct BSQON_AST_Node* node
     nv.pop_back(); //remove the trailing 'i'
 
     if(!Parser::isValidInt(nv, vv)) {
-        this->addError("Int value could not be parsed", Parser::convertSrcPos(node->pos));
+        this->addError("Int value outside of valid range", Parser::convertSrcPos(node->pos));
         return new ErrorValue(t, Parser::convertSrcPos(node->pos));
     }
 
@@ -115,16 +115,134 @@ BSQON::Value* BSQON::Parser::parseBigInt(const Type* t, struct BSQON_AST_Node* n
 }
 
 BSQON::Value* BSQON::Parser::parseRational(const Type* t, struct BSQON_AST_Node* node)
-    {
-        xxxx;
+{
+    if(node->tag != BSQON_AST_TAG_Rational) {
+        this->addError("Expected Rational value", Parser::convertSrcPos(node->pos));
+        return new ErrorValue(t, Parser::convertSrcPos(node->pos));
     }
+
+    std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
+    nv.pop_back(); //remove the trailing 'R'
+
+    if(nv.find('/') == std::string::npos) {
+        return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), nv, 1);
+    }
+    else {
+        auto numerator = nv.substr(0, nv.find('/'));
+        auto denominator = nv.substr(nv.find('/') + 1);
+
+        int64_t denomv;
+        if(!Parser::isValidNat(denominator, denomv)) {
+            this->addError("Rational numerator outside of valid range", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), numerator, (uint64_t)denomv);
+    }
+}
 
 BSQON::Value* BSQON::Parser::parseFloat(const Type* t, struct BSQON_AST_Node* node)
-    {
-        xxxx;
+{
+    if(node->tag != BSQON_AST_TAG_Float) {
+        this->addError("Expected Float value", Parser::convertSrcPos(node->pos));
+        return new ErrorValue(t, Parser::convertSrcPos(node->pos));
     }
 
+    std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
+    nv.pop_back(); //remove the trailing 'f'
+
+    return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), nv);
+}
+
 BSQON::Value* BSQON::Parser::parseDecmial(const Type* t, struct BSQON_AST_Node* node)
-    {
-        xxxx;
+{
+    if(node->tag != BSQON_AST_TAG_Decimal) {
+        this->addError("Expected Decimal value", Parser::convertSrcPos(node->pos));
+        return new ErrorValue(t, Parser::convertSrcPos(node->pos));
     }
+
+    std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
+    nv.pop_back(); //remove the trailing 'd'
+
+    return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), nv);
+}
+
+BSQON::Value* BSQON::Parser::parseString(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseASCIIString(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseByteBuffer(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseUUIDv4(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseUUIDv7(const Type* t, struct BSQON_AST_Node* node);
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseSHAHashcode(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseDateTime(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseUTCDateTime(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parsePlainDate(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parsePlainTime(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseTickTime(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseLogicalTime(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseISOTimeStamp(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseRegex(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseStringOf(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
+
+BSQON::Value* BSQON::Parser::parseASCIIStringOf(const Type* t, struct BSQON_AST_Node* node)
+{
+    xxxx;
+}
