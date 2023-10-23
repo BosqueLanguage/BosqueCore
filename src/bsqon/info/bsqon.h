@@ -198,10 +198,10 @@ namespace BSQON
     
         virtual ~ASCIIStringValue() = default;
 
-        static ASCIIStringValue* createFromParse(const Type* vtype, SourcePos spos, const char* bytes, size_t length);
+        static ASCIIStringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
         //Take an ascii string with escapes and convert to a true string
-        static std::optional<std::string> unescapeString(const char* chars, size_t length);
+        static std::optional<std::string> unescapeString(const uint8_t* bytes, size_t length);
 
         //Convert an ascii string to a ascii string with escapes
         static std::vector<uint8_t> escapeString(const std::string& sv);
@@ -220,33 +220,55 @@ namespace BSQON
     {
     public:
         const std::vector<uint8_t> bytes;
-    
-        ByteBufferValue(const Type* vtype, SourcePos spos, std::vector<uint8_t> bytes) : PrimtitiveValue(vtype, spos), bytes(bytes) { ; }
+
         virtual ~ByteBufferValue() = default;
+
+        static uint8_t extractByteValue(char hb, char lb);
+        static ByteBufferValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars);
 
         virtual std::string toString() const override
         {
             return "0x[" + std::string(this->bytes.begin(), this->bytes.end()) + "]";
         }
+
+    private:
+        ByteBufferValue(const Type* vtype, SourcePos spos, std::vector<uint8_t> bytes) : PrimtitiveValue(vtype, spos), bytes(bytes) { ; }
     };
 
-    class UUIDValue : public PrimtitiveValue 
+    class UUIDv4Value : public PrimtitiveValue 
     {
     public:
+        //TODO: this is currently the uuid as a string -- is the byte representation more useful?
         const std::string uuidstr;
     
-        UUIDValue(const Type* vtype, SourcePos spos, std::string uuidstr) : PrimtitiveValue(vtype, spos), uuidstr(uuidstr) { ; }
-        virtual ~UUIDValue() = default;
+        UUIDv4Value(const Type* vtype, SourcePos spos, std::string uuidstr) : PrimtitiveValue(vtype, spos), uuidstr(uuidstr) { ; }
+        virtual ~UUIDv4Value() = default;
 
         virtual std::string toString() const override
         {
-            return std::string("uuid") + (this->vtype->tkey == "UUIDv4" ? "4" : "7") + "{" + this->uuidstr + "}";
+            return std::string("uuid4{") + this->uuidstr + "}";
+        }
+    };
+
+    class UUIDv7Value : public PrimtitiveValue 
+    {
+    public:
+        //TODO: this is currently the uuid as a string -- is the byte representation more useful?
+        const std::string uuidstr;
+    
+        UUIDv7Value(const Type* vtype, SourcePos spos, std::string uuidstr) : PrimtitiveValue(vtype, spos), uuidstr(uuidstr) { ; }
+        virtual ~UUIDv7Value() = default;
+
+        virtual std::string toString() const override
+        {
+            return std::string("uuid7{") + this->uuidstr + "}";
         }
     };
 
     class SHAContentHashValue : public PrimtitiveValue 
     {
     public:
+        //TODO: this is currently the hashcode as a string -- is the byte representation more useful?
         const std::string hashstr;
     
         SHAContentHashValue(const Type* vtype, SourcePos spos, std::string hashstr) : PrimtitiveValue(vtype, spos), hashstr(hashstr) { ; }
@@ -376,14 +398,14 @@ namespace BSQON
     public:
         //This is a bit tricky as we map from the string in the BSQON format to the statically declared regex in the assembly.
         //TODO: we should normalize this (by parsing and then formatting) to eliminate any simple differences (although we are not going to do regex equality)
-        const BSQRegex tv;
+        const BSQRegex* tv;
     
-        RegexValue(const Type* vtype, SourcePos spos, BSQRegex tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
+        RegexValue(const Type* vtype, SourcePos spos, BSQRegex* tv) : PrimtitiveValue(vtype, spos), tv(tv) { ; }
         virtual ~RegexValue() = default;
 
         virtual std::string toString() const override
         {
-            return this->tv.toString();
+            return this->tv->toString();
         }
     };
 
@@ -420,7 +442,7 @@ namespace BSQON
         virtual ~ASCIIStringOfValue() = default;
 
         //null if validator fails
-        static ASCIIStringOfValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQRegex* validator);
+        static ASCIIStringOfValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length, const BSQRegex* validator);
 
         virtual std::string toString() const override
         {

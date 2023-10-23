@@ -185,8 +185,10 @@ namespace BSQON
 
     std::optional<UnicodeString> StringValue::unescapeString(const uint8_t* bytes, size_t length)
     {
+        //assume string has "..." so we need to remove them
+
         std::string acc;
-        for(size_t i = 0; i < length; ++i) {
+        for(size_t i = 1; i < length - 1; ++i) {
             uint8_t c = bytes[i];
 
             if(c == '%') {
@@ -226,7 +228,7 @@ namespace BSQON
 
     std::vector<uint8_t> StringValue::escapeString(const UnicodeString& sv)
     {
-        UnicodeString acc;
+        UnicodeString acc = U"\"";
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char32_t c = *ii;
 
@@ -237,6 +239,7 @@ namespace BSQON
                 acc = std::move(acc) + c;
             }
         }
+        acc = std::move(acc) + U"\"";
 
         std::string utf8 = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(acc);
 
@@ -256,19 +259,21 @@ namespace BSQON
         return new StringValue(vtype, spos, std::move(sv.value()));
     }
 
-    std::optional<std::string> ASCIIStringValue::unescapeString(const char* chars, size_t length)
+    std::optional<std::string> ASCIIStringValue::unescapeString(const uint8_t* bytes, size_t length)
     {
+        //assume string has '...' so we need to remove them
+
         std::string acc;
-        for(size_t i = 0; i < length; ++i) {
-            char c = chars[i];
+        for(size_t i = 1; i < length - 1; ++i) {
+            char c = bytes[i];
 
             if(c == '%') {
-                auto sc = std::find(chars + i, chars + length, ';');
-                if(sc == chars + length) {
+                auto sc = std::find(bytes + i, bytes + length, ';');
+                if(sc == bytes + length) {
                     return std::nullopt;
                 }
 
-                auto escc = std::string(chars + i + 1, sc);
+                auto escc = std::string(bytes + i + 1, sc);
                 auto esc = resolveEscapeASCIIFromName(escc);
                 if(esc == 0) {
                     return std::nullopt;
@@ -288,7 +293,7 @@ namespace BSQON
 
     std::vector<uint8_t> ASCIIStringValue::escapeString(const std::string& sv)
     {
-        std::string acc;
+        std::string acc = "'";
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char c = *ii;
 
@@ -299,6 +304,7 @@ namespace BSQON
                 acc = std::move(acc) + c;
             }
         }
+        acc = std::move(acc) + "'";
 
         std::vector<uint8_t> res(acc.size());
         std::transform(acc.cbegin(), acc.cend(), res.begin(), [](char c) { return (uint8_t)c; });
@@ -306,7 +312,7 @@ namespace BSQON
         return std::move(res);
     }
 
-    ASCIIStringValue* ASCIIStringValue::createFromParse(const Type* vtype, SourcePos spos, const char* bytes, size_t length)
+    ASCIIStringValue* ASCIIStringValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length)
     {
         auto sv = std::move(ASCIIStringValue::unescapeString(bytes, length));
         if(!sv.has_value()) {
@@ -314,6 +320,39 @@ namespace BSQON
         }
 
         return new ASCIIStringValue(vtype, spos, std::move(sv.value()));
+    }
+
+    uint8_t ByteBufferValue::extractByteValue(char hb, char lb)
+    {
+        uint8_t h = ('0' <= hb && hb <= '9') ? (hb - '0') : (hb - 'a' + 10);
+        uint8_t l = ('0' <= lb && lb <= '9') ? (lb - '0') : (lb - 'a' + 10);
+
+        return (h << 4) | l;
+    }
+
+    ByteBufferValue* ByteBufferValue::createFromParse(const Type* vtype, SourcePos spos, const char* chars)
+    {
+        auto bblen = strlen(chars) - 4; //0x[...]
+        
+        const char* curr = chars + 3;
+        const char* bbend = chars + bblen;
+
+        if(bblen % 2 != 0) {
+            return nullptr;
+        }
+
+        std::vector<uint8_t> buff;
+        buff.reserve(bblen / 2);
+
+        while(curr != bbend) {
+            auto hb = *curr++;
+            auto lb = *curr++;
+            
+            uint8_t bv = ByteBufferValue::extractByteValue(hb, lb);
+            buff.push_back(bv);
+        }
+
+        return new ByteBufferValue(vtype, spos, std::move(buff));
     }
 
     StringOfValue* StringOfValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length, const BSQRegex* validator)
@@ -326,9 +365,9 @@ namespace BSQON
         return validator->test(&str.value()) ? new StringOfValue(vtype, spos, std::move(str.value())) : nullptr;
     }
 
-    ASCIIStringOfValue* ASCIIStringOfValue::createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQRegex* validator)
+    ASCIIStringOfValue* ASCIIStringOfValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length, const BSQRegex* validator)
     {
-        auto str = std::move(ASCIIStringValue::unescapeString(chars, length));
+        auto str = std::move(ASCIIStringValue::unescapeString(bytes, length));
         if(!str.has_value()) {
             return nullptr;
         }

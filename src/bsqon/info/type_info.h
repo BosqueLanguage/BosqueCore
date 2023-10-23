@@ -399,6 +399,7 @@ namespace BSQON
         std::map<TypeKey, Type*> aliasmap;
         std::map<std::string, NamespaceDecl*> namespaces;
         std::map<TypeKey, Type*> typerefs;
+        std::map<std::string, BSQRegex*> regexliterals;
         std::map<TypeKey, std::string> revalidators;
         std::map<TypeKey, std::string> pthvalidators;
         std::vector<std::set<TypeKey>> recursiveSets;

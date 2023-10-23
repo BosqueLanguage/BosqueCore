@@ -143,6 +143,10 @@ namespace BSQON
             assembly.typerefs[t->tkey] = t; 
         });
 
+        std::for_each(j["regexliterals"].begin(), j["regexliterals"].end(), [&assembly](const json &ta) { 
+            assembly.regexliterals[ta[0].get<std::string>()] = BSQRegex::jparse(ta[1].get<std::string>());
+        });
+
         std::for_each(j["aliasmap"].begin(), j["aliasmap"].end(), [&assembly](const json &a) { 
             assembly.aliasmap[a[0].get<std::string>()] = assembly.typerefs[a[1].get<TypeKey>()];
         });

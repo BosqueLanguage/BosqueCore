@@ -36,9 +36,18 @@ namespace BSQON
 
         static bool isValidNat(const std::string nv, int64_t& vv);
         static bool isValidInt(const std::string nv, int64_t& vv);
+        static bool isValidWCTime(const std::string nv, uint64_t& vv);
 
+        static bool processDateInfo(const std::string& ds, uint16_t& yy, uint8_t& mm, uint8_t& dd);
+        static bool processTimeInfo(const std::string& ds, uint8_t& hh, uint8_t& mm, uint8_t& ss);
+        static bool processMillisInfo(const std::string& ds, uint16_t& millis);
+
+        bool processTZInfo(const std::string& ds, const char** tz);
+        
     public:
         const AssemblyInfo* assembly;
+        std::set<std::string> tzset;
+
         std::vector<ParseError> errors;
 
         Parser(const AssemblyInfo* assembly) {;}
@@ -73,6 +82,8 @@ namespace BSQON
         Value* parseISOTimeStamp(const Type* t, struct BSQON_AST_Node* node);
 
         Value* parseRegex(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseLatLongCoordinate(const Type* t, struct BSQON_AST_Node* node);
 
         Value* parseStringOf(const Type* t, struct BSQON_AST_Node* node);
         Value* parseASCIIStringOf(const Type* t, struct BSQON_AST_Node* node);
