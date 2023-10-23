@@ -89,6 +89,31 @@ namespace BSQON
         return true;
     }
 
+    std::vector<std::pair<std::string, Value*>> Parser::processPropertiesForRecord(const RecordType* ttype, BSQON_AST_BraceValueNode* node)
+    {
+        xxxx;
+    }
+
+    std::vector<Value*> Parser::processPropertiesForEntity(const StdEntityType* ttype, BSQON_AST_BraceValueNode* node)
+    {
+        xxxx;
+    }
+
+    std::vector<Value*> Parser::processPropertiesForSequence(const Type* etype, BSQON_AST_BracketValueNode* node)
+    {
+        xxxx;
+    }
+        
+    std::vector<Value*> Parser::processPropertiesForMap(const Type* keytype, const Type* valtype, BSQON_AST_BraceValueNode* node)
+    {
+        xxxx;
+    }
+
+    Type* Parser::parseType(BSQON_TYPE_AST_Node* node)
+    {
+        xxxx;
+    }
+
     Value* Parser::parseNone(const Type* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_None) {
@@ -471,7 +496,7 @@ namespace BSQON
 
     Value* Parser::parseISOTimeStamp(const Type* t, BSQON_AST_Node* node)
     {
-        if(node->tag != BSQON_AST_TAG_ISOTimeStamp) {
+        if(node->tag != BSQON_AST_TAG_Timestamp) {
             this->addError("Expected ISOTimeStamp value", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
@@ -520,8 +545,8 @@ namespace BSQON
 
         if(node->tag == BSQON_AST_TAG_TypedValue) {
             auto tnode = BSQON_AST_asTypedValueNode(node);
-            const Type* ttype = this->assembly->;
-            if(ttype->tkey != "LatLongCoordinate") {
+            const Type* ttype = this->parseType(tnode->type);
+            if(ttype == nullptr || ttype->tkey != "LatLongCoordinate") {
                 this->addError("Expected LatLongCoordinate value", Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
@@ -534,7 +559,8 @@ namespace BSQON
             node = tnode->value;
         }
 
-        auto data = BSQON_AST_asBraceValueNode(node);
+        xxxx;
+        auto data = this->processPropertiesForEntity(); BSQON_AST_asBraceValueNode(node);
         if(data->entries.)
         auto lli = this->assembly->latlongliterals.find(llstr);
 

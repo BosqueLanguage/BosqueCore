@@ -44,6 +44,12 @@ namespace BSQON
 
         bool processTZInfo(const std::string& ds, const char** tz);
         
+        std::vector<std::pair<std::string, Value*>> processPropertiesForRecord(const RecordType* ttype, struct BSQON_AST_BraceValueNode* node);
+        std::vector<Value*> processPropertiesForEntity(const StdEntityType* ttype, struct BSQON_AST_BraceValueNode* node);
+
+        std::vector<Value*> processPropertiesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
+        std::vector<Value*> processPropertiesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
+
     public:
         const AssemblyInfo* assembly;
         std::set<std::string> tzset;
@@ -52,6 +58,8 @@ namespace BSQON
 
         Parser(const AssemblyInfo* assembly) {;}
         virtual ~Parser() = default;
+
+        Type* parseType(struct BSQON_TYPE_AST_Node* node);
 
         Value* parseNone(const Type* t, struct BSQON_AST_Node* node);
         Value* parseNothing(const Type* t, struct BSQON_AST_Node* node);
