@@ -53,7 +53,7 @@ struct BSQON_TYPE_AST_NominalExtNode
 {
     struct BSQON_TYPE_AST_Node base;
     struct BSQON_TYPE_AST_NominalNode* root;
-    struct ByteString ext;
+    const char* ext;
 };
 
 struct BSQON_TYPE_AST_TupleNode

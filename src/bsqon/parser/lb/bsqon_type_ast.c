@@ -149,13 +149,18 @@ struct BSQON_TYPE_AST_NominalExtNode* BSQON_AST_asNominalExtNode(const struct BS
 
 struct BSQON_TYPE_AST_Node* BSQON_AST_NominalExtNodeCreate(struct BSQON_TYPE_AST_NominalNode* base, const char* ext)
 {
-    assert(false);
+    struct BSQON_TYPE_AST_NominalExtNode* node = (struct BSQON_TYPE_AST_NominalExtNode*)AST_ALLOC(sizeof(struct BSQON_TYPE_AST_NominalExtNode));
+    node->base.tag = BSQON_TYPE_AST_TAG_NominalExt;
+    node->root = base;
+    node->ext = ext;
+
+    return (struct BSQON_TYPE_AST_Node*)node;
 }
 
 void BSQON_AST_TYPE_printNominalExtNode(struct BSQON_TYPE_AST_NominalExtNode* node)
 {
     BSQON_AST_TYPE_printNominalNode(node->root);
-    printf("::%s", node->ext.bytes);
+    printf("::%s", node->ext);
 }
 
 struct BSQON_TYPE_AST_TupleNode* BSQON_AST_asTupleNode(const struct BSQON_TYPE_AST_Node* node)

@@ -52,6 +52,9 @@ namespace BSQON
 
     public:
         const AssemblyInfo* assembly;
+
+        const std::string defaultns;
+        std::map<std::string, std::string> importmap;
         std::set<std::string> tzset;
 
         std::vector<ParseError> errors;
@@ -59,7 +62,103 @@ namespace BSQON
         Parser(const AssemblyInfo* assembly) {;}
         virtual ~Parser() = default;
 
-        Type* parseType(struct BSQON_TYPE_AST_Node* node);
+        ///////////////////////////////////////////////////////////////////////////////////////
+
+
+        const Type* resolveTypeFromNameList(std::string basenominal, std::vector<const Type*> terms);
+        const Type* resolveAndCheckType(TypeKey tkey, SourcePos spos);
+
+        const Type* processCoreType(std::string tname);
+
+        bool parseTemplateTermList(struct BSQON_TYPE_AST_List* tlist, std::vector<const Type*>& terms);
+        const Type* parseTemplateTermList_One(SourcePos spos, struct BSQON_TYPE_AST_List* tlist); 
+        std::pair<const Type*, const Type*> parseTemplateTermList_Two(SourcePos spos, struct BSQON_TYPE_AST_List* tlist);
+
+        const Type* parseTemplateTypeHelper_One(std::string sname, SourcePos spos, struct BSQON_TYPE_AST_List* tlist);
+        const Type* parseTemplateTypeHelper_Two(std::string sname, SourcePos spos, struct BSQON_TYPE_AST_List* tlist);
+
+        const Type* parseTemplateTypeHelper_OkErr(const Type* tresult, std::string sname, SourcePos spos);
+
+        const Type* parseStringOfType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("StringOf", spos, tlist);
+        }
+
+        const Type* parseASCIIStringOfType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("ASCIIStringOf", spos, tlist);
+        }
+
+        const Type* parseSomethingType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Something", spos, tlist);
+        }
+
+        const Type* parseOptionType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Option", spos, tlist);
+        }
+
+        const Type* parseResultType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_Two("Result", spos, tlist);
+        }
+
+        const Type* parsePathType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Path", spos, tlist);
+        }
+
+        const Type* parsePathFragmentType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("PathFragment", spos, tlist);
+        }
+
+        const Type* parsePathGlobType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("PathGlob", spos, tlist);
+        }
+
+        const Type* parseListType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("List", spos, tlist);
+        }
+
+        const Type* parseStackType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Stack", spos, tlist);
+        }
+
+        const Type* parseQueueType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Queue", spos, tlist);
+        }
+
+        const Type* parseSetType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_One("Set", spos, tlist);
+        }
+
+        const Type* parseMapEntryType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_Two("MapEntry", spos, tlist);
+        }
+
+        const Type* parseMapType(SourcePos spos, struct BSQON_TYPE_AST_List* tlist)
+        {
+            return this->parseTemplateTypeHelper_Two("Map", spos, tlist);
+        }
+
+        const Type* parseNominalType(struct BSQON_TYPE_AST_NominalNode* node);
+        const Type* parseNominalTemplateType(struct BSQON_TYPE_AST_NominalExtNode* node);
+        const Type* parseTupleType(struct BSQON_TYPE_AST_TupleNode* node);
+        const Type* parseRecordType(struct BSQON_TYPE_AST_RecordNode* node);
+        const Type* parseConceptSetType(struct BSQON_TYPE_AST_Conjunction* node);
+        const Type* parseUnionType(struct BSQON_TYPE_AST_Union* node);
+        const Type* parseType(struct BSQON_TYPE_AST_Node* node);
+
+        ////////////////////////////////////////////////////////////////////////////////////////
+
 
         Value* parseNone(const Type* t, struct BSQON_AST_Node* node);
         Value* parseNothing(const Type* t, struct BSQON_AST_Node* node);
