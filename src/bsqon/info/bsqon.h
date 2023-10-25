@@ -6,7 +6,6 @@
 #include "type_info.h"
 
 #include <gmp.h>
-#include <decimal/decimal>
 
 namespace BSQON
 {
@@ -113,68 +112,140 @@ namespace BSQON
     class NatNumberValue : public PrimtitiveValue 
     {
     public:
-        const std::optional<uint64_t> cnv;
-        const std::optional<mpz_t> cbnv;
-        const std::string nv;
+        const uint64_t cnv;
     
-        NatNumberValue(const Type* vtype, SourcePos spos, std::optional<uint64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
+        NatNumberValue(const Type* vtype, SourcePos spos, uint64_t cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
         virtual ~NatNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            xxxx;
-            return this->nv + (this->vtype->tkey == "Nat" ? "n" : "N");
+            return std::to_string(this->cnv) + "n";
         }
     };
 
     class IntNumberValue : public PrimtitiveValue 
     {
     public:
-        const std::optional<int64_t> cnv;
-        const std::optional<mpz_t> cbnv;
-        const std::string nv;
-    
-        IntNumberValue(const Type* vtype, SourcePos spos, std::optional<int64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
+        const int64_t cnv;
+        
+        IntNumberValue(const Type* vtype, SourcePos spos, int64_t cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
         virtual ~IntNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            xxxx;
-            return this->nv + (this->vtype->tkey == "Int" ? "i" : "I");
+            return std::to_string(this->cnv) + "i";
+        }
+    };
+
+    class BigNatNumberValue : public PrimtitiveValue 
+    {
+    public:
+        mpz_t cnv;
+    
+        BigNatNumberValue(const Type* vtype, SourcePos spos, mpz_t cnv) : PrimtitiveValue(vtype, spos) 
+        { 
+            mpz_init_set(this->cnv, cnv); 
+        }
+
+        virtual ~BigNatNumberValue()
+        {
+            mpz_clear(this->cnv);
+        }
+
+        virtual std::string toString() const override
+        {
+            char* cstr = mpz_get_str(NULL, 10, this->cnv);
+            std::string str(cstr);
+
+            void (*freefunc)(void *, size_t);
+            mp_get_memory_functions (NULL, NULL, &freefunc);
+            freefunc(cstr, strlen(cstr) + 1);
+
+            return str + "N";
+        }
+    };
+
+    class BigIntNumberValue : public PrimtitiveValue 
+    {
+    public:
+        mpz_t cnv;
+    
+        BigIntNumberValue(const Type* vtype, SourcePos spos, mpz_t cnv) : PrimtitiveValue(vtype, spos) 
+        { 
+            mpz_init_set(this->cnv, cnv);
+        }
+
+        virtual ~BigIntNumberValue()
+        {
+            mpz_clear(this->cnv);
+        }
+
+        virtual std::string toString() const override
+        {
+            char* cstr = mpz_get_str(NULL, 10, this->cnv);
+            std::string str(cstr);
+
+            void (*freefunc)(void *, size_t);
+            mp_get_memory_functions (NULL, NULL, &freefunc);
+            freefunc(cstr, strlen(cstr) + 1);
+
+            return str + "I";
         }
     };
 
     class FloatNumberValue : public PrimtitiveValue 
     {
     public:
-        const std::optional<double> cnv;
-        const std::optional<std::decimal::decimal128> cdnv;
-        const std::string nv;
-    
-        FloatNumberValue(const Type* vtype, SourcePos spos, std::string nv) : PrimtitiveValue(vtype, spos), nv(nv) { ; }
+        const double cnv;
+        
+        FloatNumberValue(const Type* vtype, SourcePos spos, double cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
         virtual ~FloatNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            xxxx;
-            return this->nv + (this->vtype->tkey == "Float" ? "f" : "d");
+            return std::to_string(this->cnv) + "f";
+        }
+    };
+
+    class DecimalNumberValue : public PrimtitiveValue 
+    {
+    public:
+        //
+        //TODO: we need to add a decimal library/implementation
+        //
+        const std::string cnv;
+    
+        DecimalNumberValue(const Type* vtype, SourcePos spos, std::string cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
+        virtual ~DecimalNumberValue() = default;
+
+        virtual std::string toString() const override
+        {
+            //TODO: decimal needs a bit of work
+            return this->cnv + "d";
         }
     };
 
     class RationalNumberValue : public PrimtitiveValue 
     {
     public:
-        std::optional<mpq_t> cnv;
+        mpq_t cnv;
 
         const std::string numerator;
         const uint64_t denominator;
     
-        RationalNumberValue(const Type* vtype, SourcePos spos, std::string numerator, uint64_t denominator) : PrimtitiveValue(vtype, spos), numerator(numerator), denominator(denominator) { ; }
-        virtual ~RationalNumberValue() = default;
+        RationalNumberValue(const Type* vtype, SourcePos spos, mpq_t cnv, std::string numerator, uint64_t denominator) : PrimtitiveValue(vtype, spos), numerator(numerator), denominator(denominator) 
+        { 
+            mpq_init(this->cnv);
+            mpq_set(this->cnv, cnv);
+        }
+
+        virtual ~RationalNumberValue()
+        {
+            mpq_clear(this->cnv);
+        }
 
         virtual std::string toString() const override
         {
-            xxxx;
             return this->numerator + "/" + std::to_string(this->denominator) + "R";
         }
     };
@@ -419,6 +490,21 @@ namespace BSQON
         virtual std::string toString() const override
         {
             return this->tv->toString();
+        }
+    };
+
+    class LatLongCoordinateValue : public PrimtitiveValue 
+    {
+    public:
+        const double vlat;
+        const double vlong;
+    
+        LatLongCoordinateValue(const Type* vtype, SourcePos spos, double vlat, double vlong) : PrimtitiveValue(vtype, spos), vlat(vlat), vlong(vlong) { ; }
+        virtual ~LatLongCoordinateValue() = default;
+
+        virtual std::string toString() const override
+        {
+            return "LatLongCoordinate{" + std::to_string(this->vlat) + ", " + std::to_string(this->vlong) + "}";
         }
     };
 

@@ -6,7 +6,7 @@ namespace BSQON
 {
     std::vector<std::string> s_coreTypes = {
         "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
-        "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", U"UUIDv4", U"UUIDv7", U"SHAContentHash", 
+        "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
         "LatLongCoordinate", "Regex", "Nothing"
     };
 
@@ -50,6 +50,12 @@ namespace BSQON
     {
         auto ecount = sscanf(nv.c_str(), "%" SCNd64, vv);
         return ecount == 1 && Type::MIN_SAFE_NUMBER <= vv && vv <= Type::MAX_SAFE_NUMBER;
+    }
+
+    bool isValidFloat(const std::string nv, double& vv)
+    {
+        auto ecount = sscanf(nv.c_str(), "%", SCNd64, vv);
+        return ecount == 1;
     }
 
     bool Parser::isValidWCTime(const std::string nv, uint64_t& vv)
@@ -341,7 +347,13 @@ namespace BSQON
             std::vector<TypeKey> kk;
             std::transform(types.cbegin(), types.cend(), std::back_inserter(kk), [](const Type* tt){ return tt->tkey; });
 
-            return new TupleType(kk);
+            auto tkey = "[" + std::accumulate(kk.begin(), kk.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + ", ") + b; }) + "]";
+            const Type* rt = this->assembly->resolveType(tkey);
+            if(rt->isUnresolved()) {
+                this->addError("Could not resolve tuple type " + tkey, Parser::convertSrcPos(node->base.pos));
+            }
+
+            return rt;
         }
     }
 
@@ -361,40 +373,73 @@ namespace BSQON
         }
 
         std::sort(entries.begin(), entries.end(), [](const RecordTypeEntry& a, const RecordTypeEntry& b) { return a.pname < b.pname; });
-        return new RecordType(entries);
+        auto tkey = "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, RecordTypeEntry& b) { return (a == "" ? "" : std::move(a) + ", ") + b.pname + ": " + b.ptype; }) + "}";
+        const Type* rt = this->assembly->resolveType(tkey);
+        if(rt->isUnresolved()) {
+            this->addError("Could not resolve record type " + tkey, Parser::convertSrcPos(node->base.pos));
+        }
+
+        return rt;
+    }
+
+    void Parser::parseConceptSetType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
+    {
+        if(node->tag != BSQON_TYPE_AST_TAG_Conjunction) {
+            tlist.push_back(this->parseType(node));
+        }
+        else {
+            BSQON_TYPE_AST_Conjunction* cnode = BSQON_AST_asConjunction(node);
+            this->parseConceptSetType_Helper(cnode->left, tlist);
+            this->parseConceptSetType_Helper(cnode->right, tlist);
+        }
     }
 
     const Type* Parser::parseConceptSetType(BSQON_TYPE_AST_Conjunction* node) 
     {
-        const Type* lt = this->parseType(node->left);
-        const Type* rt = this->parseType(node->right);
+        std::vector<const Type*> conjs;
+        this->parseConceptSetType_Helper(node->left, conjs);
+        this->parseConceptSetType_Helper(node->right, conjs);
                 
-        if(lt->isUnresolved() || rt->isUnresolved()) {
+        if(std::any_of(conjs.begin(), conjs.end(), [](Type* tt) { return tt->isUnresolved(); })) {
             return UnresolvedType::singleton;
         }
 
         //
         //TODO: Assume that there is no subsumption here -- later we will want to check for this 
         //  Add a subtype relation in the Assembly and check/sort here.
-        
-        std::vector<TypeKey> conjs;
-        if(lt->tag == TypeTag::TYPE_CONCEPT_SET) {
-            conjs.insert(conjs.end(), static_cast<const ConceptSetType*>(lt)->concepts.begin(), static_cast<const ConceptSetType*>(lt)->concepts.end());
-        }
-        else {
-            conjs.push_back(lt->tkey);
+
+        std::vector<TypeKey> concepts;
+        std::transform(conjs.cbegin(), conjs.cend(), std::back_inserter(concepts), [](const Type* tt){ return tt->tkey; });
+
+        std::sort(concepts.begin(), concepts.end());
+        auto tkey = std::accumulate(concepts.begin(), concepts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + "&") + b; });
+        const Type* rt = this->assembly->resolveType(tkey);
+        if(rt->isUnresolved()) {
+            this->addError("Could not resolve conjunction type " + tkey, Parser::convertSrcPos(node->base.pos));
         }
 
-        std::sort(conjs.begin(), conjs.end());
-        return new ConceptSetType(conjs);
+        return rt;
+    }
+
+    void Parser::parseConceptSetType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
+    {
+        if(node->tag != BSQON_TYPE_AST_TAG_Union) {
+            tlist.push_back(this->parseType(node));
+        }
+        else {
+            BSQON_TYPE_AST_Union* unode = BSQON_AST_asUnion(node);
+            this->parseUnionType_Helper(unode->left, tlist);
+            this->parseUnionType_Helper(unode->right, tlist);
+        }
     }
 
     const Type* Parser::parseUnionType(BSQON_TYPE_AST_Union* node)
     {
-        const Type* lt = this->parseType(node->left);
-        const Type* rt = this->parseType(node->right);
+        std::vector<const Type*> opts;
+        this->parseUnionType_Helper(node->left, opts);
+        this->parseUnionType_Helper(node->right, opts);
                 
-        if(lt->isUnresolved() || rt->isUnresolved()) {
+        if(std::any_of(opts.begin(), opts.end(), [](Type* tt) { return tt->isUnresolved(); })) {
             return UnresolvedType::singleton;
         }
 
@@ -403,15 +448,16 @@ namespace BSQON
         //  Add a subtype relation in the Assembly and check/sort here.
         
         std::vector<TypeKey> disjuncts;
-        if(lt->tag == TypeTag::TYPE_UNION) {
-            disjuncts.insert(disjuncts.end(), static_cast<const UnionType*>(lt)->types.cbegin(), static_cast<const UnionType*>(lt)->types.cend());
-        }
-        else {
-            disjuncts.push_back(lt->tkey);
-        }
+        std::transform(opts.cbegin(), opts.cend(), std::back_inserter(disjuncts), [](const Type* tt){ return tt->tkey; });
 
         std::sort(disjuncts.begin(), disjuncts.end());
-        return new UnionType(disjuncts);
+        auto tkey = std::accumulate(disjuncts.begin(), disjuncts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + " | ") + b; });
+        const Type* rt = this->assembly->resolveType(tkey);
+        if(rt->isUnresolved()) {
+            this->addError("Could not resolve union type " + tkey, Parser::convertSrcPos(node->base.pos));
+        }
+
+        return rt;
     }
 
     const Type* Parser::parseType(BSQON_TYPE_AST_Node* node)
@@ -497,7 +543,7 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        return new NatNumberValue(t, Parser::convertSrcPos(node->pos), std::make_optional((uint64_t)vv), nv);
+        return new NatNumberValue(t, Parser::convertSrcPos(node->pos), (uint64_t)vv);
     }
 
     Value* Parser::parseInt(const Type* t, BSQON_AST_Node* node)
@@ -516,7 +562,7 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        return new IntNumberValue(t, Parser::convertSrcPos(node->pos), std::make_optional(vv), nv);
+        return new IntNumberValue(t, Parser::convertSrcPos(node->pos), vv);
     }
 
     Value* Parser::parseBigNat(const Type* t, BSQON_AST_Node* node)
@@ -530,9 +576,13 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'N'
 
-        bool smallv = Parser::isValidNat(nv, vv);
+        mpz_t pv;
+        mpz_init_set_str(pv, nv.c_str(), 10);
 
-        return new NatNumberValue(t, Parser::convertSrcPos(node->pos), smallv ? std::make_optional((uint64_t)vv) : std::nullopt, std::string(BSQON_AST_asLiteralStandardNode(node)->data));
+        Value* res = new BigNatNumberValue(t, Parser::convertSrcPos(node->pos), pv);
+        mpz_clear(pv);
+
+        return res;
     }
 
     Value* Parser::parseBigInt(const Type* t, BSQON_AST_Node* node)
@@ -546,9 +596,13 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'I'
 
-        bool smallv = Parser::isValidNat(nv, vv);
+        mpz_t pv;
+        mpz_init_set_str(pv, nv.c_str(), 10);
 
-        return new IntNumberValue(t, Parser::convertSrcPos(node->pos), smallv ? std::make_optional(vv) : std::nullopt, std::string(BSQON_AST_asLiteralStandardNode(node)->data));
+        Value* res = new BigIntNumberValue(t, Parser::convertSrcPos(node->pos), pv);
+        mpz_clear(pv);
+
+        return res;
     }
 
     Value* Parser::parseRational(const Type* t, BSQON_AST_Node* node)
@@ -561,8 +615,14 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'R'
 
+        mpq_t rv;
+        mpq_init(rv);
+
+        RationalNumberValue* rvv;
         if(nv.find('/') == std::string::npos) {
-            return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), nv, 1);
+            mpq_set_str(rv, nv.c_str(), 10);
+
+            rvv = new RationalNumberValue(t, Parser::convertSrcPos(node->pos), rv, nv, 1);
         }
         else {
             auto numerator = nv.substr(0, nv.find('/'));
@@ -574,8 +634,14 @@ namespace BSQON
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
 
-            return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), numerator, (uint64_t)denomv);
+            mpq_set_str(rv, nv.c_str(), 10);
+            mpq_canonicalize(rv);
+
+            rvv = new RationalNumberValue(t, Parser::convertSrcPos(node->pos), rv, numerator, (uint64_t)denomv);
         }
+
+        mpq_clear(rv);
+        return rvv;
     }
 
     Value* Parser::parseFloat(const Type* t, BSQON_AST_Node* node)
@@ -585,10 +651,16 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
+        double vv;
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'f'
 
-        return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), nv);
+        if(!Parser::isValidFloat(nv, vv)) {
+            this->addError("Invalid Float value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), vv);
     }
 
     Value* Parser::parseDecmial(const Type* t, BSQON_AST_Node* node)
@@ -601,7 +673,7 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'd'
 
-        return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), nv);
+        return new DecimalNumberValue(t, Parser::convertSrcPos(node->pos), nv);
     }
 
     Value* Parser::parseString(const Type* t, BSQON_AST_Node* node)
@@ -902,10 +974,15 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        auto vlat = static_cast<const FloatNumberValue*>(data[0])->nv;
-        auto vlong = static_cast<const FloatNumberValue*>(data[1])->nv;
+        auto vlat = static_cast<const FloatNumberValue*>(data[0])->cnv;
+        auto vlong = static_cast<const FloatNumberValue*>(data[1])->cnv;
 
-        return new LatLongCoordinateValue(t, Parser::convertSrcPos(node->pos), lli->second);
+        if(!(-90.0 <= vlat && vlat <= 90.0) || !(-180.0 < vlong && vlong <= 180.0)) {
+            this->addError("Invalid LatLongCoordinate value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new LatLongCoordinateValue(t, Parser::convertSrcPos(node->pos), vlat, vlong);
     }
 
     Value* Parser::parseStringOf(const Type* t, BSQON_AST_Node* node)
@@ -915,12 +992,64 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        auto sof = BSQON_AST_asStringOfNode(node);
-        xxxx;
+        auto softype = static_cast<const StringOfType*>(t);
+        const BSQRegex* vre = this->assembly->regexliterals.at(this->assembly->revalidators.at(softype->oftype));
+
+        ByteString* sstr;
+        if(node->tag == BSQON_AST_TAG_String) {
+            sstr = BSQON_AST_asLiteralStringNode(node)->data;
+        }
+        else {
+            sstr = BSQON_AST_asStringOfNode(node)->data;
+
+            const Type* oftype = this->parseTypeRoot(BSQON_AST_asStringOfNode(node)->type);
+            if(oftype->tkey != softype->oftype) {
+                this->addError("Mismatch between expected StringOf type " + softype->oftype + " and given type " + oftype->tkey, Parser::convertSrcPos(node->pos));
+            }
+        }
+
+        auto bstr = BSQON_AST_asLiteralStringNode(node)->data;
+        StringOfValue* svopt = StringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), bstr->bytes, bstr->len, vre);
+
+        if(svopt == nullptr) {
+            this->addError("Invalid characters in string (does not validate)", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return svopt;
     }
 
     Value* Parser::parseASCIIStringOf(const Type* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_ASCIIStringOf && node->tag != BSQON_AST_TAG_ASCIIString) {
+            this->addError("Expected ASCIIStringOf value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto softype = static_cast<const ASCIIStringOfType*>(t);
+        const BSQRegex* vre = this->assembly->regexliterals.at(this->assembly->revalidators.at(softype->oftype));
+
+        ByteString* sstr;
+        if(node->tag == BSQON_AST_TAG_ASCIIString) {
+            sstr = BSQON_AST_asLiteralStringNode(node)->data;
+        }
+        else {
+            sstr = BSQON_AST_asStringOfNode(node)->data;
+
+            const Type* oftype = this->parseTypeRoot(BSQON_AST_asStringOfNode(node)->type);
+            if(oftype->tkey != softype->oftype) {
+                this->addError("Mismatch between expected ASCIIStringOf type " + softype->oftype + " and given type " + oftype->tkey, Parser::convertSrcPos(node->pos));
+            }
+        }
+
+        auto bstr = BSQON_AST_asLiteralStringNode(node)->data;
+        ASCIIStringOfValue* svopt = ASCIIStringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), bstr->bytes, bstr->len, vre);
+
+        if(svopt == nullptr) {
+            this->addError("Invalid characters in string (does not validate)", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return svopt;
     }
 }

@@ -36,6 +36,7 @@ namespace BSQON
 
         static bool isValidNat(const std::string nv, int64_t& vv);
         static bool isValidInt(const std::string nv, int64_t& vv);
+        static bool isValidFloat(const std::string nv, double& vv);
         static bool isValidWCTime(const std::string nv, uint64_t& vv);
 
         static bool processDateInfo(const std::string& ds, uint16_t& yy, uint8_t& mm, uint8_t& dd);
@@ -150,7 +151,9 @@ namespace BSQON
         const Type* parseNominalTemplateType(struct BSQON_TYPE_AST_NominalExtNode* node);
         const Type* parseTupleType(struct BSQON_TYPE_AST_TupleNode* node);
         const Type* parseRecordType(struct BSQON_TYPE_AST_RecordNode* node);
+        void parseConceptSetType_Helper(struct BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist);
         const Type* parseConceptSetType(struct BSQON_TYPE_AST_Conjunction* node);
+        void parseUnionType_Helper(struct BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist);
         const Type* parseUnionType(struct BSQON_TYPE_AST_Union* node);
         const Type* parseType(struct BSQON_TYPE_AST_Node* node);
 
