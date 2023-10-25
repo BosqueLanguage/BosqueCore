@@ -5,6 +5,9 @@
 #include "../regex/bsqpath.h"
 #include "type_info.h"
 
+#include <gmp.h>
+#include <decimal/decimal>
+
 namespace BSQON
 {
     std::optional<char32_t> decodeHexEscape(std::string escc);
@@ -111,6 +114,7 @@ namespace BSQON
     {
     public:
         const std::optional<uint64_t> cnv;
+        const std::optional<mpz_t> cbnv;
         const std::string nv;
     
         NatNumberValue(const Type* vtype, SourcePos spos, std::optional<uint64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
@@ -118,6 +122,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
+            xxxx;
             return this->nv + (this->vtype->tkey == "Nat" ? "n" : "N");
         }
     };
@@ -126,6 +131,7 @@ namespace BSQON
     {
     public:
         const std::optional<int64_t> cnv;
+        const std::optional<mpz_t> cbnv;
         const std::string nv;
     
         IntNumberValue(const Type* vtype, SourcePos spos, std::optional<int64_t> cnv, std::string nv) : PrimtitiveValue(vtype, spos), cnv(cnv), nv(nv) { ; }
@@ -133,6 +139,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
+            xxxx;
             return this->nv + (this->vtype->tkey == "Int" ? "i" : "I");
         }
     };
@@ -140,6 +147,8 @@ namespace BSQON
     class FloatNumberValue : public PrimtitiveValue 
     {
     public:
+        const std::optional<double> cnv;
+        const std::optional<std::decimal::decimal128> cdnv;
         const std::string nv;
     
         FloatNumberValue(const Type* vtype, SourcePos spos, std::string nv) : PrimtitiveValue(vtype, spos), nv(nv) { ; }
@@ -147,6 +156,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
+            xxxx;
             return this->nv + (this->vtype->tkey == "Float" ? "f" : "d");
         }
     };
@@ -154,6 +164,8 @@ namespace BSQON
     class RationalNumberValue : public PrimtitiveValue 
     {
     public:
+        std::optional<mpq_t> cnv;
+
         const std::string numerator;
         const uint64_t denominator;
     
@@ -162,6 +174,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
+            xxxx;
             return this->numerator + "/" + std::to_string(this->denominator) + "R";
         }
     };

@@ -115,8 +115,6 @@ namespace BSQON
         xxxx;
     }
 
-    ////////////////////////////////////////////////////////////////////////////////
-
     const Type* Parser::resolveTypeFromNameList(std::string basenominal, std::vector<const Type*> terms)
     {
         std::string baseprefix = basenominal.substr(0, basenominal.find("::"));
@@ -347,120 +345,110 @@ namespace BSQON
         }
     }
 
-        Type* parseRecordType() 
-        {
-            /*
-        let entries: {pname: string, rtype: $TypeInfo.BSQType}[] = [];
-        this.popToken();
-        if(this.testToken(TokenKind.TOKEN_RBRACE)) {
-            return this.lookupMustDefType("{}");
+    const Type* Parser::parseRecordType(BSQON_TYPE_AST_RecordNode* node) 
+    {
+        std::vector<RecordTypeEntry> entries;
+        for(auto curr = node->entries; curr != NULL; curr = curr->next) {
+            auto pname = std::string(curr->value->name);
+            auto ptype = this->parseType(curr->value->value);
+            
+            if(ptype->isUnresolved()) {
+                return UnresolvedType::singleton;
+            }
+            else {
+                entries.push_back(RecordTypeEntry{pname, ptype->tkey});
+            }
+        }
+
+        std::sort(entries.begin(), entries.end(), [](const RecordTypeEntry& a, const RecordTypeEntry& b) { return a.pname < b.pname; });
+        return new RecordType(entries);
+    }
+
+    const Type* Parser::parseConceptSetType(BSQON_TYPE_AST_Conjunction* node) 
+    {
+        const Type* lt = this->parseType(node->left);
+        const Type* rt = this->parseType(node->right);
+                
+        if(lt->isUnresolved() || rt->isUnresolved()) {
+            return UnresolvedType::singleton;
+        }
+
+        //
+        //TODO: Assume that there is no subsumption here -- later we will want to check for this 
+        //  Add a subtype relation in the Assembly and check/sort here.
+        
+        std::vector<TypeKey> conjs;
+        if(lt->tag == TypeTag::TYPE_CONCEPT_SET) {
+            conjs.insert(conjs.end(), static_cast<const ConceptSetType*>(lt)->concepts.begin(), static_cast<const ConceptSetType*>(lt)->concepts.end());
         }
         else {
-            let first = true;
-            while (first || this.testToken(TokenKind.TOKEN_COMMA)) {
-                if(first) {
-                    first = false;
-                }
-                else {
-                    this.popToken();
-                }
-                
-                const pname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
-                const rtype = this.parseType();
-                entries.push({ pname: pname, rtype: rtype });
-            }
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
-
-            const ees = entries.sort((a, b) => ((a.pname !== b.pname) ? (a.pname < b.pname ? -1 : 1) : 0)).map((ee) => `${ee.pname}: ${ee.rtype.tkey}`);
-            return this.lookupMustDefType(`{${ees.join(", ")}}`);
-        }
-        */
+            conjs.push_back(lt->tkey);
         }
 
-        Type* parseConceptSetType(Type* rtype, FollowSet syncTokens) 
-        {
-            std::vector<Type*> opts = {rtype};
-            while (this->m_lex.testAndConsumeToken(TokenKind::TOKEN_AMP)) {
-                opts.push_back(this->parseBaseType(syncTokens));
-            }
+        std::sort(conjs.begin(), conjs.end());
+        return new ConceptSetType(conjs);
+    }
 
-            xxxx;
-                return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join("&"));
-        }
-
-        Type* parseBaseType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
-        {
-            Type* rtype = UnresolvedType::singleton;
-            if (this->m_lex.testToken(TokenKind::TOKEN_TYPE)) {
-                rtype = this->parseNominalType();
-            }
-            else if (this->m_lex.testToken(TokenKind::TOKEN_LBRACKET)) {
-                rtype = this->parseTupleType();
-            }
-            else if (this->m_lex.testToken(TokenKind::TOKEN_LBRACE)) {
-                rtype = this->parseRecordType();
-            }
-            else if(this->m_lex.testAndConsumeToken(TokenKind::TOKEN_LPAREN)) {
-                rtype = this->parseType({TokenKind::TOKEN_RPAREN});
-
-                if(!this->m_lex.testAndConsumeToken(TokenKind::TOKEN_RPAREN)) {
-                    this->recoverErrorInsertExpected(U")", this->m_lex.peekToken());
-                }
-            }
-            else {
-                this->recoverErrorSynchronizeToken(U"Type", this->m_lex.peekToken(), syncTokens);
-            }
-
-            if(this->m_lex.testAndConsumeToken(TokenKind::TOKEN_AMP)) {
-                return this->parseConceptSetType(rtype, syncTokens);
-            }
-            else {
-                return rtype;
-            }
-        }
-
-        Type* parseUnionType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
-        {
-            Type* lt = this->parseBaseType(syncTokens, openParen, closeParen);
-            if (!this->m_lex.testToken(TokenKind::TOKEN_BAR)) {
-                return lt;
-            }
-            else {
-                std::vector<Type*> opts = {lt};
-                while (this->m_lex.testAndConsumeToken(TokenKind::TOKEN_BAR)) {
-                    opts.push_back(this->parseBaseType(syncTokens));
-                }
-
-                return this.lookupMustDefType(opts.map((tt) => tt.tkey).sort((a, b) => ((a !== b) ? (a < b ? -1 : 1) : 0)).join(" | "));
-            }
-        }
-
-        Type* parseType(FollowSet syncTokens, TokenKind openParen, TokenKind closeParen)
-        {
-            return this->parseUnionType(syncTokens, openParen, closeParen);
-        }
-
-        Type* ParseRootType()
-        {
-            if (this->m_parse_bsqon) {
-                return this->parseType({}, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR);
-            }
-            else {
-                this.raiseErrorIf(this.testToken(TokenKind.TOKEN_STRING), `Expected type: but got ${this.peekToken()?.value ?? "EOF"}`);
-                this->m_lex.m_cpos++; //eat the "
-                Type* tt = parseType({}, TokenKind::TOKEN_CLEAR, TokenKind::TOKEN_CLEAR);
-                this->m_lex.m_cpos++; //eat the "
-
-                return tt;
-            }
-        }
-
-
-    ////////////////////////////////////////////////////////////////////////////////
-
-    Type* Parser::parseType(BSQON_TYPE_AST_Node* node)
+    const Type* Parser::parseUnionType(BSQON_TYPE_AST_Union* node)
     {
-        xxxx;
+        const Type* lt = this->parseType(node->left);
+        const Type* rt = this->parseType(node->right);
+                
+        if(lt->isUnresolved() || rt->isUnresolved()) {
+            return UnresolvedType::singleton;
+        }
+
+        //
+        //TODO: Assume that there is no subsumption here -- later we will want to check for this 
+        //  Add a subtype relation in the Assembly and check/sort here.
+        
+        std::vector<TypeKey> disjuncts;
+        if(lt->tag == TypeTag::TYPE_UNION) {
+            disjuncts.insert(disjuncts.end(), static_cast<const UnionType*>(lt)->types.cbegin(), static_cast<const UnionType*>(lt)->types.cend());
+        }
+        else {
+            disjuncts.push_back(lt->tkey);
+        }
+
+        std::sort(disjuncts.begin(), disjuncts.end());
+        return new UnionType(disjuncts);
+    }
+
+    const Type* Parser::parseType(BSQON_TYPE_AST_Node* node)
+    {
+        switch(node->tag)
+        {
+            case BSQON_TYPE_AST_TAG_Error:
+                return UnresolvedType::singleton;
+            case BSQON_TYPE_AST_TAG_Nominal:
+                return this->parseNominalType(BSQON_AST_asNominalNode(node));
+            case BSQON_TYPE_AST_TAG_NominalExt:
+                return this->parseNominalTemplateType(BSQON_AST_asNominalExtNode(node));
+            case BSQON_TYPE_AST_TAG_Tuple:
+                return this->parseTupleType(BSQON_AST_asTupleNode(node));
+            case BSQON_TYPE_AST_TAG_Record:
+                return this->parseRecordType(BSQON_AST_asRecordNode(node));
+            case BSQON_TYPE_AST_TAG_Conjunction:
+                return this->parseConceptSetType(BSQON_AST_asConjunction(node));
+            case BSQON_TYPE_AST_TAG_Union:
+                return this->parseUnionType(BSQON_AST_asUnion(node));
+            default: {
+                assert(false);
+                return UnresolvedType::singleton;
+            }
+        }
+    }
+
+    const Type* Parser::parseTypeRoot(BSQON_TYPE_AST_Node* node)
+    {
+        auto ftype = this->parseType(node);
+
+        if(this->assembly->typerefs.find(ftype->tkey) == this->assembly->typerefs.end()) {
+            this->addError("Could not resolve type " + ftype->tkey, Parser::convertSrcPos(node->pos));
+            return UnresolvedType::singleton;
+        }
+
+        return ftype;
     }
 
     Value* Parser::parseNone(const Type* t, BSQON_AST_Node* node)
@@ -894,7 +882,7 @@ namespace BSQON
 
         if(node->tag == BSQON_AST_TAG_TypedValue) {
             auto tnode = BSQON_AST_asTypedValueNode(node);
-            const Type* ttype = this->parseType(tnode->type);
+            const Type* ttype = this->parseTypeRoot(tnode->type);
             if(ttype == nullptr || ttype->tkey != "LatLongCoordinate") {
                 this->addError("Expected LatLongCoordinate value", Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
@@ -908,15 +896,14 @@ namespace BSQON
             node = tnode->value;
         }
 
-        xxxx;
-        auto data = this->processPropertiesForEntity(); BSQON_AST_asBraceValueNode(node);
-        if(data->entries.)
-        auto lli = this->assembly->latlongliterals.find(llstr);
-
-        if(lli == this->assembly->latlongliterals.end()) {
-            this->addError("Invalid LatLongCoordinate value", Parser::convertSrcPos(node->pos));
+        auto data = this->processPropertiesForEntity(static_cast<const StdEntityType*>(t), BSQON_AST_asBraceValueNode(node));
+        if(data.size() != 2 || data[0]->vtype->tkey != "Float" || data[1]->vtype->tkey != "Float") {
+            this->addError("Incorrect LatLongCoordinate args", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
+
+        auto vlat = static_cast<const FloatNumberValue*>(data[0])->nv;
+        auto vlong = static_cast<const FloatNumberValue*>(data[1])->nv;
 
         return new LatLongCoordinateValue(t, Parser::convertSrcPos(node->pos), lli->second);
     }
@@ -929,7 +916,7 @@ namespace BSQON
         }
 
         auto sof = BSQON_AST_asStringOfNode(node);
-
+        xxxx;
     }
 
     Value* Parser::parseASCIIStringOf(const Type* t, BSQON_AST_Node* node)

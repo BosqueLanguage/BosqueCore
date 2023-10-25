@@ -62,9 +62,6 @@ namespace BSQON
         Parser(const AssemblyInfo* assembly) {;}
         virtual ~Parser() = default;
 
-        ///////////////////////////////////////////////////////////////////////////////////////
-
-
         const Type* resolveTypeFromNameList(std::string basenominal, std::vector<const Type*> terms);
         const Type* resolveAndCheckType(TypeKey tkey, SourcePos spos);
 
@@ -157,8 +154,7 @@ namespace BSQON
         const Type* parseUnionType(struct BSQON_TYPE_AST_Union* node);
         const Type* parseType(struct BSQON_TYPE_AST_Node* node);
 
-        ////////////////////////////////////////////////////////////////////////////////////////
-
+        const Type* parseTypeRoot(struct BSQON_TYPE_AST_Node* node);
 
         Value* parseNone(const Type* t, struct BSQON_AST_Node* node);
         Value* parseNothing(const Type* t, struct BSQON_AST_Node* node);
