@@ -101,24 +101,180 @@ namespace BSQON
         return true;
     }
 
-    std::vector<std::pair<std::string, Value*>> Parser::processPropertiesForRecord(const RecordType* ttype, BSQON_AST_BraceValueNode* node)
+    std::optional<std::vector<Value*>> Parser::processPropertiesForTuple(const TupleType* ttype, BSQON_AST_BracketValueNode* node)
     {
-        xxxx;
+        std::vector<Value*> elems;
+
+        auto titer = ttype->entries.cbegin();
+        for(auto curr = node->values; curr != NULL; curr = curr->next) {
+            elems.push_back(this->parseValue(this->assembly->resolveType(*titer++), curr->value));
+        }
+
+        if(elems.size() != ttype->entries.size()) {
+            this->addError("Tuple value has incorrect number of elements", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else {
+            return std::make_optional(std::move(elems));
+        }
     }
 
-    std::vector<Value*> Parser::processPropertiesForEntity(const StdEntityType* ttype, BSQON_AST_BraceValueNode* node)
+    std::optional<std::vector<std::pair<std::string, Value*>>> Parser::processPropertiesForRecord(const RecordType* ttype, BSQON_AST_BraceValueNode* node)
     {
-        xxxx;
+        std::vector<std::pair<std::string, Value*>> props;
+
+        for(auto curr = node->entries; curr != NULL; curr = curr->next) {
+            if(curr->value->name == NULL) {
+                this->addError("Record value has unnamed property", Parser::convertSrcPos(node->base.pos));
+            }
+            else {
+                std::string pname(curr->value->name);
+
+                auto ptypeiter = std::find_if(ttype->entries.cbegin(), ttype->entries.cend(), [&pname](const RecordTypeEntry& rr) { return rr.pname == pname; });
+                if(ptypeiter == ttype->entries.cend()) {
+                    this->addError("Unknown property name " + pname, Parser::convertSrcPos(node->base.pos));
+                }
+                else {
+                    if(std::find_if(props.cbegin(), props.cend(), [&pname](const std::pair<std::string, Value*>& pp) { return pp.first == pname; }) != props.cend()) {
+                        this->addError("Duplicate property name " + pname, Parser::convertSrcPos(node->base.pos));
+                    }
+                    else {
+                        props.push_back(std::make_pair(pname, this->parseValue(this->assembly->resolveType(ptypeiter->ptype), curr->value->value)));
+                    }
+                }
+            }
+        }
+
+        if(props.size() != ttype->entries.size()) {
+            this->addError("Record value has mismatched properties", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else {
+            std::sort(props.begin(), props.end(), [](const std::pair<std::string, Value*>& a, const std::pair<std::string, Value*>& b) { return a.first < b.first; });
+            return std::make_optional(std::move(props));
+        }
+    }
+
+    std::optional<std::vector<Value*>> Parser::processPropertiesForEntity(const StdEntityType* ttype, BSQON_AST_BraceValueNode* node)
+    {
+        std::vector<Value*> vals(ttype->fields.size(), nullptr);
+
+        //pass over values to set named fields
+        for(auto curr = node->entries; curr != NULL; curr = curr->next) {
+            if(curr->value->name != NULL) {
+                std::string pname(curr->value->name);
+
+                auto fiter = std::find_if(ttype->fields.cbegin(), ttype->fields.cend(), [&pname](const EntityTypeFieldEntry& pp) { return pp.fname == pname; });
+                if(fiter == ttype->fields.cend()) {
+                    this->addError("Unknown field name " + pname, Parser::convertSrcPos(node->base.pos));
+                }
+                else {
+                    auto idx = std::distance(ttype->fields.cbegin(), fiter);
+                    if(vals[idx] != nullptr) {
+                        this->addError("Duplicate field entry " + pname, Parser::convertSrcPos(node->base.pos));
+                    }
+                    else {
+                        vals[idx] = this->parseValue(this->assembly->resolveType(fiter->ftype), curr->value->value);
+                    }
+                }
+            }
+        }
+
+        //pass over values to fill in positional fields
+        auto positer = std::find_if(vals.begin(), vals.end(), [](Value* vv) { return vv == nullptr; });
+        for(auto curr = node->entries; curr != NULL; curr = curr->next) {
+            if(curr->value->name == NULL) {
+                if(positer == vals.cend()) {
+                    this->addError("Too many values for type", Parser::convertSrcPos(node->base.pos));
+                }
+                else {
+                    auto fpos = std::distance(vals.begin(), positer);
+                    const EntityTypeFieldEntry& fentry = ttype->fields[fpos];
+
+                    Value* vv = this->parseValue(this->assembly->resolveType(fentry.ftype), curr->value->value);
+                    *positer = vv;
+
+                    positer = std::find_if(positer++, vals.end(), [](Value* vv) { return vv == nullptr; });
+                }
+            }
+        }
+
+        if(positer != vals.cend()) {
+            this->addError("Too few values for type", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else {
+            return std::make_optional(std::move(vals));
+        }
+    }
+
+    std::optional<std::pair<double, double>> Parser::processPropertiesForLatLong(BSQON_AST_BraceValueNode* node)
+    {
+        if(node->entries == NULL || node->entries->next == NULL) {
+            this->addError("LatLong value is missing fields", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else if(node->entries->next->next != NULL) {
+            this->addError("LatLong value has too many fields", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else if(node->entries->value->name != NULL || node->entries->next->value->name != NULL) {
+            this->addError("LatLong value does not accept named fields", Parser::convertSrcPos(node->base.pos));
+            return std::nullopt;
+        }
+        else {
+            auto latnode = node->entries->value->value;
+            auto longnode = node->entries->next->value->value;
+
+            if(latnode->tag != BSQON_AST_TAG_Float || longnode->tag != BSQON_AST_TAG_Float) {
+                this->addError("LatLong value fields must be floats", Parser::convertSrcPos(node->base.pos));
+                return std::nullopt;
+            }
+
+            double vlat = 0.0;
+            std::string nvlat = std::string(BSQON_AST_asLiteralStandardNode(latnode)->data);
+            nvlat.pop_back(); //remove the trailing 'f'
+
+            double vlong = 0.0;
+            std::string nvlong = std::string(BSQON_AST_asLiteralStandardNode(longnode)->data);
+            nvlong.pop_back(); //remove the trailing 'f'
+
+
+
+            if(!isValidFloat(nvlat, vlat) || !isValidFloat(nvlong, vlong)) {
+                this->addError("LatLong value fields must be valid floats", Parser::convertSrcPos(node->base.pos));
+                return std::nullopt;
+            }
+
+            return std::make_optional(std::make_pair(vlat, vlong));
+        }
     }
 
     std::vector<Value*> Parser::processPropertiesForSequence(const Type* etype, BSQON_AST_BracketValueNode* node)
     {
-        xxxx;
+        std::vector<Value*> elems;
+        for(auto curr = node->values; curr != NULL; curr = curr->next) {
+            elems.push_back(this->parseValue(etype, curr->value));
+        }
+
+        return std::move(elems);
     }
         
     std::vector<Value*> Parser::processPropertiesForMap(const Type* keytype, const Type* valtype, BSQON_AST_BraceValueNode* node)
     {
-        xxxx;
+        const Type* metype = this->assembly->resolveType("MapEntry<" + keytype->tkey + ", " + valtype->tkey + ">");
+
+        std::vector<Value*> elems;
+        for(auto curr = node->entries; curr != NULL; curr = curr->next) {
+            if(curr->value->name != NULL) {
+                this->addError("Map value has named property", Parser::convertSrcPos(node->base.pos));
+            }
+            else {
+                elems.push_back(this->parseValue(metype, curr->value->value));
+            }
+        }
+
+        return std::move(elems);
     }
 
     const Type* Parser::resolveTypeFromNameList(std::string basenominal, std::vector<const Type*> terms)
@@ -968,14 +1124,14 @@ namespace BSQON
             node = tnode->value;
         }
 
-        auto data = this->processPropertiesForEntity(static_cast<const StdEntityType*>(t), BSQON_AST_asBraceValueNode(node));
-        if(data.size() != 2 || data[0]->vtype->tkey != "Float" || data[1]->vtype->tkey != "Float") {
+        auto data = this->processPropertiesForLatLong(BSQON_AST_asBraceValueNode(node));
+        if(!data.has_value()) {
             this->addError("Incorrect LatLongCoordinate args", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        auto vlat = static_cast<const FloatNumberValue*>(data[0])->cnv;
-        auto vlong = static_cast<const FloatNumberValue*>(data[1])->cnv;
+        auto vlat = data.value().first;
+        auto vlong = data.value().second;
 
         if(!(-90.0 <= vlat && vlat <= 90.0) || !(-180.0 < vlong && vlong <= 180.0)) {
             this->addError("Invalid LatLongCoordinate value", Parser::convertSrcPos(node->pos));
@@ -993,7 +1149,7 @@ namespace BSQON
         }
 
         auto softype = static_cast<const StringOfType*>(t);
-        const BSQRegex* vre = this->assembly->regexliterals.at(this->assembly->revalidators.at(softype->oftype));
+        const BSQRegex* vre = this->assembly->revalidators.at(softype->oftype);
 
         ByteString* sstr;
         if(node->tag == BSQON_AST_TAG_String) {
@@ -1027,7 +1183,7 @@ namespace BSQON
         }
 
         auto softype = static_cast<const ASCIIStringOfType*>(t);
-        const BSQRegex* vre = this->assembly->regexliterals.at(this->assembly->revalidators.at(softype->oftype));
+        const BSQRegex* vre = this->assembly->revalidators.at(softype->oftype);
 
         ByteString* sstr;
         if(node->tag == BSQON_AST_TAG_ASCIIString) {
@@ -1051,5 +1207,134 @@ namespace BSQON
         }
 
         return svopt;
+    }
+
+    Value* Parser::parsePath(const Type* t, struct BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes != '`') {
+            this->addError("Expected Path value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto poftype = static_cast<const PathType*>(t);
+        const BSQPath* vpath = this->assembly->pthvalidators.at(poftype->oftype);
+
+        auto pnode = BSQON_AST_asPathNode(node);
+        PathValue* popt = PathValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
+
+        if(popt == nullptr) {
+            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return popt;
+    }
+
+    Value* Parser::parsePathFragment(const Type* t, struct BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes == 'f') {
+            this->addError("Expected PathFragment value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto poftype = static_cast<const PathFragmentType*>(t);
+        const BSQPath* vpath = this->assembly->pthvalidators.at(poftype->oftype);
+
+        auto pnode = BSQON_AST_asPathNode(node);
+        PathFragmentValue* popt = PathFragmentValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
+
+        if(popt == nullptr) {
+            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return popt;
+    }
+
+    Value* Parser::parsePathGlob(const Type* t, struct BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes == 'g') {
+            this->addError("Expected PathFragment value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto poftype = static_cast<const PathGlobType*>(t);
+        const BSQPath* vpath = this->assembly->pthvalidators.at(poftype->oftype);
+
+        auto pnode = BSQON_AST_asPathNode(node);
+        PathGlobValue* popt = PathGlobValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
+
+        if(popt == nullptr) {
+            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return popt;
+    }
+
+    Value* Parser::parseSomething(const Type* t, BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_SomeCons && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        if(node->tag == BSQON_AST_TAG_SomeCons) {
+            xxxx;
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+
+            const Type* ttype = this->parseTypeRoot(tnode->type);
+            if(ttype == nullptr || ttype->tkey xxxx != "Something") {
+                this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            node = tnode->value;
+        }
+
+        auto tnode = BSQON_AST_asTypedValueNode(node);
+        const Type* ttype = this->parseTypeRoot(tnode->type);
+        if(ttype == nullptr || ttype->tkey != "Something") {
+            this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+            this->addError("Expected Something value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        node = tnode->value;
+
+        auto data = this->processPropertiesForSomething(BSQON_AST_asBraceValueNode(node));
+        if(!data.has_value()) {
+            this->addError("Incorrect Something args", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto vtype = data.value().first;
+        auto vvalue = data.value().second;
+
+        if(vtype->tkey != ttype->tkey)
+    }
+
+    ///////////////////////////////////
+
+    Value* Parser::parseValue(const Type* t, BSQON_AST_Node* node)
+    {
+        xxxx;
     }
 }

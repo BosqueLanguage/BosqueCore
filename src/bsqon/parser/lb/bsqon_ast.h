@@ -44,7 +44,11 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_MapEntry,
     BSQON_AST_TAG_BracketValue,
     BSQON_AST_TAG_BraceValue,
-    BSQON_AST_TAG_TypedValue
+    BSQON_AST_TAG_TypedValue,
+
+    BSQON_AST_TAG_SomeCons,
+    BSQON_AST_TAG_OkCons,
+    BSQON_AST_TAG_ErrCons
 };
 
 struct BSQON_AST_Node
@@ -147,6 +151,13 @@ struct BSQON_AST_TypedValueNode
     struct BSQON_AST_Node* value;
 };
 
+struct BSQON_AST_SpecialConsNode
+{
+    struct BSQON_AST_Node base;
+    char* consname;
+    struct BSQON_AST_Node* value;
+};
+
 struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next);
 struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll);
 
@@ -202,4 +213,8 @@ void BSQON_AST_BraceValueNode_print(struct BSQON_AST_BraceValueNode* node);
 struct BSQON_AST_TypedValueNode* BSQON_AST_asTypedValueNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_TypedValueNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_Node* data, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_TypedValueNode_print(struct BSQON_AST_TypedValueNode* node);
+
+struct BSQON_AST_SpecialConsNode* BSQON_AST_asSpecialConsNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_SpecialConsNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct BSQON_AST_Node* data, char* consname);
+void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node);
 

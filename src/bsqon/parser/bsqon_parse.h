@@ -45,9 +45,11 @@ namespace BSQON
 
         bool processTZInfo(const std::string& ds, const char** tz);
         
-        std::vector<std::pair<std::string, Value*>> processPropertiesForRecord(const RecordType* ttype, struct BSQON_AST_BraceValueNode* node);
-        std::vector<Value*> processPropertiesForEntity(const StdEntityType* ttype, struct BSQON_AST_BraceValueNode* node);
+        std::optional<std::vector<Value*>> processPropertiesForTuple(const TupleType* ttype, struct BSQON_AST_BracketValueNode* node);
+        std::optional<std::vector<std::pair<std::string, Value*>>> processPropertiesForRecord(const RecordType* ttype, struct BSQON_AST_BraceValueNode* node);
+        std::optional<std::vector<Value*>> processPropertiesForEntity(const StdEntityType* ttype, struct BSQON_AST_BraceValueNode* node);
 
+        std::optional<std::pair<double, double>> processPropertiesForLatLong(struct BSQON_AST_BraceValueNode* node);
         std::vector<Value*> processPropertiesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
         std::vector<Value*> processPropertiesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
 
@@ -193,5 +195,15 @@ namespace BSQON
 
         Value* parseStringOf(const Type* t, struct BSQON_AST_Node* node);
         Value* parseASCIIStringOf(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parsePath(const Type* t, struct BSQON_AST_Node* node);
+        Value* parsePathFragment(const Type* t, struct BSQON_AST_Node* node);
+        Value* parsePathGlob(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseSomething(const Type* t, struct BSQON_AST_Node* node);
+        
+        ///////////////////////////////////
+
+        Value* parseValue(const Type* t, struct BSQON_AST_Node* node);
     };
 }

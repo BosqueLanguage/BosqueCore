@@ -3,6 +3,7 @@
 
 #include "../common.h"
 #include "../regex/bsqregex.h"
+#include "../regex/bsqpath.h"
 
 namespace BSQON
 {
@@ -400,8 +401,8 @@ namespace BSQON
         std::map<std::string, NamespaceDecl*> namespaces;
         std::map<TypeKey, Type*> typerefs;
         std::map<std::string, BSQRegex*> regexliterals;
-        std::map<TypeKey, std::string> revalidators;
-        std::map<TypeKey, std::string> pthvalidators;
+        std::map<TypeKey, BSQRegex*> revalidators;
+        std::map<TypeKey, BSQPath*> pthvalidators;
         std::vector<std::set<TypeKey>> recursiveSets;
 
         AssemblyInfo() { ; }

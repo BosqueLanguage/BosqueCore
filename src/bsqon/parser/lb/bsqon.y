@@ -58,10 +58,14 @@ int errorcount = 0;
 %token KW_TRUE "true"
 %token KW_FALSE "false"
 
+%token KW_SOME "some"
+%token KW_OK "ok"
+%token KW_ERR "err"
+
 %token SYM_DOUBLE_COLON "::"
 
 %token SYM_ELLIPSIS SYM_ENTRY SYM_BANG SYM_EQUALS SYM_DOT SYM_AT SYM_UNDERSCORE
-%token KW_SOMETHING KW_SRC KW_SOME KW_ERR KW_LET KW_IN KW_OK
+%token KW_SOMETHING KW_SRC KW_LET KW_IN
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
@@ -96,6 +100,7 @@ int errorcount = 0;
 %type <bsqon> bsqon_mapentry
 %type <bsqon> bsqon_braceval
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
+%type <bsqon> bsqonspecialcons
 %type <bsqon> bsqonroot
 
   //----------------------------
@@ -254,7 +259,7 @@ bsqonvall:
 ;
 
 bsqonl_entry:
-   bsqonval SYM_COMMA { $$ = $1; }
+   bsqon_braceval SYM_COMMA { $$ = $1; }
    | error SYM_COMMA { $$ = BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@1)); yyerrok; }
 ;
 
@@ -309,8 +314,14 @@ bsqonstructvalue:
    bsqonbracketbracevalue | bsqontypedvalue { $$ = $1; }
 ;
 
+bsqonspecialcons:
+   KW_SOME '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Some, MK_SPOS_R(@1, @4), $3, "some"); }
+   | KW_OK '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Ok, MK_SPOS_R(@1, @4), $3, "ok"); }
+   | KW_ERR '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Err, MK_SPOS_R(@1, @4), $3, "err"); }
+;
+
 bsqonval: 
-  bsqonterminal | bsqonstructvalue { $$ = $1; }
+  bsqonterminal | bsqonspecialcons | bsqonstructvalue { $$ = $1; }
 ;
 
 bsqonroot: 

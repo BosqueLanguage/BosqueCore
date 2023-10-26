@@ -261,7 +261,7 @@ namespace BSQON
 
     std::optional<std::string> ASCIIStringValue::unescapeString(const uint8_t* bytes, size_t length)
     {
-        //assume string has '...' so we need to remove them
+        //assume string has '...' (or `...`) so we need to remove them
 
         std::string acc;
         for(size_t i = 1; i < length - 1; ++i) {
@@ -274,12 +274,23 @@ namespace BSQON
                 }
 
                 auto escc = std::string(bytes + i + 1, sc);
-                auto esc = resolveEscapeASCIIFromName(escc);
-                if(esc == 0) {
-                    return std::nullopt;
-                }
+                if(escc[0] == 'u') {
+                    //it should be a hex number of 1-4 digits
+                    auto esc = decodeHexEscape(escc);
+                    if(!esc.has_value() || esc.value() > 127) {
+                        return std::nullopt;
+                    }
 
-                acc = std::move(acc) + esc;
+                    acc = std::move(acc) + (char)esc.value();
+                }
+                else {
+                    auto esc = resolveEscapeASCIIFromName(escc);
+                    if(esc == 0) {
+                        return std::nullopt;
+                    }
+
+                    acc = std::move(acc) + esc;
+                }
 
                 i += escc.size();
             }
@@ -373,6 +384,38 @@ namespace BSQON
         }
 
         return validator->test(&str.value()) ? new ASCIIStringOfValue(vtype, spos, std::move(str.value())) : nullptr;
+    }
+
+    PathValue* PathValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator)
+    {
+        auto str = std::move(ASCIIStringValue::unescapeString(chars, length));
+        if(!str.has_value()) {
+            return nullptr;
+        }
+
+        return validator->test(str.value()) ? new PathValue(vtype, spos, std::move(str.value())) : nullptr;
+    }
+
+    PathFragmentValue* PathFragmentValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator)
+    {
+        //skip the leading 'f'
+        auto str = std::move(ASCIIStringValue::unescapeString(chars + 1, length - 1));
+        if(!str.has_value()) {
+            return nullptr;
+        }
+
+        return validator->test(str.value()) ? new PathFragmentValue(vtype, spos, std::move(str.value())) : nullptr;
+    }
+
+    PathGlobValue* PathGlobValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator)
+    {
+        //skip the leading 'g'
+        auto str = std::move(ASCIIStringValue::unescapeString(chars + 1, length - 1));
+        if(!str.has_value()) {
+            return nullptr;
+        }
+
+        return validator->test(str.value()) ? new PathGlobValue(vtype, spos, std::move(str.value())) : nullptr;
     }
 }
 

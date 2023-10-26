@@ -152,11 +152,11 @@ namespace BSQON
         });
 
         std::for_each(j["revalidators"].begin(), j["revalidators"].end(), [&assembly](const json &rv) {
-            assembly.revalidators[rv[0].get<TypeKey>()] = rv[1].get<std::string>();
+            assembly.revalidators[rv[0].get<TypeKey>()] = BSQRegex::jparse(rv[1].get<std::string>());
         });
 
         std::for_each(j["pthvalidators"].begin(), j["pthvalidators"].end(), [&assembly](const json &pv) {
-            assembly.pthvalidators[pv[0].get<TypeKey>()] = pv[1].get<std::string>();
+            assembly.pthvalidators[pv[0].get<TypeKey>()] = BSQPath::jparse(pv[1].get<std::string>());
         });
 
         std::for_each(j["recursiveSets"].begin(), j["recursiveSets"].end(), [&assembly](const json &rs) { 

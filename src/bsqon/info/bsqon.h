@@ -623,7 +623,7 @@ namespace BSQON
         virtual ~PathValue() = default;
 
         //null if validator fails
-        static PathValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
+        static PathValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {
@@ -647,7 +647,7 @@ namespace BSQON
         virtual ~PathFragmentValue() = default;
 
         //null if validator fails
-        static PathFragmentValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
+        static PathFragmentValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {
@@ -671,7 +671,7 @@ namespace BSQON
         virtual ~PathGlobValue() = default;
 
         //null if validator fails
-        static PathGlobValue* createFromParse(const Type* vtype, SourcePos spos, const char* chars, size_t length, const BSQPath* validator);
+        static PathGlobValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* chars, size_t length, const BSQPath* validator);
 
         virtual std::string toString() const override
         {

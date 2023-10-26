@@ -117,6 +117,11 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_TypedValue:
         BSQON_AST_TypedValueNode_print(BSQON_AST_asTypedValueNode(node));
         break;
+    case BSQON_AST_TAG_SomeCons:
+    case BSQON_AST_TAG_OkCons:
+    case BSQON_AST_TAG_ErrCons:
+        BSQON_AST_SpecialConsNode_print(BSQON_AST_asSpecialConsNode(node));
+        break;
     default:
         BSQON_AST_LiteralStandardNode_print(BSQON_AST_asLiteralStandardNode(node));
         break;
@@ -385,3 +390,26 @@ void BSQON_AST_TypedValueNode_print(struct BSQON_AST_TypedValueNode* node)
     BSQON_AST_print((struct BSQON_AST_Node*)node->value);
 }
 
+struct BSQON_AST_SpecialConsNode* BSQON_AST_asSpecialConsNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_SpecialConsNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_SpecialConsNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct BSQON_AST_Node* data, char* consname)
+{
+    struct BSQON_AST_SpecialConsNode* node = (struct BSQON_AST_SpecialConsNode*)AST_ALLOC(sizeof(struct BSQON_AST_SpecialConsNode));
+    node->base.tag = tag;
+    node->base.pos = pos;
+    node->consname = consname;
+    node->value = data;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node)
+{
+    printf("%s", node->consname);
+    printf("(");
+    BSQON_AST_print((struct BSQON_AST_Node*)node->value);
+    printf(")");
+}
