@@ -45,14 +45,15 @@ namespace BSQON
 
         bool processTZInfo(const std::string& ds, const char** tz);
         
-        std::optional<std::vector<Value*>> processPropertiesForTuple(const TupleType* ttype, struct BSQON_AST_BracketValueNode* node);
+        std::optional<std::vector<Value*>> processEntriesForTuple(const TupleType* ttype, struct BSQON_AST_BracketValueNode* node);
         std::optional<std::vector<std::pair<std::string, Value*>>> processPropertiesForRecord(const RecordType* ttype, struct BSQON_AST_BraceValueNode* node);
         std::optional<std::vector<Value*>> processPropertiesForEntity(const StdEntityType* ttype, struct BSQON_AST_BraceValueNode* node);
 
         std::optional<Value*> processPropertiesForSpecialCons(const Type* etype, struct BSQON_AST_BraceValueNode* node);
         std::optional<std::pair<double, double>> processPropertiesForLatLong(struct BSQON_AST_BraceValueNode* node);
-        std::vector<Value*> processPropertiesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
-        std::vector<Value*> processPropertiesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
+        std::optional<std::pair<Value*, Value*>> processPropertiesForMapEntry(const Type* ktype, const Type* vtype, struct BSQON_AST_BraceValueNode* node);
+        std::vector<Value*> processEntriesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
+        std::vector<Value*> processEntriesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
 
     public:
         const AssemblyInfo* assembly;
@@ -208,6 +209,16 @@ namespace BSQON
         
         Value* parseTuple(const TupleType* t, struct BSQON_AST_Node* node);
         Value* parseRecord(const RecordType* t, struct BSQON_AST_Node* node);
+
+        Value* parseEnum(const EnumType* t, struct BSQON_AST_Node* node);
+        Value* parseTypeDecl(const TypedeclType* t, struct BSQON_AST_Node* node);
+        Value* parseStdEntity(const StdEntityType* t, struct BSQON_AST_Node* node);
+
+        Value* parseList(const ListType* t, struct BSQON_AST_Node* node);
+        Value* parseStack(const StackType* t, struct BSQON_AST_Node* node);
+        Value* parseQueue(const QueueType* t, struct BSQON_AST_Node* node);
+        Value* parseSet(const SetType* t, struct BSQON_AST_Node* node);
+        Value* parseMap(const MapType* t, struct BSQON_AST_Node* node);
 
         ///////////////////////////////////
 
