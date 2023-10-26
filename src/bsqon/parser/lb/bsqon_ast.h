@@ -46,7 +46,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_BraceValue,
     BSQON_AST_TAG_TypedValue,
 
-    BSQON_AST_TAG_SomeCons,
+    BSQON_AST_TAG_SomethingCons,
     BSQON_AST_TAG_OkCons,
     BSQON_AST_TAG_ErrCons
 };

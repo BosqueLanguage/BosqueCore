@@ -117,7 +117,7 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_TypedValue:
         BSQON_AST_TypedValueNode_print(BSQON_AST_asTypedValueNode(node));
         break;
-    case BSQON_AST_TAG_SomeCons:
+    case BSQON_AST_TAG_SomethingCons:
     case BSQON_AST_TAG_OkCons:
     case BSQON_AST_TAG_ErrCons:
         BSQON_AST_SpecialConsNode_print(BSQON_AST_asSpecialConsNode(node));

@@ -58,14 +58,14 @@ int errorcount = 0;
 %token KW_TRUE "true"
 %token KW_FALSE "false"
 
-%token KW_SOME "some"
+%token KW_SOMETHING "something"
 %token KW_OK "ok"
 %token KW_ERR "err"
 
 %token SYM_DOUBLE_COLON "::"
 
 %token SYM_ELLIPSIS SYM_ENTRY SYM_BANG SYM_EQUALS SYM_DOT SYM_AT SYM_UNDERSCORE
-%token KW_SOMETHING KW_SRC KW_LET KW_IN
+%token KW_SOME KW_SRC KW_LET KW_IN
 
 %token <str> TOKEN_NAT TOKEN_INT TOKEN_BIG_NAT TOKEN_BIG_INT 
 %token <str> TOKEN_RATIONAL TOKEN_FLOAT TOKEN_DOUBLE
@@ -315,9 +315,9 @@ bsqonstructvalue:
 ;
 
 bsqonspecialcons:
-   KW_SOME '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Some, MK_SPOS_R(@1, @4), $3, "some"); }
-   | KW_OK '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Ok, MK_SPOS_R(@1, @4), $3, "ok"); }
-   | KW_ERR '(' bsqonval ')' { $$ = BSQON_AST_SpecialConstructorNodeCreate(BSQON_AST_TAG_Err, MK_SPOS_R(@1, @4), $3, "err"); }
+   KW_SOMETHING '(' bsqonval ')' { $$ = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_SomethingCons, MK_SPOS_R(@1, @4), $3, "some"); }
+   | KW_OK '(' bsqonval ')' { $$ = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_OkCons, MK_SPOS_R(@1, @4), $3, "ok"); }
+   | KW_ERR '(' bsqonval ')' { $$ = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_ErrCons, MK_SPOS_R(@1, @4), $3, "err"); }
 ;
 
 bsqonval: 

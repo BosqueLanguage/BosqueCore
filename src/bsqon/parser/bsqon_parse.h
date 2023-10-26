@@ -49,6 +49,7 @@ namespace BSQON
         std::optional<std::vector<std::pair<std::string, Value*>>> processPropertiesForRecord(const RecordType* ttype, struct BSQON_AST_BraceValueNode* node);
         std::optional<std::vector<Value*>> processPropertiesForEntity(const StdEntityType* ttype, struct BSQON_AST_BraceValueNode* node);
 
+        std::optional<Value*> processPropertiesForSpecialCons(const Type* etype, struct BSQON_AST_BraceValueNode* node);
         std::optional<std::pair<double, double>> processPropertiesForLatLong(struct BSQON_AST_BraceValueNode* node);
         std::vector<Value*> processPropertiesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
         std::vector<Value*> processPropertiesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
@@ -161,47 +162,53 @@ namespace BSQON
 
         const Type* parseTypeRoot(struct BSQON_TYPE_AST_Node* node);
 
-        Value* parseNone(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseNothing(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseNone(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseNothing(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseBool(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseNat(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseInt(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseBigNat(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseBigInt(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseBool(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseNat(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseInt(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseBigNat(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseBigInt(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseRational(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseFloat(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseDecmial(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseRational(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseFloat(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseDecmial(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseString(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseASCIIString(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseByteBuffer(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseUUIDv4(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseUUIDv7(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseSHAHashcode(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseString(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseASCIIString(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseByteBuffer(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseUUIDv4(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseUUIDv7(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseSHAHashcode(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseDateTime(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseUTCDateTime(const Type* t, struct BSQON_AST_Node* node);
-        Value* parsePlainDate(const Type* t, struct BSQON_AST_Node* node);
-        Value* parsePlainTime(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseTickTime(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseLogicalTime(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseISOTimeStamp(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseDateTime(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseUTCDateTime(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parsePlainDate(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parsePlainTime(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseTickTime(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseLogicalTime(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseISOTimeStamp(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseRegex(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseRegex(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseLatLongCoordinate(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseLatLongCoordinate(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseStringOf(const Type* t, struct BSQON_AST_Node* node);
-        Value* parseASCIIStringOf(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseStringOf(const StringOfType* t, struct BSQON_AST_Node* node);
+        Value* parseASCIIStringOf(const ASCIIStringOfType* t, struct BSQON_AST_Node* node);
 
-        Value* parsePath(const Type* t, struct BSQON_AST_Node* node);
-        Value* parsePathFragment(const Type* t, struct BSQON_AST_Node* node);
-        Value* parsePathGlob(const Type* t, struct BSQON_AST_Node* node);
+        Value* parsePath(const PathType* t, struct BSQON_AST_Node* node);
+        Value* parsePathFragment(const PathFragmentType* t, struct BSQON_AST_Node* node);
+        Value* parsePathGlob(const PathGlobType* t, struct BSQON_AST_Node* node);
 
-        Value* parseSomething(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseSomething(const SomethingType* t, struct BSQON_AST_Node* node);
+        Value* parseOk(const OkType* t, struct BSQON_AST_Node* node);
+        Value* parseErr(const ErrorType* t, struct BSQON_AST_Node* node);
+        Value* parseMapEntry(const MapEntryType* t, struct BSQON_AST_Node* node);
         
+        Value* parseTuple(const TupleType* t, struct BSQON_AST_Node* node);
+        Value* parseRecord(const RecordType* t, struct BSQON_AST_Node* node);
+
         ///////////////////////////////////
 
         Value* parseValue(const Type* t, struct BSQON_AST_Node* node);
