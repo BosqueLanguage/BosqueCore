@@ -96,7 +96,7 @@ int errorcount = 0;
 %type <bsqon_list> bsqonvall
 %type <bsqon_namedlist> bsqonnamevall
 
-%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
+%type <bsqon> bsqonval bsqonliteral bsqonunspecvar bsqonidentifier bsqonscopedidentifier bsqonpath bsqonstringof bsqontypeliteral bsqonterminal
 %type <bsqon> bsqon_mapentry
 %type <bsqon> bsqon_braceval
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
@@ -196,6 +196,7 @@ bsqonliteral:
    | TOKEN_SHA_HASH        { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_SHAHashcode, MK_SPOS_S(@1), $1); }
    | TOKEN_STRING          { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_String, MK_SPOS_S(@1), $1); }
    | TOKEN_ASCII_STRING    { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_ASCIIString, MK_SPOS_S(@1), $1); }
+   | TOKEN_PATH_ITEM       { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S(@1), $1); }
    | TOKEN_REGEX           { $$ = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_Regex, MK_SPOS_S(@1), $1); }
    | TOKEN_DATE_TIME       { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_DateTime, MK_SPOS_S(@1), $1); }
    | TOKEN_UTC_DATE_TIME   { $$ = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UTCDateTime, MK_SPOS_S(@1), $1); }
@@ -215,13 +216,17 @@ bsqonidentifier:
    | TOKEN_IDENTIFIER { $$ = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, MK_SPOS_S(@1), $1); }
 ;
 
+bsqonscopedidentifier:
+   bsqonnominaltype SYM_COLON TOKEN_IDENTIFIER
+;
+
 bsqonstringof:
    TOKEN_STRING bsqonnominaltype { $$ = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_StringOf, MK_SPOS_R(@1, @2), $1, $2); }
    | TOKEN_ASCII_STRING bsqonnominaltype { $$ = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_ASCIIStringOf, MK_SPOS_R(@1, @2), $1, $2); }
 ;
 
 bsqonpath:
-   TOKEN_PATH_ITEM bsqonnominaltype { $$ = BSQON_AST_PathNodeCreate(MK_SPOS_R(@1, @2), $1, $2); }
+   TOKEN_PATH_ITEM bsqonnominaltype { $$ = BSQON_AST_PathNodeCreate(MK_SPOS_R(@1, @2), BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S(@1), $1), $2); }
 ;
 
 bsqontypeliteral:
@@ -243,7 +248,7 @@ bsqontypeliteral:
 ;
 
 bsqonterminal: 
-   bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
+   bsqonliteral | bsqonunspecvar | bsqonidentifier | bsqonscopedidentifier | bsqonstringof | bsqonpath | bsqontypeliteral { $$ = $1; }
 ;
 
 bsqon_mapentry:

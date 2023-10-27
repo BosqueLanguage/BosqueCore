@@ -24,6 +24,7 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_SHAHashcode,
     BSQON_AST_TAG_String,
     BSQON_AST_TAG_ASCIIString,
+    BSQON_AST_TAG_NakedPath,
     BSQON_AST_TAG_Regex,
     BSQON_AST_TAG_DateTime,
     BSQON_AST_TAG_UTCDateTime,
@@ -48,7 +49,9 @@ enum BSQON_AST_TAG
 
     BSQON_AST_TAG_SomethingCons,
     BSQON_AST_TAG_OkCons,
-    BSQON_AST_TAG_ErrCons
+    BSQON_AST_TAG_ErrCons,
+
+    BSQON_AST_TAG_ScopedName
 };
 
 struct BSQON_AST_Node
@@ -114,7 +117,7 @@ struct BSQON_AST_StringOfNode
 struct BSQON_AST_PathNode
 {
     struct BSQON_AST_Node base;
-    struct ByteString* data;
+    struct BSQON_AST_LiteralStringNode* data;
     struct BSQON_TYPE_AST_Node* type;
 };
 
@@ -158,6 +161,13 @@ struct BSQON_AST_SpecialConsNode
     struct BSQON_AST_Node* value;
 };
 
+struct BSQON_AST_ScopedNameNode
+{
+    struct BSQON_AST_Node base;
+    struct BSQON_TYPE_AST_NominalNode* root;
+    char* identifier;
+};
+
 struct BSQON_AST_List* BSQON_AST_ListCons(struct BSQON_AST_Node* value, struct BSQON_AST_List* next);
 struct BSQON_AST_List* BSQON_AST_ListCompleteParse(struct BSQON_AST_List* ll);
 
@@ -191,7 +201,7 @@ struct BSQON_AST_Node* BSQON_AST_StringOfNodeCreate(enum BSQON_AST_TAG tag, stru
 void BSQON_AST_StringOfNode_print(struct BSQON_AST_StringOfNode* node);
 
 struct BSQON_AST_PathNode* BSQON_AST_asPathNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type);
+struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_LiteralStringNode* data, struct BSQON_TYPE_AST_Node* type);
 void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node);
 
 struct BSQON_AST_TypedLiteralNode* BSQON_AST_asTypedLiteralNode(const struct BSQON_AST_Node* node);
@@ -218,3 +228,6 @@ struct BSQON_AST_SpecialConsNode* BSQON_AST_asSpecialConsNode(const struct BSQON
 struct BSQON_AST_Node* BSQON_AST_SpecialConsNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct BSQON_AST_Node* data, char* consname);
 void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node);
 
+struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier);
+void BSQON_AST_ScopedNameNode_print(struct BSQON_AST_ScopedNameNode* node);

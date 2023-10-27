@@ -30,7 +30,8 @@ namespace BSQON
                 std::transform(j["fields"].begin(), j["fields"].end(), std::back_inserter(fields), [](const json& jv) { 
                     return EntityTypeFieldEntry(jv["fname"].get<std::string>(), jv["ftype"].get<TypeKey>()); 
                 });
-                return new StdEntityType(j["tkey"].get<TypeKey>(), fields);
+                bool hasvalidations = j["hasvalidations"].get<bool>();
+                return new StdEntityType(j["tkey"].get<TypeKey>(), fields, hasvalidations);
             }
             case TypeTag::TYPE_STD_CONCEPT: {
                 std::vector<TypeKey> subtypes;
@@ -48,8 +49,8 @@ namespace BSQON
             case TypeTag::TYPE_TYPE_DECL: {
                 std::optional<TypeKey> optStringOfValidator = !j["optStringOfValidator"].is_null() ? std::make_optional(j["optStringOfValidator"].get<std::string>()) : std::nullopt;
                 std::optional<TypeKey> optPathOfValidator = !j["optPathOfValidator"].is_null() ? std::make_optional(j["optPathOfValidator"].get<std::string>()) : std::nullopt;
-
-                return new TypedeclType(j["tkey"].get<TypeKey>(), j["basetype"].get<TypeKey>(), j["oftype"].get<TypeKey>(), optStringOfValidator, optPathOfValidator);
+                bool hasvalidations = j["hasvalidations"].get<bool>();
+                return new TypedeclType(j["tkey"].get<TypeKey>(), j["basetype"].get<TypeKey>(), j["oftype"].get<TypeKey>(), optStringOfValidator, optPathOfValidator, hasvalidations);
             }
             case TypeTag::TYPE_VALIDATOR_RE: {
                 return new ValidatorREType(j["tkey"].get<TypeKey>());

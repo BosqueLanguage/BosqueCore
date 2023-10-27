@@ -153,8 +153,9 @@ namespace BSQON
     {
     public:
         std::vector<EntityTypeFieldEntry> fields;
+        bool hasvalidations;
 
-        StdEntityType(TypeKey tkey, std::vector<EntityTypeFieldEntry> fields) : EntityType(TypeTag::TYPE_STD_ENTITY, tkey), fields(fields) { ; }
+        StdEntityType(TypeKey tkey, std::vector<EntityTypeFieldEntry> fields, bool hasvalidations) : EntityType(TypeTag::TYPE_STD_ENTITY, tkey), fields(fields), hasvalidations(hasvalidations) { ; }
         virtual ~StdEntityType() = default;
     };
 
@@ -189,8 +190,9 @@ namespace BSQON
 
         std::optional<TypeKey> optStringOfValidator;
         std::optional<TypeKey> optPathOfValidator;
+        bool hasvalidations;
 
-        TypedeclType(TypeKey tkey, TypeKey basetype, TypeKey oftype, std::optional<TypeKey> optStringOfValidator, std::optional<TypeKey> optPathOfValidator) : EntityType(TypeTag::TYPE_TYPE_DECL, tkey), basetype(basetype), oftype(oftype), optStringOfValidator(optStringOfValidator), optPathOfValidator(optPathOfValidator) { ; }
+        TypedeclType(TypeKey tkey, TypeKey basetype, TypeKey oftype, std::optional<TypeKey> optStringOfValidator, std::optional<TypeKey> optPathOfValidator, bool hasvalidations) : EntityType(TypeTag::TYPE_TYPE_DECL, tkey), basetype(basetype), oftype(oftype), optStringOfValidator(optStringOfValidator), optPathOfValidator(optPathOfValidator), hasvalidations(hasvalidations) { ; }
         virtual ~TypedeclType() = default;
     };
 

@@ -1245,64 +1245,88 @@ namespace BSQON
         return svopt;
     }
 
+    Value* Parser::parsePathNaked(const PathType* t, SourcePos spos, BSQON_AST_LiteralStringNode* node)
+    {
+        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
+        PathValue* popt = PathValue::createFromParse(t, spos, node->data->bytes, node->data->len, vpath);
+
+        if(popt == nullptr) {
+            this->addError("Invalid characters in path (does not validate)", spos);
+            return new ErrorValue(t, spos);
+        }
+
+        return popt;
+    }
+
     Value* Parser::parsePath(const PathType* t, struct BSQON_AST_Node* node)
     {
-        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes != '`') {
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes != '`') {
             this->addError("Expected Path value", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
+        auto ptype = this->parseTypeRoot(BSQON_AST_asPathNode(node)->type);
+        if(ptype->tkey != t->tkey) {
+            this->addError("Mismatch between expected Path type " + t->oftype + " and given type " + ptype->tkey, Parser::convertSrcPos(node->pos));
+        }
 
-        auto pnode = BSQON_AST_asPathNode(node);
-        PathValue* popt = PathValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
+        return this->parsePathNaked(t, Parser::convertSrcPos(node->pos), BSQON_AST_asPathNode(node)->data);
+    }
+
+    Value* Parser::parsePathFragmentNaked(const PathFragmentType* t, SourcePos spos, BSQON_AST_LiteralStringNode* node)
+    {
+        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
+        PathFragmentValue* popt = PathFragmentValue::createFromParse(t, spos, node->data->bytes, node->data->len, vpath);
 
         if(popt == nullptr) {
-            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            this->addError("Invalid characters in path (does not validate)", spos);
+            return new ErrorValue(t, spos);
         }
 
         return popt;
     }
 
-    Value* Parser::parsePathFragment(const PathFragmentType* t, struct BSQON_AST_Node* node)
+    Value* Parser::parsePathFragment(const PathFragmentType* t, BSQON_AST_Node* node)
     {
-        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes == 'f') {
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes == 'f') {
             this->addError("Expected PathFragment value", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
+        auto ptype = this->parseTypeRoot(BSQON_AST_asPathNode(node)->type);
+        if(ptype->tkey != t->tkey) {
+            this->addError("Mismatch between expected PathFragment type " + t->oftype + " and given type " + ptype->tkey, Parser::convertSrcPos(node->pos));
+        }
 
-        auto pnode = BSQON_AST_asPathNode(node);
-        PathFragmentValue* popt = PathFragmentValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
+        return this->parsePathFragmentNaked(t, Parser::convertSrcPos(node->pos), BSQON_AST_asPathNode(node)->data);
+    }
+
+    Value* Parser::parsePathGlobNaked(const PathGlobType* t, SourcePos spos, BSQON_AST_LiteralStringNode* node)
+    {
+        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
+        PathGlobValue* popt = PathGlobValue::createFromParse(t, spos, node->data->bytes, node->data->len, vpath);
 
         if(popt == nullptr) {
-            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            this->addError("Invalid characters in pathGlob (does not validate)", spos);
+            return new ErrorValue(t, spos);
         }
 
         return popt;
     }
 
-    Value* Parser::parsePathGlob(const PathGlobType* t, struct BSQON_AST_Node* node)
+    Value* Parser::parsePathGlob(const PathGlobType* t, BSQON_AST_Node* node)
     {
-        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->bytes == 'g') {
-            this->addError("Expected PathFragment value", Parser::convertSrcPos(node->pos));
+        if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes == 'g') {
+            this->addError("Expected PathGlob value", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        const BSQPath* vpath = this->assembly->pthvalidators.at(t->oftype);
-
-        auto pnode = BSQON_AST_asPathNode(node);
-        PathGlobValue* popt = PathGlobValue::createFromParse(t, Parser::convertSrcPos(node->pos), pnode->data->bytes, pnode->data->len, vpath);
-
-        if(popt == nullptr) {
-            this->addError("Invalid characters in path (does not validate)", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        auto ptype = this->parseTypeRoot(BSQON_AST_asPathNode(node)->type);
+        if(ptype->tkey != t->tkey) {
+            this->addError("Mismatch between expected PathGlob type " + t->oftype + " and given type " + ptype->tkey, Parser::convertSrcPos(node->pos));
         }
 
-        return popt;
+        return this->parsePathGlobNaked(t, Parser::convertSrcPos(node->pos), BSQON_AST_asPathNode(node)->data);
     }
 
     Value* Parser::parseSomething(const SomethingType* t, BSQON_AST_Node* node)
@@ -1560,17 +1584,105 @@ namespace BSQON
 
     Value* Parser::parseEnum(const EnumType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(!node->tag == BSQON_AST_TAG_ScopedName) {
+            this->addError("Expected Enum value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto snode = BSQON_AST_asScopedNameNode(node);
+        const Type* ttype = this->parseTypeRoot((BSQON_TYPE_AST_Node*)snode->root);
+        if(ttype->tkey != t->tkey) {
+            this->addError("Expected " + t->tkey + " value but got " + ttype->tkey, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::string ename(snode->identifier);
+        auto eiter = std::find(t->variants.cbegin(), t->variants.cend(), ename);
+
+        if(eiter == t->variants.cend()) {
+            this->addError("Name " + ename + " not defined in the enumeration", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new EnumValue(t, Parser::convertSrcPos(node->pos), ename, (uint32_t)std::distance(t->variants.cbegin(), eiter));
     }
     
-    Value* parseTypeDecl(const TypedeclType* t, BSQON_AST_Node* node)
+    Value* Parser::parseTypeDecl(const TypedeclType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        auto vnode = node;
+        if(node->tag == BSQON_AST_TAG_TypedLiteral) {
+            vnode = BSQON_AST_asTypedLiteralNode(node)->data;
+            const Type* tdtype = this->parseTypeRoot(BSQON_AST_asTypedLiteralNode(node)->type);
+
+            if(tdtype->tkey != t->tkey) {
+                this->addError("Expected " + t->tkey + " value but got " + tdtype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+        }
+        
+        const Type* btype = this->assembly->resolveType(t->basetype);
+        Value* bval = nullptr;
+        if(node->tag == BSQON_AST_TAG_NakedPath) {
+            auto npnode = BSQON_AST_asLiteralStringNode(vnode);
+            if(*npnode->data->bytes == '`') {
+                bval = this->parsePathNaked(static_cast<const PathType*>(btype), Parser::convertSrcPos(vnode->pos), npnode);
+            }
+            else if(*npnode->data->bytes == 'f') {
+                bval = this->parsePathFragmentNaked(static_cast<const PathFragmentType*>(btype), Parser::convertSrcPos(vnode->pos), npnode);
+            }
+            else {
+                bval = this->parsePathGlobNaked(static_cast<const PathGlobType*>(btype), Parser::convertSrcPos(vnode->pos), npnode);
+            }
+        }
+        else {
+            bval = this->parseValue(btype, vnode);
+
+            if(bval->vtype->tkey != t->basetype) {
+                this->addError("Incompatible value and typedecl -- got " + bval->vtype->tkey + " but expected " + t->basetype, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+        }
+
+        if(!bval->isValidForTypedecl()) {
+            this->addError("Value cannot be used in a typedecl " + bval->vtype->tkey, Parser::convertSrcPos(vnode->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new TypedeclValue(t, Parser::convertSrcPos(node->pos), bval);
     }
 
-    Value* parseStdEntity(const StdEntityType* t, BSQON_AST_Node* node)
+    Value* Parser::parseStdEntity(const StdEntityType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BraceValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Entity value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        if(node->tag == BSQON_AST_TAG_TypedValue) {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            const Type* ttype = this->parseTypeRoot(tnode->type);
+            if(ttype->tkey != t->tkey) {
+                this->addError("Expected " + t->tkey + " value but got " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected entity value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            node = tnode->value;
+        }
+
+        auto vvals = this->processPropertiesForEntity(t, BSQON_AST_asBraceValueNode(node));
+        if(!vvals.has_value()) {
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+        
+        std::vector<Value*> rvals(vvals.value().size(), nullptr);
+        std::transform(vvals.value().begin(), vvals.value().end(), rvals.begin(), [](const std::pair<std::string, Value*>& pp) { return pp.second; });
+
+        return new RecordValue(t, Parser::convertSrcPos(node->pos), std::move(rvals));
     }
 
     Value* parseList(const ListType* t, BSQON_AST_Node* node)

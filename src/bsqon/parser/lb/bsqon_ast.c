@@ -122,6 +122,8 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_ErrCons:
         BSQON_AST_SpecialConsNode_print(BSQON_AST_asSpecialConsNode(node));
         break;
+    case BSQON_AST_TAG_ScopedName:
+        BSQON_AST_ScopedNameNode_print(BSQON_AST_asScopedNameNode(node));
     default:
         BSQON_AST_LiteralStandardNode_print(BSQON_AST_asLiteralStandardNode(node));
         break;
@@ -237,11 +239,11 @@ struct BSQON_AST_PathNode* BSQON_AST_asPathNode(const struct BSQON_AST_Node* nod
     return (struct BSQON_AST_PathNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct ByteString* str, struct BSQON_TYPE_AST_Node* type)
+struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct BSQON_AST_LiteralStringNode* data, struct BSQON_TYPE_AST_Node* type)
 {
     struct BSQON_AST_PathNode* node = (struct BSQON_AST_PathNode*)AST_ALLOC(sizeof(struct BSQON_AST_PathNode));
     node->base.tag = BSQON_AST_TAG_Path;
-    node->data = str;
+    node->data = data;
     node->type = type;
 
     return (struct BSQON_AST_Node*)node;
@@ -249,7 +251,7 @@ struct BSQON_AST_Node* BSQON_AST_PathNodeCreate(struct AST_SourcePos pos, struct
 
 void BSQON_AST_PathNode_print(struct BSQON_AST_PathNode* node)
 {
-    printf("%s", node->data->bytes);
+    printf("%s", (char*)node->data->data->bytes);
     BSQON_TYPE_AST_print(node->type);
 }
 
@@ -412,4 +414,26 @@ void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node)
     printf("(");
     BSQON_AST_print((struct BSQON_AST_Node*)node->value);
     printf(")");
+}
+
+struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_ScopedNameNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier)
+{
+    struct BSQON_AST_ScopedNameNode* node = (struct BSQON_AST_ScopedNameNode*)AST_ALLOC(sizeof(struct BSQON_AST_ScopedNameNode));
+    node->base.tag = BSQON_AST_TAG_ScopedName;
+    node->base.pos = pos;
+    node->root = root;
+    node->identifier = identifier;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_ScopedNameNode_print(struct BSQON_AST_ScopedNameNode* node)
+{
+    BSQON_TYPE_AST_print(node->root);
+    printf("::%s", node->identifier);
 }

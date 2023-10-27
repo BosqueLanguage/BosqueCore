@@ -198,8 +198,11 @@ namespace BSQON
         Value* parseStringOf(const StringOfType* t, struct BSQON_AST_Node* node);
         Value* parseASCIIStringOf(const ASCIIStringOfType* t, struct BSQON_AST_Node* node);
 
+        Value* parsePathNaked(const PathType* t, SourcePos spos, struct BSQON_AST_LiteralStringNode* node);
         Value* parsePath(const PathType* t, struct BSQON_AST_Node* node);
+        Value* parsePathFragmentNaked(const PathFragmentType* t, SourcePos spos, struct BSQON_AST_LiteralStringNode* node);
         Value* parsePathFragment(const PathFragmentType* t, struct BSQON_AST_Node* node);
+        Value* parsePathGlobNaked(const PathGlobType* t, SourcePos spos, struct BSQON_AST_LiteralStringNode* node);
         Value* parsePathGlob(const PathGlobType* t, struct BSQON_AST_Node* node);
 
         Value* parseSomething(const SomethingType* t, struct BSQON_AST_Node* node);
