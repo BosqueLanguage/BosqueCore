@@ -417,5 +417,68 @@ namespace BSQON
 
         return validator->test(str.value()) ? new PathGlobValue(vtype, spos, std::move(str.value())) : nullptr;
     }
+
+    std::vector<TypeKey> s_known_key_order = {
+        "None",
+        "Bool",
+        "Nat",
+        "Int",
+        "BigNat",
+        "BigInt",
+        "String",
+        "ASCIIString",
+        "UTCDateTime",
+        "PlainDate",
+        "PlainTime",
+        "TickTime",
+        "LogicalTime",
+        "ISOTimeStamp",
+        "UUIDv4",
+        "UUIDv7",
+        "SHAContentHash"
+    };
+
+    bool Value::keyCompare(const Value* v1, const Value* v2)
+    {
+        if(v1->vtype->tkey != v2->vtype->tkey) {
+            auto iter1 = std::find(s_known_key_order.cbegin(), s_known_key_order.cend(), v1->vtype->tkey);
+            auto iter2 = std::find(s_known_key_order.cbegin(), s_known_key_order.cend(), v2->vtype->tkey);
+
+            return (iter1 < iter2 || (iter1 == s_known_key_order.cend() && iter1 == s_known_key_order.cend() && v1->vtype->tkey < v2->vtype->tkey));
+        }
+        else {
+            const std::string dtype = v1->vtype->tkey;
+
+            if(v1->vtype->tag == TypeTag::TYPE_PRIMITIVE) {
+                if(dtype == "None") {
+                    return false;
+                }
+                else if(dtype == "Bool") {
+                    return BoolValue::keyCompare(static_cast<const BoolValue*>(v1), static_cast<const BoolValue*>(v2));
+                }
+                else if() {
+                    xxxx;
+                }
+            }
+            else {
+                switch (v1->vtype->tag)
+                {
+                case TypeTag::TYPE_STRING_OF:
+                    xxxx;
+                case TypeTag::TYPE_ASCII_STRING_OF:
+                    xxxx;
+                case TypeTag::TYPE_PATH:
+                    xxxx;
+                case TypeTag::TYPE_PATH_FRAGMENT:
+                    xxxx;
+                case TypeTag::TYPE_PATH_GLOB:
+                    xxxx;
+                default:
+                    //it must be a typedecl
+                    return Value::keyCompare(static_cast<const TypedeclValue*>(v1)->basevalue, static_cast<const TypedeclValue*>(v2)->basevalue);
+                }
+            }
+        }
+    }
 }
 

@@ -40,6 +40,13 @@ namespace BSQON
         {
             return false;
         }
+
+        virtual bool isValidForTypedecl() const
+        {
+            return false;
+        }
+
+        static bool keyCompare(const Value* v1, const Value* v2);
     };
 
     class ErrorValue : public Value
@@ -81,6 +88,11 @@ namespace BSQON
         {
             return "none";
         }
+
+        static bool keyCompare(const NoneValue* v1, const NoneValue* v2)
+        {
+            return false;
+        }
     };
 
     class NothingValue : public PrimtitiveValue 
@@ -107,6 +119,16 @@ namespace BSQON
         {
             return this->tv ? "true" : "false";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const BoolValue* v1, const BoolValue* v2)
+        {
+            return !v1->tv && v2->tv;
+        }
     };
 
     class NatNumberValue : public PrimtitiveValue 
@@ -121,6 +143,16 @@ namespace BSQON
         {
             return std::to_string(this->cnv) + "n";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const NatNumberValue* v1, const NatNumberValue* v2)
+        {
+            return v1->cnv < v2->cnv;
+        }
     };
 
     class IntNumberValue : public PrimtitiveValue 
@@ -134,6 +166,16 @@ namespace BSQON
         virtual std::string toString() const override
         {
             return std::to_string(this->cnv) + "i";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const IntNumberValue* v1, const IntNumberValue* v2)
+        {
+            return v1->cnv < v2->cnv;
         }
     };
 
@@ -163,6 +205,16 @@ namespace BSQON
 
             return str + "N";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const BigNatNumberValue* v1, const BigNatNumberValue* v2)
+        {
+            return v1->cnv < v2->cnv;
+        }
     };
 
     class BigIntNumberValue : public PrimtitiveValue 
@@ -191,6 +243,16 @@ namespace BSQON
 
             return str + "I";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const BigIntNumberValue* v1, const BigIntNumberValue* v2)
+        {
+            return v1->cnv < v2->cnv;
+        }
     };
 
     class FloatNumberValue : public PrimtitiveValue 
@@ -204,6 +266,11 @@ namespace BSQON
         virtual std::string toString() const override
         {
             return std::to_string(this->cnv) + "f";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
         }
     };
 
@@ -222,6 +289,11 @@ namespace BSQON
         {
             //TODO: decimal needs a bit of work
             return this->cnv + "d";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
         }
     };
 
@@ -248,6 +320,11 @@ namespace BSQON
         {
             return this->numerator + "/" + std::to_string(this->denominator) + "R";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
     };
 
     class StringValue : public PrimtitiveValue 
@@ -269,6 +346,16 @@ namespace BSQON
         {
             auto ustr = StringValue::escapeString(this->sv);
             return "\"" + std::string(ustr.begin(), ustr.end()) + "\"";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const StringValue* v1, const StringValue* v2)
+        {
+            return xxxx;
         }
 
     private:
@@ -294,6 +381,16 @@ namespace BSQON
         {
             auto ustr = ASCIIStringValue::escapeString(this->sv);
             return "'" + std::string(ustr.begin(), ustr.end()) + "'";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const ASCIIStringValue* v1, const ASCIIStringValue* v2)
+        {
+            return xxxx;
         }
 
     private:
@@ -332,6 +429,16 @@ namespace BSQON
         {
             return std::string("uuid4{") + this->uuidstr + "}";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const UUIDv4Value* v1, const UUIDv4Value* v2)
+        {
+            return xxxx;
+        }
     };
 
     class UUIDv7Value : public PrimtitiveValue 
@@ -347,6 +454,16 @@ namespace BSQON
         {
             return std::string("uuid7{") + this->uuidstr + "}";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const UUIDv7Value* v1, const UUIDv7Value* v2)
+        {
+            return xxxx;
+        }
     };
 
     class SHAContentHashValue : public PrimtitiveValue 
@@ -361,6 +478,16 @@ namespace BSQON
         virtual std::string toString() const override
         {
             return std::string("sha3") + "{" + this->hashstr + "}";
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const SHAContentHashValue* v1, const SHAContentHashValue* v2)
+        {
+            return xxxx;
         }
     };
 
@@ -379,6 +506,11 @@ namespace BSQON
             
             return std::string(buf);
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
     };
 
     class UTCDateTimeValue : public PrimtitiveValue 
@@ -395,6 +527,16 @@ namespace BSQON
             sprintf(buf, "%.4u-%.2u-%.2uT%.2u:%.2u:%.2uZ", this->tv.year, this->tv.month, this->tv.day, this->tv.hour, this->tv.min, this->tv.sec);
             
             return std::string(buf);
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const UTCDateTimeValue* v1, const UTCDateTimeValue* v2)
+        {
+            return xxxx;
         }
     };
 
@@ -413,6 +555,16 @@ namespace BSQON
             
             return std::string(buf);
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const PlainDateValue* v1, const PlainDateValue* v2)
+        {
+            return xxxx;
+        }
     };
 
     class PlainTimeValue : public PrimtitiveValue 
@@ -430,6 +582,16 @@ namespace BSQON
             
             return std::string(buf);
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const PlainTimeValue* v1, const PlainTimeValue* v2)
+        {
+            return xxxx;
+        }
     };
 
     class LogicalTimeValue : public PrimtitiveValue 
@@ -444,6 +606,16 @@ namespace BSQON
         {
             return std::to_string(this->tv);
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const LogicalTimeValue* v1, const LogicalTimeValue* v2)
+        {
+            return xxxx;
+        }
     };
 
     class TickTimeValue : public PrimtitiveValue 
@@ -457,6 +629,16 @@ namespace BSQON
         virtual std::string toString() const override
         {
             return std::to_string(this->tv);
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const TickTimeValue* v1, const TickTimeValue* v2)
+        {
+            return xxxx;
         }
     };
 
@@ -474,6 +656,16 @@ namespace BSQON
             sprintf(buf, "%.4u-%.2u-%.2uT%.2u:%.2u:%.2u.%.3uZ", this->tv.year, this->tv.month, this->tv.day, this->tv.hour, this->tv.min, this->tv.sec, this->tv.millis);
             
             return std::string(buf);
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const ISOTimeStampValue* v1, const ISOTimeStampValue* v2)
+        {
+            return xxxx;
         }
     };
 
@@ -506,6 +698,11 @@ namespace BSQON
         {
             return "LatLongCoordinate{" + std::to_string(this->vlat) + ", " + std::to_string(this->vlong) + "}";
         }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
     };
 
     class StringOfValue : public Value
@@ -527,6 +724,16 @@ namespace BSQON
         const StringOfType* getStringOfType() const
         {
             return (const StringOfType*)this->vtype;
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const StringOfValue* v1, const StringOfValue* v2)
+        {
+            return xxxx;
         }
 
     private:
@@ -552,6 +759,16 @@ namespace BSQON
         const ASCIIStringOfType* getASCIIStringOfType() const
         {
             return (const ASCIIStringOfType*)this->vtype;
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const ASCIIStringOfValue* v1, const ASCIIStringOfValue* v2)
+        {
+            return xxxx;
         }
 
     private:
@@ -635,6 +852,16 @@ namespace BSQON
             return (const PathType*)this->vtype;
         }
 
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const PathValue* v1, const PathValue* v2)
+        {
+            return xxxx;
+        }
+
     private:
         PathValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
@@ -659,6 +886,16 @@ namespace BSQON
             return (const PathFragmentType*)this->vtype;
         }
 
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const PathFragmentValue* v1, const PathFragmentValue* v2)
+        {
+            return xxxx;
+        }
+
     private:
         PathFragmentValue(const Type* vtype, SourcePos spos, std::string&& sv) : Value(vtype, spos), sv(std::move(sv)) { ; }
     };
@@ -681,6 +918,16 @@ namespace BSQON
         const PathGlobType* getPathGlobType() const
         {
             return (const PathGlobType*)this->vtype;
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const PathGlobValue* v1, const PathGlobValue* v2)
+        {
+            return xxxx;
         }
 
     private:
@@ -819,6 +1066,16 @@ namespace BSQON
         const EnumType* getEnumType() const
         {
             return (const EnumType*)this->vtype;
+        }
+
+        virtual bool isValidForTypedecl() const override
+        {
+            return true;
+        }
+
+        static bool keyCompare(const EnumValue* v1, const EnumValue* v2)
+        {
+            return v1->ev < v2->ev;
         }
     };
 

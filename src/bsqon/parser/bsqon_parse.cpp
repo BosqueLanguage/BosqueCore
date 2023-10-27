@@ -1682,7 +1682,7 @@ namespace BSQON
         std::vector<Value*> rvals(vvals.value().size(), nullptr);
         std::transform(vvals.value().begin(), vvals.value().end(), rvals.begin(), [](const std::pair<std::string, Value*>& pp) { return pp.second; });
 
-        return new RecordValue(t, Parser::convertSrcPos(node->pos), std::move(rvals));
+        return new EntityValue(t, Parser::convertSrcPos(node->pos), std::move(rvals));
     }
 
     Value* parseList(const ListType* t, BSQON_AST_Node* node)

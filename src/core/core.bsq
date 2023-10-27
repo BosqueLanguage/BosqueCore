@@ -320,6 +320,7 @@ __internal __constructable __enumable __litvaluetype __typedeclable entity ASCII
 
 //<summary>An efficient byte buffer for data.</summary>
 __internal entity ByteBuffer provides Some {
+    //TODO: do we want to make this typedeclable too?
 }
 
 //<summary>Validator for TimeZone</summary>
