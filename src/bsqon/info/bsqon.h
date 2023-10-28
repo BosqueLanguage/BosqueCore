@@ -46,7 +46,52 @@ namespace BSQON
             return false;
         }
 
-        static bool keyCompare(const Value* v1, const Value* v2);
+        static int keyCompare(const Value* v1, const Value* v2);
+
+        template <typename T>
+        static int keyCompareImplScalars(T v1, T v2)
+        {
+            if(v1 == v2) {
+                return 0;
+            }
+            else if(v1 < v2) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
+        }
+
+        template <typename T>
+        static int keyCompareImplStringish(const T& v1, const T& v2)
+        {
+            if(v1.size() < v2.size()) {
+                return -1;
+            }
+            else if(v1.size() > v2.size()) {
+                return 1;
+            }
+            else {
+                auto mmi = std::mismatch(v1.cbegin(), v1.cend(), v2.cbegin(), v2.cend());
+                if(mmi.first == v1.cend() && mmi.second == v2.cend()) {
+                    return 0;
+                }
+                else {
+                    return *mmi.first < *mmi.second ? -1 : 1;
+                }
+            }
+        }
+
+        static int keyCompareImplArray(uint16_t* v1, uint16_t* v2, size_t length)
+        {
+            auto mmi = std::mismatch(v1, v1 + length, v2, v2 + length);
+            if(mmi.first == v1 + length && mmi.second == v2 + length) {
+                return 0;
+            }
+            else {
+                return *mmi.first < *mmi.second ? -1 : 1;
+            }
+        }
     };
 
     class ErrorValue : public Value
@@ -88,11 +133,6 @@ namespace BSQON
         {
             return "none";
         }
-
-        static bool keyCompare(const NoneValue* v1, const NoneValue* v2)
-        {
-            return false;
-        }
     };
 
     class NothingValue : public PrimtitiveValue 
@@ -125,9 +165,17 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const BoolValue* v1, const BoolValue* v2)
+        static int keyCompare(const BoolValue* v1, const BoolValue* v2)
         {
-            return !v1->tv && v2->tv;
+            if(v1->tv == v2->tv) {
+                return 0;
+            }
+            else if(!v1->tv) {
+                return -1;
+            }
+            else {
+                return 1;
+            }
         }
     };
 
@@ -149,9 +197,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const NatNumberValue* v1, const NatNumberValue* v2)
+        static int keyCompare(const NatNumberValue* v1, const NatNumberValue* v2)
         {
-            return v1->cnv < v2->cnv;
+            return Value::keyCompareImplScalars(v1->cnv, v2->cnv);
         }
     };
 
@@ -173,9 +221,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const IntNumberValue* v1, const IntNumberValue* v2)
+        static int keyCompare(const IntNumberValue* v1, const IntNumberValue* v2)
         {
-            return v1->cnv < v2->cnv;
+            return Value::keyCompareImplScalars(v1->cnv, v2->cnv);
         }
     };
 
@@ -211,9 +259,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const BigNatNumberValue* v1, const BigNatNumberValue* v2)
+        static int keyCompare(const BigNatNumberValue* v1, const BigNatNumberValue* v2)
         {
-            return v1->cnv < v2->cnv;
+            return Value::keyCompareImplScalars(v1->cnv, v2->cnv);
         }
     };
 
@@ -249,9 +297,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const BigIntNumberValue* v1, const BigIntNumberValue* v2)
+        static int keyCompare(const BigIntNumberValue* v1, const BigIntNumberValue* v2)
         {
-            return v1->cnv < v2->cnv;
+            return Value::keyCompareImplScalars(v1->cnv, v2->cnv);
         }
     };
 
@@ -353,9 +401,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const StringValue* v1, const StringValue* v2)
+        static int keyCompare(const StringValue* v1, const StringValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -388,9 +436,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const ASCIIStringValue* v1, const ASCIIStringValue* v2)
+        static int keyCompare(const ASCIIStringValue* v1, const ASCIIStringValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -435,9 +483,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const UUIDv4Value* v1, const UUIDv4Value* v2)
+        static int keyCompare(const UUIDv4Value* v1, const UUIDv4Value* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->uuidstr, v2->uuidstr);
         }
     };
 
@@ -460,9 +508,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const UUIDv7Value* v1, const UUIDv7Value* v2)
+        static int keyCompare(const UUIDv7Value* v1, const UUIDv7Value* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->uuidstr, v2->uuidstr);
         }
     };
 
@@ -485,9 +533,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const SHAContentHashValue* v1, const SHAContentHashValue* v2)
+        static int keyCompare(const SHAContentHashValue* v1, const SHAContentHashValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->hashstr, v2->hashstr);
         }
     };
 
@@ -534,9 +582,12 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const UTCDateTimeValue* v1, const UTCDateTimeValue* v2)
+        static int keyCompare(const UTCDateTimeValue* v1, const UTCDateTimeValue* v2)
         {
-            return xxxx;
+            uint16_t v1vs[6] = {v1->tv.year, v1->tv.month, v1->tv.day, v1->tv.hour, v1->tv.min, v1->tv.sec};
+            uint16_t v2vs[6] = {v2->tv.year, v2->tv.month, v2->tv.day, v2->tv.hour, v2->tv.min, v2->tv.sec};
+
+            return Value::keyCompareImplArray(v1vs, v2vs, 6);
         }
     };
 
@@ -561,9 +612,12 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const PlainDateValue* v1, const PlainDateValue* v2)
+        static int keyCompare(const PlainDateValue* v1, const PlainDateValue* v2)
         {
-            return xxxx;
+            uint16_t v1vs[3] = {v1->tv.year, v1->tv.month, v1->tv.day};
+            uint16_t v2vs[3] = {v2->tv.year, v2->tv.month, v2->tv.day};
+
+            return Value::keyCompareImplArray(v1vs, v2vs, 3);
         }
     };
 
@@ -588,9 +642,12 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const PlainTimeValue* v1, const PlainTimeValue* v2)
+        static int keyCompare(const PlainTimeValue* v1, const PlainTimeValue* v2)
         {
-            return xxxx;
+            uint16_t v1vs[3] = {v1->tv.hour, v1->tv.min, v1->tv.sec};
+            uint16_t v2vs[3] = {v2->tv.hour, v2->tv.min, v2->tv.sec};
+
+            return Value::keyCompareImplArray(v1vs, v2vs, 3);
         }
     };
 
@@ -612,9 +669,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const LogicalTimeValue* v1, const LogicalTimeValue* v2)
+        static int keyCompare(const LogicalTimeValue* v1, const LogicalTimeValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplScalars(v1->tv, v2->tv);
         }
     };
 
@@ -636,9 +693,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const TickTimeValue* v1, const TickTimeValue* v2)
+        static int keyCompare(const TickTimeValue* v1, const TickTimeValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplScalars(v1->tv, v2->tv);
         }
     };
 
@@ -663,9 +720,12 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const ISOTimeStampValue* v1, const ISOTimeStampValue* v2)
+        static int keyCompare(const ISOTimeStampValue* v1, const ISOTimeStampValue* v2)
         {
-            return xxxx;
+            uint16_t v1vs[7] = {v1->tv.year, v1->tv.month, v1->tv.day, v1->tv.hour, v1->tv.min, v1->tv.sec, v1->tv.millis};
+            uint16_t v2vs[7] = {v2->tv.year, v2->tv.month, v2->tv.day, v2->tv.hour, v2->tv.min, v2->tv.sec, v2->tv.millis};
+
+            return Value::keyCompareImplArray(v1vs, v2vs, 7);
         }
     };
 
@@ -731,9 +791,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const StringOfValue* v1, const StringOfValue* v2)
+        static int keyCompare(const StringOfValue* v1, const StringOfValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -766,9 +826,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const ASCIIStringOfValue* v1, const ASCIIStringOfValue* v2)
+        static int keyCompare(const ASCIIStringOfValue* v1, const ASCIIStringOfValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -857,9 +917,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const PathValue* v1, const PathValue* v2)
+        static int keyCompare(const PathValue* v1, const PathValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -891,9 +951,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const PathFragmentValue* v1, const PathFragmentValue* v2)
+        static int keyCompare(const PathFragmentValue* v1, const PathFragmentValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -925,9 +985,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const PathGlobValue* v1, const PathGlobValue* v2)
+        static int keyCompare(const PathGlobValue* v1, const PathGlobValue* v2)
         {
-            return xxxx;
+            return Value::keyCompareImplStringish(v1->sv, v2->sv);
         }
 
     private:
@@ -1073,9 +1133,9 @@ namespace BSQON
             return true;
         }
 
-        static bool keyCompare(const EnumValue* v1, const EnumValue* v2)
+        static int keyCompare(const EnumValue* v1, const EnumValue* v2)
         {
-            return v1->ev < v2->ev;
+            return Value::keyCompareImplScalars(v1->ev, v2->ev);
         }
     };
 

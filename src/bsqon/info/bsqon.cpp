@@ -438,7 +438,7 @@ namespace BSQON
         "SHAContentHash"
     };
 
-    bool Value::keyCompare(const Value* v1, const Value* v2)
+    int Value::keyCompare(const Value* v1, const Value* v2)
     {
         if(v1->vtype->tkey != v2->vtype->tkey) {
             auto iter1 = std::find(s_known_key_order.cbegin(), s_known_key_order.cend(), v1->vtype->tkey);
@@ -456,23 +456,68 @@ namespace BSQON
                 else if(dtype == "Bool") {
                     return BoolValue::keyCompare(static_cast<const BoolValue*>(v1), static_cast<const BoolValue*>(v2));
                 }
-                else if() {
-                    xxxx;
+                else if(dtype == "Nat") {
+                    return NatNumberValue::keyCompare(static_cast<const NatNumberValue*>(v1), static_cast<const NatNumberValue*>(v2));
+                }
+                else if(dtype == "Int") {
+                    return IntNumberValue::keyCompare(static_cast<const IntNumberValue*>(v1), static_cast<const IntNumberValue*>(v2));
+                }
+                else if(dtype == "BigNat") {
+                    return BigNatNumberValue::keyCompare(static_cast<const BigNatNumberValue*>(v1), static_cast<const BigNatNumberValue*>(v2));
+                }
+                else if(dtype == "BigInt") {
+                    return BigIntNumberValue::keyCompare(static_cast<const BigIntNumberValue*>(v1), static_cast<const BigIntNumberValue*>(v2));
+                }
+                else if(dtype == "String") {
+                    return StringValue::keyCompare(static_cast<const StringValue*>(v1), static_cast<const StringValue*>(v2));
+                }
+                else if(dtype == "ASCIIString") {
+                    return ASCIIStringValue::keyCompare(static_cast<const ASCIIStringValue*>(v1), static_cast<const ASCIIStringValue*>(v2));
+                }
+                else if(dtype == "UUIDv4") {
+                    return UUIDv4Value::keyCompare(static_cast<const UUIDv4Value*>(v1), static_cast<const UUIDv4Value*>(v2));
+                }
+                else if(dtype == "UUIDv7") {
+                    return UUIDv7Value::keyCompare(static_cast<const UUIDv7Value*>(v1), static_cast<const UUIDv7Value*>(v2));
+                }
+                else if(dtype == "SHAContentHash") {
+                    return SHAContentHashValue::keyCompare(static_cast<const SHAContentHashValue*>(v1), static_cast<const SHAContentHashValue*>(v2));
+                }
+                else if(dtype == "UTCDateTime") {
+                    return UTCDateTimeValue::keyCompare(static_cast<const UTCDateTimeValue*>(v1), static_cast<const UTCDateTimeValue*>(v2));
+                }
+                else if(dtype == "PlainDate") {
+                    return PlainDateValue::keyCompare(static_cast<const PlainDateValue*>(v1), static_cast<const PlainDateValue*>(v2));
+                }
+                else if(dtype == "PlainTime") {
+                    return PlainTimeValue::keyCompare(static_cast<const PlainTimeValue*>(v1), static_cast<const PlainTimeValue*>(v2));
+                }
+                else if(dtype == "TickTime") {
+                    return TickTimeValue::keyCompare(static_cast<const TickTimeValue*>(v1), static_cast<const TickTimeValue*>(v2));
+                }
+                else if(dtype == "LogicalTime") {
+                    return LogicalTimeValue::keyCompare(static_cast<const LogicalTimeValue*>(v1), static_cast<const LogicalTimeValue*>(v2));
+                }
+                else {
+                    //should be ISOTimestamp
+                    return ISOTimeStampValue::keyCompare(static_cast<const ISOTimeStampValue*>(v1), static_cast<const ISOTimeStampValue*>(v2));
                 }
             }
             else {
                 switch (v1->vtype->tag)
                 {
+                case TypeTag::TYPE_ENUM:
+                    return EnumValue::keyCompare(static_cast<const EnumValue*>(v1), static_cast<const EnumValue*>(v2));
                 case TypeTag::TYPE_STRING_OF:
-                    xxxx;
+                    return StringOfValue::keyCompare(static_cast<const StringOfValue*>(v1), static_cast<const StringOfValue*>(v2));
                 case TypeTag::TYPE_ASCII_STRING_OF:
-                    xxxx;
+                    return ASCIIStringOfValue::keyCompare(static_cast<const ASCIIStringOfValue*>(v1), static_cast<const ASCIIStringOfValue*>(v2));
                 case TypeTag::TYPE_PATH:
-                    xxxx;
+                    return PathValue::keyCompare(static_cast<const PathValue*>(v1), static_cast<const PathValue*>(v2));
                 case TypeTag::TYPE_PATH_FRAGMENT:
-                    xxxx;
+                    return PathFragmentValue::keyCompare(static_cast<const PathFragmentValue*>(v1), static_cast<const PathFragmentValue*>(v2));
                 case TypeTag::TYPE_PATH_GLOB:
-                    xxxx;
+                    return PathGlobValue::keyCompare(static_cast<const PathGlobValue*>(v1), static_cast<const PathGlobValue*>(v2));
                 default:
                     //it must be a typedecl
                     return Value::keyCompare(static_cast<const TypedeclValue*>(v1)->basevalue, static_cast<const TypedeclValue*>(v2)->basevalue);
