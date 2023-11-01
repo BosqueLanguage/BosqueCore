@@ -378,7 +378,7 @@ __internal __typedeclable __typebase entity PlainTime provides Some, KeyType {
         requires min < 60n;
         requires sec < 61n;
     {
-        return PlainTime::s_create(day, hour, min, sec);
+        return PlainTime::s_create(hour, min, sec);
     }
 }
 
