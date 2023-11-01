@@ -52,8 +52,8 @@ namespace BSQON
         std::optional<Value*> processPropertiesForSpecialCons(const Type* etype, struct BSQON_AST_BraceValueNode* node);
         std::optional<std::pair<double, double>> processPropertiesForLatLong(struct BSQON_AST_BraceValueNode* node);
         std::optional<std::pair<Value*, Value*>> processPropertiesForMapEntry(const Type* ktype, const Type* vtype, struct BSQON_AST_BraceValueNode* node);
-        std::vector<Value*> processEntriesForSequence(const Type* etype, struct BSQON_AST_BracketValueNode* node);
-        std::vector<Value*> processEntriesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node);
+        void processEntriesForSequence(const Type* etype, struct BSQON_AST_Node* node, std::vector<Value*>& vals);
+        void processEntriesForMap(const Type* keytype, const Type* valtype, struct BSQON_AST_BraceValueNode* node, std::vector<MapEntryValue*>& entries);
 
     public:
         const AssemblyInfo* assembly;

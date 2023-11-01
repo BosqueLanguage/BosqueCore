@@ -288,31 +288,37 @@ namespace BSQON
         }
     }
 
-    std::vector<Value*> Parser::processEntriesForSequence(const Type* etype, BSQON_AST_BracketValueNode* node)
+    void Parser::processEntriesForSequence(const Type* etype, BSQON_AST_Node* node, std::vector<Value*>& vals)
     {
-        std::vector<Value*> elems;
-        for(auto curr = node->values; curr != NULL; curr = curr->next) {
-            elems.push_back(this->parseValue(etype, curr->value));
+        if(node->tag == BSQON_AST_TAG_BracketValue) {
+            auto bnode = BSQON_AST_asBracketValueNode(node);
+            for(auto curr = bnode->values; curr != NULL; curr = curr->next) {
+                vals.push_back(this->parseValue(etype, curr->value));
+            }
         }
-
-        return std::move(elems);
+        else {
+            auto bnode = BSQON_AST_asBraceValueNode(node);
+            for(auto curr = bnode->entries; curr != NULL; curr = curr->next) {
+                if(curr->value->name != NULL) {
+                    this->addError("Sequence value cannot have named property", Parser::convertSrcPos(node->pos));
+                }
+                vals.push_back(this->parseValue(etype, curr->value->value));
+            }
+        }
     }
         
-    std::vector<Value*> Parser::processEntriesForMap(const Type* keytype, const Type* valtype, BSQON_AST_BraceValueNode* node)
+    void Parser::processEntriesForMap(const Type* keytype, const Type* valtype, BSQON_AST_BraceValueNode* node, std::vector<MapEntryValue*>& entries)
     {
         const Type* metype = this->assembly->resolveType("MapEntry<" + keytype->tkey + ", " + valtype->tkey + ">");
 
-        std::vector<Value*> elems;
         for(auto curr = node->entries; curr != NULL; curr = curr->next) {
             if(curr->value->name != NULL) {
                 this->addError("Map value has named property", Parser::convertSrcPos(node->base.pos));
             }
             else {
-                elems.push_back(this->parseValue(metype, curr->value->value));
+                entries.push_back(static_cast<MapEntryValue*>(this->parseValue(metype, curr->value->value)));
             }
         }
-
-        return std::move(elems);
     }
 
     const Type* Parser::resolveTypeFromNameList(std::string basenominal, std::vector<const Type*> terms)
@@ -1502,9 +1508,8 @@ namespace BSQON
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
 
-            const Type* ttype = this->parseTypeRoot(tnode->type);
-            if(ttype->tkey != t->tkey) {
-                this->addError("Expected " + t->tkey + " value but got " + ttype->tkey, Parser::convertSrcPos(node->pos));
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
 
@@ -1685,29 +1690,236 @@ namespace BSQON
         return new EntityValue(t, Parser::convertSrcPos(node->pos), std::move(rvals));
     }
 
-    Value* parseList(const ListType* t, BSQON_AST_Node* node)
+    Value* Parser::parseList(const ListType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BracketValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected List value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::vector<Value*> vv;
+        if(node->tag == BSQON_AST_TAG_BracketValue) {
+             this->processEntriesForSequence(t, node, vv);
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected List value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+            if(oftypenode->terms != NULL) {
+                const Type* ttype = this->parseTypeRoot(tnode->type);
+                if(ttype->tkey != t->tkey) {
+                    this->addError("Expected List value but got type " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+            }
+
+            if(strcmp(oftypenode->name, "List") != 0) {
+                this->addError("Expected List value but got type " + std::string(oftypenode->name), Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            this->processEntriesForSequence(t, tnode->value, vv);
+        }
+
+        return new ListValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
     }
 
-    Value* parseStack(const StackType* t, BSQON_AST_Node* node)
+    Value* Parser::parseStack(const StackType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BracketValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Stack value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::vector<Value*> vv;
+        if(node->tag == BSQON_AST_TAG_BracketValue) {
+             this->processEntriesForSequence(t, node, vv);
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected Stack value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+            if(oftypenode->terms != NULL) {
+                const Type* ttype = this->parseTypeRoot(tnode->type);
+                if(ttype->tkey != t->tkey) {
+                    this->addError("Expected Stack value but got type " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+            }
+
+            if(strcmp(oftypenode->name, "Stack") != 0) {
+                this->addError("Expected Stack value but got type " + std::string(oftypenode->name), Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            this->processEntriesForSequence(t, tnode->value, vv);
+        }
+
+        return new StackValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
     }
 
-    Value* parseQueue(const QueueType* t, BSQON_AST_Node* node)
+    Value* Parser::parseQueue(const QueueType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BracketValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Queue value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::vector<Value*> vv;
+        if(node->tag == BSQON_AST_TAG_BracketValue) {
+             this->processEntriesForSequence(t, node, vv);
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected Queue value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+            if(oftypenode->terms != NULL) {
+                const Type* ttype = this->parseTypeRoot(tnode->type);
+                if(ttype->tkey != t->tkey) {
+                    this->addError("Expected Queue value but got type " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+            }
+
+            if(strcmp(oftypenode->name, "Queue") != 0) {
+                this->addError("Expected Queue value but got type " + std::string(oftypenode->name), Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            this->processEntriesForSequence(t, tnode->value, vv);
+        }
+
+        return new QueueValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
     }
 
-    Value* parseSet(const SetType* t, BSQON_AST_Node* node)
+    Value* Parser::parseSet(const SetType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BraceValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Set value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::vector<Value*> vv;
+        if(node->tag == BSQON_AST_TAG_BraceValue) {
+             this->processEntriesForSequence(t, node, vv);
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected Set value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+            if(oftypenode->terms != NULL) {
+                const Type* ttype = this->parseTypeRoot(tnode->type);
+                if(ttype->tkey != t->tkey) {
+                    this->addError("Expected Set value but got type " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+            }
+
+            if(strcmp(oftypenode->name, "Set") != 0) {
+                this->addError("Expected Set value but got type " + std::string(oftypenode->name), Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            this->processEntriesForSequence(t, tnode->value, vv);
+        }
+
+        std::sort(vv.begin(), vv.end(), [](const Value* v1, const Value* v2) { return Value::keyCompare(v1, v2) < 0; });
+        auto hasdup = std::adjacent_find(vv.cbegin(), vv.cend(), [](const Value* v1, const Value* v2){ return Value::keyCompare(v1, v2) == 0; });
+        if(hasdup != vv.cend()) {
+            this->addError("Duplicate value in Set", (*(hasdup + 1))->spos);
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new SetValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
     }
 
-    Value* parseMap(const MapType* t, BSQON_AST_Node* node)
+    Value* Parser::parseMap(const MapType* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(node->tag != BSQON_AST_TAG_BraceValue && node->tag != BSQON_AST_TAG_TypedValue) {
+            this->addError("Expected Map value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        const Type* tkey = this->assembly->resolveType(t->ktype);
+        const Type* tvalue = this->assembly->resolveType(t->vtype);
+
+        std::vector<MapEntryValue*> vv;
+        if(node->tag == BSQON_AST_TAG_BraceValue) {
+             this->processEntriesForMap(tkey, tvalue, BSQON_AST_asBraceValueNode(node), vv);
+        }
+        else {
+            auto tnode = BSQON_AST_asTypedValueNode(node);
+            if(tnode->type->tag != BSQON_TYPE_AST_TAG_Nominal) {
+                this->addError("Expected Map value", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            auto oftypenode = BSQON_AST_asNominalNode(tnode->type);
+            if(oftypenode->terms != NULL) {
+                const Type* ttype = this->parseTypeRoot(tnode->type);
+                if(ttype->tkey != t->tkey) {
+                    this->addError("Expected Map value but got type " + ttype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+            }
+
+            if(strcmp(oftypenode->name, "Map") != 0) {
+                this->addError("Expected Map value but got type " + std::string(oftypenode->name), Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
+                this->addError("Expected constructor arg list", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            this->processEntriesForMap(tkey, tvalue, BSQON_AST_asBraceValueNode(tnode->value), vv);
+        }
+
+        std::sort(vv.begin(), vv.end(), [](const MapEntryValue* v1, const MapEntryValue* v2) { return Value::keyCompare(v1->key, v2->key) < 0; });
+        auto hasdup = std::adjacent_find(vv.cbegin(), vv.cend(), [](const MapEntryValue* v1, const MapEntryValue* v2){ return Value::keyCompare(v1->key, v2->key) == 0; });
+        if(hasdup != vv.cend()) {
+            this->addError("Duplicate keys in Map", (*(hasdup + 1))->spos);
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return new MapValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
     }
 
     ///////////////////////////////////

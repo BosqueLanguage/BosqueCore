@@ -444,7 +444,18 @@ namespace BSQON
             auto iter1 = std::find(s_known_key_order.cbegin(), s_known_key_order.cend(), v1->vtype->tkey);
             auto iter2 = std::find(s_known_key_order.cbegin(), s_known_key_order.cend(), v2->vtype->tkey);
 
-            return (iter1 < iter2 || (iter1 == s_known_key_order.cend() && iter1 == s_known_key_order.cend() && v1->vtype->tkey < v2->vtype->tkey));
+            if(iter1 == s_known_key_order.cend() && iter2 == s_known_key_order.cend()) {
+                return (v1->vtype->tkey < v2->vtype->tkey) ? -1 : 1;
+            }
+            else if (iter1 == s_known_key_order.cend()) {
+                return 1;
+            }
+            else if (iter2 == s_known_key_order.cend()) {
+                return -1;
+            }
+            else {
+                return iter1 < iter2 ? -1 : 1;
+            }
         }
         else {
             const std::string dtype = v1->vtype->tkey;
