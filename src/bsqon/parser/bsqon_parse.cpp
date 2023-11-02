@@ -863,7 +863,7 @@ namespace BSQON
         return new FloatNumberValue(t, Parser::convertSrcPos(node->pos), vv);
     }
 
-    Value* Parser::parseDecmial(const PrimitiveType* t, BSQON_AST_Node* node)
+    Value* Parser::parseDecimal(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Decimal) {
             this->addError("Expected Decimal value", Parser::convertSrcPos(node->pos));
@@ -1920,6 +1920,265 @@ namespace BSQON
         }
 
         return new MapValue(t, Parser::convertSrcPos(node->pos), std::move(vv));
+    }
+
+    Value* Parser::parseValuePrimitive(const PrimitiveType* t, BSQON_AST_Node* node)
+    {
+        auto tk = t->tkey;
+        if(tk == "None") {
+            return this->parseNone(t, node);
+        }
+        else if(tk == "Nothing") {
+            return this->parseNothing(t, node);
+        }
+        else if(tk == "Bool") {
+            return this->parseBool(t, node);
+        }
+        else if(tk == "Int") {
+            return this->parseInt(t, node);
+        }
+        else if(tk == "Nat") {
+            return this->parseNat(t, node);
+        }
+        else if(tk == "BigInt") {
+            return this->parseBigInt(t, node);
+        }
+        else if(tk == "BigNat") {
+            return this->parseBigNat(t, node);
+        }
+        else if(tk == "Rational") {
+            return this->parseRational(t, node);
+        }
+        else if(tk == "Float") {
+            return this->parseFloat(t, node);
+        }
+        else if(tk == "Decimal") {
+            return this->parseDecimal(t, node);
+        }
+        else if(tk == "String") {
+            return this->parseString(t, node);
+        }
+        else if(tk == "ASCIIString") {
+            return this->parseASCIIString(t, node);
+        }
+        else if(tk == "ByteBuffer") {
+            return this->parseByteBuffer(t, node);
+        }
+        else if(tk == "DateTime") {
+            return this->parseDateTime(t, node);
+        }
+        else if(tk == "UTCDateTime") {
+            return this->parseUTCDateTime(t, node);
+        }
+        else if(tk == "PlainDate") {
+            return this->parsePlainDate(t, node);
+        }
+        else if(tk == "PlainTime") {
+            return this->parsePlainTime(t, node);
+        }
+        else if(tk == "TickTime") {
+            return this->parseTickTime(t, node);
+        }
+        else if(tk == "LogicalTime") {
+            return this->parseLogicalTime(t, node);
+        }
+        else if(tk == "ISOTimeStamp") {
+            return this->parseISOTimeStamp(t, node);
+        }
+        else if(tk == "UUIDv4") {
+            return this->parseUUIDv4(t, node);
+        }
+        else if(tk == "UUIDv7") {
+            return this->parseUUIDv7(t, node);
+        }
+        else if(tk == "SHAContentHash") {
+            return this->parseSHAHashcode(t, node);
+        } 
+        else if(tk == "LatLongCoordinate") {
+            return this->parseLatLongCoordinate(t, node);
+        }
+        else if(tk == "Regex") {
+            return this->parseRegex(t, node);
+        }
+        else {
+            this->addError("Unknown primitive type " + tk, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+    }
+
+    Value* Parser::parseValueDirect(const Type* t, BSQON_AST_Node* node)
+    {
+        switch(t->tag) {
+            case TypeTag::TYPE_TUPLE: {
+                return this->parseTuple(static_cast<const TupleType*>(t), node);
+            }
+            case TypeTag::TYPE_RECORD: {
+                return this->parseRecord(static_cast<const RecordType*>(t), node);
+            }
+            case TypeTag::TYPE_STD_ENTITY: {
+                return this->parseStdEntity(static_cast<const StdEntityType*>(t), node);
+            }
+            case TypeTag::TYPE_ENUM: {
+                return this->parseEnum(static_cast<const EnumType*>(t), node);
+            }
+            case TypeTag::TYPE_TYPE_DECL: {
+                return this->parseTypeDecl(static_cast<const TypedeclType*>(t), node);
+            }
+            case TypeTag::TYPE_STRING_OF: {
+                return this->parseStringOf(static_cast<const StringOfType*>(t), node);
+            }
+            case TypeTag::TYPE_ASCII_STRING_OF: {
+                return this->parseASCIIStringOf(static_cast<const ASCIIStringOfType*>(t), node);
+            }
+            case TypeTag::TYPE_SOMETHING: {
+                return this->parseSomething(static_cast<const SomethingType*>(t), node);
+            }
+            case TypeTag::TYPE_OK: {
+                return this->parseOk(static_cast<const OkType*>(t), node);
+            }
+            case TypeTag::TYPE_ERROR: {
+                return this->parseErr(static_cast<const ErrorType*>(t), node);
+            }
+            case TypeTag::TYPE_PATH: {
+                return this->parsePath(static_cast<const PathType*>(t), node);
+            }
+            case TypeTag::TYPE_PATH_FRAGMENT: {
+                return this->parsePathFragment(static_cast<const PathFragmentType*>(t), node);
+            }
+            case TypeTag::TYPE_PATH_GLOB: {
+                return this->parsePathGlob(static_cast<const PathGlobType*>(t), node);
+            }
+            case TypeTag::TYPE_LIST: {
+                return this->parseList(static_cast<const ListType*>(t), node);
+            }
+            case TypeTag::TYPE_STACK: {
+                return this->parseStack(static_cast<const StackType*>(t), node);
+            }
+            case TypeTag::TYPE_QUEUE: {
+                return this->parseQueue(static_cast<const QueueType*>(t), node);
+            }
+            case TypeTag::TYPE_SET: {
+                return this->parseSet(static_cast<const SetType*>(t), node);
+            }
+            case TypeTag::TYPE_MAP_ENTRY: {
+                return this->parseMapEntry(static_cast<const MapEntryType*>(t), node);
+            }
+            case TypeTag::TYPE_MAP: {
+                return this->parseMap(static_cast<const MapType*>(t), node);
+            }
+            default: {
+                this->addError("Unknown type " + t->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+        }
+    }
+
+    Value* Parser::parseValueConcept(const Type* t /*concept or concept set*/, BSQON_AST_Node* node)
+    {
+        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
+            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
+            const tt = this.parseType();
+            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
+            const vv = this.parseValue(tt, whistory);
+            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
+
+            this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
+        }
+        else {
+            let rv: BSQONParseResult = undefined;
+            let rt: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
+            
+            if (ttype instanceof $TypeInfo.OptionType) {
+                if (this.testToken(TokenKind.TOKEN_NOTHING)) {
+                    rv = this.parseNothing(whistory);
+                    rt = this.lookupMustDefType("Nothing");
+                }
+                else {
+                    [rv, rt] = this.parseSomething(ttype, ttype, whistory);
+                }
+            }
+            else if (ttype instanceof $TypeInfo.ResultType) {
+                if (this.testToken(TokenKind.TOKEN_OK) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Ok"})) {
+                    [rv, rt] = this.parseOk(ttype, ttype, whistory);
+                }
+                else if (this.testToken(TokenKind.TOKEN_ERR) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Err"})) {
+                    [rv, rt] = this.parseErr(ttype, ttype, whistory);
+                }
+                else {
+                    const rtype = this.parseNominalType();
+                    this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(rtype, ttype), `Expected result of type ${ttype.tkey} but got ${rtype.tkey}`);
+
+                    if (rtype instanceof $TypeInfo.OkType) {
+                        this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
+                        const vv = this.parseValue(this.lookupMustDefType(rtype.ttype), whistory);
+                        this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
+
+                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rt = rtype;
+                    }
+                    else {
+                        this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
+                        const vv = this.parseValue(this.lookupMustDefType((rtype as $TypeInfo.ErrorType).etype), whistory);
+                        this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
+
+                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
+                        rt = rtype;
+                    }
+                }
+            }
+            else if (ttype instanceof $TypeInfo.StdConceptType) {
+                const tt = this.parseNominalType();
+                this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
+                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
+
+                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rt = tt;
+            }
+            else if (ttype instanceof $TypeInfo.ConceptSetType) {
+                const tt = this.parseNominalType();
+                this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
+                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
+
+                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
+                rt = tt;
+            }
+            else {
+                this.raiseError(`Unknown concept type ${ttype.tkey}`);
+            }
+
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
+        }
+    }
+
+    const Type* /*maybe null*/ Parser::resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts)
+    {
+        let tt: $TypeInfo.BSQType | undefined = undefined;
+        if (opts.types.length === 1) {
+            tt = this.lookupMustDefType(opts.types[0]);
+        }
+        else if(opts.types.length === 2 && opts.types.includes("None")) {
+            tt = this.lookupMustDefType(opts.types[0] === "None" ? opts.types[1] : opts.types[0]);
+        }   
+        else {
+            ; //do nothing
+        }
+
+        return (tt !== undefined && oftags.includes(tt.tag)) ? tt : undefined;
+    }
+
+    Value* Parser::parseValueSimple(const Type* t, BSQON_AST_Node* node)
+    {
+        if (t->tag == TypeTag::TYPE_PRIMITIVE) {
+            return this->parseValuePrimitive(static_cast<const PrimitiveType*>(t), node);
+        }
+        else if ((t->tag == TypeTag::TYPE_STD_CONCEPT) || (t->tag == TypeTag::TYPE_CONCEPT_SET)) {
+            return this->parseValueConcept(t, node);
+        }
+        else {
+            return this->parseValueDirect(t, node);
+        }
     }
 
     ///////////////////////////////////

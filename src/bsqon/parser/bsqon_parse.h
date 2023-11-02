@@ -174,7 +174,7 @@ namespace BSQON
 
         Value* parseRational(const PrimitiveType* t, struct BSQON_AST_Node* node);
         Value* parseFloat(const PrimitiveType* t, struct BSQON_AST_Node* node);
-        Value* parseDecmial(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseDecimal(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
         Value* parseString(const PrimitiveType* t, struct BSQON_AST_Node* node);
         Value* parseASCIIString(const PrimitiveType* t, struct BSQON_AST_Node* node);
@@ -222,6 +222,26 @@ namespace BSQON
         Value* parseQueue(const QueueType* t, struct BSQON_AST_Node* node);
         Value* parseSet(const SetType* t, struct BSQON_AST_Node* node);
         Value* parseMap(const MapType* t, struct BSQON_AST_Node* node);
+
+        Value* parseValuePrimitive(const PrimitiveType* t, struct BSQON_AST_Node* node);
+        Value* parseValueDirect(const Type* t, struct BSQON_AST_Node* node);
+
+        Value* parseValueConcept(const Type* t /*concept or concept set*/, struct BSQON_AST_Node* node);
+        
+        const Type* /*maybe null*/ resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts);
+        
+        bool isNoneableParse(const UnionType* t)
+        {
+            return t->types.size() == 2 && std::find(t->types.cbegin(), t->types.cend(), "None") != t->types.cend();
+        }
+
+        bool getNoneableRealType(const UnionType* t)
+        {
+            auto tii = std::find_if(t->types.cbegin(), t->types.cend(), [](const TypeKey& tt){ tt != "None"; });
+            return this->assembly->resolveType(*tii);
+        }
+
+        Value* parseValueSimple(const Type* t, struct BSQON_AST_Node* node);
 
         ///////////////////////////////////
 
