@@ -226,7 +226,7 @@ namespace BSQON
         Value* parseValuePrimitive(const PrimitiveType* t, struct BSQON_AST_Node* node);
         Value* parseValueDirect(const Type* t, struct BSQON_AST_Node* node);
 
-        Value* parseValueConcept(const Type* t /*concept or concept set*/, struct BSQON_AST_Node* node);
+        Value* parseValueConcept(const Type* t, struct BSQON_AST_Node* node);
         
         const Type* /*maybe null*/ resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts);
         
@@ -235,7 +235,7 @@ namespace BSQON
             return t->types.size() == 2 && std::find(t->types.cbegin(), t->types.cend(), "None") != t->types.cend();
         }
 
-        bool getNoneableRealType(const UnionType* t)
+        const Type* getNoneableRealType(const UnionType* t)
         {
             auto tii = std::find_if(t->types.cbegin(), t->types.cend(), [](const TypeKey& tt){ tt != "None"; });
             return this->assembly->resolveType(*tii);

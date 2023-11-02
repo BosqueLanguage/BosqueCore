@@ -418,29 +418,6 @@ namespace BSQON
 
         static void parse(json j, AssemblyInfo& assembly);
 
-        bool checkConcreteSubtype(Type* t, Type* oftype)
-        {
-            if (t->tkey == oftype->tkey) {
-                return true;
-            }
-
-            if (oftype->tag == TypeTag::TYPE_UNION) {
-                return std::any_of(static_cast<UnionType*>(oftype)->types.begin(), static_cast<UnionType*>(oftype)->types.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->typerefs[tt]); });
-            }
-            else if (oftype->tag == TypeTag::TYPE_CONCEPT_SET) {
-                return std::all_of(static_cast<ConceptSetType*>(oftype)->concepts.begin(), static_cast<ConceptSetType*>(oftype)->concepts.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->typerefs[tt]); });
-            }
-            else {
-                auto psubtypes = oftype->getPossibleSubtypeKeys();
-                if(psubtypes == nullptr) {
-                    return false;
-                }
-                else {
-                    return std::binary_search(psubtypes->begin(), psubtypes->end(), t->tkey);
-                }
-            }
-        }
-
         Type* resolveType(TypeKey tkey)
         {
             auto tt = this->typerefs.find(tkey);
@@ -460,6 +437,29 @@ namespace BSQON
             }
             else {
                 return UnresolvedType::singleton;
+            }
+        }
+
+        bool checkConcreteSubtype(const Type* t, const Type* oftype) const
+        {
+            if (t->tkey == oftype->tkey) {
+                return true;
+            }
+
+            if (oftype->tag == TypeTag::TYPE_UNION) {
+                return std::any_of(static_cast<const UnionType*>(oftype)->types.begin(), static_cast<const UnionType*>(oftype)->types.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
+            }
+            else if (oftype->tag == TypeTag::TYPE_CONCEPT_SET) {
+                return std::all_of(static_cast<const ConceptSetType*>(oftype)->concepts.begin(), static_cast<const ConceptSetType*>(oftype)->concepts.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
+            }
+            else {
+                auto psubtypes = oftype->getPossibleSubtypeKeys();
+                if(psubtypes == nullptr) {
+                    return false;
+                }
+                else {
+                    return std::binary_search(psubtypes->begin(), psubtypes->end(), t->tkey);
+                }
             }
         }
     };

@@ -2073,99 +2073,77 @@ namespace BSQON
         }
     }
 
-    Value* Parser::parseValueConcept(const Type* t /*concept or concept set*/, BSQON_AST_Node* node)
+    Value* Parser::parseValueConcept(const Type* t, BSQON_AST_Node* node)
     {
-        if (this.m_parsemode === $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-            const tt = this.parseType();
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const vv = this.parseValue(tt, whistory);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
-
-            this.raiseErrorIf(!tt.isconcretetype, `Expected concrete type but got ${tt.tkey}`);
-            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected type ${ttype.tkey} but got ${tt.tkey}`);
-            return BSQONParseResultInfo.create(new $Runtime.UnionValue(tt.tkey, BSQONParseResultInfo.getParseValue(vv, whistory)), tt, BSQONParseResultInfo.getHistory(vv, whistory), whistory);
-        }
-        else {
-            let rv: BSQONParseResult = undefined;
-            let rt: $TypeInfo.BSQType = $TypeInfo.UnresolvedType.singleton;
-            
-            if (ttype instanceof $TypeInfo.OptionType) {
-                if (this.testToken(TokenKind.TOKEN_NOTHING)) {
-                    rv = this.parseNothing(whistory);
-                    rt = this.lookupMustDefType("Nothing");
-                }
-                else {
-                    [rv, rt] = this.parseSomething(ttype, ttype, whistory);
-                }
-            }
-            else if (ttype instanceof $TypeInfo.ResultType) {
-                if (this.testToken(TokenKind.TOKEN_OK) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Ok"})) {
-                    [rv, rt] = this.parseOk(ttype, ttype, whistory);
-                }
-                else if (this.testToken(TokenKind.TOKEN_ERR) || this.testTokensWValue({kind: TokenKind.TOKEN_TYPE, value: "Result"}, {kind: TokenKind.TOKEN_COLON_COLON, value: "::"}, {kind: TokenKind.TOKEN_TYPE, value: "Err"})) {
-                    [rv, rt] = this.parseErr(ttype, ttype, whistory);
-                }
-                else {
-                    const rtype = this.parseNominalType();
-                    this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(rtype, ttype), `Expected result of type ${ttype.tkey} but got ${rtype.tkey}`);
-
-                    if (rtype instanceof $TypeInfo.OkType) {
-                        this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
-                        const vv = this.parseValue(this.lookupMustDefType(rtype.ttype), whistory);
-                        this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
-
-                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
-                        rt = rtype;
-                    }
-                    else {
-                        this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
-                        const vv = this.parseValue(this.lookupMustDefType((rtype as $TypeInfo.ErrorType).etype), whistory);
-                        this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
-
-                        rv = BSQONParseResultInfo.create(BSQONParseResultInfo.getParseValue(vv, whistory), rtype, [BSQONParseResultInfo.getValueType(vv, whistory), BSQONParseResultInfo.getHistory(vv, whistory)], whistory);
-                        rt = rtype;
-                    }
-                }
-            }
-            else if (ttype instanceof $TypeInfo.StdConceptType) {
-                const tt = this.parseNominalType();
-                this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
-                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
-
-                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
-                rt = tt;
-            }
-            else if (ttype instanceof $TypeInfo.ConceptSetType) {
-                const tt = this.parseNominalType();
-                this.raiseErrorIf(!(tt instanceof $TypeInfo.StdEntityType), `Expected std entity type but got ${tt.tkey}`);
-                this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(tt, ttype), `Expected std entity of type ${ttype.tkey} but got ${tt.tkey}`);
-
-                rv = this.parseStdEntity(tt as $TypeInfo.StdEntityType, whistory);
-                rt = tt;
+        if(t->tag == TypeTag::TYPE_OPTION) {
+            const OptionType* otype = static_cast<const OptionType*>(t);
+                
+            if(node->tag == BSQON_AST_TAG_Nothing) {
+                return this->parseNothing(static_cast<const PrimitiveType*>(this->assembly->resolveType("Nothing")), node);
             }
             else {
-                this.raiseError(`Unknown concept type ${ttype.tkey}`);
+                return this->parseSomething(static_cast<const SomethingType*>(this->assembly->resolveType("Something<" + t->tkey + ">")), node);
+            }
+        }
+        else if(t->tag == TypeTag::TYPE_RESULT) {
+            const ResultType* rtype = static_cast<const ResultType*>(t);
+            const OkType* oktype = static_cast<const OkType*>(this->assembly->resolveType(rtype->tkey + "::Ok"));
+            const ErrorType* errtype = static_cast<const ErrorType*>(this->assembly->resolveType(rtype->tkey + "::Err"));
+
+            if(node->tag == BSQON_AST_TAG_OkCons) {
+                return this->parseOk(oktype, node);
+            }
+            else if(node->tag == BSQON_AST_TAG_ErrCons) {
+                return this->parseErr(errtype, node);
+            }
+            else {
+                if(node->tag != BSQON_AST_TAG_TypedValue) {
+                    this->addError("Values of Result<T, E> type must be tagged", Parser::convertSrcPos(node->pos));
+                }
+
+                const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
+                if(!this->assembly->checkConcreteSubtype(oftype, t)) {
+                    this->addError("Expected result of type " + t->tkey+ " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                }
+
+                if(oftype->tag == TypeTag::TYPE_OK) {
+                    return this->parseOk(static_cast<const OkType*>(oftype), node);
+                }
+                else {
+                    return this->parseErr(static_cast<const ErrorType*>(errtype), node);
+                }
+            }
+        }
+        else if(t->tag == TypeTag::TYPE_STD_CONCEPT || t->tag == TypeTag::TYPE_CONCEPT_SET) {
+            if(node->tag != BSQON_AST_TAG_TypedValue) {
+                this->addError("Values of Concept type must be tagged", Parser::convertSrcPos(node->pos));
             }
 
-            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
+            const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
+            if(!this->assembly->checkConcreteSubtype(oftype, t)) {
+                this->addError("Expected result of type " + t->tkey+ " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+            }
+            
+            return this->parseStdEntity(static_cast<const StdEntityType*>(oftype), node);
+        }
+        else {
+            this->addError("Unknown type " + t->tkey, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
     }
 
     const Type* /*maybe null*/ Parser::resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts)
     {
-        let tt: $TypeInfo.BSQType | undefined = undefined;
-        if (opts.types.length === 1) {
-            tt = this.lookupMustDefType(opts.types[0]);
-        }
-        else if(opts.types.length === 2 && opts.types.includes("None")) {
-            tt = this.lookupMustDefType(opts.types[0] === "None" ? opts.types[1] : opts.types[0]);
-        }   
-        else {
-            ; //do nothing
+        if(!this->isNoneableParse(opts)) {
+            return nullptr;
         }
 
-        return (tt !== undefined && oftags.includes(tt.tag)) ? tt : undefined;
+        const Type* tt = this->getNoneableRealType(opts);
+        if(std::find(oftags.cbegin(), oftags.cend(), tt->tag) == oftags.cend()) {
+            return nullptr;
+        }
+
+        return tt;
     }
 
     Value* Parser::parseValueSimple(const Type* t, BSQON_AST_Node* node)
