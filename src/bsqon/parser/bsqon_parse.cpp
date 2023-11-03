@@ -10,6 +10,13 @@ namespace BSQON
         "LatLongCoordinate", "Regex", "Nothing"
     };
 
+    std::vector<TypeTag> s_okTypeTaggedTags = {
+        TypeTag::TYPE_STD_ENTITY,
+        TypeTag::TYPE_RECORD, TypeTag::TYPE_TUPLE,
+        TypeTag::TYPE_SOMETHING, TypeTag::TYPE_OK, TypeTag::TYPE_ERROR,
+        TypeTag::TYPE_LIST, TypeTag::TYPE_STACK, TypeTag::TYPE_QUEUE, TypeTag::TYPE_SET, TypeTag::TYPE_MAP_ENTRY, TypeTag::TYPE_MAP
+    };
+
     bool s_dayInMonth(uint8_t d, uint8_t m, uint16_t y)
     {
         if(m == 1) {
@@ -548,12 +555,7 @@ namespace BSQON
             std::transform(types.cbegin(), types.cend(), std::back_inserter(kk), [](const Type* tt){ return tt->tkey; });
 
             auto tkey = "[" + std::accumulate(kk.begin(), kk.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + ", ") + b; }) + "]";
-            const Type* rt = this->assembly->resolveType(tkey);
-            if(rt->isUnresolved()) {
-                this->addError("Could not resolve tuple type " + tkey, Parser::convertSrcPos(node->base.pos));
-            }
-
-            return rt;
+            return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
         }
     }
 
@@ -574,12 +576,7 @@ namespace BSQON
 
         std::sort(entries.begin(), entries.end(), [](const RecordTypeEntry& a, const RecordTypeEntry& b) { return a.pname < b.pname; });
         auto tkey = "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, RecordTypeEntry& b) { return (a == "" ? "" : std::move(a) + ", ") + b.pname + ": " + b.ptype; }) + "}";
-        const Type* rt = this->assembly->resolveType(tkey);
-        if(rt->isUnresolved()) {
-            this->addError("Could not resolve record type " + tkey, Parser::convertSrcPos(node->base.pos));
-        }
-
-        return rt;
+        return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
     void Parser::parseConceptSetType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
@@ -613,12 +610,7 @@ namespace BSQON
 
         std::sort(concepts.begin(), concepts.end());
         auto tkey = std::accumulate(concepts.begin(), concepts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + "&") + b; });
-        const Type* rt = this->assembly->resolveType(tkey);
-        if(rt->isUnresolved()) {
-            this->addError("Could not resolve conjunction type " + tkey, Parser::convertSrcPos(node->base.pos));
-        }
-
-        return rt;
+        return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
     void Parser::parseConceptSetType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
@@ -652,12 +644,7 @@ namespace BSQON
 
         std::sort(disjuncts.begin(), disjuncts.end());
         auto tkey = std::accumulate(disjuncts.begin(), disjuncts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + " | ") + b; });
-        const Type* rt = this->assembly->resolveType(tkey);
-        if(rt->isUnresolved()) {
-            this->addError("Could not resolve union type " + tkey, Parser::convertSrcPos(node->base.pos));
-        }
-
-        return rt;
+        return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
     const Type* Parser::parseType(BSQON_TYPE_AST_Node* node)
@@ -2099,11 +2086,13 @@ namespace BSQON
             else {
                 if(node->tag != BSQON_AST_TAG_TypedValue) {
                     this->addError("Values of Result<T, E> type must be tagged", Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
                 }
 
                 const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
                 if(!this->assembly->checkConcreteSubtype(oftype, t)) {
-                    this->addError("Expected result of type " + t->tkey+ " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                    this->addError("Expected result of type " + t->tkey + " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
                 }
 
                 if(oftype->tag == TypeTag::TYPE_OK) {
@@ -2117,11 +2106,13 @@ namespace BSQON
         else if(t->tag == TypeTag::TYPE_STD_CONCEPT || t->tag == TypeTag::TYPE_CONCEPT_SET) {
             if(node->tag != BSQON_AST_TAG_TypedValue) {
                 this->addError("Values of Concept type must be tagged", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
 
             const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
             if(!this->assembly->checkConcreteSubtype(oftype, t)) {
-                this->addError("Expected result of type " + t->tkey+ " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                this->addError("Expected result of type " + t->tkey + " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
             
             return this->parseStdEntity(static_cast<const StdEntityType*>(oftype), node);
@@ -2130,20 +2121,6 @@ namespace BSQON
             this->addError("Unknown type " + t->tkey, Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
-    }
-
-    const Type* /*maybe null*/ Parser::resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts)
-    {
-        if(!this->isNoneableParse(opts)) {
-            return nullptr;
-        }
-
-        const Type* tt = this->getNoneableRealType(opts);
-        if(std::find(oftags.cbegin(), oftags.cend(), tt->tag) == oftags.cend()) {
-            return nullptr;
-        }
-
-        return tt;
     }
 
     Value* Parser::parseValueSimple(const Type* t, BSQON_AST_Node* node)
@@ -2159,10 +2136,277 @@ namespace BSQON
         }
     }
 
+    Value* Parser::parseValueUnion(const UnionType* t, BSQON_AST_Node* node)
+    {
+        //everyone has a none special format option
+        if(node->tag == BSQON_AST_TAG_None) {
+            if(std::find(t->types.cbegin(), t->types.cend(), "None") == t->types.cend()) {
+                this->addError("Expected result of type " + t->tkey + " but got none", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            return this->parseNone(static_cast<const PrimitiveType*>(this->assembly->resolveType("None")), node);
+        }
+
+        //Check for special nonable form as well "T | none"
+        if(this->isNoneableParse(t)) {
+            //from previous check we know that the type is not none
+            return this->parseValueSimple(this->getNoneableRealType(t), node);
+        }
+
+        //it isn't none so now we start looking at tags
+        auto tk = node->tag;
+        Value* vv = nullptr;
+        const Type* tt = nullptr;
+        if(tk == BSQON_AST_TAG_TypedValue) {
+            tt = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
+            if(std::find(s_okTypeTaggedTags.cbegin(), s_okTypeTaggedTags.cend(), tt->tag) == s_okTypeTaggedTags.cend()) {
+                this->addError("Invalid tagged value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+            vv = this->parseValueDirect(tt, BSQON_AST_asTypedValueNode(node)->value);
+        }
+        else if(tk == BSQON_AST_TAG_StringOf) {
+            const Type* oftype = this->parseTypeRoot(BSQON_AST_asStringOfNode(node)->type);
+            if(oftype->isUnresolved()) {
+                this->addError("Invalid StringOf value " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            tt = this->assembly->resolveType("StringOf<" + oftype->tkey + ">");
+            if(tt->tag != TypeTag::TYPE_STRING_OF) {
+                this->addError("Invalid StringOf  value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+            vv = this->parseStringOf(static_cast<const StringOfType*>(tt), node);
+        }
+        else if(tk == BSQON_AST_TAG_ASCIIStringOf) {
+            const Type* oftype = this->parseTypeRoot(BSQON_AST_asStringOfNode(node)->type);
+            if(oftype->isUnresolved()) {
+                this->addError("Invalid ASCIIStringOf value " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            tt = this->assembly->resolveType("ASCIIStringOf<" + oftype->tkey + ">");
+            if(tt->tag != TypeTag::TYPE_ASCII_STRING_OF) {
+                this->addError("Invalid ASCIIStringOf value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+            vv = this->parseASCIIStringOf(static_cast<const ASCIIStringOfType*>(tt), node);
+        }
+        else if(tk == BSQON_AST_TAG_Path) {
+            auto pnode = BSQON_AST_asPathNode(node);
+
+            const Type* oftype = this->parseTypeRoot(pnode->type);
+            if(oftype->isUnresolved()) {
+                this->addError("Invalid path value " + oftype->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            char pfx = *pnode->data->data->bytes;
+            if(pfx == 'g') {
+                tt = this->assembly->resolveType("PathGlob<" + oftype->tkey + ">");
+                if(tt->tag != TypeTag::TYPE_PATH_GLOB) {
+                    this->addError("Invalid PathGlob value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+                vv = this->parsePathGlob(static_cast<const PathGlobType*>(tt), node);
+            }
+            else if(pfx == 'f') {
+                tt = this->assembly->resolveType("PathFragment<" + oftype->tkey + ">");
+                if(tt->tag != TypeTag::TYPE_PATH_FRAGMENT) {
+                    this->addError("Invalid PathFragment value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+                vv = this->parsePathFragment(static_cast<const PathFragmentType*>(tt), node);
+            }
+            else {
+                tt = this->assembly->resolveType("Path<" + oftype->tkey + ">");
+                if(tt->tag != TypeTag::TYPE_PATH) {
+                    this->addError("Invalid Path value " + tt->tkey, Parser::convertSrcPos(node->pos));
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+                vv = this->parsePath(static_cast<const PathType*>(tt), node);
+            }
+        }
+        else if(tk == BSQON_AST_TAG_TypedLiteral) {
+            tt = this->parseTypeRoot(BSQON_AST_asTypedLiteralNode(node)->type);
+            if(tt->isUnresolved()) {
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
+            vv = this->parseValueSimple(tt, BSQON_AST_asTypedLiteralNode(node)->data);
+        }
+        else {
+            if(tk == BSQON_AST_TAG_True || tk == BSQON_AST_TAG_False) {
+                tt = this->assembly->resolveType("Bool");
+                vv = this->parseBool(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Nat) {
+                tt = this->assembly->resolveType("Nat");
+                vv = this->parseNat(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Int) {
+                tt = this->assembly->resolveType("Int");
+                vv = this->parseInt(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_BigNat) {
+                tt = this->assembly->resolveType("BigNat");
+                vv = this->parseBigNat(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_BigInt) {
+                tt = this->assembly->resolveType("BigInt");
+                vv = this->parseBigInt(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Float) {
+                tt = this->assembly->resolveType("Float");
+                vv = this->parseFloat(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Decimal) {
+                tt = this->assembly->resolveType("Decimal");
+                vv = this->parseDecimal(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Rational) {
+                tt = this->assembly->resolveType("Rational");
+                vv = this->parseRational(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_String) {
+                tt = this->assembly->resolveType("String");
+                vv = this->parseString(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_ASCIIString) {
+                tt = this->assembly->resolveType("ASCIIString");
+                vv = this->parseASCIIString(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_ByteBuffer) {
+                tt = this->assembly->resolveType("ByteBuffer");
+                vv = this->parseByteBuffer(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Regex) {
+                tt = this->assembly->resolveType("Regex");
+                vv = this->parseRegex(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_DateTime) {
+                tt = this->assembly->resolveType("DateTime");
+                vv = this->parseDateTime(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_UTCDateTime) {
+                tt = this->assembly->resolveType("UTCDateTime");
+                vv = this->parseUTCDateTime(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_PlainDate) {
+                tt = this->assembly->resolveType("PlainDate");
+                vv = this->parsePlainDate(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_PlainTime) {
+                tt = this->assembly->resolveType("PlainTime");
+                vv = this->parsePlainTime(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_TickTime) {
+                tt = this->assembly->resolveType("TickTime");
+                vv = this->parseTickTime(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_LogicalTime) {
+                tt = this->assembly->resolveType("LogicalTime");
+                vv = this->parseLogicalTime(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_Timestamp) {
+                tt = this->assembly->resolveType("ISOTimeStamp");
+                vv = this->parseISOTimeStamp(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_UUIDv4) {
+                tt = this->assembly->resolveType("UUIDv4");
+                vv = this->parseUUIDv4(static_cast<const PrimitiveType*>(tt), node);
+            }
+                else if(this.testToken(TokenKind.TOKEN_ISO_TIMESTAMP)) {
+                    rv = this.parseISOTimeStamp(whistory);
+                    tt = "Timestamp";
+                }
+                else if(this.testToken(TokenKind.TOKEN_UUID)) {
+                    if(this.peekToken()!.value.startsWith("uuid4{")) {
+                        rv = this.parseUUIDv4(whistory);
+                        tt = "UUIDv4";
+                    }
+                    else {
+                        rv = this.parseUUIDv7(whistory);
+                        tt = "UUIDv7";
+                    }
+                }
+                else if(this.testToken(TokenKind.TOKEN_SHA_HASH)) {
+                    rv = this.parseSHAContentHash(whistory);
+                    tt = "SHAHash";
+                }
+                else if(this.testToken(TokenKind.TOKEN_PATH_ITEM)) {
+                    this.raiseError("PATH ITEMS ARE NOT IMPLEMENTED YET!!!");
+                }
+                else {
+                    this.raiseError(`Expected a primitive value but got ${tk}`);
+                }
+
+                if(this.testAndPop_TypedeclUnder()) {
+                    const tdtype = this.parseType();
+                    this.raiseErrorIf(!(tdtype instanceof $TypeInfo.TypedeclType), `Expected a typedecl type but got ${tdtype.tkey}`);
+                    this.raiseErrorIf((tdtype as $TypeInfo.TypedeclType).basetype !== tt, `Typedecl has a basetype of ${tdtype.tkey} but got ${tt}`);
+
+                    tt = tdtype.tkey;
+
+                    if((tdtype as $TypeInfo.TypedeclType).optStringOfValidator !== undefined) {
+                        const vre = this.m_assembly.revalidators.get((tdtype as $TypeInfo.TypedeclType).optStringOfValidator!);
+                        this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), tt), `Typedecl string literal does not satisfy the required format: ${(tdtype as $TypeInfo.TypedeclType).optStringOfValidator!} (${vre})`);
+                    }
+
+                    if((tdtype as $TypeInfo.TypedeclType).optPathOfValidator !== undefined) {
+                        this.raiseError("PATH ITEMS ARE NOT IMPLEMENTED YET!!!");
+                    }
+
+                    if((tdtype as $TypeInfo.TypedeclType).hasvalidations) {
+                        this.m_typedeclChecks.push({ttype: tt, tvalue: rv});
+                    }
+                }
+
+                rt = this.lookupMustDefType(tt);
+
+            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(rt, ttype), `Value is not of type ${ttype.tkey} -- got ${rt.tkey}`);   
+            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
+        }
+    }
+
     ///////////////////////////////////
 
     Value* Parser::parseValue(const Type* t, BSQON_AST_Node* node)
     {
-        xxxx;
+        if(this.testTokens(TokenKind.TOKEN_LPAREN, TokenKind.TOKEN_LET)) {
+            this.popToken();
+            this.popToken();
+
+            const vname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
+            this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+            const vtype = this.parseType();
+            this.expectTokenAndPop(TokenKind.TOKEN_EQUALS);
+            const vvalue = this.parseValue(vtype, true);
+            
+            this.raiseErrorIf(this.m_refs.has(vname), `Duplicate let binding ${vname}`);
+            this.m_refs.set(vname, [BSQONParseResultInfo.getParseValue(vvalue, true), BSQONParseResultInfo.getValueType(vvalue, true), BSQONParseResultInfo.getHistory(vvalue, true)]);
+
+            this.expectTokenAndPop(TokenKind.TOKEN_IN);
+
+            const vv = this.parseExpression(ttype, whistory);
+
+            this.expectTokenAndPop(TokenKind.TOKEN_RPAREN);
+
+            this.m_refs.delete(vname);
+            return vv;
+        }
+        else if(this.testTokens(TokenKind.TOKEN_SRC) || this.testTokens(TokenKind.TOKEN_REFERENCE)) {
+            return this.parseExpression(ttype, whistory);
+        }
+        else {
+            if (ttype instanceof $TypeInfo.UnionType) {
+                return this.parseValueUnion(ttype, whistory);
+            }
+            else {
+                return this.parseValueSimple(ttype, whistory);
+            }
+        }
     }
 }

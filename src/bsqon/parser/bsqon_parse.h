@@ -228,8 +228,6 @@ namespace BSQON
 
         Value* parseValueConcept(const Type* t, struct BSQON_AST_Node* node);
         
-        const Type* /*maybe null*/ resolveRelaxedTypeMatch(const std::vector<TypeKey>& oftags, const UnionType* opts);
-        
         bool isNoneableParse(const UnionType* t)
         {
             return t->types.size() == 2 && std::find(t->types.cbegin(), t->types.cend(), "None") != t->types.cend();
@@ -239,9 +237,10 @@ namespace BSQON
         {
             auto tii = std::find_if(t->types.cbegin(), t->types.cend(), [](const TypeKey& tt){ tt != "None"; });
             return this->assembly->resolveType(*tii);
-        }
+        }        
 
         Value* parseValueSimple(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseValueUnion(const UnionType* t, struct BSQON_AST_Node* node);
 
         ///////////////////////////////////
 
