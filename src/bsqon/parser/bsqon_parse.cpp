@@ -253,48 +253,6 @@ namespace BSQON
         }
     }
 
-    std::optional<std::pair<double, double>> Parser::processPropertiesForLatLong(BSQON_AST_BraceValueNode* node)
-    {
-        if(node->entries == NULL || node->entries->next == NULL) {
-            this->addError("LatLong value is missing fields", Parser::convertSrcPos(node->base.pos));
-            return std::nullopt;
-        }
-        else if(node->entries->next->next != NULL) {
-            this->addError("LatLong value has too many fields", Parser::convertSrcPos(node->base.pos));
-            return std::nullopt;
-        }
-        else if(node->entries->value->name != NULL || node->entries->next->value->name != NULL) {
-            this->addError("LatLong value does not accept named fields", Parser::convertSrcPos(node->base.pos));
-            return std::nullopt;
-        }
-        else {
-            auto latnode = node->entries->value->value;
-            auto longnode = node->entries->next->value->value;
-
-            if(latnode->tag != BSQON_AST_TAG_Float || longnode->tag != BSQON_AST_TAG_Float) {
-                this->addError("LatLong value fields must be floats", Parser::convertSrcPos(node->base.pos));
-                return std::nullopt;
-            }
-
-            double vlat = 0.0;
-            std::string nvlat = std::string(BSQON_AST_asLiteralStandardNode(latnode)->data);
-            nvlat.pop_back(); //remove the trailing 'f'
-
-            double vlong = 0.0;
-            std::string nvlong = std::string(BSQON_AST_asLiteralStandardNode(longnode)->data);
-            nvlong.pop_back(); //remove the trailing 'f'
-
-
-
-            if(!isValidFloat(nvlat, vlat) || !isValidFloat(nvlong, vlong)) {
-                this->addError("LatLong value fields must be valid floats", Parser::convertSrcPos(node->base.pos));
-                return std::nullopt;
-            }
-
-            return std::make_optional(std::make_pair(vlat, vlong));
-        }
-    }
-
     void Parser::processEntriesForSequence(const Type* etype, BSQON_AST_Node* node, std::vector<Value*>& vals)
     {
         if(node->tag == BSQON_AST_TAG_BracketValue) {
@@ -1134,32 +1092,7 @@ namespace BSQON
 
     Value* Parser::parseLatLongCoordinate(const PrimitiveType* t, struct BSQON_AST_Node* node)
     {
-        if(node->tag != BSQON_AST_TAG_BraceValue && node->tag != BSQON_AST_TAG_TypedValue) {
-            this->addError("Expected LatLongCoordinate value", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-        }
-
-        if(node->tag == BSQON_AST_TAG_TypedValue) {
-            auto tnode = BSQON_AST_asTypedValueNode(node);
-            const Type* ttype = this->parseTypeRoot(tnode->type);
-            if(ttype->tkey != "LatLongCoordinate") {
-                this->addError("Expected LatLongCoordinate value", Parser::convertSrcPos(node->pos));
-                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-            }
-
-            if(tnode->value->tag != BSQON_AST_TAG_BraceValue) {
-                this->addError("Expected LatLongCoordinate value", Parser::convertSrcPos(node->pos));
-                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-            }
-
-            node = tnode->value;
-        }
-
-        auto data = this->processPropertiesForLatLong(BSQON_AST_asBraceValueNode(node));
-        if(!data.has_value()) {
-            this->addError("Incorrect LatLongCoordinate args", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-        }
+        xxxx;
 
         auto vlat = data.value().first;
         auto vlong = data.value().second;
@@ -2318,56 +2251,29 @@ namespace BSQON
                 tt = this->assembly->resolveType("UUIDv4");
                 vv = this->parseUUIDv4(static_cast<const PrimitiveType*>(tt), node);
             }
-                else if(this.testToken(TokenKind.TOKEN_ISO_TIMESTAMP)) {
-                    rv = this.parseISOTimeStamp(whistory);
-                    tt = "Timestamp";
-                }
-                else if(this.testToken(TokenKind.TOKEN_UUID)) {
-                    if(this.peekToken()!.value.startsWith("uuid4{")) {
-                        rv = this.parseUUIDv4(whistory);
-                        tt = "UUIDv4";
-                    }
-                    else {
-                        rv = this.parseUUIDv7(whistory);
-                        tt = "UUIDv7";
-                    }
-                }
-                else if(this.testToken(TokenKind.TOKEN_SHA_HASH)) {
-                    rv = this.parseSHAContentHash(whistory);
-                    tt = "SHAHash";
-                }
-                else if(this.testToken(TokenKind.TOKEN_PATH_ITEM)) {
-                    this.raiseError("PATH ITEMS ARE NOT IMPLEMENTED YET!!!");
-                }
-                else {
-                    this.raiseError(`Expected a primitive value but got ${tk}`);
-                }
-
-                if(this.testAndPop_TypedeclUnder()) {
-                    const tdtype = this.parseType();
-                    this.raiseErrorIf(!(tdtype instanceof $TypeInfo.TypedeclType), `Expected a typedecl type but got ${tdtype.tkey}`);
-                    this.raiseErrorIf((tdtype as $TypeInfo.TypedeclType).basetype !== tt, `Typedecl has a basetype of ${tdtype.tkey} but got ${tt}`);
-
-                    tt = tdtype.tkey;
-
-                    if((tdtype as $TypeInfo.TypedeclType).optStringOfValidator !== undefined) {
-                        const vre = this.m_assembly.revalidators.get((tdtype as $TypeInfo.TypedeclType).optStringOfValidator!);
-                        this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), tt), `Typedecl string literal does not satisfy the required format: ${(tdtype as $TypeInfo.TypedeclType).optStringOfValidator!} (${vre})`);
-                    }
-
-                    if((tdtype as $TypeInfo.TypedeclType).optPathOfValidator !== undefined) {
-                        this.raiseError("PATH ITEMS ARE NOT IMPLEMENTED YET!!!");
-                    }
-
-                    if((tdtype as $TypeInfo.TypedeclType).hasvalidations) {
-                        this.m_typedeclChecks.push({ttype: tt, tvalue: rv});
-                    }
-                }
-
-                rt = this.lookupMustDefType(tt);
-
-            this.raiseErrorIf(!this.m_assembly.checkConcreteSubtype(rt, ttype), `Value is not of type ${ttype.tkey} -- got ${rt.tkey}`);   
-            return BSQONParseResultInfo.create(new $Runtime.UnionValue(rt.tkey, BSQONParseResultInfo.getParseValue(rv, whistory)), rt, BSQONParseResultInfo.getHistory(rv, whistory), whistory);
+            else if(tk == BSQON_AST_TAG_UUIDv7) {
+                tt = this->assembly->resolveType("UUIDv7");
+                vv = this->parseUUIDv7(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_SHAHashcode) {
+                tt = this->assembly->resolveType("SHAContentHash");
+                vv = this->parseSHAHashcode(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else if(tk == BSQON_AST_TAG_LatLongCoordinate) {
+                tt = this->assembly->resolveType("LatLongCoordinate");
+                vv = this->parseLatLongCoordinate(static_cast<const PrimitiveType*>(tt), node);
+            }
+            else {
+                this->addError("Cannot implicitly resolve ", Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }             
+                
+            if(!this->assembly->checkConcreteSubtype(tt, t)) {
+                this->addError("Expected result of type " + t->tkey + " but got " + tt->tkey, Parser::convertSrcPos(node->pos));
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+            
+            return vv;
         }
     }
 
@@ -2375,37 +2281,31 @@ namespace BSQON
 
     Value* Parser::parseValue(const Type* t, BSQON_AST_Node* node)
     {
-        if(this.testTokens(TokenKind.TOKEN_LPAREN, TokenKind.TOKEN_LET)) {
-            this.popToken();
-            this.popToken();
-
-            const vname = this.expectTokenAndPop(TokenKind.TOKEN_PROPERTY).value;
-            this.expectTokenAndPop(TokenKind.TOKEN_COLON);
+        if(node->tag == BSQON_AST_TAG_Let) {
             const vtype = this.parseType();
-            this.expectTokenAndPop(TokenKind.TOKEN_EQUALS);
             const vvalue = this.parseValue(vtype, true);
             
             this.raiseErrorIf(this.m_refs.has(vname), `Duplicate let binding ${vname}`);
             this.m_refs.set(vname, [BSQONParseResultInfo.getParseValue(vvalue, true), BSQONParseResultInfo.getValueType(vvalue, true), BSQONParseResultInfo.getHistory(vvalue, true)]);
 
-            this.expectTokenAndPop(TokenKind.TOKEN_IN);
-
             const vv = this.parseExpression(ttype, whistory);
-
-            this.expectTokenAndPop(TokenKind.TOKEN_RPAREN);
 
             this.m_refs.delete(vname);
             return vv;
         }
-        else if(this.testTokens(TokenKind.TOKEN_SRC) || this.testTokens(TokenKind.TOKEN_REFERENCE)) {
+        else if(node->tag == BSQON_AST_TAG_Identifier) {
+            const vname = BSQON_AST_asIdentifierNode(node)->name;
+            this.raiseErrorIf(!this.m_refs.has(vname), `Unknown identifier ${vname}`);
+
+            const [vvalue, vtype, whistory] = this.m_refs.get(vname);
             return this.parseExpression(ttype, whistory);
         }
         else {
-            if (ttype instanceof $TypeInfo.UnionType) {
-                return this.parseValueUnion(ttype, whistory);
+            if (t->tag == TypeTag::TYPE_UNION) {
+                return this->parseValueUnion(static_cast<const UnionType*>(t), node);
             }
             else {
-                return this.parseValueSimple(ttype, whistory);
+                return this->parseValueSimple(t, node);
             }
         }
     }
