@@ -122,6 +122,9 @@ void BSQON_AST_print(struct BSQON_AST_Node* node)
     case BSQON_AST_TAG_ErrCons:
         BSQON_AST_SpecialConsNode_print(BSQON_AST_asSpecialConsNode(node));
         break;
+    case BSQON_AST_TAG_LetIn:
+        BSQON_AST_LetInNode_print(BSQON_AST_asLetInNode(node));
+        break;
     case BSQON_AST_TAG_ScopedName:
         BSQON_AST_ScopedNameNode_print(BSQON_AST_asScopedNameNode(node));
     default:
@@ -413,6 +416,35 @@ void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node)
     printf("%s", node->consname);
     printf("(");
     BSQON_AST_print((struct BSQON_AST_Node*)node->value);
+    printf(")");
+}
+
+struct BSQON_AST_LetInNode* BSQON_AST_asLetInNode(const struct BSQON_AST_Node* node)
+{
+    return (struct BSQON_AST_LetInNode*)node;
+}
+
+struct BSQON_AST_Node* BSQON_AST_LetInNodeCreate(struct AST_SourcePos pos, char* vname, struct BSQON_TYPE_AST_Node* vtype, struct BSQON_AST_Node* value, struct BSQON_AST_Node* exp)
+{
+    struct BSQON_AST_LetInNode* node = (struct BSQON_AST_LetInNode*)AST_ALLOC(sizeof(struct BSQON_AST_LetInNode));
+    node->base.tag = BSQON_AST_TAG_LetIn;
+    node->base.pos = pos;
+    node->vname = vname;
+    node->vtype = vtype;
+    node->value = value;
+    node->exp = exp;
+
+    return (struct BSQON_AST_Node*)node;
+}
+
+void BSQON_AST_LetInNode_print(struct BSQON_AST_LetInNode* node)
+{
+    printf("(let %s: ", node->vname);
+    BSQON_TYPE_AST_print(node->vtype);
+    printf(" = ");
+    BSQON_AST_print(node->value);
+    printf(" in ");
+    BSQON_AST_print(node->exp);
     printf(")");
 }
 

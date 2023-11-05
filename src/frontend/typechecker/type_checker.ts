@@ -2417,7 +2417,6 @@ class TypeChecker {
     getSpecialUUIDv4Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUIDv4"); }
     getSpecialUUIDv7Type(): ResolvedType { return this.internSpecialPrimitiveObjectType("UUIDv7"); }
     getSpecialSHAContentHashType(): ResolvedType { return this.internSpecialPrimitiveObjectType("SHAContentHash"); }
-    getSpecialLatLongCoordinateType(): ResolvedType { return this.internSpecialPrimitiveObjectType("LatLongCoordinate"); }
     getSpecialRegexType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Regex"); }
     getSpecialNothingType(): ResolvedType { return this.internSpecialPrimitiveObjectType("Nothing"); }
     getSpecialTaskIDType(): ResolvedType { return ResolvedType.createSingle(ResolvedTypedeclEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("TaskID") as EntityTypeDecl, this.getSpecialUUIDv4Type().options[0] as ResolvedPrimitiveInternalEntityAtomType, this.getSpecialUUIDv4Type().options[0] as ResolvedPrimitiveInternalEntityAtomType)); }
@@ -7653,7 +7652,6 @@ class TypeChecker {
         this.toTIRTypeKey(this.getSpecialUUIDv4Type());
         this.toTIRTypeKey(this.getSpecialUUIDv7Type());
         this.toTIRTypeKey(this.getSpecialSHAContentHashType());
-        this.toTIRTypeKey(this.getSpecialLatLongCoordinateType());
         this.toTIRTypeKey(this.getSpecialRegexType());
         this.toTIRTypeKey(this.getSpecialNothingType());
         this.toTIRTypeKey(this.getSpecialTaskIDType());

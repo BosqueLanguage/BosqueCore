@@ -430,18 +430,6 @@ __internal __typedeclable __typebase entity UUIDv7 provides Some, KeyType {
 __internal __typedeclable __typebase entity SHAContentHash provides Some, KeyType {
 }
 
-//<summary>Primitive Lat/Long</summary>
-__internal __typedeclable __typebase entity LatLongCoordinate provides Some {
-    __assume_safe internal function s_create(lat: Float, long: Float): LatLongCoordinate = latlongcoordinate_create;
-
-    function create(lat: Float, long: Float): LatLongCoordinate
-        requires -90.0f <= lat && lat <= 90.0f;
-        requires -180.0f < long && long <= 180.0f;
-    {
-        return LatLongCoordinate::s_create(lat, long);
-    }
-}
-
 //<summary>Primitive regex value.</summary>
 __internal entity Regex provides Some {
     __safe internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;

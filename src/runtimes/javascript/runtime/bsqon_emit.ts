@@ -376,15 +376,6 @@ class BSQONEmitter {
         }    
     }
 
-    private emitLatLongCoordinate(llc: [number, number]): string {
-        if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            return `LatLongCoordinate{${llc[0]}, ${llc[1]}}`;
-        }
-        else {
-            return `[${llc[0]}, ${llc[1]}]`;
-        }
-    }
-
     private emitStringOf(ttype: $TypeInfo.StringOfType, str: string): string {
         if (this.m_emitmode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
             return '"' + this.escapeString(str) + '"' + this.emitType(this.lookupMustDefType(ttype.oftype));
@@ -645,9 +636,6 @@ class BSQONEmitter {
         else if(ttype.tkey === "SHAContentHash") {
             return this.emitSHAContentHash(v as string);
         } 
-        else if(ttype.tkey === "LatLongCoordinate") {
-            return this.emitLatLongCoordinate(v as [number, number]);
-        }
         else if(ttype.tkey === "Regex") {
             return this.emitRegex(v as string);
         }

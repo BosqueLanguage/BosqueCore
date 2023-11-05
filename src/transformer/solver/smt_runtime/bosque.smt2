@@ -195,13 +195,11 @@
     ; UUIDv4 -> String
     ; UUIDv7 -> String
     ; SHAContentHash -> (_ BitVec 16)
-    (LatLongCoordinate 0)
     ; Regex -> String
     ;;--OO_DECLS--;;
     ) (
         ( (none) ) 
         ( (nothing) )
-        ( (LatLongCoordinate@mk (LatLongCoordinate-lat @Float) (LatLongCoordinate-long @Float)) )
         ;;--OO_CONSTRUCTORS--;;
     )
 )
@@ -252,7 +250,6 @@
         (@BoxedData-mk-UUIDv4 (@BoxedData-UUIDv4 String))
         (@BoxedData-mk-UUIDv7 (@BoxedData-UUIDv7 String))
         (@BoxedData-mk-SHAContentHash (@BoxedData-SHAContentHash (_ BitVec 16)))
-        (@BoxedData-mk-LatLongCoordinate (@BoxedData-LatLongCoordinate LatLongCoordinate))
         (@BoxedData-mk-Regex (@BoxedData-Regex String))
         ;;--TYPE_BOX_CONSTRUCTORS--;;
     )
@@ -290,7 +287,6 @@
 (define-fun @Term-box-UUIDv4 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv4 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv4 (@BoxedKeyValue-mk-String v))))
 (define-fun @Term-box-UUIDv7 ((v String)) @Term (@Term-mk (@BoxedData-mk-UUIDv7 v) (@BoxedKey-mk-of @KeyTypeTag-UUIDv7 (@BoxedKeyValue-mk-String v))))
 (define-fun @Term-box-SHAContentHash ((v (_ BitVec 16))) @Term (@Term-mk (@BoxedData-mk-SHAContentHash v) (@BoxedKey-mk-of @KeyTypeTag-SHAContentHash (@BoxedKeyValue-mk-SHAContentHash v))))
-(define-fun @Term-box-LatLongCoordinate ((v LatLongCoordinate)) @Term (@Term-mk (@BoxedData-mk-LatLongCoordinate v) @BoxedKey-mk-NA))
 (define-fun @Term-box-Regex ((v String)) @Term (@Term-mk (@BoxedData-mk-Regex v) @BoxedKey-mk-NA))
 ;;--TERM_BOX_CONSTRUCTORS--;;
 
@@ -317,7 +313,6 @@
 (define-fun @Term-unbox-UUIDv4 ((t @Term)) String (@BoxedData-UUIDv4 (@Term-data t)))
 (define-fun @Term-unbox-UUIDv7 ((t @Term)) String (@BoxedData-UUIDv7 (@Term-data t)))
 (define-fun @Term-unbox-SHAContentHash ((t @Term)) (_ BitVec 16) (@BoxedData-SHAContentHash (@Term-data t)))
-(define-fun @Term-unbox-LatLongCoordinate ((t @Term)) LatLongCoordinate (@BoxedData-LatLongCoordinate (@Term-data t)))
 (define-fun @Term-unbox-Regex ((t @Term)) String (@BoxedData-Regex (@Term-data t)))
 ;;--TERM_BOX_UNBOXERS--;;
 
@@ -348,7 +343,6 @@
     (@ResultO-UUIDv4 0)
     (@ResultO-UUIDv7 0)
     (@ResultO-SHAContentHash 0)
-    (@ResultO-LatLongCoordinate 0)
     (@ResultO-Regex 0)
     ;;--RESULT_O_DECLS--;;
     ) (
@@ -375,7 +369,6 @@
         ( (@ResultO-mk-ok-UUIDv4 (@ResultO-UUIDv4-val String)) (@ResultO-mk-err-UUIDv4 (@ResultO-UUIDv4-err @ErrorKind)) )
         ( (@ResultO-mk-ok-UUIDv7 (@ResultO-UUIDv7-val String)) (@ResultO-mk-err-UUIDv7 (@ResultO-UUIDv7-err @ErrorKind)) )
         ( (@ResultO-mk-ok-SHAContentHash (@ResultO-SHAContentHash-val (_ BitVec 16))) (@ResultO-mk-err-SHAContentHash (@ResultO-SHAContentHash-err @ErrorKind)) )
-        ( (@ResultO-mk-ok-LatLongCoordinate (@ResultO-LatLongCoordinate-val LatLongCoordinate)) (@ResultO-mk-err-LatLongCoordinate (@ResultO-LatLongCoordinate-err @ErrorKind)) )
         ( (@ResultO-mk-ok-Regex (@ResultO-Regex-val String)) (@ResultO-mk-err-Regex (@ResultO-Regex-err @ErrorKind)) )
         ;;--RESULT_O_CONSTRUCTORS--;;
     )
@@ -408,7 +401,6 @@
     (@ResultT-UUIDv4 0)
     (@ResultT-UUIDv7 0)
     (@ResultT-SHAContentHash 0)
-    (@ResultT-LatLongCoordinate 0)
     (@ResultT-Regex 0)
     ;;--RESULT_T_DECLS--;;
     ) (
@@ -435,7 +427,6 @@
         ( (@ResultT-mk-ok-UUIDv4 (@ResultT-UUIDv4-val String)) (@ResultT-mk-err-UUIDv4 (@ResultT-UUIDv4-err @ErrorKind)) )
         ( (@ResultT-mk-ok-UUIDv7 (@ResultT-UUIDv7-val String)) (@ResultT-mk-err-UUIDv7 (@ResultT-UUIDv7-err @ErrorKind)) )
         ( (@ResultT-mk-ok-SHAContentHash (@ResultT-SHAContentHash-val (_ BitVec 16))) (@ResultT-mk-err-SHAContentHash (@ResultT-SHAContentHash-err @ErrorKind)) )
-        ( (@ResultT-mk-ok-LatLongCoordinate (@ResultT-LatLongCoordinate-val LatLongCoordinate)) (@ResultT-mk-err-LatLongCoordinate (@ResultT-LatLongCoordinate-err @ErrorKind)) )
         ( (@ResultT-mk-ok-Regex (@ResultT-Regex-val String)) (@ResultT-mk-err-Regex (@ResultT-Regex-err @ErrorKind)) )
         ;;--RESULT_T_CONSTRUCTORS--;;
     )
@@ -743,12 +734,6 @@
 
 (define-fun @entrypoint_cons_SHAContentHash ((ctx (Seq Int))) @ResultO-SHAContentHash
     (@ResultO-mk-ok-SHAContentHash (@SHAContentHash_UFCons_API ctx))
-)
-
-(define-fun @entrypoint_cons_LatLongCoordinate ((ctx (Seq Int))) @ResultO-LatLongCoordinate
-    (let ((lat (@Latitude_UFCons_API ctx)) (long (@Longitude_UFCons_API ctx)))
-        (@ResultO-mk-ok-LatLongCoordinate (LatLongCoordinate@mk lat long))
-    )
 )
 
 ;;--GLOBAL_DECLS--;;

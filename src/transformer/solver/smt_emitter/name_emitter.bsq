@@ -137,9 +137,6 @@ entity NameEmitter {
         elif(tkey === "SHAContentHash"_TreeIR::TypeKey) {
             return "(_ BitVec 16)";
         }
-        elif(tkey === "LatLongCoordinate"_TreeIR::TypeKey) {
-            return "LatLongCoordinate";
-        }
         else {
             assert(tkey === "Regex"_TreeIR::TypeKey);
 

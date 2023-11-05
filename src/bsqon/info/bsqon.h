@@ -745,26 +745,6 @@ namespace BSQON
         }
     };
 
-    class LatLongCoordinateValue : public PrimtitiveValue 
-    {
-    public:
-        const double vlat;
-        const double vlong;
-    
-        LatLongCoordinateValue(const Type* vtype, SourcePos spos, double vlat, double vlong) : PrimtitiveValue(vtype, spos), vlat(vlat), vlong(vlong) { ; }
-        virtual ~LatLongCoordinateValue() = default;
-
-        virtual std::string toString() const override
-        {
-            return "LatLongCoordinate{" + std::to_string(this->vlat) + ", " + std::to_string(this->vlong) + "}";
-        }
-
-        virtual bool isValidForTypedecl() const override
-        {
-            return true;
-        }
-    };
-
     class StringOfValue : public Value
     {
     public:
@@ -1232,6 +1212,37 @@ namespace BSQON
         const EListType* getEListType() const
         {
             return (const EListType*)this->vtype;
+        }
+    };
+
+    class IdentifierValue : public Value
+    {
+    public:
+        const std::string vname;
+
+        IdentifierValue(const Type* vtype, SourcePos spos, std::string vname) : Value(vtype, spos), vname(vname) { ; }
+        virtual ~IdentifierValue() = default;
+
+        virtual std::string toString() const override
+        {
+            return vname;
+        }
+    };
+
+    class LetInValue : public Value
+    {
+    public:
+        const std::string vname;
+        const Type* oftype;
+        const Value* value;
+        const Value* exp;
+
+        LetInValue(const Type* vtype, SourcePos spos, std::string vname, const Type* oftype, const Value* value, const Value* exp) : Value(vtype, spos), vname(vname), oftype(oftype), value(value), exp(exp) { ; }
+        virtual ~LetInValue() = default;
+
+        virtual std::string toString() const override
+        {
+            return "(let " + this->vname + ": " + this->oftype->tkey + " = " + this->value->toString() + " in " + this->exp->toString() + ")";
         }
     };
 }

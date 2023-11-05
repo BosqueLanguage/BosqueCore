@@ -63,6 +63,8 @@ namespace BSQON
 
         std::vector<ParseError> errors;
 
+        std::map<std::string, Value*> vbinds;
+
         Parser(const AssemblyInfo* assembly) {;}
         virtual ~Parser() = default;
 
@@ -192,8 +194,6 @@ namespace BSQON
 
         Value* parseRegex(const PrimitiveType* t, struct BSQON_AST_Node* node);
 
-        Value* parseLatLongCoordinate(const PrimitiveType* t, struct BSQON_AST_Node* node);
-
         Value* parseStringOf(const StringOfType* t, struct BSQON_AST_Node* node);
         Value* parseASCIIStringOf(const ASCIIStringOfType* t, struct BSQON_AST_Node* node);
 
@@ -241,7 +241,8 @@ namespace BSQON
         Value* parseValueSimple(const Type* t, struct BSQON_AST_Node* node);
         Value* parseValueUnion(const UnionType* t, struct BSQON_AST_Node* node);
 
-        ///////////////////////////////////
+        Value* parseIdentifier(const Type* t, struct BSQON_AST_Node* node);
+        Value* parseLetIn(const Type* t, struct BSQON_AST_Node* node);
 
         Value* parseValue(const Type* t, struct BSQON_AST_Node* node);
     };

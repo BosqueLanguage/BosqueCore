@@ -325,7 +325,6 @@ class UnionValue {
 //UUIDv4 -> string
 //UUIDv7 -> string
 //SHAContentHash -> string
-//LatLongCoordinate -> [lat, long]
 //Regex -> string
 
 //StringOf -> string

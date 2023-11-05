@@ -51,6 +51,8 @@ enum BSQON_AST_TAG
     BSQON_AST_TAG_OkCons,
     BSQON_AST_TAG_ErrCons,
 
+    BSQON_AST_TAG_LetIn,
+
     BSQON_AST_TAG_ScopedName
 };
 
@@ -161,6 +163,15 @@ struct BSQON_AST_SpecialConsNode
     struct BSQON_AST_Node* value;
 };
 
+struct BSQON_AST_LetInNode
+{
+    struct BSQON_AST_Node base;
+    char* vname;
+    struct BSQON_TYPE_AST_Node* vtype;
+    struct BSQON_AST_Node* value;
+    struct BSQON_AST_Node* exp;
+};
+
 struct BSQON_AST_ScopedNameNode
 {
     struct BSQON_AST_Node base;
@@ -227,6 +238,10 @@ void BSQON_AST_TypedValueNode_print(struct BSQON_AST_TypedValueNode* node);
 struct BSQON_AST_SpecialConsNode* BSQON_AST_asSpecialConsNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_SpecialConsNodeCreate(enum BSQON_AST_TAG tag, struct AST_SourcePos pos, struct BSQON_AST_Node* data, char* consname);
 void BSQON_AST_SpecialConsNode_print(struct BSQON_AST_SpecialConsNode* node);
+
+struct BSQON_AST_LetInNode* BSQON_AST_asLetInNode(const struct BSQON_AST_Node* node);
+struct BSQON_AST_Node* BSQON_AST_LetInNodeCreate(struct AST_SourcePos pos, char* vname, struct BSQON_TYPE_AST_Node* vtype, struct BSQON_AST_Node* value, struct BSQON_AST_Node* exp);
+void BSQON_AST_LetInNode_print(struct BSQON_AST_LetInNode* node);
 
 struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier);

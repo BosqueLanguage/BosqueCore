@@ -7,7 +7,7 @@ namespace BSQON
     std::vector<std::string> s_coreTypes = {
         "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
         "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
-        "LatLongCoordinate", "Regex", "Nothing"
+        "Regex", "Nothing"
     };
 
     std::vector<TypeTag> s_okTypeTaggedTags = {
@@ -1090,21 +1090,6 @@ namespace BSQON
         return new RegexValue(t, Parser::convertSrcPos(node->pos), rri->second);
     }
 
-    Value* Parser::parseLatLongCoordinate(const PrimitiveType* t, struct BSQON_AST_Node* node)
-    {
-        xxxx;
-
-        auto vlat = data.value().first;
-        auto vlong = data.value().second;
-
-        if(!(-90.0 <= vlat && vlat <= 90.0) || !(-180.0 < vlong && vlong <= 180.0)) {
-            this->addError("Invalid LatLongCoordinate value", Parser::convertSrcPos(node->pos));
-            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-        }
-
-        return new LatLongCoordinateValue(t, Parser::convertSrcPos(node->pos), vlat, vlong);
-    }
-
     Value* Parser::parseStringOf(const StringOfType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_StringOf && node->tag != BSQON_AST_TAG_String) {
@@ -1914,9 +1899,6 @@ namespace BSQON
         else if(tk == "SHAContentHash") {
             return this->parseSHAHashcode(t, node);
         } 
-        else if(tk == "LatLongCoordinate") {
-            return this->parseLatLongCoordinate(t, node);
-        }
         else if(tk == "Regex") {
             return this->parseRegex(t, node);
         }
@@ -2023,6 +2005,10 @@ namespace BSQON
                 }
 
                 const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
+                if(oftype->isUnresolved()) {
+                    return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+                }
+
                 if(!this->assembly->checkConcreteSubtype(oftype, t)) {
                     this->addError("Expected result of type " + t->tkey + " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
                     return new ErrorValue(t, Parser::convertSrcPos(node->pos));
@@ -2043,6 +2029,10 @@ namespace BSQON
             }
 
             const Type* oftype = this->parseTypeRoot(BSQON_AST_asTypedValueNode(node)->type);
+            if(oftype->isUnresolved()) {
+                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+            }
+
             if(!this->assembly->checkConcreteSubtype(oftype, t)) {
                 this->addError("Expected result of type " + t->tkey + " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
@@ -2259,15 +2249,11 @@ namespace BSQON
                 tt = this->assembly->resolveType("SHAContentHash");
                 vv = this->parseSHAHashcode(static_cast<const PrimitiveType*>(tt), node);
             }
-            else if(tk == BSQON_AST_TAG_LatLongCoordinate) {
-                tt = this->assembly->resolveType("LatLongCoordinate");
-                vv = this->parseLatLongCoordinate(static_cast<const PrimitiveType*>(tt), node);
-            }
             else {
                 this->addError("Cannot implicitly resolve ", Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-            }             
-                
+            }
+
             if(!this->assembly->checkConcreteSubtype(tt, t)) {
                 this->addError("Expected result of type " + t->tkey + " but got " + tt->tkey, Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
@@ -2277,28 +2263,69 @@ namespace BSQON
         }
     }
 
-    ///////////////////////////////////
+    Value* Parser::parseIdentifier(const Type* t, BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_Identifier) {
+            this->addError("Expected Identifier value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        std::string vname = BSQON_AST_asNameNode(node)->data;
+        if(!this->vbinds.contains(vname)) {
+            this->addError("Unknown let binding " + vname, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        const Type* oftype = this->vbinds[vname]->vtype;
+
+        if(oftype->isUnresolved()) {
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        if(!this->assembly->checkConcreteSubtype(oftype, t)) {
+            this->addError("Expected result of type " + t->tkey + " but got " + oftype->tkey, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        return this->vbinds[vname];
+    }
+
+    Value* Parser::parseLetIn(const Type* t, BSQON_AST_Node* node)
+    {
+        if(node->tag != BSQON_AST_TAG_LetIn) {
+            this->addError("Expected LetIn value", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        auto lnode = BSQON_AST_asLetInNode(node);
+
+        std::string vname = lnode->vname;
+        if(this->vbinds.contains(vname)) {
+            this->addError("Duplicate let binding " + vname, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        const Type* vtype = this->parseTypeRoot(lnode->vtype);
+        if(vtype->isUnresolved()) {
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
+        Value* vvalue = this->parseValue(vtype, lnode->value);
+        this->vbinds[vname] = vvalue;
+
+        Value* res = this->parseValue(t, lnode->exp);
+
+        this->vbinds.erase(vname);
+        return res;
+    }
 
     Value* Parser::parseValue(const Type* t, BSQON_AST_Node* node)
     {
-        if(node->tag == BSQON_AST_TAG_Let) {
-            const vtype = this.parseType();
-            const vvalue = this.parseValue(vtype, true);
-            
-            this.raiseErrorIf(this.m_refs.has(vname), `Duplicate let binding ${vname}`);
-            this.m_refs.set(vname, [BSQONParseResultInfo.getParseValue(vvalue, true), BSQONParseResultInfo.getValueType(vvalue, true), BSQONParseResultInfo.getHistory(vvalue, true)]);
-
-            const vv = this.parseExpression(ttype, whistory);
-
-            this.m_refs.delete(vname);
-            return vv;
+        if(node->tag == BSQON_AST_TAG_Identifier) {
+            return this->parseIdentifier(t, node);
         }
-        else if(node->tag == BSQON_AST_TAG_Identifier) {
-            const vname = BSQON_AST_asIdentifierNode(node)->name;
-            this.raiseErrorIf(!this.m_refs.has(vname), `Unknown identifier ${vname}`);
-
-            const [vvalue, vtype, whistory] = this.m_refs.get(vname);
-            return this.parseExpression(ttype, whistory);
+        else if(node->tag == BSQON_AST_TAG_LetIn) {
+            return this->parseLetIn(t, node);
         }
         else {
             if (t->tag == TypeTag::TYPE_UNION) {

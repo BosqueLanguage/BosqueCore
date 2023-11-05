@@ -68,6 +68,14 @@ namespace BSQON
         {
             return this->tag == TypeTag::TYPE_UNRESOLVED;
         }
+
+        bool isConcreteType() const
+        {
+            return !(this->tag == TypeTag::TYPE_UNRESOLVED 
+                || this->tag == TypeTag::TYPE_OPTION || this->tag == TypeTag::TYPE_RESULT
+                || this->tag == TypeTag::TYPE_STD_CONCEPT || this->tag == TypeTag::TYPE_CONCEPT_SET 
+                || this->tag == TypeTag::TYPE_UNION);
+        }
     };
 
     class UnresolvedType : public Type

@@ -101,6 +101,7 @@ int errorcount = 0;
 %type <bsqon> bsqon_braceval
 %type <bsqon> bsqonbracketvalue bsqonbracevalue bsqonbracketbracevalue bsqontypedvalue bsqonstructvalue
 %type <bsqon> bsqonspecialcons
+%type <bsqon> bsqonletexp
 %type <bsqon> bsqonroot
 
   //----------------------------
@@ -327,6 +328,10 @@ bsqonspecialcons:
 
 bsqonval: 
   bsqonterminal | bsqonspecialcons | bsqonstructvalue { $$ = $1; }
+;
+
+bsqonletexp:
+  '(' KW_LET bsqonidentifier ':' bsqontype SYM_EQUALS bsqonval KW_IN bsqonval ')'{ $$ = BSQON_AST_LetInNodeCreate(MK_SPOS_R(@1, @10), $3, $5, $7, $9); }
 ;
 
 bsqonroot: 
