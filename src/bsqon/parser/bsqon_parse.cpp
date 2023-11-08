@@ -307,7 +307,7 @@ namespace BSQON
         }
 
         if (!terms.empty()) {
-            scopedname = scopedname + "<" + std::accumulate(terms.begin(), terms.end(), std::string(), [](std::string& a, Type* b) { return a + ", " + b->tkey; }) + ">";
+            scopedname = scopedname + "<" + std::accumulate(terms.cbegin(), terms.cend(), std::string(), [](std::string&& a, const Type* b) { return a + ", " + b->tkey; }) + ">";
         }
 
         auto titer = this->assembly->typerefs.find(scopedname);
@@ -346,7 +346,7 @@ namespace BSQON
             terms.push_back(this->parseType(curr->value));
         }
      
-        return std::find_if(terms.begin(), terms.end(), [](Type* tt) { return tt->isUnresolved(); }) == terms.end();
+        return std::find_if(terms.begin(), terms.end(), [](const Type* tt) { return tt->isUnresolved(); }) == terms.end();
     }
 
     const Type* Parser::parseTemplateTermList_One(SourcePos spos, BSQON_TYPE_AST_List* tlist) 
@@ -355,7 +355,7 @@ namespace BSQON
         bool ok = this->parseTemplateTermList(tlist, terms);
 
         if(ok && terms.size() == 1) {
-            terms[0];
+            return terms[0];
         }
         else {
             if(terms.size() != 1) {
@@ -371,7 +371,7 @@ namespace BSQON
         bool ok = this->parseTemplateTermList(tlist, terms);
 
         if(ok && terms.size() == 2) {
-            std::make_pair(terms[0], terms[1]);
+            return std::make_pair(terms[0], terms[1]);
         }
         else {
             if(terms.size() != 2) {
@@ -469,7 +469,7 @@ namespace BSQON
             std::vector<const Type*> terms;
             this->parseTemplateTermList(node->terms, terms);
                 
-            if(std::any_of(terms.begin(), terms.end(), [](Type* tt) { return tt->isUnresolved(); })) {
+            if(std::any_of(terms.begin(), terms.end(), [](const Type* tt) { return tt->isUnresolved(); })) {
                 return UnresolvedType::singleton;
             }
             else {
@@ -504,7 +504,7 @@ namespace BSQON
         std::vector<const Type*> types;
         this->parseTemplateTermList(node->types, types);
                 
-        if(std::any_of(types.begin(), types.end(), [](Type* tt) { return tt->isUnresolved(); })) {
+        if(std::any_of(types.cbegin(), types.cend(), [](const Type* tt) { return tt->isUnresolved(); })) {
             return UnresolvedType::singleton;
         }
         else {
@@ -532,7 +532,7 @@ namespace BSQON
         }
 
         std::sort(entries.begin(), entries.end(), [](const RecordTypeEntry& a, const RecordTypeEntry& b) { return a.pname < b.pname; });
-        auto tkey = "{" + std::accumulate(entries.begin(), entries.end(), std::string(), [](std::string&& a, RecordTypeEntry& b) { return (a == "" ? "" : std::move(a) + ", ") + b.pname + ": " + b.ptype; }) + "}";
+        auto tkey = "{" + std::accumulate(entries.cbegin(), entries.cend(), std::string(), [](std::string&& a, const RecordTypeEntry& b) { return (a == "" ? "" : std::move(a) + ", ") + b.pname + ": " + b.ptype; }) + "}";
         return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
@@ -554,7 +554,7 @@ namespace BSQON
         this->parseConceptSetType_Helper(node->left, conjs);
         this->parseConceptSetType_Helper(node->right, conjs);
                 
-        if(std::any_of(conjs.begin(), conjs.end(), [](Type* tt) { return tt->isUnresolved(); })) {
+        if(std::any_of(conjs.cbegin(), conjs.cend(), [](const Type* tt) { return tt->isUnresolved(); })) {
             return UnresolvedType::singleton;
         }
 
@@ -566,7 +566,7 @@ namespace BSQON
         std::transform(conjs.cbegin(), conjs.cend(), std::back_inserter(concepts), [](const Type* tt){ return tt->tkey; });
 
         std::sort(concepts.begin(), concepts.end());
-        auto tkey = std::accumulate(concepts.begin(), concepts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + "&") + b; });
+        auto tkey = std::accumulate(concepts.cbegin(), concepts.cend(), std::string(), [](std::string&& a, const TypeKey& b) { return (a == "" ? "" : std::move(a) + "&") + b; });
         return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
@@ -588,7 +588,7 @@ namespace BSQON
         this->parseUnionType_Helper(node->left, opts);
         this->parseUnionType_Helper(node->right, opts);
                 
-        if(std::any_of(opts.begin(), opts.end(), [](Type* tt) { return tt->isUnresolved(); })) {
+        if(std::any_of(opts.cbegin(), opts.cend(), [](const Type* tt) { return tt->isUnresolved(); })) {
             return UnresolvedType::singleton;
         }
 
@@ -600,7 +600,7 @@ namespace BSQON
         std::transform(opts.cbegin(), opts.cend(), std::back_inserter(disjuncts), [](const Type* tt){ return tt->tkey; });
 
         std::sort(disjuncts.begin(), disjuncts.end());
-        auto tkey = std::accumulate(disjuncts.begin(), disjuncts.end(), std::string(), [](std::string&& a, TypeKey& b) { return (a == "" ? "" : std::move(a) + " | ") + b; });
+        auto tkey = std::accumulate(disjuncts.cbegin(), disjuncts.cend(), std::string(), [](std::string&& a, const TypeKey& b) { return (a == "" ? "" : std::move(a) + " | ") + b; });
         return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
@@ -716,7 +716,6 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        int64_t vv;
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'N'
 
@@ -736,7 +735,6 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        int64_t vv;
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'I'
 
@@ -1111,8 +1109,7 @@ namespace BSQON
             }
         }
 
-        auto bstr = BSQON_AST_asLiteralStringNode(node)->data;
-        StringOfValue* svopt = StringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), bstr->bytes, bstr->len, vre);
+        StringOfValue* svopt = StringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), sstr->bytes, sstr->len, vre);
 
         if(svopt == nullptr) {
             this->addError("Invalid characters in string (does not validate)", Parser::convertSrcPos(node->pos));
@@ -1144,8 +1141,7 @@ namespace BSQON
             }
         }
 
-        auto bstr = BSQON_AST_asLiteralStringNode(node)->data;
-        ASCIIStringOfValue* svopt = ASCIIStringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), bstr->bytes, bstr->len, vre);
+        ASCIIStringOfValue* svopt = ASCIIStringOfValue::createFromParse(t, Parser::convertSrcPos(node->pos), sstr->bytes, sstr->len, vre);
 
         if(svopt == nullptr) {
             this->addError("Invalid characters in string (does not validate)", Parser::convertSrcPos(node->pos));
@@ -1493,7 +1489,7 @@ namespace BSQON
 
     Value* Parser::parseEnum(const EnumType* t, BSQON_AST_Node* node)
     {
-        if(!node->tag == BSQON_AST_TAG_ScopedName) {
+        if(node->tag != BSQON_AST_TAG_ScopedName) {
             this->addError("Expected Enum value", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
@@ -1588,10 +1584,7 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
         
-        std::vector<Value*> rvals(vvals.value().size(), nullptr);
-        std::transform(vvals.value().begin(), vvals.value().end(), rvals.begin(), [](const std::pair<std::string, Value*>& pp) { return pp.second; });
-
-        return new EntityValue(t, Parser::convertSrcPos(node->pos), std::move(rvals));
+        return new EntityValue(t, Parser::convertSrcPos(node->pos), std::move(vvals.value()));
     }
 
     Value* Parser::parseList(const ListType* t, BSQON_AST_Node* node)
@@ -1983,7 +1976,7 @@ namespace BSQON
                 return this->parseNothing(static_cast<const PrimitiveType*>(this->assembly->resolveType("Nothing")), node);
             }
             else {
-                return this->parseSomething(static_cast<const SomethingType*>(this->assembly->resolveType("Something<" + t->tkey + ">")), node);
+                return this->parseSomething(static_cast<const SomethingType*>(this->assembly->resolveType("Something<" + otype->oftype + ">")), node);
             }
         }
         else if(t->tag == TypeTag::TYPE_RESULT) {
@@ -2252,14 +2245,14 @@ namespace BSQON
                 this->addError("Cannot implicitly resolve ", Parser::convertSrcPos(node->pos));
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
-
-            if(!this->assembly->checkConcreteSubtype(tt, t)) {
-                this->addError("Expected result of type " + t->tkey + " but got " + tt->tkey, Parser::convertSrcPos(node->pos));
-                return new ErrorValue(t, Parser::convertSrcPos(node->pos));
-            }
-            
-            return vv;
         }
+
+        if(!this->assembly->checkConcreteSubtype(tt, t)) {
+            this->addError("Expected result of type " + t->tkey + " but got " + tt->tkey, Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+            
+        return vv;
     }
 
     Value* Parser::parseIdentifier(const Type* t, BSQON_AST_Node* node)

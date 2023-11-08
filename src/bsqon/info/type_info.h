@@ -64,7 +64,7 @@ namespace BSQON
 
         static Type* parse(json j);
 
-        inline bool isUnresolved() const
+        bool isUnresolved() const
         {
             return this->tag == TypeTag::TYPE_UNRESOLVED;
         }

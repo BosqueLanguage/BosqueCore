@@ -246,7 +246,7 @@ namespace BSQON
         std::vector<uint8_t> res(utf8.size());
         std::transform(utf8.cbegin(), utf8.cend(), res.begin(), [](char c) { return (uint8_t)c; });
 
-        return std::move(res);
+        return res;
     }
 
     StringValue* StringValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length)
@@ -320,7 +320,7 @@ namespace BSQON
         std::vector<uint8_t> res(acc.size());
         std::transform(acc.cbegin(), acc.cend(), res.begin(), [](char c) { return (uint8_t)c; });
 
-        return std::move(res);
+        return res;
     }
 
     ASCIIStringValue* ASCIIStringValue::createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length)
