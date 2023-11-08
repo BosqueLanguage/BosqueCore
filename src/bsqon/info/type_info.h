@@ -398,9 +398,9 @@ namespace BSQON
 
         static NamespaceDecl* parse(json j);
 
-        bool hasTypenameDecl(const UnicodeString& name) const
+        bool hasTypenameDecl(const std::string& name) const
         {
-            return std::binary_search(this->typenames.begin(), this->typenames.end(), name);
+            return std::binary_search(this->typenames.cbegin(), this->typenames.cend(), name);
         }
     };
 
@@ -455,10 +455,10 @@ namespace BSQON
             }
 
             if (oftype->tag == TypeTag::TYPE_UNION) {
-                return std::any_of(static_cast<const UnionType*>(oftype)->types.begin(), static_cast<const UnionType*>(oftype)->types.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
+                return std::any_of(static_cast<const UnionType*>(oftype)->types.begin(), static_cast<const UnionType*>(oftype)->types.end(), [this, t](const TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
             }
             else if (oftype->tag == TypeTag::TYPE_CONCEPT_SET) {
-                return std::all_of(static_cast<const ConceptSetType*>(oftype)->concepts.begin(), static_cast<const ConceptSetType*>(oftype)->concepts.end(), [this, t](TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
+                return std::all_of(static_cast<const ConceptSetType*>(oftype)->concepts.begin(), static_cast<const ConceptSetType*>(oftype)->concepts.end(), [this, t](const TypeKey& tt) { return this->checkConcreteSubtype(t, this->resolveType(tt)); });
             }
             else {
                 auto psubtypes = oftype->getPossibleSubtypeKeys();

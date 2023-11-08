@@ -234,7 +234,7 @@ namespace BSQON
 
         const Type* getNoneableRealType(const UnionType* t)
         {
-            auto tii = std::find_if(t->types.cbegin(), t->types.cend(), [](const TypeKey& tt){ tt != "None"; });
+            auto tii = std::find_if(t->types.cbegin(), t->types.cend(), [](const TypeKey& tt){ return tt != "None"; });
             return this->assembly->resolveType(*tii);
         }        
 

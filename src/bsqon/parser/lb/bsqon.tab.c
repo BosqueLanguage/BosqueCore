@@ -187,39 +187,40 @@ enum yysymbol_kind_t
   YYSYMBOL_59_ = 59,                       /* '}'  */
   YYSYMBOL_60_ = 60,                       /* '('  */
   YYSYMBOL_61_ = 61,                       /* ')'  */
-  YYSYMBOL_YYACCEPT = 62,                  /* $accept  */
-  YYSYMBOL_bsqontypel = 63,                /* bsqontypel  */
-  YYSYMBOL_bsqontypel_entry = 64,          /* bsqontypel_entry  */
-  YYSYMBOL_bsqonnametypel = 65,            /* bsqonnametypel  */
-  YYSYMBOL_bsqonnametypel_entry = 66,      /* bsqonnametypel_entry  */
-  YYSYMBOL_bsqonnominaltype = 67,          /* bsqonnominaltype  */
-  YYSYMBOL_bsqontermslist = 68,            /* bsqontermslist  */
-  YYSYMBOL_bsqontupletype = 69,            /* bsqontupletype  */
-  YYSYMBOL_bsqonrecordtype = 70,           /* bsqonrecordtype  */
-  YYSYMBOL_bsqontype = 71,                 /* bsqontype  */
-  YYSYMBOL_bsqontspec = 72,                /* bsqontspec  */
-  YYSYMBOL_bsqonliteral = 73,              /* bsqonliteral  */
-  YYSYMBOL_bsqonunspecvar = 74,            /* bsqonunspecvar  */
-  YYSYMBOL_bsqonidentifier = 75,           /* bsqonidentifier  */
-  YYSYMBOL_bsqonscopedidentifier = 76,     /* bsqonscopedidentifier  */
-  YYSYMBOL_bsqonstringof = 77,             /* bsqonstringof  */
-  YYSYMBOL_bsqonpath = 78,                 /* bsqonpath  */
-  YYSYMBOL_bsqontypeliteral = 79,          /* bsqontypeliteral  */
-  YYSYMBOL_bsqonterminal = 80,             /* bsqonterminal  */
-  YYSYMBOL_bsqon_mapentry = 81,            /* bsqon_mapentry  */
-  YYSYMBOL_bsqonvall = 82,                 /* bsqonvall  */
-  YYSYMBOL_bsqonl_entry = 83,              /* bsqonl_entry  */
-  YYSYMBOL_bsqonbracketvalue = 84,         /* bsqonbracketvalue  */
-  YYSYMBOL_bsqonnamevall = 85,             /* bsqonnamevall  */
-  YYSYMBOL_bsqon_braceval = 86,            /* bsqon_braceval  */
-  YYSYMBOL_bsqonnameval_entry = 87,        /* bsqonnameval_entry  */
-  YYSYMBOL_bsqonbracevalue = 88,           /* bsqonbracevalue  */
-  YYSYMBOL_bsqonbracketbracevalue = 89,    /* bsqonbracketbracevalue  */
-  YYSYMBOL_bsqontypedvalue = 90,           /* bsqontypedvalue  */
-  YYSYMBOL_bsqonstructvalue = 91,          /* bsqonstructvalue  */
-  YYSYMBOL_bsqonspecialcons = 92,          /* bsqonspecialcons  */
-  YYSYMBOL_bsqonval = 93,                  /* bsqonval  */
-  YYSYMBOL_bsqonroot = 94                  /* bsqonroot  */
+  YYSYMBOL_62_ = 62,                       /* ':'  */
+  YYSYMBOL_YYACCEPT = 63,                  /* $accept  */
+  YYSYMBOL_bsqontypel = 64,                /* bsqontypel  */
+  YYSYMBOL_bsqontypel_entry = 65,          /* bsqontypel_entry  */
+  YYSYMBOL_bsqonnametypel = 66,            /* bsqonnametypel  */
+  YYSYMBOL_bsqonnametypel_entry = 67,      /* bsqonnametypel_entry  */
+  YYSYMBOL_bsqonnominaltype = 68,          /* bsqonnominaltype  */
+  YYSYMBOL_bsqontermslist = 69,            /* bsqontermslist  */
+  YYSYMBOL_bsqontupletype = 70,            /* bsqontupletype  */
+  YYSYMBOL_bsqonrecordtype = 71,           /* bsqonrecordtype  */
+  YYSYMBOL_bsqontype = 72,                 /* bsqontype  */
+  YYSYMBOL_bsqontspec = 73,                /* bsqontspec  */
+  YYSYMBOL_bsqonliteral = 74,              /* bsqonliteral  */
+  YYSYMBOL_bsqonunspecvar = 75,            /* bsqonunspecvar  */
+  YYSYMBOL_bsqonidentifier = 76,           /* bsqonidentifier  */
+  YYSYMBOL_bsqonscopedidentifier = 77,     /* bsqonscopedidentifier  */
+  YYSYMBOL_bsqonstringof = 78,             /* bsqonstringof  */
+  YYSYMBOL_bsqonpath = 79,                 /* bsqonpath  */
+  YYSYMBOL_bsqontypeliteral = 80,          /* bsqontypeliteral  */
+  YYSYMBOL_bsqonterminal = 81,             /* bsqonterminal  */
+  YYSYMBOL_bsqon_mapentry = 82,            /* bsqon_mapentry  */
+  YYSYMBOL_bsqonvall = 83,                 /* bsqonvall  */
+  YYSYMBOL_bsqonl_entry = 84,              /* bsqonl_entry  */
+  YYSYMBOL_bsqonbracketvalue = 85,         /* bsqonbracketvalue  */
+  YYSYMBOL_bsqonnamevall = 86,             /* bsqonnamevall  */
+  YYSYMBOL_bsqon_braceval = 87,            /* bsqon_braceval  */
+  YYSYMBOL_bsqonnameval_entry = 88,        /* bsqonnameval_entry  */
+  YYSYMBOL_bsqonbracevalue = 89,           /* bsqonbracevalue  */
+  YYSYMBOL_bsqonbracketbracevalue = 90,    /* bsqonbracketbracevalue  */
+  YYSYMBOL_bsqontypedvalue = 91,           /* bsqontypedvalue  */
+  YYSYMBOL_bsqonstructvalue = 92,          /* bsqonstructvalue  */
+  YYSYMBOL_bsqonspecialcons = 93,          /* bsqonspecialcons  */
+  YYSYMBOL_bsqonval = 94,                  /* bsqonval  */
+  YYSYMBOL_bsqonroot = 95                  /* bsqonroot  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -553,7 +554,7 @@ union yyalloc
 #define YYLAST   761
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  62
+#define YYNTOKENS  63
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  33
 /* YYNRULES -- Number of rules.  */
@@ -581,7 +582,7 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
       60,    61,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    62,     2,
       54,     2,    55,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -613,19 +614,19 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   113,   113,   114,   118,   119,   123,   124,   128,   129,
-     133,   134,   135,   139,   140,   141,   142,   146,   147,   148,
-     149,   150,   154,   155,   156,   157,   158,   162,   163,   164,
-     165,   166,   167,   168,   172,   173,   174,   182,   183,   184,
-     185,   186,   187,   188,   189,   190,   191,   192,   193,   194,
-     195,   196,   197,   198,   199,   200,   201,   202,   203,   204,
-     205,   206,   207,   211,   215,   216,   220,   224,   225,   229,
-     233,   237,   241,   245,   251,   251,   251,   251,   251,   251,
-     251,   255,   256,   257,   258,   262,   263,   267,   268,   272,
-     273,   274,   275,   276,   280,   281,   285,   285,   289,   290,
-     291,   292,   296,   297,   298,   299,   300,   301,   302,   303,
-     304,   308,   308,   312,   313,   314,   315,   319,   319,   323,
-     324,   325,   329,   329,   329,   333,   334
+       0,   114,   114,   115,   119,   120,   124,   125,   129,   130,
+     134,   135,   136,   140,   141,   142,   143,   147,   148,   149,
+     150,   151,   155,   156,   157,   158,   159,   163,   164,   165,
+     166,   167,   168,   169,   173,   174,   175,   183,   184,   185,
+     186,   187,   188,   189,   190,   191,   192,   193,   194,   195,
+     196,   197,   198,   199,   200,   201,   202,   203,   204,   205,
+     206,   207,   208,   212,   216,   217,   221,   225,   226,   230,
+     234,   238,   242,   246,   252,   252,   252,   252,   252,   252,
+     252,   256,   257,   258,   259,   263,   264,   268,   269,   273,
+     274,   275,   276,   277,   281,   282,   286,   286,   290,   291,
+     292,   293,   297,   298,   299,   300,   301,   302,   303,   304,
+     305,   309,   309,   313,   314,   315,   316,   320,   320,   324,
+     325,   326,   330,   330,   330,   338,   339
 };
 #endif
 
@@ -654,10 +655,10 @@ static const char *const yytname[] =
   "TOKEN_PLAIN_TIME", "TOKEN_LOGICAL_TIME", "TOKEN_TICK_TIME",
   "TOKEN_TIMESTAMP", "\"identifier\"", "\"type name\"",
   "\"unspec identifier\"", "'<'", "'>'", "'['", "']'", "'{'", "'}'", "'('",
-  "')'", "$accept", "bsqontypel", "bsqontypel_entry", "bsqonnametypel",
-  "bsqonnametypel_entry", "bsqonnominaltype", "bsqontermslist",
-  "bsqontupletype", "bsqonrecordtype", "bsqontype", "bsqontspec",
-  "bsqonliteral", "bsqonunspecvar", "bsqonidentifier",
+  "')'", "':'", "$accept", "bsqontypel", "bsqontypel_entry",
+  "bsqonnametypel", "bsqonnametypel_entry", "bsqonnominaltype",
+  "bsqontermslist", "bsqontupletype", "bsqonrecordtype", "bsqontype",
+  "bsqontspec", "bsqonliteral", "bsqonunspecvar", "bsqonidentifier",
   "bsqonscopedidentifier", "bsqonstringof", "bsqonpath",
   "bsqontypeliteral", "bsqonterminal", "bsqon_mapentry", "bsqonvall",
   "bsqonl_entry", "bsqonbracketvalue", "bsqonnamevall", "bsqon_braceval",
@@ -928,42 +929,42 @@ static const yytype_int8 yystos[] =
        0,     1,     9,    10,    11,    12,    13,    14,    15,    25,
       28,    29,    30,    31,    32,    33,    34,    35,    36,    37,
       38,    39,    40,    41,    42,    43,    44,    45,    46,    47,
-      48,    49,    50,    51,    52,    53,    54,    56,    58,    67,
-      73,    74,    75,    76,    77,    78,    79,    80,    84,    88,
-      89,    90,    91,    92,    93,    94,    89,    23,    23,    60,
-      60,    60,    23,    67,    67,    67,    54,    68,     1,    56,
-      58,    67,    69,    70,    72,     1,    57,    81,    82,    83,
-      86,    93,     1,    51,    59,    85,    86,    87,    93,     7,
-      16,    89,    23,     0,    67,    67,     1,    93,    93,    93,
-      67,     1,    60,    63,    64,    67,    69,    70,    71,    55,
-       1,    57,    63,    71,    51,    59,    65,    66,    55,     8,
-      18,    57,     1,    83,    93,     8,    18,    57,     8,    59,
-      20,     1,    51,    86,    87,     8,    59,    51,    52,    67,
-      61,    61,    61,     8,    55,     1,    71,     1,    64,    71,
-       3,     5,     8,    55,    89,    57,     1,    71,    57,     7,
-      51,    66,    89,     1,    93,    57,    57,     1,    93,     1,
-      93,    59,    20,    59,    61,    61,    55,    55,    71,    71,
-      57,    57,     1,    71,     7,     8,    59,     8,    59,     1,
-      93,     8,    59,     8,    59,     1,    71,    59,    59,    59,
+      48,    49,    50,    51,    52,    53,    54,    56,    58,    68,
+      74,    75,    76,    77,    78,    79,    80,    81,    85,    89,
+      90,    91,    92,    93,    94,    95,    90,    23,    23,    60,
+      60,    60,    23,    68,    68,    68,    54,    69,     1,    56,
+      58,    68,    70,    71,    73,     1,    57,    82,    83,    84,
+      87,    94,     1,    51,    59,    86,    87,    88,    94,     7,
+      16,    90,    23,     0,    68,    68,     1,    94,    94,    94,
+      68,     1,    60,    64,    65,    68,    70,    71,    72,    55,
+       1,    57,    64,    72,    51,    59,    66,    67,    55,     8,
+      18,    57,     1,    84,    94,     8,    18,    57,     8,    59,
+      20,     1,    51,    87,    88,     8,    59,    51,    52,    68,
+      61,    61,    61,     8,    55,     1,    72,     1,    65,    72,
+       3,     5,     8,    55,    90,    57,     1,    72,    57,     7,
+      51,    67,    90,     1,    94,    57,    57,     1,    94,     1,
+      94,    59,    20,    59,    61,    61,    55,    55,    72,    72,
+      57,    57,     1,    72,     7,     8,    59,     8,    59,     1,
+      94,     8,    59,     8,    59,     1,    72,    59,    59,    59,
       59
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    62,    63,    63,    64,    64,    65,    65,    66,    66,
-      67,    67,    67,    68,    68,    68,    68,    69,    69,    69,
-      69,    69,    70,    70,    70,    70,    70,    71,    71,    71,
-      71,    71,    71,    71,    72,    72,    72,    73,    73,    73,
-      73,    73,    73,    73,    73,    73,    73,    73,    73,    73,
-      73,    73,    73,    73,    73,    73,    73,    73,    73,    73,
-      73,    73,    73,    74,    75,    75,    76,    77,    77,    78,
-      79,    79,    79,    79,    80,    80,    80,    80,    80,    80,
-      80,    81,    81,    81,    81,    82,    82,    83,    83,    84,
-      84,    84,    84,    84,    85,    85,    86,    86,    87,    87,
-      87,    87,    88,    88,    88,    88,    88,    88,    88,    88,
-      88,    89,    89,    90,    90,    90,    90,    91,    91,    92,
-      92,    92,    93,    93,    93,    94,    94
+       0,    63,    64,    64,    65,    65,    66,    66,    67,    67,
+      68,    68,    68,    69,    69,    69,    69,    70,    70,    70,
+      70,    70,    71,    71,    71,    71,    71,    72,    72,    72,
+      72,    72,    72,    72,    73,    73,    73,    74,    74,    74,
+      74,    74,    74,    74,    74,    74,    74,    74,    74,    74,
+      74,    74,    74,    74,    74,    74,    74,    74,    74,    74,
+      74,    74,    74,    75,    76,    76,    77,    78,    78,    79,
+      80,    80,    80,    80,    81,    81,    81,    81,    81,    81,
+      81,    82,    82,    82,    82,    83,    83,    84,    84,    85,
+      85,    85,    85,    85,    86,    86,    87,    87,    88,    88,
+      88,    88,    89,    89,    89,    89,    89,    89,    89,    89,
+      89,    90,    90,    91,    91,    91,    91,    92,    92,    93,
+      93,    93,    94,    94,    94,    95,    95
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -1829,696 +1830,696 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* bsqontypel: bsqontypel bsqontypel_entry  */
-#line 113 "bsqon.y"
+#line 114 "bsqon.y"
                                { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCons((yyvsp[0].bsqon_t), (yyvsp[-1].bsqon_t_list)); }
-#line 1835 "bsqon.tab.c"
+#line 1836 "bsqon.tab.c"
     break;
 
   case 3: /* bsqontypel: bsqontypel_entry  */
-#line 114 "bsqon.y"
+#line 115 "bsqon.y"
                       { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCons((yyvsp[0].bsqon_t), NULL); }
-#line 1841 "bsqon.tab.c"
+#line 1842 "bsqon.tab.c"
     break;
 
   case 4: /* bsqontypel_entry: bsqontype ","  */
-#line 118 "bsqon.y"
+#line 119 "bsqon.y"
                        { (yyval.bsqon_t) = (yyvsp[-1].bsqon_t); }
-#line 1847 "bsqon.tab.c"
+#line 1848 "bsqon.tab.c"
     break;
 
   case 5: /* bsqontypel_entry: error ","  */
-#line 119 "bsqon.y"
+#line 120 "bsqon.y"
                      { (yyval.bsqon_t) = BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))); yyerrok; }
-#line 1853 "bsqon.tab.c"
+#line 1854 "bsqon.tab.c"
     break;
 
   case 6: /* bsqonnametypel: bsqonnametypel bsqonnametypel_entry  */
-#line 123 "bsqon.y"
+#line 124 "bsqon.y"
                                        { (yyval.bsqon_t_namedlist) = BSQON_TYPE_AST_NamedListCons((yyvsp[0].bsqon_t_nametypel_entry), (yyvsp[-1].bsqon_t_namedlist)); }
-#line 1859 "bsqon.tab.c"
+#line 1860 "bsqon.tab.c"
     break;
 
   case 7: /* bsqonnametypel: bsqonnametypel_entry  */
-#line 124 "bsqon.y"
+#line 125 "bsqon.y"
                           { (yyval.bsqon_t_namedlist) = BSQON_TYPE_AST_NamedListCons((yyvsp[0].bsqon_t_nametypel_entry), NULL); }
-#line 1865 "bsqon.tab.c"
+#line 1866 "bsqon.tab.c"
     break;
 
   case 8: /* bsqonnametypel_entry: "identifier" ":" bsqontype ","  */
-#line 128 "bsqon.y"
+#line 129 "bsqon.y"
                                                   { (yyval.bsqon_t_nametypel_entry) = BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon_t)); }
-#line 1871 "bsqon.tab.c"
+#line 1872 "bsqon.tab.c"
     break;
 
   case 9: /* bsqonnametypel_entry: "identifier" ":" error ","  */
-#line 129 "bsqon.y"
+#line 130 "bsqon.y"
                                                 { (yyval.bsqon_t_nametypel_entry) = BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))); yyerrok; }
-#line 1877 "bsqon.tab.c"
+#line 1878 "bsqon.tab.c"
     break;
 
   case 10: /* bsqonnominaltype: "type name"  */
-#line 133 "bsqon.y"
+#line 134 "bsqon.y"
                         { (yyval.bsqon_t) = BSQON_AST_NominalNodeCreate((yyvsp[0].str), NULL); }
-#line 1883 "bsqon.tab.c"
+#line 1884 "bsqon.tab.c"
     break;
 
   case 11: /* bsqonnominaltype: "type name" bsqontermslist  */
-#line 134 "bsqon.y"
+#line 135 "bsqon.y"
                                          { (yyval.bsqon_t) = BSQON_AST_NominalNodeCreate((yyvsp[-1].str), (yyvsp[0].bsqon_t_list)); }
-#line 1889 "bsqon.tab.c"
+#line 1890 "bsqon.tab.c"
     break;
 
   case 12: /* bsqonnominaltype: bsqonnominaltype "::" "type name"  */
-#line 135 "bsqon.y"
+#line 136 "bsqon.y"
                                                             { (yyval.bsqon_t) = BSQON_AST_NominalExtNodeCreate(BSQON_AST_asNominalNode((yyvsp[-2].bsqon_t)), (yyvsp[0].str)); }
-#line 1895 "bsqon.tab.c"
+#line 1896 "bsqon.tab.c"
     break;
 
   case 13: /* bsqontermslist: '<' bsqontype '>'  */
-#line 139 "bsqon.y"
+#line 140 "bsqon.y"
                      { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCons((yyvsp[-1].bsqon_t), NULL); }
-#line 1901 "bsqon.tab.c"
+#line 1902 "bsqon.tab.c"
     break;
 
   case 14: /* bsqontermslist: '<' bsqontypel bsqontype '>'  */
-#line 140 "bsqon.y"
+#line 141 "bsqon.y"
                                   { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons((yyvsp[-1].bsqon_t), (yyvsp[-2].bsqon_t_list))); }
-#line 1907 "bsqon.tab.c"
+#line 1908 "bsqon.tab.c"
     break;
 
   case 15: /* bsqontermslist: '<' error '>'  */
-#line 141 "bsqon.y"
+#line 142 "bsqon.y"
                    { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), NULL); yyerrok; }
-#line 1913 "bsqon.tab.c"
+#line 1914 "bsqon.tab.c"
     break;
 
   case 16: /* bsqontermslist: '<' bsqontypel error '>'  */
-#line 142 "bsqon.y"
+#line 143 "bsqon.y"
                               { (yyval.bsqon_t_list) = BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), (yyvsp[-2].bsqon_t_list))); yyerrok; }
-#line 1919 "bsqon.tab.c"
+#line 1920 "bsqon.tab.c"
     break;
 
   case 17: /* bsqontupletype: '[' ']'  */
-#line 146 "bsqon.y"
+#line 147 "bsqon.y"
            { (yyval.bsqon_t) = BSQON_AST_TupleNodeCreate(NULL); }
-#line 1925 "bsqon.tab.c"
+#line 1926 "bsqon.tab.c"
     break;
 
   case 18: /* bsqontupletype: '[' bsqontype ']'  */
-#line 147 "bsqon.y"
+#line 148 "bsqon.y"
                        { (yyval.bsqon_t) = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons((yyvsp[-1].bsqon_t), NULL)); }
-#line 1931 "bsqon.tab.c"
+#line 1932 "bsqon.tab.c"
     break;
 
   case 19: /* bsqontupletype: '[' bsqontypel bsqontype ']'  */
-#line 148 "bsqon.y"
+#line 149 "bsqon.y"
                                   { (yyval.bsqon_t) = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons((yyvsp[-1].bsqon_t), (yyvsp[-2].bsqon_t_list)))); }
-#line 1937 "bsqon.tab.c"
+#line 1938 "bsqon.tab.c"
     break;
 
   case 20: /* bsqontupletype: '[' error ']'  */
-#line 149 "bsqon.y"
+#line 150 "bsqon.y"
                    { (yyval.bsqon_t) = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), NULL)); yyerrok; }
-#line 1943 "bsqon.tab.c"
+#line 1944 "bsqon.tab.c"
     break;
 
   case 21: /* bsqontupletype: '[' bsqontypel error ']'  */
-#line 150 "bsqon.y"
+#line 151 "bsqon.y"
                               { (yyval.bsqon_t) = BSQON_AST_TupleNodeCreate(BSQON_TYPE_AST_ListCompleteParse(BSQON_TYPE_AST_ListCons(BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), (yyvsp[-2].bsqon_t_list)))); yyerrok; }
-#line 1949 "bsqon.tab.c"
+#line 1950 "bsqon.tab.c"
     break;
 
   case 22: /* bsqonrecordtype: '{' '}'  */
-#line 154 "bsqon.y"
+#line 155 "bsqon.y"
            { (yyval.bsqon_t) = BSQON_AST_RecordNodeCreate(NULL); }
-#line 1955 "bsqon.tab.c"
+#line 1956 "bsqon.tab.c"
     break;
 
   case 23: /* bsqonrecordtype: '{' "identifier" ":" bsqontype '}'  */
-#line 155 "bsqon.y"
+#line 156 "bsqon.y"
                                                   { (yyval.bsqon_t) = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon_t)), NULL)); }
-#line 1961 "bsqon.tab.c"
+#line 1962 "bsqon.tab.c"
     break;
 
   case 24: /* bsqonrecordtype: '{' bsqonnametypel "identifier" ":" bsqontype '}'  */
-#line 156 "bsqon.y"
+#line 157 "bsqon.y"
                                                                  { (yyval.bsqon_t) = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon_t)), (yyvsp[-4].bsqon_t_namedlist)))); }
-#line 1967 "bsqon.tab.c"
+#line 1968 "bsqon.tab.c"
     break;
 
   case 25: /* bsqonrecordtype: '{' "identifier" ":" error '}'  */
-#line 157 "bsqon.y"
+#line 158 "bsqon.y"
                                               { (yyval.bsqon_t) = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), NULL)); yyerrok; }
-#line 1973 "bsqon.tab.c"
+#line 1974 "bsqon.tab.c"
     break;
 
   case 26: /* bsqonrecordtype: '{' bsqonnametypel "identifier" ":" error '}'  */
-#line 158 "bsqon.y"
+#line 159 "bsqon.y"
                                                              { (yyval.bsqon_t) = BSQON_AST_RecordNodeCreate(BSQON_TYPE_AST_NamedListCompleteParse(BSQON_TYPE_AST_NamedListCons(BSQON_TYPE_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), (yyvsp[-4].bsqon_t_namedlist)))); yyerrok; }
-#line 1979 "bsqon.tab.c"
+#line 1980 "bsqon.tab.c"
     break;
 
   case 27: /* bsqontype: bsqonnominaltype  */
-#line 162 "bsqon.y"
+#line 163 "bsqon.y"
                     { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 1985 "bsqon.tab.c"
+#line 1986 "bsqon.tab.c"
     break;
 
   case 28: /* bsqontype: bsqontupletype  */
-#line 163 "bsqon.y"
+#line 164 "bsqon.y"
                     { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 1991 "bsqon.tab.c"
+#line 1992 "bsqon.tab.c"
     break;
 
   case 29: /* bsqontype: bsqonrecordtype  */
-#line 164 "bsqon.y"
+#line 165 "bsqon.y"
                      { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 1997 "bsqon.tab.c"
+#line 1998 "bsqon.tab.c"
     break;
 
   case 30: /* bsqontype: bsqontype SYM_AMP bsqontype  */
-#line 165 "bsqon.y"
+#line 166 "bsqon.y"
                                  { (yyval.bsqon_t) = BSQON_AST_ConjunctionCreate((yyvsp[-2].bsqon_t), (yyvsp[0].bsqon_t)); }
-#line 2003 "bsqon.tab.c"
+#line 2004 "bsqon.tab.c"
     break;
 
   case 31: /* bsqontype: bsqontype SYM_BAR bsqontype  */
-#line 166 "bsqon.y"
+#line 167 "bsqon.y"
                                  { (yyval.bsqon_t) = BSQON_AST_UnionCreate((yyvsp[-2].bsqon_t), (yyvsp[0].bsqon_t)); }
-#line 2009 "bsqon.tab.c"
+#line 2010 "bsqon.tab.c"
     break;
 
   case 32: /* bsqontype: '(' bsqontype ')'  */
-#line 167 "bsqon.y"
+#line 168 "bsqon.y"
                        { (yyval.bsqon_t) = (yyvsp[-1].bsqon_t); }
-#line 2015 "bsqon.tab.c"
+#line 2016 "bsqon.tab.c"
     break;
 
   case 33: /* bsqontype: '(' error ')'  */
-#line 168 "bsqon.y"
+#line 169 "bsqon.y"
                    { (yyval.bsqon_t) = BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))); yyerrok; }
-#line 2021 "bsqon.tab.c"
+#line 2022 "bsqon.tab.c"
     break;
 
   case 34: /* bsqontspec: bsqonnominaltype  */
-#line 172 "bsqon.y"
+#line 173 "bsqon.y"
                     { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 2027 "bsqon.tab.c"
+#line 2028 "bsqon.tab.c"
     break;
 
   case 35: /* bsqontspec: bsqontupletype  */
-#line 173 "bsqon.y"
+#line 174 "bsqon.y"
                     { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 2033 "bsqon.tab.c"
+#line 2034 "bsqon.tab.c"
     break;
 
   case 36: /* bsqontspec: bsqonrecordtype  */
-#line 174 "bsqon.y"
+#line 175 "bsqon.y"
                      { (yyval.bsqon_t) = (yyvsp[0].bsqon_t); }
-#line 2039 "bsqon.tab.c"
+#line 2040 "bsqon.tab.c"
     break;
 
   case 37: /* bsqonliteral: "none"  */
-#line 182 "bsqon.y"
+#line 183 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_None, MK_SPOS_S((yylsp[0]))); }
-#line 2045 "bsqon.tab.c"
+#line 2046 "bsqon.tab.c"
     break;
 
   case 38: /* bsqonliteral: "nothing"  */
-#line 183 "bsqon.y"
+#line 184 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_Nothing, MK_SPOS_S((yylsp[0]))); }
-#line 2051 "bsqon.tab.c"
+#line 2052 "bsqon.tab.c"
     break;
 
   case 39: /* bsqonliteral: "true"  */
-#line 184 "bsqon.y"
+#line 185 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_True, MK_SPOS_S((yylsp[0]))); }
-#line 2057 "bsqon.tab.c"
+#line 2058 "bsqon.tab.c"
     break;
 
   case 40: /* bsqonliteral: "false"  */
-#line 185 "bsqon.y"
+#line 186 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_False, MK_SPOS_S((yylsp[0]))); }
-#line 2063 "bsqon.tab.c"
+#line 2064 "bsqon.tab.c"
     break;
 
   case 41: /* bsqonliteral: TOKEN_NAT  */
-#line 186 "bsqon.y"
+#line 187 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Nat, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2069 "bsqon.tab.c"
+#line 2070 "bsqon.tab.c"
     break;
 
   case 42: /* bsqonliteral: TOKEN_INT  */
-#line 187 "bsqon.y"
+#line 188 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Int, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2075 "bsqon.tab.c"
+#line 2076 "bsqon.tab.c"
     break;
 
   case 43: /* bsqonliteral: TOKEN_BIG_NAT  */
-#line 188 "bsqon.y"
+#line 189 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_BigNat, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2081 "bsqon.tab.c"
+#line 2082 "bsqon.tab.c"
     break;
 
   case 44: /* bsqonliteral: TOKEN_BIG_INT  */
-#line 189 "bsqon.y"
+#line 190 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_BigInt, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2087 "bsqon.tab.c"
+#line 2088 "bsqon.tab.c"
     break;
 
   case 45: /* bsqonliteral: TOKEN_RATIONAL  */
-#line 190 "bsqon.y"
+#line 191 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Rational, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2093 "bsqon.tab.c"
+#line 2094 "bsqon.tab.c"
     break;
 
   case 46: /* bsqonliteral: TOKEN_FLOAT  */
-#line 191 "bsqon.y"
+#line 192 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Float, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2099 "bsqon.tab.c"
+#line 2100 "bsqon.tab.c"
     break;
 
   case 47: /* bsqonliteral: TOKEN_DOUBLE  */
-#line 192 "bsqon.y"
+#line 193 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Decimal, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2105 "bsqon.tab.c"
+#line 2106 "bsqon.tab.c"
     break;
 
   case 48: /* bsqonliteral: TOKEN_BYTE_BUFFER  */
-#line 193 "bsqon.y"
+#line 194 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_ByteBuffer, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2111 "bsqon.tab.c"
+#line 2112 "bsqon.tab.c"
     break;
 
   case 49: /* bsqonliteral: TOKEN_UUID_V4  */
-#line 194 "bsqon.y"
+#line 195 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv4, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2117 "bsqon.tab.c"
+#line 2118 "bsqon.tab.c"
     break;
 
   case 50: /* bsqonliteral: TOKEN_UUID_V7  */
-#line 195 "bsqon.y"
+#line 196 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UUIDv7, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2123 "bsqon.tab.c"
+#line 2124 "bsqon.tab.c"
     break;
 
   case 51: /* bsqonliteral: TOKEN_SHA_HASH  */
-#line 196 "bsqon.y"
+#line 197 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_SHAHashcode, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2129 "bsqon.tab.c"
+#line 2130 "bsqon.tab.c"
     break;
 
   case 52: /* bsqonliteral: TOKEN_STRING  */
-#line 197 "bsqon.y"
+#line 198 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_String, MK_SPOS_S((yylsp[0])), (yyvsp[0].bstr)); }
-#line 2135 "bsqon.tab.c"
+#line 2136 "bsqon.tab.c"
     break;
 
   case 53: /* bsqonliteral: TOKEN_ASCII_STRING  */
-#line 198 "bsqon.y"
+#line 199 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_ASCIIString, MK_SPOS_S((yylsp[0])), (yyvsp[0].bstr)); }
-#line 2141 "bsqon.tab.c"
+#line 2142 "bsqon.tab.c"
     break;
 
   case 54: /* bsqonliteral: TOKEN_PATH_ITEM  */
-#line 199 "bsqon.y"
+#line 200 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S((yylsp[0])), (yyvsp[0].bstr)); }
-#line 2147 "bsqon.tab.c"
+#line 2148 "bsqon.tab.c"
     break;
 
   case 55: /* bsqonliteral: TOKEN_REGEX  */
-#line 200 "bsqon.y"
+#line 201 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_Regex, MK_SPOS_S((yylsp[0])), (yyvsp[0].bstr)); }
-#line 2153 "bsqon.tab.c"
+#line 2154 "bsqon.tab.c"
     break;
 
   case 56: /* bsqonliteral: TOKEN_DATE_TIME  */
-#line 201 "bsqon.y"
+#line 202 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_DateTime, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2159 "bsqon.tab.c"
+#line 2160 "bsqon.tab.c"
     break;
 
   case 57: /* bsqonliteral: TOKEN_UTC_DATE_TIME  */
-#line 202 "bsqon.y"
+#line 203 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_UTCDateTime, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2165 "bsqon.tab.c"
+#line 2166 "bsqon.tab.c"
     break;
 
   case 58: /* bsqonliteral: TOKEN_PLAIN_DATE  */
-#line 203 "bsqon.y"
+#line 204 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_PlainDate, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2171 "bsqon.tab.c"
+#line 2172 "bsqon.tab.c"
     break;
 
   case 59: /* bsqonliteral: TOKEN_PLAIN_TIME  */
-#line 204 "bsqon.y"
+#line 205 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_PlainTime, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2177 "bsqon.tab.c"
+#line 2178 "bsqon.tab.c"
     break;
 
   case 60: /* bsqonliteral: TOKEN_LOGICAL_TIME  */
-#line 205 "bsqon.y"
+#line 206 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_LogicalTime, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2183 "bsqon.tab.c"
+#line 2184 "bsqon.tab.c"
     break;
 
   case 61: /* bsqonliteral: TOKEN_TICK_TIME  */
-#line 206 "bsqon.y"
+#line 207 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_TickTime, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2189 "bsqon.tab.c"
+#line 2190 "bsqon.tab.c"
     break;
 
   case 62: /* bsqonliteral: TOKEN_TIMESTAMP  */
-#line 207 "bsqon.y"
+#line 208 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_LiteralStandardNodeCreate(BSQON_AST_TAG_Timestamp, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2195 "bsqon.tab.c"
+#line 2196 "bsqon.tab.c"
     break;
 
   case 63: /* bsqonunspecvar: "unspec identifier"  */
-#line 211 "bsqon.y"
+#line 212 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_UnspecIdentifier, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2201 "bsqon.tab.c"
+#line 2202 "bsqon.tab.c"
     break;
 
   case 64: /* bsqonidentifier: KW_SRC  */
-#line 215 "bsqon.y"
+#line 216 "bsqon.y"
                 { (yyval.bsqon) = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, MK_SPOS_S((yylsp[0])), "$src"); }
-#line 2207 "bsqon.tab.c"
+#line 2208 "bsqon.tab.c"
     break;
 
   case 65: /* bsqonidentifier: "identifier"  */
-#line 216 "bsqon.y"
+#line 217 "bsqon.y"
                       { (yyval.bsqon) = BSQON_AST_NameNodeCreate(BSQON_AST_TAG_Identifier, MK_SPOS_S((yylsp[0])), (yyvsp[0].str)); }
-#line 2213 "bsqon.tab.c"
+#line 2214 "bsqon.tab.c"
     break;
 
   case 67: /* bsqonstringof: TOKEN_STRING bsqonnominaltype  */
-#line 224 "bsqon.y"
+#line 225 "bsqon.y"
                                  { (yyval.bsqon) = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_StringOf, MK_SPOS_R((yylsp[-1]), (yylsp[0])), (yyvsp[-1].bstr), (yyvsp[0].bsqon_t)); }
-#line 2219 "bsqon.tab.c"
+#line 2220 "bsqon.tab.c"
     break;
 
   case 68: /* bsqonstringof: TOKEN_ASCII_STRING bsqonnominaltype  */
-#line 225 "bsqon.y"
+#line 226 "bsqon.y"
                                          { (yyval.bsqon) = BSQON_AST_StringOfNodeCreate(BSQON_AST_TAG_ASCIIStringOf, MK_SPOS_R((yylsp[-1]), (yylsp[0])), (yyvsp[-1].bstr), (yyvsp[0].bsqon_t)); }
-#line 2225 "bsqon.tab.c"
+#line 2226 "bsqon.tab.c"
     break;
 
   case 69: /* bsqonpath: TOKEN_PATH_ITEM bsqonnominaltype  */
-#line 229 "bsqon.y"
+#line 230 "bsqon.y"
                                     { (yyval.bsqon) = BSQON_AST_PathNodeCreate(MK_SPOS_R((yylsp[-1]), (yylsp[0])), BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S((yylsp[-1])), (yyvsp[-1].bstr)), (yyvsp[0].bsqon_t)); }
-#line 2231 "bsqon.tab.c"
+#line 2232 "bsqon.tab.c"
     break;
 
   case 70: /* bsqontypeliteral: "numberino" SYM_UNDERSCORE bsqonnominaltype  */
-#line 233 "bsqon.y"
+#line 234 "bsqon.y"
                                                    {
       yyerror("Missing numeric specifier");
       (yyval.bsqon) = BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-2])));
    }
-#line 2240 "bsqon.tab.c"
+#line 2241 "bsqon.tab.c"
     break;
 
   case 71: /* bsqontypeliteral: "none" SYM_UNDERSCORE bsqonnominaltype  */
-#line 237 "bsqon.y"
+#line 238 "bsqon.y"
                                              {
       yyerror("Cannot have a typedecl of none or nothing");
       (yyval.bsqon) = BSQON_AST_ErrorNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])));
    }
-#line 2249 "bsqon.tab.c"
+#line 2250 "bsqon.tab.c"
     break;
 
   case 72: /* bsqontypeliteral: "nothing" SYM_UNDERSCORE bsqonnominaltype  */
-#line 241 "bsqon.y"
+#line 242 "bsqon.y"
                                                 {
       yyerror("Cannot have a typedecl of none or nothing");
       (yyval.bsqon) = BSQON_AST_ErrorNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])));
    }
-#line 2258 "bsqon.tab.c"
+#line 2259 "bsqon.tab.c"
     break;
 
   case 73: /* bsqontypeliteral: bsqonliteral SYM_UNDERSCORE bsqonnominaltype  */
-#line 245 "bsqon.y"
+#line 246 "bsqon.y"
                                                   {
       (yyval.bsqon) = BSQON_AST_TypedLiteralNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), (yyvsp[-2].bsqon), (yyvsp[0].bsqon_t));
    }
-#line 2266 "bsqon.tab.c"
+#line 2267 "bsqon.tab.c"
     break;
 
   case 80: /* bsqonterminal: bsqontypeliteral  */
-#line 251 "bsqon.y"
+#line 252 "bsqon.y"
                                                                                                                           { (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2272 "bsqon.tab.c"
+#line 2273 "bsqon.tab.c"
     break;
 
   case 81: /* bsqon_mapentry: bsqonval SYM_ENTRY bsqonval  */
-#line 255 "bsqon.y"
+#line 256 "bsqon.y"
                                { (yyval.bsqon) = BSQON_AST_MapEntryNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), (yyvsp[-2].bsqon), (yyvsp[0].bsqon)); }
-#line 2278 "bsqon.tab.c"
+#line 2279 "bsqon.tab.c"
     break;
 
   case 82: /* bsqon_mapentry: error SYM_ENTRY bsqonval  */
-#line 256 "bsqon.y"
+#line 257 "bsqon.y"
                               { (yyval.bsqon) = BSQON_AST_MapEntryNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-2]))), (yyvsp[0].bsqon)); yyerrok; }
-#line 2284 "bsqon.tab.c"
+#line 2285 "bsqon.tab.c"
     break;
 
   case 83: /* bsqon_mapentry: bsqonval SYM_ENTRY error  */
-#line 257 "bsqon.y"
+#line 258 "bsqon.y"
                               { (yyval.bsqon) = BSQON_AST_MapEntryNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), (yyvsp[-2].bsqon), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[0])))); yyerrok; }
-#line 2290 "bsqon.tab.c"
+#line 2291 "bsqon.tab.c"
     break;
 
   case 84: /* bsqon_mapentry: error SYM_ENTRY error  */
-#line 258 "bsqon.y"
+#line 259 "bsqon.y"
                            { (yyval.bsqon) = BSQON_AST_MapEntryNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-2]))), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[0])))); yyerrok; }
-#line 2296 "bsqon.tab.c"
+#line 2297 "bsqon.tab.c"
     break;
 
   case 85: /* bsqonvall: bsqonvall bsqonl_entry  */
-#line 262 "bsqon.y"
+#line 263 "bsqon.y"
                           { (yyval.bsqon_list) = BSQON_AST_ListCons((yyvsp[0].bsqon), (yyvsp[-1].bsqon_list)); }
-#line 2302 "bsqon.tab.c"
+#line 2303 "bsqon.tab.c"
     break;
 
   case 86: /* bsqonvall: bsqonl_entry  */
-#line 263 "bsqon.y"
+#line 264 "bsqon.y"
                   { (yyval.bsqon_list) = BSQON_AST_ListCons((yyvsp[0].bsqon), NULL); }
-#line 2308 "bsqon.tab.c"
+#line 2309 "bsqon.tab.c"
     break;
 
   case 87: /* bsqonl_entry: bsqon_braceval ","  */
-#line 267 "bsqon.y"
+#line 268 "bsqon.y"
                             { (yyval.bsqon) = (yyvsp[-1].bsqon); }
-#line 2314 "bsqon.tab.c"
+#line 2315 "bsqon.tab.c"
     break;
 
   case 88: /* bsqonl_entry: error ","  */
-#line 268 "bsqon.y"
+#line 269 "bsqon.y"
                      { (yyval.bsqon) = BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))); yyerrok; }
-#line 2320 "bsqon.tab.c"
+#line 2321 "bsqon.tab.c"
     break;
 
   case 89: /* bsqonbracketvalue: '[' ']'  */
-#line 272 "bsqon.y"
+#line 273 "bsqon.y"
            { (yyval.bsqon) = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R((yylsp[-1]), (yylsp[0])), NULL); }
-#line 2326 "bsqon.tab.c"
+#line 2327 "bsqon.tab.c"
     break;
 
   case 90: /* bsqonbracketvalue: '[' bsqonval ']'  */
-#line 273 "bsqon.y"
+#line 274 "bsqon.y"
                       { (yyval.bsqon) = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_ListCons((yyvsp[-1].bsqon), NULL)); }
-#line 2332 "bsqon.tab.c"
+#line 2333 "bsqon.tab.c"
     break;
 
   case 91: /* bsqonbracketvalue: '[' bsqonvall bsqonval ']'  */
-#line 274 "bsqon.y"
+#line 275 "bsqon.y"
                                 { (yyval.bsqon) = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), BSQON_AST_ListCompleteParse(BSQON_AST_ListCons((yyvsp[-1].bsqon), (yyvsp[-2].bsqon_list)))); }
-#line 2338 "bsqon.tab.c"
+#line 2339 "bsqon.tab.c"
     break;
 
   case 92: /* bsqonbracketvalue: '[' error ']'  */
-#line 275 "bsqon.y"
+#line 276 "bsqon.y"
                    { (yyval.bsqon) = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), NULL)); yyerrok; }
-#line 2344 "bsqon.tab.c"
+#line 2345 "bsqon.tab.c"
     break;
 
   case 93: /* bsqonbracketvalue: '[' bsqonvall error ']'  */
-#line 276 "bsqon.y"
+#line 277 "bsqon.y"
                              { (yyval.bsqon) = BSQON_AST_BracketValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), BSQON_AST_ListCompleteParse(BSQON_AST_ListCons(BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1]))), (yyvsp[-2].bsqon_list)))); yyerrok; }
-#line 2350 "bsqon.tab.c"
+#line 2351 "bsqon.tab.c"
     break;
 
   case 94: /* bsqonnamevall: bsqonnamevall bsqonnameval_entry  */
-#line 280 "bsqon.y"
+#line 281 "bsqon.y"
                                     { (yyval.bsqon_namedlist) = BSQON_AST_NamedListCons((yyvsp[0].bsqon_nameval_entry), (yyvsp[-1].bsqon_namedlist)); }
-#line 2356 "bsqon.tab.c"
+#line 2357 "bsqon.tab.c"
     break;
 
   case 95: /* bsqonnamevall: bsqonnameval_entry  */
-#line 281 "bsqon.y"
+#line 282 "bsqon.y"
                         { (yyval.bsqon_namedlist) = BSQON_AST_NamedListCons((yyvsp[0].bsqon_nameval_entry), NULL); }
-#line 2362 "bsqon.tab.c"
+#line 2363 "bsqon.tab.c"
     break;
 
   case 97: /* bsqon_braceval: bsqon_mapentry  */
-#line 285 "bsqon.y"
+#line 286 "bsqon.y"
                              { (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2368 "bsqon.tab.c"
+#line 2369 "bsqon.tab.c"
     break;
 
   case 98: /* bsqonnameval_entry: "identifier" SYM_EQUALS bsqonval ","  */
-#line 289 "bsqon.y"
+#line 290 "bsqon.y"
                                                   { (yyval.bsqon_nameval_entry) = BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon)); }
-#line 2374 "bsqon.tab.c"
+#line 2375 "bsqon.tab.c"
     break;
 
   case 99: /* bsqonnameval_entry: "identifier" SYM_EQUALS error ","  */
-#line 290 "bsqon.y"
+#line 291 "bsqon.y"
                                                  { (yyval.bsqon_nameval_entry) = BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))); yyerrok; }
-#line 2380 "bsqon.tab.c"
+#line 2381 "bsqon.tab.c"
     break;
 
   case 100: /* bsqonnameval_entry: bsqon_braceval ","  */
-#line 291 "bsqon.y"
+#line 292 "bsqon.y"
                               { (yyval.bsqon_nameval_entry) = BSQON_AST_NamedListEntryCreate(NULL, (yyvsp[-1].bsqon)); }
-#line 2386 "bsqon.tab.c"
+#line 2387 "bsqon.tab.c"
     break;
 
   case 101: /* bsqonnameval_entry: error ","  */
-#line 292 "bsqon.y"
+#line 293 "bsqon.y"
                      { (yyval.bsqon_nameval_entry) = BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))); yyerrok; }
-#line 2392 "bsqon.tab.c"
+#line 2393 "bsqon.tab.c"
     break;
 
   case 102: /* bsqonbracevalue: '{' '}'  */
-#line 296 "bsqon.y"
+#line 297 "bsqon.y"
            { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-1]), (yylsp[0])), NULL); }
-#line 2398 "bsqon.tab.c"
+#line 2399 "bsqon.tab.c"
     break;
 
   case 103: /* bsqonbracevalue: '{' "identifier" SYM_EQUALS bsqonval '}'  */
-#line 297 "bsqon.y"
+#line 298 "bsqon.y"
                                                   { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-4]), (yylsp[0])), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon)), NULL)); }
-#line 2404 "bsqon.tab.c"
+#line 2405 "bsqon.tab.c"
     break;
 
   case 104: /* bsqonbracevalue: '{' bsqonnamevall "identifier" SYM_EQUALS bsqonval '}'  */
-#line 298 "bsqon.y"
+#line 299 "bsqon.y"
                                                                 { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-5]), (yylsp[0])), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), (yyvsp[-1].bsqon)), (yyvsp[-4].bsqon_namedlist)))); }
-#line 2410 "bsqon.tab.c"
+#line 2411 "bsqon.tab.c"
     break;
 
   case 105: /* bsqonbracevalue: '{' "identifier" SYM_EQUALS error '}'  */
-#line 299 "bsqon.y"
+#line 300 "bsqon.y"
                                                { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-4]), (yylsp[0])), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), NULL)); yyerrok; }
-#line 2416 "bsqon.tab.c"
+#line 2417 "bsqon.tab.c"
     break;
 
   case 106: /* bsqonbracevalue: '{' bsqonnamevall "identifier" SYM_EQUALS error '}'  */
-#line 300 "bsqon.y"
+#line 301 "bsqon.y"
                                                              { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-5]), (yylsp[0])), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate((yyvsp[-3].str), BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), (yyvsp[-4].bsqon_namedlist)))); yyerrok; }
-#line 2422 "bsqon.tab.c"
+#line 2423 "bsqon.tab.c"
     break;
 
   case 107: /* bsqonbracevalue: '{' bsqon_braceval '}'  */
-#line 301 "bsqon.y"
+#line 302 "bsqon.y"
                             { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, (yyvsp[-1].bsqon)), NULL)); }
-#line 2428 "bsqon.tab.c"
+#line 2429 "bsqon.tab.c"
     break;
 
   case 108: /* bsqonbracevalue: '{' bsqonnamevall bsqon_braceval '}'  */
-#line 302 "bsqon.y"
+#line 303 "bsqon.y"
                                           { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, (yyvsp[-1].bsqon)), (yyvsp[-2].bsqon_namedlist)))); }
-#line 2434 "bsqon.tab.c"
+#line 2435 "bsqon.tab.c"
     break;
 
   case 109: /* bsqonbracevalue: '{' error '}'  */
-#line 303 "bsqon.y"
+#line 304 "bsqon.y"
                    { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-2]), (yylsp[0])), BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), NULL)); yyerrok; }
-#line 2440 "bsqon.tab.c"
+#line 2441 "bsqon.tab.c"
     break;
 
   case 110: /* bsqonbracevalue: '{' bsqonnamevall error '}'  */
-#line 304 "bsqon.y"
+#line 305 "bsqon.y"
                                  { (yyval.bsqon) = BSQON_AST_BraceValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), BSQON_AST_NamedListCompleteParse(BSQON_AST_NamedListCons(BSQON_AST_NamedListEntryCreate(NULL, BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))), (yyvsp[-2].bsqon_namedlist)))); yyerrok; }
-#line 2446 "bsqon.tab.c"
+#line 2447 "bsqon.tab.c"
     break;
 
   case 112: /* bsqonbracketbracevalue: bsqonbracevalue  */
-#line 308 "bsqon.y"
+#line 309 "bsqon.y"
                                        { (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2452 "bsqon.tab.c"
+#line 2453 "bsqon.tab.c"
     break;
 
   case 113: /* bsqontypedvalue: '<' bsqontspec '>' bsqonbracketbracevalue  */
-#line 312 "bsqon.y"
+#line 313 "bsqon.y"
                                              { (yyval.bsqon) = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), (yyvsp[0].bsqon), (yyvsp[-2].bsqon_t)); }
-#line 2458 "bsqon.tab.c"
+#line 2459 "bsqon.tab.c"
     break;
 
   case 114: /* bsqontypedvalue: bsqonnominaltype bsqonbracketbracevalue  */
-#line 313 "bsqon.y"
+#line 314 "bsqon.y"
                                              { (yyval.bsqon) = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R((yylsp[-1]), (yylsp[0])), (yyvsp[0].bsqon), (yyvsp[-1].bsqon_t)); }
-#line 2464 "bsqon.tab.c"
+#line 2465 "bsqon.tab.c"
     break;
 
   case 115: /* bsqontypedvalue: '<' error '>' bsqonbracketbracevalue  */
-#line 314 "bsqon.y"
+#line 315 "bsqon.y"
                                           { (yyval.bsqon) = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R((yylsp[-3]), (yylsp[0])), (yyvsp[0].bsqon), BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-2])))); }
-#line 2470 "bsqon.tab.c"
+#line 2471 "bsqon.tab.c"
     break;
 
   case 116: /* bsqontypedvalue: error bsqonbracketbracevalue  */
-#line 315 "bsqon.y"
+#line 316 "bsqon.y"
                                   { (yyval.bsqon) = BSQON_AST_TypedValueNodeCreate(MK_SPOS_R((yylsp[-1]), (yylsp[0])), (yyvsp[0].bsqon), BSQON_TYPE_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[-1])))); }
-#line 2476 "bsqon.tab.c"
+#line 2477 "bsqon.tab.c"
     break;
 
   case 118: /* bsqonstructvalue: bsqontypedvalue  */
-#line 319 "bsqon.y"
+#line 320 "bsqon.y"
                                             { (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2482 "bsqon.tab.c"
+#line 2483 "bsqon.tab.c"
     break;
 
   case 119: /* bsqonspecialcons: "something" '(' bsqonval ')'  */
-#line 323 "bsqon.y"
+#line 324 "bsqon.y"
                                  { (yyval.bsqon) = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_SomethingCons, MK_SPOS_R((yylsp[-3]), (yylsp[0])), (yyvsp[-1].bsqon), "some"); }
-#line 2488 "bsqon.tab.c"
+#line 2489 "bsqon.tab.c"
     break;
 
   case 120: /* bsqonspecialcons: "ok" '(' bsqonval ')'  */
-#line 324 "bsqon.y"
+#line 325 "bsqon.y"
                             { (yyval.bsqon) = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_OkCons, MK_SPOS_R((yylsp[-3]), (yylsp[0])), (yyvsp[-1].bsqon), "ok"); }
-#line 2494 "bsqon.tab.c"
+#line 2495 "bsqon.tab.c"
     break;
 
   case 121: /* bsqonspecialcons: "err" '(' bsqonval ')'  */
-#line 325 "bsqon.y"
+#line 326 "bsqon.y"
                              { (yyval.bsqon) = BSQON_AST_SpecialConsNodeCreate(BSQON_AST_TAG_ErrCons, MK_SPOS_R((yylsp[-3]), (yylsp[0])), (yyvsp[-1].bsqon), "err"); }
-#line 2500 "bsqon.tab.c"
+#line 2501 "bsqon.tab.c"
     break;
 
   case 124: /* bsqonval: bsqonstructvalue  */
-#line 329 "bsqon.y"
+#line 330 "bsqon.y"
                                                       { (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2506 "bsqon.tab.c"
+#line 2507 "bsqon.tab.c"
     break;
 
   case 125: /* bsqonroot: bsqonval  */
-#line 333 "bsqon.y"
+#line 338 "bsqon.y"
             { yybsqonval = (yyvsp[0].bsqon); (yyval.bsqon) = (yyvsp[0].bsqon); }
-#line 2512 "bsqon.tab.c"
+#line 2513 "bsqon.tab.c"
     break;
 
   case 126: /* bsqonroot: error  */
-#line 334 "bsqon.y"
+#line 339 "bsqon.y"
            {yybsqonval = BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[0]))); (yyval.bsqon) = BSQON_AST_ErrorNodeCreate(MK_SPOS_S((yylsp[0]))); }
-#line 2518 "bsqon.tab.c"
+#line 2519 "bsqon.tab.c"
     break;
 
 
-#line 2522 "bsqon.tab.c"
+#line 2523 "bsqon.tab.c"
 
       default: break;
     }
@@ -2747,7 +2748,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 335 "bsqon.y"
+#line 340 "bsqon.y"
 
 
 extern FILE* yyin;

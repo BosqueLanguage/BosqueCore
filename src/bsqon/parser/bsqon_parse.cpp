@@ -17,6 +17,16 @@ namespace BSQON
         TypeTag::TYPE_LIST, TypeTag::TYPE_STACK, TypeTag::TYPE_QUEUE, TypeTag::TYPE_SET, TypeTag::TYPE_MAP_ENTRY, TypeTag::TYPE_MAP
     };
 
+    bool s_isLeapYear(uint16_t y)
+    {
+        if(y == 1900 || y == 2100 || y == 2200) {
+            return false;
+        }
+        else {
+            return y % 4 == 0;
+        }
+    }
+
     bool s_dayInMonth(uint8_t d, uint8_t m, uint16_t y)
     {
         if(m == 1) {
@@ -37,57 +47,47 @@ namespace BSQON
         }
     }
 
-    bool s_isLeapYear(uint16_t y)
-    {
-        if(y == 1900 || y == 2100 || y == 2200) {
-            return false;
-        }
-        else {
-            return y % 4 == 0;
-        }
-    }
-
     bool Parser::isValidNat(const std::string nv, int64_t& vv)
     {
-        auto ecount = sscanf(nv.c_str(), "%" SCNd64, vv);
+        auto ecount = sscanf(nv.c_str(), "%" SCNd64, &vv);
         return ecount == 1 && 0 <= vv && vv <= Type::MAX_SAFE_NUMBER; 
     }
 
     bool Parser::isValidInt(const std::string nv, int64_t& vv)
     {
-        auto ecount = sscanf(nv.c_str(), "%" SCNd64, vv);
+        auto ecount = sscanf(nv.c_str(), "%" SCNd64, &vv);
         return ecount == 1 && Type::MIN_SAFE_NUMBER <= vv && vv <= Type::MAX_SAFE_NUMBER;
     }
 
     bool isValidFloat(const std::string nv, double& vv)
     {
-        auto ecount = sscanf(nv.c_str(), "%", SCNd64, vv);
+        auto ecount = sscanf(nv.c_str(), "%lf", &vv);
         return ecount == 1;
     }
 
     bool Parser::isValidWCTime(const std::string nv, uint64_t& vv)
     {
-        auto ecount = sscanf(nv.c_str(), "%" SCNu64, vv);
+        auto ecount = sscanf(nv.c_str(), "%" SCNu64, &vv);
         return ecount == 1;
     }
 
     bool Parser::processDateInfo(const std::string& ds, uint16_t& yy, uint8_t& mm, uint8_t& dd)
     {
-        auto pp = sscanf(ds.c_str(), "%4" SCNu16 "-%2" SCNu8 "-%2" SCNu8, yy, mm, dd);
+        auto pp = sscanf(ds.c_str(), "%4" SCNu16 "-%2" SCNu8 "-%2" SCNu8, &yy, &mm, &dd);
 
         return pp == 3 && (1900 <= yy && yy <= 2200) && mm < 12 && s_dayInMonth(dd, mm, yy);
     }
 
     bool Parser::processTimeInfo(const std::string& ds, uint8_t& hh, uint8_t& mm, uint8_t& ss)
     {
-        auto pp = sscanf(ds.c_str(), "%2" SCNu8 ":%2" SCNu8 ":%2" SCNu8, hh, mm, ss);
+        auto pp = sscanf(ds.c_str(), "%2" SCNu8 ":%2" SCNu8 ":%2" SCNu8, &hh, &mm, &ss);
 
         return pp == 3 && hh < 24 && mm < 60 && ss < 61;
     }
 
     bool Parser::processMillisInfo(const std::string& ds, uint16_t& millis)
     {
-        auto pp = sscanf(ds.c_str(), ".%3" SCNu16, millis);
+        auto pp = sscanf(ds.c_str(), ".%3" SCNu16, &millis);
 
         return pp == 1 && millis < 1000;
     }
@@ -291,8 +291,7 @@ namespace BSQON
         std::string baseprefix = basenominal.substr(0, basenominal.find("::"));
 
         std::string scopedname;
-        UnicodeString ubasename = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(basenominal);
-        if (this->assembly->namespaces.at("Core")->hasTypenameDecl(ubasename)) {
+        if (this->assembly->namespaces.at("Core")->hasTypenameDecl(basenominal)) {
             scopedname = basenominal;
         }
         else if (this->importmap.find(baseprefix) != this->importmap.end()) {
@@ -571,7 +570,7 @@ namespace BSQON
         return this->resolveAndCheckType(tkey, Parser::convertSrcPos(node->base.pos));
     }
 
-    void Parser::parseConceptSetType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
+    void Parser::parseUnionType_Helper(BSQON_TYPE_AST_Node* node, std::vector<const Type*>& tlist)
     {
         if(node->tag != BSQON_TYPE_AST_TAG_Union) {
             tlist.push_back(this->parseType(node));
