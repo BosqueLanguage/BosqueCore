@@ -2,6 +2,11 @@
 
 #include "bytestring.h"
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 enum BSQON_TYPE_AST_TAG
 {
     BSQON_TYPE_AST_TAG_Error = 1,
@@ -117,3 +122,7 @@ void BSQON_AST_TYPE_printConjunction(struct BSQON_TYPE_AST_Conjunction* node);
 struct BSQON_TYPE_AST_Union* BSQON_AST_asUnion(const struct BSQON_TYPE_AST_Node* node);
 struct BSQON_TYPE_AST_Node* BSQON_AST_UnionCreate(struct BSQON_TYPE_AST_Node* left, struct BSQON_TYPE_AST_Node* right);
 void BSQON_AST_TYPE_printUnion(struct BSQON_TYPE_AST_Union* node);
+
+#ifdef __cplusplus
+}
+#endif

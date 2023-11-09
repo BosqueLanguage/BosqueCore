@@ -59,7 +59,7 @@ namespace BSQON
         return ecount == 1 && Type::MIN_SAFE_NUMBER <= vv && vv <= Type::MAX_SAFE_NUMBER;
     }
 
-    bool isValidFloat(const std::string nv, double& vv)
+    bool Parser::isValidFloat(const std::string nv, double& vv)
     {
         auto ecount = sscanf(nv.c_str(), "%lf", &vv);
         return ecount == 1;

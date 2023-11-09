@@ -6,6 +6,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 #define AST_ALLOC_ALIGN_8(size) (((size) + 7) & ~7)
 #define AST_ALLOC(size) malloc(AST_ALLOC_ALIGN_8(size))
 
@@ -28,3 +33,7 @@ struct AST_SourcePos
 };
 
 struct AST_SourcePos createSourcePos(uint32_t first_line, uint32_t first_column, uint32_t last_line, uint32_t last_column);
+
+#ifdef __cplusplus
+}
+#endif

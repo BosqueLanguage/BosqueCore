@@ -65,7 +65,7 @@ exec(`bison -d${mode === "debug" ? " -Wcex" : ""} bsqon.y && flex bsqon.l`, {cwd
         donetest = true;
         doneop(oerr !== null, oerr !== null ? oerr + ostderr + ostdout : "done obj file build...");
 
-        exec(`g++ -Og -ggdb ${cpp_flags} ${json_includes} -o ${outexec}/bsqon ${bsqon_cpp_files.join(" ")} ${bsqon_obj_files.map((v) => v[1]).join(" ")} bsqon_main.cpp`, {cwd: bsqonsrcdir}, (berr, bstdout, bstderr) => {
+        exec(`g++ -Og -ggdb ${cpp_flags} ${json_includes} -o ${outexec}/bsqon ${bsqon_cpp_files.join(" ")} ${bsqon_obj_files.map((v) => v[1]).join(" ")} bsqon_main.cpp -lgmp`, {cwd: bsqonsrcdir}, (berr, bstdout, bstderr) => {
             donebsqon = true;
             doneop(berr !== null, berr !== null ? berr + bstderr + bstdout : "done bsqon main build...");
         });

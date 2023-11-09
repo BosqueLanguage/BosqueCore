@@ -3,6 +3,11 @@
 #include "bytestring.h"
 #include "bsqon_type_ast.h"
 
+#ifdef __cplusplus
+extern "C" 
+{
+#endif
+
 enum BSQON_AST_TAG
 {
     BSQON_AST_TAG_Error = 1,
@@ -246,3 +251,7 @@ void BSQON_AST_LetInNode_print(struct BSQON_AST_LetInNode* node);
 struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_AST_Node* node);
 struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier);
 void BSQON_AST_ScopedNameNode_print(struct BSQON_AST_ScopedNameNode* node);
+
+#ifdef __cplusplus
+}
+#endif
