@@ -2,6 +2,9 @@
 #include "../info/bsqon.h"
 #include "bsqon_parse.h"
 
+#include <iostream>
+#include <fstream>
+
 int main(int argc, char** argv)
 {
     //argv is a file name to a JSON file
@@ -10,9 +13,18 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-
     //parse the JSON 
-    json jv = ;
+    json jv = nullptr;
+    try
+    {
+        std::ifstream infile(argv[1]);
+        infile >> jv;
+    }
+    catch(const std::exception& e)
+    {
+        printf("Error parsing JSON: %s\n", e.what());
+        exit(1);
+    }
     
     //the property assembly is the code so load it
     if(jv["assembly"].is_null()) {
