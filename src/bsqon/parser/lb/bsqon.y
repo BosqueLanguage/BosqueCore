@@ -13,7 +13,6 @@ void yyerror(const char* s, ...);
 #define MK_SPOS_S(T) (createSourcePos((T).first_line, (T).first_column, (T).last_line, (T).last_column))
 #define MK_SPOS_R(S, E) (createSourcePos((S).first_line, (S).first_column, (E).last_line, (E).last_column))
 
-
 struct BSQON_TYPE_AST_Node* yybsqonval_type;
 struct BSQON_AST_Node* yybsqonval;
 char* filename = "<stdin>";
@@ -410,5 +409,21 @@ int main(int argc, char** argv)
       printf("%s\n", errors[i]);
       fflush(stdout);
    }
+}
+#else
+struct BSQON_AST_Node* parse_from_file(const char* file)
+{
+   if((yyin = fopen(file, "r")) == NULL) {
+      perror(file);
+      exit(1);
+   }
+   
+   if(!yyparse()) {
+      //todo handle errors here!!!!
+      printf("ERROR IN PARSE!\n");
+      exit(1);
+   }
+
+   return yybsqonval;
 }
 #endif

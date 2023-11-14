@@ -111,7 +111,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 31 "bsqon.y"
+#line 30 "bsqon.y"
 
    struct BSQON_TYPE_AST_List* bsqon_t_list;
    struct BSQON_TYPE_AST_NamedListEntry* bsqon_t_nametypel_entry;
