@@ -200,7 +200,7 @@ const KWStrings = [
 const _s_core_types = [
     "None", "Bool", "Int", "Nat", "BigInt", "BigNat", "Rational", "Float", "Decimal", "String", "ASCIIString",
     "ByteBuffer", "DateTime", "UTCDateTime", "PlainDate", "PlainTime", "TickTime", "LogicalTime", "ISOTimeStamp", "UUIDv4", "UUIDv7", "SHAContentHash", 
-    "LatLongCoordinate", "Regex", "Nothing"
+    "Regex", "Nothing"
 ];
 
 const _s_dateTimeNamedExtractRE = /^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})T(?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-9]{2})\.(?<millis>[0-9]{3})(?<timezone>\[[a-zA-Z/ _-]+\]|Z)$/;
@@ -1888,34 +1888,6 @@ class BSQONParser {
         return BSQONParseResultInfo.create(re, this.lookupMustDefType("Regex"), undefined, whistory);
     }
 
-    private parseLatLongCoordinate(whistory: boolean): BSQONParseResult {
-        let llc: [number, number] | undefined = undefined;
-        if (this.m_parsemode !== $Runtime.NotationMode.NOTATION_MODE_JSON) {
-            const ttype = this.expectTokenAndPop(TokenKind.TOKEN_TYPE).value;
-            this.raiseErrorIf(ttype !== "LatLongCoordinate", `Expected LatLongCoordinate but got ${ttype}`);
-    
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACE);
-            const lat = this.parseFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const long = this.parseFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACE);
-    
-            llc = [lat, long];
-        }
-        else {
-            this.expectTokenAndPop(TokenKind.TOKEN_LBRACKET);
-            const lat = this.parseFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_COMMA);
-            const long = this.parseFloat(false);
-            this.expectTokenAndPop(TokenKind.TOKEN_RBRACKET);
-    
-            llc = [lat, long];
-        }
-
-        this.raiseErrorIf(-90.0 <= llc[0] && llc[0] <= 90.0 && -180.0 < llc[1] && llc[1] <= 180.0, `LatLongCoordinate out of range: ${llc}`)
-        return BSQONParseResultInfo.create(llc, this.lookupMustDefType("LatLongCoordinate"), undefined, whistory);
-    }
-
     private parseStringOfWithType(whistory: boolean): [BSQONParseResult, $TypeInfo.BSQTypeKey] {
         const rawtk = this.expectTokenAndPop(TokenKind.TOKEN_STRING).value.slice(1, -1);
         const tk = this.unescapeString(rawtk);
@@ -2596,9 +2568,6 @@ class BSQONParser {
         else if(ttype.tkey === "SHAContentHash") {
             return this.parseSHAContentHash(whistory);
         } 
-        else if(ttype.tkey === "LatLongCoordinate") {
-            return this.parseLatLongCoordinate(whistory);
-        }
         else if(ttype.tkey === "Regex") {
             return this.parseRegex(whistory);
         }

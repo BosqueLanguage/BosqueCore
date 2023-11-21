@@ -28,32 +28,65 @@ namespace BSQON
     //TODO: wstring is not that great for unicode -- at some point we need to switch to UTF8 etc.
     //
     typedef std::u32string UnicodeString;
-    typedef std::basic_regex<char32_t> UnicodeRegex;
-
+ 
     typedef uint32_t CharCode;
     typedef size_t StateID;
 
     class CharCodeIterator
     {
     public:
-        const UnicodeString sstr;
-        int64_t curr;
+        virtual bool valid() const = 0;
+        virtual void advance() = 0;
+        virtual CharCode get() const = 0;
+    };
 
-        CharCodeIterator(UnicodeString& sstr) : sstr(sstr), curr(0) {;}
+    class UnicodeIterator : public CharCodeIterator
+    {
+    public:
+        const UnicodeString* sstr;
+        UnicodeString::const_iterator curr;
+
+        UnicodeIterator(const UnicodeString* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
+        ~UnicodeIterator() {;}
         
-        bool valid() const
+        bool valid() const override
         {
-            return this->curr != (int64_t)this->sstr.size();
+            return this->curr != this->sstr->cend();
         }
 
-        void advance()
+        void advance() override
         {
             this->curr++;
         }
 
-        CharCode get() const
+        CharCode get() const override
         {
-            return this->sstr.at(this->curr);
+            return *this->curr;
+        }
+    };
+
+    class ASCIIIterator : public CharCodeIterator
+    {
+    public:
+        const std::string* sstr;
+        std::string::const_iterator curr;
+
+        ASCIIIterator(const std::string* sstr) : sstr(sstr), curr(sstr->cbegin()) {;}
+        ~ASCIIIterator() {;}
+        
+        bool valid() const override
+        {
+            return this->curr != this->sstr->cend();
+        }
+
+        void advance() override
+        {
+            this->curr++;
+        }
+
+        CharCode get() const override
+        {
+            return *this->curr;
         }
     };
 
@@ -103,7 +136,5 @@ namespace BSQON
         uint8_t sec;     // 0-60
         uint16_t millis; // 0-999
     };
-
-    using TextPosition = int64_t;
 }
 

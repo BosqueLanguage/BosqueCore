@@ -320,6 +320,7 @@ __internal __constructable __enumable __litvaluetype __typedeclable entity ASCII
 
 //<summary>An efficient byte buffer for data.</summary>
 __internal entity ByteBuffer provides Some {
+    //TODO: do we want to make this typedeclable too?
 }
 
 //<summary>Validator for TimeZone</summary>
@@ -372,15 +373,12 @@ __internal __typedeclable __typebase entity PlainDate provides Some, KeyType {
 __internal __typedeclable __typebase entity PlainTime provides Some, KeyType {
     __assume_safe internal function s_create(hour: Nat, min: Nat, sec: Nat): PlainTime = plaintime_create;
 
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): PlainTime
-        requires 1900n <= year && year <= 2200n;
-        requires month < 12n;
-        requires DateOps::s_check_DayInMonth(day, month, year);
+    function create(hour: Nat, min: Nat, sec: Nat): PlainTime
         requires hour < 24n;
         requires min < 60n;
         requires sec < 61n;
     {
-        return PlainTime::s_create(day, hour, min, sec);
+        return PlainTime::s_create(hour, min, sec);
     }
 }
 
@@ -430,18 +428,6 @@ __internal __typedeclable __typebase entity UUIDv7 provides Some, KeyType {
 
 //<summary>Primitive hash value suitable for content addressable operations or crypto secure digests.</summary>
 __internal __typedeclable __typebase entity SHAContentHash provides Some, KeyType {
-}
-
-//<summary>Primitive Lat/Long</summary>
-__internal __typedeclable __typebase entity LatLongCoordinate provides Some {
-    __assume_safe internal function s_create(lat: Float, long: Float): LatLongCoordinate = latlongcoordinate_create;
-
-    function create(lat: Float, long: Float): LatLongCoordinate
-        requires -90.0f <= lat && lat <= 90.0f;
-        requires -180.0f < long && long <= 180.0f;
-    {
-        return LatLongCoordinate::s_create(lat, long);
-    }
 }
 
 //<summary>Primitive regex value.</summary>

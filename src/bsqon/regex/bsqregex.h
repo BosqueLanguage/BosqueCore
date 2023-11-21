@@ -191,6 +191,8 @@ namespace BSQON
         BSQRegexOpt() {;}
         virtual ~BSQRegexOpt() {;}
 
+        virtual std::string toString() const = 0;
+
         static BSQRegexOpt* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const = 0;
     };
@@ -202,6 +204,15 @@ namespace BSQON
 
         BSQLiteralRe(UnicodeString litstr) : BSQRegexOpt(), litstr(litstr) {;}
         virtual ~BSQLiteralRe() {;}
+
+        static std::string escapeCode(CharCode c);
+
+        virtual std::string toString() const override
+        {
+            return std::accumulate(this->litstr.cbegin(), this->litstr.cend(), std::string(), [](std::string&& acc, CharCode c) {
+                return std::move(acc) + escapeCode(c);
+            });
+        }
 
         static BSQLiteralRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
@@ -216,6 +227,20 @@ namespace BSQON
         BSQCharRangeRe(bool compliment, std::vector<SingleCharRange> ranges) : BSQRegexOpt(), compliment(compliment), ranges(ranges) {;}
         virtual ~BSQCharRangeRe() {;}
 
+        static std::string escapeCode(CharCode c);
+
+        virtual std::string toString() const override
+        {
+            return "[" + std::accumulate(this->ranges.cbegin(), this->ranges.cend(), std::string(this->compliment ? "^" : ""), [](std::string&& acc, SingleCharRange cr) {
+                if(cr.low == cr.high) {
+                    return std::move(acc) + escapeCode(cr.low);
+                }
+                else {
+                    return std::move(acc) + escapeCode(cr.low) + "-" + escapeCode(cr.high);
+                }
+            }) + "]";
+        }
+
         static BSQCharRangeRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
     };
@@ -225,6 +250,11 @@ namespace BSQON
     public:
         BSQCharClassDotRe() : BSQRegexOpt() {;}
         virtual ~BSQCharClassDotRe() {;}
+
+        virtual std::string toString() const override
+        {
+            return ".";
+        }
 
         static BSQCharClassDotRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
@@ -240,6 +270,11 @@ namespace BSQON
         virtual ~BSQStarRepeatRe() 
         {
             delete this->opt;
+        }
+
+        virtual std::string toString() const override
+        {
+            return "(" + this->opt->toString() + "*)";
         }
 
         static BSQStarRepeatRe* parse(json j);
@@ -258,6 +293,11 @@ namespace BSQON
             delete this->opt;
         }
 
+        virtual std::string toString() const override
+        {
+            return "(" + this->opt->toString() + "+)";
+        }
+
         static BSQPlusRepeatRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
     };
@@ -266,14 +306,29 @@ namespace BSQON
     {
     public:
         const BSQRegexOpt* opt;
-        const uint8_t low;
-        const uint8_t high;
+        const uint16_t low;
+        const uint16_t high;
 
-        BSQRangeRepeatRe(uint8_t low, uint8_t high, const BSQRegexOpt* opt) : BSQRegexOpt(), opt(opt), low(low), high(high) {;}
+        BSQRangeRepeatRe(uint16_t low, uint16_t high, const BSQRegexOpt* opt) : BSQRegexOpt(), opt(opt), low(low), high(high) {;}
         
         virtual ~BSQRangeRepeatRe() 
         {
             delete this->opt;
+        }
+
+        virtual std::string toString() const override
+        {
+            if(this->high == UINT16_MAX)
+            {
+                return "(" + this->opt->toString() + "{" + std::to_string(this->low) + ",})";
+            }
+            else if(this->low == this->high)
+            {
+                return "(" + this->opt->toString() + "{" + std::to_string(this->low) + "})";
+            }
+            else {
+                return "(" + this->opt->toString() + "{" + std::to_string(this->low) + "," + std::to_string(this->high) + "})";
+            }
         }
 
         static BSQRangeRepeatRe* parse(json j);
@@ -287,6 +342,11 @@ namespace BSQON
 
         BSQOptionalRe(const BSQRegexOpt* opt) : BSQRegexOpt(), opt(opt) {;}
         virtual ~BSQOptionalRe() {;}
+
+        virtual std::string toString() const override
+        {
+            return "(" + this->opt->toString() + "?)";
+        }
 
         static BSQOptionalRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
@@ -304,6 +364,13 @@ namespace BSQON
             for(size_t i = 0; i < this->opts.size(); ++i) {
                 delete this->opts[i];
             }
+        }
+
+        virtual std::string toString() const override
+        {
+            return "(" + std::accumulate(this->opts.cbegin(), this->opts.cend(), std::string(), [](std::string&& acc, const BSQRegexOpt* re) {
+                return std::move(acc) + re->toString() + "|";
+            }) + ")";
         }
 
         static BSQAlternationRe* parse(json j);
@@ -324,6 +391,13 @@ namespace BSQON
             }
         }
 
+        virtual std::string toString() const override
+        {
+            return "(" + std::accumulate(this->opts.cbegin(), this->opts.cend(), std::string(), [](std::string&& acc, const BSQRegexOpt* re) {
+                return std::move(acc) + re->toString();
+            }) + ")";
+        }
+
         static BSQSequenceRe* parse(json j);
         virtual StateID compile(StateID follows, std::vector<NFAOpt*>& states) const override final;
     };
@@ -331,23 +405,33 @@ namespace BSQON
     class BSQRegex
     {
     public:
-        const UnicodeString restr;
         const BSQRegexOpt* re;
         const NFA* nfare;
 
-        BSQRegex(UnicodeString restr, const BSQRegexOpt* re, NFA* nfare): restr(restr), re(re), nfare(nfare) {;}
+        BSQRegex(const BSQRegexOpt* re, NFA* nfare): re(re), nfare(nfare) {;}
         ~BSQRegex() {;}
 
         static BSQRegex* jparse(json j);
 
-        bool test(CharCodeIterator& cci)
+        std::string toString() const 
+        {
+            return re->toString();
+        }
+
+        bool test(CharCodeIterator& cci) const
         {
             return this->nfare->test(cci);
         }
 
-        bool test(UnicodeString& s)
+        bool test(const UnicodeString* s) const
         {
-            CharCodeIterator siter(s);
+            UnicodeIterator siter(s);
+            return this->nfare->test(siter);
+        }
+
+        bool test(const std::string* s) const
+        {
+            ASCIIIterator siter(s);
             return this->nfare->test(siter);
         }
     };

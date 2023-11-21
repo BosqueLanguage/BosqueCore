@@ -32,7 +32,6 @@ namespace BSQON
         virtual std::optional<std::vector<uint8_t>> extractUUID4Impl(const APIModule* apimodule, const IType* itype, ValueRepr value, State& ctx) = 0;
         virtual std::optional<std::vector<uint8_t>> extractUUID7Impl(const APIModule* apimodule, const IType* itype, ValueRepr value, State& ctx) = 0;
         virtual std::optional<std::vector<uint8_t>> extractSHAContentHashImpl(const APIModule* apimodule, const IType* itype, ValueRepr value, State& ctx) = 0;
-        virtual std::optional<std::pair<float, float>> extractLatLongCoordinateImpl(const APIModule* apimodule, const IType* itype, ValueRepr value, State& ctx) = 0;
         
         virtual std::optional<uint64_t> extractEnumImpl(const APIModule* apimodule, const IType* itype, ValueRepr value, State& ctx) = 0;
 
