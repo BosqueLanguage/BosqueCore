@@ -1,5 +1,6 @@
+#line 2 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 
-#line 3 "lex.yy.c"
+#line 4 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -1658,9 +1659,9 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "bsqon.l"
+#line 1 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 #define YY_NO_INPUT 1
-#line 4 "bsqon.l"
+#line 4 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 #include "bsqon.tab.h"
 
 #include "bytestring.h"
@@ -1691,9 +1692,9 @@ void yyerror(const char* s, ...);
   yylloc.first_line = start_line; yylloc.first_column = start_column;    \
   yylloc.last_line = yylineno; yylloc.last_column = yycolumn;              
 
-#line 1695 "lex.yy.c"
+#line 1696 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 
-#line 1697 "lex.yy.c"
+#line 1698 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 
 #define INITIAL 0
 #define STRING 1
@@ -1912,15 +1913,15 @@ YY_DECL
 		}
 
 	{
-#line 53 "bsqon.l"
+#line 53 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 
 
-#line 56 "bsqon.l"
+#line 56 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
   int start_line, start_column;
   int prev_yylineno = yylineno;
 
  /* standard parens */
-#line 1924 "lex.yy.c"
+#line 1925 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1988,514 +1989,514 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
-#line 61 "bsqon.l"
+#line 61 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 2:
-#line 62 "bsqon.l"
+#line 62 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 3:
-#line 63 "bsqon.l"
+#line 63 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 4:
-#line 64 "bsqon.l"
+#line 64 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 5:
-#line 65 "bsqon.l"
+#line 65 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 6:
-#line 66 "bsqon.l"
+#line 66 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 7:
-#line 67 "bsqon.l"
+#line 67 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 case 8:
 YY_RULE_SETUP
-#line 67 "bsqon.l"
+#line 67 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return yytext[0]; }
 	YY_BREAK
 /* symbols */
 case 9:
 YY_RULE_SETUP
-#line 70 "bsqon.l"
+#line 70 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_ELLIPSIS; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 72 "bsqon.l"
+#line 72 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_DOUBLE_COLON; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 73 "bsqon.l"
+#line 73 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_ENTRY; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 75 "bsqon.l"
+#line 75 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_COLON; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 76 "bsqon.l"
+#line 76 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_COMMA; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 77 "bsqon.l"
+#line 77 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_AMP; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 78 "bsqon.l"
+#line 78 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_BAR; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 79 "bsqon.l"
+#line 79 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_BANG; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 80 "bsqon.l"
+#line 80 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_EQUALS; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 81 "bsqon.l"
+#line 81 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_DOT; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 82 "bsqon.l"
+#line 82 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_AT; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 83 "bsqon.l"
+#line 83 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return SYM_UNDERSCORE; }
 	YY_BREAK
 /* keywords */
 case 21:
 YY_RULE_SETUP
-#line 86 "bsqon.l"
+#line 86 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_SOMETHING; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 88 "bsqon.l"
+#line 88 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_NOTHING; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 90 "bsqon.l"
+#line 90 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_FALSE; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 92 "bsqon.l"
+#line 92 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_SRC; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 93 "bsqon.l"
+#line 93 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_NONE; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 94 "bsqon.l"
+#line 94 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_SOME; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 95 "bsqon.l"
+#line 95 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_TRUE; } 
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 97 "bsqon.l"
+#line 97 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_ERR; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 98 "bsqon.l"
+#line 98 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_LET; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 100 "bsqon.l"
+#line 100 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_IN; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 101 "bsqon.l"
+#line 101 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return KW_OK; }
 	YY_BREAK
 /* numbers */
 case 32:
 YY_RULE_SETUP
-#line 104 "bsqon.l"
+#line 104 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_NAT; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 105 "bsqon.l"
+#line 105 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_INT; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 106 "bsqon.l"
+#line 106 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_BIG_NAT; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 107 "bsqon.l"
+#line 107 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_BIG_INT; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 109 "bsqon.l"
+#line 109 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_RATIONAL; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 110 "bsqon.l"
+#line 110 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_RATIONAL; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 112 "bsqon.l"
+#line 112 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Zero cannot be negative"); return YYerror; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 113 "bsqon.l"
+#line 113 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Cannot have negative natural number"); return YYerror; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 114 "bsqon.l"
+#line 114 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 115 "bsqon.l"
+#line 115 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 116 "bsqon.l"
+#line 116 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 117 "bsqon.l"
+#line 117 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 118 "bsqon.l"
+#line 118 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 119 "bsqon.l"
+#line 119 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Zero as divisor"); return YYerror; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 121 "bsqon.l"
+#line 121 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_FLOAT; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 122 "bsqon.l"
+#line 122 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_FLOAT; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 124 "bsqon.l"
+#line 124 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_DOUBLE; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 125 "bsqon.l"
+#line 125 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_DOUBLE; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 127 "bsqon.l"
+#line 127 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Redundant leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 128 "bsqon.l"
+#line 128 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 129 "bsqon.l"
+#line 129 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading decimal is not allowed"); return YYerror; }
 	YY_BREAK
 /* numberinos */
 case 53:
 YY_RULE_SETUP
-#line 132 "bsqon.l"
+#line 132 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_NUMBERINO; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 134 "bsqon.l"
+#line 134 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Cannot have sign on indexer"); return YYerror; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 135 "bsqon.l"
+#line 135 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 136 "bsqon.l"
+#line 136 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 /* strings */
 case 57:
 YY_RULE_SETUP
-#line 140 "bsqon.l"
+#line 140 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_BYTE_BUFFER; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 141 "bsqon.l"
+#line 141 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_UUID_V4; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 142 "bsqon.l"
+#line 142 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_UUID_V7; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 143 "bsqon.l"
+#line 143 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_SHA_HASH; }
 	YY_BREAK
 case 61:
 /* rule 61 can match eol */
 YY_RULE_SETUP
-#line 145 "bsqon.l"
+#line 145 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Invalid buffer contents"); return YYerror; }
 	YY_BREAK
 case 62:
 /* rule 62 can match eol */
 YY_RULE_SETUP
-#line 146 "bsqon.l"
+#line 146 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Invalid UUID value"); return YYerror; }
 	YY_BREAK
 case 63:
 /* rule 63 can match eol */
 YY_RULE_SETUP
-#line 147 "bsqon.l"
+#line 147 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Invalid SHA3 value"); return YYerror; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 149 "bsqon.l"
+#line 149 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Missing close bracket"); return YYerror; }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 150 "bsqon.l"
+#line 150 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Missing close bracket"); return YYerror; }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 151 "bsqon.l"
+#line 151 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Missing close bracket"); return YYerror; }
 	YY_BREAK
 
 case 67:
 YY_RULE_SETUP
-#line 154 "bsqon.l"
+#line 154 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(STRING); string_buf_bs.len = 0; ByteStringStoreChar('"'); }
 	YY_BREAK
 
 
 case 68:
 YY_RULE_SETUP
-#line 157 "bsqon.l"
+#line 157 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); ByteStringStoreChar('"'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_STRING; }
 	YY_BREAK
 case YY_STATE_EOF(STRING):
-#line 158 "bsqon.l"
+#line 158 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); yyerror("Unclosed String"); return YYEOF; }
 	YY_BREAK
 case 69:
 /* rule 69 can match eol */
 YY_RULE_SETUP
-#line 159 "bsqon.l"
+#line 159 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar('\n'); /*ignore whitespace till alignment on multi-line string*/ }
 	YY_BREAK
 case 70:
 /* rule 70 can match eol */
 YY_RULE_SETUP
-#line 160 "bsqon.l"
+#line 160 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar(yytext[0]); }
 	YY_BREAK
 
 
 case 71:
 YY_RULE_SETUP
-#line 164 "bsqon.l"
+#line 164 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(ASCII_STRING); string_buf_bs.len = 0; ByteStringStoreChar('\''); }
 	YY_BREAK
 
 
 case 72:
 YY_RULE_SETUP
-#line 167 "bsqon.l"
+#line 167 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); ByteStringStoreChar('\''); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_ASCII_STRING; }
 	YY_BREAK
 case YY_STATE_EOF(ASCII_STRING):
-#line 168 "bsqon.l"
+#line 168 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); yyerror("Unclosed ASCIIString"); return YYEOF; }
 	YY_BREAK
 case 73:
 /* rule 73 can match eol */
 YY_RULE_SETUP
-#line 169 "bsqon.l"
+#line 169 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar('\n'); /*ignore whitespace till alignment on multi-line string*/ }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 170 "bsqon.l"
+#line 170 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar(yytext[0]); }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 171 "bsqon.l"
+#line 171 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Non-printable character (ignoring)"); return YYerror; }
 	YY_BREAK
 
 
 case 76:
 YY_RULE_SETUP
-#line 175 "bsqon.l"
+#line 175 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(REGEX); string_buf_bs.len = 0; ByteStringStoreChar('/'); }
 	YY_BREAK
 
 
 case 77:
 YY_RULE_SETUP
-#line 178 "bsqon.l"
+#line 178 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); ByteStringStoreChar('/'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_REGEX; }
 	YY_BREAK
 case YY_STATE_EOF(REGEX):
-#line 179 "bsqon.l"
+#line 179 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); yyerror("Unclosed Regex"); return YYEOF; }
 	YY_BREAK
 case 78:
 /* rule 78 can match eol */
 YY_RULE_SETUP
-#line 180 "bsqon.l"
+#line 180 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Newline in Regex"); return YYerror; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 181 "bsqon.l"
+#line 181 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar(yytext[0]); }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 182 "bsqon.l"
+#line 182 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Invalid character (ignoring)"); return YYerror;}
 	YY_BREAK
 
 
 case 81:
 YY_RULE_SETUP
-#line 186 "bsqon.l"
+#line 186 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(PATH_ITEM); string_buf_bs.len = 0; ByteStringStoreText(yytext, yyleng); }
 	YY_BREAK
 
 
 case 82:
 YY_RULE_SETUP
-#line 189 "bsqon.l"
+#line 189 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); ByteStringStoreChar('`'); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_PATH_ITEM; }
 	YY_BREAK
 case YY_STATE_EOF(PATH_ITEM):
-#line 190 "bsqon.l"
+#line 190 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { BEGIN(INITIAL); yyerror("Unclosed Path Item"); return YYEOF; }
 	YY_BREAK
 case 83:
 /* rule 83 can match eol */
 YY_RULE_SETUP
-#line 191 "bsqon.l"
+#line 191 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Whitespace in Path Item"); return YYerror; }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 192 "bsqon.l"
+#line 192 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { ByteStringStoreChar(yytext[0]); }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 193 "bsqon.l"
+#line 193 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Invalid character (ignoring)"); return YYerror;}
 	YY_BREAK
 
 /* dates */
 case 86:
 YY_RULE_SETUP
-#line 197 "bsqon.l"
+#line 197 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_DATE_TIME; }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 198 "bsqon.l"
+#line 198 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_UTC_DATE_TIME; }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 199 "bsqon.l"
+#line 199 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_PLAIN_DATE; }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 200 "bsqon.l"
+#line 200 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_PLAIN_TIME; }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 202 "bsqon.l"
+#line 202 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_TICK_TIME; }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 203 "bsqon.l"
+#line 203 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_LOGICAL_TIME; }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 205 "bsqon.l"
+#line 205 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Cannot have sign/negative time"); return YYerror; }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 206 "bsqon.l"
+#line 206 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Cannot have sign/negative time"); return YYerror; }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 207 "bsqon.l"
+#line 207 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 208 "bsqon.l"
+#line 208 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yyerror("Leading zero is not allowed"); return YYerror; }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 210 "bsqon.l"
+#line 210 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_TIMESTAMP; }
 	YY_BREAK
 /* names */
 case 97:
 YY_RULE_SETUP
-#line 213 "bsqon.l"
+#line 213 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { 
     size_t conflict = isSpecialTypedLiteralIdConflict(yytext);
     if(conflict != 0) {
@@ -2524,7 +2525,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 239 "bsqon.l"
+#line 239 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { 
     yylval.str = AST_STRDUP(yytext); 
     return TOKEN_UNSPEC_IDENTIFIER; 
@@ -2532,32 +2533,32 @@ YY_RULE_SETUP
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 244 "bsqon.l"
+#line 244 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
 	YY_BREAK
 /* comments */
 case 100:
 YY_RULE_SETUP
-#line 247 "bsqon.l"
+#line 247 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 /* line comment */
 	YY_BREAK
 case 101:
 /* rule 101 can match eol */
 YY_RULE_SETUP
-#line 249 "bsqon.l"
+#line 249 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 /* ignore white space */ 
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 251 "bsqon.l"
+#line 251 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 { return yytext[0]; } /* catch all and error in parser */
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 253 "bsqon.l"
+#line 253 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2561 "lex.yy.c"
+#line 2562 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -3533,7 +3534,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 253 "bsqon.l"
+#line 253 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
 
 
 void ByteStringStoreChar(char c)

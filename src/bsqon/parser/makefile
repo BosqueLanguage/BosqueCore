@@ -26,8 +26,8 @@ BSQON_SOURCES=$(SRC_DIR)../regex/bsqregex.cpp $(SRC_DIR)../info/type_info.cpp $(
 all: bsqon bsqon_parser
 
 cfg:
-	flex $(BSQON_CFG_DIR)bsqon.l
-	bison -d -Wcex $(BSQON_CFG_DIR)bsqon.y
+	flex -o $(BSQON_CFG_DIR)lex.yy.c $(BSQON_CFG_DIR)bsqon.l
+	bison -d -Wcex -o $(BSQON_CFG_DIR)bsqon.tab.c $(BSQON_CFG_DIR)bsqon.y
 
 bsqon: $(BSQON_HEADERS) $(BSQON_SOURCES) $(PARSER_OBJS)
 	$(CPP) $(CPPFLAGS) $(JSON_INCLUDES) -o $(OUT_EXE)/bsqon $(BSQON_SOURCES) $(PARSER_OBJS) -lfl -lgmp
@@ -36,16 +36,16 @@ bsqon_parser: $(PARSER_HEADERS) $(PARSER_SOURCES)
 	$(CC) -O1 -g -ggdb -fno-omit-frame-pointer -o $(OUT_EXE)bsqon_parser $(PARSER_SOURCES) -lfl
 
 $(OUT_OBJ)bytestring.o: $(PARSER_HEADERS) $(PARSER_SOURCES)
-	$(CC) $(CFLAGS) -o $(BSQON_CFG_DIR)bytestring.o $(OUT_OBJ)bytestring.c
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)bytestring.o -c $(BSQON_CFG_DIR)bytestring.c
 
 $(OUT_OBJ)bsqon_type_ast.o: $(PARSER_HEADERS) $(PARSER_SOURCES)
-	$(CC) $(CFLAGS) -o $(BSQON_CFG_DIR)bsqon_type_ast.o $(OUT_OBJ)bsqon_type_ast.c
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)bsqon_type_ast.o -c $(BSQON_CFG_DIR)bsqon_type_ast.c
 
 $(OUT_OBJ)bsqon_ast.o: $(PARSER_HEADERS) $(PARSER_SOURCES)
-	$(CC) $(CFLAGS) -o $(BSQON_CFG_DIR)bsqon_ast.o $(OUT_OBJ)bsqon_ast.c
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)bsqon_ast.o -c $(BSQON_CFG_DIR)bsqon_ast.c
 
 $(OUT_OBJ)bsqon.tab.o: $(PARSER_HEADERS) $(PARSER_SOURCES)
-	$(CC) $(CFLAGS) -o $(BSQON_CFG_DIR)bsqon.tab.o $(OUT_OBJ)bsqon.tab.c
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)bsqon.tab.o -c $(BSQON_CFG_DIR)bsqon.tab.c
 
 $(OUT_OBJ)lex.yy.o: $(PARSER_HEADERS) $(PARSER_SOURCES)
-	$(CC) $(CFLAGS) -o $(BSQON_CFG_DIR)lex.yy.o $(OUT_OBJ)lex.yy.c
+	$(CC) $(CFLAGS) -o $(OUT_OBJ)lex.yy.o -c $(BSQON_CFG_DIR)lex.yy.c

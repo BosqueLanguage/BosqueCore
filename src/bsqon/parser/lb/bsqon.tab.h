@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_BSQON_TAB_H_INCLUDED
-# define YY_YY_BSQON_TAB_H_INCLUDED
+#ifndef YY_YY_HOME_MARK_CODE_BOSQUECORE_SRC_BSQON_PARSER_LB_BSQON_TAB_H_INCLUDED
+# define YY_YY_HOME_MARK_CODE_BOSQUECORE_SRC_BSQON_PARSER_LB_BSQON_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -111,7 +111,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 30 "bsqon.y"
+#line 30 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.y"
 
    struct BSQON_TYPE_AST_List* bsqon_t_list;
    struct BSQON_TYPE_AST_NamedListEntry* bsqon_t_nametypel_entry;
@@ -126,7 +126,7 @@ union YYSTYPE
    struct ByteString* bstr;
    char* str;
 
-#line 130 "bsqon.tab.h"
+#line 130 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -155,4 +155,4 @@ extern YYLTYPE yylloc;
 int yyparse (void);
 
 
-#endif /* !YY_YY_BSQON_TAB_H_INCLUDED  */
+#endif /* !YY_YY_HOME_MARK_CODE_BOSQUECORE_SRC_BSQON_PARSER_LB_BSQON_TAB_H_INCLUDED  */

@@ -219,7 +219,7 @@ bsqonstringof:
 ;
 
 bsqonpath:
-   TOKEN_PATH_ITEM bsqonnominaltype { $$ = BSQON_AST_PathNodeCreate(MK_SPOS_R(@1, @2), BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S(@1), $1), $2); }
+   TOKEN_PATH_ITEM bsqonnominaltype { $$ = BSQON_AST_PathNodeCreate(MK_SPOS_R(@1, @2), BSQON_AST_asLiteralStringNode(BSQON_AST_LiteralStringNodeCreate(BSQON_AST_TAG_NakedPath, MK_SPOS_S(@1), $1)), $2); }
 ;
 
 bsqontypeliteral:
@@ -315,7 +315,7 @@ bsqonval:
 ;
 
 bsqonletexp:
-  '(' KW_LET bsqonidentifier ':' bsqontype SYM_EQUALS bsqonval KW_IN bsqonval ')'{ $$ = BSQON_AST_LetInNodeCreate(MK_SPOS_R(@1, @10), $3, $5, $7, $9); }
+  '(' KW_LET TOKEN_IDENTIFIER ':' bsqontype SYM_EQUALS bsqonval KW_IN bsqonval ')' { $$ = BSQON_AST_LetInNodeCreate(MK_SPOS_R(@1, @10), $3, $5, $7, $9); }
 ;
 
 bsqonroot: 
