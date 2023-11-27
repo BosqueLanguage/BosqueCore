@@ -453,7 +453,7 @@ struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_A
     return (struct BSQON_AST_ScopedNameNode*)node;
 }
 
-struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier)
+struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_Node* root, char* identifier)
 {
     struct BSQON_AST_ScopedNameNode* node = (struct BSQON_AST_ScopedNameNode*)AST_ALLOC(sizeof(struct BSQON_AST_ScopedNameNode));
     node->base.tag = BSQON_AST_TAG_ScopedName;

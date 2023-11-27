@@ -1526,6 +1526,11 @@ namespace BSQON
         }
         
         const Type* btype = this->assembly->resolveType(t->basetype);
+        if(btype->tkey == "None" || btype->tkey == "Nothing") {
+            this->addError("Cannot have literal value of none/nothing", Parser::convertSrcPos(node->pos));
+            return new ErrorValue(t, Parser::convertSrcPos(node->pos));
+        }
+
         Value* bval = nullptr;
         if(node->tag == BSQON_AST_TAG_NakedPath) {
             auto npnode = BSQON_AST_asLiteralStringNode(vnode);

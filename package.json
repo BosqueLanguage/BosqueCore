@@ -15,14 +15,15 @@
         "refa": "0.10.0"
     },
     "devDependencies": {
-        "fs-extra": "11.1.1",
-        "mocha": "10.2.0",
         "chai": "4.3.7",
         "decimal.js": "10.4.3",
+        "deep-object-diff": "1.1.9",
         "fraction.js": "4.2.0",
+        "fs-extra": "11.1.1",
         "immutable": "4.3.0",
-        "uuidv4": "6.2.13",
-        "deep-object-diff": "1.1.9"
+        "mocha": "10.2.0",
+        "typescript": "^5.3.2",
+        "uuidv4": "6.2.13"
     },
     "scripts": {
         "build": "node ./build/build_all.js",

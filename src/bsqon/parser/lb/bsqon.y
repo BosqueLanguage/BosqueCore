@@ -88,7 +88,6 @@ int errorcount = 0;
 %type <bsqon_t_list> bsqontypel bsqontermslist
 %type <bsqon_t_namedlist> bsqonnametypel
 %type <bsqon_t> bsqontype bsqonnominaltype bsqontupletype bsqonrecordtype bsqontspec
-%type <bsqon_t> bsqontyperoot
 
 %type <bsqon> bsqonl_entry
 %type <bsqon_nameval_entry> bsqonnameval_entry
@@ -103,9 +102,7 @@ int errorcount = 0;
 %type <bsqon> bsqonletexp
 %type <bsqon> bsqonroot
 
-  //----------------------------
-  %start bsqonroot
-  //%start bsqontyperoot
+%start bsqonroot
 
 %%
 
@@ -174,10 +171,6 @@ bsqontspec:
    | bsqonrecordtype { $$ = $1; }
 ;
 
-bsqontyperoot:
-   bsqontype { yybsqonval_type = $1; $$ = $1; }
-;
-
 bsqonliteral: 
    KW_NONE                 { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_None, MK_SPOS_S(@1)); }
    | KW_NOTHING            { $$ = BSQON_AST_LiteralSingletonNodeCreate(BSQON_AST_TAG_Nothing, MK_SPOS_S(@1)); }
@@ -217,7 +210,7 @@ bsqonidentifier:
 ;
 
 bsqonscopedidentifier:
-   bsqonnominaltype SYM_COLON TOKEN_IDENTIFIER
+   bsqonnominaltype SYM_DOUBLE_COLON TOKEN_IDENTIFIER { $$ = BSQON_AST_ScopedNameNodeCreate(MK_SPOS_R(@1, @3), $1, $3); }
 ;
 
 bsqonstringof:
@@ -233,14 +226,6 @@ bsqontypeliteral:
    TOKEN_NUMBERINO SYM_UNDERSCORE bsqonnominaltype {
       yyerror("Missing numeric specifier");
       $$ = BSQON_AST_ErrorNodeCreate(MK_SPOS_S(@1));
-   }
-   | KW_NONE SYM_UNDERSCORE bsqonnominaltype {
-      yyerror("Cannot have a typedecl of none or nothing");
-      $$ = BSQON_AST_ErrorNodeCreate(MK_SPOS_R(@1, @3));
-   }
-   | KW_NOTHING SYM_UNDERSCORE bsqonnominaltype {
-      yyerror("Cannot have a typedecl of none or nothing");
-      $$ = BSQON_AST_ErrorNodeCreate(MK_SPOS_R(@1, @3));
    }
    | bsqonliteral SYM_UNDERSCORE bsqonnominaltype {
       $$ = BSQON_AST_TypedLiteralNodeCreate(MK_SPOS_R(@1, @3), $1, $3);
@@ -326,7 +311,7 @@ bsqonspecialcons:
 ;
 
 bsqonval: 
-  bsqonterminal | bsqonspecialcons | bsqonstructvalue { $$ = $1; }
+  bsqonterminal | bsqonspecialcons | bsqonstructvalue | bsqonletexp { $$ = $1; }
 ;
 
 bsqonletexp:
