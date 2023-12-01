@@ -4,7 +4,8 @@ namespace BSQON
 {
     BSQRegexOpt* BSQRegexOpt::parse(json j)
     {
-    auto tag = j["tag"].get<std::string>();
+        auto tag = j["tag"].get<std::string>();
+        
         if(tag == "TreeIR::RegexLiteral") {
             return BSQLiteralRe::parse(j);
         }

@@ -16,11 +16,11 @@ jobs:
         lfs: 'true'
     - uses: denoland/setup-deno@v1
       with:
-        deno-version: v1.34
+        deno-version: v1.38.3
     - name: Setup
       uses: actions/setup-node@v1
       with:
-        node-version: '16.x'
+        node-version: '20.x'
     - name: Install
       run: npm install
     - name: Run Tests

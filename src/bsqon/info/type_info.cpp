@@ -5,9 +5,105 @@ namespace BSQON
 {
     static AssemblyInfo g_assembly;
 
+    TypeTag convertTagNameToEnum(const std::string& tname)
+    {
+        TypeTag ttag = TypeTag::TYPE_UNRESOLVED;
+
+        if(tname == "[...]") {
+            ttag = TypeTag::TYPE_TUPLE;
+        }
+        else if(tname == "{...}") {
+            ttag = TypeTag::TYPE_RECORD;
+        }
+        else if(tname == "StdEntity") {
+            ttag = TypeTag::TYPE_STD_ENTITY;
+        }
+        else if(tname == "StdConcept") {
+            ttag = TypeTag::TYPE_STD_CONCEPT;
+        }
+        else if(tname == "PrimitiveEntity") {
+            ttag = TypeTag::TYPE_PRIMITIVE;
+        }
+        else if(tname == "EnumEntity") {
+            ttag = TypeTag::TYPE_ENUM;
+        }
+        else if(tname == "TypeDecl") {
+            ttag = TypeTag::TYPE_TYPE_DECL;
+        }
+        else if(tname == "ValidatorRE") {
+            ttag = TypeTag::TYPE_VALIDATOR_RE;
+        }
+        else if(tname == "ValidatorPth") {
+            ttag = TypeTag::TYPE_VALIDATOR_PTH;
+        }
+        else if(tname == "StringOf") {
+            ttag = TypeTag::TYPE_STRING_OF;
+        }
+        else if(tname == "AsciiStringOf") {
+            ttag = TypeTag::TYPE_ASCII_STRING_OF;
+        }
+        else if(tname == "Something") {
+            ttag = TypeTag::TYPE_SOMETHING;
+        }
+        else if(tname == "Option") {
+            ttag = TypeTag::TYPE_OPTION;
+        }
+        else if(tname == "Result::Ok") {
+            ttag = TypeTag::TYPE_OK;
+        }
+        else if(tname == "Result::Err") {
+            ttag = TypeTag::TYPE_ERROR;
+        }
+        else if(tname == "Result") {
+            ttag = TypeTag::TYPE_RESULT;
+        }
+        else if(tname == "Path") {
+            ttag = TypeTag::TYPE_PATH;
+        }
+        else if(tname == "PathFragment") {
+            ttag = TypeTag::TYPE_PATH_FRAGMENT;
+        }
+        else if(tname == "PathGlob") {
+            ttag = TypeTag::TYPE_PATH_GLOB;
+        }
+        else if(tname == "List") {
+            ttag = TypeTag::TYPE_LIST;
+        }
+        else if(tname == "Stack") {
+            ttag = TypeTag::TYPE_STACK;
+        }
+        else if(tname == "Queue") {
+            ttag = TypeTag::TYPE_QUEUE;
+        }
+        else if(tname == "Set") {
+            ttag = TypeTag::TYPE_SET;
+        }
+        else if(tname == "MapEntry") {
+            ttag = TypeTag::TYPE_MAP_ENTRY;
+        }
+        else if(tname == "Map") {
+            ttag = TypeTag::TYPE_MAP;
+        }
+        else if(tname == "ConceptSet") {
+            ttag = TypeTag::TYPE_CONCEPT_SET;
+        }
+        else if(tname == "UnionType") {
+            ttag = TypeTag::TYPE_UNION;
+        }
+        else {
+            //Missing tag
+            assert(false);
+        }
+
+        return ttag;
+    }
+
     Type* Type::parse(json j)
     {
-        switch(j["tag"].get<TypeTag>()) {
+        std::string ttag = j["tag"].get<std::string>();
+        TypeTag tt = convertTagNameToEnum(ttag);
+
+        switch(tt) {
             case TypeTag::TYPE_TUPLE: {
                 std::vector<TypeKey> entries;
                 std::transform(j["entries"].begin(), j["entries"].end(), std::back_inserter(entries), [](const json& jv) { return jv.get<TypeKey>(); });
