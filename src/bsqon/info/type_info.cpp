@@ -240,8 +240,10 @@ namespace BSQON
             assembly.typerefs[t->tkey] = t; 
         });
 
-        std::for_each(j["regexliterals"].begin(), j["regexliterals"].end(), [&assembly](const json &ta) { 
-            assembly.regexliterals[ta[0].get<std::string>()] = BSQRegex::jparse(ta[1].get<std::string>());
+        std::for_each(j["regexliterals"].begin(), j["regexliterals"].end(), [&assembly](const json &ta) {
+            std::string ss = ta[1].get<std::string>();
+            UnicodeString restr = unescapeString((uint8_t*)ss.c_str(), ss.size()).value();
+            assembly.regexliterals[ta[0].get<std::string>()] = RegexParser::parseRegex(restr);
         });
 
         std::for_each(j["aliasmap"].begin(), j["aliasmap"].end(), [&assembly](const json &a) { 
@@ -249,7 +251,9 @@ namespace BSQON
         });
 
         std::for_each(j["revalidators"].begin(), j["revalidators"].end(), [&assembly](const json &rv) {
-            assembly.revalidators[rv[0].get<TypeKey>()] = BSQRegex::jparse(rv[1].get<std::string>());
+            std::string ss = rv[1].get<std::string>();
+            UnicodeString restr = unescapeString((uint8_t*)ss.c_str(), ss.size()).value();
+            assembly.revalidators[rv[0].get<TypeKey>()] = RegexParser::parseRegex(restr);
         });
 
         std::for_each(j["pthvalidators"].begin(), j["pthvalidators"].end(), [&assembly](const json &pv) {

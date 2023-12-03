@@ -136,5 +136,17 @@ namespace BSQON
         uint8_t sec;     // 0-60
         uint16_t millis; // 0-999
     };
+
+    //Take a utf8 string with escapes and convert to a utf32 string
+    std::optional<UnicodeString> unescapeString(const uint8_t* bytes, size_t length);
+
+    //Convert a utf32 string to a utf8 string with escapes
+    std::vector<uint8_t> escapeString(const UnicodeString& sv);
+
+    //Take an ascii string with escapes and convert to a true string
+    std::optional<std::string> unescapeASCIIString(const uint8_t* bytes, size_t length);
+
+    //Convert an ascii string to a ascii string with escapes
+    std::vector<uint8_t> escapeASCIIString(const std::string& sv);
 }
 

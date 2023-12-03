@@ -21,7 +21,7 @@ PARSER_SOURCES=$(BSQON_CFG_DIR)bytestring.c $(BSQON_CFG_DIR)bsqon_type_ast.c $(B
 PARSER_OBJS=$(OUT_OBJ)bytestring.o $(OUT_OBJ)bsqon_type_ast.o $(OUT_OBJ)bsqon_ast.o $(OUT_OBJ)bsqon.tab.o $(OUT_OBJ)lex.yy.o
 
 BSQON_HEADERS=$(SRC_DIR)../common.h $(SRC_DIR)../regex/bsqregex.h $(SRC_DIR)../regex/bsqpath.h $(SRC_DIR)../info/type_info.h $(SRC_DIR)../info/bsqon.h $(SRC_DIR)bsqon_parse.h
-BSQON_SOURCES=$(SRC_DIR)../regex/bsqregex.cpp $(SRC_DIR)../info/type_info.cpp $(SRC_DIR)../info/bsqon.cpp $(SRC_DIR)bsqon_parse.cpp $(SRC_DIR)bsqon_main.cpp
+BSQON_SOURCES=$(SRC_DIR)../common.cpp $(SRC_DIR)../regex/bsqregex.cpp $(SRC_DIR)../info/type_info.cpp $(SRC_DIR)../info/bsqon.cpp $(SRC_DIR)bsqon_parse.cpp $(SRC_DIR)bsqon_main.cpp
 
 MAKEFLAGS += -j4
 

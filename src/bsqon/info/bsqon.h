@@ -384,15 +384,9 @@ namespace BSQON
 
         static StringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
-        //Take a utf8 string with escapes and convert to a utf32 string
-        static std::optional<UnicodeString> unescapeString(const uint8_t* bytes, size_t length);
-
-        //Convert a utf32 string to a utf8 string with escapes
-        static std::vector<uint8_t> escapeString(const UnicodeString& sv);
-
         virtual std::string toString() const override
         {
-            auto ustr = StringValue::escapeString(this->sv);
+            auto ustr = escapeString(this->sv);
             return "\"" + std::string(ustr.begin(), ustr.end()) + "\"";
         }
 
@@ -419,15 +413,9 @@ namespace BSQON
 
         static ASCIIStringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
-        //Take an ascii string with escapes and convert to a true string
-        static std::optional<std::string> unescapeString(const uint8_t* bytes, size_t length);
-
-        //Convert an ascii string to a ascii string with escapes
-        static std::vector<uint8_t> escapeString(const std::string& sv);
-
         virtual std::string toString() const override
         {
-            auto ustr = ASCIIStringValue::escapeString(this->sv);
+            auto ustr = escapeASCIIString(this->sv);
             return "'" + std::string(ustr.begin(), ustr.end()) + "'";
         }
 
@@ -757,7 +745,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            auto ustr = StringValue::escapeString(this->sv);
+            auto ustr = escapeString(this->sv);
             return "\"" + std::string(ustr.begin(), ustr.end()) + "\"" + this->vtype->tkey;
         }
 
@@ -792,7 +780,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            auto ustr = ASCIIStringValue::escapeString(this->sv);
+            auto ustr = escapeASCIIString(this->sv);
             return "'" + std::string(ustr.begin(), ustr.end()) + "'";
         }
 

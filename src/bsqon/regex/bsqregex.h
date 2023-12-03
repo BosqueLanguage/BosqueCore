@@ -501,93 +501,7 @@ namespace BSQON
             auto c = this->token();
             this->advance();
 
-            if(this->token() != U'%') {
-                return c;
-            }
-            else {
-                if(this->matchLiteralPrefix(U"slash;")) {
-                    this->advance(6);
-                    return U'/';
-                }
-                else if(this->matchLiteralPrefix(U"percent;")) {
-                    this->advance(8);
-                    return U'%';
-                }
-                else if(this->matchLiteralPrefix(U"newline;")) {
-                    this->advance(8);
-                    return U'\n';
-                }
-                else if(this->matchLiteralPrefix(U"tab;")) {
-                    this->advance(4);
-                    return U'\t';
-                }
-                else if(this->matchLiteralPrefix(U"dot;")) {
-                    this->advance(4);
-                    return U'.';
-                }
-                else if(this->matchLiteralPrefix(U"dollar;")) {
-                    this->advance(7);
-                    return U'$';
-                }
-                else if(this->matchLiteralPrefix(U"carat;")) {
-                    this->advance(6);
-                    return U'^';
-                }
-                else if(this->matchLiteralPrefix(U"star;")) {
-                    this->advance(5);
-                    return U'*';
-                }
-                else if(this->matchLiteralPrefix(U"plus;")) {
-                    this->advance(5);
-                    return U'+';
-                }
-                else if(this->matchLiteralPrefix(U"question;")) {
-                    this->advance(9);
-                    return U'?';
-                }
-                else if(this->matchLiteralPrefix(U"pipe;")) {
-                    this->advance(5);
-                    return U'|';
-                }
-                else if(this->matchLiteralPrefix(U"lparen;")) {
-                    this->advance(7);
-                    return U'(';
-                }
-                else if(this->matchLiteralPrefix(U"rparen;")) {
-                    this->advance(7);
-                    return U')';
-                }
-                else if(this->matchLiteralPrefix(U"lbracket;")) {
-                    this->advance(9);
-                    return U'[';
-                }
-                else if(this->matchLiteralPrefix(U"rbracket;")) {
-                    this->advance(9);
-                    return U']';
-                }
-                else if(this->matchLiteralPrefix(U"lbrace;")) {
-                    this->advance(7);
-                    return U'{';
-                }
-                else if(this->matchLiteralPrefix(U"rbrace;")) {
-                    this->advance(7);
-                    return U'}';
-                }
-                else {
-                    uint32_t cc = 0;
-                    while(!this->done() && U'0' < this->token() && this->token() < U'9') {
-                        cc = cc * 10 + (this->token() - U'0');
-                        this->advance();
-                    }
-
-                    if(this->done() || !this->isToken(U';')) {
-                        return 0;
-                    }
-                    this->advance();
-                    
-                    return (CharCode)cc;
-                }
-            }
+            return c;
         }
 
         const BSQRegexOpt* parseBaseComponent() 
@@ -770,6 +684,23 @@ namespace BSQON
         const BSQRegexOpt* parseComponent()
         {
             return this->parseAlternationComponent();
+        }
+
+    public:
+        static BSQRegex* parseRegex(UnicodeString restr)
+        {
+            auto parser = RegexParser(restr);
+
+            auto re = parser.parseComponent();
+            if(re == nullptr) {
+                return nullptr;
+            }
+
+            std::vector<NFAOpt*> nfastates = { new NFAOptAccept(0) };
+            auto nfastart = re->compile(0, nfastates);
+
+            auto nfare = new NFA(nfastart, 0, nfastates);
+            return new BSQRegex(re, nfare);
         }
     };
 }
