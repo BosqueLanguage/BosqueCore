@@ -2827,12 +2827,14 @@ struct BSQON_AST_Node* parse_from_file(const char* file)
       exit(1);
    }
    
-   if(!yyparse()) {
-      //todo handle errors here!!!!
-      printf("ERROR IN PARSE!\n");
-      exit(1);
+   if(!yyparse() || errorcount != 0) {
+      return yybsqonval;
    }
 
-   return yybsqonval;
+   for(size_t i = 0; i < errorcount; ++i) {
+      printf("%s\n", errors[i]);
+      fflush(stdout);
+   }
+   exit(1);
 }
 #endif
