@@ -644,7 +644,7 @@ namespace BSQON
     Value* Parser::parseNone(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_None) {
-            this->addError("Expected None value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected none", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -654,7 +654,7 @@ namespace BSQON
     Value* Parser::parseNothing(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Nothing) {
-            this->addError("Expected Nothing value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected nothing", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -664,7 +664,7 @@ namespace BSQON
     Value* Parser::parseBool(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_True && node->tag != BSQON_AST_TAG_False) {
-            this->addError("Expected Boolean value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Boolean literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -674,7 +674,7 @@ namespace BSQON
     Value* Parser::parseNat(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Nat) {
-            this->addError("Expected Nat value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Nat literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -693,7 +693,7 @@ namespace BSQON
     Value* Parser::parseInt(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Int) {
-            this->addError("Expected Int value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Int literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -712,7 +712,7 @@ namespace BSQON
     Value* Parser::parseBigNat(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_BigNat) {
-            this->addError("Expected BigNat value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected BigNat literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -731,7 +731,7 @@ namespace BSQON
     Value* Parser::parseBigInt(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_BigInt) {
-            this->addError("Expected BigInt value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected BigInt literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -750,7 +750,7 @@ namespace BSQON
     Value* Parser::parseRational(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Rational) {
-            this->addError("Expected Rational value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Rational literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -789,7 +789,7 @@ namespace BSQON
     Value* Parser::parseFloat(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Float) {
-            this->addError("Expected Float value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Float literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -798,7 +798,7 @@ namespace BSQON
         nv.pop_back(); //remove the trailing 'f'
 
         if(!Parser::isValidFloat(nv, vv)) {
-            this->addError("Invalid Float value", Parser::convertSrcPos(node->pos));
+            this->addError("Invalid Float literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -808,7 +808,7 @@ namespace BSQON
     Value* Parser::parseDecimal(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Decimal) {
-            this->addError("Expected Decimal value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Decimal literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -821,7 +821,7 @@ namespace BSQON
     Value* Parser::parseString(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_String) {
-            this->addError("Expected String value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected String literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -839,7 +839,7 @@ namespace BSQON
     Value* Parser::parseASCIIString(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_ASCIIString) {
-            this->addError("Expected ASCIIString value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected ASCIIString literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -857,7 +857,7 @@ namespace BSQON
     Value* Parser::parseByteBuffer(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_ByteBuffer) {
-            this->addError("Expected ByteBuffer value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected ByteBuffer literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -875,7 +875,7 @@ namespace BSQON
     Value* Parser::parseUUIDv4(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_UUIDv4) {
-            this->addError("Expected UUIDv4 value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected UUIDv4 literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -891,7 +891,7 @@ namespace BSQON
     Value* Parser::parseUUIDv7(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_UUIDv7) {
-            this->addError("Expected UUIDv7 value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected UUIDv7 literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -907,7 +907,7 @@ namespace BSQON
     Value* Parser::parseSHAHashcode(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_SHAHashcode) {
-            this->addError("Expected SHAContentHash value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected SHAContentHash literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -918,7 +918,7 @@ namespace BSQON
     Value* Parser::parseDateTime(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_DateTime) {
-            this->addError("Expected DateTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected DateTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -943,7 +943,7 @@ namespace BSQON
     Value* Parser::parseUTCDateTime(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_UTCDateTime) {
-            this->addError("Expected UTCDateTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected UTCDateTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -967,7 +967,7 @@ namespace BSQON
     Value* Parser::parsePlainDate(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_PlainDate) {
-            this->addError("Expected PlainDate value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected PlainDate literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -977,7 +977,7 @@ namespace BSQON
         uint8_t month, day;
 
         if(!Parser::processDateInfo(dstr, year, month, day)) {
-            this->addError("Invalid component in PlainDate value", Parser::convertSrcPos(node->pos));
+            this->addError("Invalid component in PlainDate literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -988,7 +988,7 @@ namespace BSQON
     Value* Parser::parsePlainTime(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_PlainTime) {
-            this->addError("Expected PlainTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected PlainTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -997,7 +997,7 @@ namespace BSQON
         uint8_t hour, minute, second;
 
         if(!Parser::processTimeInfo(tstr, hour, minute, second)) {
-            this->addError("Invalid component in PlainTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Invalid component in PlainTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1008,7 +1008,7 @@ namespace BSQON
     Value* Parser::parseTickTime(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_TickTime) {
-            this->addError("Expected TickTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected TickTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1029,7 +1029,7 @@ namespace BSQON
     Value* Parser::parseLogicalTime(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_LogicalTime) {
-            this->addError("Expected LogicalTime value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected LogicalTime literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1048,7 +1048,7 @@ namespace BSQON
     Value* Parser::parseISOTimeStamp(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Timestamp) {
-            this->addError("Expected ISOTimeStamp value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected ISOTimeStamp literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1072,7 +1072,7 @@ namespace BSQON
     Value* Parser::parseRegex(const PrimitiveType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Regex) {
-            this->addError("Expected Regex value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Regex literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1090,7 +1090,7 @@ namespace BSQON
     Value* Parser::parseStringOf(const StringOfType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_StringOf && node->tag != BSQON_AST_TAG_String) {
-            this->addError("Expected StringOf value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected StringOf literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1122,7 +1122,7 @@ namespace BSQON
     Value* Parser::parseASCIIStringOf(const ASCIIStringOfType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_ASCIIStringOf && node->tag != BSQON_AST_TAG_ASCIIString) {
-            this->addError("Expected ASCIIStringOf value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected ASCIIStringOf literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1167,7 +1167,7 @@ namespace BSQON
     Value* Parser::parsePath(const PathType* t, struct BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes != '`') {
-            this->addError("Expected Path value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected Path literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1195,7 +1195,7 @@ namespace BSQON
     Value* Parser::parsePathFragment(const PathFragmentType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes == 'f') {
-            this->addError("Expected PathFragment value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected PathFragment literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
@@ -1223,7 +1223,7 @@ namespace BSQON
     Value* Parser::parsePathGlob(const PathGlobType* t, BSQON_AST_Node* node)
     {
         if(node->tag != BSQON_AST_TAG_Path || *BSQON_AST_asPathNode(node)->data->data->bytes == 'g') {
-            this->addError("Expected PathGlob value", Parser::convertSrcPos(node->pos));
+            this->addError("Expected PathGlob literal", Parser::convertSrcPos(node->pos));
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
