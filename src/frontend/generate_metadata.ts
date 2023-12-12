@@ -87,13 +87,7 @@ function workflowEmitToDir(into: string, usercode: PackageConfig, entrypoints: {
         const entrytypes = epf.params.map((pp) => pp.type).concat([epf.resultType]);
         const tinfo = tasm.generateTypeInfo(entrytypes, aliasmap);
         const tinfopath = Path.join(into, "metadata.json");
-
-        if(into === "--stdout") {
-            process.stdout.write(JSON.stringify(tinfo.emit(), undefined, 2));
-        }
-        else {
-            FS.writeFileSync(tinfopath, JSON.stringify(tinfo.emit(), undefined, 2));
-        }
+        FS.writeFileSync(tinfopath, JSON.stringify(tinfo.emit(), undefined, 2));
 
     } catch(e) {
         process.stderr.write(`TS emit error -- ${e}\n`);
@@ -127,9 +121,6 @@ if(mfs !== undefined) {
 
 if(fullargs.length > 2 && fullargs[2] === "--outdir") {
     buildTSDefault(fullargs[3], fullargs.slice(4));
-}
-else if(fullargs.length > 1 && fullargs[1] === "--stdout") {
-    buildTSDefault("--stdout", fullargs.slice(3));
 }
 else {
     buildTSDefault(".", fullargs.slice(2));

@@ -396,6 +396,22 @@ int main(int argc, char** argv)
    }
 }
 #else
+struct BSQON_AST_Node* parse_from_stdin()
+{
+   yyin = stdin;
+   filename = "<stdin>";
+   
+   if(!yyparse() || errorcount != 0) {
+      return yybsqonval;
+   }
+
+   for(size_t i = 0; i < errorcount; ++i) {
+      printf("%s\n", errors[i]);
+      fflush(stdout);
+   }
+   exit(1);
+}
+
 struct BSQON_AST_Node* parse_from_file(const char* file)
 {
    if((yyin = fopen(file, "r")) == NULL) {

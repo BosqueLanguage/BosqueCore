@@ -8,8 +8,8 @@
 int main(int argc, char** argv)
 {
     //argv is a file name to a JSON file
-    if(argc != 4) {
-        printf("Expected 3 arguments to a file containing the assembly file, type, and value file\n");
+    if(argc < 3) {
+        printf("usage: bsqon <metadata.json> <type> [data.bsqon]\n");
         exit(1);
     }
 
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     }
 
     //the property value is the BSQON value (as a JSON string) so parse it
-    BSQON_AST_Node* node = parse_from_file(argv[3]);
+    BSQON_AST_Node* node = argc == 3 ? parse_from_stdin() : parse_from_file(argv[3]);
 
     BSQON::Parser parser(&assembly);
     BSQON::Value* res = parser.parseValue(loadtype, node);
