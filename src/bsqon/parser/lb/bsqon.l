@@ -243,9 +243,9 @@ _"$"{IDENTIFIER} {
 {TYPE_IDENTIFIER}(::{TYPE_IDENTIFIER})* { yylval.str = AST_STRDUP(yytext); return TOKEN_TYPE_COMPONENT; }
 
  /* comments */
-"%%"[^\n]*    /* line comment */
+"%%"[^\n]*  { } /* line comment */
 
-[ \t\n\r]   /* ignore white space */ 
+[ \t\n\r]   { } /* ignore white space */ 
 
 .	{ return yytext[0]; } /* catch all and error in parser */
 

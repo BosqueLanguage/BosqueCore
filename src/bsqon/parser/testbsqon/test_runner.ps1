@@ -24,46 +24,32 @@ $passingTests = 0
 $failingTests = 0
 
 # function for running a single test
-function RunTest($testName, $testType, $testData, $expectedResult, $testOutputDirectory, $srcList)
+function RunTest($testName, $testType, $testFile, $metadataFile, $expectedFile, $tmpFile)
 {
-    node $metadataGenScript --outdir $testOutputDirectory.FullName $srcList | Out-Null
-    if (-Not ($?)) {
-        Write-Host "Failed to generate metadata for '$testName'"
+    $process = Start-Process -FilePath $bsqonExe -RedirectStandardOutput $tmpFile -ArgumentList "$metadataFile $testType $testFile" -PassThru -Wait
+
+    if($process.ExitCode -ne 0) {
+        Write-Host "Failed to parse '$testName'"
+        Write-Host (Get-Content $tmpFile -Raw -Encoding utf8)
         $errorTests += 1
     }
     else {
-        $process = Start-Process -FilePath $bsqonExe -ArgumentList "$testOutputDirectory.FullName\metadata.json $testType $testData.FullName"
-        $process.StandardInput.Write($testData)
-        $process.StandardInput.Close()
-
-        $result = $process.StandardOutput.ReadToEnd()
-        $process.WaitForExit()
-
-        if($process.ExitCode -ne 0) {
-            Write-Host "Failed to parse '$testName'"
-            Write-Host $result
-            $errorTests += 1
+        $diff = Compare-Object -ReferenceObject (Get-Content $expectedFile -Raw -Encoding utf8) -DifferenceObject (Get-Content $tmpFile -Raw -Encoding utf8)
+        if ($diff) {
+            Write-Host "Parse output does not match expected '$testName'"
+            Write-Host "--diff--"
+            Write-Host $diff
+            $failingTests += 1
         }
         else {
-            $expected = Get-Content -Path $expectedResult -Raw -Encoding utf8
-            $diff = Compare-Object -ReferenceObject $result -DifferenceObject $expected
-            if ($diff) {
-                Write-Host "Parse output does not match expected '$testName'"
-                Write-Host "--diff--"
-                Write-Host $diff
-                $failingTests += 1
-            }
-            else {
-                $passingTests += 1
-                Write-Host "Test '$testName' passed"
-            }
+            $passingTests += 1
+            Write-Host "Test '$testName' passed"
         }
     }
 }
 
 function RunTestSuite($testName)
 {
-    $testOutputDir = New-Item -Path (Join-Path $testOutputDir $testName) -ItemType Directory -Force
     $srcList = Get-ChildItem -Path (Join-Path $testDataDir $testName) -File | Where-Object { $_.Extension -eq ".bsq" -or $_.Extension -eq ".bsqapi" }
     
     if($srcList.Count -eq 0) {
@@ -72,29 +58,44 @@ function RunTestSuite($testName)
     }
 
     $tests = Get-ChildItem -Path (Join-Path $testDataDir $testName) -File -Filter "*.bsqon" | Where-Object { $_.Name -notmatch '_expected.bsqon$' }
-    ForEach ($test in $tests) {
-        $totalTests += 1
-        $contents = Get-Content -Path $test.FullName -Encoding utf8 -TotalCount 10
 
-        if($contents[0] -notmatch '^\s*%%\s*[A-Z].+') {
-            Write-Host "Test '$testName' does not have a type specified at the top of the file"
-            $errorTests += 1
-            continue
+    $metadataFile = New-Item -Path (Join-Path $testOutputDir $testName "metadata.json") -ItemType File -Force
+    $tmpFile = New-Item -Path (Join-Path $testOutputDir $testName "_output_.bsqon") -ItemType File -Force
+
+    node $metadataGenScript --outdir (Join-Path $testOutputDir $testName) $srcList | Out-Null
+    if (-Not ($?)) {
+        Write-Host "Failed to generate metadata for '$testName'"
+        $errorTests += 1
+    }
+    else {
+        ForEach ($test in $tests) {
+            $totalTests += 1
+            $contents = Get-Content -Path $test.FullName -Encoding utf8 -TotalCount 10
+
+            if($contents[0] -notmatch '^\s*%%\s*[A-Z].+') {
+                Write-Host "Test '$testName' does not have a type specified at the top of the file"
+                $errorTests += 1
+                continue
+            }
+            
+            $testType = $contents[0].Trim().Substring(2).Trim()
+            $expected = $test.FullName.Replace(".bsqon", "_expected.bsqon")
+
+            if(-Not (Test-Path $expected)) {
+                Write-Host "Test '$testName' has no expected result file"
+                $errorTests += 1
+                continue
+            }
+
+            RunTest $testName $testType $test $metadataFile $expected $tmpFile
         }
-        
-        $testType = $contents[0].Trim().Substring(2).Trim()
-        $expected = $test.FullName.Replace(".bsqon", "_expected.bsqon")
 
-        if(-Not (Test-Path $expected)) {
-            Write-Host "Test '$testName' has no expected result file"
-            $errorTests += 1
-            continue
-        }
-
-        RunTest $testName $testType $test $expected $testOutputDir $srcList
+        #cleanup here
     }
 
     #cleanup here
 }
 
 RunTestSuite("doit")
+
+return

@@ -2540,13 +2540,13 @@ YY_RULE_SETUP
 case 100:
 YY_RULE_SETUP
 #line 247 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
-/* line comment */
+{ } /* line comment */
 	YY_BREAK
 case 101:
 /* rule 101 can match eol */
 YY_RULE_SETUP
 #line 249 "/home/mark/Code/BosqueCore/src/bsqon/parser/lb/bsqon.l"
-/* ignore white space */ 
+{ } /* ignore white space */ 
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
