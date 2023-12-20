@@ -57,10 +57,6 @@ function RunTest($testName, $testType, $testFile, $metadataFile, $expectedFile, 
 
 function RunTestSuite($testName)
 {
-    Write-Host "------------"
-    Write-Host "Running test suite $testName"
-    $oldFails = $errorTests + $failingTests
-
     $srcList = Get-ChildItem -Path (Join-Path $testDataDir $testName) -File | Where-Object { $_.Extension -eq ".bsq" -or $_.Extension -eq ".bsqapi" }
     
     if($srcList.Count -eq 0) {
@@ -70,6 +66,10 @@ function RunTestSuite($testName)
 
     $tests = Get-ChildItem -Path (Join-Path $testDataDir $testName) -File -Filter "*.bsqon" | Where-Object { $_.Name -notmatch '_expected.bsqon$' }
 
+    Write-Host "------------"
+    Write-Host "Running test suite $testName..."
+    $oldFails = $errorTests + $failingTests
+
     $metadataFile = New-Item -Path (Join-Path $testOutputDir $testName "metadata.json") -ItemType File -Force
     $tmpFile = New-Item -Path (Join-Path $testOutputDir $testName "_output_.bsqon") -ItemType File -Force
 
@@ -77,16 +77,16 @@ function RunTestSuite($testName)
 
     if (-Not ($?)) {
         Write-Host "  Failed to generate metadata for $testName" -ForegroundColor Red
-        $errorTests += 1
+        $SCRIPT:errorTests += 1
     }
     else {
         ForEach ($test in $tests) {
-            $totalTests += 1
+            $SCRIPT:totalTests += 1
             $contents = Get-Content -Path $test.FullName -Encoding utf8 -TotalCount 10
 
             if($contents[0] -notmatch '^\s*%%\s*[A-Z].+') {
                 Write-Host "  Test $testName does not have a type specified at the top of the file" -ForegroundColor Red
-                $errorTests += 1
+                $SCRIPT:errorTests += 1
                 continue
             }
             
@@ -95,7 +95,7 @@ function RunTestSuite($testName)
 
             if(-Not (Test-Path $expected)) {
                 Write-Host "  Test $testName has no expected result file" -ForegroundColor Red
-                $errorTests += 1
+                $SCRIPT:errorTests += 1
                 continue
             }
 
@@ -105,19 +105,34 @@ function RunTestSuite($testName)
         Remove-Item -Path $tmpFile.FullName -Force | Out-Null
     }
 
-    Remove-Item -Path (Join-Path $testDataDir $testName) -Recurse | Out-Null
-
-    Write-Output $oldFails
-    Write-Output ($errorTests + $failingTests) 
+    Remove-Item -Path (Join-Path $testOutputDir $testName) -Recurse | Out-Null
 
     if ($oldFails -eq ($errorTests + $failingTests)) {
         Write-Host "...all tests passed" -ForegroundColor Green
     }
     else {
-        Write-Host "..."(($failingTests + $errorTests) - $oldFails)"new failures" -ForegroundColor Red
+        Write-Host "...$(($failingTests + $errorTests) - $oldFails) new failures" -ForegroundColor Red
     }
 }
 
-RunTestSuite("doit")
+$allsuites = Get-ChildItem -Path $testDataDir -Directory
+ForEach ($suite in $allsuites) {
+    RunTestSuite($suite.Name)
+}
 
-return
+Write-Host "------------"
+Write-Host "Total tests:   $totalTests"
+Write-Host "Passing tests: $passingTests"
+
+if($totalTests -eq $passingTests) {
+    Write-Host "...all passed!" -ForegroundColor Green
+}
+
+if($errorTests -gt 0) {
+    Write-Host "Error tests: $errorTests" -ForegroundColor Magenta
+}
+
+if($failingTests -gt 0) {
+    Write-Host "Failing tests: $failingTests" -ForegroundColor Red
+}
+
