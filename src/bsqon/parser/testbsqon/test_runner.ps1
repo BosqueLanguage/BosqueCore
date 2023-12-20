@@ -29,31 +29,42 @@ function RunTest($testName, $testType, $testFile, $metadataFile, $expectedFile, 
     $process = Start-Process -FilePath $bsqonExe -RedirectStandardOutput $tmpFile -ArgumentList "$metadataFile $testType $testFile" -PassThru -Wait
 
     if($process.ExitCode -ne 0) {
-        Write-Host "Failed to parse '$testName'"
-        Write-Host (Get-Content $tmpFile -Raw -Encoding utf8)
-        $errorTests += 1
+        Write-Host "  Failed to parse $testName" -ForegroundColor Red
+        Write-Host (Get-Content $tmpFile -Raw -Encoding utf8) -ForegroundColor Gray
+
+        $SCRIPT:errorTests += 1
     }
     else {
-        $diff = Compare-Object -ReferenceObject (Get-Content $expectedFile -Raw -Encoding utf8) -DifferenceObject (Get-Content $tmpFile -Raw -Encoding utf8)
-        if ($diff) {
-            Write-Host "Parse output does not match expected '$testName'"
-            Write-Host "--diff--"
-            Write-Host $diff
-            $failingTests += 1
+        $actualContent = (Get-Content $tmpFile -Raw -Encoding utf8).Trim()
+        $expectedContent = (Get-Content $expectedFile -Raw -Encoding utf8).Trim()
+
+        if ($actualContent -ne $expectedContent) {
+            Write-Host "  Parse output does not match expected $testName" -ForegroundColor Red
+            Write-Host "expected: $expectedContent"
+            Write-Host "actual:   " -NoNewline
+            Write-Host $actualContent -ForegroundColor Gray
+
+            $SCRIPT:failingTests += 1
         }
         else {
-            $passingTests += 1
-            Write-Host "Test '$testName' passed"
+            Write-Host "  Test $testName " -NoNewline
+            Write-Host "passed" -ForegroundColor Green
+
+            $SCRIPT:passingTests += 1
         }
     }
 }
 
 function RunTestSuite($testName)
 {
+    Write-Host "------------"
+    Write-Host "Running test suite $testName"
+    $oldFails = $errorTests + $failingTests
+
     $srcList = Get-ChildItem -Path (Join-Path $testDataDir $testName) -File | Where-Object { $_.Extension -eq ".bsq" -or $_.Extension -eq ".bsqapi" }
     
     if($srcList.Count -eq 0) {
-        Write-Host "No source files found for test suite '$testName'"
+        Write-Host "  No source files found for test suite $testName" -ForegroundColor Red
         return
     }
 
@@ -63,8 +74,9 @@ function RunTestSuite($testName)
     $tmpFile = New-Item -Path (Join-Path $testOutputDir $testName "_output_.bsqon") -ItemType File -Force
 
     node $metadataGenScript --outdir (Join-Path $testOutputDir $testName) $srcList | Out-Null
+
     if (-Not ($?)) {
-        Write-Host "Failed to generate metadata for '$testName'"
+        Write-Host "  Failed to generate metadata for $testName" -ForegroundColor Red
         $errorTests += 1
     }
     else {
@@ -73,7 +85,7 @@ function RunTestSuite($testName)
             $contents = Get-Content -Path $test.FullName -Encoding utf8 -TotalCount 10
 
             if($contents[0] -notmatch '^\s*%%\s*[A-Z].+') {
-                Write-Host "Test '$testName' does not have a type specified at the top of the file"
+                Write-Host "  Test $testName does not have a type specified at the top of the file" -ForegroundColor Red
                 $errorTests += 1
                 continue
             }
@@ -82,7 +94,7 @@ function RunTestSuite($testName)
             $expected = $test.FullName.Replace(".bsqon", "_expected.bsqon")
 
             if(-Not (Test-Path $expected)) {
-                Write-Host "Test '$testName' has no expected result file"
+                Write-Host "  Test $testName has no expected result file" -ForegroundColor Red
                 $errorTests += 1
                 continue
             }
@@ -90,10 +102,20 @@ function RunTestSuite($testName)
             RunTest $testName $testType $test $metadataFile $expected $tmpFile
         }
 
-        #cleanup here
+        Remove-Item -Path $tmpFile.FullName -Force | Out-Null
     }
 
-    #cleanup here
+    Remove-Item -Path (Join-Path $testDataDir $testName) -Recurse | Out-Null
+
+    Write-Output $oldFails
+    Write-Output ($errorTests + $failingTests) 
+
+    if ($oldFails -eq ($errorTests + $failingTests)) {
+        Write-Host "...all tests passed" -ForegroundColor Green
+    }
+    else {
+        Write-Host "..."(($failingTests + $errorTests) - $oldFails)"new failures" -ForegroundColor Red
+    }
 }
 
 RunTestSuite("doit")
