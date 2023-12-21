@@ -32,14 +32,47 @@ function RunTest($testName, $testType, $testFile, $metadataFile, $expectedFile, 
         Write-Host "  Failed to parse $testName" -ForegroundColor Red
         Write-Host (Get-Content $tmpFile -Raw -Encoding utf8) -ForegroundColor Gray
 
-        $SCRIPT:errorTests += 1
+        $SCRIPT:failingTests += 1
     }
     else {
         $actualContent = (Get-Content $tmpFile -Raw -Encoding utf8).Trim()
         $expectedContent = (Get-Content $expectedFile -Raw -Encoding utf8).Trim()
 
-        if ($actualContent -ne $expectedContent) {
-            Write-Host "  Parse output does not match expected $testName" -ForegroundColor Red
+        if ($actualContent -cne $expectedContent) {
+            Write-Host "  Parse output does not match expected for test '$testName'" -ForegroundColor Red
+            Write-Host "expected: $expectedContent"
+            Write-Host "actual:   " -NoNewline
+            Write-Host $actualContent -ForegroundColor Gray
+
+            $SCRIPT:failingTests += 1
+        }
+        else {
+            Write-Host "  Test $testName " -NoNewline
+            Write-Host "passed" -ForegroundColor Green
+
+            $SCRIPT:passingTests += 1
+        }
+    }
+}
+
+function RunErrorTest($testName, $testType, $testFile, $metadataFile, $expectedFile, $tmpFile)
+{
+    $process = Start-Process -FilePath $bsqonExe -RedirectStandardOutput $tmpFile -ArgumentList "$metadataFile $testType $testFile" -PassThru -Wait
+
+    if($process.ExitCode -eq 0) {
+        Write-Host "  Expected error in parse of $testName" -ForegroundColor Red
+
+        $actualContent = (Get-Content $tmpFile -Raw -Encoding utf8).Trim()
+        Write-Host "output: $actualContent"
+
+        $SCRIPT:failingTests += 1
+    }
+    else {
+        $actualContent = (Get-Content $tmpFile -Raw -Encoding utf8).Trim()
+        $expectedContent = (Get-Content $expectedFile -Raw -Encoding utf8).Trim()
+
+        if ($actualContent -cne $expectedContent) {
+            Write-Host "  Parse output does not match expected for test '$testName'" -ForegroundColor Red
             Write-Host "expected: $expectedContent"
             Write-Host "actual:   " -NoNewline
             Write-Host $actualContent -ForegroundColor Gray
@@ -99,7 +132,12 @@ function RunTestSuite($testName)
                 continue
             }
 
-            RunTest $testName $testType $test $metadataFile $expected $tmpFile
+            if ($testName.EndsWith("_errors")) {
+                RunErrorTest $test.BaseName $testType $test $metadataFile $expected $tmpFile
+            }
+            else {
+                RunTest $test.BaseName $testType $test $metadataFile $expected $tmpFile
+            }
         }
 
         Remove-Item -Path $tmpFile.FullName -Force | Out-Null
@@ -125,14 +163,19 @@ Write-Host "Total tests:   $totalTests"
 Write-Host "Passing tests: $passingTests"
 
 if($totalTests -eq $passingTests) {
-    Write-Host "...all passed!" -ForegroundColor Green
+    Write-Host "...all passed!" -NoNewline -ForegroundColor Green
 }
 
 if($errorTests -gt 0) {
-    Write-Host "Error tests: $errorTests" -ForegroundColor Magenta
+    Write-Host "Error tests: $errorTests" -NoNewline -ForegroundColor Magenta
+
+    if($failingTests -gt 0) {
+        Write-Host ""
+    }
 }
 
 if($failingTests -gt 0) {
-    Write-Host "Failing tests: $failingTests" -ForegroundColor Red
+    Write-Host "Failing tests: $failingTests" -NoNewline -ForegroundColor Red
 }
 
+Write-Host ""

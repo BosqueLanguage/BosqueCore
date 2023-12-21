@@ -235,7 +235,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
     } 
   }
 
-_"$"{IDENTIFIER} { 
+"$?"{IDENTIFIER} { 
     yylval.str = AST_STRDUP(yytext); 
     return TOKEN_UNSPEC_IDENTIFIER; 
   }
