@@ -49,7 +49,7 @@ namespace BSQON
 
     bool Parser::isValidNat(const std::string nv, int64_t& vv)
     {
-        auto ecount = sscanf(nv.c_str(), "%" SCNd64, &vv);
+        auto ecount = sscanf(nv.c_str(), "%" SCNu64, &vv);
         return ecount == 1 && 0 <= vv && vv <= Type::MAX_SAFE_NUMBER; 
     }
 
@@ -719,6 +719,10 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'N'
 
+        if(nv.front() == '+') {
+            nv = nv.substr(1);
+        }
+
         mpz_t pv;
         mpz_init_set_str(pv, nv.c_str(), 10);
 
@@ -737,6 +741,10 @@ namespace BSQON
 
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'I'
+
+        if(nv.front() == '+') {
+            nv = nv.substr(1);
+        }
 
         mpz_t pv;
         mpz_init_set_str(pv, nv.c_str(), 10);
