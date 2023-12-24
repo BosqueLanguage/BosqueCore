@@ -366,7 +366,14 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            return this->numerator + "/" + std::to_string(this->denominator) + "R";
+            char* cstr = mpq_get_str(NULL, 10, this->cnv);
+            std::string str(cstr);
+
+            void (*freefunc)(void *, size_t);
+            mp_get_memory_functions (NULL, NULL, &freefunc);
+            freefunc(cstr, strlen(cstr) + 1);
+
+            return str + "R";
         }
 
         virtual bool isValidForTypedecl() const override
