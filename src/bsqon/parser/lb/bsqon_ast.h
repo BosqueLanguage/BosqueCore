@@ -255,6 +255,8 @@ void BSQON_AST_ScopedNameNode_print(struct BSQON_AST_ScopedNameNode* node);
 struct BSQON_AST_Node* parse_from_stdin();
 struct BSQON_AST_Node* parse_from_file(const char* file);
 
+size_t BSQON_AST_getErrorInfo(char** errorInfo);
+
 #ifdef __cplusplus
 }
 #endif

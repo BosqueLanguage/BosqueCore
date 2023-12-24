@@ -400,16 +400,13 @@ struct BSQON_AST_Node* parse_from_stdin()
 {
    yyin = stdin;
    filename = "<stdin>";
-   
-   if(!yyparse() || errorcount != 0) {
+
+   if(!yyparse()) {
       return yybsqonval;
    }
-
-   for(size_t i = 0; i < errorcount; ++i) {
-      printf("%s\n", errors[i]);
-      fflush(stdout);
+   else {
+      return NULL;
    }
-   exit(1);
 }
 
 struct BSQON_AST_Node* parse_from_file(const char* file)
@@ -419,14 +416,21 @@ struct BSQON_AST_Node* parse_from_file(const char* file)
       exit(1);
    }
    
-   if(!yyparse() || errorcount != 0) {
+   if(!yyparse()) {
       return yybsqonval;
    }
-
-   for(size_t i = 0; i < errorcount; ++i) {
-      printf("%s\n", errors[i]);
-      fflush(stdout);
+   else {
+      return NULL;
    }
-   exit(1);
+}
+
+size_t BSQON_AST_getErrorInfo(char** errorInfo)
+{
+   for(size_t i = 0; i < errorcount; ++i) {
+      errorInfo[i] = errors[i];
+   }
+   fflush(stdout);
+   
+   return errorcount;
 }
 #endif
