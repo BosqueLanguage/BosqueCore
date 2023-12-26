@@ -723,13 +723,9 @@ namespace BSQON
             nv = nv.substr(1);
         }
 
-        mpz_t pv;
-        mpz_init_set_str(pv, nv.c_str(), 10);
+        boost::multiprecision::mpz_int pv(nv);
 
-        Value* res = new BigNatNumberValue(t, Parser::convertSrcPos(node->pos), pv);
-        mpz_clear(pv);
-
-        return res;
+        return new BigNatNumberValue(t, Parser::convertSrcPos(node->pos), pv);
     }
 
     Value* Parser::parseBigInt(const PrimitiveType* t, BSQON_AST_Node* node)
@@ -746,13 +742,9 @@ namespace BSQON
             nv = nv.substr(1);
         }
 
-        mpz_t pv;
-        mpz_init_set_str(pv, nv.c_str(), 10);
+        boost::multiprecision::mpz_int pv(nv);
 
-        Value* res = new BigIntNumberValue(t, Parser::convertSrcPos(node->pos), pv);
-        mpz_clear(pv);
-
-        return res;
+        return new BigIntNumberValue(t, Parser::convertSrcPos(node->pos), pv);
     }
 
     Value* Parser::parseRational(const PrimitiveType* t, BSQON_AST_Node* node)
@@ -765,17 +757,17 @@ namespace BSQON
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'R'
 
-        mpq_t rv;
-        mpq_init(rv);
+        if(nv.front() == '+') {
+            nv = nv.substr(1);
+        }
 
-        RationalNumberValue* rvv;
         if(nv.find('/') == std::string::npos) {
-            mpq_set_str(rv, nv.c_str(), 10);
+            boost::multiprecision::mpz_int rv(nv);
 
-            rvv = new RationalNumberValue(t, Parser::convertSrcPos(node->pos), rv, nv, 1);
+            return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), boost::multiprecision::mpq_rational(rv, 1));
         }
         else {
-            auto numerator = nv.substr(0, nv.find('/'));
+            boost::multiprecision::mpz_int numerator(nv.substr(0, nv.find('/')));
             auto denominator = nv.substr(nv.find('/') + 1);
 
             int64_t denomv;
@@ -784,14 +776,8 @@ namespace BSQON
                 return new ErrorValue(t, Parser::convertSrcPos(node->pos));
             }
 
-            mpq_set_str(rv, nv.c_str(), 10);
-            mpq_canonicalize(rv);
-
-            rvv = new RationalNumberValue(t, Parser::convertSrcPos(node->pos), rv, numerator, (uint64_t)denomv);
+            return new RationalNumberValue(t, Parser::convertSrcPos(node->pos), boost::multiprecision::mpq_rational(numerator, (uint64_t)denomv));
         }
-
-        mpq_clear(rv);
-        return rvv;
     }
 
     Value* Parser::parseFloat(const PrimitiveType* t, BSQON_AST_Node* node)
@@ -822,6 +808,8 @@ namespace BSQON
 
         std::string nv = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
         nv.pop_back(); //remove the trailing 'd'
+
+        boost::multiprecision::cpp_dec_float_50 pv(nv);
 
         return new DecimalNumberValue(t, Parser::convertSrcPos(node->pos), nv);
     }
