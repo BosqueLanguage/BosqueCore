@@ -286,7 +286,25 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            return std::to_string(this->cnv) + "f";
+            auto sstr = std::to_string(this->cnv);
+            if(sstr == "0") {
+                return "0.0f";
+            }
+
+            while(sstr.back() == '0') {
+                sstr.pop_back();
+            }
+
+            if(sstr.back() == '.') {
+                sstr.push_back('0');
+            }
+            
+            if(std::find(sstr.cbegin(), sstr.cend(), '.') != sstr.cend()) {
+                return sstr + "f";
+            }
+            else {
+                return sstr + ".0f";
+            }
         }
 
         virtual bool isValidForTypedecl() const override
@@ -307,7 +325,21 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            return this->cnv.str() + "d";
+            auto sstr = this->cnv.str();
+            if(sstr == "0") {
+                return "0.0d";
+            }
+
+            while(sstr.back() == '0') {
+                sstr.pop_back();
+            }
+
+            if(std::find(sstr.cbegin(), sstr.cend(), '.') != sstr.cend()) {
+                return sstr + "d";
+            }
+            else {
+                return sstr + ".0d";
+            }
         }
 
         virtual bool isValidForTypedecl() const override
