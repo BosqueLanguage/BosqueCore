@@ -39,12 +39,14 @@ namespace BSQON
 
         {32, U"space;"},
         {33, U"bang;"},
+        {34, U";"},
         {34, U"quote;"},
         {35, U"hash;"},
         {36, U"dollar;"},
+        {37, U"%;"},
         {37, U"percent;"},
         {38, U"amp;"},
-        {39, U"apos;"},
+        {39, U"tick;"},
         {40, U"lparen;"},
         {41, U"rparen;"},
         {42, U"star;"},
@@ -112,9 +114,11 @@ namespace BSQON
         {34, "quote;"},
         {35, "hash;"},
         {36, "dollar;"},
+        {37, "%;"},
         {37, "percent;"},
         {38, "amp;"},
-        {39, "apos;"},
+        {39, ";"},
+        {39, "tick;"},
         {40, "lparen;"},
         {41, "rparen;"},
         {42, "star;"},
@@ -144,13 +148,13 @@ namespace BSQON
 
     std::optional<char32_t> decodeHexEscape(std::string escc)
     {
-        //u 1-4 digits and a ;
-        if(escc.size() == 2 || 6 < escc.size()) {
+        //1-4 digits and a ;
+        if(escc.size() == 1 || 5 < escc.size()) {
             return std::nullopt;
         }
 
         uint32_t cval;
-        auto sct = sscanf(escc.c_str(), "u%x;", &cval);
+        auto sct = sscanf(escc.c_str(), "%x;", &cval);
         if(sct != 1) {
             return std::nullopt;
         }
@@ -198,7 +202,7 @@ namespace BSQON
                 }
 
                 auto escc = std::string(bytes + i + 1, sc);
-                if(escc[0] == 'u') {
+                if(std::isdigit(escc[0])) {
                     //it should be a hex number of 1-4 digits
                     auto esc = decodeHexEscape(escc);
                     if(!esc.has_value()) {
@@ -264,7 +268,7 @@ namespace BSQON
                 }
 
                 auto escc = std::string(bytes + i + 1, sc);
-                if(escc[0] == 'u') {
+                if(std::isdigit(escc[0])) {
                     //it should be a hex number of 1-4 digits
                     auto esc = decodeHexEscape(escc);
                     if(!esc.has_value() || esc.value() > 127) {

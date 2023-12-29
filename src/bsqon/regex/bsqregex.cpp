@@ -42,13 +42,13 @@ namespace BSQON
             return pct + std::string("slash;");
         }
         else if( c == '%') {
-            return pct + std::string("percent;");
+            return pct + std::string("%;");
         }
         else if(c == '\n') {
-            return pct + std::string("newline;");
+            return pct + std::string("n;");
         }
         else if(c == '\t') {
-            return pct + std::string("tab;");
+            return pct + std::string("t;");
         }
         else if(c == '.') {
             return pct + std::string("dot;");
@@ -95,7 +95,7 @@ namespace BSQON
             }
             else {
                 char buf[64];
-                sprintf(buf, "u%x;", c);
+                sprintf(buf, "%x;", c);
 
                 return pct + std::string(std::string(buf) + ";");
             }
@@ -129,13 +129,13 @@ namespace BSQON
             return pct + std::string("slash;");
         }
         else if( c == '%') {
-            return pct + std::string("percent;");
+            return pct + std::string("%;");
         }
         else if(c == '\n') {
-            return pct + std::string("newline;");
+            return pct + std::string("n;");
         }
         else if(c == '\t') {
-            return pct + std::string("tab;");
+            return pct + std::string("t;");
         }
         else if(c == '^') {
             return pct + std::string("carat;");
@@ -155,7 +155,7 @@ namespace BSQON
             }
             else {
                 char buf[64];
-                sprintf(buf, "u%x;", c);
+                sprintf(buf, "%x;", c);
 
                 return pct + std::string(std::string(buf) + ";");
             }

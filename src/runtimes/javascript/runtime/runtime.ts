@@ -15,13 +15,13 @@ function bsqonEscapeString(str: string): string {
     let ret = "";
     for (let i = 0; i < str.length; i++) {
         if (str[i] === "%") {
-            ret += "%p;";
+            ret += "%$;";
         }
         else if(str[i] === "\"") {
-            ret += "%q;";
+            ret += "%;";
         }
         else if(str[i] === "`") {
-            ret += "%b;";
+            ret += "%backtick;";
         }
         else {
             ret += str[i];
@@ -36,38 +36,32 @@ function bsqonUnescapeString(str: string): string {
     for (let i = 0; i < str.length; i++) {
         if (str[i] === "%") {
             i++;
-            if (str[i] === "p") {
+            const epos = str.indexOf(";", i);
+
+            if (str[i] === "%") {
                 ret += "%";
-                i++;
             }
             else if (str[i] === "n") {
                 ret += "\n";
-                i++;
             }
             else if (str[i] === "r") {
                 ret += "\r";
-                i++;
             }
             else if (str[i] === "t") {
                 ret += "\t";
-                i++;
             }
             else if (str[i] === "b") {
                 ret += "`";
-                i++;
             }
-            else if (str[i] === "q") {
+            else if (str[i] === ";") {
                 ret += "\"";
-                i++;
             }
             else {
-                //should be a u 
-                i++;
-                const epos = str.indexOf(";", i);
                 const hex = str.substring(i, epos);
                 ret += String.fromCharCode(parseInt(hex, 16));
-                i = epos;
             }
+
+            i = epos;
         }
         else {
             ret += str[i];
