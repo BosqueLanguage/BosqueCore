@@ -269,7 +269,7 @@ namespace BSQON
                     return std::nullopt;
                 }
 
-                auto escc = std::string(bytes + i + 1, sc);
+                auto escc = std::string(bytes + i + 1, sc + 1);
                 if(std::isdigit(escc[0])) {
                     //it should be a hex number of 1-4 digits
                     auto esc = decodeHexEscape(escc);
@@ -300,7 +300,7 @@ namespace BSQON
 
     std::vector<uint8_t> escapeASCIIString(const std::string& sv)
     {
-        std::string acc = "'";
+        std::string acc;
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char c = *ii;
 
@@ -311,7 +311,6 @@ namespace BSQON
                 acc = std::move(acc) + c;
             }
         }
-        acc = std::move(acc) + "'";
 
         std::vector<uint8_t> res(acc.size());
         std::transform(acc.cbegin(), acc.cend(), res.begin(), [](char c) { return (uint8_t)c; });

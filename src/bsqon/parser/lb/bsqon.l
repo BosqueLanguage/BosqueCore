@@ -166,8 +166,7 @@ sha3"{"[a-zA-Z0-9]+        { yyerror("Missing close bracket"); return YYerror; }
 '             { BEGIN(INITIAL); ByteStringStoreChar('\''); yylval.bstr = bstrAlloc(string_buf_bs); return TOKEN_ASCII_STRING; }
 <<EOF>>       { BEGIN(INITIAL); yyerror("Unclosed ASCIIString"); return YYEOF; }
 \n[ \t\r]*\\  { ByteStringStoreChar('\n'); /*ignore whitespace till alignment on multi-line string*/ }
-[!-~ \t]      { ByteStringStoreChar(yytext[0]); }
-.             { yyerror("Non-printable character (ignoring)"); return YYerror; }
+[^']          { ByteStringStoreChar(yytext[0]); }
 }
 
 <INITIAL>{
