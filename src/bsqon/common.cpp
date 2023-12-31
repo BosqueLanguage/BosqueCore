@@ -149,7 +149,7 @@ namespace BSQON
     std::optional<char32_t> decodeHexEscape(std::string escc)
     {
         //1-4 digits and a ;
-        if(escc.size() == 1 || 5 < escc.size()) {
+        if(escc.size() == 1 || 7 < escc.size()) {
             return std::nullopt;
         }
 
@@ -163,25 +163,25 @@ namespace BSQON
         }
     }
 
-    UnicodeString resolveEscapeUnicodeFromCode(char32_t c)
+    UnicodeString resolveEscapeUnicodeFromCode(uint8_t c)
     {
         auto ii = std::find_if(s_escape_names_unicode.cbegin(), s_escape_names_unicode.cend(), [c](const std::pair<char32_t, UnicodeString>& p) { return p.first == c; });
-        return ii->second;
+        return U"%" + ii->second;
     }
 
-    char32_t resolveEscapeUnicodeFromName(const UnicodeString& name)
+    uint8_t resolveEscapeUnicodeFromName(const UnicodeString& name)
     {
         auto ii = std::find_if(s_escape_names_unicode.cbegin(), s_escape_names_unicode.cend(), [name](const std::pair<char32_t, UnicodeString>& p) { return p.second == name; });
         return ii->first;
     }
 
-    std::string resolveEscapeASCIIFromCode(char c)
+    std::string resolveEscapeASCIIFromCode(uint8_t c)
     {
         auto ii = std::find_if(s_escape_names_ascii.cbegin(), s_escape_names_ascii.cend(), [c](const std::pair<char, std::string>& p) { return p.first == c; });
-        return ii->second;
+        return "%" + ii->second;
     }
 
-    char resolveEscapeASCIIFromName(const std::string& name)
+    uint8_t resolveEscapeASCIIFromName(const std::string& name)
     {
         auto ii = std::find_if(s_escape_names_ascii.cbegin(), s_escape_names_ascii.cend(), [name](const std::pair<char, std::string>& p) { return p.second == name; });
         return ii->first;
@@ -201,7 +201,8 @@ namespace BSQON
                     return std::nullopt;
                 }
 
-                auto escc = std::string(bytes + i + 1, sc);
+                auto escc = std::string(bytes + i + 1, sc + 1);
+
                 if(std::isdigit(escc[0])) {
                     //it should be a hex number of 1-4 digits
                     auto esc = decodeHexEscape(escc);
@@ -212,12 +213,13 @@ namespace BSQON
                     acc = std::move(acc) + std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(esc.value());
                 }
                 else {
-                    auto esc = resolveEscapeASCIIFromName(escc);
+                    auto uniescc = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(escc);
+                    auto esc = resolveEscapeUnicodeFromName(uniescc);
                     if(esc == 0) {
                         return std::nullopt;
                     }
 
-                    acc = std::move(acc) + esc;
+                    acc = std::move(acc) + (char)esc;
                 }
 
                 i += escc.size();
@@ -232,7 +234,7 @@ namespace BSQON
 
     std::vector<uint8_t> escapeString(const UnicodeString& sv)
     {
-        UnicodeString acc = U"\"";
+        UnicodeString acc = U"";
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char32_t c = *ii;
 
@@ -243,7 +245,7 @@ namespace BSQON
                 acc = std::move(acc) + c;
             }
         }
-        acc = std::move(acc) + U"\"";
+        acc = std::move(acc) + U"";
 
         std::string utf8 = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.to_bytes(acc);
 
@@ -283,7 +285,7 @@ namespace BSQON
                         return std::nullopt;
                     }
 
-                    acc = std::move(acc) + esc;
+                    acc = std::move(acc) + (char)esc;
                 }
 
                 i += escc.size();
