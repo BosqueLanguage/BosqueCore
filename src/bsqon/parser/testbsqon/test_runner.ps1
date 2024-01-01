@@ -115,10 +115,11 @@ function RunTestSuite($testName)
     else {
         ForEach ($test in $tests) {
             $SCRIPT:totalTests += 1
+            $tname = $test.BaseName
             $contents = Get-Content -Path $test.FullName -Encoding utf8 -TotalCount 10
 
             if($contents[0] -notmatch '^\s*%%\s*[A-Z].+') {
-                Write-Host "  Test $testName does not have a type specified at the top of the file" -ForegroundColor Red
+                Write-Host "  Test $tname does not have a type specified at the top of the file" -ForegroundColor Red
                 $SCRIPT:errorTests += 1
                 continue
             }
@@ -127,7 +128,7 @@ function RunTestSuite($testName)
             $expected = $test.FullName.Replace(".bsqon", "_expected.bsqon")
 
             if(-Not (Test-Path $expected)) {
-                Write-Host "  Test $testName has no expected result file" -ForegroundColor Red
+                Write-Host "  Test $tname has no expected result file" -ForegroundColor Red
                 $SCRIPT:errorTests += 1
                 continue
             }

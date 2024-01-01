@@ -261,7 +261,11 @@ namespace BSQON
 
         std::string acc;
         for(size_t i = 1; i < length - 1; ++i) {
-            char c = bytes[i];
+            uint8_t c = bytes[i];
+
+            if(!std::isprint(c) && !std::iswspace(c)) {
+                return std::nullopt;
+            }
 
             if(c == '%') {
                 auto sc = std::find(bytes + i, bytes + length, ';');
