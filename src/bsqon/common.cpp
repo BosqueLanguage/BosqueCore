@@ -257,7 +257,7 @@ namespace BSQON
 
     std::optional<std::string> unescapeASCIIString(const uint8_t* bytes, size_t length)
     {
-        //assume string has '...' (or `...`) so we need to remove them
+        //assume string has '...' (or `...`, /.../) so we need to remove them
 
         std::string acc;
         for(size_t i = 1; i < length - 1; ++i) {

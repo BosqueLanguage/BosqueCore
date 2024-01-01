@@ -1072,7 +1072,15 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        auto rstr = std::string(BSQON_AST_asLiteralStandardNode(node)->data);
+        auto rstr = std::string((char*)BSQON_AST_asLiteralStringNode(node)->data->bytes, BSQON_AST_asLiteralStringNode(node)->data->len);
+
+        std::cout << rstr << std::endl;
+
+        std::cout << "Regex literals: " << this->assembly->regexliterals.size() << std::endl;
+        for(auto ii = this->assembly->regexliterals.begin(); ii != this->assembly->regexliterals.end(); ++ii) {
+            std::cout << (*ii).first << ": " << (*ii).second << std::endl;
+        }
+
         auto rri = this->assembly->regexliterals.find(rstr);
 
         if(rri == this->assembly->regexliterals.end()) {
