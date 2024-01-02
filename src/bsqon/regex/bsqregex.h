@@ -593,14 +593,24 @@ namespace BSQON
                         this->advance();
                     }
 
+                    while(!this->done() && this->isToken(U' ')) {
+                        this->advance();
+                    }
+
                     uint16_t max = min;
                     if (!this->done() && this->isToken(U',')) {
                         this->advance();
 
-                        max = 0;
-                        while(!this->done() && U'0' < this->token() && this->token() < U'9') {
-                            max = max * 10 + (this->token() - U'0');
+                        while(!this->done() && this->isToken(U' ')) {
                             this->advance();
+                        }
+
+                        if(!this->done() && !this->isToken(U'}')) {
+                            max = 0;
+                            while(!this->done() && U'0' < this->token() && this->token() < U'9') {
+                                max = max * 10 + (this->token() - U'0');
+                                this->advance();
+                            }
                         }
                     }
 

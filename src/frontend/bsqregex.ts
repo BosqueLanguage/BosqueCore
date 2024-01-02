@@ -165,19 +165,30 @@ class RegexParser {
                 }
                 this.advance(nmin[0].length);
 
+                while(this.isToken(" ")) {
+                    this.advance();
+                }
+
                 const min = Number.parseInt(nmin[0]);
                 let max = min;
                 if (this.isToken(",")) {
                     this.advance();
-                    nre.lastIndex = this.pos;
 
-                    const nmax = nre.exec(this.restr);
-                    if (nmax === null) {
-                        return "Invalid number";
+                    while(this.isToken(" ")) {
+                        this.advance();
                     }
-                    this.advance(nmax[0].length);
 
-                    max = Number.parseInt(nmax[0]);
+                    if (!this.isToken("}")) {
+                        nre.lastIndex = this.pos;
+
+                        const nmax = nre.exec(this.restr);
+                        if (nmax === null) {
+                            return "Invalid number";
+                        }
+                        this.advance(nmax[0].length);
+
+                        max = Number.parseInt(nmax[0]);
+                    }
                 }
 
                 if(!this.isToken("}")) {

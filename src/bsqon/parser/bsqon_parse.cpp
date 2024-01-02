@@ -1076,10 +1076,13 @@ namespace BSQON
 
         std::cout << rstr << std::endl;
 
-        std::cout << "Regex literals: " << this->assembly->regexliterals.size() << std::endl;
+std::cout << "XX" << std::endl;
+        std::cout << "Regex literals: " << (this->assembly == nullptr) << std::endl;
+        std::cout << "YY" << std::endl;
         for(auto ii = this->assembly->regexliterals.begin(); ii != this->assembly->regexliterals.end(); ++ii) {
             std::cout << (*ii).first << ": " << (*ii).second << std::endl;
         }
+        std::cout << "ZZ" << std::endl;
 
         auto rri = this->assembly->regexliterals.find(rstr);
 
