@@ -1072,7 +1072,9 @@ namespace BSQON
             return new ErrorValue(t, Parser::convertSrcPos(node->pos));
         }
 
-        auto rstr = std::string((char*)BSQON_AST_asLiteralStringNode(node)->data->bytes, BSQON_AST_asLiteralStringNode(node)->data->len);
+        auto rparse = std::string((char*)BSQON_AST_asLiteralStringNode(node)->data->bytes, BSQON_AST_asLiteralStringNode(node)->data->len);
+        auto rr = RegexParser::parseRegex(std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(rparse));
+        auto rstr = rr->toString();
 
         std::cout << rstr << std::endl;
 
