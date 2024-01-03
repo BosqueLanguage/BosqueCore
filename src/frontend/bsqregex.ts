@@ -1,5 +1,130 @@
 import { JS, NFA, Words } from "refa";
 import { escapeString } from "./build_decls";
+import assert from "assert";
+
+//
+//TODO: this is strict on the syntax that must be escaped -- later we are going to replace this with a NAPI wrapper on the C++ code that will be more general
+//
+
+function unescapeEntryForRegex(c: string): string {
+    if(c === "%slash;") {
+        return "/";
+    }
+    else if( c === '%%;') {
+        return "%";
+    }
+    else if(c === "%n;") {
+        return "\n";
+    }
+    else if(c === "%t;") {
+        return "\t";
+    }
+    else if(c === "%dot;") {
+        return ".";
+    }
+    else if(c === "%dollar;") {
+        return "$";
+    }
+    else if(c === "%carat;") {
+        return "^";
+    }
+    else if(c === "%star;") {
+        return "*";
+    }
+    else if(c === "%plus;") {
+        return "+";
+    }
+    else if(c === "%question;") {
+        return "?";
+    }
+    else if(c === "%pipe;") {
+        return "|";
+    }
+    else if(c === "%lparen;") {
+        return "(";
+    }
+    else if(c === "%rparen;") {
+        return ")";
+    }
+    else if(c === "%lbracket;") {
+        return "[";
+    }
+    else if(c === "%rbracket;") {
+        return "]";
+    }
+    else if(c === "%lbrace;") {
+        return "{";
+    }
+    else if(c === "%rbrace;") {
+        return "}";
+    }
+    else {
+        let cp = c.codePointAt(0) as number;
+        assert(32 <= cp && cp <= 126, "Invalid character -- temp must be simple ascii otherwise");
+
+        return c;
+    }
+}
+
+function escapeCharCodeForRegex(c: string): {charcode: number, bsqonesc: string, jsesc: string} {
+    if(c === "/") {
+        return {bsqonesc: "%slash;", jsesc: "\\/"};
+    }
+    else if(c === '%') {
+        return {bsqonesc: "%%;", jsesc: "%"};
+    }
+    else if(c === '\n') {
+        return {bsqonesc: "%n;", jsesc: "\\n"};
+    }
+    else if(c === '\t') {
+        return {bsqonesc: "%t;", jsesc: "\\t"};
+    }
+    else if(c === '.') {
+        return {bsqonesc: "%dot;", jsesc: "\\."};
+    }
+    else if(c === '$') {
+        return {bsqonesc: "%dollar;", jsesc: "\\$"};
+    }
+    else if(c === '^') {
+        return {bsqonesc: "%carat;", jsesc: "\\^"};
+    }
+    else if(c === '*') {
+        return {bsqonesc: "%star;", jsesc: "\\*"};
+    }
+    else if(c === '+') {
+        return {bsqonesc: "%plus;", jsesc: "\\+"};
+    }
+    else if(c === '?') {
+        return {bsqonesc: "%question;", jsesc: "\\?"};
+    }
+    else if(c === '|') {
+        return {bsqonesc: "%pipe;", jsesc: "\\|"};
+    }
+    else if(c === '(') {
+        return {bsqonesc: "%lparen;", jsesc: "\\("};
+    }
+    else if(c === ')') {
+        return {bsqonesc: "%rparen;", jsesc: "\\)"};
+    }
+    else if(c === '[') {
+        return {bsqonesc: "%lbracket;", jsesc: "\\["};
+    }
+    else if(c === ']') {
+        return {bsqonesc: "%rbracket;", jsesc: "\\]"};
+    }
+    else if(c === '{') {
+        return {bsqonesc: "%lbrace;", jsesc: "\\{"};
+    }
+    else if(c === '}') {
+        return {bsqonesc: "%rbrace;", jsesc: "\\}"};
+    }
+    else {
+        let cp = c.codePointAt(0) as number;
+        assert(32 <= cp && cp <= 126, "Invalid character -- temp must be simple ascii otherwise");
+        
+        return {bsqonesc: c, jsesc: c};
+    }
+}
 
 class RegexParser {
     readonly currentns: string;
@@ -287,6 +412,10 @@ class BSQRegex {
         return nfa.test(Words.fromStringToUnicode(str));
     }
 
+    literalemit(): string {
+        return this.re.literalemit();
+    }
+
     static parse(currentns: string, rstr: string): BSQRegex | string {
         const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 1));
         const rep = reparser.parseComponent();
@@ -316,6 +445,8 @@ abstract class RegexComponent {
     useParens(): boolean {
         return false;
     }
+
+    abstract literalemit(): string;
 
     abstract jemit(): any;
 
@@ -351,14 +482,20 @@ abstract class RegexComponent {
 }
 
 class RegexLiteral extends RegexComponent {
-    readonly restr: string;
-    readonly escstr: string;
+    readonly charcodes: number[];
+    readonly bsqonstr: string; //chars or escapes BSQ regxes
+    readonly jsstr: string; //chars or escapes for JS regexs
 
-    constructor(restr: string, escstr: string) {
+    constructor(charcodes: number[], bsqonstr: string, jsstr: string) {
         super();
 
-        this.restr = restr;
-        this.escstr = escstr;
+        this.charcodes = charcodes;
+        this.bsqonstr = bsqonstr;
+        this.jsstr = jsstr;
+    }
+
+    literalemit(): string {
+        return this.bsqonstr;
     }
 
     jemit(): any {

@@ -1,3 +1,4 @@
+import { BSQRegex } from "../bsqregex";
 
 type BSQTypeKey = string;
 
@@ -554,14 +555,16 @@ class AssemblyInfo {
     readonly aliasmap: Map<BSQTypeKey, BSQType>;
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
+    readonly regexliterals: BSQRegex[];
     readonly revalidators: Map<BSQTypeKey, string>;
     readonly pthvalidators: Map<BSQTypeKey, string>;
     readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>, recursiveSets: Set<BSQTypeKey>[]) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>, recursiveSets: Set<BSQTypeKey>[]) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
+        this.regexliterals = regexliterals;
         this.revalidators = revalidators;
         this.pthvalidators = pthvalidators;
         this.recursiveSets = recursiveSets;
@@ -572,6 +575,7 @@ class AssemblyInfo {
             aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
+            regexliterals: this.regexliterals.map((rl) => rl.literalemit()),
             revalidators: [...this.revalidators.entries()],
             pthvalidators: [...this.pthvalidators.entries()],
             recursiveSets: this.recursiveSets.map((s) => [...s])
@@ -596,6 +600,11 @@ class AssemblyInfo {
             aliasmap.set(aa[0], typerefs.get(aa[1]) as BSQType);
         });
 
+        const regexliterals: BSQRegex[] = [];
+        jv.regexliterals.forEach((rl: any) => {
+            regexliterals.push(BSQRegex.parse("#global#", rl) as BSQRegex);
+        });
+
         const revalidators = new Map<BSQTypeKey, string>();
         jv.revalidators.forEach((rv: any) => {
             revalidators.set(rv[0], rv[1]);
@@ -611,7 +620,7 @@ class AssemblyInfo {
             recursiveSets.push(new Set<BSQTypeKey>(rs));
         });
 
-        return new AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators, recursiveSets);
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, regexliterals, revalidators, pthvalidators, recursiveSets);
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {

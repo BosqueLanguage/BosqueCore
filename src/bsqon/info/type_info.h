@@ -415,7 +415,10 @@ namespace BSQON
         std::map<TypeKey, BSQPath*> pthvalidators;
         std::vector<std::set<TypeKey>> recursiveSets;
 
-        AssemblyInfo() { ; }
+        AssemblyInfo() : aliasmap(), namespaces(), typerefs(), regexliterals(), revalidators(), pthvalidators(), recursiveSets()
+        { 
+            ; 
+        }
 
         ~AssemblyInfo()
         {

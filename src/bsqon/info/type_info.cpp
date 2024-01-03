@@ -241,9 +241,9 @@ namespace BSQON
         });
 
         std::for_each(j["regexliterals"].begin(), j["regexliterals"].end(), [&assembly](const json &ta) {
-            std::string ss = ta[1].get<std::string>();
+            std::string ss = ta.get<std::string>();
             UnicodeString restr = unescapeString((uint8_t*)ss.c_str(), ss.size()).value();
-            assembly.regexliterals[ta[0].get<std::string>()] = RegexParser::parseRegex(restr);
+            assembly.regexliterals[ss] = RegexParser::parseRegex(restr);
         });
 
         std::for_each(j["aliasmap"].begin(), j["aliasmap"].end(), [&assembly](const json &a) { 

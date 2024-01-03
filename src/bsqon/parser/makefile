@@ -12,7 +12,7 @@ CC=gcc
 CFLAGS=-g -ggdb -DEXPORT
 
 CPP=g++
-CPPFLAGS=-g -ggdb -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=c++20
+CPPFLAGS=-g -ggdb -fno-omit-frame-pointer -Wall -Wextra -Wno-unused-parameter -Wuninitialized -Werror -std=c++20 -fsanitize=address
 
 CFG_SOURCES=$(BSQON_CFG_DIR)bsqon.y $(BSQON_CFG_DIR)bsqon.l
 
