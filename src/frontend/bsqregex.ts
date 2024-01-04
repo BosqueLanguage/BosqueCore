@@ -1,68 +1,174 @@
 import { JS, NFA, Words } from "refa";
-import { escapeString } from "./build_decls";
-import assert from "assert";
 
-//
-//TODO: this is strict on the syntax that must be escaped -- later we are going to replace this with a NAPI wrapper on the C++ code that will be more general
-//
+const s_escape_names: [number, string][] = [
+    [0, "0;"],
+    [1, "SOH;"],
+    [2, "STX;"],
+    [3, "ETX;"],
+    [4, "EOT;"],
+    [5, "ENQ;"],
+    [6, "ACK;"],
+    [7, "a;"],
+    [8, "b;"],
+    [9, "t;"],
+    [10, "n;"],
+    [11, "v;"],
+    [12, "f;"],
+    [13, "r;"],
+    [14, "SO;"],
+    [15, "SI;"],
+    [16, "DLE;"],
+    [17, "DC1;"],
+    [18, "DC2;"],
+    [19, "DC3;"],
+    [20, "DC4;"],
+    [21, "NAK;"],
+    [22, "SYN;"],
+    [23, "ETB;"],
+    [24, "CAN;"],
+    [25, "EM;"],
+    [26, "SUB;"],
+    [27, "e;"],
+    [28, "FS;"],
+    [29, "GS;"],
+    [30, "RS;"],
+    [31, "US;"],
+    [127, "DEL;"],
 
-function unescapeEntryForRegex(c: string): string {
-    if(c === "%slash;") {
-        return "/";
+    [32, "space;"],
+    [33, "bang;"],
+    [34, "quote;"],
+    [35, "hash;"],
+    [36, "dollar;"],
+    [37, "%;"],
+    [37, "percent;"],
+    [38, "amp;"],
+    [39, "tick;"],
+    [40, "lparen;"],
+    [41, "rparen;"],
+    [42, "star;"],
+    [43, "plus;"],
+    [44, "comma;"],
+    [45, "dash;"],
+    [46, "dot;"],
+    [47, "slash;"],
+    [58, "colon;"],
+    [59, "semicolon;"],
+    [60, "langle;"],
+    [61, "equal;"],
+    [62, "rangle;"],
+    [63, "question;"],
+    [64, "at;"], 
+    [91, "lbracket;"],
+    [92, "backslash;"],
+    [93, "rbracket;"],
+    [94, "caret;"],
+    [95, "underscore;"],
+    [96, "backtick;"],
+    [123, "lbrace;"],
+    [124, "pipe;"],
+    [125, "rbrace;"],
+    [126, "tilde;"]
+];
+
+function unescapeRegexDataValue(rstr: string, inliteral: boolean): string | undefined {
+    if(rstr.startsWith("%")) {
+        let rrstr = rstr.slice(1);
+        if(/\d+;/.test(rrstr)) {
+            const ccode = Number.parseInt(rrstr.slice(0, rrstr.length - 1), 16);
+            if(!Number.isSafeInteger(ccode)) {
+                return undefined;
+            }
+            else {
+                return String.fromCharCode(ccode);
+            }
+        }
+        else if(inliteral && rstr === ";") {
+            return "\"";
+        }
+        else {
+            const mm = s_escape_names.find((en) => rrstr === en[1]);
+            if(mm === undefined) {
+                return undefined;
+            }
+            else {
+                return String.fromCharCode(mm[0]);
+            }
+        }
     }
-    else if( c === '%%;') {
-        return "%";
+    else {
+        return rstr;
     }
-    else if(c === "%n;") {
-        return "\n";
+}
+
+function escapeEntryForRegexDataAsBSQON(c: string, inliteral: boolean): string {
+    if( c === '%') {
+        return "%%;";
     }
-    else if(c === "%t;") {
-        return "\t";
+    else if(c === "\n") {
+        return "%n;";
     }
-    else if(c === "%dot;") {
-        return ".";
+    else if(c === "\t") {
+        return "%t;";
     }
-    else if(c === "%dollar;") {
-        return "$";
+    else if(c === "\r") {
+        return "%r;";
     }
-    else if(c === "%carat;") {
-        return "^";
+    else if(inliteral && c === "\"") {
+        return "%;";
     }
-    else if(c === "%star;") {
-        return "*";
+    else if(!inliteral && c === "-") {
+        return "%;";
     }
-    else if(c === "%plus;") {
-        return "+";
+    else if(!inliteral && c === "[") {
+        return "%lbracket;";
     }
-    else if(c === "%question;") {
-        return "?";
-    }
-    else if(c === "%pipe;") {
-        return "|";
-    }
-    else if(c === "%lparen;") {
-        return "(";
-    }
-    else if(c === "%rparen;") {
-        return ")";
-    }
-    else if(c === "%lbracket;") {
-        return "[";
-    }
-    else if(c === "%rbracket;") {
-        return "]";
-    }
-    else if(c === "%lbrace;") {
-        return "{";
-    }
-    else if(c === "%rbrace;") {
-        return "}";
+    else if(!inliteral && c === "]") {
+        return "%rbracket;";
     }
     else {
         let cp = c.codePointAt(0) as number;
-        assert(32 <= cp && cp <= 126, "Invalid character -- temp must be simple ascii otherwise");
+        if(32 <= cp && cp <= 126) {
+            return c;
+        }
+        else {
+            return "%" + cp.toString(16) + ";";
+        }
+    }
+}
 
-        return c;
+function escapeEntryForRegexDataAsECMAScript(c: string, inliteral: boolean): string {
+    xxxx;
+    
+    if(c === "\n") {
+        return "%n;";
+    }
+    else if(c === "\t") {
+        return "%t;";
+    }
+    else if(c === "\r") {
+        return "%r;";
+    }
+    else if(inliteral && c === "\"") {
+        return "%;";
+    }
+    else if(!inliteral && c === "-") {
+        return "%;";
+    }
+    else if(!inliteral && c === "[") {
+        return "%lbracket;";
+    }
+    else if(!inliteral && c === "]") {
+        return "%rbracket;";
+    }
+    else {
+        let cp = c.codePointAt(0) as number;
+        if(32 <= cp && cp <= 126) {
+            return c;
+        }
+        else {
+            return "%" + cp.toString(16) + ";";
+        }
     }
 }
 

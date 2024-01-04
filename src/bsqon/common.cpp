@@ -3,7 +3,7 @@
 namespace BSQON
 {
     std::vector<std::pair<char32_t, UnicodeString>> s_escape_names_unicode = {
-        {0, U"0;"},
+        {0, U"NUL;"},
         {1, U"SOH;"},
         {2, U"STX;"},
         {3, U"ETX;"},
@@ -75,40 +75,6 @@ namespace BSQON
     };
 
     std::vector<std::pair<char, std::string>> s_escape_names_ascii = {
-        {0, "0;"},
-        {1, "SOH;"},
-        {2, "STX;"},
-        {3, "ETX;"},
-        {4, "EOT;"},
-        {5, "ENQ;"},
-        {6, "ACK;"},
-        {7, "a;"},
-        {8, "b;"},
-        {9, "t;"},
-        {10, "n;"},
-        {11, "v;"},
-        {12, "f;"},
-        {13, "r;"},
-        {14, "SO;"},
-        {15, "SI;"},
-        {16, "DLE;"},
-        {17, "DC1;"},
-        {18, "DC2;"},
-        {19, "DC3;"},
-        {20, "DC4;"},
-        {21, "NAK;"},
-        {22, "SYN;"},
-        {23, "ETB;"},
-        {24, "CAN;"},
-        {25, "EM;"},
-        {26, "SUB;"},
-        {27, "e;"},
-        {28, "FS;"},
-        {29, "GS;"},
-        {30, "RS;"},
-        {31, "US;"},
-        {127, "DEL;"},
-
         {32, "space;"},
         {33, "bang;"},
         {34, "quote;"},
@@ -169,10 +135,15 @@ namespace BSQON
         return U"%" + ii->second;
     }
 
-    uint8_t resolveEscapeUnicodeFromName(const UnicodeString& name)
+    std::optional<uint8_t> resolveEscapeUnicodeFromName(const UnicodeString& name)
     {
         auto ii = std::find_if(s_escape_names_unicode.cbegin(), s_escape_names_unicode.cend(), [name](const std::pair<char32_t, UnicodeString>& p) { return p.second == name; });
-        return ii->first;
+        if(ii == s_escape_names_unicode.cend()) {
+            return std::nullopt;
+        }
+        else {
+            return std::make_optional(ii->first);
+        }
     }
 
     std::string resolveEscapeASCIIFromCode(uint8_t c)
@@ -181,10 +152,15 @@ namespace BSQON
         return "%" + ii->second;
     }
 
-    uint8_t resolveEscapeASCIIFromName(const std::string& name)
+    std::optional<uint8_t> resolveEscapeASCIIFromName(const std::string& name)
     {
         auto ii = std::find_if(s_escape_names_ascii.cbegin(), s_escape_names_ascii.cend(), [name](const std::pair<char, std::string>& p) { return p.second == name; });
-        return ii->first;
+        if(ii == s_escape_names_ascii.cend()) {
+            return std::nullopt;
+        }
+        else {
+            return std::make_optional(ii->first);
+        }
     }
 
     std::optional<UnicodeString> unescapeString(const uint8_t* bytes, size_t length)
@@ -194,6 +170,10 @@ namespace BSQON
         std::string acc;
         for(size_t i = 1; i < length - 1; ++i) {
             uint8_t c = bytes[i];
+
+            if(c <= 127 && !std::isprint(c) && !std::iswspace(c)) {
+                return std::nullopt;
+            }
 
             if(c == '%') {
                 auto sc = std::find(bytes + i, bytes + length, ';');
@@ -215,11 +195,11 @@ namespace BSQON
                 else {
                     auto uniescc = std::wstring_convert<std::codecvt_utf8<char32_t>, char32_t>{}.from_bytes(escc);
                     auto esc = resolveEscapeUnicodeFromName(uniescc);
-                    if(esc == 0) {
+                    if(!esc.has_value()) {
                         return std::nullopt;
                     }
 
-                    acc = std::move(acc) + (char)esc;
+                    acc = std::move(acc) + (char)esc.value();
                 }
 
                 i += escc.size();
@@ -238,7 +218,7 @@ namespace BSQON
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char32_t c = *ii;
 
-            if(c == U'%' || c == U'"' || c == U'\n' || c == U'\t' || c == U'\r') {
+            if(c == U'%' || c == U'"' || (c <= 127 && !std::isprint(c))) {
                 acc = std::move(acc) + resolveEscapeUnicodeFromCode(c);
             }
             else {
@@ -285,11 +265,11 @@ namespace BSQON
                 }
                 else {
                     auto esc = resolveEscapeASCIIFromName(escc);
-                    if(esc == 0) {
+                    if(!esc.has_value()) {
                         return std::nullopt;
                     }
 
-                    acc = std::move(acc) + (char)esc;
+                    acc = std::move(acc) + (char)esc.value();
                 }
 
                 i += escc.size();
@@ -308,7 +288,7 @@ namespace BSQON
         for(auto ii = sv.cbegin(); ii != sv.cend(); ++ii) {
             char c = *ii;
 
-            if(c == '%' || c == '\'' || c == '\n' || c == '\t' || c == '\r') {
+            if(c == '%' || c == '\'' || !std::isprint(c)) {
                 acc = std::move(acc) + resolveEscapeASCIIFromCode(c);
             }
             else {
