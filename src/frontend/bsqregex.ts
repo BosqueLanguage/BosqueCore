@@ -67,62 +67,64 @@ function unescapeEntryForRegex(c: string): string {
 }
 
 function escapeCharCodeForRegex(c: string): {charcode: number, bsqonesc: string, jsesc: string} {
+    let cc = c.charCodeAt(0);
+
     if(c === "/") {
-        return {bsqonesc: "%slash;", jsesc: "\\/"};
+        return {charcode: cc, bsqonesc: "%slash;", jsesc: "\\/"};
     }
     else if(c === '%') {
-        return {bsqonesc: "%%;", jsesc: "%"};
+        return {charcode: cc, bsqonesc: "%%;", jsesc: "%"};
     }
     else if(c === '\n') {
-        return {bsqonesc: "%n;", jsesc: "\\n"};
+        return {charcode: cc, bsqonesc: "%n;", jsesc: "\\n"};
     }
     else if(c === '\t') {
-        return {bsqonesc: "%t;", jsesc: "\\t"};
+        return {charcode: cc, bsqonesc: "%t;", jsesc: "\\t"};
     }
     else if(c === '.') {
-        return {bsqonesc: "%dot;", jsesc: "\\."};
+        return {charcode: cc, bsqonesc: "%dot;", jsesc: "\\."};
     }
     else if(c === '$') {
-        return {bsqonesc: "%dollar;", jsesc: "\\$"};
+        return {charcode: cc, bsqonesc: "%dollar;", jsesc: "\\$"};
     }
     else if(c === '^') {
-        return {bsqonesc: "%carat;", jsesc: "\\^"};
+        return {charcode: cc, bsqonesc: "%carat;", jsesc: "\\^"};
     }
     else if(c === '*') {
-        return {bsqonesc: "%star;", jsesc: "\\*"};
+        return {charcode: cc, bsqonesc: "%star;", jsesc: "\\*"};
     }
     else if(c === '+') {
-        return {bsqonesc: "%plus;", jsesc: "\\+"};
+        return {charcode: cc, bsqonesc: "%plus;", jsesc: "\\+"};
     }
     else if(c === '?') {
-        return {bsqonesc: "%question;", jsesc: "\\?"};
+        return {charcode: cc, bsqonesc: "%question;", jsesc: "\\?"};
     }
     else if(c === '|') {
-        return {bsqonesc: "%pipe;", jsesc: "\\|"};
+        return {charcode: cc, bsqonesc: "%pipe;", jsesc: "\\|"};
     }
     else if(c === '(') {
-        return {bsqonesc: "%lparen;", jsesc: "\\("};
+        return {charcode: cc, bsqonesc: "%lparen;", jsesc: "\\("};
     }
     else if(c === ')') {
-        return {bsqonesc: "%rparen;", jsesc: "\\)"};
+        return {charcode: cc, bsqonesc: "%rparen;", jsesc: "\\)"};
     }
     else if(c === '[') {
-        return {bsqonesc: "%lbracket;", jsesc: "\\["};
+        return {charcode: cc, bsqonesc: "%lbracket;", jsesc: "\\["};
     }
     else if(c === ']') {
-        return {bsqonesc: "%rbracket;", jsesc: "\\]"};
+        return {charcode: cc, bsqonesc: "%rbracket;", jsesc: "\\]"};
     }
     else if(c === '{') {
-        return {bsqonesc: "%lbrace;", jsesc: "\\{"};
+        return {charcode: cc, bsqonesc: "%lbrace;", jsesc: "\\{"};
     }
     else if(c === '}') {
-        return {bsqonesc: "%rbrace;", jsesc: "\\}"};
+        return {charcode: cc, bsqonesc: "%rbrace;", jsesc: "\\}"};
     }
     else {
-        let cp = c.codePointAt(0) as number;
+        let cp = c.charCodeAt(0) as number;
         assert(32 <= cp && cp <= 126, "Invalid character -- temp must be simple ascii otherwise");
         
-        return {bsqonesc: c, jsesc: c};
+        return {charcode: cc, bsqonesc: c, jsesc: c};
     }
 }
 
@@ -225,7 +227,10 @@ class RegexParser {
             return new RegexConstClass(ns, ccname);            
         }
         else {
-            res = new RegexLiteral(this.token(), this.token());
+            let tv = this.token();
+            let ccs = Array.from(tv).map((c) =>c.charCodeAt(0));
+            res = new RegexLiteral(ccs, this.token(), this.token());
+
             this.advance();
         }
 
@@ -237,23 +242,13 @@ class RegexParser {
             this.advance();
             return new RegexDotCharClass();
         }
-        else if(this.isToken("\\")) {
-            this.advance();
-            if(this.isToken("\\") || this.isToken("/") 
-                || this.isToken(".") || this.isToken("*") || this.isToken("+") || this.isToken("?") || this.isToken("|")
-                || this.isToken("(") || this.isToken(")") || this.isToken("[") || this.isToken("]") || this.isToken("{") || this.isToken("}")
-                || this.isToken("$")) {
-                const cc = this.token();
-                this.advance();
+        else if(this.isToken("%")) {
+            let epos = this.restr.indexOf(";", this.pos);
+            let estr = this.restr.slice(this.pos, epos + 1);
+            this.advance(estr.length);
 
-                return new RegexLiteral(`\\${cc}`, cc);
-            }
-            else {
-                const cc = this.token();
-                this.advance();
-
-                return new RegexLiteral(`\\${cc}`, `\\${cc}`);
-            }
+            let uesi = escapeCharCodeForRegex(estr);
+            return new RegexLiteral([uesi.charcode], uesi.bsqonesc, uesi.jsesc);
         }
         else {
             return this.parseBaseComponent();

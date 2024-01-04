@@ -124,42 +124,7 @@ namespace BSQON
 
     std::string BSQCharRangeRe::escapeCode(CharCode c)
     {
-        auto pct = "%";
-        if(c == '/') {
-            return pct + std::string("slash;");
-        }
-        else if( c == '%') {
-            return pct + std::string("%;");
-        }
-        else if(c == '\n') {
-            return pct + std::string("n;");
-        }
-        else if(c == '\t') {
-            return pct + std::string("t;");
-        }
-        else if(c == '^') {
-            return pct + std::string("carat;");
-        }
-        else if(c == '-') {
-            return pct + std::string("dash;");
-        }
-        else if(c == '[') {
-            return pct + std::string("lbracket;");
-        }
-        else if(c == ']') {
-            return pct + std::string("rbracket;");
-        }
-        else {
-            if(' ' <= c && c <= '~') {
-                return std::to_string(c);
-            }
-            else {
-                char buf[64];
-                sprintf(buf, "%x;", c);
-
-                return pct + std::string(std::string(buf) + ";");
-            }
-        }
+        xxxx;
     }
 
     BSQCharRangeRe* BSQCharRangeRe::parse(json j)
