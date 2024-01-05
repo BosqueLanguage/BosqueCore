@@ -137,29 +137,60 @@ function escapeEntryForRegexDataAsBSQON(c: string, inliteral: boolean): string {
     }
 }
 
-function escapeEntryForRegexDataAsECMAScript(c: string, inliteral: boolean): string {
-    xxxx;
-    
-    if(c === "\n") {
-        return "%n;";
+function escapeEntryForRegexLiteralAsECMAScript(c: string): string {
+    if(c === '\\') {
+        return "\\\\";
+    }
+    else if(c === '/') {
+        return "\\/";
+    }
+    else if(c === "\n") {
+        return "\\n";
     }
     else if(c === "\t") {
-        return "%t;";
+        return "\\t";
     }
     else if(c === "\r") {
-        return "%r;";
+        return "\\r";
     }
-    else if(inliteral && c === "\"") {
-        return "%;";
+    else if(c === "^") {
+        return "\\^";
     }
-    else if(!inliteral && c === "-") {
-        return "%;";
+    else if(c === "$") {
+        return "\\$";
     }
-    else if(!inliteral && c === "[") {
-        return "%lbracket;";
+    else if(c === ".") {
+        return "\\.";
     }
-    else if(!inliteral && c === "]") {
-        return "%rbracket;";
+    else if(c === "*") {
+        return "\\*";
+    }
+    else if(c === "+") {
+        return "\\+";
+    }
+    else if(c === "?") {
+        return "\\?";
+    }
+    else if(c === "(") {
+        return "\\(";
+    }
+    else if(c === ")") {
+        return "\\)";
+    }
+    else if(c === "{") {
+        return "\\{";
+    }
+    else if(c === "}") {
+        return "\\}";
+    }
+    else if(c === "[") {
+        return "\\[";
+    }
+    else if(c === "]") {
+        return "\\]";
+    }
+    else if(c === "|") {
+        return "\\|";
     }
     else {
         let cp = c.codePointAt(0) as number;
@@ -167,71 +198,19 @@ function escapeEntryForRegexDataAsECMAScript(c: string, inliteral: boolean): str
             return c;
         }
         else {
-            return "%" + cp.toString(16) + ";";
+            return "\\u{" + cp.toString(16) + "}";
         }
     }
 }
 
-function escapeCharCodeForRegex(c: string): {charcode: number, bsqonesc: string, jsesc: string} {
-    let cc = c.charCodeAt(0);
-
-    if(c === "/") {
-        return {charcode: cc, bsqonesc: "%slash;", jsesc: "\\/"};
-    }
-    else if(c === '%') {
-        return {charcode: cc, bsqonesc: "%%;", jsesc: "%"};
-    }
-    else if(c === '\n') {
-        return {charcode: cc, bsqonesc: "%n;", jsesc: "\\n"};
-    }
-    else if(c === '\t') {
-        return {charcode: cc, bsqonesc: "%t;", jsesc: "\\t"};
-    }
-    else if(c === '.') {
-        return {charcode: cc, bsqonesc: "%dot;", jsesc: "\\."};
-    }
-    else if(c === '$') {
-        return {charcode: cc, bsqonesc: "%dollar;", jsesc: "\\$"};
-    }
-    else if(c === '^') {
-        return {charcode: cc, bsqonesc: "%carat;", jsesc: "\\^"};
-    }
-    else if(c === '*') {
-        return {charcode: cc, bsqonesc: "%star;", jsesc: "\\*"};
-    }
-    else if(c === '+') {
-        return {charcode: cc, bsqonesc: "%plus;", jsesc: "\\+"};
-    }
-    else if(c === '?') {
-        return {charcode: cc, bsqonesc: "%question;", jsesc: "\\?"};
-    }
-    else if(c === '|') {
-        return {charcode: cc, bsqonesc: "%pipe;", jsesc: "\\|"};
-    }
-    else if(c === '(') {
-        return {charcode: cc, bsqonesc: "%lparen;", jsesc: "\\("};
-    }
-    else if(c === ')') {
-        return {charcode: cc, bsqonesc: "%rparen;", jsesc: "\\)"};
-    }
-    else if(c === '[') {
-        return {charcode: cc, bsqonesc: "%lbracket;", jsesc: "\\["};
-    }
-    else if(c === ']') {
-        return {charcode: cc, bsqonesc: "%rbracket;", jsesc: "\\]"};
-    }
-    else if(c === '{') {
-        return {charcode: cc, bsqonesc: "%lbrace;", jsesc: "\\{"};
-    }
-    else if(c === '}') {
-        return {charcode: cc, bsqonesc: "%rbrace;", jsesc: "\\}"};
-    }
-    else {
-        let cp = c.charCodeAt(0) as number;
-        assert(32 <= cp && cp <= 126, "Invalid character -- temp must be simple ascii otherwise");
-        
-        return {charcode: cc, bsqonesc: c, jsesc: c};
-    }
+function escapeEntryForRegexRangeAsECMAScript(c: string): string {
+    let cp = c.codePointAt(0) as number;
+        if(cp === 32 || (48 <= cp && cp <= 57) || (65 <= cp && cp <= 90) || (97 <= cp && cp <= 122)) {
+            return c;
+        }
+        else {
+            return "\\u{" + cp.toString(16) + "}";
+        }
 }
 
 class RegexParser {
