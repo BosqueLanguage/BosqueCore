@@ -71,37 +71,32 @@ const s_escape_names: [number, string][] = [
     [126, "tilde;"]
 ];
 
-function unescapeRegexDataValue(rstr: string, inliteral: boolean): string | undefined {
-    if(rstr.startsWith("%")) {
-        let rrstr = rstr.slice(1);
-        if(/\d+;/.test(rrstr)) {
-            const ccode = Number.parseInt(rrstr.slice(0, rrstr.length - 1), 16);
-            if(!Number.isSafeInteger(ccode)) {
-                return undefined;
-            }
-            else {
-                return String.fromCharCode(ccode);
-            }
-        }
-        else if(inliteral && rstr === ";") {
-            return "\"";
+function unescapeRegexDataValue(rstr: string, inliteral: boolean): [number, string] | undefined {
+    let rrstr = rstr.slice(1);
+    if (/\d+;/.test(rrstr)) {
+        const ccode = Number.parseInt(rrstr.slice(0, rrstr.length - 1), 16);
+        if (!Number.isSafeInteger(ccode)) {
+            return undefined;
         }
         else {
-            const mm = s_escape_names.find((en) => rrstr === en[1]);
-            if(mm === undefined) {
-                return undefined;
-            }
-            else {
-                return String.fromCharCode(mm[0]);
-            }
+            return [ccode, String.fromCharCode(ccode)];
         }
     }
+    else if (inliteral && rstr === ";") {
+        return [34, "\""];
+    }
     else {
-        return rstr;
+        const mm = s_escape_names.find((en) => rrstr === en[1]);
+        if (mm === undefined) {
+            return undefined;
+        }
+        else {
+            return [mm[0], String.fromCharCode(mm[0])];
+        }
     }
 }
 
-function escapeEntryForRegexDataAsBSQON(c: string, inliteral: boolean): string {
+function escapeEntryForRegexLiteralAsBSQON(c: string): string {
     if( c === '%') {
         return "%%;";
     }
@@ -114,16 +109,40 @@ function escapeEntryForRegexDataAsBSQON(c: string, inliteral: boolean): string {
     else if(c === "\r") {
         return "%r;";
     }
-    else if(inliteral && c === "\"") {
+    else if(c === "\"") {
         return "%;";
     }
-    else if(!inliteral && c === "-") {
+    else {
+        let cp = c.codePointAt(0) as number;
+        if(32 <= cp && cp <= 126) {
+            return c;
+        }
+        else {
+            return "%" + cp.toString(16) + ";";
+        }
+    }
+}
+
+function escapeEntryForRegexRangeAsBSQON(c: string): string {
+    if( c === '%') {
+        return "%%;";
+    }
+    else if(c === "\n") {
+        return "%n;";
+    }
+    else if(c === "\t") {
+        return "%t;";
+    }
+    else if(c === "\r") {
+        return "%r;";
+    }
+    else if(c === "-") {
         return "%;";
     }
-    else if(!inliteral && c === "[") {
+    else if(c === "[") {
         return "%lbracket;";
     }
-    else if(!inliteral && c === "]") {
+    else if(c === "]") {
         return "%rbracket;";
     }
     else {
@@ -203,14 +222,13 @@ function escapeEntryForRegexLiteralAsECMAScript(c: string): string {
     }
 }
 
-function escapeEntryForRegexRangeAsECMAScript(c: string): string {
-    let cp = c.codePointAt(0) as number;
-        if(cp === 32 || (48 <= cp && cp <= 57) || (65 <= cp && cp <= 90) || (97 <= cp && cp <= 122)) {
-            return c;
-        }
-        else {
-            return "\\u{" + cp.toString(16) + "}";
-        }
+function escapeEntryForRegexRangeAsECMAScript(cp: number): string {
+    if (cp === 32 || (48 <= cp && cp <= 57) || (65 <= cp && cp <= 90) || (97 <= cp && cp <= 122)) {
+        return String.fromCharCode(cp);
+    }
+    else {
+        return "\\u{" + cp.toString(16) + "}";
+    }
 }
 
 class RegexParser {
@@ -240,100 +258,190 @@ class RegexParser {
         this.pos = this.pos + (dist !== undefined ? dist : 1);
     }
 
+    private parseLiteral(): RegexLiteral | string {
+        let codes: number[] = [];
+        let cvals = "";
+
+        this.advance();
+        if(this.done()) {
+            return "Unclosed regex literal";
+        }
+
+        while(!this.isToken("\"")) {
+            const c = this.token();
+            this.advance();
+
+            if(c !== "%") {
+                codes.push(c.codePointAt(0) as number);
+                cvals += c;
+            }
+            else {
+                const eepos = this.restr.indexOf(";", this.pos);
+                if(eepos === -1) {
+                    return "Invalid escape sequence -- missing ;";
+                }
+
+                const sstr = this.restr.slice(this.pos, eepos);
+                this.advance(sstr.length);
+
+                const usc = unescapeRegexDataValue(sstr, true);
+                if(usc === undefined) {
+                    return "Invalid escape sequence";
+                }
+
+                codes.push(usc[0]);
+                cvals += usc[1];
+            }
+        }
+
+        this.advance();
+        return new RegexLiteral(codes, cvals);
+    }
+
+    private parseRange(): RegexCharRange | string {
+        this.advance();
+
+        let range: {lb: [number, string], ub: [number, string]}[] = [];
+        while (!this.isToken("]")) {
+            const lb = this.token();
+            this.advance();
+
+            let lcode: [number, string] = [0, "NUL"];
+            if(lb !== "%") {
+                lcode = [lb.codePointAt(0) as number, lb];
+            }
+            else {
+                const eepos = this.restr.indexOf(";", this.pos);
+                if(eepos === -1) {
+                    return "Invalid escape sequence -- missing ;";
+                }
+
+                const lcstr = this.restr.slice(this.pos, eepos);
+                const lcc = unescapeRegexDataValue(lcstr, false);
+                if(lcc === undefined) {
+                    return "Invalid escape sequence";
+                }
+
+                this.advance(lcstr.length);
+                lcode = lcc;
+            }
+
+            if (!this.isToken("-")) {
+                range.push({ lb: lcode, ub: lcode });
+            }
+            else {
+                this.advance();
+
+                const ub = this.token();
+                this.advance();
+
+                let ucode: [number, string] = [0, "NUL"];
+                if(ub !== "%") {
+                    ucode = [ub.codePointAt(0) as number, ub];
+                }
+                else {
+                    const eepos = this.restr.indexOf(";", this.pos);
+                    if (eepos === -1) {
+                        return "Invalid escape sequence -- missing ;";
+                    }
+
+                    const ucstr = this.restr.slice(this.pos, eepos);
+                    const ucc = unescapeRegexDataValue(ucstr, false);
+                    if(ucc === undefined) {
+                        return "Invalid escape sequence";
+                    }
+    
+                    this.advance(ucstr.length);
+                    ucode = ucc;
+                }
+
+                range.push({ lb: lcode, ub: ucode });
+            }
+        }
+
+        if (!this.isToken("]")) {
+            return "Invalid range";
+        }
+        this.advance();
+
+        return new RegexCharRange(range);
+    }
+
+    private parseNamedComponent(): RegexConstClass | string {
+        this.advance();
+
+        if (!this.isToken("{")) {
+            return "Invalid regex const";
+        }
+        this.advance();
+
+        let fname = "";
+        while (!this.isToken("}")) {
+            fname += this.token();
+            this.advance();
+        }
+
+        if (!this.isToken("}")) {
+            return "Invalid regex const";
+        }
+        this.advance();
+
+        let ccpos = fname.indexOf("::");
+
+        let ns = ccpos === -1 ? this.currentns : fname.slice(0, ccpos);
+        let ccname = ccpos === -1 ? fname : fname.slice(ccpos + 3);
+
+        return new RegexConstClass(ns, ccname);
+    }
+
+    private parseNegatedComponent(): RegexNegatedComponent | string {
+        this.advance();
+
+        const cc = this.parseCharClassOrEscapeComponent();
+        if(typeof(cc) === "string") {
+            return cc;
+        }
+
+        return new RegexNegatedComponent(cc);
+    }
+
     private parseBaseComponent(): RegexComponent | string {
-        let res: RegexComponent | string;
+        if(this.done()) {
+            return "Unexpected end of regex"
+        }
+
         if(this.isToken("(")) {
             this.advance();
 
-            res = this.parseComponent();
+            const res = this.parseComponent();
             if(!this.isToken(")")) {
                 return "Un-matched paren";
             }
-
             this.advance();
+
+            return res;
+        }
+        else if(this.isToken("^")) {
+            return this.parseNegatedComponent();
+        }
+        else if(this.isToken("\"")) {
+            return this.parseLiteral();
         }
         else if(this.isToken("[")) {
-            this.advance();
-
-            const compliment = this.isToken("^")
-            if(compliment) {
-                this.advance();
-            }
-
-            let range: {lb: number, ub: number}[] = [];
-            while(!this.isToken("]")) {
-                const lb = this.token();
-                this.advance();
-
-                if (!this.isToken("-")) {
-                    range.push({ lb: lb.codePointAt(0) as number, ub: lb.codePointAt(0) as number });
-                }
-                else {
-                    this.advance();
-
-                    const ub = this.token();
-                    this.advance();
-
-                    range.push({ lb: lb.codePointAt(0) as number, ub: ub.codePointAt(0) as number });
-                }
-            }
-
-            if(!this.isToken("]")) {
-                return "Invalid range";
-            }
-            this.advance();
-
-            return new RegexCharRange(compliment, range);
+            return this.parseRange();
         }
         else if(this.isToken("$")) {
-            this.advance();
-
-            if(!this.isToken("{")) {
-                return "Invalid regex const";
-            }
-            this.advance();
-
-            let fname = "";
-            while(!this.isToken("}")) {
-                fname += this.token();
-                this.advance();
-            }
-
-            if(!this.isToken("}")) {
-                return "Invalid regex const";
-            }
-            this.advance();
-
-            let ccpos = fname.indexOf("::");
-
-            let ns = ccpos === -1 ? this.currentns : fname.slice(0, ccpos);
-            let ccname = ccpos === -1 ? fname : fname.slice(ccpos + 3);
-
-            return new RegexConstClass(ns, ccname);            
+            return this.parseNamedComponent();            
         }
         else {
-            let tv = this.token();
-            let ccs = Array.from(tv).map((c) =>c.charCodeAt(0));
-            res = new RegexLiteral(ccs, this.token(), this.token());
-
-            this.advance();
+            return `Unknown regex component -- starting with "${this.token()}"`
         }
-
-        return res;
     }
 
     private parseCharClassOrEscapeComponent(): RegexComponent | string {
         if(this.isToken(".")) {
             this.advance();
             return new RegexDotCharClass();
-        }
-        else if(this.isToken("%")) {
-            let epos = this.restr.indexOf(";", this.pos);
-            let estr = this.restr.slice(this.pos, epos + 1);
-            this.advance(estr.length);
-
-            let uesi = escapeCharCodeForRegex(estr);
-            return new RegexLiteral([uesi.charcode], uesi.bsqonesc, uesi.jsesc);
         }
         else {
             return this.parseBaseComponent();
@@ -416,19 +524,6 @@ class RegexParser {
             if(typeof(rpe) === "string") {
                 return rpe;
             }
-
-            if(sre.length === 0) {
-                sre.push(rpe);
-            }
-            else {
-                const lcc = sre[sre.length - 1];
-                if(lcc instanceof RegexLiteral && rpe instanceof RegexLiteral) {
-                    sre[sre.length - 1] = RegexLiteral.mergeLiterals(lcc, rpe);
-                }
-                else {
-                    sre.push(rpe);
-                }
-            }
         }
 
         if(sre.length === 0) {
@@ -475,25 +570,21 @@ class RegexParser {
 }
 
 class BSQRegex {
-    readonly regexstr: string;
+    readonly regexid: string | undefined; //either the scoped key for the regex or undefined if this is a literal
     readonly re: RegexComponent;
 
-    constructor(restr: string, re: RegexComponent) {
-        this.regexstr = restr;
+    constructor(regexid: string, re: RegexComponent) {
+        this.regexid = regexid;
         this.re = re;
     }
 
-    acceptsString(str: string): boolean {
-        const jsre = RegExp(this.re.compileToJS());
+    acceptsString(str: string, regexmap: Map<string, BSQRegex>): boolean {
+        const jsre = RegExp(this.re.compileToECMA(false, regexmap));
 
         const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
 	    const nfa = NFA.fromRegex(expression, { maxCharacter });
 
         return nfa.test(Words.fromStringToUnicode(str));
-    }
-
-    literalemit(): string {
-        return this.re.literalemit();
     }
 
     static parse(currentns: string, rstr: string): BSQRegex | string {
@@ -509,15 +600,19 @@ class BSQRegex {
     }
 
     jemit(): any {
-        return { regexstr: this.regexstr, re: this.re.jemit() };
+        return { regexid: this.regexid || null, re: this.re.jemit() };
     }
 
     static jparse(obj: any): BSQRegex {
-        return new BSQRegex(obj.regexstr, RegexComponent.jparse(obj.re));
+        return new BSQRegex(obj.regexid || undefined, RegexComponent.jparse(obj.re));
     }
 
-    bsqonemit(): string {
-        return `TreeIR::BSQRegex{"${escapeString(this.regexstr)}", ${this.re.bsqonemit()}}`;
+    bsq_emit(): string {
+        return `TreeIR::BSQRegex{${this.regexid !== undefined ? ("\"" + this.regexid + "\"") : "none"}, ${this.re.bsqonemit()}}`;
+    }
+
+    bsqon_literal_regexemit(): string {
+        return this.re.bsqon_literal_emit();
     }
 }
 
@@ -526,11 +621,11 @@ abstract class RegexComponent {
         return false;
     }
 
-    abstract literalemit(): string;
+    abstract bsqon_literal_emit(): string;
 
     abstract jemit(): any;
 
-    abstract compileToJS(): string;
+    abstract compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string;
 
     static jparse(obj: any): RegexComponent {
         const tag = obj[0];
@@ -543,6 +638,8 @@ abstract class RegexComponent {
                 return RegexDotCharClass.jparse(obj);
             case "TreeIR::RegexConstRegexClass":
                 return RegexConstClass.jparse(obj);
+            case "TreeIR::RegexNegatedComponent":
+                return RegexNegatedComponent.jparse(obj);
             case "TreeIR::RegexStarRepeat":
                 return RegexStarRepeat.jparse(obj);
             case "TreeIR::RegexPlusRepeat":
@@ -563,94 +660,77 @@ abstract class RegexComponent {
 
 class RegexLiteral extends RegexComponent {
     readonly charcodes: number[];
-    readonly bsqonstr: string; //chars or escapes BSQ regxes
-    readonly jsstr: string; //chars or escapes for JS regexs
+    readonly literalstr: string;
 
-    constructor(charcodes: number[], bsqonstr: string, jsstr: string) {
+    constructor(charcodes: number[], literalstr: string) {
         super();
 
         this.charcodes = charcodes;
-        this.bsqonstr = bsqonstr;
-        this.jsstr = jsstr;
+        this.literalstr = literalstr;
     }
 
-    literalemit(): string {
-        return this.bsqonstr;
+    bsqon_literal_emit(): string {
+        return "\"" + escapeEntryForRegexLiteralAsBSQON(this.literalstr) + "\"";
     }
 
     jemit(): any {
-        return ["TreeIR::RegexLiteral", {restr: this.restr, escstr: this.escstr}];
+        return ["TreeIR::RegexLiteral", {charcodes: this.charcodes, literalstr: this.literalstr}];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexLiteral(obj[1].restr, obj[1].escstr);
+        return new RegexLiteral(obj[1].charcodes, obj[1].literalstr);
     }
 
-    static mergeLiterals(l1: RegexLiteral, l2: RegexLiteral): RegexLiteral {
-        return new RegexLiteral(l1.restr + l2.restr, l1.escstr + l2.escstr);
-    }
-
-    compileToJS(): string {
-        return this.restr;
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        return escapeEntryForRegexLiteralAsECMAScript(this.literalstr);
     }
 
     bsqonemit(): string {
-        return `TreeIR::RegexLiteral{"${escapeString(this.restr)}", "${escapeString(this.escstr)}"}`;
+        return `TreeIR::RegexLiteral{[${this.charcodes.map((cc) => cc.toString()).join(", ")}], "${escapeEntryForRegexLiteralAsBSQON(this.literalstr)}"}`;
     }
 }
 
 class RegexCharRange extends RegexComponent {
-    readonly compliment: boolean;
-    readonly range: {lb: number, ub: number}[];
+    readonly range: {lb: [number, string], ub: [number, string]}[];
 
-    constructor(compliment: boolean, range: {lb: number, ub: number}[]) {
+    constructor(range: {lb: [number, string], ub: [number, string]}[]) {
         super();
 
-        this.compliment = compliment;
         this.range = range;
     }
 
+    bsqon_literal_emit(): string {
+        const rng = this.range.map((rr) => (rr.lb[0] == rr.ub[0]) ? escapeEntryForRegexRangeAsBSQON(rr.lb[1]) : `${escapeEntryForRegexRangeAsBSQON(rr.lb[1])}-${escapeEntryForRegexRangeAsBSQON(rr.ub[1])}`);
+        return `[${rng.join("")}]`;
+    }
+
     jemit(): any {
-        return ["TreeIR::RegexCharRange", {compliment: this.compliment, range: this.range }];
+        return ["TreeIR::RegexCharRange", {range: this.range }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexCharRange(obj[1].compliment, obj[1].range);
+        return new RegexCharRange(obj[1].range);
     }
 
-    private static valToSStr(cc: number): string {
-        if(cc === 9) {
-            return "\\t";
-        }
-        else if (cc === 10) {
-            return "\\n";
-        }
-        else if (cc === 13) {
-            return "\\r";
-        }
-        else {
-            return String.fromCodePoint(cc);
-        }
-    }
-
-    compileToJS(): string {
-        //
-        //TODO: probably need to do some escaping here as well
-        //
-        const rng = this.range.map((rr) => (rr.lb == rr.ub) ? RegexCharRange.valToSStr(rr.lb) : `${RegexCharRange.valToSStr(rr.lb)}-${RegexCharRange.valToSStr(rr.ub)}`);
-        return `[${this.compliment ? "^" : ""}${rng.join("")}]`;
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        const rng = this.range.map((rr) => (rr.lb[0] == rr.ub[0]) ? escapeEntryForRegexRangeAsECMAScript(rr.lb[0]) : `${escapeEntryForRegexRangeAsECMAScript(rr.lb[0])}-${escapeEntryForRegexRangeAsECMAScript(rr.ub[0])}`);
+        return `[${isnegate ? "^" : ""}${rng.join("")}]`;
     }
 
     bsqonemit(): string {
-        const rngl = this.range.map((rr) => `{lb=${rr.lb}n, ub=${rr.ub}n}`);
+        const rngl = this.range.map((rr) => `{lb=[${rr.lb[0]}n, "${rr.lb[1]}"], ub=[${rr.ub[0]}n, "${rr.ub[1]}"]}`);
         const rng = `[${rngl.join(", ")}]`;
-        return `TreeIR::RegexCharRange{${this.compliment}, ${rng}}`;
+        return `TreeIR::RegexCharRange{${rng}}`;
     }
 }
 
 class RegexDotCharClass extends RegexComponent {
     constructor() {
         super();
+    }
+
+    bsqon_literal_emit(): string {
+        return ".";
     }
 
     jemit(): any {
@@ -661,8 +741,8 @@ class RegexDotCharClass extends RegexComponent {
         return new RegexDotCharClass();
     }
 
-    compileToJS(): string {
-        return ".";
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        return isnegate ? "-ERROR-" : ".";
     }
 
     bsqonemit(): string {
@@ -681,6 +761,10 @@ class RegexConstClass extends RegexComponent {
         this.ccname = ccname;
     }
 
+    bsqon_literal_emit(): string {
+        return "${" + `${this.ns}::${this.ccname}` + "}" ;
+    }
+
     jemit(): any {
         return ["TreeIR::RegexConstRegexClass", { ns: this.ns, ccname: this.ccname }];
     }
@@ -689,12 +773,51 @@ class RegexConstClass extends RegexComponent {
         return new RegexConstClass(obj[1].ns, obj[1].ccname);
     }
 
-    compileToJS(): string {
-        return `${this.ns}::${this.ccname}`;
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        return (regexmap.get(`${this.ns}::${this.ccname}`) as BSQRegex).re.compileToECMA(isnegate, regexmap);
     }
 
     bsqonemit(): string {
-        return `[NOT SUPPORTED]`;
+        return `TreeIR::RegexConstClass{${this.ns}::${this.ccname}}`;
+    }
+}
+
+class RegexNegatedComponent extends RegexComponent {
+    readonly nregex: RegexComponent;
+
+    constructor(nregex: RegexComponent) {
+        super();
+
+        this.nregex = nregex;
+    }
+
+    useParens(): boolean {
+        return true;
+    }
+
+    bsqon_literal_emit(): string {
+        return "^(" + this.nregex.bsqon_literal_emit() + ")";
+    }
+
+    jemit(): any {
+        return ["TreeIR::RegexNegatedComponent", { nregex: this.nregex.jemit() }];
+    }
+
+    static jparse(obj: any): RegexComponent {
+        return new RegexNegatedComponent(RegexComponent.jparse(obj[1].nregex));
+    }
+
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        if(this.nregex instanceof RegexCharRange) {
+            return this.nregex.compileToECMA(isnegate, regexmap);
+        }
+        else {
+            return "TODO: -- negation in regex";
+        }
+    }
+
+    bsqonemit(): string {
+        return `TreeIR::RegexNegatedComponent{${this.nregex.bsqonemit()}}`;
     }
 }
 
@@ -707,6 +830,10 @@ class RegexStarRepeat extends RegexComponent {
         this.repeat = repeat;
     }
 
+    bsqon_literal_emit(): string {
+        return this.repeat.useParens() ? `(${this.repeat.bsqon_literal_emit()})*` : `${this.repeat.bsqon_literal_emit()}*`;
+    }
+
     jemit(): any {
         return ["TreeIR::RegexStarRepeat", { repeat: this.repeat.jemit() }];
     }
@@ -715,8 +842,8 @@ class RegexStarRepeat extends RegexComponent {
         return new RegexStarRepeat(RegexComponent.jparse(obj[1].repeat));
     }
 
-    compileToJS(): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToJS()})*` : `${this.repeat.compileToJS()}*`;
+    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(isnegate, regexmap)})*` : `${this.repeat.compileToECMA(isnegate, regexmap)}*`;
     }
 
     bsqonemit(): string {
@@ -741,8 +868,8 @@ class RegexPlusRepeat extends RegexComponent {
         return new RegexPlusRepeat(RegexComponent.jparse(obj[1].repeat));
     }
 
-    compileToJS(): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToJS()})+` : `${this.repeat.compileToJS()}+`;
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)})+` : `${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}+`;
     }
 
     bsqonemit(): string {
@@ -771,8 +898,8 @@ class RegexRangeRepeat extends RegexComponent {
         return new RegexRangeRepeat(RegexComponent.jparse(obj[1].repeat), obj[1].min, obj[1].max);
     }
 
-    compileToJS(): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToJS()}){${this.min},${this.max}}` : `${this.repeat.compileToJS()}{${this.min},${this.max}}`;
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}){${this.min},${this.max}}` : `${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}{${this.min},${this.max}}`;
     }
 
     bsqonemit(): string {
@@ -797,8 +924,8 @@ class RegexOptional extends RegexComponent {
         return new RegexOptional(RegexComponent.jparse(obj[1].opt));
     }
 
-    compileToJS(): string {
-        return this.opt.useParens() ? `(${this.opt.compileToJS()})?` : `${this.opt.compileToJS()}?`;
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return this.opt.useParens() ? `(${this.opt.compileToECMA(regexmap: Map<string, BSQRegex>)})?` : `${this.opt.compileToECMA(regexmap: Map<string, BSQRegex>)}?`;
     }
 
     bsqonemit(): string {
@@ -827,8 +954,8 @@ class RegexAlternation extends RegexComponent {
         return new RegexAlternation(obj[1].opts.map((opt: any) => RegexComponent.jparse(opt)));
     }
 
-    compileToJS(): string {
-        return this.opts.map((opt) => opt.compileToJS()).join("|");
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return this.opts.map((opt) => opt.compileToECMA(regexmap: Map<string, BSQRegex>)).join("|");
     }
 
     bsqonemit(): string {
@@ -857,7 +984,7 @@ class RegexSequence extends RegexComponent {
         return new RegexSequence(obj[1].elems.map((elem: any) => RegexComponent.jparse(elem)));
     }
 
-    compileToJS(): string {
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
         return this.elems.map((elem) => elem.compileToJS()).join("");
     }
 
