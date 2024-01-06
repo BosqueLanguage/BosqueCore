@@ -301,6 +301,11 @@ class RegexParser {
     private parseRange(): RegexCharRange | string {
         this.advance();
 
+        const iscompliment = this.isToken("^");
+        if(iscompliment) {
+            this.advance();
+        }
+
         let range: {lb: [number, string], ub: [number, string]}[] = [];
         while (!this.isToken("]")) {
             const lb = this.token();
@@ -364,7 +369,7 @@ class RegexParser {
         }
         this.advance();
 
-        return new RegexCharRange(range);
+        return new RegexCharRange(iscompliment, range);
     }
 
     private parseNamedComponent(): RegexConstClass | string {
@@ -483,7 +488,7 @@ class RegexParser {
                 }
 
                 const min = Number.parseInt(nmin[0]);
-                let max = min;
+                let max: number | undefined = min;
                 if (this.isToken(",")) {
                     this.advance();
 
@@ -491,6 +496,7 @@ class RegexParser {
                         this.advance();
                     }
 
+                    max = undefined;
                     if (!this.isToken("}")) {
                         nre.lastIndex = this.pos;
 
@@ -579,7 +585,7 @@ class BSQRegex {
     }
 
     acceptsString(str: string, regexmap: Map<string, BSQRegex>): boolean {
-        const jsre = RegExp(this.re.compileToECMA(false, regexmap));
+        const jsre = RegExp(this.re.compileToECMA(regexmap));
 
         const { expression, maxCharacter } = JS.Parser.fromLiteral(jsre).parse();
 	    const nfa = NFA.fromRegex(expression, { maxCharacter });
@@ -625,7 +631,7 @@ abstract class RegexComponent {
 
     abstract jemit(): any;
 
-    abstract compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string;
+    abstract compileToECMA(regexmap: Map<string, BSQRegex>): string;
 
     static jparse(obj: any): RegexComponent {
         const tag = obj[0];
@@ -681,7 +687,7 @@ class RegexLiteral extends RegexComponent {
         return new RegexLiteral(obj[1].charcodes, obj[1].literalstr);
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
         return escapeEntryForRegexLiteralAsECMAScript(this.literalstr);
     }
 
@@ -691,30 +697,32 @@ class RegexLiteral extends RegexComponent {
 }
 
 class RegexCharRange extends RegexComponent {
+    readonly iscompliment: boolean;
     readonly range: {lb: [number, string], ub: [number, string]}[];
 
-    constructor(range: {lb: [number, string], ub: [number, string]}[]) {
+    constructor(iscompliment: boolean, range: {lb: [number, string], ub: [number, string]}[]) {
         super();
 
+        this.iscompliment = iscompliment;
         this.range = range;
     }
 
     bsqon_literal_emit(): string {
         const rng = this.range.map((rr) => (rr.lb[0] == rr.ub[0]) ? escapeEntryForRegexRangeAsBSQON(rr.lb[1]) : `${escapeEntryForRegexRangeAsBSQON(rr.lb[1])}-${escapeEntryForRegexRangeAsBSQON(rr.ub[1])}`);
-        return `[${rng.join("")}]`;
+        return `[${this.iscompliment ? "^" : ""}${rng.join("")}]`;
     }
 
     jemit(): any {
-        return ["TreeIR::RegexCharRange", {range: this.range }];
+        return ["TreeIR::RegexCharRange", {iscompliment: this.iscompliment, range: this.range }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexCharRange(obj[1].range);
+        return new RegexCharRange(obj[1].iscompliment, obj[1].range);
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
         const rng = this.range.map((rr) => (rr.lb[0] == rr.ub[0]) ? escapeEntryForRegexRangeAsECMAScript(rr.lb[0]) : `${escapeEntryForRegexRangeAsECMAScript(rr.lb[0])}-${escapeEntryForRegexRangeAsECMAScript(rr.ub[0])}`);
-        return `[${isnegate ? "^" : ""}${rng.join("")}]`;
+        return `[${this.iscompliment ? "^" : ""}${rng.join("")}]`;
     }
 
     bsqonemit(): string {
@@ -741,8 +749,8 @@ class RegexDotCharClass extends RegexComponent {
         return new RegexDotCharClass();
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
-        return isnegate ? "-ERROR-" : ".";
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return ".";
     }
 
     bsqonemit(): string {
@@ -773,8 +781,8 @@ class RegexConstClass extends RegexComponent {
         return new RegexConstClass(obj[1].ns, obj[1].ccname);
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
-        return (regexmap.get(`${this.ns}::${this.ccname}`) as BSQRegex).re.compileToECMA(isnegate, regexmap);
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return (regexmap.get(`${this.ns}::${this.ccname}`) as BSQRegex).re.compileToECMA(regexmap);
     }
 
     bsqonemit(): string {
@@ -791,10 +799,6 @@ class RegexNegatedComponent extends RegexComponent {
         this.nregex = nregex;
     }
 
-    useParens(): boolean {
-        return true;
-    }
-
     bsqon_literal_emit(): string {
         return "^(" + this.nregex.bsqon_literal_emit() + ")";
     }
@@ -807,13 +811,8 @@ class RegexNegatedComponent extends RegexComponent {
         return new RegexNegatedComponent(RegexComponent.jparse(obj[1].nregex));
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
-        if(this.nregex instanceof RegexCharRange) {
-            return this.nregex.compileToECMA(isnegate, regexmap);
-        }
-        else {
-            return "TODO: -- negation in regex";
-        }
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return "{TODO: -- negation in regex}";
     }
 
     bsqonemit(): string {
@@ -842,8 +841,8 @@ class RegexStarRepeat extends RegexComponent {
         return new RegexStarRepeat(RegexComponent.jparse(obj[1].repeat));
     }
 
-    compileToECMA(isnegate: boolean, regexmap: Map<string, BSQRegex>): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(isnegate, regexmap)})*` : `${this.repeat.compileToECMA(isnegate, regexmap)}*`;
+    compileToECMA(regexmap: Map<string, BSQRegex>): string {
+        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap)})*` : `${this.repeat.compileToECMA(regexmap)}*`;
     }
 
     bsqonemit(): string {
@@ -860,6 +859,10 @@ class RegexPlusRepeat extends RegexComponent {
         this.repeat = repeat;
     }
 
+    bsqon_literal_emit(): string {
+        return this.repeat.useParens() ? `(${this.repeat.bsqon_literal_emit()})+` : `${this.repeat.bsqon_literal_emit()}+`;
+    }
+
     jemit(): any {
         return ["TreeIR::RegexPlusRepeat", { repeat: this.repeat.jemit() }];
     }
@@ -869,7 +872,7 @@ class RegexPlusRepeat extends RegexComponent {
     }
 
     compileToECMA(regexmap: Map<string, BSQRegex>): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)})+` : `${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}+`;
+        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap)})+` : `${this.repeat.compileToECMA(regexmap)}+`;
     }
 
     bsqonemit(): string {
@@ -880,9 +883,9 @@ class RegexPlusRepeat extends RegexComponent {
 class RegexRangeRepeat extends RegexComponent {
     readonly repeat: RegexComponent;
     readonly min: number;
-    readonly max: number;
+    readonly max: number | undefined;
 
-    constructor(repeat: RegexComponent, min: number, max: number) {
+    constructor(repeat: RegexComponent, min: number, max: number | undefined) {
         super();
 
         this.repeat = repeat;
@@ -890,20 +893,40 @@ class RegexRangeRepeat extends RegexComponent {
         this.max = max;
     }
 
+    bsqon_literal_emit(): string {
+        if(this.max === undefined) {
+            return this.repeat.useParens() ? `(${this.repeat.bsqon_literal_emit()}){${this.min},}` : `${this.repeat.bsqon_literal_emit()}{${this.min},}`;
+        }
+        else if(this.min === this.max) {
+            return this.repeat.useParens() ? `(${this.repeat.bsqon_literal_emit()}){${this.min}}` : `${this.repeat.bsqon_literal_emit()}{${this.min}}`;
+        }
+        else {
+            return this.repeat.useParens() ? `(${this.repeat.bsqon_literal_emit()}){${this.min},${this.max}}` : `${this.repeat.bsqon_literal_emit()}{${this.min},${this.max}}`;
+        }
+    }
+
     jemit(): any {
-        return ["TreeIR::RegexRangeRepeat", { repeat: this.repeat.jemit(), min: this.min, max: this.max }];
+        return ["TreeIR::RegexRangeRepeat", { repeat: this.repeat.jemit(), min: this.min, max: this.max !== undefined ? this.max : null }];
     }
 
     static jparse(obj: any): RegexComponent {
-        return new RegexRangeRepeat(RegexComponent.jparse(obj[1].repeat), obj[1].min, obj[1].max);
+        return new RegexRangeRepeat(RegexComponent.jparse(obj[1].repeat), obj[1].min, obj[1].max !== null ? obj[1].max : undefined);
     }
 
     compileToECMA(regexmap: Map<string, BSQRegex>): string {
-        return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}){${this.min},${this.max}}` : `${this.repeat.compileToECMA(regexmap: Map<string, BSQRegex>)}{${this.min},${this.max}}`;
+        if(this.max === undefined) {
+            return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap)}){${this.min},}` : `${this.repeat.compileToECMA(regexmap)}{${this.min},}`;
+        }
+        else if(this.min === this.max) {
+            return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap)}){${this.min}}` : `${this.repeat.compileToECMA(regexmap)}{${this.min}}`;
+        }
+        else {
+            return this.repeat.useParens() ? `(${this.repeat.compileToECMA(regexmap)}){${this.min},${this.max}}` : `${this.repeat.compileToECMA(regexmap)}{${this.min},${this.max}}`;
+        }
     }
 
     bsqonemit(): string {
-        return `TreeIR::RegexRangeRepeat{${this.repeat.bsqonemit()}, ${this.min}n, ${this.max}n}`;
+        return `TreeIR::RegexRangeRepeat{${this.repeat.bsqonemit()}, ${this.min}n, ${this.max !== undefined ? `${this.max}n` : "none"}}`;
     }
 }
 
@@ -916,6 +939,10 @@ class RegexOptional extends RegexComponent {
         this.opt = opt;
     }
 
+    bsqon_literal_emit(): string {
+        return this.opt.useParens() ? `(${this.opt.bsqon_literal_emit()})?` : `${this.opt.bsqon_literal_emit()}?`;
+    }
+
     jemit(): any {
         return ["TreeIR::RegexOptional", { opt: this.opt.jemit() }];
     }
@@ -925,7 +952,7 @@ class RegexOptional extends RegexComponent {
     }
 
     compileToECMA(regexmap: Map<string, BSQRegex>): string {
-        return this.opt.useParens() ? `(${this.opt.compileToECMA(regexmap: Map<string, BSQRegex>)})?` : `${this.opt.compileToECMA(regexmap: Map<string, BSQRegex>)}?`;
+        return this.opt.useParens() ? `(${this.opt.compileToECMA(regexmap)})?` : `${this.opt.compileToECMA(regexmap)}?`;
     }
 
     bsqonemit(): string {
@@ -946,6 +973,10 @@ class RegexAlternation extends RegexComponent {
         return true;
     }
 
+    bsqon_literal_emit(): string {
+        return this.opts.map((opt) => opt.bsqon_literal_emit()).join("|");
+    }
+
     jemit(): any {
         return ["TreeIR::RegexAlternation", { opts: this.opts.map((opt) => opt.jemit()) }];
     }
@@ -955,7 +986,7 @@ class RegexAlternation extends RegexComponent {
     }
 
     compileToECMA(regexmap: Map<string, BSQRegex>): string {
-        return this.opts.map((opt) => opt.compileToECMA(regexmap: Map<string, BSQRegex>)).join("|");
+        return this.opts.map((opt) => opt.compileToECMA(regexmap)).join("|");
     }
 
     bsqonemit(): string {
@@ -976,6 +1007,10 @@ class RegexSequence extends RegexComponent {
         return true;
     }
 
+    bsqon_literal_emit(): string {
+        return this.elems.map((elem) => elem.bsqon_literal_emit()).join("");
+    }
+
     jemit(): any {
         return ["TreeIR::RegexSequence", { elems: this.elems.map((elem) => elem.jemit()) }];
     }
@@ -985,7 +1020,7 @@ class RegexSequence extends RegexComponent {
     }
 
     compileToECMA(regexmap: Map<string, BSQRegex>): string {
-        return this.elems.map((elem) => elem.compileToJS()).join("");
+        return this.elems.map((elem) => elem.compileToECMA(regexmap)).join("");
     }
 
     bsqonemit(): string {

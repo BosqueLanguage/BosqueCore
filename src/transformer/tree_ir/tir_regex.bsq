@@ -16,6 +16,7 @@ RegexLiteral {
     literalstr: String
 }
 | RegexCharRange {
+    iscompliment: Boolean,
     range: List<{lb: [Nat, String], ub: [Nat, String]}>
 }
 | RegexDotCharClass {
@@ -35,7 +36,7 @@ RegexLiteral {
 | RegexRangeRepeat {
     repeat: RegexComponent,
     min: Nat,
-    max: Nat
+    max: Nat?
 }
 | RegexOptional {
     opt: RegexComponent

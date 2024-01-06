@@ -348,6 +348,7 @@ class TypeChecker {
     }
 
     private processRegexComponent(sinfo: SourceInfo, rr: RegexComponent): RegexComponent {
+        xxxx;
         if((rr instanceof RegexLiteral) || (rr instanceof RegexCharRange) || (rr instanceof RegexDotCharClass)) {
             return rr;
         } 
