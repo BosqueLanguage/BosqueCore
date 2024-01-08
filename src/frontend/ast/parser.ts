@@ -692,7 +692,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
+    private static readonly _s_regexRe = /\/[^\r\n]*(\\(.)[^\r\n]*)*\//y;
     private tryLexRegex() {
         Lexer._s_regexRe.lastIndex = this.m_cpos;
         const ms = Lexer._s_regexRe.exec(this.m_input);
@@ -2095,7 +2095,7 @@ class Parser {
         }
         else if (tk === TokenStrings.Regex) {
             const restr = this.consumeTokenAndGetValue(); //keep in escaped format
-            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), restr);
+            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), undefined, restr);
             if(typeof(re) === "string") {
                 this.raiseError(line, re);
             }
@@ -4621,7 +4621,7 @@ class Parser {
             }
             this.ensureToken(SYM_coma, incontext);
 
-            const reparse = BSQRegex.parse(currentDecl.ns, strs.join("|"));
+            const reparse = BSQRegex.parse(currentDecl.ns, undefined, strs.join("|"));
             if(typeof reparse === "string") {
                 this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
                 return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
@@ -4631,7 +4631,7 @@ class Parser {
             }
         }
         else if (this.testToken(TokenStrings.Regex)) {
-            const reparse = BSQRegex.parse(currentDecl.ns, this.consumeTokenAndGetValue());
+            const reparse = BSQRegex.parse(currentDecl.ns, undefined, this.consumeTokenAndGetValue());
             if(typeof reparse === "string") {
                 this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
                 return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
@@ -4646,10 +4646,12 @@ class Parser {
         }
     }
 
-    private parsePathValidator(currentDecl: NamespaceDeclaration): BSQPathValidator {
+    private parsePathValidator(currentDecl: NamespaceDeclaration, name: string): BSQPathValidator {
         this.consumeToken();
 
         const sinfo = this.getCurrentSrcInfo();
+
+        const pathid = currentDecl.ns !== "Core" ? `${currentDecl.ns}::${name}` : name;
 
         let scheme: string | undefined = undefined;
         let userinfo: BSQRegex | undefined = undefined;
@@ -4837,7 +4839,7 @@ class Parser {
             this.raiseError(sinfo.line, "file must be defined if extension is");
         }
 
-        return new BSQPathValidator(scheme, userinfo, host, port, path, query, fragment);
+        return new BSQPathValidator(pathid, scheme, userinfo, host, port, path, query, fragment);
     }
 
     private parseTypeDecl(currentDecl: NamespaceDeclaration) {
@@ -4860,7 +4862,7 @@ class Parser {
             const vregex = this.consumeTokenAndGetValue();
             this.ensureAndConsumeToken(SYM_semicolon, "Validator");
 
-            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), vregex);
+            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), iname, vregex);
             if (typeof (re) === "string") {
                 this.raiseError(this.getCurrentLine(), re);
             }
@@ -4875,12 +4877,12 @@ class Parser {
 
             currentDecl.objects.set(iname, validatortype);
             this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, currentDecl.objects.get(iname) as EntityTypeDecl);
-            this.m_penv.assembly.addValidatorRegex((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, re as BSQRegex);
+            this.m_penv.assembly.addValidatorRegex(re as BSQRegex);
         }
         else if(this.testToken(SYM_lbrace)) {
             //[attr] typedecl NAME = pathvalidator;
             
-            const vv = this.parsePathValidator(currentDecl);
+            const vv = this.parsePathValidator(currentDecl, iname);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
@@ -4893,7 +4895,7 @@ class Parser {
 
             currentDecl.objects.set(iname, validatortype);
             this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, currentDecl.objects.get(iname) as EntityTypeDecl);
-            this.m_penv.assembly.addValidatorPath((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, vv);
+            this.m_penv.assembly.addValidatorPath(vv);
         }
         else {
             //[attr] typedecl NAME = PRIMITIVE [& {...}];

@@ -557,17 +557,15 @@ class AssemblyInfo {
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly regexliterals: BSQRegex[];
-    readonly revalidators: Map<BSQTypeKey, BSQRegex>;
-    readonly pthvalidators: Map<BSQTypeKey, BSQPathValidator>;
+    readonly pthliterals: BSQPathValidator[];
     readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], revalidators: Map<BSQTypeKey, BSQRegex>, pthvalidators: Map<BSQTypeKey, BSQPathValidator>, recursiveSets: Set<BSQTypeKey>[]) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], pthliterals: BSQPathValidator[], recursiveSets: Set<BSQTypeKey>[]) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
         this.regexliterals = regexliterals;
-        this.revalidators = revalidators;
-        this.pthvalidators = pthvalidators;
+        this.pthliterals = pthliterals;
         this.recursiveSets = recursiveSets;
     }
 
@@ -576,9 +574,8 @@ class AssemblyInfo {
             aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
-            regexliterals: this.regexliterals.map((rl) => rl.bsq_emit()),
-            revalidators: [...this.revalidators].map((e) => [e[0], e[1].regexid]),
-            pthvalidators: [...this.pthvalidators].map((e) => [e[0], e[1].jemit()]),
+            regexliterals: this.regexliterals.map((rl) => rl.jemit()),
+            pthliterals: [...this.pthliterals].map((e) => e.jemit()),
             recursiveSets: this.recursiveSets.map((s) => [...s])
         };
     }
@@ -606,14 +603,9 @@ class AssemblyInfo {
             regexliterals.push(BSQRegex.jparse(rl));
         });
 
-        const revalidators = new Map<BSQTypeKey, BSQRegex>();
-        jv.revalidators.forEach((rv: any) => {
-            revalidators.set(rv[0], BSQRegex.jparse(rv[1]));
-        });
-
-        const pthvalidators = new Map<BSQTypeKey, BSQPathValidator>();
-        jv.pthvalidators.forEach((pv: any) => {
-            pthvalidators.set(pv[0], BSQPathValidator.jparse(pv[1]));
+        const pthliterals: BSQPathValidator[] = [];
+        jv.pthliterals.forEach((pv: any) => {
+            pthliterals.push(BSQPathValidator.jparse(pv[1]));
         });
 
         const recursiveSets: Set<BSQTypeKey>[] = [];
@@ -621,7 +613,7 @@ class AssemblyInfo {
             recursiveSets.push(new Set<BSQTypeKey>(rs));
         });
 
-        return new AssemblyInfo(aliasmap, namespaces, typerefs, regexliterals, revalidators, pthvalidators, recursiveSets);
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, regexliterals, pthliterals, recursiveSets);
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {

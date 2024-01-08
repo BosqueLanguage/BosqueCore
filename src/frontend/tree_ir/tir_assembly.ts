@@ -1595,8 +1595,7 @@ class TIRAssembly {
     readonly pcodemap: Map<TIRPCodeKey, TIRCodePack>;
 
     readonly literalRegexs: BSQRegex[];
-    readonly validatorRegexs: Map<TIRTypeKey, BSQRegex>;
-    readonly validatorPaths: Map<TIRTypeKey, BSQPathValidator>;
+    readonly literalPaths: BSQPathValidator[];
 
     getNamespace(ns: string): TIRNamespaceDeclaration {
         assert(this.namespaceMap.has(ns), "Missing namespace?");
@@ -1608,15 +1607,14 @@ class TIRAssembly {
         return this.typeMap.get(tkey) as T;
     }
 
-    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], validatorRegexs: Map<TIRTypeKey, BSQRegex>, validatorPaths: Map<TIRTypeKey, BSQPathValidator>) {
+    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], literalPaths: BSQPathValidator[]) {
         this.namespaceMap = namespaceMap;
         this.typeMap = typeMap;
         this.fieldMap = fieldMap;
         this.invokeMap = invokeMap;
         this.pcodemap = pcodemap;
         this.literalRegexs = literalRegexs;
-        this.validatorRegexs = validatorRegexs;
-        this.validatorPaths = validatorPaths;
+        this.literalPaths = literalPaths;
     }
 
     private isConcreteSubtypeOf(t: TIRTypeKey, oftype: TIRConceptType): boolean {
@@ -1955,17 +1953,7 @@ class TIRAssembly {
             namespaces.set(v.ns, new TypeInfo.NamespaceDecl(v.ns, nstypes));
         });
 
-        let revalidators = new Map<TypeInfo.BSQTypeKey, BSQRegex>();
-        this.validatorRegexs.forEach((v, k) => {
-            revalidators.set(k, v);
-        });
-
-        let pthvalidators = new Map<TypeInfo.BSQTypeKey, BSQPathValidator>();
-        this.validatorPaths.forEach((v, k) => {
-            pthvalidators.set(k, v);
-        });
-
-        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, [...this.literalRegexs].sort((a, b) => a.normalizedre.localeCompare(b.normalizedre)), revalidators, pthvalidators, rescursiveMap[1]);
+        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, [...this.literalRegexs].sort((a, b) => a.normalizedre.localeCompare(b.normalizedre)), [...this.literalPaths].sort((a, b) => (a.pathid || "").localeCompare(b.pathid || "")), rescursiveMap[1]);
     }
 
     private bsqemitnamespacemap(ii: string): string {
@@ -2031,21 +2019,13 @@ class TIRAssembly {
             return `[\n${ii + s_iident}${regexdeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
-    private bsqemitvremap(ii: string): string {
-        if(this.validatorRegexs.size === 0) {
+
+    private bsqemitpths(ii: string): string {
+        if(this.literalPaths.length === 0) {
             return "[]";
         }
         else {
-            const vredeclsi = [...this.validatorRegexs].map((e) => `"${e[0]}" => ${e[1].bsq_emit()}`);
-            return `[\n${ii + s_iident}${vredeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
-        }
-    }
-    private bsqemitvpemap(ii: string): string {
-        if(this.validatorPaths.size === 0) {
-            return "[]";
-        }
-        else {
-            const vpedeclsi = [...this.validatorPaths].map((e) => `"${e[0]}" => ${e[1].bsqonemit()}`);
+            const vpedeclsi = this.literalPaths.map((e) => e.bsqonemit());
             return `[\n${ii + s_iident}${vpedeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
@@ -2072,8 +2052,7 @@ class TIRAssembly {
         + `,\n${ii + s_iident}${this.bsqemitinvokemap(ii + s_iident)}`
         + `,\n${ii + s_iident}${this.bsqemitpcodemap(ii + s_iident)}`
         + `,\n${ii + s_iident}${this.bsqemitregexs(ii + s_iident)}`
-        + `,\n${ii + s_iident}${this.bsqemitvremap(ii + s_iident)}`
-        + `,\n${ii + s_iident}${this.bsqemitvpemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitpths(ii + s_iident)}`
         + `${ii}\n}`;
     }
 }

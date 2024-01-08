@@ -674,8 +674,7 @@ class Assembly {
     private m_taskMap: Map<string, TaskTypeDecl> = new Map<string, TaskTypeDecl>();
 
     m_literalRegexs: BSQRegex[] = [];
-    m_validatorRegexs: Map<string, BSQRegex> = new Map<string, BSQRegex>();
-    m_validatorPaths: Map<string, BSQPathValidator> = new Map<string, BSQPathValidator>();
+    m_literalPaths: BSQPathValidator[] = [];
 
     tryGetConceptTypeForFullyResolvedName(name: string): ConceptTypeDecl | undefined {
         return this.m_conceptMap.get(name);
@@ -690,11 +689,11 @@ class Assembly {
     }
 
     tryGetValidatorForFullyResolvedName(name: string): BSQRegex | undefined {
-        return this.m_validatorRegexs.get(name);
+        return this.m_literalRegexs.find((re) => re.regexid === name);
     }
 
     tryGetPathValidatorForFullyResolvedName(name: string): BSQPathValidator | undefined {
-        return this.m_validatorPaths.get(name);
+        return this.m_literalPaths.find((pre) => pre.pathid === name);
     }
 
     hasNamespace(ns: string): boolean {
@@ -733,18 +732,16 @@ class Assembly {
         this.m_taskMap.set(resolvedName, task);
     }
 
-    addValidatorRegex(resolvedName: string, validator: BSQRegex) {
+    addValidatorRegex(validator: BSQRegex) {
         let ere = this.m_literalRegexs.findIndex((lre) => BSQRegex.areRedundantLiterals(lre, validator));
         if(ere === -1) {
             ere = this.m_literalRegexs.length;
             this.m_literalRegexs.push(validator);
         }
-
-        this.m_validatorRegexs.set(resolvedName, this.m_literalRegexs[ere]);
     }
 
-    addValidatorPath(resolvedName: string, validator: BSQPathValidator) {
-        this.m_validatorPaths.set(resolvedName, validator);
+    addValidatorPath(validator: BSQPathValidator) {
+        this.m_literalPaths.push(validator);
     }
 
     addLiteralRegex(re: BSQRegex) {

@@ -7535,20 +7535,6 @@ class TypeChecker {
         }
     }
 
-    private processRegexAndValidatorInfo(): {literalre: BSQRegex[], validatorsre: Map<TIRTypeKey, BSQRegex>, pathvalidators: Map<TIRTypeKey, BSQPathValidator>} {
-        const vre = new Map<TIRTypeKey, BSQRegex>();
-         [...this.m_assembly.m_validatorRegexs].forEach((rr) => {
-            vre.set(rr[0], rr[1]);
-        });
-
-        const vpth = new Map<TIRTypeKey, BSQPathValidator>();
-        [...this.m_assembly.m_validatorPaths].forEach((vp) => {
-            vpth.set(vp[0], vp[1]);
-        });
-
-        return { literalre: this.m_assembly.m_literalRegexs, validatorsre: vre, pathvalidators: vpth };
-    }
-
     private anyTypesPending(): boolean {
         return this.m_pendingEntityDecls.length !== 0 ||
             this.m_pendingEnumDecls.length !== 0 ||
@@ -7806,14 +7792,11 @@ class TypeChecker {
             }
         }
 
-        //process regex literals + validators decls (regex and path)
-        const lvinfo = tchecker.processRegexAndValidatorInfo();
-
         if(tchecker.m_errors.length !== 0) {
             return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
         }
         else {
-            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
+            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, asm.m_literalRegexs, asm.m_literalPaths), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
         }
     }
 

@@ -530,6 +530,8 @@ class RegexParser {
             if(typeof(rpe) === "string") {
                 return rpe;
             }
+
+            sre.push(rpe);
         }
 
         if(sre.length === 0) {
@@ -609,7 +611,7 @@ class BSQRegex {
         return nfa.test(Words.fromStringToUnicode(str));
     }
 
-    static parse(currentns: string, rstr: string): BSQRegex | string {
+    static parse(currentns: string, optname: string | undefined, rstr: string): BSQRegex | string {
         const reparser = new RegexParser(currentns, rstr.substring(1, rstr.length - 1));
         const rep = reparser.parseComponent();
 
@@ -618,7 +620,8 @@ class BSQRegex {
         }
         else {
             const normalizedre = rep.bsqon_literal_emit();
-            return new BSQRegex(rstr, rep, normalizedre);
+            const id = optname !== undefined ? (currentns !== "Core" ? `${currentns}::${optname}` : optname) : undefined;
+            return new BSQRegex(id, rep, normalizedre);
         }
     }
 
