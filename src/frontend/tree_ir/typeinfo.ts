@@ -1,4 +1,5 @@
 import { BSQRegex } from "../bsqregex";
+import { BSQPathValidator } from "../path_validator";
 
 type BSQTypeKey = string;
 
@@ -556,11 +557,11 @@ class AssemblyInfo {
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly regexliterals: BSQRegex[];
-    readonly revalidators: Map<BSQTypeKey, string>;
-    readonly pthvalidators: Map<BSQTypeKey, string>;
+    readonly revalidators: Map<BSQTypeKey, BSQRegex>;
+    readonly pthvalidators: Map<BSQTypeKey, BSQPathValidator>;
     readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], revalidators: Map<BSQTypeKey, string>, pthvalidators: Map<BSQTypeKey, string>, recursiveSets: Set<BSQTypeKey>[]) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], revalidators: Map<BSQTypeKey, BSQRegex>, pthvalidators: Map<BSQTypeKey, BSQPathValidator>, recursiveSets: Set<BSQTypeKey>[]) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
@@ -575,9 +576,9 @@ class AssemblyInfo {
             aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
-            regexliterals: this.regexliterals.map((rl) => rl.literalemit()),
-            revalidators: [...this.revalidators.entries()],
-            pthvalidators: [...this.pthvalidators.entries()],
+            regexliterals: this.regexliterals.map((rl) => rl.bsq_emit()),
+            revalidators: [...this.revalidators].map((e) => [e[0], e[1].regexid]),
+            pthvalidators: [...this.pthvalidators].map((e) => [e[0], e[1].jemit()]),
             recursiveSets: this.recursiveSets.map((s) => [...s])
         };
     }
@@ -602,17 +603,17 @@ class AssemblyInfo {
 
         const regexliterals: BSQRegex[] = [];
         jv.regexliterals.forEach((rl: any) => {
-            regexliterals.push(BSQRegex.parse("#global#", rl) as BSQRegex);
+            regexliterals.push(BSQRegex.jparse(rl));
         });
 
-        const revalidators = new Map<BSQTypeKey, string>();
+        const revalidators = new Map<BSQTypeKey, BSQRegex>();
         jv.revalidators.forEach((rv: any) => {
-            revalidators.set(rv[0], rv[1]);
+            revalidators.set(rv[0], BSQRegex.jparse(rv[1]));
         });
 
-        const pthvalidators = new Map<BSQTypeKey, string>();
+        const pthvalidators = new Map<BSQTypeKey, BSQPathValidator>();
         jv.pthvalidators.forEach((pv: any) => {
-            pthvalidators.set(pv[0], pv[1]);
+            pthvalidators.set(pv[0], BSQPathValidator.jparse(pv[1]));
         });
 
         const recursiveSets: Set<BSQTypeKey>[] = [];

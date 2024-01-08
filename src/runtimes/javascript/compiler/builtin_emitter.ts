@@ -32,7 +32,7 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
 
         case "validator_accepts": {
             const vre = asm.validatorRegexs.get(ttype.tkey) as BSQRegex;
-            const jsre = vre.re.compileToJS();
+            const jsre = vre.re.compileToECMA(asm.literalRegexs);
             return `{ return $Runtime.acceptsString("${jsre}", ${func.invoke.params[0].name}); }`
         }
 

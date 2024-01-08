@@ -7,7 +7,7 @@ import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome, BSQONLiteralExpression, SynthesisBody } from "./body";
 import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
-import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
+import { BSQRegex, RegexLiteral } from "../bsqregex";
 import { BSQPathValidator } from "../path_validator";
 import { BuildLevel, logLevelNumber, SourceInfo } from "../build_decls";
 
@@ -4621,13 +4621,20 @@ class Parser {
             }
             this.ensureToken(SYM_coma, incontext);
 
-            return new BSQRegex(strs.join("|"), new RegexAlternation(strs.map((ss) => new RegexLiteral(ss, ss))));
+            const reparse = BSQRegex.parse(currentDecl.ns, strs.join("|"));
+            if(typeof reparse === "string") {
+                this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
+                return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
+            }
+            else {
+                return reparse;
+            }
         }
         else if (this.testToken(TokenStrings.Regex)) {
             const reparse = BSQRegex.parse(currentDecl.ns, this.consumeTokenAndGetValue());
             if(typeof reparse === "string") {
                 this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
-                return new BSQRegex("", new RegexLiteral("?", "?"));    
+                return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
             }
             else {
                 return reparse;
@@ -4635,7 +4642,7 @@ class Parser {
         }
         else {
             this.raiseError(this.getCurrentLine(), `Expected String(s) or Regex literal for entry in ${incontext}`);
-            return new BSQRegex("", new RegexLiteral("?", "?"));
+            return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");
         }
     }
 
