@@ -14,7 +14,7 @@ const bsq_runtime_src = [
     Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_emit.ts"),
     Path.join(bosque_dir, "src/runtimes/javascript/runtime/bsqon_parse.ts"),
     Path.join(bosque_dir, "src/runtimes/javascript/runtime/prorogue.ts"),
-    Path.join(bosque_dir, "src/frontend/tree_ir/typeinfo.ts"),
+    Path.join(bosque_dir, "src/frontend/tree_ir/typeinfo.ts")
 ];
 
 let fullargs = process.argv;

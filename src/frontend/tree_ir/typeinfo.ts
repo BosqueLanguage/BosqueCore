@@ -1,6 +1,3 @@
-import { BSQRegex } from "../bsqregex";
-import { BSQPathValidator } from "../path_validator";
-
 type BSQTypeKey = string;
 
 enum BSQTypeTag {
@@ -556,16 +553,12 @@ class AssemblyInfo {
     readonly aliasmap: Map<BSQTypeKey, BSQType>;
     readonly namespaces: Map<string, NamespaceDecl>;
     readonly typerefs: Map<BSQTypeKey, BSQType>;
-    readonly regexliterals: BSQRegex[];
-    readonly pthliterals: BSQPathValidator[];
     readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, regexliterals: BSQRegex[], pthliterals: BSQPathValidator[], recursiveSets: Set<BSQTypeKey>[]) {
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, recursiveSets: Set<BSQTypeKey>[]) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
-        this.regexliterals = regexliterals;
-        this.pthliterals = pthliterals;
         this.recursiveSets = recursiveSets;
     }
 
@@ -574,8 +567,6 @@ class AssemblyInfo {
             aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
-            regexliterals: this.regexliterals.map((rl) => rl.jemit()),
-            pthliterals: [...this.pthliterals].map((e) => e.jemit()),
             recursiveSets: this.recursiveSets.map((s) => [...s])
         };
     }
@@ -598,22 +589,12 @@ class AssemblyInfo {
             aliasmap.set(aa[0], typerefs.get(aa[1]) as BSQType);
         });
 
-        const regexliterals: BSQRegex[] = [];
-        jv.regexliterals.forEach((rl: any) => {
-            regexliterals.push(BSQRegex.jparse(rl));
-        });
-
-        const pthliterals: BSQPathValidator[] = [];
-        jv.pthliterals.forEach((pv: any) => {
-            pthliterals.push(BSQPathValidator.jparse(pv[1]));
-        });
-
         const recursiveSets: Set<BSQTypeKey>[] = [];
         jv.recursiveSets.forEach((rs: any) => {
             recursiveSets.push(new Set<BSQTypeKey>(rs));
         });
 
-        return new AssemblyInfo(aliasmap, namespaces, typerefs, regexliterals, pthliterals, recursiveSets);
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, recursiveSets);
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {

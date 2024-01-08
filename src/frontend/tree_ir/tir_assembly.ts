@@ -1953,7 +1953,7 @@ class TIRAssembly {
             namespaces.set(v.ns, new TypeInfo.NamespaceDecl(v.ns, nstypes));
         });
 
-        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, [...this.literalRegexs].sort((a, b) => a.normalizedre.localeCompare(b.normalizedre)), [...this.literalPaths].sort((a, b) => (a.pathid || "").localeCompare(b.pathid || "")), rescursiveMap[1]);
+        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, rescursiveMap[1]);
     }
 
     private bsqemitnamespacemap(ii: string): string {

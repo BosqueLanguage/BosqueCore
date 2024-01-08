@@ -89,7 +89,7 @@ class BodyEmitter {
     }
 
     private emitLiteralRegexExpression(exp: TIRLiteralRegexExpression): string {
-        return exp.value.re.compileToECMA(this.m_assembly.literalRegexs);
+        return "/" + exp.value.re.compileToECMA(this.m_assembly.literalRegexs) + "/";
     }
 
     private emitLiteralStringExpression(exp: TIRLiteralStringExpression): string {

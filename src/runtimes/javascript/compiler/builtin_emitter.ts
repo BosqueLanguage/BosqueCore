@@ -35,6 +35,9 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
             const jsre = vre.re.compileToECMA(asm.literalRegexs);
             return `{ return $Runtime.acceptsString("${jsre}", ${func.invoke.params[0].name}); }`
         }
+        case "regex_accepts": {
+            return `{ return ${func.invoke.params[0].name}.test(${func.invoke.params[1].name}); }`
+        }
 
         case "number_nattoint":
         case "number_nattobignat":
