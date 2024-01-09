@@ -1,6 +1,8 @@
 import { BSQRegex } from "./bsqregex";
 
 class BSQPathValidator {
+    readonly pathid: string | undefined;
+
     readonly scheme: string | undefined;
     readonly userinfo: BSQRegex | undefined;
     readonly host: BSQRegex | undefined;
@@ -15,9 +17,11 @@ class BSQPathValidator {
     readonly query: Map<string, BSQRegex> | undefined;
     readonly fragment: BSQRegex | undefined;
 
-    constructor(scheme: string | undefined, userinfo: BSQRegex | undefined, host: BSQRegex | undefined, port: number | undefined,
+    constructor(pathid: string | undefined, scheme: string | undefined, userinfo: BSQRegex | undefined, host: BSQRegex | undefined, port: number | undefined,
         path: { prefix: BSQRegex | undefined, segments: BSQRegex | undefined, suffix: BSQRegex | undefined, file: BSQRegex | undefined, extension: BSQRegex | undefined },
         query: Map<string, BSQRegex> | undefined, fragment: BSQRegex | undefined) {
+            this.pathid = pathid;
+
             this.scheme = scheme;
             this.userinfo = userinfo;
             this.host = host;
@@ -29,6 +33,7 @@ class BSQPathValidator {
 
     jemit(): any {
         return {
+            pathid: this.pathid || null,
             scheme: this.scheme || null,
             userinfo: this.userinfo ? this.userinfo.jemit() : null,
             host: this.host ? this.host.jemit() : null,
@@ -46,6 +51,7 @@ class BSQPathValidator {
     }
     static jparse(obj: any): BSQPathValidator {
         return new BSQPathValidator(
+            obj.pathid || undefined,
             obj.scheme || undefined,
             obj.userinfo ? BSQRegex.jparse(obj.userinfo) : undefined,
             obj.host ? BSQRegex.jparse(obj.host) : undefined,
@@ -64,19 +70,20 @@ class BSQPathValidator {
 
     bsqonemit(): string {
         return `TreeIR::BSQPathValidator{`
+        + `pathid: ${this.pathid ? `"${this.pathid}"` : "none"}`
         + `scheme: ${this.scheme ? `"${this.scheme}"` : "none"}, `
-        + `userinfo: ${this.userinfo ? this.userinfo.bsqonemit() : "none"}, `
-        + `host: ${this.host ? this.host.bsqonemit() : "none"}, `
+        + `userinfo: ${this.userinfo ? this.userinfo.bsq_emit() : "none"}, `
+        + `host: ${this.host ? this.host.bsq_emit() : "none"}, `
         + `port: ${this.port ? `${this.port}n` : "none"}, `
         + `path: {`
-        + `prefix: ${this.path.prefix ? this.path.prefix.bsqonemit() : "none"}, `
-        + `segments: ${this.path.segments ? this.path.segments.bsqonemit() : "none"}, `
-        + `suffix: ${this.path.suffix ? this.path.suffix.bsqonemit() : "none"}, `
-        + `file: ${this.path.file ? this.path.file.bsqonemit() : "none"}, `
-        + `extension: ${this.path.extension ? this.path.extension.bsqonemit() : "none"}`
+        + `prefix: ${this.path.prefix ? this.path.prefix.bsq_emit() : "none"}, `
+        + `segments: ${this.path.segments ? this.path.segments.bsq_emit() : "none"}, `
+        + `suffix: ${this.path.suffix ? this.path.suffix.bsq_emit() : "none"}, `
+        + `file: ${this.path.file ? this.path.file.bsq_emit() : "none"}, `
+        + `extension: ${this.path.extension ? this.path.extension.bsq_emit() : "none"}`
         + `}, `
-        + `query: ${this.query ? `[${[...this.query].map((e) => `"${e[0]}": ${e[1].bsqonemit()}`).join(", ")}]` : "none"}, `
-        + `fragment: ${this.fragment ? this.fragment.bsqonemit() : "none"}`
+        + `query: ${this.query ? `[${[...this.query].map((e) => `"${e[0]}": ${e[1].bsq_emit()}`).join(", ")}]` : "none"}, `
+        + `fragment: ${this.fragment ? this.fragment.bsq_emit() : "none"}`
         + `}`;
     }
 

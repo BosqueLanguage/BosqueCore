@@ -1893,7 +1893,7 @@ class BSQONParser {
         const tk = this.unescapeString(rawtk);
         const st = this.parseNominalType() as $TypeInfo.ValidatorEntityType;
 
-        const vre = this.m_assembly.revalidators.get(st.oftype);
+        const vre = this.m_assembly.ecmaRegexValidators.get(st.oftype);
         this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), tk), `String literal does not satisfy the required format: ${st.oftype} (${vre})`);
 
         const stt = this.lookupMustDefType(`StringOf<${st.tkey}>`) as $TypeInfo.StringOfType;
@@ -1917,7 +1917,7 @@ class BSQONParser {
             sval = this.unescapeString(rawtk);
         }
 
-        const vre = this.m_assembly.revalidators.get(ttype.oftype);
+        const vre = this.m_assembly.ecmaRegexValidators.get(ttype.oftype);
         this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), sval), `String literal does not satisfy the required format: ${ttype.oftype} (${vre})`);
 
         return BSQONParseResultInfo.create(sval, ttype, undefined, whistory);
@@ -1928,7 +1928,7 @@ class BSQONParser {
         const tk = this.unescapeString(rawtk);
         const st = this.parseASCIIStringOfType() as $TypeInfo.ValidatorEntityType;
 
-        const vre = this.m_assembly.revalidators.get(st.oftype);
+        const vre = this.m_assembly.ecmaRegexValidators.get(st.oftype);
         this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), tk), `String literal does not satisfy the required format: ${st.oftype} (${vre})`);
 
         const stt = this.lookupMustDefType(`ASCIIStringOf<${st.tkey}>`) as $TypeInfo.ASCIIStringOfType;
@@ -1953,7 +1953,7 @@ class BSQONParser {
             sval = this.unescapeString(rawtk);
         }
 
-        const vre = this.m_assembly.revalidators.get(ttype.oftype);
+        const vre = this.m_assembly.ecmaRegexValidators.get(ttype.oftype);
         this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), sval), `ASCIIString literal does not satisfy the required format: ${ttype.oftype} (${vre})`);
 
         return BSQONParseResultInfo.create(sval, ttype, undefined, whistory);
@@ -2209,7 +2209,7 @@ class BSQONParser {
 
         if(ttype.basetype.tkey === "String" || ttype.basetype.tkey === "ASCIIString") {
             if(ttype.optStringOfValidator !== undefined) {
-                const vre = this.m_assembly.revalidators.get(ttype.optStringOfValidator);
+                const vre = this.m_assembly.ecmaRegexValidators.get(ttype.optStringOfValidator);
                 this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), vv as string), `Typedecl of string literal does not satisfy the required format: ${ttype.optStringOfValidator} (${vre})`);
             }
         }
@@ -2982,7 +2982,7 @@ class BSQONParser {
                     tt = tdtype.tkey;
 
                     if((tdtype as $TypeInfo.TypedeclType).optStringOfValidator !== undefined) {
-                        const vre = this.m_assembly.revalidators.get((tdtype as $TypeInfo.TypedeclType).optStringOfValidator!);
+                        const vre = this.m_assembly.ecmaRegexValidators.get((tdtype as $TypeInfo.TypedeclType).optStringOfValidator!);
                         this.raiseErrorIf(vre === undefined || !$Runtime.acceptsString(vre.slice(1, -1), tt), `Typedecl string literal does not satisfy the required format: ${(tdtype as $TypeInfo.TypedeclType).optStringOfValidator!} (${vre})`);
                     }
 

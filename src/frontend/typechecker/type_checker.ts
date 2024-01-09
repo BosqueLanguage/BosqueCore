@@ -12,7 +12,7 @@ import { ExpressionTypeEnvironment, VarInfo, StatementTypeEnvironment } from "./
 import { TIRAccessEnvValueExpression, TIRAccessNamespaceConstantExpression, TIRAccessConstMemberFieldExpression, TIRAccessVariableExpression, TIRExpression, TIRInvalidExpression, TIRLiteralASCIIStringExpression, TIRLiteralASCIITemplateStringExpression, TIRLiteralASCIITypedStringExpression, TIRLiteralBoolExpression, TIRLiteralFloatPointExpression, TIRLiteralIntegralExpression, TIRLiteralNoneExpression, TIRLiteralNothingExpression, TIRLiteralRationalExpression, TIRLiteralRegexExpression, TIRLiteralStringExpression, TIRLiteralTemplateStringExpression, TIRLiteralTypedPrimitiveConstructorExpression, TIRLiteralTypedPrimitiveDirectExpression, TIRLiteralTypedStringExpression, TIRLiteralValue, TIRCoerceSafeExpression, TIRConstructorPrimaryDirectExpression, TIRResultOkConstructorExpression, TIRResultErrConstructorExpression, TIRSomethingConstructorExpression, TIRMapEntryConstructorExpression, TIRConstructorPrimaryCheckExpression, TIRConstructorListExpression, TIRConstructorMapExpression, TIRConstructorTupleExpression, TIRConstructorRecordExpression, TIRCodePack, TIRTypedeclDirectExpression, TIRTypedeclConstructorExpression, TIRCallNamespaceFunctionExpression, TIRCallNamespaceOperatorExpression, TIRBinKeyEqBothUniqueExpression, TIRBinKeyEqOneUniqueExpression, TIRBinKeyEqGeneralExpression, TIRBinKeyUniqueLessExpression, TIRBinKeyGeneralLessExpression, TIRInjectExpression, TIRCallStaticFunctionExpression, TIRLogicActionAndExpression, TIRIsTypeExpression, TIRLoadIndexExpression, TIRLoadPropertyExpression, TIRLoadFieldExpression, TIRLoadFieldVirtualExpression, TIRExtractExpression, TIRCallMemberFunctionSelfRefExpression, TIRCallMemberFunctionExpression, TIRCallMemberFunctionDynamicExpression, TIRPrefixNotExpression, TIRStatement, TIRPrefixNegateExpression, TIRBinKeyNeqBothUniqueExpression, TIRBinKeyNeqOneUniqueExpression, TIRBinKeyNeqGeneralExpression, TIRLogicActionOrExpression, TIRBinLogicOrExpression, TIRBinAddExpression, TIRBinSubExpression, TIRBinMultExpression, TIRBinDivExpression, TIRNumericEqExpression, TIRNumericNeqExpression, TIRNumericLessExpression, TIRNumericLessEqExpression, TIRNumericGreaterExpression, TIRNumericGreaterEqExpression, TIRIfExpression, TIRSwitchExpression, TIRMatchExpression, TIRTaskSelfFieldExpression, TIRTaskGetIDExpression, TIRCallMemberActionExpression, TIRVarDeclareStatement, TIRCallMemberFunctionTaskSelfRefExpression, TIRCallMemberFunctionTaskExpression, TIRVarDeclareAndAssignStatement, TIRVarAssignStatement, TIRReturnStatement, TIRReturnStatementWRef, TIRReturnStatementWTaskRef, TIRReturnStatementWAction, TIRAbortStatement, TIRAssertCheckStatement, TIRDebugStatement, TIRBinLogicAndExpression, TIRScopedBlockStatement, TIRUnscopedBlockStatement, TIRIfStatement, TIRNopStatement, TIRSwitchStatement, TIRMatchStatement, TIREnvironmentFreshStatement, TIREnvironmentSetStatement, TIREnvironmentSetStatementBracket, TIRTaskSelfControlExpression, TIRTaskRunStatement, TIRTaskMultiStatement, TIRTaskDashStatement, TIRTaskAllStatement, TIRTaskRaceStatement, TIRTaskSetSelfFieldStatement, TIRLoggerEmitStatement, TIRLoggerEmitConditionalStatement, TIRCreateCodePackExpression, TIRAccessCapturedVariableExpression, TIRCodePackInvokeExpression, TIRLoggerSetPrefixStatement, TIRBinLogicImpliesExpression, TIRIsNoneSpecialExpression, TIRIsSomeSpecialExpression, TIRIsNothingSpecialExpression, TIRIsSomethingSpecialExpression, TIRIsErrSpecialExpression, TIRIsOkSpecialExpression, TIRIsNotEqualToLiteralExpression, TIRIsEqualToLiteralExpression, TIRIsNotSubTypeExpression, TIRIsNotTypeExpression, TIRIsSubTypeExpression, TIRAsSomeSpecialExpression, TIRAsNoneSpecialExpression, TIRAsSomethingSpecialExpression, TIRAsNothingSpecialExpression, TIRAsErrSpecialExpression, TIRAsOkSpecialExpression, TIRAsEqualToLiteralExpression, TIRAsNotEqualToLiteralExpression, TIRAsNotTypeExpression, TIRAsNotSubTypeExpression, TIRAsTypeExpression, TIRAsSubTypeExpression, TIRAccessScratchSingleValueExpression, TIRAccessScratchIndexExpression, TIRCallStatementWRef, TIRVarRefAssignFromScratch, TIRTaskRefAssignFromScratch, TIRCallStatementWTaskRef, TIRCallStatementWAction, TIRVariableRetypeStatement, TIRVariableSCRetypeStatement, TIRBSQONLiteralExpression } from "../tree_ir/tir_body";
 import { TIRASCIIStringOfEntityType, TIRAssembly, TIRConceptSetType, TIRConceptType, TIRConstMemberDecl, TIREnumEntityType, TIRErrEntityType, TIRFieldKey, TIRFunctionParameter, TIRInfoTemplate, TIRInfoTemplateConst, TIRInfoTemplateMacro, TIRInfoTemplateRecord, TIRInfoTemplateTuple, TIRInfoTemplateValue, TIRInvoke, TIRInvokeAbstractDeclaration, TIRInvokeImplementation, TIRInvokeKey, TIRInvokePrimitive, TIRInvokeSampleDeclFile, TIRInvokeSampleDeclInline, TIRInvokeSynthesis, TIRListEntityType, TIRMapEntityType, TIRMapEntryEntityType, TIRMemberFieldDecl, TIRMemberMethodDecl, TIRNamespaceConstDecl, TIRNamespaceDeclaration, TIRNamespaceFunctionDecl, TIRNamespaceLambdaDecl, TIRNamespaceOperatorDecl, TIRObjectEntityType, TIRObjectInvariantDecl, TIRObjectValidateDecl, TIROkEntityType, TIROOType, TIRPathEntityType, TIRPathFragmentEntityType, TIRPathGlobEntityType, TIRPathValidatorEntityType, TIRPCodeKey, TIRPostConditionDecl, TIRPreConditionDecl, TIRPrimitiveInternalEntityType, TIRQueueEntityType, TIRRecordType, TIRSetEntityType, TIRSomethingEntityType, TIRStackEntityType, TIRStaticFunctionDecl, TIRStringOfEntityType, TIRStringTemplate, TIRTaskType, TIRTupleType, TIRType, TIRTypedeclEntityType, TIRTypedeclInvariantDecl, TIRTypedeclValidateDecl, TIRTypeKey, TIRTypeName, TIRUnionType, TIRValidatorEntityType } from "../tree_ir/tir_assembly";
 
-import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
+import { BSQRegex, RegexAlternation, RegexCharRange, RegexComponent, RegexConstClass, RegexNegatedComponent, RegexDotCharClass, RegexLiteral, RegexOptional, RegexPlusRepeat, RegexRangeRepeat, RegexSequence, RegexStarRepeat } from "../bsqregex";
 import { extractLiteralStringValue, extractLiteralASCIIStringValue, SourceInfo, BuildLevel, isBuildLevelEnabled, PackageConfig } from "../build_decls";
 import { Parser } from "../ast/parser";
 import { BSQPathValidator } from "../path_validator";
@@ -337,7 +337,7 @@ class TypeChecker {
         const cc = ns.consts.get(cre.ccname) as NamespaceConstDecl;
 
         if(cc.value.exp instanceof LiteralRegexExpression) {
-            return cc.value.exp.value.re;
+            return cre;
         }
         else {
             this.raiseErrorIf(sinfo, !(cc.value.exp instanceof AccessNamespaceConstantExpression), "Only literals and other const references allowed");
@@ -354,6 +354,9 @@ class TypeChecker {
         else if (rr instanceof RegexConstClass) {
             return this.resolveREExp(sinfo, rr);
         } 
+        else if(rr instanceof RegexNegatedComponent) {
+            return new RegexNegatedComponent(this.processRegexComponent(sinfo, rr.nregex));
+        }
         else if (rr instanceof RegexStarRepeat) {
             return new RegexStarRepeat(this.processRegexComponent(sinfo, rr.repeat));
         } 
@@ -376,7 +379,8 @@ class TypeChecker {
     }
 
     private processBSQRegex(sinfo: SourceInfo, re: BSQRegex): BSQRegex {
-        return new BSQRegex(re.regexstr, this.processRegexComponent(sinfo, re.re));
+        const prr = this.processRegexComponent(sinfo, re.re);
+        return new BSQRegex(re.regexid, prr, prr.bsqon_literal_emit());
     }
 
     private processValidatorRegex(sinfo: SourceInfo, vtype: string): BSQRegex {
@@ -3363,7 +3367,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
         const argstr = extractLiteralStringValue(exp.value, true);
-        const accepts = (vv as BSQRegex).acceptsString(argstr);
+        const accepts = (vv as BSQRegex).acceptsString(argstr, this.m_assembly.m_literalRegexs);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
@@ -3381,7 +3385,7 @@ class TypeChecker {
         this.raiseErrorIf(exp.sinfo, vv === undefined, `Bad Validator type for StringOf ${toftype.typeID}`);
             
         const argstr = extractLiteralASCIIStringValue(exp.value, true);
-        const accepts = (vv as BSQRegex).acceptsString(argstr);
+        const accepts = (vv as BSQRegex).acceptsString(argstr, this.m_assembly.m_literalRegexs);
         
         this.raiseErrorIf(exp.sinfo, !accepts, "Literal string failed Validator regex");
 
@@ -3419,10 +3423,10 @@ class TypeChecker {
             const litval = (lexp[0] as TIRLiteralValue).exp;
             let accepts = false;
             if (litval instanceof TIRLiteralStringExpression) {
-                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralStringValue(litval.expstr, true));
+                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralStringValue(litval.expstr, true), this.m_assembly.m_literalRegexs);
             }
             else {
-                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralASCIIStringValue(litval.expstr, true));
+                accepts = tirtypedecl.strvalidator.vre.acceptsString(extractLiteralASCIIStringValue(litval.expstr, true), this.m_assembly.m_literalRegexs);
             }
             this.raiseErrorIf(exp.sinfo, !accepts, "literal string does not satisfy validator constraint");
         }
@@ -7531,20 +7535,6 @@ class TypeChecker {
         }
     }
 
-    private processRegexAndValidatorInfo(): {literalre: BSQRegex[], validatorsre: Map<TIRTypeKey, BSQRegex>, pathvalidators: Map<TIRTypeKey, BSQPathValidator>} {
-        const vre = new Map<TIRTypeKey, BSQRegex>();
-         [...this.m_assembly.m_validatorRegexs].forEach((rr) => {
-            vre.set(rr[0], rr[1]);
-        });
-
-        const vpth = new Map<TIRTypeKey, BSQPathValidator>();
-        [...this.m_assembly.m_validatorPaths].forEach((vp) => {
-            vpth.set(vp[0], vp[1]);
-        });
-
-        return { literalre: this.m_assembly.m_literalRegexs, validatorsre: vre, pathvalidators: vpth };
-    }
-
     private anyTypesPending(): boolean {
         return this.m_pendingEntityDecls.length !== 0 ||
             this.m_pendingEnumDecls.length !== 0 ||
@@ -7802,14 +7792,11 @@ class TypeChecker {
             }
         }
 
-        //process regex literals + validators decls (regex and path)
-        const lvinfo = tchecker.processRegexAndValidatorInfo();
-
         if(tchecker.m_errors.length !== 0) {
             return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
         }
         else {
-            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, lvinfo.literalre, lvinfo.validatorsre, lvinfo.pathvalidators), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
+            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, asm.m_literalRegexs, asm.m_literalPaths), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
         }
     }
 

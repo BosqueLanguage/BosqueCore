@@ -31,9 +31,12 @@ function emitBuiltinMemberFunction(asm: TIRAssembly, ttype: TIROOType, func: TIR
         }
 
         case "validator_accepts": {
-            const vre = asm.validatorRegexs.get(ttype.tkey) as BSQRegex;
-            const jsre = vre.re.compileToJS();
+            const vre = asm.literalRegexs.find((re) => re.regexid === ttype.tkey) as BSQRegex;
+            const jsre = vre.re.compileToECMA(asm.literalRegexs);
             return `{ return $Runtime.acceptsString("${jsre}", ${func.invoke.params[0].name}); }`
+        }
+        case "regex_accepts": {
+            return `{ return ${func.invoke.params[0].name}.test(${func.invoke.params[1].name}); }`
         }
 
         case "number_nattoint":

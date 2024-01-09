@@ -180,7 +180,7 @@ struct BSQON_AST_LetInNode
 struct BSQON_AST_ScopedNameNode
 {
     struct BSQON_AST_Node base;
-    struct BSQON_TYPE_AST_NominalNode* root;
+    struct BSQON_TYPE_AST_Node* root;
     char* identifier;
 };
 
@@ -249,10 +249,13 @@ struct BSQON_AST_Node* BSQON_AST_LetInNodeCreate(struct AST_SourcePos pos, char*
 void BSQON_AST_LetInNode_print(struct BSQON_AST_LetInNode* node);
 
 struct BSQON_AST_ScopedNameNode* BSQON_AST_asScopedNameNode(const struct BSQON_AST_Node* node);
-struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_NominalNode* root, char* identifier);
+struct BSQON_AST_Node* BSQON_AST_ScopedNameNodeCreate(struct AST_SourcePos pos, struct BSQON_TYPE_AST_Node* root, char* identifier);
 void BSQON_AST_ScopedNameNode_print(struct BSQON_AST_ScopedNameNode* node);
 
+struct BSQON_AST_Node* parse_from_stdin();
 struct BSQON_AST_Node* parse_from_file(const char* file);
+
+size_t BSQON_AST_getErrorInfo(char** errorInfo);
 
 #ifdef __cplusplus
 }

@@ -231,8 +231,8 @@ printType(none) //"n"
 <a name="typed-strings"></a>
 **Validated Strings:**
 ```
-typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
-typedecl CSSpt = /[0-9]+pt/;
+typedecl ZipcodeUS = /[0-9]{5}("-"[0-9]{4})?/;
+typedecl CSSpt = /[0-9]+"pt"/;
 
 function is3pt(s1: StringOf<CSSpt>): Bool {
     return s1.value() === "3pt";

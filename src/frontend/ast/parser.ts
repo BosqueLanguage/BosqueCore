@@ -7,7 +7,7 @@ import { ParserEnvironment, FunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, FunctionParameter, FunctionTypeSignature, NominalTypeSignature, ParseErrorTypeSignature, ProjectTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessFormatInfoExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression, ConstantExpressionValue, ConstructorPCodeExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentFreshStatement, EnvironmentSetStatement, EnvironmentSetStatementBracket, Expression, IfStatement, IfExpression, InvalidExpression, InvalidStatement, LiteralASCIIStringExpression, LiteralASCIITemplateStringExpression, LiteralASCIITypedStringExpression, LiteralBoolExpression, LiteralExpressionValue, LiteralFloatPointExpression, LiteralIntegralExpression, LiteralNoneExpression, LiteralNothingExpression, LiteralRationalExpression, LiteralRegexExpression, LiteralStringExpression, LiteralTemplateStringExpression, LiteralTypedPrimitiveConstructorExpression, LiteralTypedStringExpression, LoggerCategoryStatement, LoggerEmitConditionalStatement, LoggerEmitStatement, LoggerLevelStatement, LoggerPrefixStatement, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PCodeInvokeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, RefCallStatement, ReturnStatement, ScopedBlockStatement, SpecialConstructorExpression, Statement, SwitchExpression, SwitchStatement, TaskAllStatement, TaskCallWithStatement, TaskCancelRequestedExpression, TaskDashStatement, TaskEventEmitStatement, TaskGetIDExpression, TaskMultiStatement, TaskRaceStatement, TaskRunStatement, TaskSelfActionExpression, TaskSelfFieldExpression, TaskSetSelfFieldStatement, TaskSetStatusStatement, UnscopedBlockStatement, VariableAssignmentStatement, VariableDeclarationStatement, TaskSelfControlExpression, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, VariableSCRetypeStatement, ExpressionSCReturnStatement, ITestSome, BSQONLiteralExpression, SynthesisBody } from "./body";
 import { Assembly, ConceptTypeDecl, ControlFieldDecl, EntityTypeDecl, InfoTemplate, InfoTemplateConst, InfoTemplateMacro, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateValue, InvariantDecl, InvokeDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, MemberFieldDecl, MemberMethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, StaticFunctionDecl, StaticMemberDecl, StringTemplate, TaskEnvironmentEffect, TaskEventEffect, TaskResourceEffect, TaskStatusEffect, TaskTypeDecl, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, ValidateDecl } from "./assembly";
-import { BSQRegex, RegexAlternation, RegexLiteral } from "../bsqregex";
+import { BSQRegex, RegexLiteral } from "../bsqregex";
 import { BSQPathValidator } from "../path_validator";
 import { BuildLevel, logLevelNumber, SourceInfo } from "../build_decls";
 
@@ -692,7 +692,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_regexRe = /\/[^"\\\r\n]*(\\(.)[^"\\\r\n]*)*\//y;
+    private static readonly _s_regexRe = /\/[^\r\n]*(\\(.)[^\r\n]*)*\//y;
     private tryLexRegex() {
         Lexer._s_regexRe.lastIndex = this.m_cpos;
         const ms = Lexer._s_regexRe.exec(this.m_input);
@@ -2095,7 +2095,7 @@ class Parser {
         }
         else if (tk === TokenStrings.Regex) {
             const restr = this.consumeTokenAndGetValue(); //keep in escaped format
-            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), restr);
+            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), undefined, restr);
             if(typeof(re) === "string") {
                 this.raiseError(line, re);
             }
@@ -4621,13 +4621,20 @@ class Parser {
             }
             this.ensureToken(SYM_coma, incontext);
 
-            return new BSQRegex(strs.join("|"), new RegexAlternation(strs.map((ss) => new RegexLiteral(ss, ss))));
-        }
-        else if (this.testToken(TokenStrings.Regex)) {
-            const reparse = BSQRegex.parse(currentDecl.ns, this.consumeTokenAndGetValue());
+            const reparse = BSQRegex.parse(currentDecl.ns, undefined, strs.join("|"));
             if(typeof reparse === "string") {
                 this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
-                return new BSQRegex("", new RegexLiteral("?", "?"));    
+                return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
+            }
+            else {
+                return reparse;
+            }
+        }
+        else if (this.testToken(TokenStrings.Regex)) {
+            const reparse = BSQRegex.parse(currentDecl.ns, undefined, this.consumeTokenAndGetValue());
+            if(typeof reparse === "string") {
+                this.raiseError(this.getCurrentLine(), `Error parsing regex: ${reparse}`);
+                return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");    
             }
             else {
                 return reparse;
@@ -4635,14 +4642,16 @@ class Parser {
         }
         else {
             this.raiseError(this.getCurrentLine(), `Expected String(s) or Regex literal for entry in ${incontext}`);
-            return new BSQRegex("", new RegexLiteral("?", "?"));
+            return new BSQRegex(undefined, new RegexLiteral([0], "?"), "?");
         }
     }
 
-    private parsePathValidator(currentDecl: NamespaceDeclaration): BSQPathValidator {
+    private parsePathValidator(currentDecl: NamespaceDeclaration, name: string): BSQPathValidator {
         this.consumeToken();
 
         const sinfo = this.getCurrentSrcInfo();
+
+        const pathid = currentDecl.ns !== "Core" ? `${currentDecl.ns}::${name}` : name;
 
         let scheme: string | undefined = undefined;
         let userinfo: BSQRegex | undefined = undefined;
@@ -4830,7 +4839,7 @@ class Parser {
             this.raiseError(sinfo.line, "file must be defined if extension is");
         }
 
-        return new BSQPathValidator(scheme, userinfo, host, port, path, query, fragment);
+        return new BSQPathValidator(pathid, scheme, userinfo, host, port, path, query, fragment);
     }
 
     private parseTypeDecl(currentDecl: NamespaceDeclaration) {
@@ -4853,7 +4862,7 @@ class Parser {
             const vregex = this.consumeTokenAndGetValue();
             this.ensureAndConsumeToken(SYM_semicolon, "Validator");
 
-            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), vregex);
+            const re = BSQRegex.parse(this.m_penv.getCurrentNamespace(), iname, vregex);
             if (typeof (re) === "string") {
                 this.raiseError(this.getCurrentLine(), re);
             }
@@ -4868,12 +4877,12 @@ class Parser {
 
             currentDecl.objects.set(iname, validatortype);
             this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, currentDecl.objects.get(iname) as EntityTypeDecl);
-            this.m_penv.assembly.addValidatorRegex((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, re as BSQRegex);
+            this.m_penv.assembly.addValidatorRegex(re as BSQRegex);
         }
         else if(this.testToken(SYM_lbrace)) {
             //[attr] typedecl NAME = pathvalidator;
             
-            const vv = this.parsePathValidator(currentDecl);
+            const vv = this.parsePathValidator(currentDecl, iname);
             this.ensureAndConsumeToken(SYM_semicolon, "PathValidator");
 
             const param = new FunctionParameter("arg", new NominalTypeSignature(sinfo, "Core", ["String"]), undefined);
@@ -4886,7 +4895,7 @@ class Parser {
 
             currentDecl.objects.set(iname, validatortype);
             this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, currentDecl.objects.get(iname) as EntityTypeDecl);
-            this.m_penv.assembly.addValidatorPath((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, vv);
+            this.m_penv.assembly.addValidatorPath(vv);
         }
         else {
             //[attr] typedecl NAME = PRIMITIVE [& {...}];

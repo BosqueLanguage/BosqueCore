@@ -281,12 +281,12 @@ class TIRLiteralRegexExpression extends TIRExpression {
     readonly value: BSQRegex;
 
     constructor(sinfo: SourceInfo, value: BSQRegex) {
-        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.regexstr);
+        super(TIRExpressionTag.LiteralRegexExpression, sinfo, "Regex", value.normalizedre);
         this.value = value;
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_exp_il(ii) + `, "${this.value}"}`;
+        return this.bsqemit_exp_il(ii) + `, ${this.value.normalizedre}}`;
     }
 }
 

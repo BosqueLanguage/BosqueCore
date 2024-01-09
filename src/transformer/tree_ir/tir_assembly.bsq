@@ -21,6 +21,9 @@ typedecl Identifier = StringOf<ValidIdentifier>;
 typedecl ValidTypeName = /[A-Z][A-Za-z0-9_:]*/;
 typedecl TypeNameIdentifier = StringOf<ValidTypeName>;
 
+typedecl ValidRegexID = /${ValidNamespace}::${ValidIdentifier}/;
+typedecl RegexID = StringOf<ValidRegexID>;
+
 entity TypeName {
     field ns: NamespaceIdentifier;
     field name: TypeNameIdentifier;

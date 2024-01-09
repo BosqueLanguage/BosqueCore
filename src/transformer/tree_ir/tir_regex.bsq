@@ -1,25 +1,31 @@
 namespace TreeIR;
 
 entity BSQRegex {
-    field regexstr: String;
+    field regexid: RegexID?;
     field re: RegexComponent;
 
     method compileASCIIPatternToSMT(): String {
-        return this.re.compileASCIIPatternToSMT();
+        return this.re.compilePatternToSMT();
     }
 }
 
 datatype RegexComponent
 of
 RegexLiteral {
-    restr: String,
-    escstr: String
+    charcodes: Nat[],
+    literalstr: String
 }
 | RegexCharRange {
-    compliment: Bool,
-    range: List<{lb: Nat, ub: Nat}>
+    iscompliment: Boolean,
+    range: List<{lb: [Nat, String], ub: [Nat, String]}>
 }
 | RegexDotCharClass {
+}
+| RegexConstClass {
+    regexid: String
+}
+| RegexNegatedComponent {
+    nregex: RegexComponent
 }
 | RegexStarRepeat {
     repeat: RegexComponent
@@ -30,7 +36,7 @@ RegexLiteral {
 | RegexRangeRepeat {
     repeat: RegexComponent,
     min: Nat,
-    max: Nat
+    max: Nat?
 }
 | RegexOptional {
     opt: RegexComponent
@@ -42,35 +48,41 @@ RegexLiteral {
     elems: List<RegexComponent>
 }
 & {
-    recursive method compilePatternToSMT(): String {
+    recursive method compilePatternToSMT(regexmap: Map<RegexID, BSQRegex>): String {
         match(this) {
             RegexLiteral => {
-                return String::concat(List<String>{"(str.to.re ", $.escstr, ")"});
+                return String::concat(List<String>{"(str.to.re ", $.literalstr, ")"});
             }
             | RegexCharRange => {
-                let rngopts = $.range.map<String>(fn(rr) => if (rr.lb == rr.ub) then String::concat(List<String>{"(str.to.re ", String::fromCharCode(rr.lb), ")"}) else String::concat(List<String>{"(re.range ", String::fromCharCode(rr.lb), " ", String::fromCharCode(rr.ub), ")"}));
+                let rngopts = $.range.map<String>(fn(rr) => if (rr.lb.0 == rr.ub.0) then String::concat(List<String>{"(str.to.re ", rr.lb.1, ")"}) else String::concat(List<String>{"(re.range ", rr.lb.1, " ", rr.ub.1, ")"}));
                 return if (rngopts.isSingleton()) then rngopts.getSingleton() else String::concat(List<String>{"(re.union ", String::join(" ", rngopts), ")"});
             }
             | RegexDotCharClass => {
                 return "re.allchar";
             }
+            | RegexConstClass => {
+                return regexmap.get($.regexid).re.compilePatternToSMT(regexmap);
+            }
+            | RegexNegatedComponent => {
+                return "TODO -- regex negation";
+            }
             | RegexStarRepeat => {
-                return String::concat(List<String>{"(re.* ", $.repeat.compilePatternToSMT(), ")"});
+                return String::concat(List<String>{"(re.* ", $.repeat.compilePatternToSMT(regexmap), ")"});
             }
             | RegexPlusRepeat => {
-                return String::concat(List<String>{"(re.+ ", $.repeat.compilePatternToSMT(), ")"});
+                return String::concat(List<String>{"(re.+ ", $.repeat.compilePatternToSMT(regexmap), ")"});
             }
             | RegexRangeRepeat => {
-                return String::concat(List<String>{"(re.loop ", $.repeat.compilePatternToSMT(), " ", String::fromNat($.min), " ", String::fromNat($.max), ")"});
+                return String::concat(List<String>{"(re.loop ", $.repeat.compilePatternToSMT(regexmap), " ", String::fromNat($.min), " ", String::fromNat($.max), ")"});
             }
             | RegexOptional => {
-                return String::concat(List<String>{"(re.opt ", $.opt.compilePatternToSMT(), ")"});
+                return String::concat(List<String>{"(re.opt ", $.opt.compilePatternToSMT(regexmap), ")"});
             }
             | RegexAlternation => {
-                return String::concat(List<String>{"(re.union ", String::join(" ", $.opts.map(fn(opt) => opt.compilePatternToSMT())), ")"});
+                return String::concat(List<String>{"(re.union ", String::join(" ", $.opts.map(fn(opt) => opt.compilePatternToSMT(regexmap))), ")"});
             }
             | RegexSequence => {
-                return String::concat(List<String>{"(re.++ ", String::join(" ", $.elems.map(fn(elem) => elem.compilePatternToSMT())), ")"});
+                return String::concat(List<String>{"(re.++ ", String::join(" ", $.elems.map(fn(elem) => elem.compilePatternToSMT(regexmap))), ")"});
             }
         }
     } 

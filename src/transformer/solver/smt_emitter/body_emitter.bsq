@@ -7,12 +7,12 @@ function unescapeString(str: String): String {
 }
 
 function extractLiteralStringValue(str: String, unescape: Bool): String {
-    return if (unescape) then unescapeString(str.removeFront("%q;").removeEnd("%q;")) else str;
+    return if (unescape) then unescapeString(str.removeFront("%;").removeEnd("%;")) else str;
 }
 
 function extractLiteralASCIIStringValue(str: String, unescape: Bool): String {
     let ll = str.removeFront("ascii{").removeEnd("}");
-    return if (unescape) then unescapeString(ll.removeFront("%q;").removeEnd("%q;")) else ll;
+    return if (unescape) then unescapeString(ll.removeFront("%;").removeEnd("%;")) else ll;
 }
 
 entity BodyEmitter {

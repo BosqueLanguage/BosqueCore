@@ -1,0 +1,12 @@
+namespace Main;
+
+const bounds: Regex = /(a|b){1,3}/;
+const bounds_lower: RegExp = /a{1,}/;
+const escape: RegExp = /%%;%lparen;%tilde;/;
+const escape_hex: RegExp = /%42;/;
+const literal: RegExp = /none/;
+const range_plus: RegExp = /[0-9]+/;
+
+export function main(): None {
+    return none;
+}

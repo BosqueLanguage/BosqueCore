@@ -5,7 +5,8 @@
 #include "../regex/bsqpath.h"
 #include "type_info.h"
 
-#include <gmp.h>
+#include <boost/multiprecision/gmp.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
 namespace BSQON
 {
@@ -230,28 +231,14 @@ namespace BSQON
     class BigNatNumberValue : public PrimtitiveValue 
     {
     public:
-        mpz_t cnv;
+        boost::multiprecision::mpz_int cnv;
     
-        BigNatNumberValue(const Type* vtype, SourcePos spos, mpz_t cnv) : PrimtitiveValue(vtype, spos) 
-        { 
-            mpz_init_set(this->cnv, cnv); 
-        }
-
-        virtual ~BigNatNumberValue()
-        {
-            mpz_clear(this->cnv);
-        }
+        BigNatNumberValue(const Type* vtype, SourcePos spos, boost::multiprecision::mpz_int cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
+        virtual ~BigNatNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            char* cstr = mpz_get_str(NULL, 10, this->cnv);
-            std::string str(cstr);
-
-            void (*freefunc)(void *, size_t);
-            mp_get_memory_functions (NULL, NULL, &freefunc);
-            freefunc(cstr, strlen(cstr) + 1);
-
-            return str + "N";
+            return this->cnv.str() + "N";
         }
 
         virtual bool isValidForTypedecl() const override
@@ -268,28 +255,14 @@ namespace BSQON
     class BigIntNumberValue : public PrimtitiveValue 
     {
     public:
-        mpz_t cnv;
+        boost::multiprecision::mpz_int cnv;
     
-        BigIntNumberValue(const Type* vtype, SourcePos spos, mpz_t cnv) : PrimtitiveValue(vtype, spos) 
-        { 
-            mpz_init_set(this->cnv, cnv);
-        }
-
-        virtual ~BigIntNumberValue()
-        {
-            mpz_clear(this->cnv);
-        }
+        BigIntNumberValue(const Type* vtype, SourcePos spos, boost::multiprecision::mpz_int cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
+        virtual ~BigIntNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            char* cstr = mpz_get_str(NULL, 10, this->cnv);
-            std::string str(cstr);
-
-            void (*freefunc)(void *, size_t);
-            mp_get_memory_functions (NULL, NULL, &freefunc);
-            freefunc(cstr, strlen(cstr) + 1);
-
-            return str + "I";
+            return this->cnv.str() + "I";
         }
 
         virtual bool isValidForTypedecl() const override
@@ -313,7 +286,25 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            return std::to_string(this->cnv) + "f";
+            auto sstr = std::to_string(this->cnv);
+            if(sstr == "0") {
+                return "0.0f";
+            }
+
+            while(sstr.back() == '0') {
+                sstr.pop_back();
+            }
+
+            if(sstr.back() == '.') {
+                sstr.push_back('0');
+            }
+            
+            if(std::find(sstr.cbegin(), sstr.cend(), '.') != sstr.cend()) {
+                return sstr + "f";
+            }
+            else {
+                return sstr + ".0f";
+            }
         }
 
         virtual bool isValidForTypedecl() const override
@@ -325,18 +316,30 @@ namespace BSQON
     class DecimalNumberValue : public PrimtitiveValue 
     {
     public:
-        //
-        //TODO: we need to add a decimal library/implementation
-        //
-        const std::string cnv;
+        //TODO: We may want to refine the representation range a bit
+        boost::multiprecision::cpp_dec_float_50 cnv;
+        
     
         DecimalNumberValue(const Type* vtype, SourcePos spos, std::string cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
         virtual ~DecimalNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            //TODO: decimal needs a bit of work
-            return this->cnv + "d";
+            auto sstr = this->cnv.str();
+            if(sstr == "0") {
+                return "0.0d";
+            }
+
+            while(sstr.back() == '0') {
+                sstr.pop_back();
+            }
+
+            if(std::find(sstr.cbegin(), sstr.cend(), '.') != sstr.cend()) {
+                return sstr + "d";
+            }
+            else {
+                return sstr + ".0d";
+            }
         }
 
         virtual bool isValidForTypedecl() const override
@@ -348,25 +351,14 @@ namespace BSQON
     class RationalNumberValue : public PrimtitiveValue 
     {
     public:
-        mpq_t cnv;
+        boost::multiprecision::mpq_rational cnv;
 
-        const std::string numerator;
-        const uint64_t denominator;
-    
-        RationalNumberValue(const Type* vtype, SourcePos spos, mpq_t cnv, std::string numerator, uint64_t denominator) : PrimtitiveValue(vtype, spos), numerator(numerator), denominator(denominator) 
-        { 
-            mpq_init(this->cnv);
-            mpq_set(this->cnv, cnv);
-        }
-
-        virtual ~RationalNumberValue()
-        {
-            mpq_clear(this->cnv);
-        }
+        RationalNumberValue(const Type* vtype, SourcePos spos, boost::multiprecision::mpq_rational cnv) : PrimtitiveValue(vtype, spos), cnv(cnv) { ; }
+        virtual ~RationalNumberValue() = default;
 
         virtual std::string toString() const override
         {
-            return this->numerator + "/" + std::to_string(this->denominator) + "R";
+            return this->cnv.str() + "R";
         }
 
         virtual bool isValidForTypedecl() const override
@@ -384,15 +376,9 @@ namespace BSQON
 
         static StringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
-        //Take a utf8 string with escapes and convert to a utf32 string
-        static std::optional<UnicodeString> unescapeString(const uint8_t* bytes, size_t length);
-
-        //Convert a utf32 string to a utf8 string with escapes
-        static std::vector<uint8_t> escapeString(const UnicodeString& sv);
-
         virtual std::string toString() const override
         {
-            auto ustr = StringValue::escapeString(this->sv);
+            auto ustr = escapeString(this->sv);
             return "\"" + std::string(ustr.begin(), ustr.end()) + "\"";
         }
 
@@ -419,15 +405,9 @@ namespace BSQON
 
         static ASCIIStringValue* createFromParse(const Type* vtype, SourcePos spos, const uint8_t* bytes, size_t length);
 
-        //Take an ascii string with escapes and convert to a true string
-        static std::optional<std::string> unescapeString(const uint8_t* bytes, size_t length);
-
-        //Convert an ascii string to a ascii string with escapes
-        static std::vector<uint8_t> escapeString(const std::string& sv);
-
         virtual std::string toString() const override
         {
-            auto ustr = ASCIIStringValue::escapeString(this->sv);
+            auto ustr = escapeASCIIString(this->sv);
             return "'" + std::string(ustr.begin(), ustr.end()) + "'";
         }
 
@@ -757,7 +737,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            auto ustr = StringValue::escapeString(this->sv);
+            auto ustr = escapeString(this->sv);
             return "\"" + std::string(ustr.begin(), ustr.end()) + "\"" + this->vtype->tkey;
         }
 
@@ -792,7 +772,7 @@ namespace BSQON
 
         virtual std::string toString() const override
         {
-            auto ustr = ASCIIStringValue::escapeString(this->sv);
+            auto ustr = escapeASCIIString(this->sv);
             return "'" + std::string(ustr.begin(), ustr.end()) + "'";
         }
 

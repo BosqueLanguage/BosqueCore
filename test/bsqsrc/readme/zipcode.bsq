@@ -1,6 +1,6 @@
 namespace Main;
 
-typedecl ZipcodeUS = /[0-9]{5}(-[0-9]{4})?/;
+typedecl ZipcodeUS = /[0-9]{5}("-"[0-9]{4})?/;
 
 function main(str: String): Bool {
     return ZipcodeUS::accepts(str);

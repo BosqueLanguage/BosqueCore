@@ -723,7 +723,7 @@ class TIRTypedeclEntityType extends TIREntityType {
         const apivalidateopts = this.apivalidates.map((av) => av.bsqemit(ii + s_iident + s_iident));
         const apivalidates = apivalidateopts.length !== 0 ? `[\n${ii + s_iident + s_iident}${apivalidateopts.join(`,\n${ii + s_iident + s_iident}`)}\n${ii + s_iident}]` : "[]";
 
-        const strvalidator = this.strvalidator !== undefined ? `{vtype="${this.strvalidator.vtype}", vre=${this.strvalidator.vre.bsqonemit()}}` : "none";
+        const strvalidator = this.strvalidator !== undefined ? `{vtype="${this.strvalidator.vtype}", vre="${this.strvalidator.vre.regexid}"}` : "none";
         const pthvalidator = this.pthvalidator !== undefined ? `{vtype="${this.pthvalidator.vtype}", vpth=${this.pthvalidator.vpth.bsqonemit()}, kind="${this.pthvalidator.kind}"PathKindValidator}` : "none";
 
         return this.bsqemit_entitytype(ii, "TypedeclEntityType")
@@ -770,7 +770,7 @@ class TIRValidatorEntityType extends TIRInternalEntityType {
     }
 
     bsqemit(ii: string): string {
-        return this.bsqemit_internalentity(ii, "ValidatorEntityType") + `\n${ii + s_iident}${this.revalidator.bsqonemit()}` + `\n${ii}}`;
+        return this.bsqemit_internalentity(ii, "ValidatorEntityType") + `\n${ii + s_iident}"${this.revalidator.regexid}"` + `\n${ii}}`;
     }
 }
 
@@ -788,7 +788,7 @@ class TIRStringOfEntityType extends TIRInternalEntityType {
     bsqemit(ii: string): string {
         return this.bsqemit_internalentity(ii, "StringOfEntityType") 
         + `,\n${ii + s_iident}"${this.validatortype}"`
-        + `,\n${ii + s_iident}${this.revalidator.bsqonemit()}`
+        + `,\n${ii + s_iident}"${this.revalidator.regexid}"`
         + `\n${ii}}`;
     }
 }
@@ -807,7 +807,7 @@ class TIRASCIIStringOfEntityType extends TIRInternalEntityType {
     bsqemit(ii: string): string {
         return this.bsqemit_internalentity(ii, "ASCIIStringOfEntityType")
         + `,\n${ii + s_iident}"${this.validatortype}"`
-        + `,\n${ii + s_iident}${this.revalidator.bsqonemit()}`
+        + `,\n${ii + s_iident}"${this.revalidator.regexid}"`
         + `\n${ii}}`;
     }
 }
@@ -1595,8 +1595,7 @@ class TIRAssembly {
     readonly pcodemap: Map<TIRPCodeKey, TIRCodePack>;
 
     readonly literalRegexs: BSQRegex[];
-    readonly validatorRegexs: Map<TIRTypeKey, BSQRegex>;
-    readonly validatorPaths: Map<TIRTypeKey, BSQPathValidator>;
+    readonly literalPaths: BSQPathValidator[];
 
     getNamespace(ns: string): TIRNamespaceDeclaration {
         assert(this.namespaceMap.has(ns), "Missing namespace?");
@@ -1608,15 +1607,14 @@ class TIRAssembly {
         return this.typeMap.get(tkey) as T;
     }
 
-    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], validatorRegexs: Map<TIRTypeKey, BSQRegex>, validatorPaths: Map<TIRTypeKey, BSQPathValidator>) {
+    constructor(namespaceMap: Map<string, TIRNamespaceDeclaration>, typeMap: Map<TIRTypeKey, TIRType>, fieldMap: Map<TIRTypeKey, TIRMemberFieldDecl>, invokeMap: Map<TIRTypeKey, TIRInvoke>, pcodemap: Map<TIRPCodeKey, TIRCodePack>, literalRegexs: BSQRegex[], literalPaths: BSQPathValidator[]) {
         this.namespaceMap = namespaceMap;
         this.typeMap = typeMap;
         this.fieldMap = fieldMap;
         this.invokeMap = invokeMap;
         this.pcodemap = pcodemap;
         this.literalRegexs = literalRegexs;
-        this.validatorRegexs = validatorRegexs;
-        this.validatorPaths = validatorPaths;
+        this.literalPaths = literalPaths;
     }
 
     private isConcreteSubtypeOf(t: TIRTypeKey, oftype: TIRConceptType): boolean {
@@ -1955,17 +1953,14 @@ class TIRAssembly {
             namespaces.set(v.ns, new TypeInfo.NamespaceDecl(v.ns, nstypes));
         });
 
-        let revalidators = new Map<TypeInfo.BSQTypeKey, string>();
-        this.validatorRegexs.forEach((v, k) => {
-            revalidators.set(k, v.regexstr);
-        });
+        let ecmaRegexValidators = new Map<TypeInfo.BSQTypeKey, string>();
+        this.literalRegexs.forEach((lre) => {
+            if(lre.regexid !== undefined) {
+                ecmaRegexValidators.set(lre.regexid, "/" + lre.re.compileToECMA(this.literalRegexs) + "/");
+            }
+        })
 
-        let pthvalidators = new Map<TypeInfo.BSQTypeKey, string>();
-        this.validatorPaths.forEach((v, k) => {
-            pthvalidators.set(k, "[TODO]");
-        });
-
-        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, revalidators, pthvalidators, rescursiveMap[1]);
+        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, rescursiveMap[1], ecmaRegexValidators);
     }
 
     private bsqemitnamespacemap(ii: string): string {
@@ -2027,25 +2022,17 @@ class TIRAssembly {
             return "[]";
         }
         else {
-            const regexdeclsi = this.literalRegexs.map((e) => e.bsqonemit());
+            const regexdeclsi = this.literalRegexs.map((e) => e.bsq_emit());
             return `[\n${ii + s_iident}${regexdeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
-    private bsqemitvremap(ii: string): string {
-        if(this.validatorRegexs.size === 0) {
+
+    private bsqemitpths(ii: string): string {
+        if(this.literalPaths.length === 0) {
             return "[]";
         }
         else {
-            const vredeclsi = [...this.validatorRegexs].map((e) => `"${e[0]}" => ${e[1].bsqonemit()}`);
-            return `[\n${ii + s_iident}${vredeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
-        }
-    }
-    private bsqemitvpemap(ii: string): string {
-        if(this.validatorPaths.size === 0) {
-            return "[]";
-        }
-        else {
-            const vpedeclsi = [...this.validatorPaths].map((e) => `"${e[0]}" => ${e[1].bsqonemit()}`);
+            const vpedeclsi = this.literalPaths.map((e) => e.bsqonemit());
             return `[\n${ii + s_iident}${vpedeclsi.join(",\n" + ii + s_iident)}\n${ii}]`;
         }
     }
@@ -2072,8 +2059,7 @@ class TIRAssembly {
         + `,\n${ii + s_iident}${this.bsqemitinvokemap(ii + s_iident)}`
         + `,\n${ii + s_iident}${this.bsqemitpcodemap(ii + s_iident)}`
         + `,\n${ii + s_iident}${this.bsqemitregexs(ii + s_iident)}`
-        + `,\n${ii + s_iident}${this.bsqemitvremap(ii + s_iident)}`
-        + `,\n${ii + s_iident}${this.bsqemitvpemap(ii + s_iident)}`
+        + `,\n${ii + s_iident}${this.bsqemitpths(ii + s_iident)}`
         + `${ii}\n}`;
     }
 }

@@ -11,18 +11,18 @@
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "18.15.7",
+        "@types/node": "20.10.0",
         "refa": "0.10.0"
     },
     "devDependencies": {
-        "fs-extra": "11.1.1",
-        "mocha": "10.2.0",
         "chai": "4.3.7",
         "decimal.js": "10.4.3",
+        "deep-object-diff": "1.1.9",
         "fraction.js": "4.2.0",
+        "fs-extra": "11.1.1",
         "immutable": "4.3.0",
-        "uuidv4": "6.2.13",
-        "deep-object-diff": "1.1.9"
+        "mocha": "10.2.0",
+        "uuidv4": "6.2.13"
     },
     "scripts": {
         "build": "node ./build/build_all.js",
@@ -35,7 +35,7 @@
         "bosque": "./impl/bin/cmd/bosque.js"
     },
     "engines": {
-        "node": ">=16.0.0",
-        "typescript": ">=5.0.0"
+        "node": ">=20.10.0",
+        "typescript": ">=5.3.0"
     }
 }

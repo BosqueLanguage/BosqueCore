@@ -196,7 +196,7 @@ Similarly object-oriented types can be defined as `typedecls` or `datatypes` and
 typedecl Fahrenheit = Int;
 Fahrenheit{32i} //constructs a Fahrenheit value for freezing
 
-typedecl SystemID = /[A-Z]{3}-[0-9]+/;
+typedecl SystemID = /[A-Z]{3}"-"[0-9]+/;
 typedecl PartID = StringOf<SystemID>;
 
 "X-52"_PartID    //fails the invariant on the string

@@ -173,7 +173,7 @@ const identifiertests = {
         ['$src', '$src', '$src'],
         ['bob', 'bob', 'bob'],
         ['foo', 'foo', 'foo'],
-        ['_$us', '_$us', '_$us']
+        ['$?us', '$?us', '$?us']
     ]
 };
 
