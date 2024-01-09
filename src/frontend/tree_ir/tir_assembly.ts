@@ -1953,7 +1953,14 @@ class TIRAssembly {
             namespaces.set(v.ns, new TypeInfo.NamespaceDecl(v.ns, nstypes));
         });
 
-        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, rescursiveMap[1]);
+        let ecmaRegexValidators = new Map<TypeInfo.BSQTypeKey, string>();
+        this.literalRegexs.forEach((lre) => {
+            if(lre.regexid !== undefined) {
+                ecmaRegexValidators.set(lre.regexid, "/" + lre.re.compileToECMA(this.literalRegexs) + "/");
+            }
+        })
+
+        return new TypeInfo.AssemblyInfo(aliasmap, namespaces, typerefs, rescursiveMap[1], ecmaRegexValidators);
     }
 
     private bsqemitnamespacemap(ii: string): string {

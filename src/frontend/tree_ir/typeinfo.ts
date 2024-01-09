@@ -555,11 +555,15 @@ class AssemblyInfo {
     readonly typerefs: Map<BSQTypeKey, BSQType>;
     readonly recursiveSets: Set<BSQTypeKey>[];
 
-    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, recursiveSets: Set<BSQTypeKey>[]) {
+    readonly ecmaRegexValidators: Map<BSQTypeKey, string>;
+
+    constructor(aliasmap: Map<string, BSQType>, namespaces: Map<string, NamespaceDecl>, typerefs: Map<string, BSQType>, recursiveSets: Set<BSQTypeKey>[], ecmaRegexValidators: Map<BSQTypeKey, string>) {
         this.aliasmap = aliasmap;
         this.namespaces = namespaces;
         this.typerefs = typerefs;
         this.recursiveSets = recursiveSets;
+
+        this.ecmaRegexValidators = ecmaRegexValidators;
     }
 
     emit(): any {
@@ -567,7 +571,8 @@ class AssemblyInfo {
             aliasmap: [...this.aliasmap.entries()].map((e) => [e[0], e[1].tkey]),
             namespaces: [...this.namespaces.entries()].map((e) => e[1].emit()),
             typerefs: [...this.typerefs.entries()].map((e) => e[1].emit()),
-            recursiveSets: this.recursiveSets.map((s) => [...s])
+            recursiveSets: this.recursiveSets.map((s) => [...s]),
+            ecmaRegexValidators: [...this.ecmaRegexValidators]
         };
     }
 
@@ -594,7 +599,12 @@ class AssemblyInfo {
             recursiveSets.push(new Set<BSQTypeKey>(rs));
         });
 
-        return new AssemblyInfo(aliasmap, namespaces, typerefs, recursiveSets);
+        const ecmaRegexValidators = new Map<BSQTypeKey, string>();
+        jv.ecmaRegexValidators.forEach((ev: any) => {
+            ecmaRegexValidators.set(ev[0], ev[1]);
+        });
+
+        return new AssemblyInfo(aliasmap, namespaces, typerefs, recursiveSets, ecmaRegexValidators);
     }
 
     checkConcreteSubtype(t: BSQType, oftype: BSQType): boolean {
