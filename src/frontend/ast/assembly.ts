@@ -7,35 +7,37 @@ import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionPar
 import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body";
 
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { BSQRegex } from "../bsqregex";
-import { BSQPathValidator } from "../path_validator";
+
+enum TemplateTermSpecialRestrictions {
+    grounded,
+    unique,
+    numeric
+};
 
 class TemplateTermDecl {
     readonly name: string;
-    readonly isunique: boolean;
-    readonly isgrounded: boolean;
-    readonly isnumeric: boolean;
+    readonly specialconstraints: TemplateTermSpecialRestrictions[];
     readonly tconstraint: TypeSignature;
 
-    constructor(name: string, isunique: boolean, isgrounded: boolean, isnumeric: boolean, tconstraint: TypeSignature) {
+    constructor(name: string, specialconstraints: TemplateTermSpecialRestrictions[], tconstraint: TypeSignature) {
         this.name = name;
-        this.isunique = isunique;
-        this.isgrounded = isgrounded;
-        this.isnumeric = isnumeric;
+        this.specialconstraints = specialconstraints;
         this.tconstraint = tconstraint;
     }
+
+    isGrounded(): boolean { return this.specialconstraints.includes(TemplateTermSpecialRestrictions.grounded); }
+    isUnique(): boolean { return this.specialconstraints.includes(TemplateTermSpecialRestrictions.unique); }
+    isNumeric(): boolean { return this.specialconstraints.includes(TemplateTermSpecialRestrictions.numeric); }
 }
 
 class TemplateTypeRestriction {
     readonly t: TypeSignature;
-    readonly isunique: boolean;
-    readonly isgrounded: boolean;
+    readonly specialconstraints: TemplateTermSpecialRestrictions[];
     readonly tconstraint: TypeSignature;
 
-    constructor(t: TypeSignature, isunique: boolean, isgrounded: boolean, tconstraint: TypeSignature) {
+    constructor(t: TypeSignature, specialconstraints: TemplateTermSpecialRestrictions[], tconstraint: TypeSignature) {
         this.t = t;
-        this.isunique = isunique;
-        this.isgrounded = isgrounded;
+        this.specialconstraints = specialconstraints;
         this.tconstraint = tconstraint;
     }
 }
@@ -292,34 +294,6 @@ class MemberMethodDecl implements OOMemberDecl {
         this.attributes = attributes;
         this.name = name;
         this.invoke = invoke;
-    }
-
-    getName(): string {
-        return this.name;
-    }
-
-    hasAttribute(attr: string): boolean {
-        return this.attributes.includes(attr);
-    }
-}
-
-class ControlFieldDecl implements OOMemberDecl {
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: string[];
-    readonly name: string;
-
-    readonly declaredType: TypeSignature;
-    readonly defaultValue: ConstantExpressionValue | undefined;
-
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, defaultValue: ConstantExpressionValue | undefined) {
-        this.sourceLocation = srcInfo;
-        this.srcFile = srcFile;
-        this.attributes = attributes;
-        this.name = name;
-        this.declaredType = dtype;
-        this.defaultValue = defaultValue;
     }
 
     getName(): string {
@@ -757,7 +731,7 @@ class Assembly {
 }
 
 export {
-    TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, InvokeDecl,
+    TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
