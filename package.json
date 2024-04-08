@@ -2,27 +2,23 @@
     "name": "@bosque/core",
     "description": "Bosque programming language and tooling stack (Core).",
     "author": {
-        "name": "Mark Marron <mark.marron@protonmail.com>"
+        "name": "Mark Marron <marron@cs.uky.edu>"
     },
     "license": "MIT",
-    "version": "0.10.0",
+    "version": "1.0.0-dev",
     "repository": {
         "type": "git",
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "20.10.0",
-        "refa": "0.10.0"
+        "@types/node": "20.10.0"
     },
     "devDependencies": {
         "chai": "4.3.7",
-        "decimal.js": "10.4.3",
         "deep-object-diff": "1.1.9",
-        "fraction.js": "4.2.0",
         "fs-extra": "11.1.1",
         "immutable": "4.3.0",
-        "mocha": "10.2.0",
-        "uuidv4": "6.2.13"
+        "mocha": "10.2.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",

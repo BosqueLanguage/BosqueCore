@@ -1,74 +1,10 @@
-type BSQTypeKey = string;
-
-import { JS, NFA, Words } from "npm:refa@0.10.0";
-import {Decimal} from "npm:decimal.js@10.4.3";
-import Fraction from "npm:fraction.js@4.2.0";
+"use strict";
 
 import { List as IList, Map as IMap } from "npm:immutable@4.3.0";
 
 enum NotationMode {
     NOTATION_MODE_BSQON = "BSQ_OBJ_NOTATION_DEFAULT",
     NOTATION_MODE_JSON = "BSQ_OBJ_NOTATION_JSON"
-}
-
-function bsqonEscapeString(str: string): string {
-    let ret = "";
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === "%") {
-            ret += "%$;";
-        }
-        else if(str[i] === "\"") {
-            ret += "%;";
-        }
-        else if(str[i] === "`") {
-            ret += "%backtick;";
-        }
-        else {
-            ret += str[i];
-        }
-    }
-
-    return ret;
-}
-
-function bsqonUnescapeString(str: string): string {
-    let ret = "";
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === "%") {
-            i++;
-            const epos = str.indexOf(";", i);
-
-            if (str[i] === "%") {
-                ret += "%";
-            }
-            else if (str[i] === "n") {
-                ret += "\n";
-            }
-            else if (str[i] === "r") {
-                ret += "\r";
-            }
-            else if (str[i] === "t") {
-                ret += "\t";
-            }
-            else if (str[i] === "b") {
-                ret += "`";
-            }
-            else if (str[i] === ";") {
-                ret += "\"";
-            }
-            else {
-                const hex = str.substring(i, epos);
-                ret += String.fromCharCode(parseInt(hex, 16));
-            }
-
-            i = epos;
-        }
-        else {
-            ret += str[i];
-        }
-    }
-
-    return ret;
 }
 
 enum BSQErrorKind {
