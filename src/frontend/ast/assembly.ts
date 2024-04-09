@@ -74,7 +74,7 @@ class PostConditionDecl {
     }
 }
 
-class InvokeSampleDeclInline {
+class InvokeExampleDeclInline {
     readonly sinfo: SourceInfo;
     readonly istest: boolean;
     readonly args: string; //a tuple of the arguments
@@ -88,7 +88,7 @@ class InvokeSampleDeclInline {
     }
 }
 
-class InvokeSampleDeclFile {
+class InvokeExampleDeclFile {
     readonly sinfo: SourceInfo;
     readonly istest: boolean;
     readonly filepath: string; //may use the $root and $src meta variables
@@ -142,7 +142,7 @@ class InvokeDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
-    readonly samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[];
+    readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
     readonly isPCodeFn: boolean;
     readonly isPCodePred: boolean;
@@ -151,7 +151,7 @@ class InvokeDecl {
 
     readonly body: BodyImplementation | undefined;
 
-    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
+    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
         this.namespace = ns;
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
@@ -170,7 +170,7 @@ class InvokeDecl {
 
         this.preconditions = preconds;
         this.postconditions = postconds;
-        this.samples = samples;
+        this.examples = examples;
 
         this.isPCodeFn = isPCodeFn;
         this.isPCodePred = isPCodePred;
@@ -187,11 +187,11 @@ class InvokeDecl {
         return new InvokeDecl(namespce, sinfoStart, sinfoEnd, srcFile, attributes, recursive, [], undefined, params, false, resultInfo, [], [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
     }
 
-    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], body: BodyImplementation | undefined) {
+    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], body: BodyImplementation | undefined) {
         return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
     }
 
-    static createSynthesisInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[], body: BodyImplementation) {
+    static createSynthesisInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], body: BodyImplementation) {
         return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, isThisRef, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
     }
 }
@@ -369,35 +369,28 @@ class EntityTypeDecl extends OOPTypeDecl {
     }
 }
 
-class TaskStatusEffect {
-    readonly statusinfo: TypeSignature[];
+class EnvironmentVariableInformation {
+    readonly evname: string;
+    readonly evtype: TypeSignature;
+    readonly optdefault: Expression | undefined;
 
-    constructor(statusinfo: TypeSignature[]) {
-        this.statusinfo = statusinfo;
+    constructor(evname: string, evtype: TypeSignature, optdefault: Expression | undefined) {
+        this.evname = evname;
+        this.evtype = evtype;
+        this.optdefault = optdefault;
     }
 }
 
-class TaskEventEffect {
-    readonly eventinfo: TypeSignature[];
-
-    constructor(eventinfo: TypeSignature[]) {
-        this.eventinfo = eventinfo;
-    }
+enum ResourceAccessModes {
+    get,     //no side effects and idempotent -- reads the value or list (elements) 
+    modify,  //replaces or updates an existing value -- parent list modifications are implicit from the create/delete resource access info
+    create,  //creates a new value or list (that did not previously exist)
+    delete   //removes a value or list that may have previously existed
 }
 
-class TaskEnvironmentEffect {
-    readonly evars: {vv: string, isw: boolean}[]; //string "*" is wildcard
-
-    constructor(evars: {vv: string, isw: boolean}[]) {
-        this.evars = evars;
-    }
-}
-
-class TaskResourceEffect {
-    readonly pathdescriptor: TypeSignature; //the resource validator
-    readonly pathglob: ConstantExpressionValue | undefined; //returns a glob string of type PathGlob<pathdescriptor>
-    readonly isread: boolean;
-    readonly iswrite: boolean;
+class ResourceInformation {
+    readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype
+    readonly accessInfo: ResourceAccessModes[];
 
     constructor(pathdescriptor: TypeSignature, pathglob: ConstantExpressionValue | undefined, isread: boolean, iswrite: boolean) {
         this.pathdescriptor = pathdescriptor;
@@ -407,12 +400,12 @@ class TaskResourceEffect {
     }
 }
 
-class TaskTypeDecl extends OOPTypeDecl {
+class APIDecl {
     readonly econtrol: ControlFieldDecl[];
     readonly actions: MemberMethodDecl[];
     readonly mainfunc: StaticFunctionDecl;
     readonly onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined };
-    readonly lfuncs: { logStart: StaticFunctionDecl | undefined, logEnd: StaticFunctionDecl | undefined, taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined };
+    readonly lfuncs: { taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined };
 
     readonly statuseffect: TaskStatusEffect;
     readonly eventeffect: TaskEventEffect
@@ -731,9 +724,9 @@ class Assembly {
 }
 
 export {
-    TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeSampleDeclInline, InvokeSampleDeclFile, InvokeDecl,
-    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, ControlFieldDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
-    TaskStatusEffect, TaskEventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
+    TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeExampleDeclInline, InvokeExampleDeclFile, InvokeDecl,
+    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
+    StatusEffect, EventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
     StringTemplate,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
