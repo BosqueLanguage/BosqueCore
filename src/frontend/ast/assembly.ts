@@ -3,10 +3,10 @@
 // Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-import { NominalTypeSignature, TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
-import { Expression, BodyImplementation, ConstantExpressionValue, LiteralExpressionValue } from "./body";
+import { TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
+import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
-import { BuildLevel, SourceInfo } from "../build_decls";
+import { BuildLevel, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
 
 enum TemplateTermSpecialRestrictions {
     grounded,
@@ -123,7 +123,7 @@ class ValidateDecl {
 }
 
 class InvokeDecl {
-    readonly namespace: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly startSourceLocation: SourceInfo;
     readonly endSourceLocation: SourceInfo;
     readonly srcFile: string;
@@ -151,8 +151,8 @@ class InvokeDecl {
 
     readonly body: BodyImplementation | undefined;
 
-    constructor(ns: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
-        this.namespace = ns;
+    constructor(ns: FullyQualifiedNamespace, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], isThisRef: boolean, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation | undefined) {
+        this.ns = ns;
         this.startSourceLocation = sinfoStart;
         this.endSourceLocation = sinfoEnd;
         this.srcFile = srcFile;
@@ -262,13 +262,15 @@ class MemberFieldDecl implements OOMemberDecl {
     readonly name: string;
 
     readonly declaredType: TypeSignature;
+    readonly defaultValue: ConstantExpressionValue | undefined;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature) {
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined) {
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
         this.attributes = attributes;
         this.name = name;
         this.declaredType = dtype;
+        this.defaultValue = dvalue;
     }
 
     getName(): string {
@@ -310,7 +312,7 @@ class OOPTypeDecl {
     readonly srcFile: string;
 
     readonly attributes: string[];
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
     readonly terms: TemplateTermDecl[];
@@ -327,7 +329,7 @@ class OOPTypeDecl {
 
     readonly nestedEntityDecls: Map<string, EntityTypeDecl>;
 
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
+    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
@@ -350,7 +352,7 @@ class OOPTypeDecl {
 }
 
 class ConceptTypeDecl extends OOPTypeDecl {
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
+    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
@@ -360,12 +362,22 @@ class ConceptTypeDecl extends OOPTypeDecl {
 }
 
 class EntityTypeDecl extends OOPTypeDecl {
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
+    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
         invariants: InvariantDecl[], validates: ValidateDecl[],
         staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
         memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
         nestedEntityDecls: Map<string, EntityTypeDecl>) {
         super(sourceLocation, srcFile, attributes, ns, name, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntityDecls);
+    }
+}
+
+class StatusInfo {
+    readonly standard: TypeSignature[];
+    readonly verbose: TypeSignature[];
+
+    constructor(standard: TypeSignature[], verbose: TypeSignature[]) {
+        this.standard = standard;
+        this.verbose = verbose;
     }
 }
 
@@ -381,6 +393,21 @@ class EnvironmentVariableInformation {
     }
 }
 
+////
+//  This is copied from BREX path_glob.h for reference here -- see how it works with the access modes
+//
+//  /x/y/*     <-- all files in y
+//  /x/y/*/    <-- all directories in y
+//  /x/y/+     <-- all files *AND* directories in y
+//
+//  /x/y/**   <-- all files (recursively) reachable from y
+//  /x/y/**/  <-- all directories (recursively) reachable from in y
+//  /x/y/++   <-- all files *AND* directories reachable from y
+//
+//  /x/y/*.*     <-- all files in y with an extension
+//  /x/y/**/*.*  <-- all files (recursively) reachable from y with an extension
+//
+
 enum ResourceAccessModes {
     get,     //no side effects and idempotent -- reads the value or list (elements) 
     modify,  //replaces or updates an existing value -- parent list modifications are implicit from the create/delete resource access info
@@ -392,48 +419,57 @@ class ResourceInformation {
     readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype
     readonly accessInfo: ResourceAccessModes[];
 
-    constructor(pathdescriptor: TypeSignature, pathglob: ConstantExpressionValue | undefined, isread: boolean, iswrite: boolean) {
-        this.pathdescriptor = pathdescriptor;
+    constructor(pathglob: ConstantExpressionValue, accessInfo: ResourceAccessModes[]) {
         this.pathglob = pathglob;
-        this.isread = isread;
-        this.iswrite = iswrite;
+        this.accessInfo = accessInfo;
     }
 }
 
 class APIDecl {
-    readonly econtrol: ControlFieldDecl[];
-    readonly actions: MemberMethodDecl[];
-    readonly mainfunc: StaticFunctionDecl;
-    readonly onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined };
-    readonly lfuncs: { taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined };
+    readonly startSourceLocation: SourceInfo;
+    readonly endSourceLocation: SourceInfo;
+    readonly srcFile: string;
 
-    readonly statuseffect: TaskStatusEffect;
-    readonly eventeffect: TaskEventEffect
-    readonly enveffect: TaskEnvironmentEffect;
-    readonly resourceeffect: TaskResourceEffect[];
+    readonly attributes: string[];
+    readonly ns: FullyQualifiedNamespace;
 
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, terms: TemplateTermDecl[],
-        validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
-        memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
-        econtrol: ControlFieldDecl[],
-        mainfunc: StaticFunctionDecl,
-        actions: MemberMethodDecl[],
-        onfuncs: { onCanel: MemberMethodDecl | undefined, onFailure: MemberMethodDecl | undefined, onTimeout: MemberMethodDecl | undefined },
-        lfuncs: { logStart: StaticFunctionDecl | undefined, logEnd: StaticFunctionDecl | undefined, taskEnsures: MemberMethodDecl | undefined, taskWarns: MemberMethodDecl | undefined },
-        statuseffect: TaskStatusEffect, eventeffect: TaskEventEffect, enveffect: TaskEnvironmentEffect, resourceeffect: TaskResourceEffect[]) {
-        super(sourceLocation, srcFile, attributes, ns, name, terms, [[new NominalTypeSignature(sourceLocation, "Core", ["Task"], undefined), undefined]], [], validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
+    readonly params: FunctionParameter[];    
+    readonly resultType: TypeSignature;
 
-        this.econtrol = econtrol;
-        this.mainfunc = mainfunc;
-        this.actions = actions;
-        this.onfuncs = onfuncs;
-        this.lfuncs = lfuncs;
+    readonly preconds: PreConditionDecl[];
+    readonly postcondsWarn: PostConditionDecl[];
+    readonly postcondsBlock: PostConditionDecl[];
 
-        this.statuseffect = statuseffect;
-        this.eventeffect = eventeffect;
-        this.enveffect = enveffect;
-        this.resourceeffect = resourceeffect;
+    readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
+
+    readonly statusOutputs: StatusInfo;
+    readonly envVarRequirements: EnvironmentVariableInformation[];
+    readonly resourceImpacts: ResourceInformation[];
+
+    readonly body: BodyImplementation | undefined;
+
+    constructor(sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postcondsWarn: PostConditionDecl[], postcondsBlock: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfo, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[], body: BodyImplementation | undefined) {
+        this.startSourceLocation = sinfoStart;
+        this.endSourceLocation = sinfoEnd;
+        this.srcFile = srcFile;
+
+        this.attributes = attributes;
+        this.ns = ns;
+        
+        this.params = params;
+        this.resultType = resultType;
+
+        this.preconds = preconds;
+        this.postcondsWarn = postcondsWarn;
+        this.postcondsBlock = postcondsBlock;
+
+        this.examples = examples;
+
+        this.statusOutputs = statusOutputs;
+        this.envVarRequirements = envVarRequirements;
+        this.resourceImpacts = resourceImpacts;
+
+        this.body = body;
     }
 }
 
@@ -442,13 +478,13 @@ class NamespaceConstDecl {
     readonly srcFile: string;
 
     readonly attributes: string[];
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
     readonly declaredType: TypeSignature;
     readonly value: ConstantExpressionValue;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
         this.sourceLocation = srcInfo;
         this.srcFile = srcFile;
 
@@ -466,12 +502,12 @@ class NamespaceFunctionDecl {
     readonly srcFile: string;
 
     readonly attributes: string[];
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
 
@@ -488,11 +524,11 @@ class NamespaceOperatorDecl {
     readonly srcFile: string;
 
     readonly attributes: string[];
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
     readonly invoke: InvokeDecl;
 
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: string, name: string, invoke: InvokeDecl) {
+    constructor(sinfo: SourceInfo, srcFile: string, attributes: string[], ns: FullyQualifiedNamespace, name: string, invoke: InvokeDecl) {
         this.sourceLocation = sinfo;
         this.srcFile = srcFile;
 
@@ -507,11 +543,11 @@ class NamespaceOperatorDecl {
 class NamespaceTypedef {
     readonly attributes: string[];
 
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
     readonly boundType: TypeSignature;
 
-    constructor(attributes: string[], ns: string, name: string, btype: TypeSignature) {
+    constructor(attributes: string[], ns: FullyQualifiedNamespace, name: string, btype: TypeSignature) {
         this.attributes = attributes;
 
         this.ns = ns;
@@ -521,11 +557,11 @@ class NamespaceTypedef {
 }
 
 class NamespaceUsing {
-    readonly fromns: string;
+    readonly fromns: FullyQualifiedNamespace;
     readonly asns: string;
     readonly names: string[];
 
-    constructor(fromns: string, asns: string, names: string[]) {
+    constructor(fromns: FullyQualifiedNamespace, asns: string, names: string[]) {
         this.fromns = fromns;
         this.asns = asns;
         this.names = names;
@@ -533,92 +569,55 @@ class NamespaceUsing {
 }
 
 class NamespaceDeclaration {
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
+    readonly name: string; 
 
     usings: NamespaceUsing[];
     declaredNames: Set<string>;
+
+    subns: Map<string, NamespaceDeclaration>;
 
     typeDefs: Map<string, NamespaceTypedef>;
     consts: Map<string, NamespaceConstDecl>;
     functions: Map<string, NamespaceFunctionDecl>;
     operators: Map<string, NamespaceOperatorDecl[]>;
     concepts: Map<string, ConceptTypeDecl>;
-    objects: Map<string, EntityTypeDecl>;
+    entities: Map<string, EntityTypeDecl>;
     
-    tasks: Map<string, TaskTypeDecl>;
-    msgformats: Map<string, InfoTemplate>;
+    apis: Map<string, APIDecl>;
     stringformats: Map<string, StringTemplate>;
 
-    constructor(ns: string) {
+    constructor(ns: FullyQualifiedNamespace, name: string) {
         this.ns = ns;
+        this.name = name;
+
         this.usings = [];
         this.declaredNames = new Set<string>();
+
+        this.subns = new Map<string, NamespaceDeclaration>();
 
         this.typeDefs = new Map<string, NamespaceTypedef>();
         this.consts = new Map<string, NamespaceConstDecl>();
         this.functions = new Map<string, NamespaceFunctionDecl>();
         this.operators = new Map<string, NamespaceOperatorDecl[]>();
         this.concepts = new Map<string, ConceptTypeDecl>();
-        this.objects = new Map<string, EntityTypeDecl>();
+        this.entities = new Map<string, EntityTypeDecl>();
 
-        this.tasks = new Map<string, TaskTypeDecl>();
-        this.msgformats = new Map<string, InfoTemplate>();
+        this.apis = new Map<string, APIDecl>();
         this.stringformats = new Map<string, StringTemplate>();
     }
 
-    checkDeclNameClash(rname: string): boolean {
-        return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.objects.has(rname) || 
-        this.tasks.has(rname) || this.msgformats.has(rname) || this.stringformats.has(rname);
-    }
-}
+    checkDeclNameClash(rname: string, hastemplates: boolean): boolean {
+        if(!this.declaredNames.has(rname)) {
+            return false;
+        }
 
-class InfoTemplate {
-}
-
-class InfoTemplateRecord extends InfoTemplate {
-    readonly entries: { name: string, value: InfoTemplate }[];
-
-    constructor(entries: { name: string, value: InfoTemplate }[]) {
-        super();
-        this.entries = entries;
-    }
-}
-
-class InfoTemplateTuple extends InfoTemplate {
-    readonly entries: InfoTemplate[];
-
-    constructor(entries: InfoTemplate[]) {
-        super();
-        this.entries = entries;
-    }
-}
-
-class InfoTemplateConst extends InfoTemplate {
-    readonly lexp: LiteralExpressionValue;
-
-    constructor(lexp: LiteralExpressionValue) {
-        super();
-        this.lexp = lexp;
-    }
-}
-
-class InfoTemplateMacro extends InfoTemplate {
-    readonly macro: string;
-
-    constructor(macro: string) {
-        super();
-        this.macro = macro;
-    }
-}
-
-class InfoTemplateValue extends InfoTemplate {
-    readonly argpos: number;
-    readonly argtype: TypeSignature;
-
-    constructor(argpos: number, argtype: TypeSignature) {
-        super();
-        this.argpos = argpos;
-        this.argtype = argtype;
+        if(hastemplates) {
+            return this.functions.has(rname) || this.concepts.has(rname) || this.entities.has(rname);
+        }
+        else {
+            return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.entities.has(rname) || this.apis.has(rname) || this.stringformats.has(rname);
+        }
     }
 }
 
@@ -726,7 +725,7 @@ class Assembly {
 export {
     TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeExampleDeclInline, InvokeExampleDeclFile, InvokeDecl,
     OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
-    StatusEffect, EventEffect, TaskEnvironmentEffect, TaskResourceEffect, TaskTypeDecl,
+    StatusInfo, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     InfoTemplate, InfoTemplateRecord, InfoTemplateTuple, InfoTemplateConst, InfoTemplateMacro, InfoTemplateValue,
     StringTemplate,
     NamespaceConstDecl, NamespaceFunctionDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,

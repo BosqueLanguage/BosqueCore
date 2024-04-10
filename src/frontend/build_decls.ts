@@ -23,6 +23,8 @@ type CodeFileInfo = {
     contents: string
 };
 
+type FullyQualifiedNamespace = string;
+
 type BuildLevel = "spec" | "test" | "release" | "safety";
 
 function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
@@ -61,5 +63,6 @@ class PackageConfig {
 
 export {
     BuildLevel, isBuildLevelEnabled,
+    FullyQualifiedNamespace,
     SourceInfo, CodeFileInfo, PackageConfig,
 };
