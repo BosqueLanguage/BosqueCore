@@ -362,23 +362,21 @@ class EnvironmentVariableInformation {
 ////
 //  This is copied from BREX path_glob.h for reference here -- see how it works with the access modes
 //
-//  /x/y/*     <-- all files in y
-//  /x/y/*/    <-- all directories in y
-//  /x/y/+     <-- all files *AND* directories in y
+//  /x/y/*     <-- all files that are single extensions of the prefix
+//  /x/y/*/    <-- all directories that are single extensions of the prefix
 //
-//  /x/y/**   <-- all files (recursively) reachable from y
-//  /x/y/**/  <-- all directories (recursively) reachable from in y
-//  /x/y/++   <-- all files *AND* directories reachable from y
+//  /x/y/**   <-- all files that are extensions of the prefix
+//  /x/y/**/  <-- all directories that are extensions of the prefix
 //
-//  /x/y/*.*     <-- all files in y with an extension
-//  /x/y/**/*.*  <-- all files (recursively) reachable from y with an extension
+//  /x/y/*.*     <-- all files that have an extension with a file extension
+//  /x/y/**/*.*  <-- all files that are an extension of the prefix and with a file extension
 //
 
 enum ResourceAccessModes {
     get,     //no side effects and idempotent -- reads the value or list (elements) 
     modify,  //replaces or updates an existing value -- parent list modifications are implicit from the create/delete resource access info
     create,  //creates a new value or list (that did not previously exist)
-    delete   //removes a value or list that may have previously existed
+    delete  //removes a value or list that may have previously existed
 }
 
 class ResourceInformation {
