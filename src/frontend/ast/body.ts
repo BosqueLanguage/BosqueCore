@@ -6,7 +6,7 @@
 import { RecursiveAnnotation, TypeSignature } from "./type";
 import { InvokeDecl } from "./assembly";
 
-import { BuildLevel, LoggerLevel, SourceInfo } from "../build_decls";
+import { BuildLevel, CodeFormatter, LoggerLevel, SourceInfo } from "../build_decls";
 import { BSQRegex } from "../bsqregex";
 
 abstract class ITest {
@@ -1570,23 +1570,127 @@ class ScopedBlockStatement extends Statement {
     }
 }
 
-class SynthesisBody {
+abstract class BodyImplementation {
+    readonly sinfo: SourceInfo;
     readonly file: string;
-    readonly spos: SourceInfo;
 
-    constructor(file: string, spos: SourceInfo) {
+    constructor(sinfo: SourceInfo, file: string) {
+        this.sinfo = sinfo;
         this.file = file;
-        this.spos = spos;
+    }
+
+    abstract emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string;
+}
+
+class AbstractBodyImplementation extends BodyImplementation {
+    constructor(sinfo: SourceInfo, file: string) {
+        super(sinfo, file);
+    }
+
+    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+        if(headerstr === undefined) {
+            return "";
+        }
+        else {
+            return headerstr + ";";
+        }
     }
 }
 
-class BodyImplementation {
-    readonly file: string;
-    readonly body: string | ScopedBlockStatement | Expression | SynthesisBody;
+class BuiltinBodyImplementation extends BodyImplementation {
+    readonly builtin: string;
 
-    constructor(file: string, body: string | ScopedBlockStatement | Expression | SynthesisBody) {
-        this.file = file;
-        this.body = body;
+    constructor(sinfo: SourceInfo, file: string, builtin: string) {
+        super(sinfo, file);
+
+        this.builtin = builtin;
+    }
+
+    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+        if(headerstr === undefined) {
+            return ` = ${this.builtin};`;
+        }
+        else {
+            return headerstr + " = " + this.builtin + ";";
+        }
+    }
+}
+
+class SynthesisBodyImplementation extends BodyImplementation {
+    constructor(sinfo: SourceInfo, file: string) {
+        super(sinfo, file);
+    }
+
+    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+        let hstr = "";
+        if(headerstr !== undefined) {
+            hstr = " " + headerstr;
+        }
+
+        if(fmt === undefined) {
+            return `{${hstr} defer; }`;
+        }
+        else {
+            fmt.indentPush();
+            const bb = fmt.indent("defer;");
+            fmt.indentPop();
+
+            return `{${hstr}\n${bb}\n${fmt.indent("}")}`;
+        }
+    }
+}
+
+class ExpressionBodyImplementation extends BodyImplementation {
+    readonly exp: Expression;
+
+    constructor(sinfo: SourceInfo, file: string, exp: Expression) {
+        super(sinfo, file);
+        this.exp = exp;
+    }
+
+    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+        let hstr = "";
+        if(headerstr !== undefined) {
+            hstr = " " + headerstr;
+        }
+
+        if(fmt === undefined) {
+            return `{${hstr} return ${this.exp.emit()}; }`;
+        }
+        else {
+            fmt.indentPush();
+            const bb = fmt.indent("return " + this.exp.emit() + ";");
+            fmt.indentPop();
+
+            return `{${hstr}\n${bb}\n${fmt.indent("}")}`;
+        }
+    }
+}
+
+class StandardBodyImplementation extends BodyImplementation {
+    readonly statements: Statement[];
+
+    constructor(sinfo: SourceInfo, file: string, statements: Statement[]) {
+        super(sinfo, file);
+        this.statements = statements;
+    }
+
+    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+        let hstr = "";
+        if(headerstr !== undefined) {
+            hstr = " " + headerstr;
+        }
+
+        if(fmt === undefined) {
+            return `{${hstr} ${this.statements.map((stmt) => stmt.emit()).join(" ")} }`;
+        }
+        else {
+            fmt.indentPush();
+            const bb = this.statements.map((stmt) => stmt.emit(fmt)).join("\n");
+            fmt.indentPop();
+
+            return `{${hstr}\n${bb}\n${fmt.indent("}")}`;
+        }
     }
 }
 
@@ -1629,6 +1733,5 @@ export {
     TaskSetStatusStatement, TaskEventEmitStatement, TaskSetSelfFieldStatement, 
     LoggerLevel, LoggerEmitStatement, LoggerEmitConditionalStatement, LoggerLevelStatement, LoggerCategoryStatement, LoggerPrefixStatement,
     UnscopedBlockStatement, ScopedBlockStatement, 
-    SynthesisBody,
-    BodyImplementation
+    BodyImplementation, AbstractBodyImplementation, BuiltinBodyImplementation, SynthesisBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
 };

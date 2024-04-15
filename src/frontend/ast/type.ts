@@ -14,17 +14,17 @@ class TypeSignature {
         this.sinfo = sinfo;
     }
 
-    getDiagnosticName(): string {
+    emit(): string {
         return "[Missing Implementation]";
     }
 }
 
-class ParseErrorTypeSignature extends TypeSignature {
+class ErrorTypeSignature extends TypeSignature {
     constructor(sinfo: SourceInfo) {
         super(sinfo);
     }
 
-    getDiagnosticName(): string {
+    emit(): string {
         return "[Parse Error]";
     }
 }

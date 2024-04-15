@@ -23,6 +23,26 @@ type CodeFileInfo = {
     contents: string
 };
 
+class CodeFormatter {
+    private level: number;
+
+    constructor() {
+        this.level = 0;
+    }
+
+    indentPush() {
+        this.level++;
+    }
+    
+    indentPop() {
+        this.level--;
+    }
+    
+    indent(code: string): string {
+        return "    ".repeat(this.level) + code;
+    }   
+}
+
 type FullyQualifiedNamespace = string;
 
 type BuildLevel = "spec" | "test" | "release" | "safety";
@@ -63,6 +83,7 @@ class PackageConfig {
 
 export {
     BuildLevel, isBuildLevelEnabled,
+    CodeFormatter,
     FullyQualifiedNamespace,
     SourceInfo, CodeFileInfo, PackageConfig,
 };
