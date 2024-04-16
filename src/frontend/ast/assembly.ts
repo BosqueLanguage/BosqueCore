@@ -71,46 +71,99 @@ class TypeConditionRestriction {
     }
 }
 
-class PreConditionDecl {
-    readonly sinfo: SourceInfo;
+abstract class AbstractDecl {
+    readonly sourceLocation: SourceInfo;
+
+    constructor(srcInfo: SourceInfo) {
+        this.sourceLocation = srcInfo;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+abstract class ConditionDecl extends AbstractDecl {
+    readonly diagnosticTag: string | undefined;
+
+    constructor(srcInfo: SourceInfo, diagnosticTag: string | undefined) {
+        super(srcInfo);
+        this.diagnosticTag = diagnosticTag;
+    }
+
+    emitDiagnosticTag(): string {
+        return this.diagnosticTag === undefined ? "" : `[${this.diagnosticTag}]`;
+    }
+}
+
+class PreConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, level: BuildLevel, exp: Expression) {
-        this.sinfo = sinfo;
+    constructor(sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: Expression) {
+        super(sinfo, tag);
+
         this.level = level;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
     }
 }
 
-class PostConditionDecl {
-    readonly sinfo: SourceInfo;
+class PostConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
     readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, level: BuildLevel, exp: Expression) {
-        this.sinfo = sinfo;
+    constructor(sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: Expression) {
+        super(sinfo, tag);
+
         this.level = level;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
     }
 }
 
-class InvokeExampleDeclInline {
-    readonly sinfo: SourceInfo;
+class InvariantDecl extends ConditionDecl {
+    readonly level: BuildLevel;
+    readonly exp: ConstantExpressionValue;
+
+    constructor(sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: ConstantExpressionValue) {
+        super(sinfo, tag);
+
+        this.level = level;
+        this.exp = exp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+    }
+}
+
+class ValidateDecl extends ConditionDecl {
+    readonly exp: ConstantExpressionValue;
+
+    constructor(sinfo: SourceInfo, tag: string | undefined, exp: ConstantExpressionValue) {
+        super(sinfo, tag);
+
+        this.exp = exp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit() + ";");
+    }
+}
+
+class InvokeExampleDeclInline extends AbstractDecl {
     readonly istest: boolean;
     readonly args: string; //a tuple of the arguments
     readonly output: string;
 
     constructor(sinfo: SourceInfo, istest: boolean, args: string, output: string) {
-        this.sinfo = sinfo;
+        super(sinfo);
+
         this.istest = istest;
         this.args = args;
         this.output = output;
@@ -126,13 +179,13 @@ class InvokeExampleDeclInline {
     }
 }
 
-class InvokeExampleDeclFile {
-    readonly sinfo: SourceInfo;
+class InvokeExampleDeclFile extends AbstractDecl {
     readonly istest: boolean;
     readonly filepath: string; //may use the ROOT and SRC environment variables
 
     constructor(sinfo: SourceInfo, istest: boolean, filepath: string) {
-        this.sinfo = sinfo;
+        super(sinfo);
+
         this.istest = istest;
         this.filepath = filepath;
     }
@@ -144,36 +197,6 @@ class InvokeExampleDeclFile {
         else {
             return fmt.indent(`example ${this.filepath};`);
         }
-    }
-}
-
-class InvariantDecl {
-    readonly sinfo: SourceInfo;
-    readonly level: BuildLevel;
-    readonly exp: ConstantExpressionValue;
-
-    constructor(sinfo: SourceInfo, level: BuildLevel, exp: ConstantExpressionValue) {
-        this.sinfo = sinfo;
-        this.level = level;
-        this.exp = exp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
-    }
-}
-
-class ValidateDecl {
-    readonly sinfo: SourceInfo;
-    readonly exp: ConstantExpressionValue;
-
-    constructor(sinfo: SourceInfo, exp: ConstantExpressionValue) {
-        this.sinfo = sinfo;
-        this.exp = exp;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.exp.emit() + ";");
     }
 }
 
@@ -191,16 +214,13 @@ class DeclarationAttibute {
     }
 }
 
-abstract class AbstractDecl {
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
+abstract class AbstractCoreDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
     readonly name: string;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string) {
-        this.sourceLocation = srcInfo;
-        this.srcFile = srcFile;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(sinfo);
+        
         this.attributes = attributes;
         this.name = name;
     }
@@ -213,127 +233,107 @@ abstract class AbstractDecl {
         return this.attributes.map((attr) => attr.emit()).join(" ");
     }
 }
-abstract class AbstractInvokeDecl extends AbstractDecl {
-    readonly ns: FullyQualifiedNamespace;
-    readonly startSourceLocation: SourceInfo;
-    readonly endSourceLocation: SourceInfo;
-    readonly srcFile: string;
 
-    readonly attributes: DeclarationAttibute[];
+abstract class AbstractInvokeDecl extends AbstractCoreDecl {
     readonly recursive: "yes" | "no" | "cond";
 
-    readonly terms: TemplateTermDecl[];
-    readonly termRestrictions: TypeConditionRestriction | undefined;
-
-    readonly receiverTag: InvokeReceiverTag;
     readonly params: FunctionParameter[];
-    
     readonly resultType: TypeSignature;
 
+    readonly body: BodyImplementation;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation) {
+        super(sinfo, attributes, name);
+
+        this.recursive = recursive;
+
+        this.params = params;
+        this.resultType = resultType;
+
+        this.body = body;
+    }
+
+    generateSig(sinfo: SourceInfo, refsig: boolean): TypeSignature {
+        return new FunctionTypeSignature(sinfo, refsig, this.recursive, this.params, this.resultType);
+    }
+    
+    emitSig(): [string, string] {
+        let attrs = "";
+        if (this.attributes.length !== 0) {
+            attrs = this.attributes.map((attr) => attr.emit()).join(" ") + " ";
+        }
+
+        let rec = "";
+        if (this.recursive !== "no") {
+            rec = this.recursive === "yes" ? "recursive " : "recursive? ";
+        }
+
+        let params = this.params.map((p) => p.name + ": " + p.type.emit()).join(", ");
+
+        return [`${attrs}${rec}`, `(${params}): ${this.resultType.emit()}`];
+    }
+}
+
+abstract class AbstractLambdaDecl extends AbstractInvokeDecl {
+    readonly captureVarSet: Set<string>;
+    readonly captureTemplateSet: Set<string>;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
+        super(sinfo, attributes, name, recursive, params, resultType, body);
+
+        this.captureVarSet = captureVarSet;
+        this.captureTemplateSet = captureTemplateSet;
+    }
+
+    private emitCaptureInfo(): string {
+        
+        let capturet = "";
+        if(this.captureTemplateSet.size !== 0) {
+            capturet = "<" + Array.from(this.captureTemplateSet).sort().join(", ") + ">";
+        }
+
+        let capturev = "";
+        if(this.captureVarSet.size !== 0) {
+            capturev = "[" + Array.from(this.captureVarSet).sort().join(", ") + "]";
+        }
+
+        return "%*" + [capturet, capturev].join(" ") + "*%";
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const ssig = this.emitSig();
+
+        return `${ssig[0]} ${this.name}${ssig[1]} ${this.body.emit(undefined, this.emitCaptureInfo())}`;
+    }
+}
+
+class ParametricLambdaDecl extends AbstractLambdaDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, captureVarSet, captureTemplateSet);
+    }
+}
+
+class StdLambdaDecl extends AbstractLambdaDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, captureVarSet, captureTemplateSet);
+    }
+}
+
+abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
     readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
-    readonly isPCodeFn: boolean;
-    readonly isPCodePred: boolean;
-    readonly captureVarSet: Set<string>;
-    readonly captureTemplateSet: Set<string>;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body);
 
-    readonly body: BodyImplementation;
-
-    constructor(ns: FullyQualifiedNamespace, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], receiverTag: InvokeReceiverTag, resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isPCodeFn: boolean, isPCodePred: boolean, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation) {
-        this.ns = ns;
-        this.startSourceLocation = sinfoStart;
-        this.endSourceLocation = sinfoEnd;
-        this.srcFile = srcFile;
-
-        this.attributes = attributes;
-        this.recursive = recursive;
-
-        this.terms = terms;
-        this.termRestrictions = termRestrictions;
-
-        this.receiverTag = receiverTag;
-        this.params = params;
-
-        this.resultType = resultType;
-
-        this.preconditions = preconds;
-        this.postconditions = postconds;
+        this.preconditions = preconditions;
+        this.postconditions = postconditions;
         this.examples = examples;
-
-        this.isPCodeFn = isPCodeFn;
-        this.isPCodePred = isPCodePred;
-        this.captureVarSet = captureVarSet;
-        this.captureTemplateSet = captureTemplateSet;
-        this.body = body;
     }
 
-    generateSig(sinfo: SourceInfo): TypeSignature {
-        return new FunctionTypeSignature(sinfo, this.receiverTag, this.recursive, this.params, this.resultType, this.isPCodePred);
-    }
-
-    static createPCodeInvokeDecl(namespce: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultInfo: TypeSignature, captureVarSet: Set<string>, captureTemplateSet: Set<string>, body: BodyImplementation, isPCodeFn: boolean, isPCodePred: boolean) {
-        return new InvokeDecl(namespce, sinfoStart, sinfoEnd, srcFile, attributes, recursive, [], undefined, params, InvokeReceiverTag.Std, resultInfo, [], [], [], isPCodeFn, isPCodePred, captureVarSet, captureTemplateSet, body);
-    }
-
-    static createStandardInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], receiverTag: InvokeReceiverTag, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], body: BodyImplementation) {
-        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, receiverTag, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
-    }
-
-    static createSynthesisInvokeDecl(namespace: string, sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], recursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, params: FunctionParameter[], receiverTag: InvokeReceiverTag, resultInfo: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], samples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], body: BodyImplementation) {
-        return new InvokeDecl(namespace, sinfoStart, sinfoEnd, srcFile, attributes, recursive, terms, termRestrictions, params, receiverTag, resultInfo, preconds, postconds, samples, false, false, new Set<string>(), new Set<string>(), body);
-    }
-
-    private emitSig(fmt: CodeFormatter | undefined, name: string | undefined): string {
-        let attrs = "";
-        if(this.attributes.length !== 0) {
-            attrs = this.attributes.map((attr) => attr.emit()).join(" ") + " ";
-        }
-
-        let rec = "";
-        if(this.recursive !== "no") {
-            rec = this.recursive + " ";
-        }
-
-        let params = this.params.map((p) => p.name + ": " + p.type.emit()).join(", ");
-
-        if(name === undefined) {
-            const ff = this.isPCodePred ? "pred" : "fn";
-
-            return `${rec}${ff}(${params}): ${this.resultType.emit()}`;
-        }
-        else {
-            let terms = "";
-            if(this.terms.length !== 0) {
-                terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
-            }
-
-            let restricts = "";
-            if(this.termRestrictions !== undefined) {
-                restricts = this.termRestrictions.emit(true) + " ";
-            }
-
-            let ttinfo: string;
-            if(this.receiverTag === InvokeReceiverTag.Std) {
-                ttinfo = "function";
-            }
-            else if(this.receiverTag === InvokeReceiverTag.This || this.receiverTag === InvokeReceiverTag.Self) {
-                ttinfo = "method";
-            }
-            else if(this.receiverTag === InvokeReceiverTag.ThisRef || this.receiverTag === InvokeReceiverTag.SelfRef) {
-                ttinfo = "method ref";
-            }
-            else {
-                ttinfo = "action";
-            }
-
-            return (fmt as CodeFormatter).indent(`${attrs}${rec}${ttinfo} ${restricts}${name}${terms}(${params}): ${this.resultType.emit()}`);
-        }
-    }
-
-    private emitMetaInfo(fmt: CodeFormatter): string {
+    emitMetaInfo(fmt: CodeFormatter): string {
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
             prec = this.preconditions.map((pc) => pc.emit(fmt));
@@ -352,129 +352,207 @@ abstract class AbstractInvokeDecl extends AbstractDecl {
         return [...prec, ...postc, ...examples].join("\n");
     }
 
-    private emitCaptureInfo(): string {
-        
-        let capturet = "";
-        if(this.captureTemplateSet.size !== 0) {
-            capturet = "<" + Array.from(this.captureTemplateSet).sort().join(", ") + ">";
-        }
-
-        let capturev = "";
-        if(this.captureVarSet.size !== 0) {
-            capturev = "[" + Array.from(this.captureVarSet).sort().join(", ") + "]";
-        }
-
-        return "%*" + [capturet, capturev].join(" ") + "*%";
-    }
-
-    emitPCode(): string {
-        return this.emitSig(undefined, undefined) + this.body.emit(undefined, this.emitCaptureInfo());
-    }
-
-    emitStdInvokeDecl(fmt: CodeFormatter, name: string) {
-        const sig = this.emitSig(fmt, name);
-
-        fmt.indentPush();
-        const meta = this.emitMetaInfo(fmt);
-        fmt.indentPop();
-
-        const body = this.body.emit(fmt, this.emitCaptureInfo());
-
-        if(meta === "") {
-            return fmt.indent(sig + body);
-        }
-        else {
-            return fmt.indent(sig + "\n" + meta + "\n" + fmt.indent(body));
-        }
-    }
-}
-
-abstract class AbstractLambdaDecl extends AbstractInvokeDecl {
-    xxxx;
-}
-
-class ParametricLambdaDecl extends AbstractLambdaDecl {
-    xxxx;
-}
-
-class StdLambdaDecl extends AbstractLambdaDecl {
-    xxxx;
-}
-
-abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
-    xxxx;
+    abstract getDeclarationTag(): string;
 }
 
 abstract class ParametricExplicitInvokeDecl extends ExplicitInvokeDecl {
-    xxxx;
+    readonly terms: TemplateTermDecl[];
+    readonly termRestrictions: TypeConditionRestriction | undefined;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+
+        this.terms = terms;
+        this.termRestrictions = termRestrictions;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const ssig = this.emitSig();
+        const meta = this.emitMetaInfo(fmt);
+
+        const terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+
+        let restricts = "";
+        if (this.termRestrictions !== undefined) {
+            restricts = this.termRestrictions.emit(true) + " ";
+        }
+
+        const ttinfo = this.getDeclarationTag();
+
+        return (fmt as CodeFormatter).indent(`${ssig[0]} ${ttinfo} ${restricts}${this.name}${terms}${ssig[1]} ${this.body.emit(fmt, meta)}`);
+    }
 }
 
 abstract class StdExplicitInvokeDecl extends ExplicitInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const ssig = this.emitSig();
+        const meta = this.emitMetaInfo(fmt);
+
+        const ttinfo = this.getDeclarationTag();
+
+        return (fmt as CodeFormatter).indent(`${ssig[0]} ${ttinfo} ${this.name}${ssig[1]} ${this.body.emit(fmt, meta)}`);
+    }
 }
 
 abstract class ParametricFunctionInvokeDecl extends ParametricExplicitInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "function";
+    }
 }
 
 abstract class StdFunctionInvokeDecl extends StdExplicitInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "function";
+    }
 }
 
 class NamespaceParametricFunctionDecl extends ParametricFunctionInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
 }
 
-class NamespaceStdFunctionDecl extends StdExplicitInvokeDecl {
-    xxxx;
+class NamespaceStdFunctionDecl extends StdFunctionInvokeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+}
+
+
+class TypeParametricFunctionDecl extends ParametricFunctionInvokeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+}
+
+class TypeStdFunctionDecl extends StdFunctionInvokeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
 }
 
 abstract class ParametricMethodInvokeDecl extends ParametricExplicitInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
 }
 
 class ParametricMethodDecl extends ParametricMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "method";
+    }
 }
 
 class ParametricRefMethodDecl extends ParametricMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "ref method";
+    }
 }
 
 class ParametricTaskMethodDecl extends ParametricMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "method";
+    }
 }
 
 class ParametricTaskRefMethodDecl extends ParametricMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "ref method";
+    }
 }
 
 class ParametricTaskActionDecl extends ParametricMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples, terms, termRestrictions);
+    }
+
+    getDeclarationTag(): string {
+        return "action";
+    }
 }
 
 abstract class StdMethodInvokeDecl extends StdExplicitInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
 }
 
 class StdMethodDecl extends StdMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "method";
+    }
 }
 
 class StdRefMethodDecl extends StdMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "ref method";
+    }
 }
 
 class StdTaskMethodDecl extends StdMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "method";
+    }
 }
 
 class StdTaskRefMethodDecl extends StdMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "ref method";
+    }
 }
 
 class StdTaskActionDecl extends StdMethodInvokeDecl {
-    xxxx;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, recursive, params, resultType, body, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "action";
+    }
 }
 
 
@@ -1151,9 +1229,21 @@ class Assembly {
 }
 
 export {
-    TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, PreConditionDecl, PostConditionDecl, InvokeExampleDeclInline, InvokeExampleDeclFile, 
-    DeclarationAttibute, InvokeReceiverTag, InvokeDecl,
-    OOMemberDecl, InvariantDecl, ValidateDecl, StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
+    TemplateTermSpecialRestrictions, TemplateTermDecl, TemplateTypeRestriction, TypeConditionRestriction, 
+    AbstractDecl, 
+    ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
+    InvokeExampleDeclInline, InvokeExampleDeclFile, 
+    DeclarationAttibute, AbstractCoreDecl,
+    AbstractInvokeDecl, 
+    AbstractLambdaDecl, ParametricLambdaDecl, StdLambdaDecl,
+    ExplicitInvokeDecl, ParametricExplicitInvokeDecl, StdExplicitInvokeDecl,
+    ParametricFunctionInvokeDecl, StdFunctionInvokeDecl, NamespaceParametricFunctionDecl, NamespaceStdFunctionDecl, TypeParametricFunctionDecl, TypeStdFunctionDecl,
+    ParametricMethodInvokeDecl, ParametricMethodDecl, ParametricRefMethodDecl, ParametricTaskMethodDecl, ParametricTaskRefMethodDecl, ParametricTaskActionDecl, 
+    StdMethodInvokeDecl, StdMethodDecl, StdRefMethodDecl, StdTaskMethodDecl, StdTaskRefMethodDecl, StdTaskActionDecl,
+    
+    
+    InvokeReceiverTag, InvokeDecl,
+    OOMemberDecl,  StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
     StatusInfo, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     MemberActionDecl, TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
     StringTemplate,

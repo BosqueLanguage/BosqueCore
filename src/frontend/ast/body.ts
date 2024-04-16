@@ -162,17 +162,7 @@ abstract class Expression {
         this.sinfo = sinfo;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return false;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return false;
-    }
-
-    isTaskOperation(): boolean {
-        return false;
-    }
+    abstract emit(): string;
 }
 
 //This just holds a constant expression that can be evaluated without any arguments but not a subtype of Expression so we can distinguish as types
@@ -181,6 +171,10 @@ class LiteralExpressionValue {
 
     constructor(exp: Expression) {
         this.exp = exp;
+    }
+
+    emit(): string {
+        return this.exp.emit();
     }
 }
 
@@ -192,6 +186,10 @@ class ConstantExpressionValue {
     constructor(exp: Expression, captured: Set<string>) {
         this.exp = exp;
         this.captured = captured;
+    }
+
+    emit(): string {
+        return this.exp.emit();
     }
 }
 
@@ -1682,7 +1680,7 @@ class StandardBodyImplementation extends BodyImplementation {
         }
 
         if(fmt === undefined) {
-            return `{${hstr} ${this.statements.map((stmt) => stmt.emit()).join(" ")} }`;
+            return `{${hstr} ${this.statements.map((stmt) => stmt.emit(undefined)).join(" ")} }`;
         }
         else {
             fmt.indentPush();

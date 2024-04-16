@@ -118,15 +118,13 @@ class FunctionTypeSignature extends TypeSignature {
     readonly isThisRef: boolean;
     readonly params: FunctionParameter[];
     readonly resultType: TypeSignature;
-    readonly isPred: boolean;
 
-    constructor(sinfo: SourceInfo, isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature, isPred: boolean) {
+    constructor(sinfo: SourceInfo, isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature) {
         super(sinfo);
         this.recursive = recursive;
         this.isThisRef = isThisRef;
         this.params = params;
         this.resultType = resultType;
-        this.isPred = isPred;
     }
 
     getDiagnosticName(): string {
