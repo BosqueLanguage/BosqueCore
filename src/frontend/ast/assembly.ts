@@ -191,16 +191,29 @@ class DeclarationAttibute {
     }
 }
 
-enum InvokeReceiverTag {
-    Std,
-    This,
-    ThisRef,
-    Self,
-    SelfRef,
-    Action
-}
+abstract class AbstractDecl {
+    readonly sourceLocation: SourceInfo;
+    readonly srcFile: string;
 
-abstract class AbstractInvokeDecl {
+    readonly attributes: DeclarationAttibute[];
+    readonly name: string;
+
+    constructor(srcInfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string) {
+        this.sourceLocation = srcInfo;
+        this.srcFile = srcFile;
+        this.attributes = attributes;
+        this.name = name;
+    }
+
+    hasAttribute(aname: string): boolean {
+        return this.attributes.find((attr) => attr.name === aname) !== undefined;
+    }
+
+    emitAttributes(): string {
+        return this.attributes.map((attr) => attr.emit()).join(" ");
+    }
+}
+abstract class AbstractInvokeDecl extends AbstractDecl {
     readonly ns: FullyQualifiedNamespace;
     readonly startSourceLocation: SourceInfo;
     readonly endSourceLocation: SourceInfo;
@@ -376,7 +389,15 @@ abstract class AbstractInvokeDecl {
     }
 }
 
-class LambdaInvokeDecl extends AbstractInvokeDecl{
+abstract class AbstractLambdaDecl extends AbstractInvokeDecl {
+    xxxx;
+}
+
+class ParametricLambdaDecl extends AbstractLambdaDecl {
+    xxxx;
+}
+
+class StdLambdaDecl extends AbstractLambdaDecl {
     xxxx;
 }
 
@@ -384,28 +405,78 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
     xxxx;
 }
 
-abstract class OOMemberDecl {
-    readonly sourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: DeclarationAttibute[];
-    readonly name: string;
-
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string) {
-        this.sourceLocation = srcInfo;
-        this.srcFile = srcFile;
-        this.attributes = attributes;
-        this.name = name;
-    }
-
-    hasAttribute(aname: string): boolean {
-        return this.attributes.find((attr) => attr.name === aname) !== undefined;
-    }
-
-    emitAttributes(): string {
-        return this.attributes.map((attr) => attr.emit()).join(" ");
-    }
+abstract class ParametricExplicitInvokeDecl extends ExplicitInvokeDecl {
+    xxxx;
 }
+
+abstract class StdExplicitInvokeDecl extends ExplicitInvokeDecl {
+    xxxx;
+}
+
+abstract class ParametricFunctionInvokeDecl extends ParametricExplicitInvokeDecl {
+    xxxx;
+}
+
+abstract class StdFunctionInvokeDecl extends StdExplicitInvokeDecl {
+    xxxx;
+}
+
+class NamespaceParametricFunctionDecl extends ParametricFunctionInvokeDecl {
+    xxxx;
+}
+
+class NamespaceStdFunctionDecl extends StdExplicitInvokeDecl {
+    xxxx;
+}
+
+abstract class ParametricMethodInvokeDecl extends ParametricExplicitInvokeDecl {
+    xxxx;
+}
+
+class ParametricMethodDecl extends ParametricMethodInvokeDecl {
+    xxxx;
+}
+
+class ParametricRefMethodDecl extends ParametricMethodInvokeDecl {
+    xxxx;
+}
+
+class ParametricTaskMethodDecl extends ParametricMethodInvokeDecl {
+    xxxx;
+}
+
+class ParametricTaskRefMethodDecl extends ParametricMethodInvokeDecl {
+    xxxx;
+}
+
+class ParametricTaskActionDecl extends ParametricMethodInvokeDecl {
+    xxxx;
+}
+
+abstract class StdMethodInvokeDecl extends StdExplicitInvokeDecl {
+    xxxx;
+}
+
+class StdMethodDecl extends StdMethodInvokeDecl {
+    xxxx;
+}
+
+class StdRefMethodDecl extends StdMethodInvokeDecl {
+    xxxx;
+}
+
+class StdTaskMethodDecl extends StdMethodInvokeDecl {
+    xxxx;
+}
+
+class StdTaskRefMethodDecl extends StdMethodInvokeDecl {
+    xxxx;
+}
+
+class StdTaskActionDecl extends StdMethodInvokeDecl {
+    xxxx;
+}
+
 
 class StaticMemberDecl extends OOMemberDecl {
     readonly declaredType: TypeSignature;
