@@ -72,10 +72,10 @@ class TypeConditionRestriction {
 }
 
 abstract class AbstractDecl {
-    readonly sourceLocation: SourceInfo;
+    readonly sinfo: SourceInfo;
 
-    constructor(srcInfo: SourceInfo) {
-        this.sourceLocation = srcInfo;
+    constructor(sinfo: SourceInfo) {
+        this.sinfo = sinfo;
     }
 
     abstract emit(fmt: CodeFormatter): string;
@@ -230,7 +230,7 @@ abstract class AbstractCoreDecl extends AbstractDecl {
     }
 
     emitAttributes(): string {
-        return this.attributes.map((attr) => attr.emit()).join(" ");
+        return this.attributes.length !== 0 ? (this.attributes.map((attr) => attr.emit()).join(" ") + " ") : "";
     }
 }
 
@@ -258,10 +258,7 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
     }
     
     emitSig(): [string, string] {
-        let attrs = "";
-        if (this.attributes.length !== 0) {
-            attrs = this.attributes.map((attr) => attr.emit()).join(" ") + " ";
-        }
+        const attrs = this.emitAttributes();
 
         let rec = "";
         if (this.recursive !== "no") {
@@ -556,56 +553,35 @@ class StdTaskActionDecl extends StdMethodInvokeDecl {
 }
 
 
-class StaticMemberDecl extends OOMemberDecl {
+class ConstMemberDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
     readonly value: ConstantExpressionValue;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
-        super(srcInfo, srcFile, attributes, name);
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
+        super(sinfo, attributes, name);
 
         this.declaredType = dtype;
         this.value = value;
     }
 
     emit(fmt: CodeFormatter): string {
-        let attrs = "";
-        if(this.attributes.length !== 0) {
-            attrs = this.attributes.map((attr) => attr.emit()).join(" ") + " ";
-        }
-        return fmt.indent(`${attrs}const ${this.name}: ${this.declaredType.emit()} = ${this.value.emit()};`);
+        return fmt.indent(`${this.emitAttributes()}const ${this.name}: ${this.declaredType.emit()} = ${this.value.emit()};`);
     }
 }
 
-class StaticFunctionDecl extends OOMemberDecl {
-    readonly invoke: InvokeDecl;
-
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string, invoke: InvokeDecl) {
-        super(sinfo, srcFile, attributes, name);
-        
-        this.invoke = invoke;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return this.invoke.emitStdInvokeDecl(fmt, this.name);
-    }
-}
-
-class MemberFieldDecl extends OOMemberDecl {
+class MemberFieldDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
     readonly defaultValue: ConstantExpressionValue | undefined;
 
-    constructor(srcInfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined) {
-        super(srcInfo, srcFile, attributes, name);
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, dvalue: ConstantExpressionValue | undefined) {
+        super(sinfo, attributes, name);
         
         this.declaredType = dtype;
         this.defaultValue = dvalue;
     }
 
     emit(fmt: CodeFormatter): string {
-        let attrs = "";
-        if(this.attributes.length !== 0) {
-            attrs = this.attributes.map((attr) => attr.emit()).join(" ") + " ";
-        }
+        const attrs = this.emitAttributes();
 
         if(this.defaultValue === undefined) {
             return fmt.indent(`${attrs}field ${this.name}: ${this.declaredType.emit()};`);
@@ -616,68 +592,187 @@ class MemberFieldDecl extends OOMemberDecl {
     }
 }
 
-class MemberMethodDecl extends OOMemberDecl {
-    readonly invoke: InvokeDecl;
-
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], name: string, invoke: InvokeDecl) {
-        super(sinfo, srcFile, attributes, name);
-        
-        this.invoke = invoke;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return this.invoke.emitStdInvokeDecl(fmt, this.name);
+abstract class TypeDecl extends AbstractDecl {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo);
     }
 }
 
-abstract class TypeDecl {
-    readonly sinfo: SourceInfo;
-    readonly srcFile: string;
-
-    readonly ns: FullyQualifiedNamespace;
-    readonly name: string;
-
-    constructor(sinfo: SourceInfo, srcFile: string, ns: FullyQualifiedNamespace, name: string) {
-        this.sinfo = sinfo;
-        this.srcFile = srcFile;
-        this.ns = ns;
-        this.name = name;
-    }
-}
-
-abstract class OOPTypeDecl extends TypeDecl {
+abstract class AbstractNominalTypeDecl extends TypeDecl {
     readonly attributes: DeclarationAttibute[];
+    readonly name: string;
+    
+    readonly terms: TemplateTermDecl[];
 
     readonly provides: [TypeSignature, TypeConditionRestriction | undefined][];
 
     readonly invariants: InvariantDecl[];
     readonly validates: ValidateDecl[];
 
-    readonly staticMembers: StaticMemberDecl[];
-    readonly staticFunctions: StaticFunctionDecl[];
-    readonly memberFields: MemberFieldDecl[];
-    readonly memberMethods: MemberMethodDecl[];
+    readonly consts: ConstMemberDecl[];
 
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
-        invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
-        memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
-        nestedEntityDecls: Map<string, EntityTypeDecl>) {
-        this.sourceLocation = sourceLocation;
-        this.srcFile = srcFile;
+    readonly pfunctions: TypeParametricFunctionDecl[];
+    readonly functions: TypeStdFunctionDecl[];
+
+    readonly pmethods: ParametricMethodDecl[];
+    readonly prefmethods: ParametricRefMethodDecl[];
+    readonly methods: StdMethodDecl[];
+    readonly refmethods: StdRefMethodDecl[];
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], pfunctions: TypeParametricFunctionDecl[], functions: TypeStdFunctionDecl[], pmethods: ParametricMethodDecl[], prefmethods: ParametricRefMethodDecl[], methods: StdMethodDecl[], refmethods: StdRefMethodDecl[]) {
+        super(sinfo);
+
         this.attributes = attributes;
-        this.ns = ns;
         this.name = name;
+
         this.terms = terms;
+
         this.provides = provides;
+
         this.invariants = invariants;
         this.validates = validates;
-        this.staticMembers = staticMembers;
-        this.staticFunctions = staticFunctions;
-        this.memberFields = memberFields;
-        this.memberMethods = memberMethods;
-        this.nestedEntityDecls = nestedEntityDecls;
+
+        this.consts = consts;
+
+        this.pfunctions = pfunctions;
+        this.functions = functions;
+
+        this.pmethods = pmethods;
+        this.prefmethods = prefmethods;
+        this.methods = methods;
+        this.refmethods = refmethods;
     }
+
+    hasAttribute(aname: string): boolean {
+        return this.attributes.find((attr) => attr.name === aname) !== undefined;
+    }
+
+    emitAttributes(): string {
+        return this.attributes.length !== 0 ? (this.attributes.map((attr) => attr.emit()).join(" ") + " ") : "";
+    }
+
+    emitTerms(): string {
+        return this.terms.length !== 0 ? ("<" + this.terms.map((tt) => tt.emit()).join(", ") + ">") : "";
+    }
+
+    emitProvides(): string {
+        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p[0].emit() + (p[1] === undefined ? "" : p[1].emit(true))).join(", ")) : "";
+    }
+
+    emitBodyGroups(fmt: CodeFormatter): string[][] {
+        const groups: string[][] = [];
+
+        if(this.consts.length !== 0) {
+            groups.push(this.consts.map((c) => c.emit(fmt)));
+        }
+
+        if(this.pfunctions.length !== 0) {
+            groups.push(this.pfunctions.map((f) => f.emit(fmt)));
+        }
+
+        if(this.functions.length !== 0) {
+            groups.push(this.functions.map((f) => f.emit(fmt)));
+        }
+
+        if(this.pmethods.length !== 0) {
+            groups.push(this.pmethods.map((m) => m.emit(fmt)));
+        }
+
+        if(this.prefmethods.length !== 0) {
+            groups.push(this.prefmethods.map((m) => m.emit(fmt)));
+        }
+
+        if(this.methods.length !== 0) {
+            groups.push(this.methods.map((m) => m.emit(fmt)));
+        }
+
+        if(this.refmethods.length !== 0) {
+            groups.push(this.refmethods.map((m) => m.emit(fmt)));
+        }
+
+        return groups;
+    }
+
+    joinBodyGroups(groups: string[][]): string {
+        return groups.map((g) => g.join("\n")).join("\n\n");
+    }
+}
+
+class EnumTypeDecl extends AbstractNominalTypeDecl {
+    readonly members: string[];
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], pfunctions: TypeParametricFunctionDecl[], functions: TypeStdFunctionDecl[], pmethods: ParametricMethodDecl[], prefmethods: ParametricRefMethodDecl[], methods: StdMethodDecl[], refmethods: StdRefMethodDecl[], members: string[]) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, pfunctions, functions, pmethods, prefmethods, methods, refmethods);
+
+        this.members = members;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const endl = this.members.map((e) => fmt.indent(e + ",")).join("\n");
+        fmt.indentPop();
+
+        return fmt.indent(`${attrs}enum ${this.name} {${endl}${fmt.indent("\n}")}`);
+    }
+}
+
+class TypedeclTypeDecl extends AbstractNominalTypeDecl {
+    readonly valuetype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], pfunctions: TypeParametricFunctionDecl[], functions: TypeStdFunctionDecl[], pmethods: ParametricMethodDecl[], prefmethods: ParametricRefMethodDecl[], methods: StdMethodDecl[], refmethods: StdRefMethodDecl[], valuetype: TypeSignature) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, pfunctions, functions, pmethods, prefmethods, methods, refmethods);
+
+        this.valuetype = valuetype;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const tdcl = `${this.emitAttributes()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.emit()}`;
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        if(bg.length === 0) {
+            return tdcl + ";";
+        }
+        else {
+            return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        }
+    }
+}
+
+abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], pfunctions: TypeParametricFunctionDecl[], functions: TypeStdFunctionDecl[], pmethods: ParametricMethodDecl[], prefmethods: ParametricRefMethodDecl[], methods: StdMethodDecl[], refmethods: StdRefMethodDecl[]) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, pfunctions, functions, pmethods, prefmethods, methods, refmethods);
+    }
+}
+
+class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, provides: [TypeSignature, TypeConditionRestriction | undefined][], consts: ConstMemberDecl[], pfunctions: TypeParametricFunctionDecl[], functions: TypeStdFunctionDecl[], pmethods: ParametricMethodDecl[], methods: StdMethodDecl[]) {
+        super(sinfo, attributes, name, [], provides, [], [], consts, pfunctions, functions, pmethods, [], methods, []);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
+abstract class OOPTypeDecl extends TypeDecl {
+    
+
+    readonly fields: MemberFieldDecl[];
+}
+
+class ParametricOOTypeDecl extends OOPTypeDecl {
+    readonly 
 }
 
 class StdOOTypeDecl extends OOPTypeDecl {
@@ -702,53 +797,6 @@ class StdOOTypeDecl extends OOPTypeDecl {
         this.nestedEntityDecls = nestedEntityDecls;
     }
 }
-
-class ParametricOOTypeDecl extends OOPTypeDecl {
-    readonly terms: TemplateTermDecl[];
-    readonly nestedEntityDecls: Map<string, EntityTypeDecl>;
-
-    constructor(sourceLocation: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][],
-        invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[],
-        memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[],
-        nestedEntityDecls: Map<string, EntityTypeDecl>) {
-        this.sourceLocation = sourceLocation;
-        this.srcFile = srcFile;
-        this.attributes = attributes;
-        this.ns = ns;
-        this.name = name;
-        this.terms = terms;
-        this.provides = provides;
-        this.invariants = invariants;
-        this.validates = validates;
-        this.staticMembers = staticMembers;
-        this.staticFunctions = staticFunctions;
-        this.memberFields = memberFields;
-        this.memberMethods = memberMethods;
-        this.nestedEntityDecls = nestedEntityDecls;
-    }
-}
-
-class BuiltinDecl extends TypeDecl {
-}
-
-class EnumDecl extends TypeDecl {
-    readonly members: string[];
-
-    constructor(sinfo: SourceInfo, srcFile: string, ns: FullyQualifiedNamespace, name: string, members: string[]) {
-        super(sinfo, srcFile, ns, name);
-        this.members = members;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`enum ${this.name} {${this.members.join(",\n")}}`);
-    }
-}
-
-class TypedeclDecl extends TypeDecl {
-    xxxx;
-}
-
 
 
 
@@ -1240,10 +1288,15 @@ export {
     ParametricFunctionInvokeDecl, StdFunctionInvokeDecl, NamespaceParametricFunctionDecl, NamespaceStdFunctionDecl, TypeParametricFunctionDecl, TypeStdFunctionDecl,
     ParametricMethodInvokeDecl, ParametricMethodDecl, ParametricRefMethodDecl, ParametricTaskMethodDecl, ParametricTaskRefMethodDecl, ParametricTaskActionDecl, 
     StdMethodInvokeDecl, StdMethodDecl, StdRefMethodDecl, StdTaskMethodDecl, StdTaskRefMethodDecl, StdTaskActionDecl,
+    ConstMemberDecl, MemberFieldDecl,
+    TypeDecl, AbstractNominalTypeDecl, 
+    EnumTypeDecl,
+    TypedeclTypeDecl,
+    InternalEntityTypeDecl, PrimitiveEntityTypeDecl
+
     
     
-    InvokeReceiverTag, InvokeDecl,
-    OOMemberDecl,  StaticMemberDecl, StaticFunctionDecl, MemberFieldDecl, MemberMethodDecl, OOPTypeDecl, ConceptTypeDecl, EntityTypeDecl, 
+    ConceptTypeDecl, EntityTypeDecl, 
     StatusInfo, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     MemberActionDecl, TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
     StringTemplate,
