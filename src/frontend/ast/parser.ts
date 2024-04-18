@@ -3915,8 +3915,7 @@ class Parser {
         //public dependences can be part of the exported signatures and must be resolved by finding satifying versions with other packages. 
         //
         //The full NS SHOULD include a part like packageVN, where N is the major version number of the root package. This will allow multiple 
-        //coexisting major versions of a package to be used in an application. Versioning must specify a major number or MajorX+, the others 
-        //can be *, X+, X-Y, or X-
+        //coexisting major versions of a package to be used in an application. 
         //Good design practice would be put the public API type decls in one package and the API sigs + impls in thier own -- this way changing 
         //an API sig only forces updates to that package and the types + impl can be shared with the older versions if needed.
         //

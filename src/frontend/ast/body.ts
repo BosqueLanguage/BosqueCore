@@ -4,10 +4,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 import { RecursiveAnnotation, TypeSignature } from "./type";
-import { InvokeDecl } from "./assembly";
 
-import { BuildLevel, CodeFormatter, LoggerLevel, SourceInfo } from "../build_decls";
-import { BSQRegex } from "../bsqregex";
+import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
 
 abstract class ITest {
     readonly isnot: boolean;
@@ -15,6 +13,8 @@ abstract class ITest {
     constructor(isnot: boolean) {
         this.isnot = isnot;
     }
+
+    abstract emit(): string;
 }
 
 class ITestType extends ITest {
@@ -23,6 +23,10 @@ class ITestType extends ITest {
     constructor(isnot: boolean, ttype: TypeSignature) {
         super(isnot);
         this.ttype = ttype;
+    }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}<${this.ttype.emit()}>`;
     }
 }
 
@@ -33,11 +37,19 @@ class ITestLiteral extends ITest {
         super(isnot);
         this.literal = literal;
     }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}[${this.literal.emit(true)}]`;
+    }
 }
 
 class ITestNone extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
+    }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}none`;
     }
 }
 
@@ -45,11 +57,19 @@ class ITestSome extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}some`;
+    }
 }
 
 class ITestNothing extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
+    }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}nothing`;
     }
 }
 
@@ -57,17 +77,29 @@ class ITestSomething extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}something`;
+    }
 }
 
 class ITestOk extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
     }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}ok`;
+    }
 }
 
 class ITestErr extends ITest {
     constructor(isnot: boolean) {
         super(isnot);
+    }
+
+    emit(): string {
+        return `${this.isnot ? "!" : ""}err`;
     }
 }
 
@@ -78,10 +110,35 @@ enum ExpressionTag {
     LiteralNoneExpression = "LiteralNoneExpression",
     LiteralNothingExpression = "LiteralNothingExpression",
     LiteralBoolExpression = "LiteralBoolExpression",
-    LiteralIntegralExpression = "LiteralIntegralExpression",
+    LiteralNatExpression = "LiteralNatExpression",
+    LiteralIntExpression = "LiteralIntExpression",
     LiteralRationalExpression = "LiteralRationalExpression",
-    LiteralFloatPointExpression = "LiteralFloatExpression",
-    LiteralRegexExpression = "LiteralRegexExpression",
+    LiteralFloatExpression = "LiteralFloatExpression",
+    LiteralDecimalExpression = "LiteralDecimalExpression",
+    LiteralDecimalDegreeExpression = "LiteralDecimalDegreeExpression",
+    LiteralLatLongCoordinateExpression = "LiteralLatLongCoordinateExpression",
+    LiteralComplexNumberExpression = "LiteralComplexNumberExpression",
+    LiteralByteBufferExpression = "LiteralByteBufferExpression",
+    LiteralUUIDv4Expression = "LiteralUUIDv4Expression",
+    LiteralUUIDv7Expression = "LiteralUUIDv7Expression",
+    LiteralSHAContentHashExpression = "LiteralSHAContentHashExpression",
+    LiteralDateTimeExpression = "LiteralDateTimeExpression",
+    LiteralUTCDateTimeExpression = "LiteralUTCDateTimeExpression",
+    LiteralPlainDateExpression = "LiteralPlainDateExpression",
+    LiteralPlainTimeExpression = "LiteralPlainTimeExpression",
+    LiteralLogicalTimeExpression = "LiteralLogicalTimeExpression",
+    LiteralTickTimeExpression = "LiteralTickTimeExpression",
+    LiteralISOTimeStampExpression = "LiteralISOTimeStampExpression",
+    LiteralDeltaDateTimeExpression = "LiteralDeltaDateTimeExpression",
+    LiteralDeltaPlainDateExpression = "LiteralDeltaPlainDateExpression",
+    LiteralDeltaPlainTimeExpression = "LiteralDeltaPlainTimeExpression",
+    LiteralDeltaISOTimeStampExpression = "LiteralDeltaISOTimeStampExpression",
+    LiteralDeltaSecondsExpression = "LiteralDeltaSecondsExpression",
+    LiteralDeltaTickExpression = "LiteralDeltaTickExpression",
+    LiteralDeltaLogicalExpression = "LiteralDeltaLogicalExpression",
+
+    LiteralUnicodeRegexExpression = "LiteralUnicodeRegexExpression",
+    LiteralASCIIRegexExpression = "LiteralASCIIRegexExpression",
 
     LiteralStringExpression = "LiteralStringExpression",
     LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
@@ -92,9 +149,16 @@ enum ExpressionTag {
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
     LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
     
-    LiteralTypedPrimitiveConstructorExpression = "LiteralTypedPrimitiveConstructorExpression",
+    LiteralPathExpression = "LiteralPathExpression",
+    LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
+    LiteralPathGlobExpression = "LiteralPathGlobExpression",
+
+    LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
     BSQONLiteralExpression = "BSQONLiteralExpression",
+
+    StringSliceExpression = "StringSliceExpression",
+    ASCIIStringSliceExpression = "ASCIIStringSliceExpression",
 
     AccessFormatInfoExpression = "AccessFormatInfoExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
@@ -162,7 +226,7 @@ abstract class Expression {
         this.sinfo = sinfo;
     }
 
-    abstract emit(): string;
+    abstract emit(toplevel: boolean): string;
 }
 
 //This just holds a constant expression that can be evaluated without any arguments but not a subtype of Expression so we can distinguish as types
@@ -173,8 +237,8 @@ class LiteralExpressionValue {
         this.exp = exp;
     }
 
-    emit(): string {
-        return this.exp.emit();
+    emit(toplevel: boolean): string {
+        return this.exp.emit(toplevel);
     }
 }
 
@@ -188,8 +252,8 @@ class ConstantExpressionValue {
         this.captured = captured;
     }
 
-    emit(): string {
-        return this.exp.emit();
+    emit(toplevel: boolean): string {
+        return this.exp.emit(toplevel);
     }
 }
 
@@ -197,146 +261,49 @@ class InvalidExpression extends Expression {
     constructor(sinfo: SourceInfo) {
         super(ExpressionTag.InvalidExpresion, sinfo);
     }
-}
 
-class LiteralNoneExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.LiteralNoneExpression, sinfo);
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return "[!ERROR_EXP!]";
     }
 }
 
-class LiteralNothingExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.LiteralNothingExpression, sinfo);
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
-    }
-}
-
-class LiteralBoolExpression extends Expression {
-    readonly value: boolean;
-
-    constructor(sinfo: SourceInfo, value: boolean) {
-        super(ExpressionTag.LiteralBoolExpression, sinfo);
-        this.value = value;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
-    }
-}
-
-class LiteralIntegralExpression extends Expression {
-    readonly value: string;
-    readonly itype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, itype: TypeSignature) {
-        super(ExpressionTag.LiteralIntegralExpression, sinfo);
-        this.value = value;
-        this.itype = itype;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
-    }
-}
-
-class LiteralRationalExpression extends Expression {
-    readonly value: string;
-    readonly rtype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, rtype: TypeSignature) {
-        super(ExpressionTag.LiteralRationalExpression, sinfo);
-        this.value = value;
-        this.rtype = rtype;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-}
-
-class LiteralFloatPointExpression extends Expression {
-    readonly value: string;
-    readonly fptype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, fptype: TypeSignature) {
-        super(ExpressionTag.LiteralFloatPointExpression, sinfo);
-        this.value = value;
-        this.fptype = fptype;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-}
-
-class LiteralStringExpression extends Expression {
+class LiteralSingletonExpression extends Expression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string) {
-        super(ExpressionTag.LiteralStringExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: "none" | "nothing") {
+        super(tag, sinfo);
+
         this.value = value;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value;
+    }
+}
+
+class LiteralSimpleExpression extends Expression {
+    readonly value: string;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
+        this.value = value;
     }
 
-    isLiteralValueExpression(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value;
     }
 }
 
 class LiteralRegexExpression extends Expression {
-    readonly value: BSQRegex;
-
-    constructor(sinfo: SourceInfo, value: BSQRegex) {
-        super(ExpressionTag.LiteralRegexExpression, sinfo);
-        this.value = value;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-}
-
-class LiteralASCIIStringExpression extends Expression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string) {
-        super(ExpressionTag.LiteralASCIIStringExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
         this.value = value;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value;
     }
 }
 
@@ -344,101 +311,87 @@ class LiteralTypedStringExpression extends Expression {
     readonly value: string;
     readonly stype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, value: string, stype: TypeSignature) {
-        super(ExpressionTag.LiteralTypedStringExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, stype: TypeSignature) {
+        super(tag, sinfo);
         this.value = value;
         this.stype = stype;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
-    }
-}
-
-class LiteralASCIITypedStringExpression extends Expression {
-    readonly value: string;
-    readonly stype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, value: string, stype: TypeSignature) {
-        super(ExpressionTag.LiteralASCIITypedStringExpression, sinfo);
-        this.value = value;
-        this.stype = stype;
-    }
-
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value + this.stype.emit();
     }
 }
 
 class LiteralTemplateStringExpression extends Expression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string) {
-        super(ExpressionTag.LiteralTemplateStringExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
         this.value = value;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value;
     }
 }
 
-class LiteralASCIITemplateStringExpression extends Expression {
+class LiteralPathExpression extends Expression {
     readonly value: string;
 
-    constructor(sinfo: SourceInfo, value: string) {
-        super(ExpressionTag.LiteralASCIITemplateStringExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+        super(tag, sinfo);
         this.value = value;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return this.value;
     }
 }
 
-class LiteralTypedPrimitiveConstructorExpression extends Expression {
+class LiteralTypeDeclValueExpression extends Expression {
     readonly value: Expression;
     readonly constype: TypeSignature;
 
     constructor(sinfo: SourceInfo, value: Expression, constype: TypeSignature) {
-        super(ExpressionTag.LiteralTypedPrimitiveConstructorExpression, sinfo);
+        super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
         this.value = value;
         this.constype = constype;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return true;
-    }
-
-    isLiteralValueExpression(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return `${this.value.emit(toplevel)}_${this.constype.emit()}`;
     }
 }
 
 class BSQONLiteralExpression extends Expression {
     readonly bsqonstr: string;
-    readonly bsqtype: TypeSignature | undefined;
+    readonly bsqtype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, bsqonstr: string, bsqtype: TypeSignature | undefined) {
+    constructor(sinfo: SourceInfo, bsqonstr: string, bsqtype: TypeSignature) {
         super(ExpressionTag.BSQONLiteralExpression, sinfo);
         this.bsqonstr = bsqonstr;
         this.bsqtype = bsqtype;
     }
 
-    isCompileTimeInlineValue(): boolean {
-        return false;
+    emit(toplevel: boolean): string {
+        return `bsqon<${this.bsqtype.emit()}>{| ${this.bsqonstr} |}`;
+    }
+}
+
+class StringSliceExpression extends Expression {
+    readonly str: Expression;
+    readonly start: Expression | undefined;
+    readonly end: Expression | undefined;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, str: Expression, start: Expression | undefined, end: Expression | undefined) {
+        super(tag, sinfo);
+        this.str = str;
+        this.start = start;
+        this.end = end;
     }
 
-    isLiteralValueExpression(): boolean {
-        return false;
+    emit(toplevel: boolean): string {
+        return `${this.str.emit(toplevel)}[${this.start ? this.start.emit(toplevel) : ""}:${this.end ? this.end.emit(toplevel) : ""}]`;
     }
 }
 
@@ -1696,11 +1649,10 @@ export {
     RecursiveAnnotation,
     ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
-    LiteralNoneExpression, LiteralNothingExpression, LiteralBoolExpression, 
-    LiteralIntegralExpression, LiteralFloatPointExpression, LiteralRationalExpression,
-    LiteralRegexExpression, LiteralStringExpression, LiteralASCIIStringExpression, LiteralTypedStringExpression, LiteralASCIITypedStringExpression, LiteralTemplateStringExpression, LiteralASCIITemplateStringExpression,
-    LiteralTypedPrimitiveConstructorExpression,
+    LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression,, LiteralTemplateStringExpression, LiteralPathExpression,
+    LiteralTypeDeclValueExpression,
     BSQONLiteralExpression,
+    StringSliceExpression,
     AccessFormatInfoExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, 
     ConstructorPCodeExpression, SpecialConstructorExpression,

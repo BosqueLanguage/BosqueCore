@@ -106,7 +106,7 @@ class PreConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
     }
 }
 
@@ -122,7 +122,7 @@ class PostConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
     }
 }
 
@@ -138,7 +138,7 @@ class InvariantDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit() + ";");
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
     }
 }
 
@@ -152,7 +152,7 @@ class ValidateDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit() + ";");
+        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit(true) + ";");
     }
 }
 
@@ -882,7 +882,9 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        bg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.members.length !== 0) {
+            bg.push(this.members.map((ff) => ff.emit(fmt)));
+        }
         fmt.indentPop();
 
         return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -941,7 +943,9 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
+        if(this.nestedEntityDecls.length !== 0) {
+            bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
+        }
         fmt.indentPop();
 
         return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -962,7 +966,9 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
+        if(this.nestedEntityDecls.length !== 0) {
+            bg.push(this.nestedEntityDecls.map((ned) => ned.emit(fmt)));
+        }
         fmt.indentPop();
 
         return attrs + "concept " + this.name + this.emitTerms() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -999,7 +1005,9 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        bg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.members.length !== 0) {
+            bg.push(this.members.map((ff) => ff.emit(fmt)));
+        }
         fmt.indentPop();
 
         return attrs + "concept " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
@@ -1007,10 +1015,51 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 }
 
 class DatatypeTypeDecl extends AbstractNominalTypeDecl {
-    xxxx;
+    readonly members: MemberFieldDecl[];
+
+    readonly associatedEntityDecls: EntityTypeDecl[];
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: [TypeSignature, TypeConditionRestriction | undefined][], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], refmethods: RefMethodDecl[], members: MemberFieldDecl[], associatedEntityDecls: EntityTypeDecl[]) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods, refmethods);
+
+        this.members = members;
+        this.associatedEntityDecls = associatedEntityDecls;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const mg: string[][] = [];
+        if(this.members.length !== 0) {
+            mg.push(this.members.map((ff) => ff.emit(fmt)));
+        }
+        fmt.indentPop();
+
+        const rootdecl = attrs + "datatype " + this.name + this.emitTerms() + this.emitProvides(); 
+        let usingdecl = " of\n";
+        if(mg.length !== 0) {
+            usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
+        }
+
+        const edecls = this.associatedEntityDecls.map((aed) => {
+            aed.emit(fmt)
+        }).join("\n| ");
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        let etail = ";";
+        if(bg.length !== 0) {
+            etail = "& {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        }
+
+        return `${rootdecl}${usingdecl}${edecls}\n${etail}`;
+    }
 }
 
-class StatusInfo {
+class StatusInfoFilter {
     readonly standard: TypeSignature[];
     readonly verbose: TypeSignature[];
 
@@ -1062,15 +1111,7 @@ class ResourceInformation {
     }
 }
 
-class APIDecl {
-    readonly startSourceLocation: SourceInfo;
-    readonly endSourceLocation: SourceInfo;
-    readonly srcFile: string;
-
-    readonly attributes: DeclarationAttibute[];
-    readonly ns: FullyQualifiedNamespace;
-    readonly name: string;
-
+class APIDecl extends AbstractCoreDecl {
     readonly params: FunctionParameter[];    
     readonly resultType: TypeSignature;
 
@@ -1079,20 +1120,14 @@ class APIDecl {
 
     readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
-    readonly statusOutputs: StatusInfo;
+    readonly statusOutputs: StatusInfoFilter;
     readonly envVarRequirements: EnvironmentVariableInformation[];
     readonly resourceImpacts: ResourceInformation[];
 
     readonly body: BodyImplementation | undefined;
 
-    constructor(sinfoStart: SourceInfo, sinfoEnd: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfo, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[], body: BodyImplementation | undefined) {
-        this.startSourceLocation = sinfoStart;
-        this.endSourceLocation = sinfoEnd;
-        this.srcFile = srcFile;
-
-        this.attributes = attributes;
-        this.ns = ns;
-        this.name = name;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfo, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[], body: BodyImplementation | undefined) {
+        super(sinfo, attributes, name);
         
         this.params = params;
         this.resultType = resultType;
@@ -1107,6 +1142,26 @@ class APIDecl {
         this.resourceImpacts = resourceImpacts;
 
         this.body = body;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        const params = this.params.map((p) => p.emit(fmt)).join(", ");
+        const result = this.resultType.emit();
+
+        const preconds = this.preconds.map((pc) => pc.emit(fmt)).join("\n");
+        const postconds = this.postconds.map((pc) => pc.emit(fmt)).join("\n");
+
+        const examples = this.examples.map((ex) => ex.emit(fmt)).join("\n");
+
+        const statusOutputs = this.statusOutputs.emit(fmt);
+        const envVarRequirements = this.envVarRequirements.map((ev) => ev.emit(fmt)).join("\n");
+        const resourceImpacts = this.resourceImpacts.map((ri) => ri.emit(fmt)).join("\n");
+
+        const body = this.body !== undefined ? this.body.emit(fmt) : "";
+
+        return `${attrs}api ${this.name}(${params}): ${result} {\n${preconds}\n${postconds}\n${examples}\n${statusOutputs}\n${envVarRequirements}\n${resourceImpacts}\n${body}\n}`;
     }
 }
 
@@ -1440,7 +1495,7 @@ export {
     DatatypeTypeDecl,
 
 
-    StatusInfo, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
+    StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     MemberActionDecl, TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
     StringTemplate,
     NamespaceConstDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
