@@ -1,11 +1,8 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
 
 import { RecursiveAnnotation, TypeSignature } from "./type";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
+import { BuildLevel, CodeFormatter, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
+import { LambdaDecl } from "./assembly";
 
 abstract class ITest {
     readonly isnot: boolean;
@@ -103,6 +100,65 @@ class ITestErr extends ITest {
     }
 }
 
+abstract class ArgumentValue {
+    readonly exp: Expression;
+
+    constructor(exp: Expression) {
+        this.exp = exp;
+    }
+
+    abstract emit(): string;
+}
+
+class PositionalArgumentValue extends ArgumentValue {
+    constructor(exp: Expression) {
+        super(exp);
+    }
+
+    emit(): string {
+        return this.exp.emit(true);
+    }
+}
+
+class NamedArgumentValue extends ArgumentValue {
+    readonly name: string;
+
+    constructor(name: string, exp: Expression) {
+        super(exp);
+        this.name = name;
+    }
+
+    emit(): string {
+        return `${this.name} = ${this.exp.emit(true)}`;
+    }
+}
+
+class SpreadArgumentValue extends ArgumentValue {
+    constructor(exp: Expression) {
+        super(exp);
+    }
+
+    emit(): string {
+        return `...${this.exp.emit(true)}`;
+    }
+}
+
+class ArgumentList {
+    readonly args: ArgumentValue[];
+
+    constructor(args: ArgumentValue[]) {
+        this.args = args;
+    }
+
+    emit(lp: string, rp: string): string {
+        return lp + this.args.map((arg) => arg.emit()).join(", ") + rp;
+    }
+
+    hasSpread(): boolean {
+        return this.args.some((arg) => arg instanceof SpreadArgumentValue);
+    }
+}
+
 enum ExpressionTag {
     Clear = "[CLEAR]",
     InvalidExpresion = "[INVALID]",
@@ -160,9 +216,8 @@ enum ExpressionTag {
     StringSliceExpression = "StringSliceExpression",
     ASCIIStringSliceExpression = "ASCIIStringSliceExpression",
 
-    AccessFormatInfoExpression = "AccessFormatInfoExpression",
+    HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
-
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
@@ -170,12 +225,13 @@ enum ExpressionTag {
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
     ConstructorTupleExpression = "ConstructorTupleExpression",
     ConstructorRecordExpression = "ConstructorRecordExpression",
-    ConstructorPCodeExpression = "ConstructorPCodeExpression",
+    ConstructorEListExpression = "ConstructorEListExpression",
+    ConstructorLambdaExpression = "ConstructorLambdaExpression",
 
-    PCodeInvokeExpression = "PCodeInvokeExpression",
+    LambdaInvokeExpression = "LambdaInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
-    CallNamespaceFunctionOrOperatorExpression = "CallNamespaceFunctionOrOperatorExpression",
-    CallStaticFunctionExpression = "CallStaticFunctionExpression",
+    CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
+    CallTypeFunctionExpression = "CallTypeFunctionExpression",
 
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
@@ -203,18 +259,11 @@ enum ExpressionTag {
     BinLogicAndExpression = "BinLogicAndExpression",
     BinLogicOrExpression = "BinLogicOrExpression",
     BinLogicImpliesExpression = "BinLogicImpliesExpression",
+    BinLogicIFFExpression = "BinLogicIFFExpression",
 
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
-    IfExpression = "IfExpression",
-    SwitchExpression = "SwitchExpression",
-    MatchExpression = "MatchExpression",
-
-    TaskSelfFieldExpression = "TaskSelfFieldExpression",
-    TaskSelfControlExpression = "TaskSelfControlExpression",
-    TaskSelfActionExpression = "TaskSelfActionExpression",
-    TaskGetIDExpression = "TaskGetIDExpression",
-    TaskIsCancelRequestedExpression = "TaskIsCancelRequestedExpression"
+    IfExpression = "IfExpression"
 }
 
 abstract class Expression {
@@ -395,42 +444,31 @@ class StringSliceExpression extends Expression {
     }
 }
 
-class AccessFormatInfoExpression extends Expression {
-    readonly ns: string;
-    readonly keyname: string;
-
-    constructor(sinfo: SourceInfo, ns: string, keyname: string) {
-        super(ExpressionTag.AccessFormatInfoExpression, sinfo);
-        this.ns = ns;
-        this.keyname = keyname;
-    }
-}
-
 class AccessEnvValueExpression extends Expression {
     readonly keyname: string;
-    readonly valtype: TypeSignature;
-    readonly orNoneMode: boolean;
 
-    constructor(sinfo: SourceInfo, keyname: string, valtype: TypeSignature, orNoneMode: boolean) {
-        super(ExpressionTag.AccessEnvValueExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, keyname: string) {
+        super(tag, sinfo);
         this.keyname = keyname;
-        this.valtype = valtype;
-        this.orNoneMode = orNoneMode;
     }
 
-    isTaskOperation(): boolean {
-        return true;
+    emit(toplevel: boolean): string {
+        return `env${this.tag === ExpressionTag.HasEnvValueExpression ? "?" : ""}[${this.keyname}]`;
     }
 }
 
 class AccessNamespaceConstantExpression extends Expression {
-    readonly ns: string;
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
-    constructor(sinfo: SourceInfo, ns: string, name: string) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, name: string) {
         super(ExpressionTag.AccessNamespaceConstantExpression, sinfo);
         this.ns = ns;
         this.name = name;
+    }
+
+    emit(toplevel: boolean): string {
+        return `${this.ns}::${this.name}`;
     }
 }
 
@@ -443,6 +481,10 @@ class AccessStaticFieldExpression extends Expression {
         this.stype = stype;
         this.name = name;
     }
+
+    emit(toplevel: boolean): string {
+        return `${this.stype.emit()}::${this.name}`;
+    }
 }
 
 class AccessVariableExpression extends Expression {
@@ -452,58 +494,76 @@ class AccessVariableExpression extends Expression {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.name = name;
     }
+
+    emit(toplevel: boolean): string {
+        return this.name;
+    }
 }
 
-class ConstructorPrimaryExpression extends Expression {
+abstract class ConstructorExpression extends Expression {
+    readonly args: ArgumentList;
+
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, args: ArgumentList) {
+        super(tag, sinfo);
+        this.args = args;
+    }
+}
+
+class ConstructorPrimaryExpression extends ConstructorExpression {
     readonly ctype: TypeSignature;
-    readonly args: Expression[];
 
-    constructor(sinfo: SourceInfo, ctype: TypeSignature, args: Expression[]) {
-        super(ExpressionTag.ConstructorPrimaryExpression, sinfo);
+    constructor(sinfo: SourceInfo, ctype: TypeSignature, args: ArgumentList) {
+        super(ExpressionTag.ConstructorPrimaryExpression, sinfo, args);
         this.ctype = ctype;
-        this.args = args;
+    }
+
+    emit(toplevel: boolean): string {
+        return `${this.ctype.emit()}${this.args.emit("{", "}")}`;
     }
 }
 
-class ConstructorTupleExpression extends Expression {
-    readonly args: Expression[];
+class ConstructorTupleExpression extends ConstructorExpression {
+    constructor(sinfo: SourceInfo, args: ArgumentList) {
+        super(ExpressionTag.ConstructorTupleExpression, sinfo, args);
+    }
 
-    constructor(sinfo: SourceInfo, args: Expression[]) {
-        super(ExpressionTag.ConstructorTupleExpression, sinfo);
-        this.args = args;
+    emit(toplevel: boolean): string {
+        return this.args.emit("[", "]");
     }
 }
 
-class ConstructorRecordExpression extends Expression {
-    readonly args: {property: string, value: Expression}[];
+class ConstructorRecordExpression extends ConstructorExpression {
+    constructor(sinfo: SourceInfo, args: ArgumentList) {
+        super(ExpressionTag.ConstructorRecordExpression, sinfo, args);
+    }
 
-    constructor(sinfo: SourceInfo, args: {property: string, value: Expression}[]) {
-        super(ExpressionTag.ConstructorRecordExpression, sinfo);
-        this.args = args;
+    emit(toplevel: boolean): string {
+        return this.args.emit("{", "}");
     }
 }
 
-class ConstructorPCodeExpression extends Expression {
+class ConstructorEListExpression extends ConstructorExpression {
+    constructor(sinfo: SourceInfo, args: ArgumentList) {
+        super(ExpressionTag.ConstructorEListExpression, sinfo, args);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.args.emit("(", ")");
+    }
+}
+
+class ConstructorLambdaExpression extends Expression {
     readonly isAuto: boolean;
-    readonly invoke: InvokeDecl;
+    readonly invoke: LambdaDecl;
 
-    constructor(sinfo: SourceInfo, isAuto: boolean, invoke: InvokeDecl) {
-        super(ExpressionTag.ConstructorPCodeExpression, sinfo);
+    constructor(sinfo: SourceInfo, isAuto: boolean, invoke: LambdaDecl) {
+        super(ExpressionTag.ConstructorLambdaExpression, sinfo);
         this.isAuto = isAuto;
         this.invoke = invoke;
     }
-}
 
-class PCodeInvokeExpression extends Expression {
-    readonly pcode: string;
-    readonly rec: RecursiveAnnotation;
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, pcode: string, rec: RecursiveAnnotation, args: Expression[]) {
-        super(ExpressionTag.PCodeInvokeExpression, sinfo);
-        this.pcode = pcode;
-        this.rec = rec;
-        this.args = args;
+    emit(toplevel: boolean): string {
+        return this.invoke.emitInlineLambda();
     }
 }
 
@@ -516,39 +576,83 @@ class SpecialConstructorExpression extends Expression {
         this.rop = rop;
         this.arg = arg;
     }
+
+    emit(toplevel: boolean): string {
+        return `${this.rop}(${this.arg.emit(toplevel)})`;
+    }
 }
 
-class CallNamespaceFunctionOrOperatorExpression extends Expression {
-    readonly ns: string;
+class LambdaInvokeExpression extends Expression {
+    readonly name: string;
+    readonly rec: RecursiveAnnotation;
+    readonly args: ArgumentList;
+
+    constructor(sinfo: SourceInfo, name: string, rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.LambdaInvokeExpression, sinfo);
+        this.name = name;
+        this.rec = rec;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+        
+        return `${this.name}${rec}${this.args.emit("(", ")")}`;
+    }
+}
+
+class CallNamespaceFunctionExpression extends Expression {
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
-    readonly args: Expression[];
+    readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, ns: string, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
-        super(ExpressionTag.CallNamespaceFunctionOrOperatorExpression, sinfo);
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallNamespaceFunctionExpression, sinfo);
         this.ns = ns;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
         this.args = args;
     }
+
+    emit(toplevel: boolean): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+        
+        return `${this.ns}::${this.name}${rec}${this.args.emit("(", ")")}`;
+    }
 }
 
-class CallStaticFunctionExpression extends Expression {
+class CallTypeFunctionExpression extends Expression {
     readonly ttype: TypeSignature;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
-    readonly args: Expression[];
+    readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
-        super(ExpressionTag.CallStaticFunctionExpression, sinfo);
+    constructor(sinfo: SourceInfo, ttype: TypeSignature, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallTypeFunctionExpression, sinfo);
         this.ttype = ttype;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
         this.args = args;
+    }
+
+    emit(toplevel: boolean): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+        
+        return `${this.ttype.emit()}::${this.name}${rec}${this.args.emit("(", ")")}`;
     }
 }
 
@@ -559,6 +663,10 @@ class LogicActionAndExpression extends Expression {
         super(ExpressionTag.LogicActionAndExpression, sinfo);
         this.args = args;
     }
+
+    emit(toplevel: boolean): string {
+        return `/\\(${this.args.map((arg) => arg.emit(toplevel)).join(", ")})`;
+    }
 }
 
 class LogicActionOrExpression extends Expression {
@@ -568,14 +676,22 @@ class LogicActionOrExpression extends Expression {
         super(ExpressionTag.LogicActionOrExpression, sinfo);
         this.args = args;
     }
+
+    emit(toplevel: boolean): string {
+        return `\\/(${this.args.map((arg) => arg.emit(toplevel)).join(", ")})`;
+    }
 }
 
 enum PostfixOpTag {
     PostfixAccessFromIndex = "PostfixAccessFromIndex",
+    PostfixProjectFromIndecies = "PostfixProjectFromIndecies",
     PostfixAccessFromName = "PostfixAccessFromName",
+    PostfixProjectFromNames = "PostfixProjectFromNames",
 
     PostfixIsTest = "PostfixIsTest",
     PostfixAsConvert = "PostfixAsConvert",
+
+    PostfixAssignFields = "PostfixAssignFields",
 
     PostfixInvoke = "PostfixInvoke"
 }
@@ -588,6 +704,8 @@ abstract class PostfixOperation {
         this.sinfo = sinfo;
         this.op = op;
     }
+
+    abstract emit(): string;
 }
 
 class PostfixOp extends Expression {
@@ -599,6 +717,15 @@ class PostfixOp extends Expression {
         this.rootExp = root;
         this.ops = ops;
     }
+
+    emit(toplevel: boolean): string {
+        let res = this.rootExp.emit(false);
+        for(let i = 0; i < this.ops.length; ++i) {
+            res += this.ops[i].emit();
+        }
+
+        return res;
+    }
 }
 
 class PostfixAccessFromIndex extends PostfixOperation {
@@ -607,6 +734,23 @@ class PostfixAccessFromIndex extends PostfixOperation {
     constructor(sinfo: SourceInfo, index: number) {
         super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
         this.index = index;
+    }
+
+    emit(): string {
+        return `.${this.index}`;
+    }
+}
+
+class PostfixProjectFromIndecies extends PostfixOperation {
+    readonly indecies: number[];
+
+    constructor(sinfo: SourceInfo, indecies: number[]) {
+        super(sinfo, PostfixOpTag.PostfixProjectFromIndecies);
+        this.indecies = indecies;
+    }
+
+    emit(): string {
+        return `.(${this.indecies.join(", ")})`;
     }
 }
 
@@ -617,6 +761,23 @@ class PostfixAccessFromName extends PostfixOperation {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
         this.name = name;
     }
+
+    emit(): string {
+        return `.${this.name}`;
+    }
+}
+
+class PostfixProjectFromNames extends PostfixOperation {
+    readonly names: string[];
+
+    constructor(sinfo: SourceInfo, names: string[]) {
+        super(sinfo, PostfixOpTag.PostfixProjectFromNames);
+        this.names = names;
+    }
+
+    emit(): string {
+        return `.(${this.names.join(", ")})`;
+    }
 }
 
 class PostfixIsTest extends PostfixOperation {
@@ -625,6 +786,10 @@ class PostfixIsTest extends PostfixOperation {
     constructor(sinfo: SourceInfo, ttest: ITest) {
         super(sinfo, PostfixOpTag.PostfixIsTest);
         this.ttest = ttest;
+    }
+
+    emit(): string {
+        return "?" + this.ttest.emit();
     }
 }
 
@@ -635,207 +800,306 @@ class PostfixAsConvert extends PostfixOperation {
         super(sinfo, PostfixOpTag.PostfixAsConvert);
         this.ttest = ttest;
     }
+
+    emit(): string {
+        return "!" + this.ttest.emit();
+    }
+}
+
+class PostfixAssignFields extends PostfixOperation {
+    readonly updates: ArgumentList;
+
+    constructor(sinfo: SourceInfo, updates: ArgumentList) {
+        super(sinfo, PostfixOpTag.PostfixAssignFields);
+        this.updates = updates;
+    }
+
+    emit(): string {
+        return `.${this.updates.emit("[", "]")}`;
+    }
 }
 
 class PostfixInvoke extends PostfixOperation {
     readonly specificResolve: TypeSignature | undefined;
-    readonly isRefThis: boolean;
     readonly name: string;
     readonly rec: RecursiveAnnotation;
     readonly terms: TypeSignature[];
-    readonly args: Expression[];
+    readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, isRefThis: boolean, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: Expression[]) {
+    constructor(sinfo: SourceInfo, specificResolve: TypeSignature | undefined, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
         super(sinfo, PostfixOpTag.PostfixInvoke);
         this.specificResolve = specificResolve;
-        this.isRefThis = isRefThis;
         this.name = name;
         this.rec = rec;
         this.terms = terms;
         this.args = args;
     }
+
+    emit(): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+
+        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit("(", ")")})`;
+    }
 }
 
-class PrefixNotOp extends Expression {
+abstract class UnaryExpression extends Expression {
     readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, exp: Expression) {
-        super(ExpressionTag.PrefixNotOpExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, exp: Expression) {
+        super(tag, sinfo);
         this.exp = exp;
     }
+
+    uopEmit(toplevel: boolean, op: string): string {
+        const ee = `${op}${this.exp.emit(false)}`;
+        return toplevel ? ee : `(${ee})`;
+    }
 }
 
-class PrefixNegateOp extends Expression {
-    readonly exp: Expression;
-
+class PrefixNotOp extends UnaryExpression {
     constructor(sinfo: SourceInfo, exp: Expression) {
-        super(ExpressionTag.PrefixNegateOpExpression, sinfo);
-        this.exp = exp;
+        super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.uopEmit(toplevel, "!");
     }
 }
 
-class BinAddExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
+class PrefixNegateOp extends UnaryExpression {
+    constructor(sinfo: SourceInfo, exp: Expression) {
+        super(ExpressionTag.PrefixNegateOpExpression, sinfo, exp);
+    }
 
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinAddExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+    emit(toplevel: boolean): string {
+        return this.uopEmit(toplevel, "-");
     }
 }
 
-class BinSubExpression extends Expression {
+abstract class BinaryArithExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinSubExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(tag, sinfo);
         this.lhs = lhs;
         this.rhs = rhs;
     }
-}
 
-class BinMultExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinMultExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+    baopEmit(toplevel: boolean, op: string): string {
+        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+        return toplevel ? ee : `(${ee})`;
     }
 }
 
-class BinDivExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinAddExpression extends BinaryArithExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinDivExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinAddExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.baopEmit(toplevel, "+");
     }
 }
 
-class BinKeyEqExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinSubExpression extends BinaryArithExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinSubExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.baopEmit(toplevel, "-");
     }
 }
 
-class BinKeyNeqExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinMultExpression extends BinaryArithExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinKeyNeqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinMultExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.baopEmit(toplevel, "*");
     }
 }
 
-class NumericEqExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinDivExpression extends BinaryArithExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinDivExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.baopEmit(toplevel, "//");
     }
 }
 
-class NumericNeqExpression extends Expression {
+abstract class BinaryKeyExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericNeqExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(tag, sinfo);
         this.lhs = lhs;
         this.rhs = rhs;
     }
-}
 
-class NumericLessExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericLessExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+    bkopEmit(toplevel: boolean, op: string): string {
+        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+        return toplevel ? ee : `(${ee})`;
     }
 }
 
-class NumericLessEqExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinKeyEqExpression extends BinaryKeyExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericLessEqExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinKeyEqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bkopEmit(toplevel, "===");
     }
 }
 
-class NumericGreaterExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class BinKeyNeqExpression extends BinaryKeyExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericGreaterExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.BinKeyNeqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bkopEmit(toplevel, "!==");
     }
 }
 
-class NumericGreaterEqExpression extends Expression {
+abstract class BinaryNumericExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.NumericGreaterEqExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(tag, sinfo);
         this.lhs = lhs;
         this.rhs = rhs;
     }
-}
 
-class BinLogicAndxpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicAndExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+    bnopEmit(toplevel: boolean, op: string): string {
+        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+        return toplevel ? ee : `(${ee})`;
     }
 }
 
-class BinLogicOrExpression extends Expression {
-    readonly lhs: Expression;
-    readonly rhs: Expression;
-
+class NumericEqExpression extends BinaryNumericExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicOrExpression, sinfo);
-        this.lhs = lhs;
-        this.rhs = rhs;
+        super(ExpressionTag.NumericEqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, "==");
     }
 }
 
-class BinLogicImpliesExpression extends Expression {
+class NumericNeqExpression extends BinaryNumericExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.NumericNeqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, "!=");
+    }
+}
+
+class NumericLessExpression extends BinaryNumericExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.NumericLessExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, "<");
+    }
+}
+
+class NumericLessEqExpression extends BinaryNumericExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.NumericLessEqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, "<=");
+    }
+}
+
+class NumericGreaterExpression extends BinaryNumericExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.NumericGreaterExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, ">");
+    }
+}
+
+class NumericGreaterEqExpression extends BinaryNumericExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.NumericGreaterEqExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.bnopEmit(toplevel, ">=");
+    }
+}
+
+abstract class BinLogicExpression extends Expression {
     readonly lhs: Expression;
     readonly rhs: Expression;
 
-    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
-        super(ExpressionTag.BinLogicImpliesExpression, sinfo);
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(tag, sinfo);
         this.lhs = lhs;
         this.rhs = rhs;
+    }
+
+    blopEmit(toplevel: boolean, op: string): string {
+        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+        return toplevel ? ee : `(${ee})`;
+    }
+}
+
+class BinLogicAndxpression extends BinLogicExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinLogicAndExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.blopEmit(toplevel, "&&");
+    }
+}
+
+class BinLogicOrExpression extends BinLogicExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinLogicOrExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.blopEmit(toplevel, "||");
+    }
+}
+
+class BinLogicImpliesExpression extends BinLogicExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinLogicImpliesExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.blopEmit(toplevel, "==>");
+    }
+}
+
+class BinLogicIFFExpression extends BinLogicExpression {
+    constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
+        super(ExpressionTag.BinLogicIFFExpression, sinfo, lhs, rhs);
+    }
+
+    emit(toplevel: boolean): string {
+        return this.blopEmit(toplevel, "<==>");
     }
 }
 
@@ -847,6 +1111,10 @@ class MapEntryConstructorExpression extends Expression {
         super(ExpressionTag.MapEntryConstructorExpression, sinfo);
         this.kexp = kexp;
         this.vexp = vexp;
+    }
+
+    emit(toplevel: boolean): string {
+        return `${this.kexp.emit(toplevel)} => ${this.vexp.emit(toplevel)}`;
     }
 }
 
@@ -871,90 +1139,6 @@ class IfExpression extends Expression {
     }
 }
 
-class SwitchExpression extends Expression {
-    readonly sval: Expression;
-    readonly switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined}[];
-
-    constructor(sinfo: SourceInfo, sval: Expression, switchflow: {condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined}[]) {
-        super(ExpressionTag.SwitchExpression, sinfo);
-        this.sval = sval;
-        this.switchflow = switchflow;
-    }
-}
-
-class MatchExpression extends Expression {
-    readonly sval: Expression;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined}[];
-
-    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined}[]) {
-        super(ExpressionTag.MatchExpression, sinfo);
-        this.sval = sval;
-        this.matchflow = flow;
-    }
-}
-
-class TaskSelfFieldExpression extends Expression {
-    readonly sfield: string;
-
-    constructor(sinfo: SourceInfo, sfield: string) {
-        super(ExpressionTag.TaskSelfFieldExpression, sinfo);
-        this.sfield = sfield;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskSelfControlExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.TaskSelfControlExpression, sinfo);
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskSelfActionExpression extends Expression {
-    readonly name: string;
-    readonly terms: TypeSignature[];
-    readonly args: Expression[];
-    readonly isSelfRef: boolean;
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[], isSelfRef: boolean) {
-        super(ExpressionTag.TaskSelfActionExpression, sinfo);
-        this.name = name;
-        this.terms = terms;
-        this.args = args;
-        this.isSelfRef = isSelfRef;
-    }
-    
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskGetIDExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.TaskGetIDExpression, sinfo);
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskCancelRequestedExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
-        super(ExpressionTag.TaskIsCancelRequestedExpression, sinfo);
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
 enum StatementTag {
     Clear = "[CLEAR]",
     InvalidStatement = "[INVALID]",
@@ -965,9 +1149,6 @@ enum StatementTag {
     VariableAssignmentStatement = "VariableAssignmentStatement",
 
     VariableRetypeStatement = "VariableRetypeStatement",
-    ExpressionSCReturnStatement = "ExpressionSCReturnStatement",
-    VariableSCRetypeStatement = "VariableSCRetypeStatement",
-
     ReturnStatement = "ReturnStatement",
 
     IfElseStatement = "IfElseStatement",
@@ -978,7 +1159,6 @@ enum StatementTag {
     AssertStatement = "AssertStatement", //assert(x > 0)
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
-    RefCallStatement = "RefCallStatement",
 
     EnvironmentFreshStatement = "EnvironmentFreshStatement",
     EnvironmentSetStatement = "EnvironmentSetStatement",
@@ -998,13 +1178,6 @@ enum StatementTag {
     TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
 
     TaskEventEmitStatement = "TaskEventEmitStatement",
-
-    LoggerEmitStatement = "LoggerEmitStatement",
-    LoggerEmitConditionalStatement = "LoggerEmitConditionalStatement",
-
-    LoggerLevelStatement = "LoggerLevelStatement",
-    LoggerCategoryStatement = "LoggerCategoryStatement",
-    LoggerPrefixStatement = "LoggerPrefixStatement",
 
     UnscopedBlockStatement = "UnscopedBlockStatement",
     ScopedBlockStatement = "ScopedBlockStatement"
@@ -1648,28 +1821,30 @@ class StandardBodyImplementation extends BodyImplementation {
 export {
     RecursiveAnnotation,
     ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, LiteralExpressionValue, ConstantExpressionValue, InvalidExpression,
-    LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression,, LiteralTemplateStringExpression, LiteralPathExpression,
+    LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
     LiteralTypeDeclValueExpression,
     BSQONLiteralExpression,
     StringSliceExpression,
-    AccessFormatInfoExpression, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
-    ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, 
-    ConstructorPCodeExpression, SpecialConstructorExpression,
-    CallNamespaceFunctionOrOperatorExpression, CallStaticFunctionExpression,
+    AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
+    ConstructorLambdaExpression, SpecialConstructorExpression,
+    LambdaInvokeExpression,
+    CallNamespaceFunctionExpression, CallTypeFunctionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixAccessFromIndex, PostfixAccessFromName,
+    PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
-    PostfixInvoke, PCodeInvokeExpression,
-    PrefixNotOp, PrefixNegateOp,
-    BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
-    BinKeyEqExpression, BinKeyNeqExpression,
-    NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
-    BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression,
+    PostfixInvoke,
+    UnaryExpression, PrefixNotOp, PrefixNegateOp,
+    BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
+    BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,
+    BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
+    BinLogicExpression, BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
     MapEntryConstructorExpression,
     IfTest,
-    IfExpression, SwitchExpression, MatchExpression,
+    IfExpression,
     TaskSelfFieldExpression, TaskSelfControlExpression, TaskSelfActionExpression, TaskGetIDExpression, TaskCancelRequestedExpression,
     StatementTag, Statement, InvalidStatement, EmptyStatement,
     VariableDeclarationStatement, VariableAssignmentStatement,

@@ -1,9 +1,3 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
-import { LiteralExpressionValue } from "./body";
 
 import { SourceInfo } from "../build_decls";
 
@@ -104,25 +98,29 @@ type RecursiveAnnotation = "yes" | "no" | "cond";
 class FunctionParameter {
     readonly name: string;
     readonly type: TypeSignature;
-    readonly ddlit: LiteralExpressionValue | undefined;
+    readonly isRefParam: boolean;
+    readonly isSpreadParam: boolean;
 
-    constructor(name: string, type: TypeSignature, ddlit: LiteralExpressionValue | undefined) {
+    constructor(name: string, type: TypeSignature, isRefParam: boolean, isSpreadParam: boolean) {
         this.name = name;
         this.type = type;
-        this.ddlit = ddlit;
+        this.isRefParam = isRefParam;
+        this.isSpreadParam = isSpreadParam;
+    }
+
+    emit(): string {
+        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}:${this.type.emit()}`;
     }
 }
 
-class FunctionTypeSignature extends TypeSignature {
+class LambdaTypeSignature extends TypeSignature {
     readonly recursive: RecursiveAnnotation;
-    readonly isThisRef: boolean;
     readonly params: FunctionParameter[];
     readonly resultType: TypeSignature;
 
-    constructor(sinfo: SourceInfo, isThisRef: boolean, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature) {
+    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature) {
         super(sinfo);
         this.recursive = recursive;
-        this.isThisRef = isThisRef;
         this.params = params;
         this.resultType = resultType;
     }
