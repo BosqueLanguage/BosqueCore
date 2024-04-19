@@ -1,5 +1,5 @@
 
-import { TypeSignature, FunctionTypeSignature, FunctionParameter } from "./type";
+import { TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
 import { BuildLevel, CodeFormatter, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
@@ -231,14 +231,14 @@ abstract class AbstractCoreDecl extends AbstractDecl {
 }
 
 abstract class AbstractInvokeDecl extends AbstractCoreDecl {
-    readonly recursive: "yes" | "no" | "cond";
+    readonly recursive: RecursiveAnnotation;
 
     readonly params: FunctionParameter[];
-    readonly resultType: TypeSignature;
+    readonly resultType: TypeSignature | undefined;
 
     readonly body: BodyImplementation;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation) {
         super(sinfo, attributes, name);
 
         this.recursive = recursive;
@@ -249,10 +249,6 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
         this.body = body;
     }
 
-    generateSig(sinfo: SourceInfo, refsig: boolean): TypeSignature {
-        return new FunctionTypeSignature(sinfo, refsig, this.recursive, this.params, this.resultType);
-    }
-    
     emitSig(): [string, string] {
         const attrs = this.emitAttributes();
 
@@ -262,8 +258,9 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
         }
 
         let params = this.params.map((p) => p.emit()).join(", ");
+        let result = this.resultType === undefined ? "" : (": " + this.resultType.emit());
 
-        return [`${attrs}${rec}`, `(${params}): ${this.resultType.emit()}`];
+        return [`${attrs}${rec}`, `(${params})${result}`];
     }
 }
 
@@ -271,13 +268,17 @@ class LambdaDecl extends AbstractInvokeDecl {
     readonly captureVarSet: Set<string>;
     readonly captureTemplateSet: Set<string>;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
         super(sinfo, attributes, name, recursive, params, resultType, body);
 
         this.captureVarSet = captureVarSet;
         this.captureTemplateSet = captureTemplateSet;
     }
 
+    generateSig(sinfo: SourceInfo): TypeSignature {
+        return new LambdaTypeSignature(sinfo, this.recursive, this.name as ("fn" | "pred"), this.params, this.resultType);
+    }
+    
     private emitCaptureInfo(): string {
         
         let capturet = "";
@@ -313,7 +314,7 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
 
     readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body);
 
         this.terms = terms;
@@ -367,7 +368,7 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
 }
 
 abstract class FunctionInvokeDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 
@@ -377,29 +378,33 @@ abstract class FunctionInvokeDecl extends ExplicitInvokeDecl {
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 }
 
 class TypeFunctionDecl extends FunctionInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 }
 
 class MethodDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    readonly isThisRef: boolean;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isThisRef: boolean) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
+
+        this.isThisRef = isThisRef;
     }
 
     getDeclarationTag(): string {
-        return "method";
+        return (this.isThisRef ? "ref " : "") + "method";
     }
 }
 
 class TaskMethodDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 
@@ -409,7 +414,7 @@ class TaskMethodDecl extends ExplicitInvokeDecl {
 }
 
 class TaskActionDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 

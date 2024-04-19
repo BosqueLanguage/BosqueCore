@@ -218,6 +218,7 @@ enum ExpressionTag {
 
     HasEnvValueExpression = "HasEnvValueExpression",
     AccessEnvValueExpression = "AccessEnvValueExpression",
+    TaskAccessInfoExpression = "TaskAccessInfoExpression",
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
     AccessVariableExpression = "AccessVariableExpression",
@@ -232,7 +233,8 @@ enum ExpressionTag {
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
     CallTypeFunctionExpression = "CallTypeFunctionExpression",
-
+    CallRefThisExpression = "CallRefThisExpression",
+    
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
 
@@ -457,6 +459,19 @@ class AccessEnvValueExpression extends Expression {
     }
 }
 
+class TaskAccessInfoExpression extends Expression {
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, name: string) {
+        super(ExpressionTag.TaskAccessInfoExpression, sinfo);
+        this.name = name;
+    }
+
+    emit(toplevel: boolean): string {
+        return `Task::${this.name}()`;
+    }
+}
+
 class AccessNamespaceConstantExpression extends Expression {
     readonly ns: FullyQualifiedNamespace;
     readonly name: string;
@@ -626,7 +641,12 @@ class CallNamespaceFunctionExpression extends Expression {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
         
-        return `${this.ns}::${this.name}${rec}${this.args.emit("(", ")")}`;
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
+
+        return `${this.ns}::${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
     }
 }
 
@@ -652,7 +672,43 @@ class CallTypeFunctionExpression extends Expression {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
         
-        return `${this.ttype.emit()}::${this.name}${rec}${this.args.emit("(", ")")}`;
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
+
+        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
+    }
+}
+
+class CallRefThisExpression extends Expression {
+    xxxx; //should also have special cases for this update and self update
+
+    readonly name: string;
+    readonly rec: RecursiveAnnotation;
+    readonly terms: TypeSignature[];
+    readonly args: ArgumentList;
+
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], rec: RecursiveAnnotation, args: ArgumentList) {
+        super(ExpressionTag.CallRefThisExpression, sinfo);
+        this.name = name;
+        this.rec = rec;
+        this.terms = terms;
+        this.args = args;
+    }
+
+    emit(toplevel: boolean): string {
+        let rec = "";
+        if(this.rec !== "no") {
+            rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
+        }
+        
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
+
+        return `ref this.${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
     }
 }
 
@@ -1129,15 +1185,72 @@ class IfTest {
 }
 
 class IfExpression extends Expression {
-    readonly condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[];
-    readonly elseflow: { value: Expression, binderinfo: string | undefined };
+    readonly test: IfTest;
+    readonly trueValue: Expression
+    readonly trueValueBinder: string | undefined;
+    readonly falseValue: Expression;
+    readonly falseValueBinder: string | undefined;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: Expression, binderinfo: string | undefined}[], elseflow: { value: Expression, binderinfo: string | undefined }) {
+    constructor(sinfo: SourceInfo, test: IfTest, trueValue: Expression, trueValueBinder: string | undefined, falseValue: Expression, falseValueBinder: string | undefined) {
         super(ExpressionTag.IfExpression, sinfo);
-        this.condflow = condflow;
-        this.elseflow = elseflow;
+        this.test = test;
+        this.trueValue = trueValue;
+        this.trueValueBinder = trueValueBinder;
+        this.falseValue = falseValue;
+        this.falseValueBinder = falseValueBinder;
+    }
+
+    emit(toplevel: boolean): string {
+        const ttest = (this.test.itestopt !== undefined ? this.test.itestopt.emit() : "") + `(${this.test.exp.emit(true)})`;
+        return `if ${ttest} then ${this.trueValue.emit(true)} else ${this.falseValue.emit(true)}`;
     }
 }
+
+enum EnvironmentGenerationExpressionTag {
+
+}
+
+abstract class EnvironmentGenerationExpression {
+
+}
+
+abstract class BaseEnvironmentOpExpression extends EnvironmentGenerationExpression {
+
+}
+
+class EmptyEnvironmentExpression extends BaseEnvironmentOpExpression {
+
+}
+
+class InitializeEnvironmentExpression extends BaseEnvironmentOpExpression {
+
+}
+
+class CurrentEnvironmentExpression extends BaseEnvironmentOpExpression {
+
+}
+
+enum PostfixEnvironmentOpTag {
+
+}
+
+abstract class PostfixEnvironmentOp {
+
+}
+
+class PostFixEnvironmentOpProject extends PostfixEnvironmentOp {
+
+}
+
+class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
+
+}
+
+class PostfixEnvironmentOpExpression extends EnvironmentGenerationExpression {
+    readonly baseenv: BaseEnvironmentOpExpression;
+    readonly ops: PostfixEnvironmentOp[];
+}
+
 
 enum StatementTag {
     Clear = "[CLEAR]",
@@ -1160,9 +1273,10 @@ enum StatementTag {
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
 
-    EnvironmentFreshStatement = "EnvironmentFreshStatement",
-    EnvironmentSetStatement = "EnvironmentSetStatement",
-    EnvironmentSetStatementBracket = "EnvironmentSetStatementBracket",
+    StandaloneExpressionStatement = "StandaloneExpressionStatement",
+
+    EnvironmentStatement = "EnvironmentStatement",
+    EnvironmentBracketStatement = "EnvironmentBracketStatement",
 
     TaskRunStatement = "TaskRunStatement", //run single task
     TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
@@ -1170,17 +1284,8 @@ enum StatementTag {
     TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
     TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
 
-    TaskCallWithStatement = "TaskCallWithStatement",
-    TaskResultWithStatement = "TaskResultWithStatement",
-
-    TaskSetStatusStatement = "TaskSetStatusStatement",
-
-    TaskSetSelfFieldStatement = "TaskSetSelfFieldStatement",
-
-    TaskEventEmitStatement = "TaskEventEmitStatement",
-
-    UnscopedBlockStatement = "UnscopedBlockStatement",
-    ScopedBlockStatement = "ScopedBlockStatement"
+    TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
+    TaskEventEmitStatement = "TaskEventEmitStatement" //Task::event(...)
 }
 
 abstract class Statement {
@@ -1827,15 +1932,17 @@ export {
     LiteralTypeDeclValueExpression,
     BSQONLiteralExpression,
     StringSliceExpression,
-    AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    AccessEnvValueExpression, TaskAccessInfoExpression,
+    AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression,
     LambdaInvokeExpression,
-    CallNamespaceFunctionExpression, CallTypeFunctionExpression,
+    CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
+    PostfixAssignFields,
     PostfixInvoke,
     UnaryExpression, PrefixNotOp, PrefixNegateOp,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,

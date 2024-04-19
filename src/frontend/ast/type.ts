@@ -115,12 +115,14 @@ class FunctionParameter {
 
 class LambdaTypeSignature extends TypeSignature {
     readonly recursive: RecursiveAnnotation;
+    readonly name: "fn" | "pred";
     readonly params: FunctionParameter[];
-    readonly resultType: TypeSignature;
+    readonly resultType: TypeSignature | undefined;
 
-    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, params: FunctionParameter[], resultType: TypeSignature) {
+    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: FunctionParameter[], resultType: TypeSignature | undefined) {
         super(sinfo);
         this.recursive = recursive;
+        this.name = name;
         this.params = params;
         this.resultType = resultType;
     }
@@ -175,5 +177,5 @@ export {
     TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature,
-    RecursiveAnnotation, FunctionParameter, FunctionTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };
