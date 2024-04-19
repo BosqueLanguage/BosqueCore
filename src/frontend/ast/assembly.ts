@@ -414,8 +414,8 @@ class TaskMethodDecl extends ExplicitInvokeDecl {
 }
 
 class TaskActionDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
-        super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestrictions: TypeConditionRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+        super(sinfo, attributes, name, "no", params, resultType, body, terms, termRestrictions, preconditions, postconditions, examples);
     }
 
     getDeclarationTag(): string {

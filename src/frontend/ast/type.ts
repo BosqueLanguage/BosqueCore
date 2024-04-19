@@ -80,7 +80,7 @@ class TupleTypeSignature extends TypeSignature {
     }
 }
 
-class RecordTypeSignature extends TypeSignature {;
+class RecordTypeSignature extends TypeSignature {
     readonly entries: [string, TypeSignature][];
 
     constructor(sinfo: SourceInfo, entries: [string, TypeSignature][]) {
@@ -90,6 +90,19 @@ class RecordTypeSignature extends TypeSignature {;
 
     getDiagnosticName(): string {
         return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].getDiagnosticName())).join(", ") + "}";
+    }
+}
+
+class EListTypeSignature extends TypeSignature {
+    readonly entries: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, entries: TypeSignature[]) {
+        super(sinfo);
+        this.entries = entries;
+    }
+
+    getDiagnosticName(): string {
+        return "[" + this.entries.map((tt) => tt.getDiagnosticName()).join(", ") + "]";
     }
 }
 
@@ -174,8 +187,8 @@ class UnionTypeSignature extends TypeSignature {
 }
 
 export { 
-    TypeSignature, ParseErrorTypeSignature, AutoTypeSignature, 
+    TypeSignature, ErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
-    TupleTypeSignature, RecordTypeSignature,
+    TupleTypeSignature, RecordTypeSignature, EListTypeSignature,
     RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };
