@@ -1,16 +1,10 @@
-import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "./assembly";
+import { } from "./assembly";
 
-function assert(cond: boolean, msg?: string) {
-    if(!cond) {
-        throw new Error((msg || "error")  + " -- resolved_type.ts");
-    }
-} 
+abstract class ResolvedType {
+    readonly resolvedID: string;
 
-abstract class ResolvedAtomType {
-    readonly typeID: string;
-
-    constructor(typeID: string) {
-        this.typeID = typeID;
+    constructor(resolvedID: string) {
+        this.resolvedID = resolvedID;
     }
 }
 
@@ -545,7 +539,7 @@ class ResolvedRecordAtomType extends ResolvedAtomType {
     }
 }
 
-class ResolvedType {
+class ResolvedTypeX {
     readonly typeID: string;
     readonly options: ResolvedAtomType[];
 
@@ -852,7 +846,7 @@ class TemplateBindScope {
 }
 
 export {
-    ResolvedAtomType,
+    ResolvedType,
     ResolvedEntityAtomType, ResolvedObjectEntityAtomType, ResolvedEnumEntityAtomType, ResolvedTypedeclEntityAtomType, ResolvedInternalEntityAtomType, 
     ResolvedPrimitiveInternalEntityAtomType,
     ResolvedValidatorEntityAtomType, ResolvedStringOfEntityAtomType, ResolvedASCIIStringOfEntityAtomType,
@@ -861,7 +855,6 @@ export {
     ResolvedPrimitiveCollectionEntityAtomType, ResolvedListEntityAtomType, ResolvedStackEntityAtomType, ResolvedQueueEntityAtomType, ResolvedSetEntityAtomType, ResolvedMapEntityAtomType,
     ResolvedConceptAtomTypeEntry, ResolvedConceptAtomType, ResolvedTaskAtomType,
     ResolvedTupleAtomType, ResolvedRecordAtomType,
-    ResolvedType, 
     ResolvedEListType, ResolvedFunctionTypeParam, ResolvedFunctionType,
     TemplateBindScope
 };

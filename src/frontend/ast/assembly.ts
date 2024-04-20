@@ -91,7 +91,7 @@ class PreConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -107,7 +107,7 @@ class PostConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -123,7 +123,7 @@ class InvariantDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true) + ";");
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -137,7 +137,7 @@ class ValidateDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit(true) + ";");
+        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -310,7 +310,7 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
         this.examples = examples;
     }
 
-    emitMetaInfo(fmt: CodeFormatter): string {
+    emitMetaInfo(fmt: CodeFormatter): string | undefined {
         let prec: string[] = [];
         if(this.preconditions.length !== 0) {
             prec = this.preconditions.map((pc) => pc.emit(fmt));
@@ -326,7 +326,12 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
             examples = this.examples.map((ex) => ex.emit(fmt));
         }
 
-        return [...prec, ...postc, ...examples].join("\n");
+        if(prec.length === 0 && postc.length === 0 && examples.length === 0) {
+            return undefined;
+        }
+        else {
+            return [...prec, ...postc, ...examples].join("\n");
+        }
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1017,12 +1022,24 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
 }
 
 class StatusInfoFilter {
-    readonly standard: TypeSignature[];
-    readonly verbose: TypeSignature[];
+    readonly standard: TypeSignature | undefined;
+    readonly verbose: TypeSignature | undefined;
 
-    constructor(standard: TypeSignature[], verbose: TypeSignature[]) {
+    constructor(standard: TypeSignature | undefined, verbose: TypeSignature | undefined) {
         this.standard = standard;
         this.verbose = verbose;
+    }
+
+    emit(): string | undefined {
+        if(this.standard === undefined) {
+            return undefined;
+        }
+
+        if(this.verbose === undefined) {
+            return `status ${this.standard.emit()}`;
+        }
+
+        return `status {std: ${this.standard.emit()}, verbose: ${this.verbose.emit()}}`;
     }
 }
 
@@ -1035,6 +1052,15 @@ class EnvironmentVariableInformation {
         this.evname = evname;
         this.evtype = evtype;
         this.optdefault = optdefault;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        if(this.optdefault === undefined) {
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()};`);
+        }
+        else {
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)};`);
+        }
     }
 }
 
@@ -1072,25 +1098,25 @@ class APIDecl extends AbstractCoreDecl {
     readonly params: FunctionParameter[];    
     readonly resultType: TypeSignature;
 
-    readonly preconds: PreConditionDecl[];
-    readonly postconds: PostConditionDecl[];
+    readonly preconditions: PreConditionDecl[];
+    readonly postconditions: PostConditionDecl[];
 
     readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
     readonly statusOutputs: StatusInfoFilter;
     readonly envVarRequirements: EnvironmentVariableInformation[];
-    readonly resourceImpacts: ResourceInformation[];
+    readonly resourceImpacts: ResourceInformation[] | "*"; //* means any possible resource impact
 
     readonly body: BodyImplementation;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[], body: BodyImplementation | undefined) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "*", body: BodyImplementation) {
         super(sinfo, attributes, name);
         
         this.params = params;
         this.resultType = resultType;
 
-        this.preconds = preconds;
-        this.postconds = postconds
+        this.preconditions = preconds;
+        this.postconditions = postconds
 
         this.examples = examples;
 
@@ -1101,126 +1127,137 @@ class APIDecl extends AbstractCoreDecl {
         this.body = body;
     }
 
+    emitMetaInfo(fmt: CodeFormatter): string | undefined {
+        fmt.indentPush();
+
+        let prec: string[] = [];
+        if(this.preconditions.length !== 0) {
+            prec = this.preconditions.map((pc) => pc.emit(fmt));
+        }
+
+        let postc: string[] = [];
+        if(this.postconditions.length !== 0) {
+            postc = this.postconditions.map((pc) => pc.emit(fmt));
+        }
+
+        let examples: string[] = [];
+        if(this.examples.length !== 0) {
+            examples = this.examples.map((ex) => ex.emit(fmt));
+        }
+
+        let status: string[] = [];
+        const ss = this.statusOutputs.emit();
+        if(ss !== undefined) {
+            status = [ss];
+        }
+
+        let evs: string[] = [];
+        if(this.envVarRequirements.length !== 0) {
+            const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
+
+            fmt.indentPush();
+            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
+            fmt.indentPop();
+
+            evs.push(`env{ ${vvs} ${fmt.indent("}")}`);
+        }
+
+        fmt.indentPop();
+
+        if(prec.length === 0 && postc.length === 0 && examples.length === 0 && status.length === 0 && evs.length === 0) {
+            return undefined;
+        }
+        else {
+            return [...prec, ...postc, ...examples, ...status, ...evs].join("\n");
+        }
+    }
+
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
         const params = this.params.map((p) => p.emit()).join(", ");
         const result = this.resultType.emit();
 
-        const preconds = this.preconds.map((pc) => pc.emit(fmt)).join("\n");
-        const postconds = this.postconds.map((pc) => pc.emit(fmt)).join("\n");
-
-        const examples = this.examples.map((ex) => ex.emit(fmt)).join("\n");
-
-        const statusOutputs = this.statusOutputs.emit(fmt);
-        const envVarRequirements = this.envVarRequirements.map((ev) => ev.emit(fmt)).join("\n");
-        const resourceImpacts = this.resourceImpacts.map((ri) => ri.emit(fmt)).join("\n");
-
-        const body = this.body !== undefined ? this.body.emit(fmt) : "";
-
-        return `${attrs}api ${this.name}(${params}): ${result} {\n${preconds}\n${postconds}\n${examples}\n${statusOutputs}\n${envVarRequirements}\n${resourceImpacts}\n${body}\n}`;
+        const minfo = this.emitMetaInfo(fmt);
+        return `${attrs}api ${this.name}(${params}): ${result} ${this.body.emit(fmt, minfo)}`;
     }
 }
 
-class TaskDecl {
-    readonly startSourceLocation: SourceInfo;
-    readonly endSourceLocation: SourceInfo;
-    readonly srcFile: string;
+abstract class TaskDecl extends AbstractNominalTypeDecl {
+    readonly members: MemberFieldDecl[];
+    readonly actions: TaskActionDecl[];
 
-    readonly attributes: DeclarationAttibute[];
-    readonly ns: FullyQualifiedNamespace;
-    readonly name: string;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[]) {
+        super(sinfo, attributes, name, terms, [], invariants, validates, consts, functions, methods);
 
-    readonly staticMembers: StaticMemberDecl[];
-    readonly staticFunctions: StaticFunctionDecl[];
-    readonly memberFields: MemberFieldDecl[];
-    readonly memberMethods: MemberMethodDecl[];
+        this.members = members;
+        this.actions = actions;
+    }
 
-    readonly memberActions: MemberActionDecl[];
+    abstract getImplementsAPI(): APIDecl | undefined;
 
-    readonly mainAction: string;
-    readonly onCancelAction: string | undefined;
-    readonly onTimeoutAction: string | undefined;
-    readonly onErrorAction: string | undefined;
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
 
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], memberActions: MemberActionDecl[], mainAction: string, onCancelAction: string | undefined, onTimeoutAction: string | undefined, onErrorAction: string | undefined) {
-        this.startSourceLocation = sinfo;
-        this.endSourceLocation = sinfo;
-        this.srcFile = srcFile;
+        fmt.indentPush();
+        const mg: string[][] = [];
+        if(this.members.length !== 0) {
+            mg.push(this.members.map((ff) => ff.emit(fmt)));
+        }
+        if(this.actions.length !== 0) {
+            mg.push(this.actions.map((act) => act.emit(fmt)));
+        }
+        fmt.indentPop();
 
-        this.attributes = attributes;
-        this.ns = ns;
-        this.name = name;
+        let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
+        if(this.getImplementsAPI() !== undefined) {
+            rootdecl += `provides ${this.getImplementsAPI()!.name}`;
+        }
 
-        this.staticMembers = staticMembers;
-        this.staticFunctions = staticFunctions;
-        this.memberFields = memberFields;
-        this.memberMethods = memberMethods;
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
 
-        this.memberActions = memberActions;
+        let etail = "";
+        if(bg.length !== 0) {
+            etail = " {\n" + this.joinBodyGroups([...bg, ...mg]) + fmt.indent("\n}");
+        }
 
-        this.mainAction = mainAction;
-        this.onCancelAction = onCancelAction;
-        this.onTimeoutAction = onTimeoutAction;
-        this.onErrorAction = onErrorAction;
+        return `${rootdecl}${etail}`;
     }
 }
 
 class TaskDeclOnAPI extends TaskDecl {
     readonly api: APIDecl;
     
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], memberActions: MemberActionDecl[], onCancelAction: string | undefined, onTimeoutAction: string | undefined, onErrorAction: string | undefined, api: APIDecl) {
-        super(sinfo, srcFile, attributes, ns, name, staticMembers, staticFunctions, memberFields, memberMethods, memberActions, api.name, onCancelAction, onTimeoutAction, onErrorAction);
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
+        super(sinfo, attributes, api.name, terms, invariants, validates, consts, functions, methods, members, actions);
 
         this.api = api;
+    }
+
+    getImplementsAPI(): APIDecl | undefined {
+        return this.api;
     }
 }
 
 class TaskDeclStandalone extends TaskDecl {
-    readonly params: FunctionParameter[];    
-    readonly resultType: TypeSignature;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
+        super(sinfo, attributes, "main", terms, invariants, validates, consts, functions, methods, members, actions);
+    }
 
-    readonly preconds: PreConditionDecl[];
-    readonly postcondsWarn: PostConditionDecl[];
-    readonly postcondsBlock: PostConditionDecl[];
-
-    readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
-
-    readonly statusOutputs: StatusInfo;
-    readonly envVarRequirements: EnvironmentVariableInformation[];
-    readonly resourceImpacts: ResourceInformation[];
-
-    constructor(sinfo: SourceInfo, srcFile: string, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], memberActions: MemberActionDecl[], onCancelAction: string | undefined, onTimeoutAction: string | undefined, onErrorAction: string | undefined, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postcondsWarn: PostConditionDecl[], postcondsBlock: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], statusOutputs: StatusInfo, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[]) {
-        super(sinfo, srcFile, attributes, ns, name, staticMembers, staticFunctions, memberFields, memberMethods, memberActions, "main", onCancelAction, onTimeoutAction, onErrorAction);
-
-        this.params = params;
-        this.resultType = resultType;
-
-        this.preconds = preconds;
-        this.postcondsWarn = postcondsWarn;
-        this.postcondsBlock = postcondsBlock;
-
-        this.examples = examples;
-
-        this.statusOutputs = statusOutputs;
-        this.envVarRequirements = envVarRequirements;
-        this.resourceImpacts = resourceImpacts;
+    getImplementsAPI(): APIDecl | undefined {
+        return undefined;
     }
 }
 
-class NamespaceConstDecl {
-    readonly sinfo: SourceInfo;
-    readonly attributes: DeclarationAttibute[];
-    
-    readonly name: string;
+class NamespaceConstDecl extends AbstractCoreDecl {
     readonly declaredType: TypeSignature;
     readonly value: ConstantExpressionValue;
 
     constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, dtype: TypeSignature, value: ConstantExpressionValue) {
-        this.sinfo = sinfo;
-        this.attributes = attributes;
+        super(sinfo, attributes, name);
 
-        this.name = name;
         this.declaredType = dtype;
         this.value = value;
     }
@@ -1231,18 +1268,12 @@ class NamespaceConstDecl {
     }
 }
 
-class NamespaceTypedef {
-    readonly sinfo: SourceInfo;
-    readonly attributes: DeclarationAttibute[];
-
-    readonly name: string;
+class NamespaceTypedef extends AbstractCoreDecl {
     readonly boundType: TypeSignature;
 
     constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, btype: TypeSignature) {
-        this.sinfo = sinfo;
-        this.attributes = attributes;
+        super(sinfo, attributes, name);
 
-        this.name = name;
         this.boundType = btype;
     }
 
@@ -1269,7 +1300,6 @@ class NamespaceUsing {
 }
 
 class NamespaceDeclaration {
-    readonly ns: FullyQualifiedNamespace;
     readonly name: string; 
 
     usings: NamespaceUsing[];
@@ -1280,16 +1310,12 @@ class NamespaceDeclaration {
     typeDefs: Map<string, NamespaceTypedef>;
     consts: Map<string, NamespaceConstDecl>;
     functions: Map<string, NamespaceFunctionDecl>;
-    operators: Map<string, NamespaceOperatorDecl[]>;
-    concepts: Map<string, ConceptTypeDecl>;
-    entities: Map<string, EntityTypeDecl>;
+    typedecls: Map<string, TypeDecl>;
 
     apis: Map<string, APIDecl>;
     tasks: Map<string, TaskDecl>;
-    stringformats: Map<string, StringTemplate>;
 
-    constructor(ns: FullyQualifiedNamespace, name: string) {
-        this.ns = ns;
+    constructor(name: string) {
         this.name = name;
 
         this.usings = [];
@@ -1300,12 +1326,10 @@ class NamespaceDeclaration {
         this.typeDefs = new Map<string, NamespaceTypedef>();
         this.consts = new Map<string, NamespaceConstDecl>();
         this.functions = new Map<string, NamespaceFunctionDecl>();
-        this.operators = new Map<string, NamespaceOperatorDecl[]>();
-        this.concepts = new Map<string, ConceptTypeDecl>();
-        this.entities = new Map<string, EntityTypeDecl>();
+        this.typedecls = new Map<string, TypeDecl>();
 
         this.apis = new Map<string, APIDecl>();
-        this.stringformats = new Map<string, StringTemplate>();
+        this.tasks = new Map<string, TaskDecl>();
     }
 
     checkDeclNameClash(rname: string, hastemplates: boolean): boolean {
@@ -1319,6 +1343,47 @@ class NamespaceDeclaration {
         else {
             return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.entities.has(rname) || this.apis.has(rname) || this.stringformats.has(rname);
         }
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        let res = `namespace ${this.name} {\n`;
+
+        this.usings.forEach((u) => {
+            res += u.emit() + "\n";
+        });
+
+        this.subns.forEach((ns) => {
+            res += ns.emit() + "\n";
+        });
+
+        this.typeDefs.forEach((td) => {
+            res += td.emit() + "\n";
+        });
+
+        this.consts.forEach((c) => {
+            res += c.emit() + "\n";
+        });
+
+        this.functions.forEach((f) => {
+            res += f.emit() + "\n";
+        });
+
+        this.typedecls.forEach((td) => {
+            res += td.emit() + "\n";
+        });
+
+        this.apis.forEach((a) => {
+            res += a.emit() + "\n";
+        });
+
+        this.tasks.forEach((t) => {
+            res += t.emit() + "\n";
+        });
+
+        res += "}\n";
+
+        return res;
+    
     }
 }
 
