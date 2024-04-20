@@ -1,5 +1,5 @@
 
-import { ResolvedFunctionType, ResolvedType, TemplateBindScope } from "./resolved_type";
+import { ResolvedFunctionType, ResolvedType, TemplateBindScope } from "../ast/resolved_type";
 import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
 import { SourceInfo } from "../build_decls";
 

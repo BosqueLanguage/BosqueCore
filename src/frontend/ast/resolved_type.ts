@@ -1,4 +1,4 @@
-import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "../ast/assembly";
+import { ConceptTypeDecl, EntityTypeDecl, OOPTypeDecl, TaskTypeDecl } from "./assembly";
 
 function assert(cond: boolean, msg?: string) {
     if(!cond) {

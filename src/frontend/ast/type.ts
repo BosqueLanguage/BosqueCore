@@ -1,16 +1,14 @@
 
-import { SourceInfo } from "../build_decls";
+import { FullyQualifiedNamespace, SourceInfo } from "../build_decls";
 
-class TypeSignature {
+abstract class TypeSignature {
     readonly sinfo: SourceInfo;
 
     constructor(sinfo: SourceInfo) {
         this.sinfo = sinfo;
     }
 
-    emit(): string {
-        return "[Missing Implementation]";
-    }
+    abstract emit(): string;
 }
 
 class ErrorTypeSignature extends TypeSignature {
@@ -28,7 +26,7 @@ class AutoTypeSignature extends TypeSignature {
         super(sinfo);
     }
 
-    getDiagnosticName(): string {
+    emit(): string {
         return "[Auto Type]";
     }
 }
@@ -41,29 +39,24 @@ class TemplateTypeSignature extends TypeSignature {
         this.name = name;
     }
 
-    getDiagnosticName(): string {
+    emit(): string {
         return this.name;
     }
 }
 
 class NominalTypeSignature extends TypeSignature {
-    readonly nameSpace: string;
-    readonly tnames: string[];
-    readonly terms: TypeSignature[];
+    readonly ns: FullyQualifiedNamespace;
+    readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
-    constructor(sinfo: SourceInfo, ns: string, tnames: string[], terms?: TypeSignature[]) {
+    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, tscope: {tname: string, terms: TypeSignature[]}[]) {
         super(sinfo);
-        this.nameSpace = ns;
-        this.tnames = tnames;
-        this.terms = terms || [];
+        this.ns = ns;
+        this.tscope = tscope;
     }
 
-    computeResolvedName(): string {
-        return this.tnames.join("::");
-    }
-
-    getDiagnosticName(): string {
-        return (this.nameSpace !== "Core" ? (this.nameSpace + "::") : "") + this.tnames.join("::") + (this.terms.length !== 0 ? ("<" + this.terms.map((tt) => tt.getDiagnosticName()).join(", ") + ">") : "");
+    emit(): string {
+        const rrtscope = this.tscope.map((t) => t.tname + (t.terms.length !== 0 ? ("<" + t.terms.map((tt) => tt.emit()).join(", ") + ">") : ""));
+        return (this.ns !== "Core" ? (this.ns + "::") : "") + rrtscope.join("::");
     }
 }
 
@@ -75,8 +68,8 @@ class TupleTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    getDiagnosticName(): string {
-        return "[" + this.entries.map((tt) => tt.getDiagnosticName()).join(", ") + "]";
+    emit(): string {
+        return "[" + this.entries.map((tt) => tt.emit()).join(", ") + "]";
     }
 }
 
@@ -88,8 +81,8 @@ class RecordTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    getDiagnosticName(): string {
-        return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].getDiagnosticName())).join(", ") + "}";
+    emit(): string {
+        return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].emit())).join(", ") + "}";
     }
 }
 
@@ -101,8 +94,26 @@ class EListTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    getDiagnosticName(): string {
-        return "[" + this.entries.map((tt) => tt.getDiagnosticName()).join(", ") + "]";
+    emit(): string {
+        return "[" + this.entries.map((tt) => tt.emit()).join(", ") + "]";
+    }
+}
+
+class StringTemplateType extends TypeSignature {
+    readonly kind: "ascii" | "utf8";
+    readonly argtypes: TypeSignature[];
+
+    constructor(sinfo: SourceInfo, kind: "ascii" | "utf8", argtypes: TypeSignature[]) {
+        super(sinfo);
+        this.kind = kind;
+        this.argtypes = argtypes;
+    }
+
+    emit(): string {
+        const sk = this.kind === "ascii" ? "ASCIIStringTemplate" : "StringTemplate";
+        const uu = this.argtypes.map((tt) => tt.emit()).join(", ");
+
+        return `${sk}<${uu}>`;
     }
 }
 
@@ -122,7 +133,7 @@ class FunctionParameter {
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}:${this.type.emit()}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}: ${this.type.emit()}`;
     }
 }
 
@@ -140,8 +151,8 @@ class LambdaTypeSignature extends TypeSignature {
         this.resultType = resultType;
     }
 
-    getDiagnosticName(): string {
-        return (this.isPred ? "pred" : "fn") + (this.isThisRef ? "ref(" : " (") + this.params.map((param) => param.type.getDiagnosticName()).join(", ") + ") -> " + this.resultType.getDiagnosticName();
+    emit(): string {
+        return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType ? this.resultType.emit() : "void"}`;
     }
 }
 
@@ -155,7 +166,7 @@ class ProjectTypeSignature extends TypeSignature {
         this.oftype = oftype;
     }
 
-    getDiagnosticName(): string {
+    emit(): string {
         return this.fromtype + "!" + this.oftype;
     }
 }
@@ -168,8 +179,8 @@ class AndTypeSignature extends TypeSignature {
         this.types = types;
     }
 
-    getDiagnosticName(): string {
-        return this.types.map((tt) => tt.getDiagnosticName()).join("&");
+    emit(): string {
+        return this.types.map((tt) => tt.emit()).join("&");
     }
 }
 
@@ -181,14 +192,14 @@ class UnionTypeSignature extends TypeSignature {
         this.types = types;
     }
 
-    getDiagnosticName(): string {
-        return this.types.map((tt) => tt.getDiagnosticName()).join(" | ");
+    emit(): string {
+        return this.types.map((tt) => tt.emit()).join(" | ");
     }
 }
 
 export { 
     TypeSignature, ErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
-    TupleTypeSignature, RecordTypeSignature, EListTypeSignature,
+    TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateType,
     RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
 };

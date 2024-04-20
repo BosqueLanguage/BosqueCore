@@ -11,7 +11,7 @@ abstract class ITest {
         this.isnot = isnot;
     }
 
-    abstract emit(): string;
+    abstract emit(fmt: CodeFormatter): string;
 }
 
 class ITestType extends ITest {
@@ -22,7 +22,7 @@ class ITestType extends ITest {
         this.ttype = ttype;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}<${this.ttype.emit()}>`;
     }
 }
@@ -35,8 +35,8 @@ class ITestLiteral extends ITest {
         this.literal = literal;
     }
 
-    emit(): string {
-        return `${this.isnot ? "!" : ""}[${this.literal.emit(true)}]`;
+    emit(fmt: CodeFormatter): string {
+        return `${this.isnot ? "!" : ""}[${this.literal.emit(true, fmt)}]`;
     }
 }
 
@@ -45,7 +45,7 @@ class ITestNone extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}none`;
     }
 }
@@ -55,7 +55,7 @@ class ITestSome extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}some`;
     }
 }
@@ -65,7 +65,7 @@ class ITestNothing extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}nothing`;
     }
 }
@@ -75,7 +75,7 @@ class ITestSomething extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}something`;
     }
 }
@@ -85,7 +85,7 @@ class ITestOk extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}ok`;
     }
 }
@@ -95,7 +95,7 @@ class ITestErr extends ITest {
         super(isnot);
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `${this.isnot ? "!" : ""}err`;
     }
 }
@@ -107,7 +107,7 @@ abstract class ArgumentValue {
         this.exp = exp;
     }
 
-    abstract emit(): string;
+    abstract emit(fmt: CodeFormatter): string;
 }
 
 class PositionalArgumentValue extends ArgumentValue {
@@ -115,8 +115,8 @@ class PositionalArgumentValue extends ArgumentValue {
         super(exp);
     }
 
-    emit(): string {
-        return this.exp.emit(true);
+    emit(fmt: CodeFormatter): string {
+        return this.exp.emit(true, fmt);
     }
 }
 
@@ -128,8 +128,8 @@ class NamedArgumentValue extends ArgumentValue {
         this.name = name;
     }
 
-    emit(): string {
-        return `${this.name} = ${this.exp.emit(true)}`;
+    emit(fmt: CodeFormatter): string {
+        return `${this.name} = ${this.exp.emit(true, fmt)}`;
     }
 }
 
@@ -138,8 +138,8 @@ class SpreadArgumentValue extends ArgumentValue {
         super(exp);
     }
 
-    emit(): string {
-        return `...${this.exp.emit(true)}`;
+    emit(fmt: CodeFormatter): string {
+        return `...${this.exp.emit(true, fmt)}`;
     }
 }
 
@@ -150,8 +150,8 @@ class ArgumentList {
         this.args = args;
     }
 
-    emit(lp: string, rp: string): string {
-        return lp + this.args.map((arg) => arg.emit()).join(", ") + rp;
+    emit(fmt: CodeFormatter, lp: string, rp: string): string {
+        return lp + this.args.map((arg) => arg.emit(fmt)).join(", ") + rp;
     }
 
     hasSpread(): boolean {
@@ -269,7 +269,13 @@ enum ExpressionTag {
 
     MapEntryConstructorExpression = "MapEntryConstructorExpression",
 
-    IfExpression = "IfExpression"
+    IfExpression = "IfExpression",
+
+    TaskRunExpression = "TaskRunExpression", //run single task
+    TaskMultiExpression = "TaskMultiExpression", //run multiple explicitly identified tasks -- complete all
+    TaskDashExpression = "TaskDashExpression", //run multiple explicitly identified tasks -- first completion wins
+    TaskAllExpression = "TaskAllExpression", //run the same task on all args in a list -- complete all
+    TaskRaceExpression = "TaskRaceExpression" //run the same task on all args in a list -- first completion wins
 }
 
 abstract class Expression {
@@ -281,7 +287,7 @@ abstract class Expression {
         this.sinfo = sinfo;
     }
 
-    abstract emit(toplevel: boolean): string;
+    abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
 }
 
 class ErrorExpression extends Expression {
@@ -289,7 +295,7 @@ class ErrorExpression extends Expression {
         super(ExpressionTag.ErrorExpresion, sinfo);
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return "[!ERROR_EXP!]";
     }
 }
@@ -302,8 +308,8 @@ class LiteralExpressionValue {
         this.exp = exp;
     }
 
-    emit(toplevel: boolean): string {
-        return this.exp.emit(toplevel);
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.exp.emit(toplevel, fmt);
     }
 }
 
@@ -317,8 +323,8 @@ class ConstantExpressionValue {
         this.captured = captured;
     }
 
-    emit(toplevel: boolean): string {
-        return this.exp.emit(toplevel);
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.exp.emit(toplevel, fmt);
     }
 }
 
@@ -331,7 +337,7 @@ class LiteralSingletonExpression extends Expression {
         this.value = value;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
 }
@@ -344,7 +350,7 @@ class LiteralSimpleExpression extends Expression {
         this.value = value;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
 }
@@ -357,7 +363,7 @@ class LiteralRegexExpression extends Expression {
         this.value = value;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
 }
@@ -372,7 +378,7 @@ class LiteralTypedStringExpression extends Expression {
         this.stype = stype;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value + this.stype.emit();
     }
 }
@@ -385,7 +391,7 @@ class LiteralTemplateStringExpression extends Expression {
         this.value = value;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value; //should be $"" for unicode and $'' for ascii
     }
 }
@@ -398,7 +404,7 @@ class LiteralPathExpression extends Expression {
         this.value = value;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
 }
@@ -413,8 +419,8 @@ class LiteralTypeDeclValueExpression extends Expression {
         this.constype = constype;
     }
 
-    emit(toplevel: boolean): string {
-        return `${this.value.emit(toplevel)}_${this.constype.emit()}`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.value.emit(toplevel, fmt)}_${this.constype.emit()}`;
     }
 }
 
@@ -428,7 +434,7 @@ class BSQONLiteralExpression extends Expression {
         this.bsqtype = bsqtype;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `bsqon<${this.bsqtype.emit()}>{| ${this.bsqonstr} |}`;
     }
 }
@@ -445,8 +451,8 @@ class StringSliceExpression extends Expression {
         this.end = end;
     }
 
-    emit(toplevel: boolean): string {
-        return `${this.str.emit(toplevel)}[${this.start ? this.start.emit(toplevel) : ""}:${this.end ? this.end.emit(toplevel) : ""}]`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.str.emit(toplevel, fmt)}[${this.start ? this.start.emit(toplevel, fmt) : ""}:${this.end ? this.end.emit(toplevel, fmt) : ""}]`;
     }
 }
 
@@ -460,8 +466,8 @@ class InterpolateExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
-        return `interpolate(${this.str.emit(toplevel)}, ${this.args.emit(", ", "")}`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `interpolate(${this.str.emit(toplevel, fmt)}, ${this.args.emit(fmt, ", ", "")}`;
     }
 }
 
@@ -473,7 +479,7 @@ class AccessEnvValueExpression extends Expression {
         this.keyname = keyname;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `env${this.tag === ExpressionTag.HasEnvValueExpression ? "?" : ""}[${this.keyname}]`;
     }
 }
@@ -486,7 +492,7 @@ class TaskAccessInfoExpression extends Expression {
         this.name = name;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `Task::${this.name}()`;
     }
 }
@@ -501,7 +507,7 @@ class AccessNamespaceConstantExpression extends Expression {
         this.name = name;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.ns}::${this.name}`;
     }
 }
@@ -516,7 +522,7 @@ class AccessStaticFieldExpression extends Expression {
         this.name = name;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.stype.emit()}::${this.name}`;
     }
 }
@@ -529,7 +535,7 @@ class AccessVariableExpression extends Expression {
         this.name = name;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.name;
     }
 }
@@ -551,8 +557,8 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
         this.ctype = ctype;
     }
 
-    emit(toplevel: boolean): string {
-        return `${this.ctype.emit()}${this.args.emit("{", "}")}`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.ctype.emit()}${this.args.emit(fmt, "{", "}")}`;
     }
 }
 
@@ -561,8 +567,8 @@ class ConstructorTupleExpression extends ConstructorExpression {
         super(ExpressionTag.ConstructorTupleExpression, sinfo, args);
     }
 
-    emit(toplevel: boolean): string {
-        return this.args.emit("[", "]");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.args.emit(fmt, "[", "]");
     }
 }
 
@@ -571,8 +577,8 @@ class ConstructorRecordExpression extends ConstructorExpression {
         super(ExpressionTag.ConstructorRecordExpression, sinfo, args);
     }
 
-    emit(toplevel: boolean): string {
-        return this.args.emit("{", "}");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.args.emit(fmt, "{", "}");
     }
 }
 
@@ -581,8 +587,8 @@ class ConstructorEListExpression extends ConstructorExpression {
         super(ExpressionTag.ConstructorEListExpression, sinfo, args);
     }
 
-    emit(toplevel: boolean): string {
-        return this.args.emit("(", ")");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.args.emit(fmt, "(", ")");
     }
 }
 
@@ -596,8 +602,8 @@ class ConstructorLambdaExpression extends Expression {
         this.invoke = invoke;
     }
 
-    emit(toplevel: boolean): string {
-        return this.invoke.emitInlineLambda();
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.invoke.emit(fmt);
     }
 }
 
@@ -611,8 +617,8 @@ class SpecialConstructorExpression extends Expression {
         this.arg = arg;
     }
 
-    emit(toplevel: boolean): string {
-        return `${this.rop}(${this.arg.emit(toplevel)})`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.rop}(${this.arg.emit(toplevel, fmt)})`;
     }
 }
 
@@ -628,13 +634,13 @@ class LambdaInvokeExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
         
-        return `${this.name}${rec}${this.args.emit("(", ")")}`;
+        return `${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -654,7 +660,7 @@ class CallNamespaceFunctionExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
@@ -665,7 +671,7 @@ class CallNamespaceFunctionExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `${this.ns}::${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
+        return `${this.ns}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -685,7 +691,7 @@ class CallTypeFunctionExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
@@ -696,7 +702,7 @@ class CallTypeFunctionExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
+        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -714,7 +720,7 @@ class CallRefThisExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
@@ -725,7 +731,7 @@ class CallRefThisExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `ref this.${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
+        return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -743,7 +749,7 @@ class CallRefSelfExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
@@ -754,7 +760,7 @@ class CallRefSelfExpression extends Expression {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `ref self.${this.name}${rec}${terms}${this.args.emit("(", ")")}`;
+        return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -770,13 +776,13 @@ class CallTaskActionExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
         let terms = "";
         if(this.terms.length !== 0) {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `do self.${this.name}${terms}${this.args.emit("(", ")")}`;
+        return `do self.${this.name}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -788,8 +794,8 @@ class LogicActionAndExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
-        return `/\\(${this.args.map((arg) => arg.emit(toplevel)).join(", ")})`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `/\\(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
     }
 }
 
@@ -801,12 +807,14 @@ class LogicActionOrExpression extends Expression {
         this.args = args;
     }
 
-    emit(toplevel: boolean): string {
-        return `\\/(${this.args.map((arg) => arg.emit(toplevel)).join(", ")})`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `\\/(${this.args.map((arg) => arg.emit(toplevel, fmt)).join(", ")})`;
     }
 }
 
 enum PostfixOpTag {
+    PostfixError = "PostfixError",
+
     PostfixAccessFromIndex = "PostfixAccessFromIndex",
     PostfixProjectFromIndecies = "PostfixProjectFromIndecies",
     PostfixAccessFromName = "PostfixAccessFromName",
@@ -829,7 +837,7 @@ abstract class PostfixOperation {
         this.op = op;
     }
 
-    abstract emit(): string;
+    abstract emit(fmt: CodeFormatter): string;
 }
 
 class PostfixOp extends Expression {
@@ -842,13 +850,23 @@ class PostfixOp extends Expression {
         this.ops = ops;
     }
 
-    emit(toplevel: boolean): string {
-        let res = this.rootExp.emit(false);
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        let res = this.rootExp.emit(false, fmt);
         for(let i = 0; i < this.ops.length; ++i) {
-            res += this.ops[i].emit();
+            res += this.ops[i].emit(fmt);
         }
 
         return res;
+    }
+}
+
+class PostfixError extends PostfixOperation {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo, PostfixOpTag.PostfixError);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return "[!ERROR!]";
     }
 }
 
@@ -860,7 +878,7 @@ class PostfixAccessFromIndex extends PostfixOperation {
         this.index = index;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `.${this.index}`;
     }
 }
@@ -873,7 +891,7 @@ class PostfixProjectFromIndecies extends PostfixOperation {
         this.indecies = indecies;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `.(${this.indecies.join(", ")})`;
     }
 }
@@ -886,7 +904,7 @@ class PostfixAccessFromName extends PostfixOperation {
         this.name = name;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `.${this.name}`;
     }
 }
@@ -899,7 +917,7 @@ class PostfixProjectFromNames extends PostfixOperation {
         this.names = names;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         return `.(${this.names.join(", ")})`;
     }
 }
@@ -912,8 +930,8 @@ class PostfixIsTest extends PostfixOperation {
         this.ttest = ttest;
     }
 
-    emit(): string {
-        return "?" + this.ttest.emit();
+    emit(fmt: CodeFormatter): string {
+        return "?" + this.ttest.emit(fmt);
     }
 }
 
@@ -925,8 +943,8 @@ class PostfixAsConvert extends PostfixOperation {
         this.ttest = ttest;
     }
 
-    emit(): string {
-        return "!" + this.ttest.emit();
+    emit(fmt: CodeFormatter): string {
+        return "!" + this.ttest.emit(fmt);
     }
 }
 
@@ -938,8 +956,8 @@ class PostfixAssignFields extends PostfixOperation {
         this.updates = updates;
     }
 
-    emit(): string {
-        return `.${this.updates.emit("[", "]")}`;
+    emit(fmt: CodeFormatter): string {
+        return `.${this.updates.emit(fmt, "[", "]")}`;
     }
 }
 
@@ -959,13 +977,13 @@ class PostfixInvoke extends PostfixOperation {
         this.args = args;
     }
 
-    emit(): string {
+    emit(fmt: CodeFormatter): string {
         let rec = "";
         if(this.rec !== "no") {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
 
-        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit("(", ")")})`;
+        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")})`;
     }
 }
 
@@ -977,8 +995,8 @@ abstract class UnaryExpression extends Expression {
         this.exp = exp;
     }
 
-    uopEmit(toplevel: boolean, op: string): string {
-        const ee = `${op}${this.exp.emit(false)}`;
+    uopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
+        const ee = `${op}${this.exp.emit(false, fmt)}`;
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -988,8 +1006,8 @@ class PrefixNotOp extends UnaryExpression {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
 
-    emit(toplevel: boolean): string {
-        return this.uopEmit(toplevel, "!");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.uopEmit(toplevel, fmt, "!");
     }
 }
 
@@ -998,8 +1016,8 @@ class PrefixNegateOp extends UnaryExpression {
         super(ExpressionTag.PrefixNegateOpExpression, sinfo, exp);
     }
 
-    emit(toplevel: boolean): string {
-        return this.uopEmit(toplevel, "-");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.uopEmit(toplevel, fmt, "-");
     }
 }
 
@@ -1013,8 +1031,8 @@ abstract class BinaryArithExpression extends Expression {
         this.rhs = rhs;
     }
 
-    baopEmit(toplevel: boolean, op: string): string {
-        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+    baopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
+        const ee = `${this.lhs.emit(false, fmt)} ${op} ${this.rhs.emit(false, fmt)}`;
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -1024,8 +1042,8 @@ class BinAddExpression extends BinaryArithExpression {
         super(ExpressionTag.BinAddExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.baopEmit(toplevel, "+");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.baopEmit(toplevel, fmt, "+");
     }
 }
 
@@ -1034,8 +1052,8 @@ class BinSubExpression extends BinaryArithExpression {
         super(ExpressionTag.BinSubExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.baopEmit(toplevel, "-");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.baopEmit(toplevel, fmt, "-");
     }
 }
 
@@ -1044,8 +1062,8 @@ class BinMultExpression extends BinaryArithExpression {
         super(ExpressionTag.BinMultExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.baopEmit(toplevel, "*");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.baopEmit(toplevel, fmt, "*");
     }
 }
 
@@ -1054,8 +1072,8 @@ class BinDivExpression extends BinaryArithExpression {
         super(ExpressionTag.BinDivExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.baopEmit(toplevel, "//");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.baopEmit(toplevel, fmt, "//");
     }
 }
 
@@ -1069,8 +1087,8 @@ abstract class BinaryKeyExpression extends Expression {
         this.rhs = rhs;
     }
 
-    bkopEmit(toplevel: boolean, op: string): string {
-        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+    bkopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
+        const ee = `${this.lhs.emit(false, fmt)} ${op} ${this.rhs.emit(false, fmt)}`;
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -1080,8 +1098,8 @@ class BinKeyEqExpression extends BinaryKeyExpression {
         super(ExpressionTag.BinKeyEqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bkopEmit(toplevel, "===");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bkopEmit(toplevel, fmt, "===");
     }
 }
 
@@ -1090,8 +1108,8 @@ class BinKeyNeqExpression extends BinaryKeyExpression {
         super(ExpressionTag.BinKeyNeqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bkopEmit(toplevel, "!==");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bkopEmit(toplevel, fmt, "!==");
     }
 }
 
@@ -1105,8 +1123,8 @@ abstract class BinaryNumericExpression extends Expression {
         this.rhs = rhs;
     }
 
-    bnopEmit(toplevel: boolean, op: string): string {
-        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+    bnopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
+        const ee = `${this.lhs.emit(false, fmt)} ${op} ${this.rhs.emit(false, fmt)}`;
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -1116,8 +1134,8 @@ class NumericEqExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericEqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, "==");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, "==");
     }
 }
 
@@ -1126,8 +1144,8 @@ class NumericNeqExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericNeqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, "!=");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, "!=");
     }
 }
 
@@ -1136,8 +1154,8 @@ class NumericLessExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericLessExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, "<");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, "<");
     }
 }
 
@@ -1146,8 +1164,8 @@ class NumericLessEqExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericLessEqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, "<=");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, "<=");
     }
 }
 
@@ -1156,8 +1174,8 @@ class NumericGreaterExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericGreaterExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, ">");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, ">");
     }
 }
 
@@ -1166,8 +1184,8 @@ class NumericGreaterEqExpression extends BinaryNumericExpression {
         super(ExpressionTag.NumericGreaterEqExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.bnopEmit(toplevel, ">=");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.bnopEmit(toplevel, fmt, ">=");
     }
 }
 
@@ -1181,8 +1199,8 @@ abstract class BinLogicExpression extends Expression {
         this.rhs = rhs;
     }
 
-    blopEmit(toplevel: boolean, op: string): string {
-        const ee = `${this.lhs.emit(false)} ${op} ${this.rhs.emit(false)}`;
+    blopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
+        const ee = `${this.lhs.emit(false, fmt)} ${op} ${this.rhs.emit(false, fmt)}`;
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -1192,8 +1210,8 @@ class BinLogicAndxpression extends BinLogicExpression {
         super(ExpressionTag.BinLogicAndExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.blopEmit(toplevel, "&&");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.blopEmit(toplevel, fmt, "&&");
     }
 }
 
@@ -1202,8 +1220,8 @@ class BinLogicOrExpression extends BinLogicExpression {
         super(ExpressionTag.BinLogicOrExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.blopEmit(toplevel, "||");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.blopEmit(toplevel, fmt, "||");
     }
 }
 
@@ -1212,8 +1230,8 @@ class BinLogicImpliesExpression extends BinLogicExpression {
         super(ExpressionTag.BinLogicImpliesExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.blopEmit(toplevel, "==>");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.blopEmit(toplevel, fmt, "==>");
     }
 }
 
@@ -1222,8 +1240,8 @@ class BinLogicIFFExpression extends BinLogicExpression {
         super(ExpressionTag.BinLogicIFFExpression, sinfo, lhs, rhs);
     }
 
-    emit(toplevel: boolean): string {
-        return this.blopEmit(toplevel, "<==>");
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return this.blopEmit(toplevel, fmt, "<==>");
     }
 }
 
@@ -1237,8 +1255,8 @@ class MapEntryConstructorExpression extends Expression {
         this.vexp = vexp;
     }
 
-    emit(toplevel: boolean): string {
-        return `${this.kexp.emit(toplevel)} => ${this.vexp.emit(toplevel)}`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.kexp.emit(toplevel, fmt)} => ${this.vexp.emit(toplevel, fmt)}`;
     }
 }
 
@@ -1268,57 +1286,226 @@ class IfExpression extends Expression {
         this.falseValueBinder = falseValueBinder;
     }
 
-    emit(toplevel: boolean): string {
-        const ttest = (this.test.itestopt !== undefined ? this.test.itestopt.emit() : "") + `(${this.test.exp.emit(true)})`;
-        return `if ${ttest} then ${this.trueValue.emit(true)} else ${this.falseValue.emit(true)}`;
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const ttest = (this.test.itestopt !== undefined ? this.test.itestopt.emit(fmt) : "") + `(${this.test.exp.emit(true, fmt)})`;
+        return `if ${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
     }
 }
 
 enum EnvironmentGenerationExpressionTag {
-
+    ErrorEnvironmentExpresion = "ErrorEnvironmentExpresion",
+    EmptyEnvironmentExpression = "EmptyEnvironmentExpression",
+    InitializeEnvironmentExpression = "InitializeEnvironmentExpression",
+    CurrentEnvironmentExpression = "CurrentEnvironmentExpression",
+    PostfixEnvironmentOpExpression = "PostfixEnvironmentOpExpression"
 }
 
 abstract class EnvironmentGenerationExpression {
+    readonly tag: EnvironmentGenerationExpressionTag;
+    readonly sinfo: SourceInfo;
 
+    constructor(tag: EnvironmentGenerationExpressionTag, sinfo: SourceInfo) {
+        this.tag = tag;
+        this.sinfo = sinfo;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
+}
+
+class ErrorEnvironmentExpression extends EnvironmentGenerationExpression {
+    constructor(sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.ErrorEnvironmentExpresion, sinfo);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return "[!ERROR!]";
+    }
 }
 
 abstract class BaseEnvironmentOpExpression extends EnvironmentGenerationExpression {
-
+    constructor(tag: EnvironmentGenerationExpressionTag, sinfo: SourceInfo) {
+        super(tag, sinfo);
+    }
 }
 
 class EmptyEnvironmentExpression extends BaseEnvironmentOpExpression {
+    constructor(sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.EmptyEnvironmentExpression, sinfo);
+    }
 
+    emit(fmt: CodeFormatter): string {
+        return "env{}";
+    }
 }
 
 class InitializeEnvironmentExpression extends BaseEnvironmentOpExpression {
+    readonly args: ArgumentList;
 
+    constructor(sinfo: SourceInfo, args: ArgumentList) {
+        super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
+        this.args = args;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `env${this.args.emit(fmt, "{", "}")}`;
+    }
 }
 
 class CurrentEnvironmentExpression extends BaseEnvironmentOpExpression {
+    constructor (sinfo: SourceInfo) {
+        super(EnvironmentGenerationExpressionTag.CurrentEnvironmentExpression, sinfo);
+    }
 
+    emit(fmt: CodeFormatter): string {
+        return "env";
+    }
 }
 
 enum PostfixEnvironmentOpTag {
-
+    PostfixEnvironmentOpError = "PostfixEnvironmentOpError",
+    PostfixEnvironmentOpSet = "PostfixEnvironmentOpSet"
 }
 
 abstract class PostfixEnvironmentOp {
+    readonly sinfo: SourceInfo;
+    readonly op: PostfixEnvironmentOpTag;
 
+    constructor(sinfo: SourceInfo, op: PostfixEnvironmentOpTag) {
+        this.sinfo = sinfo;
+        this.op = op;
+    }
+
+    abstract emit(fmt: CodeFormatter): string;
 }
 
-class PostFixEnvironmentOpProject extends PostfixEnvironmentOp {
+class PostFixEnvironmentOpError extends PostfixEnvironmentOp {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo, PostfixEnvironmentOpTag.PostfixEnvironmentOpError);
+    }
 
+    emit(fmt: CodeFormatter): string {
+        return "[!ERROR!]";
+    }
 }
 
 class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
+    readonly updates: ArgumentList;
 
+    constructor(sinfo: SourceInfo, updates: ArgumentList) {
+        super(sinfo, PostfixEnvironmentOpTag.PostfixEnvironmentOpSet);
+        this.updates = updates;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return this.updates.emit(fmt, "[", "]");
+    }
 }
 
 class PostfixEnvironmentOpExpression extends EnvironmentGenerationExpression {
     readonly baseenv: BaseEnvironmentOpExpression;
-    readonly ops: PostfixEnvironmentOp[];
+    readonly followop: PostfixEnvironmentOp;
+
+    constructor(sinfo: SourceInfo, baseenv: BaseEnvironmentOpExpression, followop: PostfixEnvironmentOp) {
+        super(EnvironmentGenerationExpressionTag.PostfixEnvironmentOpExpression, sinfo);
+        this.baseenv = baseenv;
+        this.followop = followop;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `${this.baseenv.emit(fmt)}${this.followop.emit(fmt)}`;
+    }
 }
 
+class TaskRunExpression extends Expression {
+    readonly task: TypeSignature;
+    readonly args: ArgumentList;
+    readonly envi: EnvironmentGenerationExpression | undefined;
+    readonly enva: EnvironmentGenerationExpression;
+
+    constructor(sinfo: SourceInfo, task: TypeSignature, args: ArgumentList, envi: EnvironmentGenerationExpression | undefined, enva: EnvironmentGenerationExpression) {
+        super(ExpressionTag.TaskRunExpression, sinfo);
+        this.task = task;
+        this.args = args;
+        this.envi = envi;
+        this.enva = enva;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `Task::run<${this.task.emit() + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(this.args.emit("(", ")"), ${this.enva.emit(fmt)})`;
+    }
+}
+
+class TaskMultiExpression extends Expression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskMultiExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskDashExpression extends Expression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskDashExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskAllExpression extends Expression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskAllExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
+
+class TaskRaceExpression extends Expression {
+    readonly tasks: TypeSignature[];
+    readonly args: [ArgumentList, EnvironmentGenerationExpression][];
+    readonly envi: EnvironmentGenerationExpression | undefined;
+
+    constructor(sinfo: SourceInfo, tasks: TypeSignature[], args: [ArgumentList, EnvironmentGenerationExpression][], envi: EnvironmentGenerationExpression | undefined) {
+        super(ExpressionTag.TaskRaceExpression, sinfo);
+        this.tasks = tasks;
+        this.args = args;
+        this.envi = envi;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
+        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+    }
+}
 
 enum StatementTag {
     Clear = "[CLEAR]",
@@ -1351,17 +1538,8 @@ enum StatementTag {
     EnvironmentUpdateStatement = "EnvironmentUpdateStatement",
     EnvironmentBracketStatement = "EnvironmentBracketStatement",
 
-    TaskRunStatement = "TaskRunStatement", //run single task
-    TaskMultiStatement = "TaskMultiStatement", //run multiple explicitly identified tasks -- complete all
-    TaskDashStatement = "TaskDashStatement", //run multiple explicitly identified tasks -- first completion wins
-    TaskAllStatement = "TaskAllStatement", //run the same task on all args in a list -- complete all
-    TaskRaceStatement = "TaskRaceStatement", //run the same task on all args in a list -- first completion wins
-
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
-    TaskStatusBracketStatement = "TaskStatusBracketStatement", //do a status emit Task::emitStatusUpdate(...) with a bracketed expression
-
     TaskEventEmitStatement = "TaskEventEmitStatement", //Task::event(...)
-    TaskEventEmitBracketStatement = "TaskEventEmitBracketStatement", //Task::event(...) with a bracketed expression
 
     TaskResultWithStatement = "TaskResultWithStatement", //result exp (probably a do)
 
@@ -1446,7 +1624,7 @@ class VariableInitializationStatement extends Statement {
         const dc = this.isConst ? "let" : "var";
         const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit()}`;
 
-        return `${dc} ${this.name}${tt} = ${this.exp.emit(true)};`;
+        return `${dc} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
     }
 }
 
@@ -1465,7 +1643,7 @@ class VariableMultiInitializationStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
         const ttdecls = this.decls.map((dd) => dd[0] + (dd[1] instanceof AutoTypeSignature ? "" : `: ${dd[1].emit()}`));
-        const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true)).join(", ") : this.exp.emit(true);
+        const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${dc} ${ttdecls.join(", ")} = ${ttexp};`;
     }
@@ -1482,7 +1660,7 @@ class VariableAssignmentStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.name} = ${this.exp.emit(true)};`;
+        return `${this.name} = ${this.exp.emit(true, fmt)};`;
     }
 }
 
@@ -1498,7 +1676,7 @@ class VariableMultiAssignmentStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const ttname = this.name.join(", ");
-        const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true)).join(", ") : this.exp.emit(true);
+        const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${ttname} = ${ttexp};`;
     }
@@ -1515,7 +1693,7 @@ class VariableRetypeStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.name}@${this.ttest.emit()};`;
+        return `${this.name}@${this.ttest.emit(fmt)};`;
     }
 }
 
@@ -1528,7 +1706,7 @@ class ReturnStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `return ${Array.isArray(this.value) ? this.value.map((vv) => vv.emit(true)).join(", ") : this.value.emit(true)};`;
+        return `return ${Array.isArray(this.value) ? this.value.map((vv) => vv.emit(true, fmt)).join(", ") : this.value.emit(true, fmt)};`;
     }
 }
 
@@ -1543,7 +1721,7 @@ class IfStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit() : ""}(${cf.cond.exp.emit(true)}) ${cf.value.emit(fmt)}`);
+        const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.value.emit(fmt)}`);
         const ttelse = this.elseflow !== undefined ? this.elseflow.value.emit(fmt) : undefined;
 
         const iif = `if ${ttcond[0]}`;
@@ -1568,7 +1746,7 @@ class MatchStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match (${this.sval.emit(true)})`;
+        const mheader = `match (${this.sval.emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
@@ -1601,7 +1779,7 @@ class AssertStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `assert ${this.cond.emit(true)};`;
+        return `assert ${this.cond.emit(true, fmt)};`;
     }
 }
 
@@ -1614,7 +1792,7 @@ class DebugStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `debug ${this.value.emit(true)};`;
+        return `debug ${this.value.emit(true, fmt)};`;
     }
 }
 
@@ -1627,7 +1805,7 @@ class StandaloneExpressionStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.exp.emit(true)};`;
+        return `${this.exp.emit(true, fmt)};`;
     }
 }
 
@@ -1640,7 +1818,7 @@ class ThisUpdateStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true)}`).join(", ");
+        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
         return `this[${updates}];`;
     }
 }
@@ -1654,7 +1832,7 @@ class SelfUpdateStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true)}`).join(", ");
+        const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
         return `self[${updates}];`;
     }
 }
@@ -1663,301 +1841,76 @@ class EnvironmentUpdateStatement extends Statement {
     readonly updates: [LiteralExpressionValue, Expression][]; //ascii strings
 
     constructor(sinfo: SourceInfo, updates: [LiteralExpressionValue, Expression][]) {
-        super(StatementTag.SelfUpdateStatement, sinfo);
+        super(StatementTag.EnvironmentUpdateStatement, sinfo);
         this.updates = updates;
     }
 
     emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name.emit(true)} = ${exp.emit(true)}`).join(", ");
+        const updates = this.updates.map(([name, exp]) => `${name.emit(true, fmt)} = ${exp.emit(true, fmt)}`).join(", ");
         return `env[${updates}];`;
     }
 }
 
 class EnvironmentBracketStatement extends Statement {
-    readonly updates: [LiteralExpressionValue, Expression][]; //ascii strings
+    readonly env: EnvironmentGenerationExpression;
+    readonly block: BlockStatement;
 
-    constructor(sinfo: SourceInfo, updates: [LiteralExpressionValue, Expression][]) {
-        super(StatementTag.SelfUpdateStatement, sinfo);
-        this.updates = updates;
+    constructor(sinfo: SourceInfo, env: EnvironmentGenerationExpression, block: BlockStatement) {
+        super(StatementTag.EnvironmentBracketStatement, sinfo);
+        this.env = env;
+        this.block = block;
     }
 
     emit(fmt: CodeFormatter): string {
-        const updates = this.updates.map(([name, exp]) => `${name.emit(true)} = ${exp.emit(true)}`).join(", ");
-        return `env{${updates}};`;
+        return `${this.env.emit(fmt)} ${this.block.emit(fmt)}`;
     }
 }
 
-class TaskRunStatement extends Statement {
-    readonly isdefine: boolean;
-    readonly isconst: boolean;
-    readonly vtrgt: {name: string, vtype: TypeSignature};
-    readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression}[];
-    readonly args: Expression[];
+class TaskStatusStatement extends Statement {
+    readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
-        super(StatementTag.TaskRunStatement, sinfo);
-        this.isdefine = isdefine;
-        this.isconst = isconst;
-        this.vtrgt = vtrgt;
-        this.task = task;
-        this.taskargs = taskargs;
-        this.args = args;
+    constructor(sinfo: SourceInfo, exp: Expression) {
+        super(StatementTag.TaskStatusStatement, sinfo);
+        this.exp = exp;
     }
 
-    isTaskOperation(): boolean {
-        return true;
+    emit(fmt: CodeFormatter): string {
+        return `Task::status(${this.exp.emit(true, fmt)});`;
     }
 }
 
-class TaskMultiStatement extends Statement {
-    readonly isdefine: boolean;
-    readonly isconst: boolean;
-    readonly vtrgts: {name: string, vtype: TypeSignature}[];
-    readonly tasks: TypeSignature[];
-    readonly taskargs: {argn: string, argv: Expression}[];
-    readonly args: Expression[];
+class TaskEventEmitStatement extends Statement {
+    readonly exp: Expression;
 
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
-        super(StatementTag.TaskMultiStatement, sinfo);
-        this.isdefine = isdefine;
-        this.isconst = isconst;
-        this.vtrgts = vtrgts;
-        this.tasks = tasks;
-        this.taskargs = taskargs;
-        this.args = args;
+    constructor(sinfo: SourceInfo, exp: Expression) {
+        super(StatementTag.TaskEventEmitStatement, sinfo);
+        this.exp = exp;
     }
 
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskDashStatement extends Statement {
-    readonly isdefine: boolean;
-    readonly isconst: boolean;
-    readonly vtrgts: {name: string, vtype: TypeSignature}[];
-    readonly tasks: TypeSignature[];
-    readonly taskargs: {argn: string, argv: Expression}[];
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgts: {name: string, vtype: TypeSignature}[], tasks: TypeSignature[], taskargs: {argn: string, argv: Expression}[], args: Expression[]) {
-        super(StatementTag.TaskDashStatement, sinfo);
-        this.isdefine = isdefine;
-        this.isconst = isconst;
-        this.vtrgts = vtrgts;
-        this.tasks = tasks;
-        this.taskargs = taskargs;
-        this.args = args;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-
-class TaskAllStatement extends Statement {
-    readonly isdefine: boolean;
-    readonly isconst: boolean;
-    readonly vtrgt: {name: string, vtype: TypeSignature};
-    readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression}[];
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
-        super(StatementTag.TaskAllStatement, sinfo);
-        this.isdefine = isdefine;
-        this.isconst = isconst;
-        this.vtrgt = vtrgt;
-        this.task = task;
-        this.taskargs = taskargs;
-        this.arg = arg;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskRaceStatement extends Statement {
-    readonly isdefine: boolean;
-    readonly isconst: boolean;
-    readonly vtrgt: {name: string, vtype: TypeSignature};
-    readonly task: TypeSignature;
-    readonly taskargs: {argn: string, argv: Expression}[];
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vtrgt: {name: string, vtype: TypeSignature}, task: TypeSignature, taskargs: {argn: string, argv: Expression}[], arg: Expression) {
-        super(StatementTag.TaskRaceStatement, sinfo);
-        this.isdefine = isdefine;
-        this.isconst = isconst;
-        this.vtrgt = vtrgt;
-        this.task = task;
-        this.taskargs = taskargs;
-        this.arg = arg;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskCallWithStatement extends Statement {
-    readonly name: string;
-    readonly terms: TypeSignature[];
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
-        super(StatementTag.TaskCallWithStatement, sinfo);
-        this.name = name;
-        this.terms = terms;
-        this.args = args;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
+    emit(fmt: CodeFormatter): string {
+        return `Task::event(${this.exp.emit(true, fmt)});`;
     }
 }
 
 class TaskResultWithStatement extends Statement {
     readonly name: string;
     readonly terms: TypeSignature[];
-    readonly args: Expression[];
+    readonly args: ArgumentList;
 
-    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: Expression[]) {
+    constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
         super(StatementTag.TaskResultWithStatement, sinfo);
         this.name = name;
         this.terms = terms;
         this.args = args;
     }
 
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
+    emit(fmt: CodeFormatter): string {
+        let terms = "";
+        if(this.terms.length !== 0) {
+            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+        }
 
-class TaskSetStatusStatement extends Statement {
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, arg: Expression) {
-        super(StatementTag.TaskSetStatusStatement, sinfo);
-        this.arg = arg;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskSetSelfFieldStatement extends Statement {
-    readonly fname: string;
-    readonly value: Expression;
-
-    constructor(sinfo: SourceInfo, fname: string, value: Expression) {
-        super(StatementTag.TaskSetSelfFieldStatement, sinfo);
-        this.fname = fname;
-        this.value = value;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class TaskEventEmitStatement extends Statement {
-    readonly arg: Expression;
-
-    constructor(sinfo: SourceInfo, arg: Expression) {
-        super(StatementTag.TaskEventEmitStatement, sinfo);
-        this.arg = arg;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerEmitStatement extends Statement {
-    readonly level: LoggerLevel;
-    readonly msg: AccessFormatInfoExpression;
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, level: LoggerLevel, msg: AccessFormatInfoExpression, args: Expression[]) {
-        super(StatementTag.LoggerEmitStatement, sinfo);
-        this.level = level;
-        this.msg = msg;
-        this.args = args;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerEmitConditionalStatement extends Statement {
-    readonly level: LoggerLevel;
-    readonly cond: Expression;
-    readonly msg: AccessFormatInfoExpression;
-    readonly args: Expression[];
-
-    constructor(sinfo: SourceInfo, level: LoggerLevel, cond: Expression, msg: AccessFormatInfoExpression, args: Expression[]) {
-        super(StatementTag.LoggerEmitConditionalStatement, sinfo);
-        this.level = level;
-        this.cond = cond;
-        this.msg = msg;
-        this.args = args;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerLevelStatement extends Statement {
-    readonly levels: {lname: string, lvalue: Expression}[];
-    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
-
-    constructor(sinfo: SourceInfo, levels: {lname: string, lvalue: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement) {
-        super(StatementTag.LoggerLevelStatement, sinfo);
-        this.levels = levels;
-        this.block = block;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerCategoryStatement extends Statement {
-    readonly categories: {cname: string, cvalue: Expression}[];
-    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
-
-    constructor(sinfo: SourceInfo, categories: {cname: string, cvalue: Expression}[], block: UnscopedBlockStatement | ScopedBlockStatement) {
-        super(StatementTag.LoggerCategoryStatement, sinfo);
-        this.categories = categories;
-        this.block = block;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
-    }
-}
-
-class LoggerPrefixStatement extends Statement {
-    readonly msg: AccessFormatInfoExpression;
-    readonly args: Expression[];
-    readonly block: UnscopedBlockStatement | ScopedBlockStatement;
-
-    constructor(sinfo: SourceInfo, msg: AccessFormatInfoExpression, args: Expression[], block: UnscopedBlockStatement | ScopedBlockStatement) {
-        super(StatementTag.LoggerPrefixStatement, sinfo);
-        this.msg = msg;
-        this.args = args;
-        this.block = block;
-    }
-
-    isTaskOperation(): boolean {
-        return true;
+        return `result self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
     }
 }
 
@@ -1987,7 +1940,7 @@ abstract class BodyImplementation {
         this.file = file;
     }
 
-    abstract emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string;
+    abstract emit(fmt: CodeFormatter, headerstr: string | undefined): string;
 }
 
 class AbstractBodyImplementation extends BodyImplementation {
@@ -1995,12 +1948,27 @@ class AbstractBodyImplementation extends BodyImplementation {
         super(sinfo, file);
     }
 
-    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
         if(headerstr === undefined) {
-            return "";
+            return ";";
         }
         else {
             return headerstr + ";";
+        }
+    }
+}
+
+class PredicateUFBodyImplementation extends BodyImplementation {
+    constructor(sinfo: SourceInfo, file: string) {
+        super(sinfo, file);
+    }
+
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
+        if(headerstr === undefined) {
+            return "%* Uninterpreted Function as predicate for checking *%;";
+        }
+        else {
+            return headerstr + "%* Uninterpreted Function as predicate for checking *%;";
         }
     }
 }
@@ -2014,12 +1982,12 @@ class BuiltinBodyImplementation extends BodyImplementation {
         this.builtin = builtin;
     }
 
-    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
         if(headerstr === undefined) {
             return ` = ${this.builtin};`;
         }
         else {
-            return headerstr + " = " + this.builtin + ";";
+            return " = " + headerstr + this.builtin + ";";
         }
     }
 }
@@ -2029,7 +1997,7 @@ class SynthesisBodyImplementation extends BodyImplementation {
         super(sinfo, file);
     }
 
-    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
         let hstr = "";
         if(headerstr !== undefined) {
             hstr = " " + headerstr;
@@ -2056,22 +2024,13 @@ class ExpressionBodyImplementation extends BodyImplementation {
         this.exp = exp;
     }
 
-    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
         let hstr = "";
         if(headerstr !== undefined) {
             hstr = " " + headerstr;
         }
 
-        if(fmt === undefined) {
-            return `{${hstr} return ${this.exp.emit()}; }`;
-        }
-        else {
-            fmt.indentPush();
-            const bb = fmt.indent("return " + this.exp.emit() + ";");
-            fmt.indentPop();
-
-            return `{${hstr}\n${bb}\n${fmt.indent("}")}`;
-        }
+        return `${hstr} ${this.exp.emit(true, fmt)}`;
     }
 }
 
@@ -2083,22 +2042,30 @@ class StandardBodyImplementation extends BodyImplementation {
         this.statements = statements;
     }
 
-    emit(fmt: CodeFormatter | undefined, headerstr: string | undefined): string {
+    emit(fmt: CodeFormatter, headerstr: string | undefined): string {
         let hstr = "";
         if(headerstr !== undefined) {
-            hstr = " " + headerstr;
+            hstr = headerstr + "\n" + fmt.indent("");
         }
 
-        if(fmt === undefined) {
-            return `{${hstr} ${this.statements.map((stmt) => stmt.emit(undefined)).join(" ")} }`;
-        }
-        else {
-            fmt.indentPush();
-            const bb = this.statements.map((stmt) => stmt.emit(fmt)).join("\n");
-            fmt.indentPop();
+        fmt.indentPush();
+        const bb = this.statements.map((stmt, i) => {
+            let ss = stmt.emit(fmt);
+            if(i !== this.statements.length - 1) {
+                return ss;
+            }
+            else {
+                if(stmt.tag === StatementTag.IfElseStatement || stmt.tag === StatementTag.MatchStatement || stmt.tag === StatementTag.BlockStatement) {
+                    return ss + "\n";
+                }
+                else {
+                    return ss;
+                }
+            }
+        }).join("\n");
+        fmt.indentPop();
 
-            return `{${hstr}\n${bb}\n${fmt.indent("}")}`;
-        }
+        return `${hstr}{\n${bb}\n${fmt.indent("}")}`;
     }
 }
 
@@ -2120,7 +2087,7 @@ export {
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
-    PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
+    PostfixError, PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
     PostfixInvoke,
@@ -2132,9 +2099,10 @@ export {
     MapEntryConstructorExpression,
     IfTest,
     IfExpression,
-    EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, 
+    EnvironmentGenerationExpressionTag, EnvironmentGenerationExpression, ErrorEnvironmentExpression,
+    TaskRunExpression, TaskMultiExpression, TaskDashExpression, TaskAllExpression, TaskRaceExpression,
     BaseEnvironmentOpExpression, EmptyEnvironmentExpression, InitializeEnvironmentExpression, CurrentEnvironmentExpression, 
-    PostfixEnvironmentOpTag, PostfixEnvironmentOp, PostFixEnvironmentOpProject, PostfixEnvironmentOpSet, PostfixEnvironmentOpExpression,
+    PostfixEnvironmentOpTag, PostfixEnvironmentOp, PostFixEnvironmentOpError, PostfixEnvironmentOpSet, PostfixEnvironmentOpExpression,
     StatementTag, Statement, ErrorStatement, EmptyStatement,
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
@@ -2142,11 +2110,8 @@ export {
     IfStatement, MatchStatement, AbortStatement, AssertStatement, DebugStatement,
     StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
-
-    TaskRunStatement, TaskMultiStatement, TaskDashStatement, TaskAllStatement, TaskRaceStatement,
-    TaskCallWithStatement, TaskResultWithStatement,
-    TaskSetStatusStatement, TaskEventEmitStatement, TaskSetSelfFieldStatement, 
-    
+    TaskStatusStatement, TaskEventEmitStatement,
+    TaskResultWithStatement,
     BlockStatement, 
-    BodyImplementation, AbstractBodyImplementation, BuiltinBodyImplementation, SynthesisBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
+    BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, SynthesisBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
 };
