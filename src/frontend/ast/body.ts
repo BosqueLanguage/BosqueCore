@@ -6,17 +6,17 @@ import { LambdaDecl } from "./assembly";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
-    readonly name: string;    //maybe a different name that gets used for shadowing binders
+    readonly scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
 
-    constructor(srcname: string, name: string, implicitdef: boolean) {
+    constructor(srcname: string, scopename: string, implicitdef: boolean) {
         this.srcname = srcname;
-        this.name = name;
+        this.scopename = scopename;
         this.implicitdef = implicitdef;
     }
 
     emit(): string {
-        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.name ? ("%*" + this.name + "*%") : ""}  = ` : "";
+        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.scopename ? ("%*" + this.scopename + "*%") : ""}  = ` : "";
     }
 }
 
@@ -545,16 +545,16 @@ class AccessStaticFieldExpression extends Expression {
 
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
-    readonly name: string;    //maybe a different name that gets used for shadowing binders
+    readonly scopename: string;    //maybe a different name that gets used for shadowing binders
 
-    constructor(sinfo: SourceInfo, srcname: string, name: string) {
+    constructor(sinfo: SourceInfo, srcname: string, scopename: string) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
-        this.name = name;
+        this.scopename = scopename;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.name + (this.name !== this.srcname ? `%**${this.name}**%` : "");
+        return this.srcname + (this.scopename !== this.srcname ? `%*${this.scopename}*%` : "");
     }
 }
 

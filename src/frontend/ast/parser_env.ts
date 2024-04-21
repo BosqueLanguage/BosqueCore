@@ -3,13 +3,13 @@ import { Assembly } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
-    readonly name: string;
+    readonly srcname: string;
     readonly scopedname: string;
     readonly isbinder: boolean;
     isUsed: boolean;
 
-    constructor(name: string, scopedname: string, isbinder: boolean) {
-        this.name = name;
+    constructor(srcname: string, scopedname: string, isbinder: boolean) {
+        this.srcname = srcname;
         this.scopedname = scopedname;
         this.isbinder = isbinder;
         this.isUsed = false;
@@ -19,8 +19,8 @@ class LocalScopeVariableInfo {
 class LocalScopeInfo {
     locals: LocalScopeVariableInfo[];
 
-    constructor(LocalScopeVariableInfo[]) {
-        this.locals = this.locals;
+    constructor(locals: LocalScopeVariableInfo[]) {
+        this.locals = locals;
     }
 }
 
@@ -29,81 +29,52 @@ abstract class ParserTopLevelScope {
     
     readonly args: Set<string>;
     readonly boundtemplates: Set<string>;
-    
-}
+ 
+    readonly localscope: LocalScopeInfo[];
 
-class StdParserFunctionScope extends ParserTopLevelScope {
-
-}
-
-abstract class CapturingParserToplevelScope extends ParserTopLevelScope {
-    capturedVars: Set<string>;
-    capturedTemplates: Set<string>;
-
-}
-
-class LambdaBodyParserScope extends CapturingParserToplevelScope {
-
-}
-
-class ParserStandaloneExpressionScope extends CapturingParserToplevelScope {
-
-}
-
-class FunctionScope {
-
-    private m_locals: {vars: { name: string, scopedname: string, isbinder: boolean }[], isImplicitBinderUsed: boolean}[];
-
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature, ispcode: boolean) {
-        this.m_rtype = rtype;
-        this.m_capturedvars = new Set<string>();
-        this.m_capturedtemplates = new Set<string>();
-        this.m_ispcode = ispcode;
-        this.m_args = args;
-        this.m_boundtemplates = boundtemplates;
-        this.m_locals = [];
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+        this.args = args;
+        this.boundtemplates = boundtemplates;
+        this.resultingType = rtype;
+        this.localscope = [];
     }
 
     pushLocalScope() {
-        this.m_locals.push({vars: [], isImplicitBinderUsed: false});
+        this.localscope.push(new LocalScopeInfo([]));
     }
 
     popLocalScope() {
-        this.m_locals.pop();
+        this.localscope.pop();
     }
 
-    isPCodeEnv(): boolean {
-        return this.m_ispcode;
-    }
-
-    isVarNameDefined(name: string): boolean {
-        return this.m_args.has(name) || this.m_locals.some((frame) => frame.vars.some((nn) => nn.name === name));
+    isVarSourceNameDefined(name: string): boolean {
+        return this.args.has(name) || this.localscope.some((frame) => frame.locals.some((nn) => nn.srcname === name));
     }
 
     isVarScopeResolvedNameDefined(name: string): boolean {
-        return this.m_args.has(name) || this.m_locals.some((frame) => frame.vars.some((nn) => nn.scopedname === name));
+        return this.localscope.some((frame) => frame.locals.some((nn) => nn.scopedname === name));
     }
 
     isTemplateNameDefined(name: string): boolean {
-        return this.m_boundtemplates.has(name);
+        return this.boundtemplates.has(name);
     }
 
-    getScopedVarName(name: string): string {
-        for (let i = this.m_locals.length - 1; i >= 0; --i) {
-            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === name);
+    getVarInfoForSourceNameTry(name: string): LocalScopeVariableInfo | undefined {
+        for (let i = this.localscope.length - 1; i >= 0; --i) {
+            const vinfo = this.localscope[i].locals.find((fr) => fr.srcname === name);
             if (vinfo !== undefined) {
-                return vinfo.scopedname;
+                return vinfo;
             }
         }
 
-        return name;
+        return undefined;
     }
 
-    getBinderExtension(vname: string): string {
+    getBinderExtension(srcname: string): string {
         let bcount = 0;
 
-        for (let i = this.m_locals.length - 1; i >= 0; --i) {
-            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === vname);
+        for (let i = this.localscope.length - 1; i >= 0; --i) {
+            const vinfo = this.localscope[i].locals.find((fr) => fr.srcname === srcname);
             if (vinfo !== undefined) {
                 bcount++;
             }
@@ -112,24 +83,64 @@ class FunctionScope {
         return bcount.toString();
     }
 
-    getUsedImplicitBinder(): boolean {
-        return this.m_locals.length !== 0 ? this.m_locals[this.m_locals.length - 1].isImplicitBinderUsed : false;
+    getResolvedVarName(srcname: string): string {
+        const vinfo = this.getVarInfoForSourceNameTry(srcname);
+        return vinfo !== undefined ? vinfo.scopedname : srcname;
     }
 
-    markUsedImplicitBinder() {
-        for (let i = this.m_locals.length - 1; i >= 0; --i) {
-            const vinfo = this.m_locals[i].vars.find((fr) => fr.name === "$");
-            if (vinfo !== undefined) {
-                this.m_locals[i].isImplicitBinderUsed = true;
-                return;
-            }
+    markUsedImplicitBinderIfNeeded(srcname: string) {
+        const vinfo = this.getVarInfoForSourceNameTry(srcname);
+        if (vinfo !== undefined && vinfo.isbinder) {
+            vinfo.isUsed = true;
         }
     }
 
-    defineLocalVar(name: string, scopedname: string, isbinder: boolean) {
-        this.m_locals[this.m_locals.length - 1].vars.push({ name: name, scopedname: scopedname, isbinder: isbinder });
+    getUsedImplicitBinderFromThisDef(srcname: string): boolean {
+        if(this.localscope.length !== 0) {
+            return false;
+        }
+
+        const thisvinfo = this.localscope[this.localscope.length - 1].locals.find((fr) => fr.srcname === srcname);
+        return thisvinfo !== undefined ? thisvinfo.isUsed : false;
     }
 
+    defineLocalVar(name: string, scopedname: string, isbinder: boolean) {
+        this.localscope[this.localscope.length - 1].locals.push(new LocalScopeVariableInfo(name, scopedname, isbinder));
+    }
+}
+
+class StdParserFunctionScope extends ParserTopLevelScope {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+        super(args, boundtemplates, rtype);
+    }
+}
+
+abstract class CapturingParserToplevelScope extends ParserTopLevelScope {
+    capturedVars: Set<string>;
+    capturedTemplates: Set<string>;
+
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+        super(args, boundtemplates, rtype);
+
+        this.capturedVars = new Set<string>();
+        this.capturedTemplates = new Set<string>();
+    }
+}
+
+class LambdaBodyParserScope extends CapturingParserToplevelScope {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+        super(args, boundtemplates, rtype);
+    }
+}
+
+class ParserStandaloneExpressionScope extends CapturingParserToplevelScope {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+        super(args, boundtemplates, rtype);
+    }
+}
+
+class FunctionScope {
+    
     getCaptureVars(): Set<string> {
         return this.m_capturedvars;
     }
@@ -303,4 +314,7 @@ class ParserEnvironment {
 
 export { 
     LocalScopeVariableInfo, LocalScopeInfo,
-    ParserEnvironment };
+    ParserTopLevelScope, StdParserFunctionScope, CapturingParserToplevelScope, LambdaBodyParserScope, ParserStandaloneExpressionScope,
+    ParserEnvironment 
+};
+
