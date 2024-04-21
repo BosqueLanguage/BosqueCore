@@ -156,21 +156,6 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
-class ProjectTypeSignature extends TypeSignature {
-    readonly fromtype: TypeSignature;
-    readonly oftype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, fromtype: TypeSignature, oftype: TypeSignature) {
-        super(sinfo);
-        this.fromtype = fromtype;
-        this.oftype = oftype;
-    }
-
-    emit(): string {
-        return this.fromtype + "!" + this.oftype;
-    }
-}
-
 class AndTypeSignature extends TypeSignature {
     readonly types: TypeSignature[];
 
@@ -201,5 +186,5 @@ export {
     TypeSignature, ErrorTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateType,
-    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, ProjectTypeSignature, AndTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, AndTypeSignature, UnionTypeSignature
 };

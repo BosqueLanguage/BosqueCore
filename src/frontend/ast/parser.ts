@@ -307,8 +307,6 @@ const AttributeStrings = [
     "__inline",
     "__internal",
     "__typedeclable",
-    "__enumable", 
-    "__litvaluetype",
     "__constructable",
     "__primitive",
     "__typebase",

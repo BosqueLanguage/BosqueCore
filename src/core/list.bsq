@@ -1,6 +1,85 @@
 //The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
+namespace List {
+    function {when type(ll) -> List<List<T>>} concat<T?>(ll: List<List<T>>): List<T> {
+        if(ListOps::s_list_empty<List<T>>(ll)) {
+            return List<T>{};
+        }
+        else {
+            let ilist = ListOps::s_list_front<List<T>>(ll);
+            let tl = ListOps::s_list_pop_front<List<T>>(ll);
+            if(ListOps::s_list_empty<List<T>>(tl)) {
+                return ilist;
+            }
+            else {
+                return ListOps::s_list_reduce<List<T>, List<T>>(tl, ilist, fn(acc: List<T>, argl: List<T>): List<T> => {
+                    return List<T>::s_append_helper(acc, argl);
+                });
+            }
+        }
+    }
+
+    function {when type(ll) -> List<List<T>>} concatOf<T?>(...ll: List<List<T>>): List<T> {
+        return List::concat(ll);
+    }
+
+    function {when type(l1) -> List<T>, type(l2) -> List<U>} zip<T?, U?>(l1: List<T>, l2: List<U>): List<[T, U]>
+        requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
+    {
+        if(ListOps::s_list_empty<T>(l1)) {
+            return List<[T, U]>{};
+        }
+        else {
+            return ListOps::s_list_map_fn_sync<T, U, [T, U]>(l1, l2, fn(v1: T, v2: U): [T, U] => [v1, v2]);
+        }
+    }
+
+    recursive? function {when type(l1) -> List<T>, type(l2) -> List<U>} zipWith<T?, U?, V>(l1: List<T>, l2: List<U>, f: recursive? fn(T, U) -> V): List<V>
+        requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
+    {
+        if(ListOps::s_list_empty<T>(l1)) {
+            return List<V>{};
+        }
+        else {
+            return ListOps::s_list_map_fn_sync<T, U, V>[recursive?](l1, l2, f);
+        }
+    }
+
+    recursive? function {when type(l1) -> List<T>, type(l2) -> List<U>} group<T?, U?>(l1: List<T>, l2: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, List<U>]> {
+        if(ListOps::s_list_empty<T>(l1)) {
+            return List<[T, List<U>]>{};
+        }
+        elif(ListOps::s_list_empty<U>(l2)) {
+            return ListOps::s_list_map_fn<T, [T, List<U>]>(l1, fn(v: T): [T, List<U>] => [v, List<U>{}]);
+        }
+        else {
+            return ListOps::s_list_map_fn<T, [T, List<U>]>(l1, recursive? fn(v: T): [T, List<U>] => {
+                return [v, ListOps::s_list_filter_pred<U>[recursive?](l2, recursive? pred(u: U): Bool => p[recursive?](v, u))];
+            });
+        }
+    }
+
+    recursive? function {when type(l1) -> List<T>, type(l2) -> List<U>} join<T?, U?>(l1: List<T>, l2: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, U]> {
+        if(\/(ListOps::s_list_empty<T>(l1), ListOps::s_list_empty<T>(l2))) {
+            return List<[T, U]>{};
+        }
+        else {
+            return ListOps::s_list_reduce<T, List<[T, U]>>(l1, List<[T, U]>{}, recursive? fn(acc: List<[T, U]>, v: T): List<[T, U]> => {
+                let ull = ListOps::s_list_filter_pred<U>[recursive?](l2, recursive? pred(u: U): Bool => p[recursive?](v, u));
+
+                if(ListOps::s_list_empty<T>(ull)) {
+                    return acc;
+                }
+                else {
+                    let accp = ListOps::s_list_map_fn<U, [T, U]>(ull, fn(u: U): [T, U] => [v, u]);
+                    return List<[T, U]>::s_append_helper(acc, accp);
+                }
+            });
+        }
+    }
+}
+
 /*
 function rangeInt(start: Int, end: Int): List<Int>
     requires start <= end;
@@ -24,81 +103,6 @@ function rangeNat(start: Nat, end: Nat): List<Nat>
     }
 }
 */
-
-entity ListOp provides Some {
-    function concat<T>(ll: List<List<T>>): List<T> {
-        if(ListOps::s_list_empty<List<T>>(ll)) {
-            return List<T>{};
-        }
-        else {
-            let ilist = ListOps::s_list_front<List<T>>(ll);
-            let tl = ListOps::s_list_pop_front<List<T>>(ll);
-            if(ListOps::s_list_empty<List<T>>(tl)) {
-                return ilist;
-            }
-            else {
-                return ListOps::s_list_reduce<List<T>, List<T>>(tl, ilist, fn(acc: List<T>, argl: List<T>): List<T> => {
-                    return List<T>::s_append_helper(acc, argl);
-                });
-            }
-        }
-    }
-
-    function zip<T, U>(l1: List<T>, l2: List<U>): List<[T, U]>
-        requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
-    {
-        if(ListOps::s_list_empty<T>(l1)) {
-            return List<[T, U]>{};
-        }
-        else {
-            return ListOps::s_list_map_fn_sync<T, U, [T, U]>(l1, l2, fn(v1: T, v2: U): [T, U] => [v1, v2]);
-        }
-    }
-
-    recursive? function zipWith<T, U, V>(l1: List<T>, l2: List<U>, f: recursive? fn(T, U) -> V): List<V>
-        requires ListOps::s_list_size<T>(l1) == ListOps::s_list_size<U>(l2);
-    {
-        if(ListOps::s_list_empty<T>(l1)) {
-            return List<V>{};
-        }
-        else {
-            return ListOps::s_list_map_fn_sync<T, U, V>[recursive?](l1, l2, f);
-        }
-    }
-
-    recursive? function group<T, U>(l1: List<T>, l2: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, List<U>]> {
-        if(ListOps::s_list_empty<T>(l1)) {
-            return List<[T, List<U>]>{};
-        }
-        elif(ListOps::s_list_empty<U>(l2)) {
-            return ListOps::s_list_map_fn<T, [T, List<U>]>(l1, fn(v: T): [T, List<U>] => [v, List<U>{}]);
-        }
-        else {
-            return ListOps::s_list_map_fn<T, [T, List<U>]>(l1, recursive? fn(v: T): [T, List<U>] => {
-                return [v, ListOps::s_list_filter_pred<U>[recursive?](l2, recursive? pred(u: U): Bool => p[recursive?](v, u))];
-            });
-        }
-    }
-
-    recursive? function join<T, U>(l1: List<T>, l2: List<U>, p: recursive? pred(T, U) -> Bool): List<[T, U]> {
-        if(\/(ListOps::s_list_empty<T>(l1), ListOps::s_list_empty<T>(l2))) {
-            return List<[T, U]>{};
-        }
-        else {
-            return ListOps::s_list_reduce<T, List<[T, U]>>(l1, List<[T, U]>{}, recursive? fn(acc: List<[T, U]>, v: T): List<[T, U]> => {
-                let ull = ListOps::s_list_filter_pred<U>[recursive?](l2, recursive? pred(u: U): Bool => p[recursive?](v, u));
-
-                if(ListOps::s_list_empty<T>(ull)) {
-                    return acc;
-                }
-                else {
-                    let accp = ListOps::s_list_map_fn<U, [T, U]>(ull, fn(u: U): [T, U] => [v, u]);
-                    return List<[T, U]>::s_append_helper(acc, accp);
-                }
-            });
-        }
-    }
-}
 
 __internal entity List<T> provides Some, Expandoable<T> {
     internal function s_append_helper(l1: List<T>, l2: List<T>): List<T> {
@@ -211,7 +215,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    method {when T grounded KeyType} contains(v: T): Bool {
+    method {when T@KeyType} contains(v: T): Bool {
         if(ListOps::s_list_empty<T>(this)) {
             return false;
         }
@@ -220,8 +224,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    //TODO: accumulate as parallel merge processing -- + associative checking!!!
-    method sum(): T {
+    recursive? method sum(plus: recursive? fn(a: T, b: T) -> T): T {
         assert !ListOps::s_list_empty<T>(this);
 
         let iv = ListOps::s_list_front<T>(this);
@@ -230,11 +233,11 @@ __internal entity List<T> provides Some, Expandoable<T> {
             return iv;
         }
         else {
-            return ListOps::s_list_reduce<T, T>(tl, iv, fn(a: T, b: T): T => (a + b));
+            return ListOps::s_list_reduce<T, T>(tl, iv, plus);
         }
     }
 
-    recursive? method find(p: recursive? pred(T) -> Bool): T
+    recursive? method find(p: recursive? pred(v: T) -> Bool): T
         requires !ListOps::s_list_empty<T>(this);
     {
         let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
@@ -243,7 +246,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
     }
 
-    recursive? method findIdx(p: recursive? pred(T, Nat) -> Bool): T
+    recursive? method findIdx(p: recursive? pred(v: T, Nat) -> Bool): T
         requires !ListOps::s_list_empty<T>(this);
     {
         let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
@@ -252,7 +255,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         return ListOps::s_list_get<T>(this, NumericOps::s_intToNat(idx));
     }
 
-    recursive? method findIndexOf(p: recursive? pred(T) -> Bool): Nat
+    recursive? method findIndexOf(p: recursive? pred(v: T) -> Bool): Nat
         requires !ListOps::s_list_empty<T>(this);
     {
         let idx = ListOps::s_list_find_pred<T>[recursive?](this, p);
@@ -261,7 +264,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         return NumericOps::s_intToNat(idx);
     }
 
-    recursive? method findIndexOfIdx(p: recursive? pred(T, Nat) -> Bool): Nat
+    recursive? method findIndexOfIdx(p: recursive? pred(v: T, i: Nat) -> Bool): Nat
         requires !ListOps::s_list_empty<T>(this);
     {
         let idx = ListOps::s_list_find_pred_idx<T>[recursive?](this, p);
@@ -270,7 +273,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         return NumericOps::s_intToNat(idx);
     }
 
-    recursive? method filter(p: recursive? pred(T) -> Bool): List<T> {
+    recursive? method filter(p: recursive? pred(v: T) -> Bool): List<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T>{};
         }
@@ -279,7 +282,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    recursive? method filterIdx(p: recursive? pred(T, Nat) -> Bool): List<T> {
+    recursive? method filterIdx(p: recursive? pred(v: T, i: Nat) -> Bool): List<T> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<T>{};
         }
@@ -297,12 +300,12 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    method filterSome(): List<T!Some> {
+    method filterSome(): List<T&Some> {
         if(ListOps::s_list_empty<T>(this)) {
-            return List<T!Some>{};
+            return List<T&Some>{};
         }
         else {
-            return ListOps::s_list_filter_map_fn<T, T!Some>(this, pred(v: T): Bool => v?<T!Some>, fn(vv: T): T!Some => s_safeAs<T, T!Some>(vv));
+            return ListOps::s_list_filter_map_fn<T, T&Some>(this, pred(v: T): Bool => v?<T&Some>, fn(vv: T): T&Some => s_safeAs<T, T!Some>(vv));
         }
     }
 
@@ -315,7 +318,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    recursive? method map<U>(f: recursive? fn(T) -> U): List<U> {
+    recursive? method map<U>(f: recursive? fn(v: T) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{}; 
         }
@@ -324,7 +327,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    recursive? method mapIdx<U>(f: recursive? fn(T, Nat) -> U): List<U> {
+    recursive? method mapIdx<U>(f: recursive? fn(v: T, i: Nat) -> U): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{}; 
         }
@@ -333,7 +336,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    method {when T grounded KeyType} project<U>(m: Map<T, U>): List<U> {
+    method {when T@KeyType} project<U>(m: Map<T, U>): List<U> {
         if(ListOps::s_list_empty<T>(this)) {
             return List<U>{};
         }
@@ -1167,7 +1170,7 @@ __internal entity List<T> provides Some, Expandoable<T> {
         }
     }
 
-    method argMaxOf<T>(f: recursive? fn(_: T) -> U, cmp: recursive? pred(_: U, _: U) -> Bool): U
+    method argMaxOf<U>(f: recursive? fn(_: T) -> U, cmp: recursive? pred(_: U, _: U) -> Bool): U
         requires !ListOps::s_list_empty<T>(this);
     {
         let iv = f[recursive?](ListOps::s_list_front<T>(this));

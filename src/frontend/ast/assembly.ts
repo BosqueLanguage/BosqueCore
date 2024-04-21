@@ -1,58 +1,92 @@
 
-import { TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation } from "./type";
+import { TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
 import { BuildLevel, CodeFormatter, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
 
-class TemplateTermDecl {
+class TypeTemplateTermDecl {
     readonly name: string;
-    readonly isGrounded: boolean;
-    readonly isUnique: boolean;
     readonly tconstraint: TypeSignature;
 
-    constructor(name: string, isGrounded: boolean, isUnique: boolean, tconstraint: TypeSignature) {
+    constructor(name: string, tconstraint: TypeSignature) {
         this.name = name;
-        this.isGrounded = isGrounded;
-        this.isUnique = isUnique;
         this.tconstraint = tconstraint;
     }
 
     emit(): string {
-        let scstr = "";
-        if(this.isGrounded) {
-            scstr = " grounded";
+        if(this.tconstraint.emit() === "Any") {
+            return this.name;
         }
-        if(this.isUnique) {
-            scstr = " unique";
+        else {
+            return `${this.name}: ${this.tconstraint.emit()}`;
         }
-
-        return `${this.name}${scstr} ${this.tconstraint.emit()}`;
     }
 }
 
-class TemplateTypeRestriction {
-    readonly t: TypeSignature;
-    readonly isGrounded: boolean;
-    readonly isUnique: boolean;
+class InvokeTemplateTermDecl {
+    readonly name: string;
     readonly tconstraint: TypeSignature;
+    readonly isinferable: boolean;
 
-    constructor(t: TypeSignature, isGrounded: boolean, isUnique: boolean, tconstraint: TypeSignature) {
-        this.t = t;
-        this.isGrounded = isGrounded;
-        this.isUnique = isUnique;
+    constructor(name: string, tconstraint: TypeSignature, isinferable: boolean) {
+        this.name = name;
         this.tconstraint = tconstraint;
+        this.isinferable = isinferable;
     }
 
     emit(): string {
-        let scstr = "";
-        if(this.isGrounded) {
-            scstr = " grounded";
+        if(this.tconstraint.emit() === "Any") {
+            return `${this.name}${this.isinferable ? "?" : ""}`;
         }
-        if(this.isUnique) {
-            scstr = " unique";
+        else {
+            return `${this.name}${this.isinferable ? "?" : ""}: ${this.tconstraint.emit()}`;
         }
+    }
+}
 
-        return `when ${this.t.emit()} ${scstr} ${this.tconstraint.emit()}`;
+abstract class InvokeTemplateTypeRestrictionClause {
+    abstract emit(): string ;
+}
+
+class InvokeTemplateTypeRestrictionClauseUnify extends InvokeTemplateTypeRestrictionClause {
+    readonly vname: string;
+    readonly unifyinto: TypeSignature;
+
+    constructor(vname: string, unifyinto: TypeSignature) {
+        super();
+        this.vname = vname;
+        this.unifyinto = unifyinto;
+    }
+
+    emit(): string {
+        return `type(${this.vname}) -> ${this.unifyinto.emit()}`;
+    }
+}
+
+class InvokeTemplateTypeRestrictionClauseSubtype extends InvokeTemplateTypeRestrictionClause {
+    readonly t: TemplateTypeSignature;
+    readonly subtype: TypeSignature;
+
+    constructor(t: TemplateTypeSignature, subtype: TypeSignature) {
+        super();
+        this.t = t;
+        this.subtype = subtype;
+    }
+
+    emit(): string {
+        return `${this.t}@${this.subtype.emit()}`;
+    }
+}
+
+class InvokeTemplateTypeRestriction {
+    readonly clauses: InvokeTemplateTypeRestrictionClause[];
+
+    constructor(clauses: InvokeTemplateTypeRestrictionClause[]) {
+        this.clauses = clauses;
+    }
+
+    emit(): string {
+        return `{when ${this.clauses.map((c) => c.emit()).join(", ")}}`;
     }
 }
 
@@ -238,6 +272,8 @@ abstract class AbstractInvokeDecl extends AbstractCoreDecl {
         this.body = body;
     }
 
+    abstract hasTerms(): boolean;
+
     emitSig(): [string, string] {
         const attrs = this.emitAttributes();
 
@@ -262,6 +298,10 @@ class LambdaDecl extends AbstractInvokeDecl {
 
         this.captureVarSet = captureVarSet;
         this.captureTemplateSet = captureTemplateSet;
+    }
+
+    hasTerms(): boolean {
+        return false;
     }
 
     generateSig(sinfo: SourceInfo): TypeSignature {
@@ -291,15 +331,15 @@ class LambdaDecl extends AbstractInvokeDecl {
 }
 
 abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
-    readonly terms: TemplateTermDecl[];
-    readonly termRestriction: TemplateTypeRestriction | undefined;
+    readonly terms: InvokeTemplateTermDecl[];
+    readonly termRestriction: InvokeTemplateTypeRestriction | undefined;
 
     readonly preconditions: PreConditionDecl[];
     readonly postconditions: PostConditionDecl[];
 
     readonly examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body);
 
         this.terms = terms;
@@ -308,6 +348,10 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
         this.preconditions = preconditions;
         this.postconditions = postconditions;
         this.examples = examples;
+    }
+
+    hasTerms(): boolean {
+        return this.terms.length !== 0;
     }
 
     emitMetaInfo(fmt: CodeFormatter): string | undefined {
@@ -345,7 +389,7 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
 
         let restricts = "";
         if (this.termRestriction !== undefined) {
-            restricts = "{" + this.termRestriction.emit() + "} ";
+            restricts = this.termRestriction.emit() + " ";
         }
 
         const ttinfo = this.getDeclarationTag();
@@ -357,7 +401,7 @@ abstract class ExplicitInvokeDecl extends AbstractInvokeDecl {
 }
 
 abstract class FunctionInvokeDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
 
@@ -367,13 +411,13 @@ abstract class FunctionInvokeDecl extends ExplicitInvokeDecl {
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
 }
 
 class TypeFunctionDecl extends FunctionInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
 }
@@ -381,7 +425,7 @@ class TypeFunctionDecl extends FunctionInvokeDecl {
 class MethodDecl extends ExplicitInvokeDecl {
     readonly isThisRef: boolean;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isThisRef: boolean) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isThisRef: boolean) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
 
         this.isThisRef = isThisRef;
@@ -393,7 +437,7 @@ class MethodDecl extends ExplicitInvokeDecl {
 }
 
 class TaskMethodDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
 
@@ -403,7 +447,7 @@ class TaskMethodDecl extends ExplicitInvokeDecl {
 }
 
 class TaskActionDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: TemplateTermDecl[], termRestriction: TemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
         super(sinfo, attributes, name, "no", params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
 
@@ -452,16 +496,21 @@ class MemberFieldDecl extends AbstractCoreDecl {
 }
 
 abstract class TypeDecl extends AbstractDecl {
-    constructor(sinfo: SourceInfo) {
-        super(sinfo);
-    }
-}
-
-abstract class AbstractNominalTypeDecl extends TypeDecl {
     readonly attributes: DeclarationAttibute[];
     readonly name: string;
     
-    readonly terms: TemplateTermDecl[];
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(sinfo);
+
+        this.attributes = attributes;
+        this.name = name;
+    }
+
+    abstract hasTerms(): boolean;
+}
+
+abstract class AbstractNominalTypeDecl extends TypeDecl {
+    readonly terms: TypeTemplateTermDecl[];
     readonly provides: TypeSignature[];
 
     readonly invariants: InvariantDecl[];
@@ -471,11 +520,8 @@ abstract class AbstractNominalTypeDecl extends TypeDecl {
     readonly functions: TypeFunctionDecl[];
     readonly methods: MethodDecl[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
-        super(sinfo);
-
-        this.attributes = attributes;
-        this.name = name;
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+        super(sinfo, attributes, name);
 
         this.terms = terms;
         this.provides = provides;
@@ -486,6 +532,10 @@ abstract class AbstractNominalTypeDecl extends TypeDecl {
         this.consts = consts;
         this.functions = functions;
         this.methods = methods;
+    }
+
+    hasTerms(): boolean {
+        return this.terms.length !== 0;
     }
 
     hasAttribute(aname: string): boolean {
@@ -501,7 +551,7 @@ abstract class AbstractNominalTypeDecl extends TypeDecl {
     }
 
     emitProvides(): string {
-        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p[0].emit() + (p[1] === undefined ? "" : p[1].emit(true))).join(", ")) : "";
+        return this.provides.length !== 0 ? (" provides" + this.provides.map((p) => p.emit()).join(", ")) : "";
     }
 
     emitBodyGroups(fmt: CodeFormatter): string[][] {
@@ -530,8 +580,8 @@ abstract class AbstractNominalTypeDecl extends TypeDecl {
 class EnumTypeDecl extends AbstractNominalTypeDecl {
     readonly members: string[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: string[]) {
-        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, provides: TypeSignature[], members: string[]) {
+        super(sinfo, attributes, name, [], provides, [], [], [], [], []);
 
         this.members = members;
     }
@@ -550,7 +600,7 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
 class TypedeclTypeDecl extends AbstractNominalTypeDecl {
     readonly valuetype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], valuetype: TypeSignature) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], valuetype: TypeSignature) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
 
         this.valuetype = valuetype;
@@ -573,7 +623,7 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
 }
 
 abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
@@ -637,7 +687,7 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
 }
 
 class ThingOfTypeDecl extends InternalEntityTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -653,43 +703,43 @@ class ThingOfTypeDecl extends InternalEntityTypeDecl {
 }
 
 class StringOfTypeDecl extends ThingOfTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class ASCIIStringOfTypeDecl extends ThingOfTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class PathOfTypeDecl extends ThingOfTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class PathFragmentOfTypeDecl extends ThingOfTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class PathGlobOfTypeDecl extends ThingOfTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 abstract class ConstructableTypeDecl extends InternalEntityTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class OkTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -705,7 +755,7 @@ class OkTypeDecl extends ConstructableTypeDecl {
 }
 
 class ErrTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -721,7 +771,7 @@ class ErrTypeDecl extends ConstructableTypeDecl {
 }
 
 class APIOkTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -737,7 +787,7 @@ class APIOkTypeDecl extends ConstructableTypeDecl {
 }
 
 class APIErrTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -753,7 +803,7 @@ class APIErrTypeDecl extends ConstructableTypeDecl {
 }
 
 class SomethingTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -769,7 +819,7 @@ class SomethingTypeDecl extends ConstructableTypeDecl {
 }
 
 class MapEntryEntityTypeDecl extends ConstructableTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -785,7 +835,7 @@ class MapEntryEntityTypeDecl extends ConstructableTypeDecl {
 }
 
 abstract class AbstractCollectionTypeDecl extends InternalEntityTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 
@@ -801,31 +851,31 @@ abstract class AbstractCollectionTypeDecl extends InternalEntityTypeDecl {
 }
 
 class ListTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class StackypeDecl extends AbstractCollectionTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class QueueTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class SetTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
 
 class MapTypeDecl extends AbstractCollectionTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
 }
@@ -833,7 +883,7 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
 class EntityTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
 
         this.members = members;
@@ -854,7 +904,7 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 }
 
 abstract class InternalConceptTypeDecl extends AbstractNominalTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, [], [], consts, functions, methods);
     }
 }
@@ -876,7 +926,7 @@ class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
 }
 
 class OptionTypeDecl extends InternalConceptTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, consts, functions, methods);
     }
 
@@ -894,7 +944,7 @@ class OptionTypeDecl extends InternalConceptTypeDecl {
 class ResultTypeDecl extends InternalConceptTypeDecl {
     readonly nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[]) {
         super(sinfo, attributes, name, terms, provides, consts, functions, methods);
 
         this.nestedEntityDecls = nestedEntityDecls;
@@ -917,7 +967,7 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 class APIResultTypeDecl extends InternalConceptTypeDecl {
     readonly nestedEntityDecls: (APIOkTypeDecl | APIErrTypeDecl)[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (APIOkTypeDecl | APIErrTypeDecl)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (APIOkTypeDecl | APIErrTypeDecl)[]) {
         super(sinfo, attributes, name, terms, provides, consts, functions, methods);
 
         this.nestedEntityDecls = nestedEntityDecls;
@@ -938,7 +988,7 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ExpandoableTypeDecl extends InternalConceptTypeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[]) {
         super(sinfo, attributes, name, terms, provides, [], [], []);
     }
 
@@ -956,7 +1006,7 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 class ConceptTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
 
         this.members = members;
@@ -981,7 +1031,7 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
 
     readonly associatedEntityDecls: EntityTypeDecl[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], associatedEntityDecls: EntityTypeDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], associatedEntityDecls: EntityTypeDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
 
         this.members = members;
@@ -1187,7 +1237,7 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[];
     readonly actions: TaskActionDecl[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[]) {
         super(sinfo, attributes, name, terms, [], invariants, validates, consts, functions, methods);
 
         this.members = members;
@@ -1230,7 +1280,7 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
 class TaskDeclOnAPI extends TaskDecl {
     readonly api: APIDecl;
     
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TypeTemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
         super(sinfo, attributes, api.name, terms, invariants, validates, consts, functions, methods, members, actions);
 
         this.api = api;
@@ -1242,7 +1292,7 @@ class TaskDeclOnAPI extends TaskDecl {
 }
 
 class TaskDeclStandalone extends TaskDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TypeTemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
         super(sinfo, attributes, "main", terms, invariants, validates, consts, functions, methods, members, actions);
     }
 
@@ -1305,15 +1355,15 @@ class NamespaceDeclaration {
     usings: NamespaceUsing[];
     declaredNames: Set<string>;
 
-    subns: Map<string, NamespaceDeclaration>;
+    subns: NamespaceDeclaration[];
 
-    typeDefs: Map<string, NamespaceTypedef>;
-    consts: Map<string, NamespaceConstDecl>;
-    functions: Map<string, NamespaceFunctionDecl>;
-    typedecls: Map<string, TypeDecl>;
+    typeDefs: NamespaceTypedef[];
+    consts: NamespaceConstDecl[];
+    functions: NamespaceFunctionDecl[];
+    typedecls: TypeDecl[];
 
-    apis: Map<string, APIDecl>;
-    tasks: Map<string, TaskDecl>;
+    apis: APIDecl[];
+    tasks: TaskDecl[];
 
     constructor(name: string) {
         this.name = name;
@@ -1321,115 +1371,147 @@ class NamespaceDeclaration {
         this.usings = [];
         this.declaredNames = new Set<string>();
 
-        this.subns = new Map<string, NamespaceDeclaration>();
+        this.subns = [];
 
-        this.typeDefs = new Map<string, NamespaceTypedef>();
-        this.consts = new Map<string, NamespaceConstDecl>();
-        this.functions = new Map<string, NamespaceFunctionDecl>();
-        this.typedecls = new Map<string, TypeDecl>();
+        this.typeDefs = [];
+        this.consts = [];
+        this.functions = [];
+        this.typedecls = [];
 
-        this.apis = new Map<string, APIDecl>();
-        this.tasks = new Map<string, TaskDecl>();
+        this.apis = [];
+        this.tasks = [];
     }
 
-    checkDeclNameClash(rname: string, hastemplates: boolean): boolean {
+    checkDeclNameClash(rname: string, hasterms: boolean): boolean {
         if(!this.declaredNames.has(rname)) {
             return false;
         }
 
-        if(hastemplates) {
-            return this.functions.has(rname) || this.concepts.has(rname) || this.entities.has(rname);
+        if(!hasterms && this.subns.find((ns) => ns.name === rname) !== undefined) {
+            return true;
         }
-        else {
-            return this.typeDefs.has(rname) || this.consts.has(rname) || this.functions.has(rname) || this.concepts.has(rname) || this.entities.has(rname) || this.apis.has(rname) || this.stringformats.has(rname);
+
+        if(!hasterms && this.typeDefs.find((td) => td.name === rname) !== undefined) {
+            return true;
         }
+
+        if(!hasterms && this.consts.find((c) => c.name === rname) !== undefined) {
+            return true;
+        }
+
+        if(!hasterms && this.apis.find((api) => api.name === rname) !== undefined) {
+            return true;
+        }
+
+        if(this.functions.find((f) => f.name === rname && f.hasTerms() === hasterms) !== undefined) {
+            return true;
+        }
+
+        if(this.typedecls.find((t) => t.name === rname && t.hasTerms() === hasterms) !== undefined) {
+            return true;
+        }
+
+        if(this.tasks.find((t) => t.name === rname && t.hasTerms() === hasterms) !== undefined) {
+            return true;
+        }
+
+        return false;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        let res = `namespace ${this.name} {\n`;
+        let res = `namespace ${this.name}`;
+
+        if(toplevel) {
+            res += ";\n\n";
+        }
+        else {
+            res += " {\n";
+            fmt.indentPush();
+        }
 
         this.usings.forEach((u) => {
-            res += u.emit() + "\n";
+            res += fmt.indent(u.emit() + "\n");
         });
+        if(this.usings.length !== 0) {
+            res += "\n";
+        }
 
         this.subns.forEach((ns) => {
-            res += ns.emit() + "\n";
+            res += fmt.indent(ns.emit(false, fmt) + "\n");
         });
+        if(this.subns.length !== 0) {
+            res += "\n";
+        }
 
         this.typeDefs.forEach((td) => {
-            res += td.emit() + "\n";
+            res += fmt.indent(td.emit() + "\n");
         });
+        if(this.typeDefs.length !== 0) {
+            res += "\n";
+        }
 
         this.consts.forEach((c) => {
-            res += c.emit() + "\n";
+            res += fmt.indent(c.emit(fmt) + "\n");
         });
+        if(this.consts.length !== 0) {
+            res += "\n";
+        }
 
         this.functions.forEach((f) => {
-            res += f.emit() + "\n";
+            res += fmt.indent(f.emit(fmt) + "\n");
         });
+        if(this.functions.length !== 0) {
+            res += "\n";
+        }
 
         this.typedecls.forEach((td) => {
-            res += td.emit() + "\n";
+            res += fmt.indent(td.emit(fmt) + "\n");
         });
+        if(this.typedecls.length !== 0) {
+            res += "\n";
+        }
 
         this.apis.forEach((a) => {
-            res += a.emit() + "\n";
+            res += fmt.indent(a.emit(fmt) + "\n");
         });
+        if(this.apis.length !== 0) {
+            res += "\n";
+        }
 
         this.tasks.forEach((t) => {
-            res += t.emit() + "\n";
+            res += fmt.indent(t.emit(fmt) + "\n");
         });
 
-        res += "}\n";
+        if(res.endsWith("\n\n")) {
+            res = res.slice(0, res.length - 1);
+        }
+
+        if(!toplevel) {
+            fmt.indentPop();
+            res += fmt.indent("}\n");
+        }
 
         return res;
-    
     }
 }
 
 class Assembly {
     private m_namespaceMap: Map<string, NamespaceDeclaration> = new Map<string, NamespaceDeclaration>();
-    private m_conceptMap: Map<string, ConceptTypeDecl> = new Map<string, ConceptTypeDecl>();
-    private m_objectMap: Map<string, EntityTypeDecl> = new Map<string, EntityTypeDecl>();
-    private m_taskMap: Map<string, TaskTypeDecl> = new Map<string, TaskTypeDecl>();
-
-    m_literalRegexs: BSQRegex[] = [];
-    m_literalPaths: BSQPathValidator[] = [];
-
-    tryGetConceptTypeForFullyResolvedName(name: string): ConceptTypeDecl | undefined {
-        return this.m_conceptMap.get(name);
-    }
-
-    tryGetObjectTypeForFullyResolvedName(name: string): EntityTypeDecl | undefined {
-        return this.m_objectMap.get(name);
-    }
-
-    tryGetTaskTypeForFullyResolvedName(name: string): TaskTypeDecl | undefined {
-        return this.m_taskMap.get(name);
-    }
-
-    tryGetValidatorForFullyResolvedName(name: string): BSQRegex | undefined {
-        return this.m_literalRegexs.find((re) => re.regexid === name);
-    }
-
-    tryGetPathValidatorForFullyResolvedName(name: string): BSQPathValidator | undefined {
-        return this.m_literalPaths.find((pre) => pre.pathid === name);
-    }
-
-    hasNamespace(ns: string): boolean {
+    
+    hasToplevelNamespace(ns: string): boolean {
         return this.m_namespaceMap.has(ns);
     }
 
-    getNamespace(ns: string): NamespaceDeclaration {
+    getToplevelNamespace(ns: string): NamespaceDeclaration {
         return this.m_namespaceMap.get(ns) as NamespaceDeclaration;
     }
 
-    ensureNamespace(ns: string): NamespaceDeclaration {
-        if (!this.hasNamespace(ns)) {
+    ensureToplevelNamespace(ns: string): NamespaceDeclaration {
+        if (!this.hasToplevelNamespace(ns)) {
             this.m_namespaceMap.set(ns, new NamespaceDeclaration(ns));
         }
 
-        return this.getNamespace(ns);
+        return this.getToplevelNamespace(ns);
     }
 
     getNamespaces(): NamespaceDeclaration[] {
@@ -1439,45 +1521,10 @@ class Assembly {
         });
         return decls;
     }
-
-    addConceptDecl(resolvedName: string, concept: ConceptTypeDecl) {
-        this.m_conceptMap.set(resolvedName, concept);
-    }
-
-    addObjectDecl(resolvedName: string, object: EntityTypeDecl) {
-        this.m_objectMap.set(resolvedName, object);
-    }
-
-    addTaskDecl(resolvedName: string, task: TaskTypeDecl) {
-        this.m_taskMap.set(resolvedName, task);
-    }
-
-    addValidatorRegex(validator: BSQRegex) {
-        let ere = this.m_literalRegexs.findIndex((lre) => BSQRegex.areRedundantLiterals(lre, validator));
-        if(ere === -1) {
-            ere = this.m_literalRegexs.length;
-            this.m_literalRegexs.push(validator);
-        }
-    }
-
-    addValidatorPath(validator: BSQPathValidator) {
-        this.m_literalPaths.push(validator);
-    }
-
-    addLiteralRegex(re: BSQRegex) {
-        const ere = this.m_literalRegexs.findIndex((lre) => BSQRegex.areRedundantLiterals(lre, re));
-        if(ere === -1) {
-            this.m_literalRegexs.push(re);
-        }
-    }
-
-    getAllEntities(): EntityTypeDecl[] {
-        return [...this.m_objectMap].map((mm) => mm[1]);
-    }
 }
 
 export {
-    TemplateTermDecl, TemplateTypeRestriction, 
+    TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     InvokeExampleDeclInline, InvokeExampleDeclFile, 
@@ -1500,11 +1547,8 @@ export {
     InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
     DatatypeTypeDecl,
-
-
     StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
-    MemberActionDecl, TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
-    StringTemplate,
-    NamespaceConstDecl, NamespaceOperatorDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
+    TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
+    NamespaceConstDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     Assembly
 };
