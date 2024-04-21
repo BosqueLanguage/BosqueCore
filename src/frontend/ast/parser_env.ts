@@ -1,20 +1,57 @@
-//-------------------------------------------------------------------------------------------------------
-// Copyright (C) Microsoft. All rights reserved.
-// Licensed under the MIT license. See LICENSE.txt file in the project root for full license information.
-//-------------------------------------------------------------------------------------------------------
-
 import { SourceInfo } from "../build_decls";
 import { Assembly } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
-class FunctionScope {
-    private readonly m_rtype: TypeSignature;
-    private m_capturedvars: Set<string>;
-    private m_capturedtemplates: Set<string>;
+class LocalScopeVariableInfo {
+    readonly name: string;
+    readonly scopedname: string;
+    readonly isbinder: boolean;
+    isUsed: boolean;
 
-    private readonly m_ispcode: boolean;
-    private readonly m_args: Set<string>;
-    private readonly m_boundtemplates: Set<string>;
+    constructor(name: string, scopedname: string, isbinder: boolean) {
+        this.name = name;
+        this.scopedname = scopedname;
+        this.isbinder = isbinder;
+        this.isUsed = false;
+    }
+}
+
+class LocalScopeInfo {
+    locals: LocalScopeVariableInfo[];
+
+    constructor(LocalScopeVariableInfo[]) {
+        this.locals = this.locals;
+    }
+}
+
+abstract class ParserTopLevelScope {
+    readonly resultingType: TypeSignature | undefined; //undefined if this is a void call
+    
+    readonly args: Set<string>;
+    readonly boundtemplates: Set<string>;
+    
+}
+
+class StdParserFunctionScope extends ParserTopLevelScope {
+
+}
+
+abstract class CapturingParserToplevelScope extends ParserTopLevelScope {
+    capturedVars: Set<string>;
+    capturedTemplates: Set<string>;
+
+}
+
+class LambdaBodyParserScope extends CapturingParserToplevelScope {
+
+}
+
+class ParserStandaloneExpressionScope extends CapturingParserToplevelScope {
+
+}
+
+class FunctionScope {
+
     private m_locals: {vars: { name: string, scopedname: string, isbinder: boolean }[], isImplicitBinderUsed: boolean}[];
 
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature, ispcode: boolean) {
@@ -190,10 +227,6 @@ class ParserEnvironment {
         return this.m_currentNamespace as string;
     }
 
-    taskOpsOk(): boolean {
-        return this.m_taskenabled;
-    }
-
     isVarDefinedInAnyScope(name: string): boolean {
         return this.m_functionScopes.some((sc) => sc.isVarNameDefined(name));
     }
@@ -268,4 +301,6 @@ class ParserEnvironment {
     }
 }
 
-export { FunctionScope, ParserEnvironment };
+export { 
+    LocalScopeVariableInfo, LocalScopeInfo,
+    ParserEnvironment };
