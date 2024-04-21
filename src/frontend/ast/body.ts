@@ -4,6 +4,22 @@ import { AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
 import { BuildLevel, CodeFormatter, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
 import { LambdaDecl } from "./assembly";
 
+class BinderInfo {
+    readonly srcname: string; //the name in the source code
+    readonly name: string;    //maybe a different name that gets used for shadowing binders
+    readonly implicitdef: boolean;
+
+    constructor(srcname: string, name: string, implicitdef: boolean) {
+        this.srcname = srcname;
+        this.name = name;
+        this.implicitdef = implicitdef;
+    }
+
+    emit(): string {
+        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.name ? ("%*" + this.name + "*%") : ""}  = ` : "";
+    }
+}
+
 abstract class ITest {
     readonly isnot: boolean;
 
@@ -1275,11 +1291,11 @@ class IfTest {
 class IfExpression extends Expression {
     readonly test: IfTest;
     readonly trueValue: Expression
-    readonly trueValueBinder: string | undefined;
+    readonly trueValueBinder: BinderInfo | undefined;
     readonly falseValue: Expression;
-    readonly falseValueBinder: string | undefined;
+    readonly falseValueBinder: BinderInfo | undefined;
 
-    constructor(sinfo: SourceInfo, test: IfTest, trueValue: Expression, trueValueBinder: string | undefined, falseValue: Expression, falseValueBinder: string | undefined) {
+    constructor(sinfo: SourceInfo, test: IfTest, trueValue: Expression, trueValueBinder: BinderInfo | undefined, falseValue: Expression, falseValueBinder: BinderInfo | undefined) {
         super(ExpressionTag.IfExpression, sinfo);
         this.test = test;
         this.trueValue = trueValue;
@@ -1289,7 +1305,7 @@ class IfExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const ttest = (this.test.itestopt !== undefined ? this.test.itestopt.emit(fmt) : "") + `(${this.test.exp.emit(true, fmt)})`;
+        const ttest = (this.trueValueBinder !== undefined ? this.trueValueBinder.emit() : "") + (this.test.itestopt !== undefined ? this.test.itestopt.emit(fmt) : "") + `(${this.test.exp.emit(true, fmt)})`;
         return `if ${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
     }
 }
@@ -1713,17 +1729,17 @@ class ReturnStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-    readonly condflow: {cond: IfTest, value: BlockStatement, binderinfo: string | undefined}[];
-    readonly elseflow: {value: BlockStatement, binderinfo: string | undefined} | undefined;
+    readonly condflow: {cond: IfTest, value: BlockStatement, binderinfo: BinderInfo | undefined}[];
+    readonly elseflow: {value: BlockStatement, binderinfo: BinderInfo | undefined} | undefined;
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: BlockStatement, binderinfo: string | undefined}[], elseflow: {value: BlockStatement, binderinfo: string | undefined} | undefined) {
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: BlockStatement, binderinfo: BinderInfo | undefined}[], elseflow: {value: BlockStatement, binderinfo: BinderInfo | undefined} | undefined) {
         super(StatementTag.IfElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.value.emit(fmt)}`);
+        const ttcond = this.condflow.map((cf) => `${cf.binderinfo !== undefined ? cf.binderinfo.emit() : ""}${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.value.emit(fmt)}`);
         const ttelse = this.elseflow !== undefined ? this.elseflow.value.emit(fmt) : undefined;
 
         const iif = `if ${ttcond[0]}`;
@@ -1738,17 +1754,17 @@ class IfStatement extends Statement {
 }
 
 class MatchStatement extends Statement {
-    readonly sval: Expression;
-    readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement, binderinfo: string | undefined}[];
+    readonly sval: [Expression, BinderInfo | undefined];
+    readonly matchflow: {mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined}[];
 
-    constructor(sinfo: SourceInfo, sval: Expression, flow: {mtype: TypeSignature | undefined, value: BlockStatement, binderinfo: string | undefined}[]) {
+    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined}[]) {
         super(StatementTag.MatchStatement, sinfo);
         this.sval = sval;
         this.matchflow = flow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match (${this.sval.emit(true, fmt)})`;
+        const mheader = `match ${this.sval[1] !== undefined ? this.sval[1].emit() : ""}(${this.sval[0].emit(true, fmt)})`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
@@ -2073,7 +2089,7 @@ class StandardBodyImplementation extends BodyImplementation {
 
 export {
     RecursiveAnnotation,
-    ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
+    BinderInfo, ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
     ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
