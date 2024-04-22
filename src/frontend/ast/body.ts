@@ -1559,7 +1559,7 @@ enum StatementTag {
     TaskStatusStatement = "TaskStatusStatement", //do a status emit Task::emitStatusUpdate(...)
     TaskEventEmitStatement = "TaskEventEmitStatement", //Task::event(...)
 
-    TaskResultWithStatement = "TaskResultWithStatement", //result exp (probably a do)
+    TaskYieldStatement = "TaskYieldStatement", //result exp (probably a do)
 
     BlockStatement = "BlockStatement"
 }
@@ -1711,7 +1711,7 @@ class VariableRetypeStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.name}@${this.ttest.emit(fmt)};`;
+        return `ref ${this.name}@${this.ttest.emit(fmt)};`;
     }
 }
 
@@ -1797,7 +1797,8 @@ class AssertStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `assert ${this.cond.emit(true, fmt)};`;
+        const level = (this.level !== "release") ? (this.level + " ") : "";
+        return `assert${level} ${this.cond.emit(true, fmt)};`;
     }
 }
 
@@ -1810,7 +1811,7 @@ class DebugStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `debug ${this.value.emit(true, fmt)};`;
+        return `_debug ${this.value.emit(true, fmt)};`;
     }
 }
 
@@ -1837,7 +1838,7 @@ class ThisUpdateStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `this[${updates}];`;
+        return `ref this[${updates}];`;
     }
 }
 
@@ -1851,7 +1852,7 @@ class SelfUpdateStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const updates = this.updates.map(([name, exp]) => `${name} = ${exp.emit(true, fmt)}`).join(", ");
-        return `self[${updates}];`;
+        return `ref self[${updates}];`;
     }
 }
 
@@ -1910,13 +1911,13 @@ class TaskEventEmitStatement extends Statement {
     }
 }
 
-class TaskResultWithStatement extends Statement {
+class TaskYieldStatement extends Statement {
     readonly name: string;
     readonly terms: TypeSignature[];
     readonly args: ArgumentList;
 
     constructor(sinfo: SourceInfo, name: string, terms: TypeSignature[], args: ArgumentList) {
-        super(StatementTag.TaskResultWithStatement, sinfo);
+        super(StatementTag.TaskYieldStatement, sinfo);
         this.name = name;
         this.terms = terms;
         this.args = args;
@@ -1928,7 +1929,7 @@ class TaskResultWithStatement extends Statement {
             terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
         }
 
-        return `result self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
+        return `yield self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
     }
 }
 
@@ -2129,7 +2130,7 @@ export {
     StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
-    TaskResultWithStatement,
+    TaskYieldStatement,
     BlockStatement, 
     BodyImplementation, AbstractBodyImplementation, PredicateUFBodyImplementation, BuiltinBodyImplementation, SynthesisBodyImplementation, ExpressionBodyImplementation, StandardBodyImplementation
 };

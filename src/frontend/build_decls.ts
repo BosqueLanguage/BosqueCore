@@ -45,7 +45,7 @@ class CodeFormatter {
 
 type FullyQualifiedNamespace = string;
 
-type BuildLevel = "spec" | "test" | "release" | "safety";
+type BuildLevel = "spec" | "debug" | "test" | "release" | "safety";
 
 function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
     if(enabled === "safety") {
@@ -53,7 +53,10 @@ function isBuildLevelEnabled(check: BuildLevel, enabled: BuildLevel): boolean {
     }
     
     if(enabled === "spec") {
-        return check === "spec" ||  check === "test" || check === "release";
+        return check === "spec" || check === "debug" || check === "test" || check === "release";
+    }
+    else if(enabled === "debug") {
+        return check === "debug" || check === "test" || check === "release";
     }
     else if(enabled === "test") {
         return check === "test" || check === "release";

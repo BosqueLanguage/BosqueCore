@@ -55,8 +55,19 @@ class NominalTypeSignature extends TypeSignature {
     }
 
     emit(): string {
+        let nscope: string;
+        if(this.ns === "Core") {
+            nscope = "";
+        }
+        else if(this.ns.startsWith("Core::")) {
+            nscope = this.ns.substring(6) + "::";
+        }
+        else {
+            nscope = this.ns + "::";
+        }
+
         const rrtscope = this.tscope.map((t) => t.tname + (t.terms.length !== 0 ? ("<" + t.terms.map((tt) => tt.emit()).join(", ") + ">") : ""));
-        return (this.ns !== "Core" ? (this.ns + "::") : "") + rrtscope.join("::");
+        return nscope + rrtscope.join("::");
     }
 }
 

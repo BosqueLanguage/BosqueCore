@@ -1496,30 +1496,22 @@ class NamespaceDeclaration {
 }
 
 class Assembly {
-    private m_namespaceMap: Map<string, NamespaceDeclaration> = new Map<string, NamespaceDeclaration>();
+    readonly toplevelNamespaces: NamespaceDeclaration[] = [];
     
     hasToplevelNamespace(ns: string): boolean {
-        return this.m_namespaceMap.has(ns);
+        return this.toplevelNamespaces.find((nsd) => nsd.name === ns) !== undefined;
     }
 
     getToplevelNamespace(ns: string): NamespaceDeclaration {
-        return this.m_namespaceMap.get(ns) as NamespaceDeclaration;
+        return this.toplevelNamespaces.find((nsd) => nsd.name === ns) as NamespaceDeclaration;
     }
 
     ensureToplevelNamespace(ns: string): NamespaceDeclaration {
         if (!this.hasToplevelNamespace(ns)) {
-            this.m_namespaceMap.set(ns, new NamespaceDeclaration(ns));
+            this.toplevelNamespaces.push(new NamespaceDeclaration(ns));
         }
 
         return this.getToplevelNamespace(ns);
-    }
-
-    getNamespaces(): NamespaceDeclaration[] {
-        let decls: NamespaceDeclaration[] = [];
-        this.m_namespaceMap.forEach((v, k) => {
-            decls.push(v);
-        });
-        return decls;
     }
 }
 

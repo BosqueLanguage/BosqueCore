@@ -1,5 +1,5 @@
 import { SourceInfo } from "../build_decls";
-import { Assembly } from "./assembly";
+import { Assembly, NamespaceDeclaration } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
@@ -24,7 +24,7 @@ class LocalScopeInfo {
     }
 }
 
-abstract class ParserTopLevelScope {
+abstract class ParserScope {
     readonly resultingType: TypeSignature | undefined; //undefined if this is a void call
     
     readonly args: Set<string>;
@@ -109,13 +109,13 @@ abstract class ParserTopLevelScope {
     }
 }
 
-class StdParserFunctionScope extends ParserTopLevelScope {
+class StdParserFunctionScope extends ParserScope {
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
     }
 }
 
-abstract class CapturingParserToplevelScope extends ParserTopLevelScope {
+abstract class CapturingParserScope extends ParserScope {
     capturedVars: Set<string>;
     capturedTemplates: Set<string>;
 
@@ -127,184 +127,140 @@ abstract class CapturingParserToplevelScope extends ParserTopLevelScope {
     }
 }
 
-class LambdaBodyParserScope extends CapturingParserToplevelScope {
+class LambdaBodyParserScope extends CapturingParserScope {
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
     }
 }
 
-class ParserStandaloneExpressionScope extends CapturingParserToplevelScope {
+class ParserStandaloneExpressionScope extends CapturingParserScope {
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
-    }
-}
-
-class FunctionScope {
-    
-    getCaptureVars(): Set<string> {
-        return this.m_capturedvars;
-    }
-
-    getCaptureTemplates(): Set<string> {
-        return this.m_capturedtemplates;
-    }
-
-    getBoundTemplates(): Set<string> {
-        return this.m_boundtemplates;
-    }
-
-    getReturnType(): TypeSignature {
-        return this.m_rtype;
     }
 }
 
 class ParserEnvironment {
-    private m_currentFile: string | undefined;
-    private m_currentNamespace: string | undefined;
-    private m_taskenabled: boolean = false;
-
-    private m_functionScopes: FunctionScope[];
-
     readonly assembly: Assembly;
+
+    readonly currentFile: string;
+    readonly currentNamespace: string;
+
+    enclosingScope: ParserScope;
+    nestedScopes: CapturingParserScope[];
 
     readonly SpecialAnySignature: TypeSignature;
     readonly SpecialSomeSignature: TypeSignature;
     readonly SpecialNoneSignature: TypeSignature;
     readonly SpecialBoolSignature: TypeSignature;
-    
-    readonly SpecialIntSignature: TypeSignature;
-    readonly SpecialNatSignature: TypeSignature;
-    readonly SpecialFloatSignature: TypeSignature;
-    readonly SpecialDecimalSignature: TypeSignature;
-    readonly SpecialBigIntSignature: TypeSignature;
-    readonly SpecialBigNatSignature: TypeSignature;
-    readonly SpecialRationalSignature: TypeSignature;
-    readonly SpecialStringSignature: TypeSignature;
 
     readonly SpecialAutoSignature: TypeSignature;
 
-    constructor(assembly: Assembly) {
-        this.m_currentFile = undefined;
-        this.m_currentNamespace = undefined;
-
+    constructor(assembly: Assembly, currentFile: string, currentNamespace: string, startScope: ParserScope) {
         this.assembly = assembly;
 
-        this.m_functionScopes = [];
+        this.currentFile = currentFile;
+        this.currentNamespace = currentNamespace;
 
-        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Any"], undefined);
-        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Some"], undefined);
-        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["None"], undefined);
-        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Bool"], undefined);
+        this.enclosingScope = startScope;
+        this.nestedScopes = [];
 
-        this.SpecialIntSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Int"], undefined);
-        this.SpecialNatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Nat"], undefined);
-        this.SpecialFloatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Float"], undefined);
-        this.SpecialDecimalSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Decimal"], undefined);
-        this.SpecialBigIntSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["BigInt"], undefined);
-        this.SpecialBigNatSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["BigNat"], undefined);
-        this.SpecialRationalSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["Rational"], undefined);
-        this.SpecialStringSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["String"], undefined);
+        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Any", terms: []}]);
+        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Some", terms: []}]);
+
+        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "None", terms: []}]);
+        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Nothing", terms: []}]);
+        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Bool", terms: []}]);
         
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
     }
 
-    isFunctionScopeActive(): boolean {
-        return this.m_functionScopes.length !== 0;
+    getCurrentFunctionScope(): ParserScope {
+        return this.nestedScopes.length !== 0 ? this.nestedScopes[this.nestedScopes.length - 1] : this.enclosingScope;
     }
 
-    getCurrentFunctionScope(): FunctionScope {
-        return this.m_functionScopes[this.m_functionScopes.length - 1];
+    pushFunctionScope(scope: CapturingParserScope) {
+        this.nestedScopes.push(scope);
     }
 
-    pushFunctionScope(scope: FunctionScope) {
-        this.m_functionScopes.push(scope);
+    popFunctionScope(): CapturingParserScope {
+        return this.nestedScopes.pop() as CapturingParserScope;
     }
 
-    popFunctionScope(): FunctionScope {
-        return this.m_functionScopes.pop() as FunctionScope;
+    isVarDefinedInAnyScope(srcname: string): boolean {
+        return this.enclosingScope.isVarSourceNameDefined(srcname) || this.nestedScopes.some((sc) => sc.isVarSourceNameDefined(srcname));
     }
 
-    setNamespaceAndFile(ns: string, file: string) {
-        this.m_currentFile = file;
-        this.m_currentNamespace = ns;
-        this.m_taskenabled = file.endsWith("bsqtask");
-    }
-
-    getCurrentFile(): string {
-        return this.m_currentFile as string;
-    }
-
-    getCurrentNamespace(): string {
-        return this.m_currentNamespace as string;
-    }
-
-    isVarDefinedInAnyScope(name: string): boolean {
-        return this.m_functionScopes.some((sc) => sc.isVarNameDefined(name));
-    }
-
-    useLocalVar(name: string): string {
-        if (this.isFunctionScopeActive()) {
-            const oname = name;
-            const cscope = this.getCurrentFunctionScope();
-
-            if(oname === "$") {
-                for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
-                    if (this.m_functionScopes[i].isVarNameDefined(name)) {
-                        this.m_functionScopes[i].markUsedImplicitBinder();
-                    }
+    useLocalVar(srcname: string): string {
+        let rname: string | undefined = undefined;
+        if (srcname.startsWith("$")) {
+            for (let i = this.nestedScopes.length - 1; i >= 0; --i) {
+                if (this.nestedScopes[i].isVarSourceNameDefined(srcname)) {
+                    rname = this.nestedScopes[i].getResolvedVarName(srcname);
+                    break;
                 }
             }
 
-            if (name.startsWith("$")) {
-                for (let i = this.m_functionScopes.length - 1; i >= 0; --i) {
-                    if (this.m_functionScopes[i].isVarNameDefined(name)) {
-                        name = this.m_functionScopes[i].getScopedVarName(name);
-                        break;
-                    }
-                }
+            if(rname === undefined) {
+                rname = this.enclosingScope.getResolvedVarName(srcname);
             }
-
-            if (!cscope.isVarScopeResolvedNameDefined(name) && cscope.isPCodeEnv()) {
-                cscope.getCaptureVars().add(name);
-            }
-        }
-        
-        return name;
-    }
-
-    useTemplateType(name: string): string {
-        if (this.isFunctionScopeActive()) {
-            const cscope = this.getCurrentFunctionScope();
-
-            if (cscope.isPCodeEnv()) {
-                if (!cscope.isTemplateNameDefined(name)) {
-                    cscope.getCaptureTemplates().add(name);
-                }
-            }
-        }
-
-        return name;
-    }
-
-    tryResolveNamespace(ns: string | undefined, typename: string): string | undefined {
-        if (ns !== undefined) {
-            return ns;
-        }
-
-        const coredecl = this.assembly.getNamespace("Core");
-        if (coredecl.declaredNames.has(typename)) {
-            return "Core";
         }
         else {
-            const nsdecl = this.assembly.getNamespace(this.m_currentNamespace as string);
-            if (nsdecl.declaredNames.has(typename)) {
-                return this.m_currentNamespace as string;
-            }
-            else {
-                const fromns = nsdecl.usings.find((nsuse) => nsuse.names.indexOf(typename) !== -1);
-                return fromns !== undefined ? fromns.fromns : undefined;
+            rname = srcname;
+        }
+
+        const cscope = this.getCurrentFunctionScope();
+        if (!cscope.isVarScopeResolvedNameDefined(srcname) && (cscope instanceof CapturingParserScope)) {
+            cscope.capturedVars.add(rname);
+        }
+        
+        return rname;
+    }
+
+    useTemplateType(tname: string): string {
+        const cscope = this.getCurrentFunctionScope();
+
+        if (cscope instanceof CapturingParserScope) {
+            if (!cscope.isTemplateNameDefined(tname)) {
+                cscope.capturedTemplates.add(tname);
             }
         }
+
+        return tname;
+    }
+
+    resolveImplicitNamespaceRoot(scopedname: string): [NamespaceDeclaration, string[]] | undefined {
+        const namesplit = scopedname.split("::");
+
+        //If core is explicit then we can skip the lookup
+        if (namesplit[0] === "Core") {
+            return [this.assembly.getToplevelNamespace("Core"), namesplit.slice(1)];
+        }
+
+        //We lookup in implicit Core first
+        const coredecl = this.assembly.getToplevelNamespace("Core");
+        if (coredecl.declaredNames.has(namesplit[0])) {
+            return [coredecl, namesplit];
+        }
+
+        //Then in implicit this namespace
+        const nsdecl = this.assembly.getToplevelNamespace(this.currentNamespace);
+        if (nsdecl.declaredNames.has(namesplit[0])) {
+            return [nsdecl, namesplit];
+        }
+        else {
+            const fromns = nsdecl.usings.find((nsuse) => nsuse.names.indexOf(namesplit[0]) !== -1);
+            if(fromns !== undefined) {
+                return this.resolveImplicitNamespaceRoot(fromns.fromns);
+            }
+        }
+
+        //Then a global search assuming the name is explicitly scoped
+        const tlns = namesplit[0];
+        if (this.assembly.hasToplevelNamespace(tlns)) {
+            return [this.assembly.getToplevelNamespace(tlns), namesplit.slice(1)];
+        }
+
+        return undefined;
     }
 
     getBinderExtension(vname: string): string {
@@ -314,7 +270,7 @@ class ParserEnvironment {
 
 export { 
     LocalScopeVariableInfo, LocalScopeInfo,
-    ParserTopLevelScope, StdParserFunctionScope, CapturingParserToplevelScope, LambdaBodyParserScope, ParserStandaloneExpressionScope,
+    ParserScope, StdParserFunctionScope, CapturingParserScope, LambdaBodyParserScope, ParserStandaloneExpressionScope,
     ParserEnvironment 
 };
 

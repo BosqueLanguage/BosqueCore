@@ -1,3 +1,5 @@
+
+/*
 import { } from "./assembly";
 
 abstract class ResolvedType {
@@ -858,3 +860,4 @@ export {
     ResolvedEListType, ResolvedFunctionTypeParam, ResolvedFunctionType,
     TemplateBindScope
 };
+*/
