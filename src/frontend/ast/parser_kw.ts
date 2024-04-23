@@ -18,6 +18,7 @@ const KW_err = "err";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
+const KW_implements = "implements";
 const KW_let = "let";
 const KW_match = "match";
 const KW_none = "none";
@@ -67,6 +68,7 @@ const KW_using = "using";
 const KW_validate = "validate";
 const KW_when = "when";
 const KW_example = "example";
+const KW_status = "status";
 const KW_validator = "validator";
 
 //reserved
@@ -147,16 +149,17 @@ const KeywordStrings = [
 
 const NS_KW = [
     KW_import,
-    KW_function, KW_operator, KW_const, KW_format,
-    KW_concept, KW_entity, KW_typedef, KW_typedecl, KW_datatype, KW_enum, 
-    KW_logmsg, KW_eventmsg, KW_statusmsg
+    KW_namespace,
+    KW_typedef, KW_typedecl,
+    KW_function, KW_const, 
+    KW_concept, KW_entity, KW_enum, KW_datatype, KW_task
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
 //Attributes
 
 const GeneralAttributes = [ 
-    "exportable",
+    "export",
     "private",
     "internal",
     "hidden"
