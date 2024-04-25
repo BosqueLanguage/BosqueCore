@@ -750,7 +750,7 @@ class OkTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + "Result::" + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -766,11 +766,11 @@ class ErrTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + "Result::" + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
-class APIOkTypeDecl extends ConstructableTypeDecl {
+class APIRejectedTypeDecl extends ConstructableTypeDecl {
     constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
@@ -782,11 +782,11 @@ class APIOkTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + "Result::" + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
-class APIErrTypeDecl extends ConstructableTypeDecl {
+class APIFailedTypeDecl extends ConstructableTypeDecl {
     constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
         super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
     }
@@ -798,7 +798,39 @@ class APIErrTypeDecl extends ConstructableTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        return attrs + "entity " + "Result::" + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
+class APIErrorTypeDecl extends ConstructableTypeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
+class APISuccessTypeDecl extends ConstructableTypeDecl {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
+        super(sinfo, attributes, name, terms, provides, invariants, validates, consts, functions, methods);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -965,9 +997,9 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class APIResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (APIOkTypeDecl | APIErrTypeDecl)[];
+    readonly nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[];
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (APIOkTypeDecl | APIErrTypeDecl)[]) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[]) {
         super(sinfo, attributes, name, terms, provides, consts, functions, methods);
 
         this.nestedEntityDecls = nestedEntityDecls;
@@ -1089,7 +1121,7 @@ class StatusInfoFilter {
             return `status ${this.standard.emit()}`;
         }
 
-        return `status {std: ${this.standard.emit()}, verbose: ${this.verbose.emit()}}`;
+        return `status [${this.standard.emit()}, ${this.verbose.emit()}]`;
     }
 }
 
@@ -1106,10 +1138,10 @@ class EnvironmentVariableInformation {
 
     emit(fmt: CodeFormatter): string {
         if(this.optdefault === undefined) {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit()};`);
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()}`);
         }
         else {
-            return fmt.indent(`${this.evname}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)};`);
+            return fmt.indent(`${this.evname}: ${this.evtype.emit()} = ${this.optdefault.emit(true, fmt)}`);
         }
     }
 }
@@ -1329,7 +1361,7 @@ class NamespaceTypedef extends AbstractCoreDecl {
 
     emit(): string {
         const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        return `${attr}typedef ${this.name} = ${this.boundType.emit()};`;
+        return `${attr}type ${this.name} = ${this.boundType.emit()};`;
     }
 }
 
@@ -1533,7 +1565,7 @@ export {
     InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     RegexValidatorTypeDecl, ASCIIRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, ASCIIStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIOkTypeDecl, APIErrTypeDecl, SomethingTypeDecl, MapEntryEntityTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryEntityTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EntityTypeDecl, 
     InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,

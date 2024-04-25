@@ -13,13 +13,14 @@ const KW_abort = "abort";
 const KW_assert = "assert";
 const KW_elif = "elif";
 const KW_else = "else";
-const KW_env = "environment";
+const KW_env = "env";
 const KW_err = "err";
 const KW_false = "false";
 const KW_fn = "fn";
 const KW_if = "if";
 const KW_implements = "implements";
 const KW_let = "let";
+const KW_literal = "literal";
 const KW_match = "match";
 const KW_none = "none";
 const KW_nothing = "nothing";
@@ -29,6 +30,7 @@ const KW_ref = "ref";
 const KW_return = "return";
 const KW_something = "something";
 const KW_some = "some";
+const KW_type = "type";
 const KW_synth = "defer";
 const KW_switch = "switch";
 const KW_then = "then";
@@ -45,6 +47,7 @@ const KW_test = "test";
 
 ////
 //Declaration keywords
+const KW_api = "api";
 const KW_concept = "concept";
 const KW_const = "const";
 const KW_enum = "enum";
@@ -61,13 +64,13 @@ const KW_provides = "provides";
 const KW_requires = "requires";
 const KW_in = "in";
 const KW_task = "task";
-const KW_typedef = "typedef";
 const KW_typedecl = "typedecl";
 const KW_datatype = "datatype";
 const KW_using = "using";
 const KW_validate = "validate";
 const KW_when = "when";
 const KW_example = "example";
+const KW_event = "event";
 const KW_status = "status";
 const KW_validator = "validator";
 
@@ -138,11 +141,6 @@ const KeywordStrings = [
     KW_var,
     KW_when,
 
-    KW_logmsg,
-    KW_eventmsg,
-    KW_statusmsg,
-    KW_format,
-
     KW_bsqon,
     KW_example
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
@@ -173,6 +171,7 @@ const TypeDeclAttributes = [
     "__typedeclable",
     "__constructable",
     "__primitive",
+    "__numeric",
     "__typebase",
     "__universal"
 ];

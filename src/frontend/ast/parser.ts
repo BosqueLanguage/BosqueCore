@@ -5,6 +5,8 @@ import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpres
 import { Assembly, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
 
+const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
+
 const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",

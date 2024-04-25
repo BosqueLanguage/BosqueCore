@@ -696,7 +696,7 @@ concept APIResult<T> provides Some {
     __internal __constructable entity Error provides APIResult<T> {
     }
 
-    //Concerns but a value is produced any -- softcheck ensures or explicit return
+    //A value is produced any -- maybe softcheck ensures info along with explicit return
     __internal __constructable entity Success provides Result<T> {
     }
 }
