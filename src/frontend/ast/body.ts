@@ -1001,7 +1001,7 @@ class PostfixInvoke extends PostfixOperation {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
 
-        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")})`;
+        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -1415,7 +1415,7 @@ class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
     }
 
     emit(fmt: CodeFormatter): string {
-        return this.updates.emit(fmt, "[", "]");
+        return "." + this.updates.emit(fmt, "[", "]");
     }
 }
 
@@ -2023,11 +2023,11 @@ class SynthesisBodyImplementation extends BodyImplementation {
         }
 
         if(fmt === undefined) {
-            return `{${hstr} defer; }`;
+            return `{${hstr} $?_; }`;
         }
         else {
             fmt.indentPush();
-            const bb = fmt.indent("defer;");
+            const bb = fmt.indent("$?_;");
             fmt.indentPop();
 
             return `{${hstr}\n${bb}\n${fmt.indent("}")}`;

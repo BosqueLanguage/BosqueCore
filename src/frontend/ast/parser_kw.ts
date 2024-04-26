@@ -11,6 +11,7 @@ const KW_action = "action";
 const KW__debug = "_debug";
 const KW_abort = "abort";
 const KW_assert = "assert";
+const KW_do = "do";
 const KW_elif = "elif";
 const KW_else = "else";
 const KW_env = "env";
@@ -30,7 +31,9 @@ const KW_ref = "ref";
 const KW_return = "return";
 const KW_something = "something";
 const KW_some = "some";
+const KW_this = "this";
 const KW_type = "type";
+const KW_self = "self";
 const KW_synth = "defer";
 const KW_switch = "switch";
 const KW_then = "then";
@@ -48,6 +51,7 @@ const KW_test = "test";
 ////
 //Declaration keywords
 const KW_api = "api";
+const KW_as = "as";
 const KW_concept = "concept";
 const KW_const = "const";
 const KW_enum = "enum";
@@ -77,20 +81,18 @@ const KW_validator = "validator";
 //reserved
 const KW_operator = "operator";
 
-const KeywordStrings = [
+const KeywordStringsExpression = [
     KW_recursive_q,
     KW_recursive,
     
     KW_action,
     KW__debug,
+    KW_do,
     KW_abort,
     KW_assert,
-    KW_callwith,
     KW_concept,
     KW_const,
     KW_debug,
-    KW_control,
-    KW_effect,
     KW_elif,
     KW_else,
     KW_enum,
@@ -103,10 +105,12 @@ const KeywordStrings = [
     KW_fn,
     KW_function,
     KW_if,
+    KW_implements,
     KW_import,
     KW_in,
     KW_invariant,
     KW_let,
+    KW_literal,
     KW_match,
     KW_method,
     KW_namespace,
@@ -119,10 +123,9 @@ const KeywordStrings = [
     KW_provides,
     KW_ref,
     KW_release,
-    KW_resultwith,
     KW_return,
-    KW_result,
     KW_requires,
+    KW_self,
     KW_something,
     KW_some,
     KW_safety,
@@ -132,25 +135,27 @@ const KeywordStrings = [
     KW_task,
     KW_test,
     KW_then,
+    KW_this,
     KW_true,
-    KW_typedef,
+    KW_type,
     KW_typedecl,
     KW_datatype,
     KW_using,
     KW_validate,
     KW_var,
     KW_when,
+    KW_yield,
 
     KW_bsqon,
     KW_example
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
-const NS_KW = [
-    KW_import,
+const KeywordStringsDeclaration = [
+    KW_import, KW_using, KW_as,
     KW_namespace,
-    KW_typedef, KW_typedecl,
-    KW_function, KW_const, 
-    KW_concept, KW_entity, KW_enum, KW_datatype, KW_task
+    KW_typedecl,
+    KW_function, KW_const, KW_api,
+    KW_concept, KW_entity, KW_enum, KW_datatype, KW_task, KW_event, KW_status, KW_validator
 ];
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -219,9 +224,7 @@ const SYM_rbrace = "}";
 const SYM_rbracebar = "|}";
 
 const SYM_at = "@";
-const SYM_atat = "@@";
 const SYM_hash = "#";
-const SYM_percent = "%";
 const SYM_amp = "&";
 const SYM_ampamp = "&&";
 const SYM_bang = "!";
@@ -236,22 +239,28 @@ const SYM_eqeq = "==";
 const SYM_eqeqeq = "===";
 const SYM_bigarrow = "=>";
 const SYM_implies = "==>";
+const SYM_iff = "<==>";
 const SYM_arrow = "->";
 const SYM_semicolon = ";";
 const SYM_bar = "|";
 const SYM_barbar = "||";
 const SYM_plus = "+";
 const SYM_question = "?";
-const SYM_questionquestion = "??";
 const SYM_le = "<";
 const SYM_leq = "<=";
 const SYM_ge = ">";
 const SYM_geq = ">=";
 const SYM_minus = "-";
 const SYM_times = "*";
-const SYM_div = "/";
+const SYM_div = "//";
 const SYM_land = "/\\";
 const SYM_lor = "\\/";
+const SYM_dotdotdot = "...";
+const SYM_HOLE = "$?_";
+
+//Reserved
+const SYM_atat = "@@";
+const SYM_questionquestion = "??";
 
 const SymbolStrings = [
     SYM_lbrack,
@@ -266,7 +275,6 @@ const SymbolStrings = [
     SYM_at,
     SYM_atat,
     SYM_hash,
-    SYM_percent,
     SYM_amp,
     SYM_bang,
     SYM_ampamp,
@@ -281,6 +289,7 @@ const SymbolStrings = [
     SYM_eqeqeq,
     SYM_bigarrow,
     SYM_implies,
+    SYM_iff,
     SYM_arrow,
     SYM_semicolon,
     SYM_bar,
@@ -296,42 +305,16 @@ const SymbolStrings = [
     SYM_times,
     SYM_div,
     SYM_land,
-    SYM_lor
+    SYM_lor,
+    SYM_dotdotdot,
+    SYM_HOLE
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
-const RegexFollows = new Set<string>([
-    KW__debug,
-    KW_ensures,
-    KW_invariant,
-    KW_return,
-    KW_requires,
-    KW_validate,
-    SYM_lbrack,
-    SYM_lparen,
-    SYM_lbrace,
-    SYM_ampamp,
-    SYM_bang,
-    SYM_bangeq,
-    SYM_bangeqeq,
-    SYM_coma,
-    SYM_eq,
-    SYM_eqeq,
-    SYM_eqeqeq,
-    SYM_bigarrow,
-    SYM_implies,
-    SYM_barbar,
-    SYM_plus,
-    SYM_le,
-    SYM_leq,
-    SYM_ge,
-    SYM_geq,
-    SYM_minus,
-    SYM_times,
-    SYM_div
-]);
 
 const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar];
 const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar];
 
 export {
+    KeywordStringsExpression, KeywordStringsDeclaration,
+    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes, SensitiveAttribute,
+    SymbolStrings, LeftScanParens, RightScanParens
 };

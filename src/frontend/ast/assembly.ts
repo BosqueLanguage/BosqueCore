@@ -1293,7 +1293,7 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
 
         let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
         if(this.getImplementsAPI() !== undefined) {
-            rootdecl += `provides ${this.getImplementsAPI()!.name}`;
+            rootdecl += `implements ${this.getImplementsAPI()!.name}`;
         }
 
         fmt.indentPush();
