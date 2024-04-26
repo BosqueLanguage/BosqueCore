@@ -11,36 +11,56 @@ const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",
 
-    Numberino: "[LITERAL_NUMBERINO]",
-    Int: "[LITERAL_INT]",
+    NumberinoInt: "[LITERAL_NUMBERINO_INT]",
+    NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
+    NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
+
     Nat: "[LITERAL_NAT]",
+    Int: "[LITERAL_INT]",
+    BigNat: "[LITERAL_BIGNAT]",
+    BigInt: "[LITERAL_BIGINT]",
     Float: "[LITERAL_FLOAT]",
     Decimal: "[LITERAL_DECIMAL]",
-    BigInt: "[LITERAL_BIGINT]",
-    BigNat: "[LITERAL_BIGNAT]",
     Rational: "[LITERAL_RATIONAL]",
-    Regex: "[LITERAL_REGEX]",
+    DecimalDegree: "[LITERAL_DECIMAL_DEGREE]",
+    LatLong: "[LITERAL_LATLONG]",
+    Complex: "[LITERAL_COMPLEX]",
     
+    ByteBuffer: "[LITERAL_BYTEBUFFER]",
+    UUIDValue: "[LITERAL_UUID]",
+    ShaHashcode: "[LITERAL_SHA]",
+
     String: "[LITERAL_STRING]",
     ASCIIString: "[LITERAL_ASCII_STRING]",
-
-    BSQON: "[BSQON]",
-    BSQON_EXAMPLE_ARGS: "[BSQON_EXAMPLE_ARGS]",
-    BSQON_EXAMPLE_RESULT: "[BSQON_EXAMPLE_RESULT]",
-    BSQON_EXAMPLE_FILE: "[BSQON_EXAMPLE_FILE]",
-
     TemplateString: "[LITERAL_TEMPLATE_STRING]",
     TemplateASCIIString: "[LITERAL_TEMPLATE_ASCII_STRING]",
 
-    //Names
-    Namespace: "[NAMESPACE]",
-    Type: "[TYPE]",
-    ScopeName: "[SCOPE]",
-    Template: "[TEMPLATE]",
-    Identifier: "[IDENTIFIER]",
-    FollowTypeSep: "[FOLLOWTYPE]",
+    Regex: "[LITERAL_REGEX]",
+    PathItem: "[LITERAL_PATH_ITEM]",
 
-    FormatSpecifier: "[FORMAT]",
+    DateTime: "[LITERAL_DATETIME]",
+    UTCDateTime: "[LITERAL_UTC_DATETIME]",
+    PlainDate: "[LITERAL_PLAIN_DATE]",
+    PlainTime: "[LITERAL_PLAIN_TIME]",
+    TickTime: "[LITERAL_TICK_TIME]",
+    LogicalTime: "[LITERAL_LOGICAL_TIME]",
+    Timestamp: "[LITERAL_TIMESTAMP]",
+
+    DeltaDateTime: "[LITERAL_DELTA_DATETIME]",
+    DeltaUTCDateTime: "[LITERAL_DELTA_UTC_DATETIME]",
+    DeltaPlainDate: "[LITERAL_DELTA_PLAIN_DATE]",
+    DeltaPlainTime: "[LITERAL_DELTA_PLAIN_TIME]",
+    DeltaSeconds: "[LITERAL_DELTA_SECONDS]",
+    DeltaTickTime: "[LITERAL_DELTA_TICK_TIME]",
+    DeltaLogicalTime: "[LITERAL_DELTA_LOGICAL_TIME]",
+    DeltaTimestamp: "[LITERAL_DELTA_TIMESTAMP]",
+
+    //Names
+    NamespaceName: "[NAMESPACE]",
+    TypeName: "[IDENTIFIER]",
+    Template: "[TEMPLATE]",
+    IdentifierName: "[IDENTIFIER]",
+    ScopedName: "[SCOPE]",
 
     EndOfStream: "[EOS]"
 };
