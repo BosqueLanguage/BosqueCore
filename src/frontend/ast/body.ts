@@ -227,8 +227,6 @@ enum ExpressionTag {
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
 
-    BSQONLiteralExpression = "BSQONLiteralExpression",
-
     StringSliceExpression = "StringSliceExpression",
     ASCIIStringSliceExpression = "ASCIIStringSliceExpression",
 
@@ -247,6 +245,8 @@ enum ExpressionTag {
     ConstructorEListExpression = "ConstructorEListExpression",
     ConstructorLambdaExpression = "ConstructorLambdaExpression",
 
+    LetExpression = "LetExpression",
+
     LambdaInvokeExpression = "LambdaInvokeExpression",
     SpecialConstructorExpression = "SpecialConstructorExpression",
     CallNamespaceFunctionExpression = "CallNamespaceFunctionExpression",
@@ -257,6 +257,8 @@ enum ExpressionTag {
     
     LogicActionAndExpression = "LogicActionAndExpression",
     LogicActionOrExpression = "LogicActionOrExpression",
+
+    ParseAsTypeExpression = "ParseAsTypeExpression",
 
     PostfixOpExpression = "PostfixOpExpression",
 
@@ -440,21 +442,6 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 }
 
-class BSQONLiteralExpression extends Expression {
-    readonly bsqonstr: string;
-    readonly bsqtype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, bsqonstr: string, bsqtype: TypeSignature) {
-        super(ExpressionTag.BSQONLiteralExpression, sinfo);
-        this.bsqonstr = bsqonstr;
-        this.bsqtype = bsqtype;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `bsqon<${this.bsqtype.emit()}>{| ${this.bsqonstr} |}`;
-    }
-}
-
 class StringSliceExpression extends Expression {
     readonly str: Expression;
     readonly start: Expression | undefined;
@@ -622,6 +609,22 @@ class ConstructorLambdaExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.invoke.emit(fmt);
+    }
+}
+
+class LetExpression extends Expression {
+    readonly decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[];
+    readonly body: Expression;
+
+    constructor(sinfo: SourceInfo, decls: {vname: string, vtype: TypeSignature | undefined, value: Expression}[], body: Expression) {
+        super(ExpressionTag.LetExpression, sinfo);
+        this.decls = decls;
+        this.body = body;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)};`).join(", ");
+        return `{| let ${dds} in ${this.body.emit(true, fmt)} |}`;
     }
 }
 
@@ -830,6 +833,21 @@ class LogicActionOrExpression extends Expression {
     }
 }
 
+class ParseAsTypeExpression extends Expression {
+    readonly exp: Expression;
+    readonly ttype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, exp: Expression, ttype: TypeSignature) {
+        super(ExpressionTag.ParseAsTypeExpression, sinfo);
+        this.exp = exp;
+        this.ttype = ttype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `<${this.exp.emit(toplevel, fmt)}> ${this.ttype.emit()}`;
+    }
+}
+
 enum PostfixOpTag {
     PostfixError = "PostfixError",
 
@@ -843,7 +861,8 @@ enum PostfixOpTag {
 
     PostfixAssignFields = "PostfixAssignFields",
 
-    PostfixInvoke = "PostfixInvoke"
+    PostfixInvoke = "PostfixInvoke",
+    PostfixLiteralKeyAccess = "PostfixLiteralKeyAccess"
 }
 
 abstract class PostfixOperation {
@@ -890,14 +909,16 @@ class PostfixError extends PostfixOperation {
 
 class PostfixAccessFromIndex extends PostfixOperation {
     readonly index: number;
+    readonly isLiteralOp: boolean;
 
-    constructor(sinfo: SourceInfo, index: number) {
+    constructor(sinfo: SourceInfo, index: number, isLiteralOp: boolean) {
         super(sinfo, PostfixOpTag.PostfixAccessFromIndex);
         this.index = index;
+        this.isLiteralOp = isLiteralOp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.${this.index}`;
+        return `${this.isLiteralOp ? "!" : ""}.${this.index}`;
     }
 }
 
@@ -916,14 +937,16 @@ class PostfixProjectFromIndecies extends PostfixOperation {
 
 class PostfixAccessFromName extends PostfixOperation {
     readonly name: string;
+    readonly isLiteralOp: boolean;
 
-    constructor(sinfo: SourceInfo, name: string) {
+    constructor(sinfo: SourceInfo, name: string, isLiteralOp: boolean) {
         super(sinfo, PostfixOpTag.PostfixAccessFromName);
         this.name = name;
+        this.isLiteralOp = isLiteralOp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `.${this.name}`;
+        return `${this.isLiteralOp ? "!" : ""}.${this.name}`;
     }
 }
 
@@ -962,7 +985,7 @@ class PostfixAsConvert extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return "!" + this.ttest.emit(fmt);
+        return "@" + this.ttest.emit(fmt);
     }
 }
 
@@ -1002,6 +1025,19 @@ class PostfixInvoke extends PostfixOperation {
         }
 
         return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
+    }
+}
+
+class PostfixLiteralKeyAccess extends PostfixOperation {
+    readonly kexp: Expression;
+
+    constructor(sinfo: SourceInfo, kexp: Expression) {
+        super(sinfo, PostfixOpTag.PostfixLiteralKeyAccess);
+        this.kexp = kexp;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `![${this.kexp.emit}]`;
     }
 }
 
@@ -2095,21 +2131,23 @@ export {
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
     LiteralTypeDeclValueExpression,
-    BSQONLiteralExpression,
     StringSliceExpression, InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression,
+    LetExpression,
     LambdaInvokeExpression,
     CallNamespaceFunctionExpression, CallTypeFunctionExpression, CallRefThisExpression,
     CallRefSelfExpression, CallTaskActionExpression,
     LogicActionAndExpression, LogicActionOrExpression,
+    ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
     PostfixIsTest, PostfixAsConvert,
     PostfixAssignFields,
     PostfixInvoke,
+    PostfixLiteralKeyAccess,
     UnaryExpression, PrefixNotOp, PrefixNegateOp,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,

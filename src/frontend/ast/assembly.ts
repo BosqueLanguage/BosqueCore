@@ -189,6 +189,7 @@ class InvokeExampleDeclInline extends AbstractDecl {
     }
 
     emit(fmt: CodeFormatter): string {
+        xxxx;
         if(this.istest) {
             return fmt.indent(`test ${this.args} -> ${this.output};`);
         }
@@ -222,14 +223,21 @@ class InvokeExampleDeclFile extends AbstractDecl {
 class DeclarationAttibute {
     readonly name: string;
     readonly tags: {enumType: string, tag: string}[]; //tags are enum names
+    readonly text: string | undefined;
 
-    constructor(name: string, tags: {enumType: string, tag: string}[]) {
+    constructor(name: string, tags: {enumType: string, tag: string}[], text: string | undefined) {
         this.name = name;
         this.tags = tags;
+        this.text = text;
     }
 
     emit(): string {
-        return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType}.${t.tag}`).join(", ") + "]"}`;
+        if(this.text === undefined) {
+            return `%** ${this.text} **%`;
+        }
+        else {
+            return `${this.name}${this.tags.length === 0 ? "" : " [" + this.tags.map((t) => `${t.enumType}.${t.tag}`).join(", ") + "]"}`;
+        }
     }
 }
 
