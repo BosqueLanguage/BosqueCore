@@ -85,7 +85,37 @@ class Token {
     }
 }
 
+class LexerState {
+    readonly cline: number;
+    readonly linestart: number;
+    readonly cpos: number;
+    readonly tokens: Token[];
+
+    readonly symbols: string[];
+    readonly attributes: string[];
+    readonly keywords: string[];
+
+    constructor(cline: number, linestart: number, cpos: number, symbols: string[], attributes: string[], keywords: string[]) {
+        this.cline = cline;
+        this.linestart = linestart;
+        this.cpos = cpos;
+        this.tokens = [];
+
+        this.symbols = symbols;
+        this.attributes = attributes;
+        this.keywords = keywords;
+    }
+}
+
 class Lexer {
+    readonly m_macrodefs: string[];
+    readonly m_namespaceScopes: Set<String> | undefined;
+
+    readonly m_input: string;
+    readonly m_internTable: Map<string, string>;
+    
+    readonly stateStack: LexerState[];
+
     private static findKeywordString(str: string): string | undefined {
         let imin = 0;
         let imax = KeywordStrings.length;
@@ -107,15 +137,7 @@ class Lexer {
         return undefined;
     }
 
-    private m_macrodefs: string[];
-    private m_namespaceScopes: Set<String> | undefined;
-
-    private m_input: string;
-    private m_internTable: Map<string, string>;
-    private m_cline: number;
-    private m_linestart: number;
-    private m_cpos: number;
-    private m_tokens: Token[];
+    
 
     constructor(input: string, macrodefs: string[], namespaceScopes: Set<String> | undefined) {
         this.m_macrodefs = macrodefs;

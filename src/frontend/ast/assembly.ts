@@ -177,24 +177,23 @@ class ValidateDecl extends ConditionDecl {
 
 class InvokeExampleDeclInline extends AbstractDecl {
     readonly istest: boolean;
-    readonly args: string; //a tuple of the arguments
-    readonly output: string;
+    readonly entries: {args: Expression[], output: Expression}[];
 
-    constructor(sinfo: SourceInfo, istest: boolean, args: string, output: string) {
+    constructor(sinfo: SourceInfo, istest: boolean, entries: {args: Expression[], output: Expression}[]) {
         super(sinfo);
 
         this.istest = istest;
-        this.args = args;
-        this.output = output;
+        this.entries = entries;
     }
 
     emit(fmt: CodeFormatter): string {
-        xxxx;
+        const estr = this.entries.map((e) => `(${e.args.map((a) => a.emit(true, fmt)).join(", ")}) -> ${e.output.emit(true, fmt)}`).join(", ");
+
         if(this.istest) {
-            return fmt.indent(`test ${this.args} -> ${this.output};`);
+            return fmt.indent(`test { ${estr} }`);
         }
         else {
-            return fmt.indent(`example ${this.args} -> ${this.output};`);
+            return fmt.indent(`example { ${estr} }`);
         }
     }
 }
