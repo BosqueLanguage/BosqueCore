@@ -86,16 +86,20 @@ class Token {
 }
 
 class LexerState {
-    readonly cline: number;
-    readonly linestart: number;
-    readonly cpos: number;
-    readonly tokens: Token[];
+    readonly mode: string;
+
+    cline: number;
+    linestart: number;
+    cpos: number;
+    tokens: Token[];
 
     readonly symbols: string[];
     readonly attributes: string[];
     readonly keywords: string[];
+    readonly namespaces: string[];
+    readonly typenames: string[];
 
-    constructor(cline: number, linestart: number, cpos: number, symbols: string[], attributes: string[], keywords: string[]) {
+    constructor(mode: string, cline: number, linestart: number, cpos: number, tokens: Token[], symbols: string[], attributes: string[], keywords: string[], namespaces: string[], typenames: string[]) {
         this.cline = cline;
         this.linestart = linestart;
         this.cpos = cpos;
@@ -104,28 +108,38 @@ class LexerState {
         this.symbols = symbols;
         this.attributes = attributes;
         this.keywords = keywords;
+
+        this.namespaces = namespaces;
+        this.typenames = typenames;
+    }
+
+    cloneForTry(mode: string): LexerState {
+        return new LexerState(mode, this.cline, this.linestart, this.cpos, [...this.tokens], this.symbols, this.attributes, this.keywords, this.namespaces, this.typenames);
     }
 }
 
 class Lexer {
-    readonly m_macrodefs: string[];
-    readonly m_namespaceScopes: Set<String> | undefined;
-
-    readonly m_input: string;
-    readonly m_internTable: Map<string, string>;
+    readonly macrodefs: string[];
+    readonly input: string;
     
     readonly stateStack: LexerState[];
 
-    private static findKeywordString(str: string): string | undefined {
+    private currentState(): LexerState {
+        return this.stateStack[this.stateStack.length - 1];
+    }
+
+    private findKeywordString(str: string): string | undefined {
+        const kws = this.currentState().keywords;
+
         let imin = 0;
-        let imax = KeywordStrings.length;
+        let imax = kws.length;
 
         while (imin < imax) {
             const imid = Math.floor((imin + imax) / 2);
 
-            const scmpval = (str.length !== KeywordStrings[imid].length) ? (KeywordStrings[imid].length - str.length) : ((str !== KeywordStrings[imid]) ? (str < KeywordStrings[imid] ? -1 : 1) : 0);
+            const scmpval = (str.length !== kws[imid].length) ? (kws[imid].length - str.length) : ((str !== kws[imid]) ? (str < kws[imid] ? -1 : 1) : 0);
             if (scmpval === 0) {
-                return KeywordStrings[imid];
+                return kws[imid];
             }
             else if (scmpval < 0) {
                 imax = imid;
@@ -137,132 +151,62 @@ class Lexer {
         return undefined;
     }
 
-    
+    constructor(input: string, macrodefs: string[], istate: LexerState) {
+        this.macrodefs = macrodefs;
+        this.input = input;
 
-    constructor(input: string, macrodefs: string[], namespaceScopes: Set<String> | undefined) {
-        this.m_macrodefs = macrodefs;
-        this.m_namespaceScopes = namespaceScopes;
-
-        this.m_input = input;
-        this.m_internTable = new Map<string, string>();
-        this.m_cline = 1;
-        this.m_linestart = 0;
-        this.m_cpos = 0;
-        this.m_tokens = [];
+        this.stateStack = [istate];
     }
 
     ////
     //Helpers
-    private isInScopeNameMode(): boolean {
-        return this.m_namespaceScopes === undefined;
-    }
-
-    private static readonly _s_scopenameRe = /(([A-Z][_a-zA-Z0-9]+)::)*([A-Z][_a-zA-Z0-9]+)/y;
-    private static readonly _s_typenameRe = /[A-Z][_a-zA-Z0-9]+/y;
-    private static readonly _s_istypenameRe = /^[A-Z][_a-zA-Z0-9]+$/y;
-    private tryExtractScopeName(): string | undefined {
-        if(this.m_namespaceScopes !== undefined) {
-            return undefined;
-        }
-
-        Lexer._s_scopenameRe.lastIndex = this.m_cpos;
-        const m = Lexer._s_scopenameRe.exec(this.m_input);
-        if(m === null) {
-            return undefined;
-        }
-        else {
-            return m[0];
-        }
-    }
-
-    private tryExtractNamespaceName(): string | undefined {
-        if(this.m_namespaceScopes === undefined) {
-            return undefined;
-        }
-
-        Lexer._s_scopenameRe.lastIndex = this.m_cpos;
-        const m = Lexer._s_scopenameRe.exec(this.m_input);
-        if(m === null) {
-            return undefined;
-        }
-        else {
-            const fullscope = m[0];
-            if(this.m_namespaceScopes.has(fullscope)) {
-                return fullscope;
-            }
-            else {
-                let ttrim = fullscope.lastIndexOf(SYM_coloncolon);
-                let pscope = fullscope;
-                while(ttrim !== -1) {
-                    pscope = pscope.substring(0, ttrim);
-
-                    if(this.m_namespaceScopes.has(pscope)) {
-                        return pscope;
-                    }
-                   
-                    ttrim = pscope.lastIndexOf(SYM_coloncolon);
-                }
-                return undefined;
-            }
-        }
-    }
-
-    private tryExtractTypenameName(): string | undefined {
-        if(this.m_namespaceScopes === undefined) {
-            return undefined;
-        }
-
-        Lexer._s_typenameRe.lastIndex = this.m_cpos;
-        const m = Lexer._s_typenameRe.exec(this.m_input);
-        if(m === null) {
-            return undefined;
-        }
-        else {
-            return m[0];
-        }
-    }
-
-    public isDeclTypeName(str: string): boolean {
-        Lexer._s_istypenameRe.lastIndex = 0;
-        return Lexer._s_istypenameRe.test(str);
-    }
-
-    private isTemplateName(str: string): boolean {
-        return str.length === 1 && /^[A-Z]$/.test(str);
-    }
-
-    //TODO: we need to make sure that someone doesn't name a local variable "_"
-    private isIdentifierName(str: string): boolean {
-        return /^([$]|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
-    }
-
-    private isFormatName(str: string): boolean {
-        return /^[$][0-9]+$/.test(str);
-    }
-
     private recordLexToken(epos: number, kind: string) {
-        this.m_tokens.push(new Token(this.m_cline, this.m_cpos - this.m_linestart, this.m_cpos, epos - this.m_cpos, kind, kind)); //set data to kind string
-        this.m_cpos = epos;
+        const cstate = this.currentState();
+
+        cstate.tokens.push(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, kind)); //set data to kind string
+        cstate.cpos = epos;
     }
 
     private recordLexTokenWData(epos: number, kind: string, data: string) {
-        const rdata = this.m_internTable.get(data) || this.m_internTable.set(data, data).get(data);
-        this.m_tokens.push(new Token(this.m_cline, this.m_cpos - this.m_linestart, this.m_cpos, epos - this.m_cpos, kind, rdata));
-        this.m_cpos = epos;
+        const cstate = this.currentState();
+
+        cstate.tokens.push(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, data));
+        cstate.cpos = epos;
     }
 
-    private static readonly _s_whitespaceRe = /\s+/y;
+    private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]/';
     private tryLexWS(): boolean {
-        Lexer._s_whitespaceRe.lastIndex = this.m_cpos;
-        const m = Lexer._s_whitespaceRe.exec(this.m_input);
+        const cstate = this.currentState();
+        const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
+
         if (m === null) {
             return false;
         }
 
-        for (let i = 0; i < m[0].length; ++i) {
-            if (m[0][i] === "\n") {
-                this.m_cline++;
-                this.m_linestart = this.m_cpos + i + 1;
+        for (let i = 0; i < m.length; ++i) {
+            if (m[i] === "\n") {
+                cstate.cline++;
+                cstate.linestart = cstate.cpos + i + 1;
+            }
+        }
+
+        cstate.cpos += m.length;
+        return true;
+    }
+
+    private tryLexLineComment(): boolean {
+        const cstate = this.currentState();
+        const m = this.input.startsWith("%%", cstate.cpos);
+
+        if (!m) {
+            return false;
+        }
+
+        const epos = this.input.indexOf("\n", cstate.cpos);
+        for (let i = 0; i < (epos - cstate.cpos); ++i) {
+            if (this.input[cstate.cpos + i] === "\n") {
+                cstate.cline++;
+                cstate.linestart = this.m_cpos + i + 1;
             }
         }
 
@@ -270,23 +214,13 @@ class Lexer {
         return true;
     }
 
-    private static readonly _s_commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/uy;
-    private tryLexComment(): boolean {
-        Lexer._s_commentRe.lastIndex = this.m_cpos;
-        const m = Lexer._s_commentRe.exec(this.m_input);
-        if (m === null) {
-            return false;
-        }
+    private static readonly _s_templateNameRe = "/[A-Z]/";
+    private isTemplateName(str: string): boolean {
+        return accepts(Lexer._s_templateNameRe, str);
+    }
 
-        for (let i = 0; i < m[0].length; ++i) {
-            if (m[0][i] === "\n") {
-                this.m_cline++;
-                this.m_linestart = this.m_cpos + i + 1;
-            }
-        }
-
-        this.m_cpos += m[0].length;
-        return true;
+    private isIdentifierName(str: string): boolean {
+        return /^([$]|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
     }
 
     private static readonly _s_intNumberinoRe = /0|[1-9][0-9]*/y;

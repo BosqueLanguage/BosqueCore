@@ -125,7 +125,7 @@ class PreConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -141,7 +141,7 @@ class PostConditionDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -157,7 +157,7 @@ class InvariantDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("invariant" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -171,7 +171,7 @@ class ValidateDecl extends ConditionDecl {
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("validate" + this.emitDiagnosticTag() + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("validate" + this.emitDiagnosticTag() + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 

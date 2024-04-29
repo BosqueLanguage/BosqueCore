@@ -1582,6 +1582,7 @@ enum StatementTag {
 
     AbortStatement = "AbortStatement",
     AssertStatement = "AssertStatement", //assert(x > 0)
+    ValidateStatement = "ValidateStatement", //assert(x > 0)
 
     DebugStatement = "DebugStatement", //print an arg or if empty attach debugger
 
@@ -1835,6 +1836,23 @@ class AssertStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         const level = (this.level !== "release") ? (this.level + " ") : "";
         return `assert${level} ${this.cond.emit(true, fmt)};`;
+    }
+}
+
+
+class ValidateStatement extends Statement {
+    readonly cond: Expression;
+    readonly diagnosticTag: string | undefined
+
+    constructor(sinfo: SourceInfo, cond: Expression, diagnosticTag: string | undefined) {
+        super(StatementTag.ValidateStatement, sinfo);
+        this.cond = cond;
+        this.diagnosticTag = diagnosticTag;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const ttg = (this.tag !== undefined) ? "" : `[${this.diagnosticTag}]`;
+        return `validate${ttg} ${this.cond.emit(true, fmt)};`;
     }
 }
 
@@ -2164,7 +2182,7 @@ export {
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
     ReturnStatement,
-    IfStatement, MatchStatement, AbortStatement, AssertStatement, DebugStatement,
+    IfStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
