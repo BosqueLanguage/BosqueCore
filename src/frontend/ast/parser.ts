@@ -617,7 +617,7 @@ class Lexer {
         return true;
     }
 
-    private static _spathRe = '/"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"[ap]/';
+    private static _spathRe = '/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"/';
     private tryLexPath() {
         const cstate = this.currentState();
 
