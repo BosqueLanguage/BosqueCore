@@ -11,6 +11,8 @@ const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",
 
+    DocComment: "[DOC_COMMENT]",
+
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
     NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
     NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
@@ -100,6 +102,8 @@ class LexerState {
     readonly typenames: string[];
 
     constructor(mode: string, cline: number, linestart: number, cpos: number, tokens: Token[], symbols: string[], attributes: string[], keywords: string[], namespaces: string[], typenames: string[]) {
+        this.mode = mode;
+
         this.cline = cline;
         this.linestart = linestart;
         this.cpos = cpos;
@@ -174,21 +178,27 @@ class Lexer {
         cstate.cpos = epos;
     }
 
+    private updatePositionInfo(spos: number, epos: number) {
+        const cstate = this.currentState();
+
+        for (let i = spos; i < epos; ++i) {
+            if (this.input[i] === "\n") {
+                cstate.cline++;
+                cstate.linestart = i + 1;
+            }
+        }
+    }
+
     private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]/';
     private tryLexWS(): boolean {
         const cstate = this.currentState();
-        const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
 
+        const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
         if (m === null) {
             return false;
         }
 
-        for (let i = 0; i < m.length; ++i) {
-            if (m[i] === "\n") {
-                cstate.cline++;
-                cstate.linestart = cstate.cpos + i + 1;
-            }
-        }
+        this.updatePositionInfo(cstate.cpos, cstate.cpos + m.length);
 
         cstate.cpos += m.length;
         return true;
@@ -196,21 +206,71 @@ class Lexer {
 
     private tryLexLineComment(): boolean {
         const cstate = this.currentState();
-        const m = this.input.startsWith("%%", cstate.cpos);
 
+        const m = this.input.startsWith("%%", cstate.cpos);
         if (!m) {
             return false;
         }
 
-        const epos = this.input.indexOf("\n", cstate.cpos);
-        for (let i = 0; i < (epos - cstate.cpos); ++i) {
-            if (this.input[cstate.cpos + i] === "\n") {
-                cstate.cline++;
-                cstate.linestart = this.m_cpos + i + 1;
-            }
+        let epos = this.input.indexOf("\n", cstate.cpos);
+        if (epos === -1) {
+            cstate.cpos = this.input.length;
+        }
+        else {
+            epos++;
+            this.updatePositionInfo(cstate.cpos, epos);
+
+            cstate.cpos = epos;
         }
 
-        this.m_cpos += m[0].length;
+        return true;
+    }
+
+    private tryLexDocComment(): boolean {
+        const cstate = this.currentState();
+
+        const m = this.input.startsWith("%**", cstate.cpos);
+        if (!m) {
+            return false;
+        }
+
+        let epos = this.input.indexOf("**%", cstate.cpos + 3);
+        if (epos === -1) {
+            cstate.cpos = this.input.length;
+        }
+        else {
+            epos += 3;
+            this.updatePositionInfo(cstate.cpos, epos);
+
+            this.recordLexTokenWData(epos, TokenStrings.DocComment, this.input.substring(cstate.cpos, epos));
+        }
+
+        return true;
+    }
+
+    private tryLexSpanComment(): boolean {
+        const cstate = this.currentState();
+        const mdoc = this.input.startsWith("%**", cstate.cpos);
+        if (!mdoc) {
+            return false;
+        }
+
+        const m = this.input.startsWith("%*", cstate.cpos);
+        if (!m) {
+            return false;
+        }
+
+        let epos = this.input.indexOf("*%", cstate.cpos + 2);
+        if (epos === -1) {
+            cstate.cpos = this.input.length;
+        }
+        else {
+            epos += 2;
+            this.updatePositionInfo(cstate.cpos, epos);
+
+            cstate.cpos = epos;
+        }
+
         return true;
     }
 
@@ -219,14 +279,14 @@ class Lexer {
         return accepts(Lexer._s_templateNameRe, str);
     }
 
-    private isIdentifierName(str: string): boolean {
-        return /^([$]|([$]?([_a-z]|([_a-z][_a-zA-Z0-9]+))))$/.test(str);
-    }
+    private static readonly _s_identiferName = '/"$"|("$"|"$?")?[_a-zA-Z][_a-zA-Z0-9]*/';
+    
+    private static readonly _s_intNumberinoRe = '/0|[1-9][0-9]*/';
+    private static readonly _s_floatNumberinoRe = '/([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?/';
+    private static readonly _s_rationalNumberinoRe = '/(0|[1-9][0-9]*)"%slash;([1-9][0-9]*)"/';
 
-    private static readonly _s_intNumberinoRe = /0|[1-9][0-9]*/y;
-
-    private static readonly _s_intRe = /(0|[1-9][0-9]*)i/y;
-    private static readonly _s_natRe = /(0|[1-9][0-9]*)n/y;
+    private static readonly _s_intRe = '/(0|[1-9][0-9]*)"i"/';
+    private static readonly _s_natRe = '/(0|[1-9][0-9]*)"n"/';
 
     private static readonly _s_floatRe = /([0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?f/y;
     private static readonly _s_decimalRe = /([0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?d/y;
