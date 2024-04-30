@@ -162,16 +162,13 @@ const KeywordStringsDeclaration = [
 //Attributes
 
 const GeneralAttributes = [ 
-    "export",
     "private",
     "internal",
-    "hidden"
+    "hidden",
+    "public"
 ];
 
 const TypeDeclAttributes = [
-    "status",
-    "event",
-
     "__internal",
     "__typedeclable",
     "__constructable",
@@ -182,6 +179,7 @@ const TypeDeclAttributes = [
 ];
 
 const APIDeclAttributes = [
+    "export",
     "deterministic",
     "idempotent",
 ];

@@ -604,11 +604,11 @@ class Lexer {
         return false;
     }
 
-    private static _sregexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[ap]?/';
+    private static _s_regexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[ap]?/';
     private tryLexRegex() {
         const cstate = this.currentState();
 
-        const rem = lexFront(Lexer._sregexRe, cstate.cpos);
+        const rem = lexFront(Lexer._s_regexRe, cstate.cpos);
         if(rem === null) {
             return false;
         }
@@ -617,11 +617,11 @@ class Lexer {
         return true;
     }
 
-    private static _spathRe = '/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"/';
+    private static _s_pathRe = '/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"/';
     private tryLexPath() {
         const cstate = this.currentState();
 
-        const rem = lexFront(Lexer._spathRe, cstate.cpos);
+        const rem = lexFront(Lexer._s_pathRe, cstate.cpos);
         if(rem === null) {
             return false;
         }
@@ -629,6 +629,38 @@ class Lexer {
         this.recordLexTokenWData(cstate.cpos + rem.length, TokenStrings.PathItem, rem);
         return true;
     }
+
+    private static _s_datevalueRE = '([0-9]{4})-([0-9]{2})-([0-9]{2})';
+    private static _s_timevalueRE = '([0-9]{2}):([0-9]{2}):([0-9]{2})';
+    private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
+
+    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}/`;
+    private static _s_utcdatetimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?/`;
+    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}/`;
+    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}/`;
+    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z/`;
+
+    private tryLexDateTime() {
+        xxxx;
+    }
+
+    DateTime: "[LITERAL_DATETIME]",
+    UTCDateTime: "[LITERAL_UTC_DATETIME]",
+    PlainDate: "[LITERAL_PLAIN_DATE]",
+    PlainTime: "[LITERAL_PLAIN_TIME]",
+    Timestamp: "[LITERAL_TIMESTAMP]",
+
+    +-]{DATE}T{TIME} { yylval.str = AST_STRDUP(yytext); return TOKEN_DELTA_DATE_TIME; }
+    [+-]{DATE}        { yylval.str = AST_STRDUP(yytext); return TOKEN_DELTA_PLAIN_DATE; }
+    [+-]{TIME}        { yylval.str = AST_STRDUP(yytext); return TOKEN_DELTA_PLAIN_TIME; }
+    
+    [+-]{DATE}T{TIME}("."[0-9]{3})           { yylval.str = AST_STRDUP(yytext); return TOKEN_DELTA_ISOTIMESTAMP; }
+
+    DeltaDateTime: "[LITERAL_DELTA_DATETIME]",
+    DeltaUTCDateTime: "[LITERAL_DELTA_UTC_DATETIME]",
+    DeltaPlainDate: "[LITERAL_DELTA_PLAIN_DATE]",
+    DeltaPlainTime: "[LITERAL_DELTA_PLAIN_TIME]",
+    DeltaTimestamp: "[LITERAL_DELTA_TIMESTAMP]",
 
     private static readonly _s_symbolRe = /[\W]+/y;
     private tryLexSymbol() {
