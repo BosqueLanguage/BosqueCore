@@ -59,7 +59,7 @@ const TokenStrings = {
 
     //Names
     NamespaceName: "[NAMESPACE]",
-    TypeName: "[IDENTIFIER]",
+    TypeName: "[TYPE]",
     Template: "[TEMPLATE]",
     IdentifierName: "[IDENTIFIER]",
     ScopedName: "[SCOPE]",
@@ -87,6 +87,19 @@ class Token {
     }
 }
 
+class ParserError {
+    readonly line: number;
+    readonly cpos: number;
+    readonly message: string;
+
+    constructor(line: number, cpos: number, message: string) {
+        this.line = line;
+        this.cpos = cpos;
+        this.message = message;
+    }
+
+}
+
 class LexerState {
     readonly mode: string;
 
@@ -94,6 +107,7 @@ class LexerState {
     linestart: number;
     cpos: number;
     tokens: Token[];
+    errors: ParserError[] = [];
 
     readonly symbols: string[];
     readonly attributes: string[];
@@ -119,6 +133,10 @@ class LexerState {
 
     cloneForTry(mode: string): LexerState {
         return new LexerState(mode, this.cline, this.linestart, this.cpos, [...this.tokens], this.symbols, this.attributes, this.keywords, this.namespaces, this.typenames);
+    }
+
+    pushError(line: number, cpos: number, message: string) {
+        this.errors.push(new ParserError(line, cpos, message));
     }
 }
 
@@ -281,263 +299,335 @@ class Lexer {
 
     private static readonly _s_identiferName = '/"$"|("$"|"$?")?[_a-zA-Z][_a-zA-Z0-9]*/';
     
-    private static readonly _s_intNumberinoRe = '/0|[1-9][0-9]*/';
-    private static readonly _s_floatNumberinoRe = '/([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?/';
-    private static readonly _s_rationalNumberinoRe = '/(0|[1-9][0-9]*)"%slash;([1-9][0-9]*)"/';
+    private static readonly _s_intvalRE = '0|[1-9][0-9]*';
+    private static readonly _s_floatvalRE = '([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?';
+    private static readonly _s_floatsimplevalRE = '([0-9]+"."[0-9]+)';
 
-    private static readonly _s_intRe = '/(0|[1-9][0-9]*)"i"/';
-    private static readonly _s_natRe = '/(0|[1-9][0-9]*)"n"/';
+    private static readonly _s_intNumberinoRe = `/${Lexer._s_intvalRE}/`;
+    private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatvalRE}/`;
+    private static readonly _s_rationalNumberinoRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})/`;
 
-    private static readonly _s_floatRe = /([0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?f/y;
-    private static readonly _s_decimalRe = /([0-9]+\.[0-9]+)([eE][-+]?[0-9]+)?d/y;
+    private static readonly _s_intRe = `/(${Lexer._s_intvalRE})"i"/`;
+    private static readonly _s_natRe = `/(${Lexer._s_intvalRE})"n"/`;
+    private static readonly _s_bigintRe = `/(${Lexer._s_intvalRE})"I"/`;
+    private static readonly _s_bignatRe = `/(${Lexer._s_intvalRE})"N"/`;
 
-    private static readonly _s_bigintRe = /(0|[1-9][0-9]*)I/y;
-    private static readonly _s_bignatRe = /(0|[1-9][0-9]*)N/y;
-    private static readonly _s_rationalRe = /((0|[1-9][0-9]*)|(0|[1-9][0-9]*)\/([1-9][0-9]*))R/y;
+    private static readonly _s_floatRe = `/(${Lexer._s_floatvalRE})"f"/`;
+    private static readonly _s_decimalRe = `/(${Lexer._s_floatvalRE})"d"/`;
+    private static readonly _s_rationalRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})"R"/`;
+    private static readonly _s_complexRe = `/(${Lexer._s_floatvalRE})[+-](${Lexer._s_floatvalRE})"j"/`;
 
-    private tryLexNumber(): boolean {
-        Lexer._s_rationalRe.lastIndex = this.m_cpos;
-        const mr = Lexer._s_rationalRe.exec(this.m_input);
-        if (mr !== null) {
-            this.recordLexTokenWData(this.m_cpos + mr[0].length, TokenStrings.Rational, mr[0]);
+    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatsimplevalRE})"dd"/`;
+    private static readonly _s_latlongRe = `/(${Lexer._s_floatsimplevalRE})"lat"[+-]${Lexer._s_floatsimplevalRE}"long"/`;
+    
+    private static readonly _s_ticktimeRe = `/(${Lexer._s_intvalRE})"t"/`;
+    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intvalRE})"l"/`;
+
+    private static readonly _s_deltasecondsRE = `/(${Lexer._s_floatsimplevalRE})"ds"/`;
+    private static readonly _s_deltaticktimeRE = `/(${Lexer._s_intvalRE})"dt"/`;
+    private static readonly _s_deltalogicaltimeRE = `/(${Lexer._s_intvalRE})"dl"/`;
+
+    private tryLexFloatCompositeLikeToken(): boolean {
+        const cstate = this.currentState();
+
+        const mcomplex = lexFront(Lexer._s_complexRe, cstate.cpos);
+        if(mcomplex !== null) {
+            this.recordLexTokenWData(cstate.cpos + mcomplex.length, TokenStrings.Complex, mcomplex);
             return true;
         }
 
-        Lexer._s_bignatRe.lastIndex = this.m_cpos;
-        const mbn = Lexer._s_bignatRe.exec(this.m_input);
-        if (mbn !== null) {
-            this.recordLexTokenWData(this.m_cpos + mbn[0].length, TokenStrings.BigNat, mbn[0]);
-            return true;
-        }
-
-        Lexer._s_bigintRe.lastIndex = this.m_cpos;
-        const mbi = Lexer._s_bigintRe.exec(this.m_input);
-        if (mbi !== null) {
-            this.recordLexTokenWData(this.m_cpos + mbi[0].length, TokenStrings.BigInt, mbi[0]);
-            return true;
-        }
-
-        Lexer._s_decimalRe.lastIndex = this.m_cpos;
-        const md = Lexer._s_decimalRe.exec(this.m_input);
-        if (md !== null) {
-            this.recordLexTokenWData(this.m_cpos + md[0].length, TokenStrings.Decimal, md[0]);
-            return true;
-        }
-
-        Lexer._s_floatRe.lastIndex = this.m_cpos;
-        const mf = Lexer._s_floatRe.exec(this.m_input);
-        if (mf !== null) {
-            this.recordLexTokenWData(this.m_cpos + mf[0].length, TokenStrings.Float, mf[0]);
-            return true;
-        }
-
-        Lexer._s_natRe.lastIndex = this.m_cpos;
-        const mn = Lexer._s_natRe.exec(this.m_input);
-        if (mn !== null) {
-            this.recordLexTokenWData(this.m_cpos + mn[0].length, TokenStrings.Nat, mn[0]);
-            return true;
-        }
-
-        Lexer._s_intRe.lastIndex = this.m_cpos;
-        const mi = Lexer._s_intRe.exec(this.m_input);
-        if (mi !== null) {
-            this.recordLexTokenWData(this.m_cpos + mi[0].length, TokenStrings.Int, mi[0]);
-            return true;
-        }
-
-        Lexer._s_intNumberinoRe.lastIndex = this.m_cpos;
-        const inio = Lexer._s_intNumberinoRe.exec(this.m_input);
-        if (inio !== null) {
-            this.recordLexTokenWData(this.m_cpos + inio[0].length, TokenStrings.Numberino, inio[0]);
+        const mlatlong = lexFront(Lexer._s_latlongRe, cstate.cpos);
+        if(mlatlong !== null) {
+            this.recordLexTokenWData(cstate.cpos + mlatlong.length, TokenStrings.LatLong, mlatlong);
             return true;
         }
 
         return false;
     }
 
-    private static readonly _s_stringRe = /"[^"]*"/uy;
-    private static readonly _s_ascii_stringRe = /ascii\{"[^"]*"\}/uy;
-    private static readonly _s_template_stringRe = /`[^`]*`/uy;
-    private static readonly _s_ascii_template_stringRe = /ascii\{`[^`]*`\}/uy;
+    private tryLexFloatLikeToken(): boolean {
+        const cstate = this.currentState();
 
-    private tryLexString() {
-        Lexer._s_template_stringRe.lastIndex = this.m_cpos;
-        const template_string_m = Lexer._s_template_stringRe.exec(this.m_input);
-        if (template_string_m !== null) {
-            this.recordLexTokenWData(this.m_cpos + template_string_m[0].length, TokenStrings.TemplateString, template_string_m[0]);
+        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, cstate.cpos);
+        if(mdecimaldegree !== null) {
+            this.recordLexTokenWData(cstate.cpos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
             return true;
         }
 
-        Lexer._s_ascii_template_stringRe.lastIndex = this.m_cpos;
-        const ascii_template_string_m = Lexer._s_ascii_template_stringRe.exec(this.m_input);
-        if (ascii_template_string_m !== null) {
-            this.recordLexTokenWData(this.m_cpos + ascii_template_string_m[0].length, TokenStrings.TemplateASCIIString, ascii_template_string_m[0]);
+        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, cstate.cpos);
+        if(mdeltaseconds !== null) {
+            this.recordLexTokenWData(cstate.cpos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
             return true;
         }
 
-        Lexer._s_stringRe.lastIndex = this.m_cpos;
-        const ms = Lexer._s_stringRe.exec(this.m_input);
-        if (ms !== null) {
-            this.recordLexTokenWData(this.m_cpos + ms[0].length, TokenStrings.String, ms[0]);
+        const mdecimal = lexFront(Lexer._s_decimalRe, cstate.cpos);
+        if(mdecimal !== null) {
+            this.recordLexTokenWData(cstate.cpos + mdecimal.length, TokenStrings.Decimal, mdecimal);
             return true;
         }
 
-        Lexer._s_ascii_stringRe.lastIndex = this.m_cpos;
-        const mas = Lexer._s_ascii_stringRe.exec(this.m_input);
-        if (mas !== null) {
-            this.recordLexTokenWData(this.m_cpos + mas[0].length, TokenStrings.ASCIIString, mas[0]);
+        const mfloat = lexFront(Lexer._s_floatRe, cstate.cpos);
+        if(mfloat !== null) {
+            this.recordLexTokenWData(cstate.cpos + mfloat.length, TokenStrings.Float, mfloat);
+            return true;
+        }
+
+        const mnumberino = lexFront(Lexer._s_floatNumberinoRe, cstate.cpos);
+        if(mnumberino !== null) {
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoFloat, mnumberino);
             return true;
         }
 
         return false;
     }
 
-    private static readonly _s_regexRe = /\/[^\r\n]*(\\(.)[^\r\n]*)*\//y;
+    private tryLexIntegralCompositeLikeToken(): boolean {
+        const cstate = this.currentState();
+
+        const mrational = lexFront(Lexer._s_rationalRe, cstate.cpos);
+        if(mrational !== null) {
+            this.recordLexTokenWData(cstate.cpos + mrational.length, TokenStrings.Rational, mrational);
+            return true;
+        }
+
+        const mnumberino = lexFront(Lexer._s_rationalNumberinoRe, cstate.cpos);
+        if(mnumberino !== null) {
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
+            return true;
+        }
+
+        return false;
+    }
+
+    private tryLexIntegralLikeToken(): boolean {
+        const cstate = this.currentState();
+
+        const mtick = lexFront(Lexer._s_ticktimeRe, cstate.cpos);
+        if(mtick !== null) {
+            this.recordLexTokenWData(cstate.cpos + mtick.length, TokenStrings.TickTime, mtick);
+            return true;
+        }
+
+        const mlogical = lexFront(Lexer._s_logicaltimeRe, cstate.cpos);
+        if(mlogical !== null) {
+            this.recordLexTokenWData(cstate.cpos + mlogical.length, TokenStrings.LogicalTime, mlogical);
+            return true;
+        }
+
+        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, cstate.cpos);
+        if(m_deltatick !== null) {
+            this.recordLexTokenWData(cstate.cpos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
+            return true;
+        }
+
+        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, cstate.cpos);
+        if(m_deltalogical !== null) {
+            this.recordLexTokenWData(cstate.cpos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
+            return true;
+        }
+        
+        const mint = lexFront(Lexer._s_intRe, cstate.cpos);
+        if(mint !== null) {
+            this.recordLexTokenWData(cstate.cpos + mint.length, TokenStrings.Int, mint);
+            return true;
+        }
+
+        const mnat = lexFront(Lexer._s_natRe, cstate.cpos);
+        if(mnat !== null) {
+            this.recordLexTokenWData(cstate.cpos + mnat.length, TokenStrings.Nat, mnat);
+            return true;
+        }
+
+        const mbigint = lexFront(Lexer._s_bigintRe, cstate.cpos);
+        if(mbigint !== null) {
+            this.recordLexTokenWData(cstate.cpos + mbigint.length, TokenStrings.BigInt, mbigint);
+            return true;
+        }
+
+        const mbignat = lexFront(Lexer._s_bignatRe, cstate.cpos);
+        if(mbignat !== null) {
+            this.recordLexTokenWData(cstate.cpos + mbignat.length, TokenStrings.BigNat, mbignat);
+            return true;
+        }
+
+        const mnumberino = lexFront(Lexer._s_intNumberinoRe, cstate.cpos);
+        if(mnumberino !== null) {
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
+            return true;
+        }
+
+        return false;
+    }
+
+    private tryLexNumberLikeToken(): boolean {
+        const cft = this.tryLexFloatCompositeLikeToken();
+        if(cft) {
+            return true;
+        }
+        
+        const ft = this.tryLexFloatLikeToken();
+        if(ft) {
+            return true;
+        }
+
+        const cit = this.tryLexIntegralCompositeLikeToken();
+        if(cit) {
+            return true;
+        }
+
+        const it = this.tryLexIntegralLikeToken();
+        if(it) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static _s_bytebufferRe = '/"0x["[0-9a-fA-F]+"]"/';
+    private tryLexByteBuffer(): boolean {
+        const cstate = this.currentState();
+
+        const m = lexFront(Lexer._s_bytebufferRe, cstate.cpos);
+        if(m !== null) {
+            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.ByteBuffer, m);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static _s_uuidRe = '/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"}"/';
+    private tryLexUUID(): boolean {
+        const cstate = this.currentState();
+
+        const m = lexFront(Lexer._s_uuidRe, cstate.cpos);
+        if(m !== null) {
+            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.UUIDValue, m);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static _s_shaRe = '/"sha3{"[a-fA-F0-9]{64}"}"/';
+    private tryLexHashCode(): boolean {
+        const cstate = this.currentState();
+
+        const m = lexFront(Lexer._s_shaRe, cstate.cpos);
+        if(m !== null) {
+            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.ShaHashcode, m);
+            return true;
+        }
+
+        return false;
+    }
+
+    private tryLexUnicodeString(): boolean {
+        const cstate = this.currentState();
+
+    
+        let ncpos = cstate.cpos;
+        let istemplate = false;
+        if(this.input.startsWith('$"', cstate.cpos)) {
+            ncpos += 2;
+            istemplate = true;
+        }
+        else if(!this.input.startsWith('"', cstate.cpos)) {
+            ncpos += 1;
+        }
+        else {
+            return false;
+        }
+
+
+        let epos = this.input.indexOf('"', ncpos);
+        if(epos === -1) {
+            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated string literal");
+            this.recordLexToken(this.input.length, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            epos++;
+            this.updatePositionInfo(cstate.cpos, epos);
+
+            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, this.input.substring(cstate.cpos, epos));
+            return true;
+        }
+    }
+
+    private tryLexASCIIString(): boolean {
+        const cstate = this.currentState();
+
+        let ncpos = cstate.cpos;
+        let istemplate = false;
+        if(this.input.startsWith("$'", cstate.cpos)) {
+            ncpos += 2;
+            istemplate = true;
+        }
+        else if(!this.input.startsWith("'", cstate.cpos)) {
+            ncpos += 1;
+        }
+        else {
+            return false;
+        }
+
+        let epos = this.input.indexOf("'", ncpos);
+        if(epos === -1) {
+            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated ASCII string literal");
+            this.recordLexToken(this.input.length, TokenStrings.Error);
+
+            return true;
+        }
+        else {
+            epos++;
+            this.updatePositionInfo(cstate.cpos, epos);
+
+            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateASCIIString : TokenStrings.ASCIIString, this.input.substring(cstate.cpos, epos));
+            return true;
+        }
+    }
+
+    private tryLexStringLike() {
+        const cstate = this.currentState();
+
+        const us = this.tryLexUnicodeString();
+        if(us) {
+            return true;
+        }
+
+        const as = this.tryLexASCIIString();
+        if(as) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static _sregexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[ap]?/';
     private tryLexRegex() {
-        Lexer._s_regexRe.lastIndex = this.m_cpos;
-        const ms = Lexer._s_regexRe.exec(this.m_input);
-        if (ms !== null && RegexFollows.has(this.m_tokens[this.m_tokens.length - 1].kind)) {
-            this.recordLexTokenWData(this.m_cpos + ms[0].length, TokenStrings.Regex, ms[0]);
-            return true;
+        const cstate = this.currentState();
+
+        const rem = lexFront(Lexer._sregexRe, cstate.cpos);
+        if(rem === null) {
+            return false;
         }
 
-        return false;
+        this.recordLexTokenWData(cstate.cpos + rem.length, TokenStrings.Regex, rem);
+        return true;
     }
 
-    private static readonly _s_bsqvvRe = /[{}"]/;
-    private tryLexBSQON() {
-        let bbpos = this.m_cpos;
-        if (!this.m_input.startsWith("bsqon{", bbpos)) {
+    private static _spathRe = '/"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"[ap]/';
+    private tryLexPath() {
+        const cstate = this.currentState();
+
+        const rem = lexFront(Lexer._spathRe, cstate.cpos);
+        if(rem === null) {
             return false;
         }
 
-        //
-        //TODO: when we support native inline BSQON parsing we want to support the form bsqon<T>{...} as well
-        //
-
-        bbpos += 6;
-
-        let pdepth = 1;
-        while(pdepth !== 0 && bbpos < this.m_input.length) {
-            const mm = Lexer._s_bsqvvRe.exec(this.m_input.slice(bbpos));
-            if(mm === null) {
-                return false;
-            }
-
-            if(mm[0] === "{") {
-                pdepth++;
-                bbpos = bbpos + mm.index + 1;
-            }
-            else if(mm[0] === "}") {
-                pdepth--;
-                bbpos = bbpos + mm.index + 1;
-            }
-            else {
-                bbpos = bbpos + mm.index;
-                       
-                Lexer._s_stringRe.lastIndex = bbpos;
-                const ms = Lexer._s_stringRe.exec(this.m_input);
-                if (ms === null) {
-                    return false;
-                }
-
-                bbpos = bbpos + ms[0].length;
-            }
-        }
-
-        if (pdepth === 0) {
-            this.recordLexTokenWData(bbpos, TokenStrings.BSQON, this.m_input.substring(this.m_cpos, bbpos));
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-
-    private static readonly _s_bsqexamplefilebeginRe = /(\s+([.]{1,2}\/)|([$]{))/y;
-    private static readonly _s_bsqexamplefileendRe = /;/;
-    private static readonly _s_bsqexamplesplitRe = /->|"|;/;
-    private static readonly _s_bsqexampleendRe = /[;"]/;
-    private tryLexBSQONExample() {
-        if (!this.m_input.startsWith("example ", this.m_cpos)) {
-            return false;
-        }
-
-        this.recordLexToken(this.m_cpos + KW_example.length, KW_example);
-
-        Lexer._s_bsqexamplefilebeginRe.lastIndex = this.m_cpos;
-        const fb = Lexer._s_bsqexamplefilebeginRe.exec(this.m_input);
-        if (fb !== null && fb.index === this.m_cpos) {
-            const fe = Lexer._s_bsqexamplefileendRe.exec(this.m_input.slice(this.m_cpos));
-            if (fe === null) {
-                return false;
-            }
-
-            this.recordLexTokenWData(this.m_cpos + fe.index, TokenStrings.BSQON_EXAMPLE_FILE, this.m_input.substring(this.m_cpos, this.m_cpos + fe.index));
-            return true;
-        }
-        else {
-            let bbpos = this.m_cpos;
-            while (bbpos < this.m_input.length) {
-                const mm = Lexer._s_bsqexamplesplitRe.exec(this.m_input.slice(bbpos));
-                if (mm === null) {
-                    return false;
-                }
-
-                if (mm[0] === ";") {
-                    return false;
-                }
-
-                if (mm[0] === "->") {
-                    bbpos = bbpos + mm.index;
-                    break;
-                }
-                else {
-                    bbpos = bbpos + mm.index;
-
-                    Lexer._s_stringRe.lastIndex = bbpos;
-                    const ms = Lexer._s_stringRe.exec(this.m_input);
-                    if (ms === null) {
-                        return false;
-                    }
-
-                    bbpos = bbpos + ms[0].length;
-                }
-            }
-            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_ARGS, this.m_input.substring(this.m_cpos, bbpos).trim());
-            this.m_cpos += 2; //skip ->
-
-            bbpos = this.m_cpos;
-            while (bbpos < this.m_input.length) {
-                const mm = Lexer._s_bsqexampleendRe.exec(this.m_input.slice(bbpos));
-                if (mm === null) {
-                    return false;
-                }
-
-                if (mm[0] === "->") {
-                    return false;
-                }
-
-                if (mm[0] === ";") {
-                    bbpos = bbpos + mm.index;
-                    break;
-                }
-                else {
-                    bbpos = bbpos + mm.index;
-
-                    Lexer._s_stringRe.lastIndex = bbpos;
-                    const ms = Lexer._s_stringRe.exec(this.m_input);
-                    if (ms === null) {
-                        return false;
-                    }
-
-                    bbpos = bbpos + ms[0].length;
-                }
-            }
-            this.recordLexTokenWData(bbpos, TokenStrings.BSQON_EXAMPLE_RESULT, this.m_input.substring(this.m_cpos, bbpos).trim());
-
-            return true;
-        }
+        this.recordLexTokenWData(cstate.cpos + rem.length, TokenStrings.PathItem, rem);
+        return true;
     }
 
     private static readonly _s_symbolRe = /[\W]+/y;
@@ -727,13 +817,6 @@ class Lexer {
 
         this.recordLexToken(this.m_input.length, TokenStrings.EndOfStream);
         return this.m_tokens;
-    }
-}
-
-class ParseError extends Error {
-    constructor(line: number, message?: string) {
-        super(`Parse failure on line ${line} -- ${message}`);
-        Object.setPrototypeOf(this, new.target.prototype);
     }
 }
 
