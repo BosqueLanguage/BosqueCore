@@ -408,23 +408,20 @@ __internal __constructable __typedeclable entity ASCIIStringOf<T: ASCIIRegexVali
 %** Special declaration of string interpolation function. **%
 function interpolate(): String = special_method;
 
-%** An efficient byte buffer for data. **%
+%** An efficient string slice view. **%
 __internal __constructable entity StringView provides Some {
-    %%TODO: do we want to make this typedeclable too?
 }
 
-%** An efficient byte buffer for data. **%
+%** An efficient ascii string slice view. **%
 __internal __constructable entity ASCIIStringView provides Some {
-    %%TODO: do we want to make this typedeclable too?
 }
 
 %** An efficient byte buffer for data. **%
-__internal entity ByteBuffer provides Some {
-    %%TODO: do we want to make this typedeclable too?
+__internal __typedeclable entity ByteBuffer provides Some {
 }
 
 %** Validator for TimeZone **%
-validator TimeZoneRegex = /"{"[A-Za-z_ 0-9-]+"}"/;
+validator TimeZoneRegex = /'{'[A-Za-z_ 0-9-]+'}'/a;
 typedecl TimeZoneString = ASCIIStringOf<TimeZoneRegex>;
 
 %** Primitive DateTime value. **%

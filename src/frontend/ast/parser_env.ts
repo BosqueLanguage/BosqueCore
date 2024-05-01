@@ -109,6 +109,12 @@ abstract class ParserScope {
     }
 }
 
+class DeclLevelParserScope extends ParserScope {
+    constructor() {
+        super(new Set<string>(), new Set<string>(), undefined);
+    }
+}
+
 class StdParserFunctionScope extends ParserScope {
     constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
@@ -270,7 +276,7 @@ class ParserEnvironment {
 
 export { 
     LocalScopeVariableInfo, LocalScopeInfo,
-    ParserScope, StdParserFunctionScope, CapturingParserScope, LambdaBodyParserScope, ParserStandaloneExpressionScope,
+    ParserScope, DeclLevelParserScope, StdParserFunctionScope, CapturingParserScope, LambdaBodyParserScope, ParserStandaloneExpressionScope,
     ParserEnvironment 
 };
 

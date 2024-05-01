@@ -1,9 +1,10 @@
 
-import { ParserEnvironment, ParserScope } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, ErrorTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, EListTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, Expression, IfStatement, IfExpression, ErrorExpression, ErrorStatement, LiteralExpressionValue, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixInvoke, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RecursiveAnnotation, ReturnStatement, SpecialConstructorExpression, Statement, TaskEventEmitStatement, VariableAssignmentStatement, VariableDeclarationStatement, IfTest, VariableRetypeStatement, ITest, ITestType, ITestLiteral, ITestNone, ITestNothing, ITestSomething, ITestOk, ITestErr, ITestSome, BSQONLiteralExpression } from "./body";
-import { Assembly, ConceptTypeDecl, EntityTypeDecl, InvariantDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ValidateDecl } from "./assembly";
+import { DeclLevelParserScope, ParserEnvironment, ParserScope } from "./parser_env";
+import { ErrorTypeSignature } from "./type";
+import { ErrorExpression, ErrorStatement } from "./body";
+import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
+import { AllAttributes, KW_debug, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -14,8 +15,10 @@ const TokenStrings = {
     DocComment: "[DOC_COMMENT]",
 
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
-    NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
-    NumberinoRational: "[LITERAL_NUMBERINO_RATIONAL]",
+
+    TaggedNumberinoInt: "[LITERAL_TAGGED_NUMBERINO_INT]",
+    TaggedNumberinoFloat: "[LITERAL_TAGGED_NUMBERINO_FLOAT]",
+    TaggedNumberinoRational: "[LITERAL_TAGGED_NUMBERINO_RATIONAL]",
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
@@ -109,13 +112,11 @@ class LexerState {
     tokens: Token[];
     errors: ParserError[] = [];
 
-    readonly symbols: string[];
     readonly attributes: string[];
-    readonly keywords: string[];
     readonly namespaces: string[];
     readonly typenames: string[];
 
-    constructor(mode: string, cline: number, linestart: number, cpos: number, tokens: Token[], symbols: string[], attributes: string[], keywords: string[], namespaces: string[], typenames: string[]) {
+    constructor(mode: string, cline: number, linestart: number, cpos: number, tokens: Token[], attributes: string[], namespaces: string[], typenames: string[]) {
         this.mode = mode;
 
         this.cline = cline;
@@ -123,16 +124,18 @@ class LexerState {
         this.cpos = cpos;
         this.tokens = [];
 
-        this.symbols = symbols;
         this.attributes = attributes;
-        this.keywords = keywords;
 
         this.namespaces = namespaces;
         this.typenames = typenames;
     }
 
+    static createFileToplevelState(namespaces: string[]): LexerState {
+        return new LexerState("toplevel", 1, 0, 0, [], AllAttributes, namespaces, []);
+    }
+
     cloneForTry(mode: string): LexerState {
-        return new LexerState(mode, this.cline, this.linestart, this.cpos, [...this.tokens], this.symbols, this.attributes, this.keywords, this.namespaces, this.typenames);
+        return new LexerState(mode, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes, this.namespaces, this.typenames);
     }
 
     pushError(line: number, cpos: number, message: string) {
@@ -143,25 +146,31 @@ class LexerState {
 class Lexer {
     readonly macrodefs: string[];
     readonly input: string;
+    readonly epos: number;
     
     readonly stateStack: LexerState[];
 
-    private currentState(): LexerState {
+    currentState(): LexerState {
         return this.stateStack[this.stateStack.length - 1];
     }
 
-    private findKeywordString(str: string): string | undefined {
-        const kws = this.currentState().keywords;
+    currentSrcInfo(): SourceInfo {
+        this.lexNext();
+        const cstate = this.currentState();
+        
+        return new SourceInfo(cstate.tokens[0].line, cstate.tokens[0].column, cstate.tokens[0].pos, cstate.tokens[0].span);
+    }
 
+    private findKeywordString(str: string): string | undefined {
         let imin = 0;
-        let imax = kws.length;
+        let imax = KeywordStrings.length;
 
         while (imin < imax) {
             const imid = Math.floor((imin + imax) / 2);
 
-            const scmpval = (str.length !== kws[imid].length) ? (kws[imid].length - str.length) : ((str !== kws[imid]) ? (str < kws[imid] ? -1 : 1) : 0);
+            const scmpval = (str.length !== KeywordStrings[imid].length) ? (KeywordStrings[imid].length - str.length) : ((str !== KeywordStrings[imid]) ? (str < KeywordStrings[imid] ? -1 : 1) : 0);
             if (scmpval === 0) {
-                return kws[imid];
+                return KeywordStrings[imid];
             }
             else if (scmpval < 0) {
                 imax = imid;
@@ -176,6 +185,7 @@ class Lexer {
     constructor(input: string, macrodefs: string[], istate: LexerState) {
         this.macrodefs = macrodefs;
         this.input = input;
+        this.epos = input.length;
 
         this.stateStack = [istate];
     }
@@ -207,12 +217,8 @@ class Lexer {
         }
     }
 
-    private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]/';
-    private tryLexWS(noskip: boolean): boolean {
-        if(noskip) {
-            return false;
-        }
-
+    private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]+/';
+    private tryLexWS(): boolean {
         const cstate = this.currentState();
 
         const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
@@ -221,16 +227,12 @@ class Lexer {
         }
 
         this.updatePositionInfo(cstate.cpos, cstate.cpos + m.length);
-
         cstate.cpos += m.length;
+
         return true;
     }
 
-    private tryLexLineComment(noskip: boolean): boolean {
-        if(noskip) {
-            return false;
-        }
-
+    private tryLexLineComment(): boolean {
         const cstate = this.currentState();
 
         const m = this.input.startsWith("%%", cstate.cpos);
@@ -239,13 +241,15 @@ class Lexer {
         }
 
         let epos = this.input.indexOf("\n", cstate.cpos);
+
         if (epos === -1) {
-            cstate.cpos = this.input.length;
+            this.updatePositionInfo(cstate.cpos, epos);
+            cstate.cpos = this.epos;
         }
         else {
             epos++;
-            this.updatePositionInfo(cstate.cpos, epos);
 
+            this.updatePositionInfo(cstate.cpos, epos);
             cstate.cpos = epos;
         }
 
@@ -263,8 +267,8 @@ class Lexer {
         let epos = this.input.indexOf(" **%", cstate.cpos + 3);
         if (epos !== -1) {
             epos += 3;
-            this.updatePositionInfo(cstate.cpos, epos);
 
+            this.updatePositionInfo(cstate.cpos, epos);
             this.recordLexTokenWData(epos, TokenStrings.DocComment, this.input.substring(cstate.cpos, epos));
             return true;
         }
@@ -272,11 +276,7 @@ class Lexer {
         return false;
     }
 
-    private tryLexSpanComment(noskip: boolean): boolean {
-        if(noskip) {
-            return false;
-        }
-
+    private tryLexSpanComment(): boolean {
         const cstate = this.currentState();
 
         const m = this.input.startsWith("%*", cstate.cpos);
@@ -286,12 +286,15 @@ class Lexer {
 
         let epos = this.input.indexOf("*%", cstate.cpos + 2);
         if (epos === -1) {
-            cstate.cpos = this.input.length;
+            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated span comment");
+            
+            this.updatePositionInfo(cstate.cpos, epos);
+            cstate.cpos = this.epos;
         }
         else {
             epos += 2;
-            this.updatePositionInfo(cstate.cpos, epos);
 
+            this.updatePositionInfo(cstate.cpos, epos);
             cstate.cpos = epos;
         }
 
@@ -302,34 +305,38 @@ class Lexer {
     private static isTemplateName(str: string): boolean {
         return accepts(Lexer._s_templateNameRe, str);
     }
-    
+
+    private static readonly _s_literalTDOnlyTagRE = '"_"[A-Z][_a-zA-Z0-9]*';
+
     private static readonly _s_intvalRE = '0|[1-9][0-9]*';
     private static readonly _s_floatvalRE = '([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?';
     private static readonly _s_floatsimplevalRE = '([0-9]+"."[0-9]+)';
 
     private static readonly _s_intNumberinoRe = `/${Lexer._s_intvalRE}/`;
-    private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatvalRE}/`;
-    private static readonly _s_rationalNumberinoRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})/`;
 
-    private static readonly _s_intRe = `/(${Lexer._s_intvalRE})"i"/`;
-    private static readonly _s_natRe = `/(${Lexer._s_intvalRE})"n"/`;
-    private static readonly _s_bigintRe = `/(${Lexer._s_intvalRE})"I"/`;
-    private static readonly _s_bignatRe = `/(${Lexer._s_intvalRE})"N"/`;
+    private static readonly _s_intTaggedNumberinoRe = `/${Lexer._s_intvalRE}${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_floatTaggedNumberinoRe = `/${Lexer._s_floatvalRE}${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_rationalTaggedNumberinoRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})${Lexer._s_literalTDOnlyTagRE}/`;
 
-    private static readonly _s_floatRe = `/(${Lexer._s_floatvalRE})"f"/`;
-    private static readonly _s_decimalRe = `/(${Lexer._s_floatvalRE})"d"/`;
-    private static readonly _s_rationalRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})"R"/`;
-    private static readonly _s_complexRe = `/(${Lexer._s_floatvalRE})[+-](${Lexer._s_floatvalRE})"j"/`;
+    private static readonly _s_intRe = `/(${Lexer._s_intvalRE})"i"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_natRe = `/(${Lexer._s_intvalRE})"n"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_bigintRe = `/(${Lexer._s_intvalRE})"I"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_bignatRe = `/(${Lexer._s_intvalRE})"N"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
-    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatsimplevalRE})"dd"/`;
-    private static readonly _s_latlongRe = `/(${Lexer._s_floatsimplevalRE})"lat"[+-]${Lexer._s_floatsimplevalRE}"long"/`;
+    private static readonly _s_floatRe = `/(${Lexer._s_floatvalRE})"f"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_decimalRe = `/(${Lexer._s_floatvalRE})"d"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_rationalRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_complexRe = `/(${Lexer._s_floatvalRE})[+-](${Lexer._s_floatvalRE})"j"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatsimplevalRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_latlongRe = `/(${Lexer._s_floatsimplevalRE})"lat"[+-]${Lexer._s_floatsimplevalRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
     
-    private static readonly _s_ticktimeRe = `/(${Lexer._s_intvalRE})"t"/`;
-    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intvalRE})"l"/`;
+    private static readonly _s_ticktimeRe = `/(${Lexer._s_intvalRE})"t"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intvalRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
-    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatsimplevalRE})"ds"/`;
-    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intvalRE})"dt"/`;
-    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intvalRE})"dl"/`;
+    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatsimplevalRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intvalRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intvalRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexFloatCompositeLikeToken(): boolean {
         const cstate = this.currentState();
@@ -376,9 +383,9 @@ class Lexer {
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_floatNumberinoRe, cstate.cpos);
+        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, cstate.cpos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoFloat, mnumberino);
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
             return true;
         }
 
@@ -394,9 +401,9 @@ class Lexer {
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_rationalNumberinoRe, cstate.cpos);
+        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, cstate.cpos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoRational, mnumberino);
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
             return true;
         }
 
@@ -454,6 +461,12 @@ class Lexer {
             return true;
         }
 
+        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, cstate.cpos);
+        if(mtnumberino !== null) {
+            this.recordLexTokenWData(cstate.cpos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
+            return true;
+        }
+
         const mnumberino = lexFront(Lexer._s_intNumberinoRe, cstate.cpos);
         if(mnumberino !== null) {
             this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
@@ -487,7 +500,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_bytebufferRe = '/"0x["[0-9a-fA-F]+"]"/';
+    private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexByteBuffer(): boolean {
         const cstate = this.currentState();
 
@@ -500,7 +513,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_uuidRe = '/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"}"/';
+    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexUUID(): boolean {
         const cstate = this.currentState();
 
@@ -513,7 +526,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_shaRe = '/"sha3{"[a-fA-F0-9]{64}"}"/';
+    private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexHashCode(): boolean {
         const cstate = this.currentState();
 
@@ -526,10 +539,11 @@ class Lexer {
         return false;
     }
 
+    private static readonly _s_literalGeneralTagRE = /^_?[A-Z][_a-zA-Z0-9]*/y;
+
     private tryLexUnicodeString(): boolean {
         const cstate = this.currentState();
 
-    
         let ncpos = cstate.cpos;
         let istemplate = false;
         if(this.input.startsWith('$"', cstate.cpos)) {
@@ -547,14 +561,19 @@ class Lexer {
         let epos = this.input.indexOf('"', ncpos);
         if(epos === -1) {
             cstate.pushError(cstate.cline, cstate.cpos, "Unterminated string literal");
-            this.recordLexToken(this.input.length, TokenStrings.Error);
+            this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
         else {
             epos++;
-            this.updatePositionInfo(cstate.cpos, epos);
+            Lexer._s_literalGeneralTagRE.lastIndex = epos;
+            const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
+            if(mtag !== null) {
+                epos = mtag.index + mtag[0].length;
+            }
 
+            this.updatePositionInfo(cstate.cpos, epos);
             this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, this.input.substring(cstate.cpos, epos));
             return true;
         }
@@ -579,14 +598,19 @@ class Lexer {
         let epos = this.input.indexOf("'", ncpos);
         if(epos === -1) {
             cstate.pushError(cstate.cline, cstate.cpos, "Unterminated ASCII string literal");
-            this.recordLexToken(this.input.length, TokenStrings.Error);
+            this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
         else {
             epos++;
-            this.updatePositionInfo(cstate.cpos, epos);
+            Lexer._s_literalGeneralTagRE.lastIndex = epos;
+            const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
+            if(mtag !== null) {
+                epos = mtag.index + mtag[0].length;
+            }
 
+            this.updatePositionInfo(cstate.cpos, epos);
             this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateASCIIString : TokenStrings.ASCIIString, this.input.substring(cstate.cpos, epos));
             return true;
         }
@@ -621,7 +645,9 @@ class Lexer {
         return true;
     }
 
-    private static _s_pathRe = '/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;"/';
+    private static readonly _s_literalGeneralTagValueRE = '"_"?[A-Z][_a-zA-Z0-9]*';
+
+    private static _s_pathRe = `/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;("*"|${Lexer._s_literalGeneralTagValueRE})"/`;
     private tryLexPath() {
         const cstate = this.currentState();
 
@@ -638,11 +664,11 @@ class Lexer {
     private static _s_timevalueRE = '([0-9]{2}):([0-9]{2}):([0-9]{2})';
     private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
 
-    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}/`;
-    private static _s_utcdatetimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?/`;
-    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}/`;
-    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}/`;
-    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z/`;
+    private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_utcdatetimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaindateRE = `/${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaintimeRE = `/${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTime() {
         const cstate = this.currentState();
@@ -679,11 +705,11 @@ class Lexer {
 
         return false;
     }
-    private static _s_datatimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}/`;
-    private static _s_utcdatetimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?/`;
-    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_datevalueRE}/`;
-    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_timevalueRE}/`;
-    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z/`;
+    private static _s_datatimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_utcdatetimeDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"Z"?(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaindateDeltaRE = `/[+-]${Lexer._s_datevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_plaintimeDeltaRE = `/[+-]${Lexer._s_timevalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_timestampDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTimeDelta() {
         const cstate = this.currentState();
@@ -739,9 +765,8 @@ class Lexer {
 
     private tryLexSymbol() {
         const cstate = this.currentState();
-        const symbolopts = cstate.symbols;
 
-        const mm = symbolopts.find((value) => this.input.startsWith(value, cstate.cpos));
+        const mm = SymbolStrings.find((value) => this.input.startsWith(value, cstate.cpos));
         if(mm !== undefined) {
             this.recordLexToken(cstate.cpos + mm.length, mm);
             return true;
@@ -761,7 +786,7 @@ class Lexer {
                 epos = this.input.indexOf("]", epos);
                 if(epos === -1) {
                     cstate.pushError(cstate.cline, cstate.cpos, "Unterminated attribute");
-                    this.recordLexToken(this.input.length, TokenStrings.Error);
+                    this.recordLexToken(this.epos, TokenStrings.Error);
                     return true;
                 }
                 epos++;
@@ -803,7 +828,7 @@ class Lexer {
         const cstate = this.currentState();
 
         const identifiermatch = lexFront(Lexer._s_identiferName, cstate.cpos);
-        const kwmatch = cstate.keywords.find((value) => this.input.startsWith(value, cstate.cpos));
+        const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, cstate.cpos));
 
         if(identifiermatch === null && kwmatch === undefined) {
             return false;
@@ -850,18 +875,17 @@ class Lexer {
         }
     }
 
-    lex(noskip: boolean): Token[] {
+    lexk(k: number): Token[] {
         const cstate = this.currentState();
-        if (cstate.tokens.length !== 0) {
+        if (cstate.tokens.length > k) {
             return cstate.tokens;
         }
 
-        xxxx;
         let mode: "scan" | "normal" = "normal";
         let macrostack: ("scan" | "normal")[] = []
 
         cstate.tokens = [];
-        while (cstate.cpos < this.input.length) {
+        while (cstate.cpos < this.epos && cstate.tokens.length < k) {
             if(mode === "scan") {
                 const macro = this.tryLexMacroOp();
                 if (macro !== undefined) {
@@ -879,8 +903,8 @@ class Lexer {
                     const nexthash = this.input.indexOf("\n#", cstate.cpos + 1);
                     if(nexthash === -1) {
                         //ended in dangling macro
-                        this.recordLexToken(this.input.length, TokenStrings.Error);
-                        cstate.cpos = this.input.length;
+                        this.recordLexToken(this.epos, TokenStrings.Error);
+                        cstate.cpos = this.epos;
                     }
                     else {
                         const skips = this.input.slice(cstate.cpos, nexthash);
@@ -910,7 +934,7 @@ class Lexer {
                     }
                 }
                 else {
-                    if (this.tryLexWS(noskip) || this.tryLexLineComment(noskip) || this.tryLexDocComment() || this.tryLexSpanComment(noskip)) {
+                    if (this.tryLexWS() || this.tryLexLineComment() || this.tryLexDocComment() || this.tryLexSpanComment()) {
                         //continue
                     }
                     else if(this.tryLexDateLike()) {
@@ -941,45 +965,76 @@ class Lexer {
             }
         }
 
-        this.recordLexToken(this.m_input.length, TokenStrings.EndOfStream);
-        return this.m_tokens;
+        if(cstate.cpos === this.epos) {
+            this.recordLexToken(this.epos, TokenStrings.EndOfStream);
+        }
+
+        return cstate.tokens;
+    }
+
+    lexNext(): Token {
+        this.lexk(1);
+        return this.currentState().tokens[0];
+    }
+
+    peekK(k: number): Token {
+        this.lexk(k);
+        
+        const cstate = this.currentState();
+        if(cstate.tokens.length < k) {
+            return cstate.tokens[cstate.tokens.length - 1];
+        }
+        else {
+            return cstate.tokens[k];
+        }
+    }
+
+    peekNext(): Token {
+        return this.peekK(0);
+    }
+
+    consumeK(k: number) {
+        this.lexk(k);
+
+        const tks = this.currentState().tokens;
+        while(k > 0 && tks.length > 1 /*never shift off EOS*/) {
+            tks.shift();
+        }
+    }
+
+    consumeToken() {
+        this.consumeK(1);
     }
 }
 
 enum InvokableKind {
-    Basic,
-    Member,
-    SelfMember,
-    PCodeFn,
-    PCodePred,
-    DynamicOperator
+    Function,
+    Method,
+    Action,
+    LambdaFn,
+    LambdaPred
 }
 
 class Parser {
-    private m_tokens: Token[];
-    private m_cpos: number;
-    private m_epos: number;
+    private lexer: Lexer;
+    private env: ParserEnvironment;
 
-    private m_penv: ParserEnvironment;
+    private static _s_nsre = /^\s*namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*;/
+    constructor(currentFile: string, contents: string, macrodefs: string[], assembly: Assembly) {
+        const allToplevelNamespaces = assembly.toplevelNamespaces.map((nsd) => nsd.name);
+        if(!allToplevelNamespaces.includes("Core")) {
+            allToplevelNamespaces.push("Core");
+        }
 
-    private m_errors: [string, number, string][];
-    private m_recoverStack: number[];
+        this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(allToplevelNamespaces.sort()));
 
-    constructor(assembly: Assembly) {
-        this.m_tokens = [];
-        this.m_cpos = 0;
-        this.m_epos = 0;
+        const nsmatch = contents.match(Parser._s_nsre);
+        let nns = "NSDefault";
+        if(nsmatch !== null) {
+            nns = nsmatch[0].trim().split(/\s+/)[1].slice(0, -1);
+        }
 
-        this.m_penv = new ParserEnvironment(assembly);
-
-        this.m_errors = [];
-        this.m_recoverStack = [];
-    }
-
-    private initialize(toks: Token[]) {
-        this.m_tokens = toks;
-        this.m_cpos = 0;
-        this.m_epos = toks.length;
+        this.env = new ParserEnvironment(assembly, currentFile, nns, new DeclLevelParserScope());
     }
 
     ////
@@ -989,42 +1044,52 @@ class Parser {
         return attribs.indexOf(attr) !== -1;
     }
 
-    private getCurrentLine(): number {
-        return this.m_tokens[this.m_cpos].line;
-    }
-
     private getCurrentSrcInfo(): SourceInfo {
-        const tk = this.m_tokens[this.m_cpos];
-        return new SourceInfo(tk.line, 0, tk.pos, tk.span);
+        return this.lexer.currentSrcInfo();
     }
 
-    private setRecover(pos: number) {
-        this.m_recoverStack.push(pos);
+    private recordExpectedError(got: Token, expected: string, contextinfo: string) {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(got.line, got.pos, `Expected "${expected}" but got "${got.data || got.kind}" when parsing "${contextinfo}"`));
     }
 
-    private clearRecover(pos?: number) {
-        this.m_recoverStack.pop();
+    private recordUnExpectedError(got: Token, expected: string, contextinfo: string) {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(got.line, got.pos, `Unexpected token "${got.data || got.kind}" when expecting "${expected}" when parsing "${contextinfo}"`));
     }
 
-    private processRecover() {
-        this.m_cpos = this.m_recoverStack.pop() as number;
+    private recordErrorDeclaration(dtoken: Token, msg: string) {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(dtoken.line, dtoken.pos, msg));
     }
 
-    private raiseError(line: number, msg: string) {
-        this.m_errors.push([this.m_penv.getCurrentFile(), line, msg]);
-        throw new ParseError(line, msg);
+    private raiseErrorTypeNode(ttoken: Token, msg: string): ErrorTypeSignature {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
+
+        return new ErrorTypeSignature(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
     }
 
-    private ensureTaskOpOk() {
-        if(!this.m_penv.taskOpsOk()) {
-            this.raiseError(this.getCurrentLine(), "Task operations are only permitted in \".bsqtask\" files");
-        }
+    private raiseErrorExpressionNode(ttoken: Token, msg: string): ErrorExpression {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
+
+        return new ErrorExpression(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
     }
 
-    private scanMatchingParens(lp: string, rp: string, sindex?: number): number {
+    private raiseErrorStatement(ttoken: Token, msg: string): ErrorStatement {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
+
+        return new ErrorStatement(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
+    }
+
+    private scanMatchingParens(lp: string, rp: string): number | undefined {
         let pscount = 1;
-        for (let pos = this.m_cpos + (sindex || 0) + 1; pos < this.m_epos; ++pos) {
-            const tok = this.m_tokens[pos];
+        let tpos = 1;
+
+        let tok = this.lexer.peekK(tpos);
+        while (tok.kind !== TokenStrings.EndOfStream) {
             if (tok.kind === lp) {
                 pscount++;
             }
@@ -1036,17 +1101,22 @@ class Parser {
             }
 
             if (pscount === 0) {
-                return pos + 1;
+                return tpos;
             }
+
+            tpos++;
+            tok = this.lexer.peekK(tpos);
         }
 
-        return this.m_epos;
+        return undefined;
     }
 
-    private scanCodeParens(): number {
+    private scanCodeParens(): number | undefined {
         let pscount = 1;
-        for (let pos = this.m_cpos + 1; pos < this.m_epos; ++pos) {
-            const tok = this.m_tokens[pos];
+        let tpos = 1;
+
+        let tok = this.lexer.peekK(tpos);
+        while (tok.kind !== TokenStrings.EndOfStream) {
             if (LeftScanParens.indexOf(tok.kind) !== -1) {
                 pscount++;
             }
@@ -1058,54 +1128,31 @@ class Parser {
             }
 
             if (pscount === 0) {
-                return pos + 1;
+                return tpos;
             }
+
+            tpos++;
+            tok = this.lexer.peekK(tpos);
         }
 
-        return this.m_epos;
-    }
-
-    private scanLParens(cpos: number): number {
-        let pscount = 1;
-        for (let pos = cpos + 1; pos < this.m_epos; ++pos) {
-            const tok = this.m_tokens[pos];
-            if (tok.kind === SYM_lparen) {
-                pscount++;
-            }
-            else if (tok.kind === SYM_rparen) {
-                pscount--;
-            }
-            else {
-                //nop
-            }
-
-            if (pscount === 0) {
-                return pos + 1;
-            }
-        }
-
-        return this.m_epos;
-    }
-
-    private setNamespaceAndFile(ns: string, file: string) {
-        this.m_penv.setNamespaceAndFile(ns, file);
+        return undefined;
     }
 
     private peekToken(pos?: number): string {
-        return this.m_tokens[this.m_cpos + (pos || 0)].kind;
+        return this.lexer.peekK((pos || 0)).kind;
     }
 
     private peekTokenData(pos?: number): string {
-        return this.m_tokens[this.m_cpos + (pos || 0)].data as string;
+        return this.lexer.peekK((pos || 0)).data as string;
     }
 
     private testToken(kind: string): boolean {
-        return (this.m_cpos !== this.m_epos) && this.m_tokens[this.m_cpos].kind === kind;
+        return this.lexer.peekNext().kind === kind;
     }
 
     private testFollows(...kinds: string[]): boolean {
         for (let i = 0; i < kinds.length; ++i) {
-            if (this.m_cpos + i === this.m_epos || this.m_tokens[this.m_cpos + i].kind !== kinds[i]) {
+            if (this.peekToken(i) !== kinds[i]) {
                 return false;
             }
         }
@@ -1114,7 +1161,7 @@ class Parser {
     }
 
     private consumeToken() {
-        this.m_cpos++;
+        this.lexer.consumeToken();
     }
 
     private consumeTokenIf(kind: string) {
@@ -1132,65 +1179,94 @@ class Parser {
     }
 
     private consumeTokenAndGetValue(): string {
-        const td = this.m_tokens[this.m_cpos].data;
+        const td = this.lexer.peekNext().data as string;
         this.consumeToken();
-        return td as string;
+
+        return td;
     }
 
-    private ensureToken(kind: string, contextinfo: string) {
-        if (!this.testToken(kind)) {
-            const found = this.m_tokens[this.m_cpos].data || this.m_tokens[this.m_cpos].kind;
-            this.raiseError(this.m_tokens[this.m_cpos].line, `Expected "${kind}" but found "${found}" when trying to parse: ${contextinfo}`);
+    private ensureToken(kind: string, contextinfo: string): boolean {
+        if (this.testToken(kind)) {
+            return true;
+        }
+        else {
+            this.recordExpectedError(this.lexer.peekNext(), kind, contextinfo);
+            return false;
         }
     }
 
     private ensureAndConsumeToken(kind: string, contextinfo: string) {
-        this.ensureToken(kind, contextinfo);
+        const ok = this.ensureToken(kind, contextinfo);
         this.consumeToken();
+
+        return ok;
     }
 
     private ensureNotToken(kind: string, contextinfo: string) {
-        if (this.testToken(kind)) {
-            this.raiseError(this.m_tokens[this.m_cpos].line, `Token "${kind}" was not expected when trying to parse: ${contextinfo}`);
+        if (!this.testToken(kind)) {
+            return true;
+        }
+        else {
+            this.recordUnExpectedError(this.lexer.peekNext(), kind, contextinfo);
+            return false;
         }
     }
 
-    private scanToken(tok: string): number {
-        let pos = this.m_cpos;
-
-        while (pos !== this.m_epos) {
-            if (this.m_tokens[pos].kind === tok) {
+    private scanToken(tok: string): number | undefined {
+        let pos = 0;
+        let tk = this.lexer.peekK(pos);
+        while(tk.kind !== TokenStrings.EndOfStream) {
+            if(tk.kind === tok) {
                 return pos;
             }
+
             pos++;
+            tk = this.lexer.peekK(pos);
         }
-        return this.m_epos;
+
+        return undefined;
     }
 
-    private scanTokenOptions(...toks: string[]): number {
-        let pos = this.m_cpos;
-
-        while (pos !== this.m_epos) {
-            if (toks.indexOf(this.m_tokens[pos].kind) !== -1) {
+    private scanTokenOptions(...toks: string[]): number | undefined {
+        let pos = 0;
+        let tk = this.lexer.peekK(pos);
+        while(tk.kind !== TokenStrings.EndOfStream) {
+            if(toks.includes(tk.kind)) {
                 return pos;
             }
+
             pos++;
+            tk = this.lexer.peekK(pos);
         }
-        return this.m_epos;
+
+        return undefined;
     }
 
     private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
         let result: T[] = [];
 
+        let closeparen = this.scanMatchingParens(start, end);
+        if(closeparen === undefined) {
+            this.;
+            closeparen = this.lexer.input.length;
+        }
+
         this.ensureAndConsumeToken(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end)) {
             result.push(fn());
             
-            if (this.testAndConsumeTokenIf(sep)) {
-                this.ensureNotToken(end, `element in ${contextinfobase} list`);
+            let pok = true;
+            if(this.testToken(sep) || this.testToken(end)) {
+                if (this.testAndConsumeTokenIf(sep)) {
+                    pok = this.ensureNotToken(end, `element in ${contextinfobase} list`);
+                }
+                else {
+                    pok = this.ensureToken(end, `element in ${contextinfobase} list`);
+                }
             }
             else {
-                this.ensureToken(end, `element in ${contextinfobase} list`);
+                //recover to next element
+                xxxx;
             }
         }
 
@@ -1198,7 +1274,7 @@ class Parser {
     }
 
     private parseBuildInfo(cb: BuildLevel): BuildLevel {
-        if( this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release)) {
+        if(this.testToken(KW_spec) || this.testToken(KW_debug) || this.testToken(KW_test) || this.testToken(KW_release) || this.testToken(KW_safety)) {
             return this.consumeTokenAndGetValue() as "spec" | "debug" | "test" | "release" | "safety";
         }
         else {

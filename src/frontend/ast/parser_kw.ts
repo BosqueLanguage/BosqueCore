@@ -199,6 +199,14 @@ const InvokeAttributes = [
     "__conditional_safe"
 ];
 
+const AllAttributes = [
+    ...GeneralAttributes,
+    ...TypeDeclAttributes,
+    ...APIDeclAttributes,
+    ...CheckerAttributes,
+    ...InvokeAttributes
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
 
@@ -303,7 +311,7 @@ const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar];
 
 export {
     KeywordStrings,
-    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes,
+    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes, AllAttributes,
     SymbolStrings, LeftScanParens, RightScanParens,
 
     KW_recursive_q,
