@@ -40,7 +40,7 @@ const KW_then = "then";
 const KW_true = "true";
 const KW_var = "var";
 const KW_yield = "yield";
-const KW_bsqon = "bsqon";
+const KW_under = "_";
 
 const KW_debug = "debug";
 const KW_release = "release";
@@ -81,10 +81,12 @@ const KW_validator = "validator";
 //reserved
 const KW_operator = "operator";
 
-const KeywordStringsExpression = [
+const KeywordStrings = [
     KW_recursive_q,
     KW_recursive,
     
+    KW_api,
+    KW_as,
     KW_action,
     KW__debug,
     KW_do,
@@ -145,18 +147,12 @@ const KeywordStringsExpression = [
     KW_var,
     KW_when,
     KW_yield,
-
-    KW_bsqon,
-    KW_example
+    KW_under,
+    KW_example,
+    KW_event,
+    KW_status,
+    KW_validator
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
-const KeywordStringsDeclaration = [
-    KW_import, KW_using, KW_as,
-    KW_namespace,
-    KW_typedecl,
-    KW_function, KW_const, KW_api,
-    KW_concept, KW_entity, KW_enum, KW_datatype, KW_task, KW_event, KW_status, KW_validator
-];
 
 ////////////////////////////////////////////////////////////////////////////////
 //Attributes
@@ -165,7 +161,9 @@ const GeneralAttributes = [
     "private",
     "internal",
     "hidden",
-    "public"
+    "public",
+
+    "sensitive"
 ];
 
 const TypeDeclAttributes = [
@@ -187,13 +185,7 @@ const APIDeclAttributes = [
 const CheckerAttributes = [
     "softcheck",
     "chktest",
-    "errtest",
-
-    "debug",
-    "release",
-    "safety",
-    "spec",
-    "test"
+    "errtest"
 ]
 
 const InvokeAttributes = [
@@ -206,8 +198,6 @@ const InvokeAttributes = [
     "__assume_safe",
     "__conditional_safe"
 ];
-
-const SensitiveAttribute = "sensitive";
 
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
@@ -312,7 +302,124 @@ const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar];
 const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar];
 
 export {
-    KeywordStringsExpression, KeywordStringsDeclaration,
-    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes, SensitiveAttribute,
-    SymbolStrings, LeftScanParens, RightScanParens
+    KeywordStrings,
+    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes,
+    SymbolStrings, LeftScanParens, RightScanParens,
+
+    KW_recursive_q,
+    KW_recursive,
+    
+    KW_api,
+    KW_as,
+    KW_action,
+    KW__debug,
+    KW_do,
+    KW_abort,
+    KW_assert,
+    KW_concept,
+    KW_const,
+    KW_debug,
+    KW_elif,
+    KW_else,
+    KW_enum,
+    KW_env,
+    KW_entity,
+    KW_ensures,
+    KW_err,
+    KW_false,
+    KW_field,
+    KW_fn,
+    KW_function,
+    KW_if,
+    KW_implements,
+    KW_import,
+    KW_in,
+    KW_invariant,
+    KW_let,
+    KW_literal,
+    KW_match,
+    KW_method,
+    KW_namespace,
+    KW_none,
+    KW_nothing,
+    KW_of,
+    KW_ok,
+    KW_operator,
+    KW_pred,
+    KW_provides,
+    KW_ref,
+    KW_release,
+    KW_return,
+    KW_requires,
+    KW_self,
+    KW_something,
+    KW_some,
+    KW_safety,
+    KW_spec,
+    KW_synth,
+    KW_switch,
+    KW_task,
+    KW_test,
+    KW_then,
+    KW_this,
+    KW_true,
+    KW_type,
+    KW_typedecl,
+    KW_datatype,
+    KW_using,
+    KW_validate,
+    KW_var,
+    KW_when,
+    KW_yield,
+    KW_under,
+    KW_example,
+    KW_event,
+    KW_status,
+    KW_validator,
+
+    SYM_lbrack,
+    SYM_lparen,
+    SYM_lbrace,
+    SYM_lbracebar,
+    SYM_rbrack,
+    SYM_rparen,
+    SYM_rbrace,
+    SYM_rbracebar,
+
+    SYM_at,
+    SYM_atat,
+    SYM_hash,
+    SYM_amp,
+    SYM_bang,
+    SYM_ampamp,
+    SYM_bangeq,
+    SYM_bangeqeq,
+    SYM_colon,
+    SYM_coloncolon,
+    SYM_coma,
+    SYM_dot,
+    SYM_eq,
+    SYM_eqeq,
+    SYM_eqeqeq,
+    SYM_bigarrow,
+    SYM_implies,
+    SYM_iff,
+    SYM_arrow,
+    SYM_semicolon,
+    SYM_bar,
+    SYM_barbar,
+    SYM_plus,
+    SYM_question,
+    SYM_questionquestion,
+    SYM_le,
+    SYM_leq,
+    SYM_ge,
+    SYM_geq,
+    SYM_minus,
+    SYM_times,
+    SYM_div,
+    SYM_land,
+    SYM_lor,
+    SYM_dotdotdot,
+    SYM_HOLE
 };
