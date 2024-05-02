@@ -1,10 +1,10 @@
 
 import { DeclLevelParserScope, ParserEnvironment, ParserScope } from "./parser_env";
-import { ErrorTypeSignature } from "./type";
+import { ErrorTypeSignature, TypeSignature } from "./type";
 import { ErrorExpression, ErrorStatement } from "./body";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_debug, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_debug, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_question, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1058,6 +1058,11 @@ class Parser {
         cstate.errors.push(new ParserError(got.line, got.pos, `Unexpected token "${got.data || got.kind}" when expecting "${expected}" when parsing "${contextinfo}"`));
     }
 
+    private recordUnballancedParenError(lp: Token, missing: string, contextinfo: string) {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(lp.line, lp.pos, `Unballanced parenthesis, missing "${missing}" when parsing "${contextinfo}"`));
+    }
+
     private recordErrorDeclaration(dtoken: Token, msg: string) {
         const cstate = this.lexer.currentState();
         cstate.errors.push(new ParserError(dtoken.line, dtoken.pos, msg));
@@ -1242,31 +1247,34 @@ class Parser {
         return undefined;
     }
 
-    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
+    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T, iserr: (v: T) => boolean): T[] {
         let result: T[] = [];
 
         let closeparen = this.scanMatchingParens(start, end);
         if(closeparen === undefined) {
-            this.;
-            closeparen = this.lexer.input.length;
+            this.recordUnballancedParenError(this.lexer.peekNext(), end, contextinfobase);
         }
 
         this.ensureAndConsumeToken(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end)) {
-            result.push(fn());
+            const v = fn();
+            result.push(v);
             
-            let pok = true;
-            if(this.testToken(sep) || this.testToken(end)) {
-                if (this.testAndConsumeTokenIf(sep)) {
-                    pok = this.ensureNotToken(end, `element in ${contextinfobase} list`);
-                }
-                else {
-                    pok = this.ensureToken(end, `element in ${contextinfobase} list`);
-                }
+            if(closeparen === undefined && iserr(v)) {
+                //assume this is where the missing close should be and break
+                break;
             }
             else {
-                //recover to next element
-                xxxx;
+                if(!this.testToken(sep) && !this.testToken(end)) {
+                    //just record the missing item and try to continue directly parsing another element
+                    this.recordExpectedError(this.lexer.peekNext(), sep, `missing in ${contextinfobase} list`);
+                }
+                else {
+                    if (this.testAndConsumeTokenIf(sep)) {
+                        //check for a stray ,) type thing at the end of the list
+                        this.ensureNotToken(end, `element in ${contextinfobase} list`);
+                    }
+                }
             }
         }
 
