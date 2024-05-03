@@ -444,12 +444,16 @@ class MethodDecl extends ExplicitInvokeDecl {
 }
 
 class TaskMethodDecl extends ExplicitInvokeDecl {
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[]) {
+    readonly isSelfRef: boolean;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature | undefined, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: (InvokeExampleDeclInline | InvokeExampleDeclFile)[], isSelfRef: boolean) {
         super(sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
+
+        this.isSelfRef = isSelfRef;
     }
 
     getDeclarationTag(): string {
-        return "method";
+        return (this.isSelfRef ? "ref " : "") + "method";
     }
 }
 

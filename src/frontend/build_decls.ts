@@ -15,6 +15,10 @@ class SourceInfo {
     static implicitSourceInfo(): SourceInfo {
         return new SourceInfo(-1, -1, -1, -1);
     }
+
+    static computeInfoSpan(start: SourceInfo, end: SourceInfo): SourceInfo {
+        return new SourceInfo(start.line, start.column, start.pos, (start.pos - end.pos) + end.span);
+    }
 }
 
 type CodeFileInfo = { 

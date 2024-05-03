@@ -1,16 +1,17 @@
 
 import { DeclLevelParserScope, ParserEnvironment, ParserScope } from "./parser_env";
-import { ErrorTypeSignature, TypeSignature } from "./type";
+import { AutoTypeSignature, ErrorTypeSignature, FunctionParameter, TypeSignature } from "./type";
 import { ErrorExpression, ErrorStatement } from "./body";
-import { Assembly } from "./assembly";
+import { Assembly, FunctionInvokeDecl, LambdaDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_debug, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_question, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_debug, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
 const TokenStrings = {
     Clear: "[CLEAR]",
     Error: "[ERROR]",
+    Recover: "[RECOVER]",
 
     DocComment: "[DOC_COMMENT]",
 
@@ -88,23 +89,37 @@ class Token {
         this.kind = kind;
         this.data = data;
     }
+
+    getSourceInfo(): SourceInfo {
+        return new SourceInfo(this.line, this.column, this.pos, this.span);
+    }
 }
 
 class ParserError {
-    readonly line: number;
-    readonly cpos: number;
+    readonly sinfo: SourceInfo;
     readonly message: string;
 
-    constructor(line: number, cpos: number, message: string) {
-        this.line = line;
-        this.cpos = cpos;
+    constructor(sinfo: SourceInfo, message: string) {
+        this.sinfo = sinfo;
         this.message = message;
     }
 
 }
 
+enum LexerStateScanMode {
+    Enabled,
+    EnabledIf,
+    EnabledElse,
+    Disabled,
+    DisabledIf,
+    DisabledElse
+}
+
 class LexerState {
-    readonly mode: string;
+    readonly modetag: string;
+    readonly scanmode: LexerStateScanMode;
+
+    readonly epos: number;
 
     cline: number;
     linestart: number;
@@ -113,11 +128,12 @@ class LexerState {
     errors: ParserError[] = [];
 
     readonly attributes: string[];
-    readonly namespaces: string[];
-    readonly typenames: string[];
 
-    constructor(mode: string, cline: number, linestart: number, cpos: number, tokens: Token[], attributes: string[], namespaces: string[], typenames: string[]) {
-        this.mode = mode;
+    constructor(modetag: string, scanmode: LexerStateScanMode, epos: number, cline: number, linestart: number, cpos: number, tokens: Token[], attributes: string[]) {
+        this.modetag = modetag;
+        this.scanmode = scanmode;
+
+        this.epos = epos;
 
         this.cline = cline;
         this.linestart = linestart;
@@ -125,40 +141,81 @@ class LexerState {
         this.tokens = [];
 
         this.attributes = attributes;
-
-        this.namespaces = namespaces;
-        this.typenames = typenames;
     }
 
-    static createFileToplevelState(namespaces: string[]): LexerState {
-        return new LexerState("toplevel", 1, 0, 0, [], AllAttributes, namespaces, []);
+    static createFileToplevelState(epos: number): LexerState {
+        return new LexerState("toplevel", LexerStateScanMode.Enabled, epos, 1, 0, 0, [], AllAttributes);
+    }
+
+    cloneForNested(mode: string, epos: number, attribs: string[] | undefined): LexerState {
+        return new LexerState(mode, this.scanmode, epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes || []);
     }
 
     cloneForTry(mode: string): LexerState {
-        return new LexerState(mode, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes, this.namespaces, this.typenames);
+        return new LexerState(mode, this.scanmode, this.epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes);
     }
 
-    pushError(line: number, cpos: number, message: string) {
-        this.errors.push(new ParserError(line, cpos, message));
+    cloneForMacro(smode: LexerStateScanMode): LexerState {
+        return new LexerState(this.modetag, smode, this.epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes);
+    }
+
+    moveStateIntoParent(parent: LexerState) {
+        parent.cline = this.cline;
+        parent.linestart = this.linestart;
+        parent.cpos = this.cpos;
+        parent.tokens = this.tokens;
+        parent.errors = this.errors;
+    }
+
+    pushError(sinfo: SourceInfo, message: string) {
+        if(this.scanmode === LexerStateScanMode.Enabled || this.scanmode === LexerStateScanMode.EnabledIf || this.scanmode === LexerStateScanMode.EnabledElse) {
+            this.errors.push(new ParserError(sinfo, message));
+        }
+    }
+
+    pushToken(token: Token) {
+        if(this.scanmode === LexerStateScanMode.Enabled || this.scanmode === LexerStateScanMode.EnabledIf || this.scanmode === LexerStateScanMode.EnabledElse) {
+            this.tokens.push(token);
+        }
+    }
+
+    recover() {
+        this.cpos = this.epos;
     }
 }
 
 class Lexer {
     readonly macrodefs: string[];
     readonly input: string;
-    readonly epos: number;
     
+    readonly namespaces: string[];
+    readonly typenames: string[];
+
     readonly stateStack: LexerState[];
 
     currentState(): LexerState {
         return this.stateStack[this.stateStack.length - 1];
     }
 
-    currentSrcInfo(): SourceInfo {
-        this.lexNext();
-        const cstate = this.currentState();
-        
-        return new SourceInfo(cstate.tokens[0].line, cstate.tokens[0].column, cstate.tokens[0].pos, cstate.tokens[0].span);
+    prepStateStackForNested(mode: string, epos: number, attribs: string[] | undefined) {
+        this.stateStack.push(this.currentState().cloneForNested(mode, epos, attribs));
+    }
+
+    prepStateStackForTry(mode: string) {
+        this.stateStack.push(this.currentState().cloneForTry(mode + "-try"));
+    }
+
+    prepStateStackForMacro(smode: LexerStateScanMode) {
+        this.stateStack.push(this.currentState().cloneForMacro(smode));
+    }
+
+    popStateIntoParentOk() {
+        const pf = this.stateStack.pop() as LexerState;
+        this.currentState().moveStateIntoParent(pf);
+    }
+
+    popStateReset() {
+        this.stateStack.pop();
     }
 
     private findKeywordString(str: string): string | undefined {
@@ -182,10 +239,12 @@ class Lexer {
         return undefined;
     }
 
-    constructor(input: string, macrodefs: string[], istate: LexerState) {
+    constructor(input: string, macrodefs: string[], istate: LexerState, namespaces: string[], typenames: string[]) {
         this.macrodefs = macrodefs;
         this.input = input;
-        this.epos = input.length;
+
+        this.namespaces = namespaces;
+        this.typenames = typenames;
 
         this.stateStack = [istate];
     }
@@ -195,14 +254,14 @@ class Lexer {
     private recordLexToken(epos: number, kind: string) {
         const cstate = this.currentState();
 
-        cstate.tokens.push(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, kind)); //set data to kind string
+        cstate.pushToken(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, kind)); //set data to kind string
         cstate.cpos = epos;
     }
 
     private recordLexTokenWData(epos: number, kind: string, data: string) {
         const cstate = this.currentState();
 
-        cstate.tokens.push(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, data));
+        cstate.pushToken(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, data));
         cstate.cpos = epos;
     }
 
@@ -240,11 +299,11 @@ class Lexer {
             return false;
         }
 
-        let epos = this.input.indexOf("\n", cstate.cpos);
+        let epos = this.input.slice(0, cstate.epos).indexOf("\n", cstate.cpos);
 
         if (epos === -1) {
             this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = this.epos;
+            cstate.cpos = cstate.epos;
         }
         else {
             epos++;
@@ -264,7 +323,7 @@ class Lexer {
             return false;
         }
 
-        let epos = this.input.indexOf(" **%", cstate.cpos + 3);
+        let epos = this.input.slice(0, cstate.epos).indexOf(" **%", cstate.cpos + 3);
         if (epos !== -1) {
             epos += 3;
 
@@ -284,12 +343,12 @@ class Lexer {
             return false;
         }
 
-        let epos = this.input.indexOf("*%", cstate.cpos + 2);
+        let epos = this.input.slice(0, cstate.epos).indexOf("*%", cstate.cpos + 2);
         if (epos === -1) {
-            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated span comment");
+            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated span comment");
             
             this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = this.epos;
+            cstate.cpos = cstate.epos;
         }
         else {
             epos += 2;
@@ -558,10 +617,10 @@ class Lexer {
         }
 
 
-        let epos = this.input.indexOf('"', ncpos);
+        let epos = this.input.slice(0, cstate.epos).indexOf('"', ncpos);
         if(epos === -1) {
-            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated string literal");
-            this.recordLexToken(this.epos, TokenStrings.Error);
+            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated string literal");
+            this.recordLexToken(cstate.epos, TokenStrings.Error);
 
             return true;
         }
@@ -595,10 +654,10 @@ class Lexer {
             return false;
         }
 
-        let epos = this.input.indexOf("'", ncpos);
+        let epos = this.input.slice(0, cstate.epos).indexOf("'", ncpos);
         if(epos === -1) {
-            cstate.pushError(cstate.cline, cstate.cpos, "Unterminated ASCII string literal");
-            this.recordLexToken(this.epos, TokenStrings.Error);
+            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated ASCII string literal");
+            this.recordLexToken(cstate.epos, TokenStrings.Error);
 
             return true;
         }
@@ -783,10 +842,10 @@ class Lexer {
         if(mm !== undefined) {
             let epos = cstate.cpos + mm.length;
             if(this.input.startsWith("[", epos)) {
-                epos = this.input.indexOf("]", epos);
+                epos = this.input.slice(epos, cstate.epos).indexOf("]", epos);
                 if(epos === -1) {
-                    cstate.pushError(cstate.cline, cstate.cpos, "Unterminated attribute");
-                    this.recordLexToken(this.epos, TokenStrings.Error);
+                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated attribute");
+                    this.recordLexToken(cstate.epos, TokenStrings.Error);
                     return true;
                 }
                 epos++;
@@ -808,11 +867,11 @@ class Lexer {
         }
         else
         {        
-            if(cstate.typenames.includes(idm)) {
+            if(this.typenames.includes(idm)) {
                 this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.TypeName, idm);
                 return true;
             }
-            else if(cstate.namespaces.includes(idm)) {
+            else if(this.namespaces.includes(idm)) {
                 this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.NamespaceName, idm);
                 return true;
             }
@@ -876,97 +935,84 @@ class Lexer {
     }
 
     lexk(k: number): Token[] {
-        const cstate = this.currentState();
+        let cstate = this.currentState();
         if (cstate.tokens.length > k) {
             return cstate.tokens;
         }
 
-        let mode: "scan" | "normal" = "normal";
-        let macrostack: ("scan" | "normal")[] = []
-
         cstate.tokens = [];
-        while (cstate.cpos < this.epos && cstate.tokens.length < k) {
-            if(mode === "scan") {
-                const macro = this.tryLexMacroOp();
-                if (macro !== undefined) {
-                    if (macro[0] === "#if") {
-                        macrostack.push("scan")
+        while (cstate.cpos < cstate.epos && cstate.tokens.length < k) {
+            const macro = this.tryLexMacroOp();
+            if(macro !== undefined) {
+                if(macro[0] === "#if") {
+                    const ifenabled = this.macrodefs.includes(macro[1] as string);
+                    const cenabled = cstate.scanmode === LexerStateScanMode.Enabled || cstate.scanmode === LexerStateScanMode.EnabledIf || cstate.scanmode === LexerStateScanMode.EnabledElse;
+
+                    let nscanmode = LexerStateScanMode.Disabled;
+                    if(cenabled) {
+                        nscanmode = ifenabled ? LexerStateScanMode.EnabledIf : LexerStateScanMode.DisabledIf;
                     }
-                    else if (macro[0] === "#else") {
-                        mode = macrostack[macrostack.length - 1];
+
+                    this.prepStateStackForMacro(nscanmode);
+                    cstate = this.currentState();
+                }
+                else if(macro[0] === "#else") {
+                    const ifmode = cstate.scanmode;
+                    this.popStateIntoParentOk();
+
+                    if(ifmode === LexerStateScanMode.Disabled) {
+                        this.prepStateStackForMacro(LexerStateScanMode.Disabled);
                     }
                     else {
-                        mode = macrostack.pop() as "scan" | "normal";
+                        let nscanmode = ifmode === LexerStateScanMode.EnabledIf ? LexerStateScanMode.DisabledElse : LexerStateScanMode.EnabledElse;
+                        this.prepStateStackForMacro(nscanmode);
                     }
+
+                    cstate = this.currentState();
                 }
                 else {
-                    const nexthash = this.input.indexOf("\n#", cstate.cpos + 1);
-                    if(nexthash === -1) {
-                        //ended in dangling macro
-                        this.recordLexToken(this.epos, TokenStrings.Error);
-                        cstate.cpos = this.epos;
-                    }
-                    else {
-                        const skips = this.input.slice(cstate.cpos, nexthash);
-
-                        this.updatePositionInfo(cstate.cpos, nexthash);
-                        cstate.cpos = nexthash;
-                    }
+                    this.popStateIntoParentOk();
+                    cstate = this.currentState();
                 }
             }
             else {
-                const macro = this.tryLexMacroOp();
-                if(macro !== undefined) {
-                    if(macro[0] === "#if") {
-                        macrostack.push("normal")
-                        if(this.macrodefs.includes(macro[1] as string)) {
-                            mode = "normal";
-                        }
-                        else {
-                            mode = "scan";
-                        }
-                    }
-                    else if(macro[0] === "#else") {
-                        mode = "scan";
-                    }
-                    else {
-                        mode = macrostack.pop() as "scan" | "normal";
-                    }
+                if (this.tryLexWS() || this.tryLexLineComment() || this.tryLexDocComment() || this.tryLexSpanComment()) {
+                    //continue
+                }
+                else if(this.tryLexDateLike()) {
+                    //continue
+                }
+                else if (this.tryLexPath() || this.tryLexRegex()) {
+                    //continue
+                }
+                else if(this.tryLexStringLike()) {
+                    //continue
+                }
+                else if(this.tryLexByteBuffer() || this.tryLexUUID() || this.tryLexHashCode()) {
+                    //continue
+                }
+                else if (this.tryLexNumberLikeToken()) {
+                    //continue
+                }
+                else if(this.tryLexAttribute()) {
+                    //continue
+                }
+                else if (this.tryLexSymbol() || this.tryLexName()) {
+                    //continue
                 }
                 else {
-                    if (this.tryLexWS() || this.tryLexLineComment() || this.tryLexDocComment() || this.tryLexSpanComment()) {
-                        //continue
-                    }
-                    else if(this.tryLexDateLike()) {
-                        //continue
-                    }
-                    else if (this.tryLexPath() || this.tryLexRegex()) {
-                        //continue
-                    }
-                    else if(this.tryLexStringLike()) {
-                        //continue
-                    }
-                    else if(this.tryLexByteBuffer() || this.tryLexUUID() || this.tryLexHashCode()) {
-                        //continue
-                    }
-                    else if (this.tryLexNumberLikeToken()) {
-                        //continue
-                    }
-                    else if(this.tryLexAttribute()) {
-                        //continue
-                    }
-                    else if (this.tryLexSymbol() || this.tryLexName()) {
-                        //continue
-                    }
-                    else {
-                        this.recordLexToken(cstate.cpos + 1, TokenStrings.Error);
-                    }
+                    this.recordLexToken(cstate.cpos + 1, TokenStrings.Error);
                 }
             }
         }
 
-        if(cstate.cpos === this.epos) {
-            this.recordLexToken(this.epos, TokenStrings.EndOfStream);
+        if(cstate.cpos === cstate.epos) {
+            if(cstate.cpos === this.input.length) {
+                this.recordLexToken(this.input.length, TokenStrings.EndOfStream);
+            }
+            else {
+                this.recordLexToken(cstate.cpos, TokenStrings.Recover);
+            }
         }
 
         return cstate.tokens;
@@ -978,7 +1024,7 @@ class Lexer {
     }
 
     peekK(k: number): Token {
-        this.lexk(k);
+        this.lexk(k + 1);
         
         const cstate = this.currentState();
         if(cstate.tokens.length < k) {
@@ -997,7 +1043,7 @@ class Lexer {
         this.lexk(k);
 
         const tks = this.currentState().tokens;
-        while(k > 0 && tks.length > 1 /*never shift off EOS*/) {
+        while(k > 0 && (tks[0].kind !== TokenStrings.EndOfStream && tks[0].kind !== TokenStrings.Recover)) {
             tks.shift();
         }
     }
@@ -1005,14 +1051,6 @@ class Lexer {
     consumeToken() {
         this.consumeK(1);
     }
-}
-
-enum InvokableKind {
-    Function,
-    Method,
-    Action,
-    LambdaFn,
-    LambdaPred
 }
 
 class Parser {
@@ -1026,7 +1064,7 @@ class Parser {
             allToplevelNamespaces.push("Core");
         }
 
-        this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(allToplevelNamespaces.sort()));
+        this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(contents.length), allToplevelNamespaces.sort(), []);
 
         const nsmatch = contents.match(Parser._s_nsre);
         let nns = "NSDefault";
@@ -1044,49 +1082,40 @@ class Parser {
         return attribs.indexOf(attr) !== -1;
     }
 
-    private getCurrentSrcInfo(): SourceInfo {
-        return this.lexer.currentSrcInfo();
+    private recordExpectedError(token: Token, expected: string, contextinfo: string) {
+        const cstate = this.lexer.currentState();
+        cstate.errors.push(new ParserError(token.getSourceInfo(), `Expected "${expected}" but got "${token.data || token.kind}" when parsing "${contextinfo}"`));
     }
 
-    private recordExpectedError(got: Token, expected: string, contextinfo: string) {
+    private recordUnExpectedError(token: Token, expected: string, contextinfo: string) {
         const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(got.line, got.pos, `Expected "${expected}" but got "${got.data || got.kind}" when parsing "${contextinfo}"`));
+        cstate.errors.push(new ParserError(token.getSourceInfo(), `Unexpected token "${token.data || token.kind}" when expecting "${expected}" when parsing "${contextinfo}"`));
     }
 
-    private recordUnExpectedError(got: Token, expected: string, contextinfo: string) {
+    private recordErrorGeneral(sinfo: SourceInfo, msg: string) {
         const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(got.line, got.pos, `Unexpected token "${got.data || got.kind}" when expecting "${expected}" when parsing "${contextinfo}"`));
+        cstate.errors.push(new ParserError(sinfo, msg));
     }
 
-    private recordUnballancedParenError(lp: Token, missing: string, contextinfo: string) {
+    private raiseErrorTypeNode(sinfo: SourceInfo, msg: string): ErrorTypeSignature {
         const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(lp.line, lp.pos, `Unballanced parenthesis, missing "${missing}" when parsing "${contextinfo}"`));
+        cstate.errors.push(new ParserError(sinfo, msg));
+
+        return new ErrorTypeSignature(sinfo);
     }
 
-    private recordErrorDeclaration(dtoken: Token, msg: string) {
+    private raiseErrorExpressionNode(sinfo: SourceInfo, msg: string): ErrorExpression {
         const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(dtoken.line, dtoken.pos, msg));
+        cstate.errors.push(new ParserError(sinfo, msg));
+
+        return new ErrorExpression(sinfo);
     }
 
-    private raiseErrorTypeNode(ttoken: Token, msg: string): ErrorTypeSignature {
+    private raiseErrorStatement(sinfo: SourceInfo, msg: string): ErrorStatement {
         const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
+        cstate.errors.push(new ParserError(sinfo, msg));
 
-        return new ErrorTypeSignature(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
-    }
-
-    private raiseErrorExpressionNode(ttoken: Token, msg: string): ErrorExpression {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
-
-        return new ErrorExpression(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
-    }
-
-    private raiseErrorStatement(ttoken: Token, msg: string): ErrorStatement {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(ttoken.line, ttoken.pos, msg));
-
-        return new ErrorStatement(new SourceInfo(ttoken.line, ttoken.column, ttoken.pos, ttoken.span));
+        return new ErrorStatement(sinfo);
     }
 
     private scanMatchingParens(lp: string, rp: string): number | undefined {
@@ -1094,7 +1123,7 @@ class Parser {
         let tpos = 1;
 
         let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream) {
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
             if (tok.kind === lp) {
                 pscount++;
             }
@@ -1121,7 +1150,7 @@ class Parser {
         let tpos = 1;
 
         let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream) {
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
             if (LeftScanParens.indexOf(tok.kind) !== -1) {
                 pscount++;
             }
@@ -1133,6 +1162,33 @@ class Parser {
             }
 
             if (pscount === 0) {
+                return tpos;
+            }
+
+            tpos++;
+            tok = this.lexer.peekK(tpos);
+        }
+
+        return undefined;
+    }
+
+    private scanToRecover(trecover: string): number | undefined {
+        let pscount = 0;
+        let tpos = 0;
+
+        let tok = this.lexer.peekK(tpos);
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (LeftScanParens.indexOf(tok.kind) !== -1) {
+                pscount++;
+            }
+            else if (RightScanParens.indexOf(tok.kind) !== -1) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if(tok.kind === trecover && pscount === 0) {
                 return tpos;
             }
 
@@ -1247,37 +1303,39 @@ class Parser {
         return undefined;
     }
 
-    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T, iserr: (v: T) => boolean): T[] {
-        let result: T[] = [];
-
-        let closeparen = this.scanMatchingParens(start, end);
+    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] | undefined {
+        const closeparen = this.scanMatchingParens(start, end);
         if(closeparen === undefined) {
-            this.recordUnballancedParenError(this.lexer.peekNext(), end, contextinfobase);
+            return undefined;
         }
 
+        const closetok = this.lexer.peekK(closeparen);
+        this.lexer.prepStateStackForNested("list-" + contextinfobase, closetok.pos, undefined);
+
+        let result: T[] = [];
         this.ensureAndConsumeToken(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end)) {
             const v = fn();
             result.push(v);
             
-            if(closeparen === undefined && iserr(v)) {
-                //assume this is where the missing close should be and break
-                break;
+            if(this.testToken(end)) {
+                ; //great this is the happy path we will exit next iter
+            }
+            else if(this.testToken(sep)) {
+                //consume the sep
+                this.consumeToken();
+
+                //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                if(this.testToken(end)) {
+                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                }
             }
             else {
-                if(!this.testToken(sep) && !this.testToken(end)) {
-                    //just record the missing item and try to continue directly parsing another element
-                    this.recordExpectedError(this.lexer.peekNext(), sep, `missing in ${contextinfobase} list`);
-                }
-                else {
-                    if (this.testAndConsumeTokenIf(sep)) {
-                        //check for a stray ,) type thing at the end of the list
-                        this.ensureNotToken(end, `element in ${contextinfobase} list`);
-                    }
-                }
+                this.lexer.currentState().recover();
             }
         }
 
+        this.lexer.popStateIntoParentOk();
         return result;
     }
 
@@ -1292,6 +1350,111 @@ class Parser {
 
     ////
     //Misc parsing
+
+    private parseInvokeSignatureParameter(autotypeok: boolean): FunctionParameter {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const isspread = this.testAndConsumeTokenIf(SYM_dotdotdot);
+
+        if(isref && isspread) {
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a spread");
+        }
+
+        const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
+        const pname = idok ? this.consumeTokenAndGetValue() : "[error]";
+
+        let ptype = this.env.SpecialAutoSignature;
+        if(this.testAndConsumeTokenIf(SYM_colon)) {
+            ptype = this.parseTypeSignature();
+        }
+        else {
+            //
+            //TODO: maybe do a try parse type here in case someone just forgot the colon
+            //
+
+            if(!autotypeok) {
+                this.recordErrorGeneral(cinfo, "Missing type specifier -- auto typing is only supported for lambda parameter declarations");
+            }
+        }
+
+        return new FunctionParameter(pname, ptype, isref, isspread);
+    }
+
+    private parseInvokeSignatureParameters(cinfo: SourceInfo, autotypeok: boolean, implicitRefAllowed: boolean): FunctionParameter[] {
+        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseInvokeSignatureParameter(autotypeok));
+        if(params === undefined) {
+            return [];
+        }
+
+        if(params.slice(0, -1).some((param) => param.isSpreadParam)) {
+            this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
+        }
+
+        if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
+            this.recordErrorGeneral(cinfo, "Cannot have more a reference parameter");
+        }
+
+        return params;
+    }
+
+    private parseLambdaDecl(): LambdaDecl {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        let isrecursive: "yes" | "no" | "cond" = "no";
+        if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
+            isrecursive = this.testToken(KW_recursive) ? "yes" : "cond";
+            this.consumeToken();
+        }
+
+        let ispred = false;
+        let isfn = false;
+        while(this.testToken(KW_pred) || this.testToken(KW_fn)) {
+            ispred = this.testAndConsumeTokenIf(KW_pred);
+            isfn = this.testAndConsumeTokenIf(KW_fn);
+        }
+
+        if(ispred && isfn) {
+            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda cannot be marked as both a pred and a fn");
+        }
+        if(!ispred && !isfn) {
+            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda must be either a pred or fn");
+        }
+
+        const okdecl = this.testToken(SYM_lparen);
+        if(!okdecl) {
+
+        }
+
+        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, true, true);
+
+        const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
+        const someTypedParams = params.some((param) => !(param.type instanceof AutoTypeSignature));
+
+        if(!allTypedParams && someTypedParams) {
+            this.recordErrorGeneral(cinfo, "Cannot have a mix of typed parameter with untyped parameters");
+        }
+
+        let resultInfo = this.env.SpecialAutoSignature;
+        if (this.testAndConsumeTokenIf(SYM_colon)) {
+            resultInfo = this.parseTypeSignature();
+
+            if(!allTypedParams) {
+                this.recordErrorGeneral(cinfo, "Cannot have a typed return with untyped parameters");
+            }
+        }
+        else {
+            if (!ispred && params.some((param) => param.isRefParam)) {
+                resultInfo = this.env.SpecialNoneSignature; //void conversion
+            }
+        }
+
+        xxxx;
+        
+    }
+
+    private parseFunctionInvokeDecl(): FunctionInvokeDecl {
+    }
 
     private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean): InvokeDecl {
         const sinfo = this.getCurrentSrcInfo();
