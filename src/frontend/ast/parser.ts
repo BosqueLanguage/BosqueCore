@@ -1303,14 +1303,14 @@ class Parser {
         return undefined;
     }
 
-    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] | undefined {
+    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T, isError: (v: T) => boolean): T[] | undefined {
         const closeparen = this.scanMatchingParens(start, end);
         if(closeparen === undefined) {
             return undefined;
         }
 
-        const closetok = this.lexer.peekK(closeparen);
-        this.lexer.prepStateStackForNested("list-" + contextinfobase, closetok.pos, undefined);
+        const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
+        this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, undefined);
 
         let result: T[] = [];
         this.ensureAndConsumeToken(start, contextinfobase);
@@ -1331,7 +1331,16 @@ class Parser {
                 }
             }
             else {
-                this.lexer.currentState().recover();
+                //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
+
+                if(isError(v)) {
+                  if(closeparen === undefined) {
+                        break; //we can't scan to a known recovery token so just break and let it sort itself out
+                    }
+                    else {
+                        this.lexer.currentState().recover();
+                    }
+                }
             }
         }
 
@@ -1369,12 +1378,13 @@ class Parser {
             ptype = this.parseTypeSignature();
         }
         else {
-            //
-            //TODO: maybe do a try parse type here in case someone just forgot the colon
-            //
-
             if(!autotypeok) {
                 this.recordErrorGeneral(cinfo, "Missing type specifier -- auto typing is only supported for lambda parameter declarations");
+
+                //maybe do a try parse type here in case someone just forgot the colon
+                if(!this.testToken(SYM_coma) && !this.testToken(SYM_rparen)) {
+                    ptype = this.parseTypeSignature();
+                }
             }
         }
 
@@ -1382,7 +1392,7 @@ class Parser {
     }
 
     private parseInvokeSignatureParameters(cinfo: SourceInfo, autotypeok: boolean, implicitRefAllowed: boolean): FunctionParameter[] {
-        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseInvokeSignatureParameter(autotypeok));
+        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseInvokeSignatureParameter(autotypeok), (v: FunctionParameter) => false);
         if(params === undefined) {
             return [];
         }
