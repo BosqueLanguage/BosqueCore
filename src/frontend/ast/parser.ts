@@ -1,10 +1,10 @@
 
-import { DeclLevelParserScope, ParserEnvironment, ParserScope } from "./parser_env";
+import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope } from "./parser_env";
 import { AutoTypeSignature, ErrorTypeSignature, FunctionParameter, TypeSignature } from "./type";
-import { ErrorExpression, ErrorStatement } from "./body";
+import { BodyImplementation, ErrorExpression, ErrorStatement } from "./body";
 import { Assembly, FunctionInvokeDecl, LambdaDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_debug, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_debug, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1459,8 +1459,23 @@ class Parser {
             }
         }
 
-        xxxx;
+        const argNames = new Set<string>(params.map((param) => param.name));
+        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+
+        if(!this.testToken(SYM_bigarrow)) {
+            this.recordExpectedError(this.lexer.peekNext(), SYM_bigarrow, "lambda declaration");
+        }
+        else {
+            this.consumeToken();
+        }
         
+        
+        const lambdaenv = new LambdaBodyParserScope(argNames, boundtemplates, resultInfo);
+        this.env.pushFunctionScope(lambdaenv);
+        const body = this.parseBody();
+        this.env.popFunctionScope();
+
+        return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.capturedTemplates);
     }
 
     private parseFunctionInvokeDecl(): FunctionInvokeDecl {
