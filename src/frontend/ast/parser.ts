@@ -1,10 +1,10 @@
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
-import { AutoTypeSignature, ErrorTypeSignature, FunctionParameter, TypeSignature } from "./type";
-import { BodyImplementation, ErrorExpression, ErrorStatement } from "./body";
-import { Assembly, FunctionInvokeDecl, InvokeExample, LambdaDecl, PostConditionDecl, PreConditionDecl } from "./assembly";
+import { AndTypeSignature, AutoTypeSignature, ErrorTypeSignature, FunctionParameter, NameResolveTypeSignature, NominalTypeSignature, NoneableTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { BodyImplementation, ErrorExpression, ErrorStatement, Expression } from "./body";
+import { Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, PostConditionDecl, PreConditionDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_debug, KW_ensures, KW_example, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_example, KW_fn, KW_method, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_arrow, SYM_at, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_ge, SYM_lbrace, SYM_lbrack, SYM_le, SYM_lparen, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -62,8 +62,6 @@ const TokenStrings = {
     DeltaTimestamp: "[LITERAL_DELTA_TIMESTAMP]",
 
     //Names
-    NamespaceName: "[NAMESPACE]",
-    TypeName: "[TYPE]",
     Template: "[TEMPLATE]",
     IdentifierName: "[IDENTIFIER]",
     Attribute: "[ATTRIBUTE]",
@@ -867,18 +865,8 @@ class Lexer {
         }
         else
         {        
-            if(this.typenames.includes(idm)) {
-                this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.TypeName, idm);
-                return true;
-            }
-            else if(this.namespaces.includes(idm)) {
-                this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.NamespaceName, idm);
-                return true;
-            }
-            else {
-                this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.IdentifierName, idm);
-                return true;
-            }
+            this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.IdentifierName, idm);
+            return true;
         }
     }
 
@@ -1057,6 +1045,8 @@ class Parser {
     private lexer: Lexer;
     private env: ParserEnvironment;
 
+    private currentNamespace: NamespaceDeclaration;
+
     private static _s_nsre = /^\s*namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*;/
     constructor(currentFile: string, contents: string, macrodefs: string[], assembly: Assembly) {
         const allToplevelNamespaces = assembly.toplevelNamespaces.map((nsd) => nsd.name);
@@ -1073,6 +1063,7 @@ class Parser {
         }
 
         this.env = new ParserEnvironment(assembly, currentFile, nns, new DeclLevelParserScope());
+        this.currentNamespace = assembly.ensureToplevelNamespace(nns);
     }
 
     ////
@@ -1303,11 +1294,8 @@ class Parser {
         return undefined;
     }
 
-    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T, isError: (v: T) => boolean): T[] | undefined {
+    private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
         const closeparen = this.scanMatchingParens(start, end);
-        if(closeparen === undefined) {
-            return undefined;
-        }
 
         const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
         this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, undefined);
@@ -1332,14 +1320,13 @@ class Parser {
             }
             else {
                 //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
+                //maybe this is where we want to do some tryParse stuff to recover as robustly as possible -- like in the TypeSpec list parse implementation
 
-                if(isError(v)) {
-                  if(closeparen === undefined) {
-                        break; //we can't scan to a known recovery token so just break and let it sort itself out
-                    }
-                    else {
-                        this.lexer.currentState().recover();
-                    }
+                if(closeparen === undefined) {
+                    break; //we can't scan to a known recovery token so just break and let it sort itself out
+                }
+                else {
+                    this.lexer.currentState().recover();
                 }
             }
         }
@@ -1360,6 +1347,79 @@ class Parser {
     ////
     //Misc parsing
 
+    private parseAttribute(): DeclarationAttibute {
+        if(this.testToken(TokenStrings.DocComment)) {
+            const docstr = this.consumeTokenAndGetValue();
+            return new DeclarationAttibute("doc", [], docstr);
+        }
+        else {
+            this.ensureToken(TokenStrings.Attribute, "attribute");
+            const attr = this.consumeTokenAndGetValue();
+
+            let args: {enumType: TypeSignature, tag: string}[] = [];
+            if(this.testToken(SYM_lbrack)) {
+                args = this.parseListOf<{enumType: TypeSignature, tag: string}>("attribute args", SYM_lparen, SYM_rparen, SYM_coma, () => {
+                    const etype = this.parseTypeSignature();
+                    this.ensureAndConsumeToken(SYM_coloncolon, "attribute args");
+
+                    this.ensureToken(TokenStrings.IdentifierName, "attribute args");
+                    const tag = this.consumeTokenAndGetValue();
+
+                    return {enumType: etype, tag: tag};
+                });
+            }
+
+            return new DeclarationAttibute(attr, args, undefined);
+        }
+    }
+
+    private parseAttributeList(): DeclarationAttibute[] {
+        return this.parseListOf<DeclarationAttibute>("attribute list", SYM_lbrack, SYM_rbrack, SYM_semicolon, () => {
+            return this.parseAttribute();
+        });
+    }
+
+    private parseInvokeTermRestriction(): InvokeTemplateTypeRestriction  {
+        this.ensureAndConsumeToken(SYM_lbrace, "template term restiction");
+        this.ensureAndConsumeToken(KW_when, "template term restiction");
+        
+        const trl = this.parseListOf<InvokeTemplateTypeRestrictionClause>("template term restiction list", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+            if(this.testToken(KW_type)) {
+                this.consumeToken();
+                this.ensureAndConsumeToken(SYM_lparen, "template term restiction");
+
+                this.ensureToken(TokenStrings.IdentifierName, "template term restiction");
+                const vname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+
+                this.ensureAndConsumeToken(SYM_rparen, "template term restiction");
+                this.ensureAndConsumeToken(SYM_arrow, "template term restiction");
+
+                const tunify = this.parseTypeSignature();
+
+                return new InvokeTemplateTypeRestrictionClauseUnify(vname, tunify);
+            }
+            else {
+                const ts = this.parseTemplateTypeReference();
+                this.ensureAndConsumeToken(SYM_at, "template term restiction");
+                const subtype = this.parseTypeSignature();
+
+                return new InvokeTemplateTypeRestrictionClauseSubtype(ts as TemplateTypeSignature, subtype);
+            }
+        });
+
+        this.ensureAndConsumeToken(SYM_rbrace, "template term restiction");
+        return new InvokeTemplateTypeRestriction(trl);
+    }
+
+    private parseInvokeTermRestrictionInfo(): InvokeTemplateTypeRestriction | undefined {
+        if(!this.testToken(SYM_lbrace)) {
+            return undefined;
+        }
+        else {
+            return this.parseInvokeTermRestriction();
+        }
+    }
+
     private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
         
@@ -1367,11 +1427,20 @@ class Parser {
         this.env.pushFunctionScope(prescope);
         while (this.testToken(KW_requires)) {
             this.consumeToken();
+            
+            let tag: string | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_lbrack)) {
+                if(this.ensureToken(TokenStrings.ASCIIString, "requires tag")) {
+                    tag = this.consumeTokenAndGetValue();
+                }
                 
+                this.ensureAndConsumeToken(SYM_rbrack, "requires tag");
+            }
+
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseExpression();
 
-            preconds.push(new PreConditionDecl(sinfo, level, exp));
+            preconds.push(new PreConditionDecl(sinfo, tag, level, exp));
 
             this.ensureAndConsumeToken(SYM_semicolon, "requires");
         }
@@ -1385,10 +1454,19 @@ class Parser {
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
 
+            let tag: string | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_lbrack)) {
+                if(this.ensureToken(TokenStrings.ASCIIString, "requires tag")) {
+                    tag = this.consumeTokenAndGetValue();
+                }
+                
+                this.ensureAndConsumeToken(SYM_rbrack, "requires tag");
+            }
+
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseExpression();
 
-            postconds.push(new PostConditionDecl(sinfo, level, exp));
+            postconds.push(new PostConditionDecl(sinfo, tag, level, exp));
 
             this.ensureAndConsumeToken(SYM_semicolon, "ensures");
         }
@@ -1400,22 +1478,25 @@ class Parser {
     private parseSamples(sinfo: SourceInfo): InvokeExample[] {
         let samples: InvokeExample[] = [];
         while (this.testToken(KW_test) || this.testToken(KW_example)) {
-            const istest = this.testAndConsumeTokenIf(KW_test);
-            this.ensureAndConsumeToken(KW_example, "example");
+            const istest = this.testToken(KW_test);
+            this.consumeToken();
 
-            if (this.testToken(TokenStrings.BSQON_EXAMPLE_FILE)) {
+            if (this.testToken(TokenStrings.PathItem)) {
                 const fp = this.consumeTokenAndGetValue();
 
-                samples.push(new InvokeSampleDeclFile(sinfo, istest, fp));
+                samples.push(new InvokeExampleDeclFile(sinfo, istest, fp));
             }
             else {
-                this.ensureToken(TokenStrings.BSQON_EXAMPLE_ARGS, "example");
-                const args = this.consumeTokenAndGetValue();
+                this.ensureToken(SYM_lbrace, "example");
+                const examples = this.parseListOf<{args: Expression[], output: Expression}>("examples", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+                    const args = this.parseListOf<Expression>("example args", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseExpression());
+                    this.ensureAndConsumeToken(SYM_bigarrow, "example");
+                    const result = this.parseExpression();
 
-                this.ensureToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
-                const result = this.consumeTokenAndGetValue();
-
-                samples.push(new InvokeSampleDeclInline(sinfo, istest, args, result));
+                    return {args: args, output: result};
+                });
+                
+                samples.push(new InvokeExampleDeclInline(sinfo, istest, examples));
             }
 
             this.ensureAndConsumeToken(SYM_semicolon, "example");
@@ -1456,20 +1537,48 @@ class Parser {
     }
 
     private parseInvokeSignatureParameters(cinfo: SourceInfo, autotypeok: boolean, implicitRefAllowed: boolean): FunctionParameter[] {
-        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseInvokeSignatureParameter(autotypeok), (v: FunctionParameter) => false);
-        if(params === undefined) {
-            return [];
-        }
+        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseInvokeSignatureParameter(autotypeok)
+        });
+        
+        if(params.length !== 0) {
+            if(params.slice(0, -1).some((param) => param.isSpreadParam)) {
+                this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
+            }
 
-        if(params.slice(0, -1).some((param) => param.isSpreadParam)) {
-            this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
-        }
-
-        if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
-            this.recordErrorGeneral(cinfo, "Cannot have more a reference parameter");
+            if(!implicitRefAllowed && params.some((param) => param.isRefParam)) {
+                this.recordErrorGeneral(cinfo, "Cannot have more a reference parameter");
+            }
         }
 
         return params;
+    }
+
+    private parseInvokeTemplateTermDecl(): InvokeTemplateTermDecl {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureToken(TokenStrings.Template, "template term");
+        const tname = this.consumeTokenAndGetValue();
+
+        const isinferable = this.testAndConsumeTokenIf(SYM_question);
+
+        let ttype = this.env.SpecialAnySignature;
+        if(this.testAndConsumeTokenIf(SYM_colon)) {
+            ttype = this.parseTypeSignature();
+        }
+
+        return new InvokeTemplateTermDecl(tname, ttype, isinferable);
+    }
+
+    private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
+        let terms: InvokeTemplateTermDecl[] = [];
+        if(this.testToken(SYM_le)) {
+            terms = this.parseListOf<InvokeTemplateTermDecl>("template terms", SYM_le, SYM_ge, SYM_coma, () => {
+                return this.parseInvokeTemplateTermDecl();
+            });
+        }
+
+        return terms;
     }
 
     private parseLambdaDecl(): LambdaDecl | undefined {
@@ -1541,8 +1650,10 @@ class Parser {
         return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.capturedTemplates);
     }
 
-    private parseFunctionInvokeDecl(): FunctionInvokeDecl | undefined {
+    private parseFunctionInvokeDecl(typescope: boolean): FunctionInvokeDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        const attributes = this.parseAttributeList();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -1550,8 +1661,14 @@ class Parser {
             this.consumeToken();
         }
 
+        this.ensureAndConsumeToken(KW_fn, "function declaration");
+
+        const termRestrictions = this.parseInvokeTermRestrictionInfo();
+
         this.ensureToken(TokenStrings.IdentifierName, "function name");
         const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+
+        const terms = this.parseInvokeTemplateTerms();
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
@@ -1571,126 +1688,109 @@ class Parser {
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
         const samples = this.parseSamples(cinfo);
     
-        const lambdaenv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
-        this.env.pushFunctionScope(lambdaenv);
+        const funcenv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
+        this.env.pushFunctionScope(funcenv);
         const body = this.parseBody();
         this.env.popFunctionScope();
 
-        xxxx;
+        if(typescope) {
+            return new TypeFunctionDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
+        }
+        else {
+            return new NamespaceFunctionDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
+        }
     }
 
-    private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean): InvokeDecl {
-        const sinfo = this.getCurrentSrcInfo();
-        const srcFile = this.m_penv.getCurrentFile();
-        const line = this.getCurrentLine();
+    private parseMethodInvokeDecl(taskscope: boolean): MethodDecl | TaskMethodDecl | undefined {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
 
-        let resultInfo = this.m_penv.SpecialAutoSignature;
+        const attributes = this.parseAttributeList();
 
-        const params = this.parseListOf<FunctionParameter>("function declaration", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            this.ensureToken(TokenStrings.Identifier, "function parameter");
-            const pname = this.consumeTokenAndGetValue();
+        let isrecursive: "yes" | "no" | "cond" = "no";
+        if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
+            isrecursive = this.testToken(KW_recursive) ? "yes" : "cond";
+            this.consumeToken();
+        }
 
-            let argtype = this.m_penv.SpecialAutoSignature;
-            if (this.testAndConsumeTokenIf(SYM_colon)) {
-                argtype = this.parseTypeSignature();
-            }
-            else {
-                if (ikind !== InvokableKind.PCodeFn && ikind !== InvokableKind.PCodePred) {
-                    this.raiseError(line, "Missing type specifier -- auto typing is only supported for lambda parameter declarations");
-                }
-            }
+        const isref = this.testAndConsumeTokenIf(KW_ref);
+        this.ensureAndConsumeToken(KW_method, "method declaration");
 
-            let litexp: LiteralExpressionValue | undefined = undefined;
-            if(this.testAndConsumeTokenIf("===")) {
-                if(ikind !== InvokableKind.DynamicOperator) {
-                    this.raiseError(line, "Literal match parameters are only allowed on dynamic operator definitions");
-                }
+        const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
-                litexp = this.parseLiteralExpression("dynamic dispatch literal value");
-            }
+        this.ensureToken(TokenStrings.IdentifierName, "method name");
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
 
-            return new FunctionParameter(pname, argtype, litexp);
-        });
+        const terms = this.parseInvokeTemplateTerms();
 
-        const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
+        const okdecl = this.testToken(SYM_lparen);
+        if(!okdecl) {
+            return undefined;
+        }
+
+        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, !isref);
+        
+        let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
             resultInfo = this.parseTypeSignature();
         }
-        else {
-            if (ikind === InvokableKind.PCodePred && allTypedParams) {
-                resultInfo = new NominalTypeSignature(sinfo, "Core", ["Bool"]);
-            }
 
-            if (ikind !== InvokableKind.PCodeFn && ikind !== InvokableKind.PCodePred) {
-                if(!optSelfRef !== true) {
-                    this.raiseError(line, "Cannot have void return unless one of the reciver is by ref");
-                }
-                resultInfo = this.m_penv.SpecialNoneSignature; //void conversion
-            }
+        const argNames = new Set<string>(params.map((param) => param.name));
+        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        const samples = this.parseSamples(cinfo);
+    
+        const menv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
+        this.env.pushFunctionScope(menv);
+        const body = this.parseBody();
+        this.env.popFunctionScope();
+
+        if(taskscope) {
+            return new TaskMethodDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, isref);
+        }
+        else {
+            return new MethodDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, isref);
+        }
+    }
+
+    private parseActionInvokeDecl(): TaskActionDecl | undefined {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        const attributes = this.parseAttributeList();
+
+        this.ensureAndConsumeToken(KW_action, "action declaration");
+
+        const termRestrictions = this.parseInvokeTermRestrictionInfo();
+
+        this.ensureToken(TokenStrings.IdentifierName, "action name");
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+
+        const terms = this.parseInvokeTemplateTerms();
+
+        const okdecl = this.testToken(SYM_lparen);
+        if(!okdecl) {
+            return undefined;
+        }
+
+        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, false);
+        
+        let resultInfo = this.env.SpecialVoidSignature;
+        if (this.testAndConsumeTokenIf(SYM_colon)) {
+            resultInfo = this.parseTypeSignature();
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        if(ikind === InvokableKind.Member) {
-            argNames.add("this");
-        }
-        if(ikind === InvokableKind.SelfMember) {
-            argNames.add("self");
-        }
+        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
 
-        let preconds: PreConditionDecl[] = [];
-        let postconds: PostConditionDecl[] = [];
-        let samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[] = [];
-        
-        const boundtemplates = new Set<string>(!(ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) ? [...terms.map((tt) => tt.name), ...implicitTemplates] : []);
-        if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
-            this.ensureAndConsumeToken(SYM_bigarrow, "a lambda declaration");
-        }
-        else {
-            //
-            //TODO: in type checker and emitter need to (1) pull these into concrete impls frim abstract impls (2) make sure concrete impls don't extend abstract requirements 
-            //      -- includes operators and virtual methods
-            //
-            [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, boundtemplates, resultInfo);
-            samples = this.parseSamples(sinfo);
-        }
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        const samples = this.parseSamples(cinfo);
+    
+        const menv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
+        this.env.pushFunctionScope(menv);
+        const body = this.parseBody();
+        this.env.popFunctionScope();
 
-        let body: BodyImplementation | undefined = undefined;
-        let capturedvars = new Set<string>();
-        let capturedtemplates = new Set<string>();
-        if (noBody) {
-            this.ensureAndConsumeToken(SYM_semicolon, "an abstract function declaration");
-        }
-        else {
-            try {
-                this.m_penv.pushFunctionScope(new FunctionScope(argNames, boundtemplates, resultInfo, ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred));
-                body = this.parseBody(srcFile);
-                capturedvars = this.m_penv.getCurrentFunctionScope().getCaptureVars();
-                capturedtemplates = this.m_penv.getCurrentFunctionScope().getCaptureTemplates();
-                this.m_penv.popFunctionScope();
-            }
-            catch (ex) {
-                this.m_penv.popFunctionScope();
-                throw ex;
-            }
-        }
-
-        if (ikind === InvokableKind.PCodeFn || ikind === InvokableKind.PCodePred) {
-            const bbody = body as BodyImplementation;
-            return InvokeDecl.createPCodeInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, params, resultInfo, capturedvars, capturedtemplates, bbody, ikind === InvokableKind.PCodeFn, ikind === InvokableKind.PCodePred);
-        }
-        else {
-            if(body === undefined) {
-                return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, undefined);
-            }
-            else {
-                if(body.body instanceof SynthesisBody) {
-                    return InvokeDecl.createSynthesisInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, body);
-                }
-                else {
-                    return InvokeDecl.createStandardInvokeDecl(this.m_penv.getCurrentNamespace(), sinfo, this.getCurrentSrcInfo(), srcFile, attributes, isrecursive, terms, termRestrictions, params, optSelfRef, resultInfo, preconds, postconds, samples, body);
-                }
-            }
-        }
+        return new TaskActionDecl(cinfo, attributes, fname, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
     }
 
     ////
@@ -1701,52 +1801,39 @@ class Parser {
     }
 
     private parseOrCombinatorType(): TypeSignature {
-        const ltype = this.parsePostfixTypeReference();
+        const ltype = this.parseAndCombinatorType();
         if (!this.testToken(SYM_bar)) {
             return ltype;
         }
         else {
+            const sinfo = this.lexer.peekNext().getSourceInfo();
             this.consumeToken();
-            return Parser.orOfTypeSignatures(ltype.sinfo, ltype, this.parseOrCombinatorType());
+            const rtype = this.parseOrCombinatorType();
+
+            return new UnionTypeSignature(sinfo, ltype, rtype);
         }
     }
 
-    private parsePostfixTypeReference(): TypeSignature {
-        let roottype = this.parseCombineCombinatorType();
-        while (this.testAndConsumeTokenIf(SYM_question)) {
-            roottype = this.parseNoneableType(roottype);
-        }
-        return roottype;
-    }
-
-    private parseNoneableType(basetype: TypeSignature): TypeSignature {
-        return Parser.orOfTypeSignatures(basetype.sinfo, basetype, this.m_penv.SpecialNoneSignature);
-    }
-
-    private parseCombineCombinatorType(): TypeSignature {
-        const ltype = this.parseProjectType();
+    private parseAndCombinatorType(): TypeSignature {
+        const ltype = this.parseNoneableType();
         if (!this.testToken(SYM_amp)) {
             return ltype;
         }
         else {
+            const sinfo = this.lexer.peekNext().getSourceInfo();
             this.consumeToken();
-            return this.andOfTypeSignatures(ltype.sinfo, ltype, this.parseCombineCombinatorType());
+            const rtype = this.parseOrCombinatorType();
+
+            return new AndTypeSignature(sinfo, ltype, rtype);
         }
     }
 
-    private parseProjectType(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
-
-        const ltype = this.parseBaseTypeReference();
-        if (!this.testToken(SYM_bang)) {
-            return ltype;
+    private parseNoneableType(): TypeSignature {
+        let roottype = this.parseBaseTypeReference();
+        if(this.testAndConsumeTokenIf(SYM_question)) {
+            roottype = new NoneableTypeSignature(roottype.sinfo, roottype);
         }
-        else {
-            this.consumeToken();
-            const ptype = this.parseNominalType();
-            
-            return new ProjectTypeSignature(sinfo, ltype, ptype);
-        }
+        return roottype;
     }
 
     private parseBaseTypeReference(): TypeSignature {
@@ -1754,43 +1841,50 @@ class Parser {
             case TokenStrings.Template: {
                 return this.parseTemplateTypeReference();
             }
-            case TokenStrings.Namespace:
-            case TokenStrings.Type:
-                return this.parseNominalType();
-            case SYM_lbrack:
+            case TokenStrings.IdentifierName: {
+                const sinfo = this.lexer.peekNext().getSourceInfo();
+                const idtype = this.peekTokenData();
+                if(/[^A-Z].*/.test(idtype)) {
+                    return this.parseNominalType();
+                }
+                else {
+                    this.recordErrorGeneral(sinfo, `Invalid type reference "${idtype}"`);
+                    return new ErrorTypeSignature(sinfo);
+                }
+            }
+            case SYM_lbrack: {
                 return this.parseTupleType();
-            case SYM_lbrace:
+            }
+            case SYM_lbrace: {
                 return this.parseRecordType();
-            case KW_function:
+            }
+            case KW_fn:
             case KW_pred:
             case KW_recursive_q:
-            case KW_recursive:
-                return this.parsePCodeType();
+            case KW_recursive: {
+                return this.parseLambdaType();
+            }
             case SYM_lparen: {
                 this.consumeToken();
                 const ptype = this.parseTypeSignature();
-                this.ensureAndConsumeToken(SYM_rparen, "(TYPE _<- missing paren?");
-
-                return ptype;
-            }
-            case TokenStrings.ScopeName: {
-                //TODO: This is a dummy case for the parse provides call in pass1 where we just need to scan and discard the type info -- we should actually write a better pass for this
-                this.consumeToken();
-                this.parseTermList();
-                return new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", ["DummySig"]);
+                if(this.testAndConsumeTokenIf(SYM_rparen)) {
+                    return ptype;
+                }
+                else {
+                    this.completeEListParse(ptype);
+                }
             }
             default: {
-                this.raiseError(this.getCurrentLine(), "Could not parse type");
-                return new ParseErrorTypeSignature(SourceInfo.implicitSourceInfo());
+                return new ErrorTypeSignature(this.lexer.peekNext().getSourceInfo());
             }
         }
     }
 
     private parseTemplateTypeReference(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         const tname = this.consumeTokenAndGetValue();
-        this.m_penv.useTemplateType(tname);
+        this.env.useTemplateType(tname);
 
         return new TemplateTypeSignature(sinfo, tname);
     }
@@ -1798,91 +1892,62 @@ class Parser {
     private parseTermList(): TypeSignature[] {
         let terms: TypeSignature[] = [];
         if (this.testToken(SYM_le)) {
-            try {
-                this.setRecover(this.scanMatchingParens(SYM_le, SYM_ge));
-                terms = this.parseListOf<TypeSignature>("template term list", SYM_le, SYM_ge, SYM_coma, () => {
-                    return this.parseTypeSignature();
-                });
-
-                this.clearRecover();
-            }
-            catch (ex) {
-                this.processRecover();
-            }
+            terms = this.parseListOf<TypeSignature>("template term list", SYM_le, SYM_ge, SYM_coma, () => {
+                return this.parseTypeSignature();
+            });
         }
         return terms;
     }
 
-    private parseNominalType(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
-
-        let ns: string | undefined = undefined;
-        if (this.testToken(TokenStrings.Namespace)) {
-            ns = this.consumeTokenAndGetValue();
-            this.ensureAndConsumeToken(SYM_coloncolon, "nominal type after namespace");
-        }
-
+    private parseNominalStep(): {tname: string, terms: TypeSignature[]} {
+        this.ensureToken(TokenStrings.IdentifierName, "nominal step");
         const tname = this.consumeTokenAndGetValue();
-        ns = this.m_penv.tryResolveNamespace(ns, tname);
-        if (ns === undefined) {
-            ns = "[Unresolved Namespace]";
+        const terms = this.parseTermList();
+
+        return {tname: tname, terms: terms};
+    }
+
+    private parseNominalType(): TypeSignature {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        let tscope: {tname: string, terms: TypeSignature[]}[] = [this.parseNominalStep()];
+
+        while (this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_le) || this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_colon)) {
+            tscope.push(this.parseNominalStep());
         }
 
-        let tnames: string[] = [tname];
-        let terms: TypeSignature[] = this.parseTermList();
+        const encns = this.env.resolveEnclosingNamespaceInfo(this.currentNamespace, tscope);
 
-        while (this.testFollows(SYM_coloncolon, TokenStrings.Type)) {
-            this.ensureAndConsumeToken(SYM_coloncolon, "nominal type after nested type");
-
-            this.ensureToken(TokenStrings.Type, "nominal type after scope operator");
-            const stname = this.consumeTokenAndGetValue();
-            tnames.push(stname);
-
-            const sterms = this.parseTermList();
-            terms = [...terms, ...sterms];
+        if (encns === undefined) {
+            this.recordErrorGeneral(sinfo, "Unable to resolve nominal type");
+            return new ErrorTypeSignature(sinfo);
         }
-
-        return new NominalTypeSignature(sinfo, ns as string, tnames, terms);
+        else {
+            return new NominalTypeSignature(sinfo, encns[0].fullns, encns[1]);
+        }
     }
 
     private parseTupleType(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        let entries: TypeSignature[] = [];
+        const entries = this.parseListOf<TypeSignature>("tuple type", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
+            return this.parseTypeSignature();
+        });
 
-        try {
-            this.setRecover(this.scanMatchingParens(SYM_lbrack, SYM_rbrack));
-            entries = this.parseListOf<TypeSignature>("tuple type", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
-                const rtype = this.parseTypeSignature();
-
-                return rtype;
-            });
-
-            this.clearRecover();
-            return new TupleTypeSignature(sinfo, entries);
-        }
-        catch (ex) {
-            this.processRecover();
-            return new ParseErrorTypeSignature(sinfo);
-        }
+        return new TupleTypeSignature(sinfo, entries);
     }
 
     private parseRecordType(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        let entries: [string, TypeSignature][] = [];
+        let pnames = new Set<string>();
+        const entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+            this.ensureToken(TokenStrings.IdentifierName, "record type entry property name");
 
-        try {
-            this.setRecover(this.scanMatchingParens(SYM_lbrace, SYM_rbrace));
-
-            let pnames = new Set<string>();
-            entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                this.ensureToken(TokenStrings.Identifier, "record type entry property name");
-
-                const name = this.consumeTokenAndGetValue();
-                if(pnames.has(name)) {
-                    this.raiseError(this.getCurrentLine(), `Duplicate property name "${name}" in record declaration`);
-                }
+            const name = this.consumeTokenAndGetValue();
+            if(pnames.has(name)) {
+                this.raiseError(this.getCurrentLine(), `Duplicate property name "${name}" in record declaration`);
+            }
                 pnames.add(name);
 
                 this.ensureAndConsumeToken(SYM_colon, "record type property type");
@@ -1900,7 +1965,7 @@ class Parser {
         }
     }
 
-    private parsePCodeType(): TypeSignature {
+    private parseLambdaType(): TypeSignature {
         const sinfo = this.getCurrentSrcInfo();
 
         let recursive: "yes" | "no" | "cond" = "no";
@@ -1931,24 +1996,6 @@ class Parser {
             this.processRecover();
             return new ParseErrorTypeSignature(sinfo);
         }
-    }
-
-    private static orOfTypeSignatures(sinfo: SourceInfo, t1: TypeSignature, t2: TypeSignature): TypeSignature {
-        const types = [
-            ...((t1 instanceof UnionTypeSignature) ? t1.types : [t1]),
-            ...((t2 instanceof UnionTypeSignature) ? t2.types : [t2]),
-        ];
-
-        return new UnionTypeSignature(sinfo, types);
-    }
-
-    private andOfTypeSignatures(sinfo: SourceInfo, t1: TypeSignature, t2: TypeSignature): TypeSignature {
-        const types = [
-            ...((t1 instanceof AndTypeSignature) ? t1.types : [t1]),
-            ...((t2 instanceof AndTypeSignature) ? t2.types : [t2]),
-        ];
-
-        return new AndTypeSignature(sinfo, types);
     }
 
     ////
@@ -3972,103 +4019,6 @@ class Parser {
 
     ////
     //Decl parsing
-
-    private parseAttributes(): string[] {
-        let attributes: string[] = [];
-        while (Lexer.isAttributeKW(this.peekTokenData())) {
-            attributes.push(this.consumeTokenAndGetValue());
-        }
-        return attributes;
-    }
-
-    private parseTemplateConstraint(hasconstraint: boolean): TypeSignature {
-        if(!hasconstraint) {
-            return this.m_penv.SpecialAnySignature;
-        }
-        else {
-            return this.parseTypeSignature();
-        }
-    }
-
-    private parseTermDeclarations(): TemplateTermDecl[] {
-        let terms: TemplateTermDecl[] = [];
-        if (this.testToken("<")) {
-            terms = this.parseListOf<TemplateTermDecl>("template term declarations", SYM_le, SYM_ge, SYM_coma, () => {
-                this.ensureToken(TokenStrings.Template, "template term declaration entry");
-                const templatename = this.consumeTokenAndGetValue();
-
-                const isunique = this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "unique";
-                if(isunique) {
-                    this.consumeToken();
-                }
-
-                const isgrounded = this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "grounded";
-                if(isgrounded) {
-                    this.consumeToken();
-                }
-
-                const isnumeric = this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "numeric";
-                if(isgrounded) {
-                    this.consumeToken();
-                }
-
-                const tconstraint = this.parseTemplateConstraint(!this.testToken(SYM_coma) && !this.testToken(SYM_ge));
-                return new TemplateTermDecl(templatename, isunique, isgrounded, isnumeric, tconstraint);
-            });
-        }
-        return terms;
-    }
-
-    private parseSingleTermRestriction(): TemplateTypeRestriction {
-        const sinfo = this.getCurrentSrcInfo();
-
-        this.ensureToken(TokenStrings.Template, "template restriction");
-        const templatename = this.consumeTokenAndGetValue();
-
-        const isunique = this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "unique";
-        if(isunique) {
-            this.consumeToken();
-        }
-        
-        const isgrounded = this.testToken(TokenStrings.Identifier) && this.peekTokenData() === "grounded";
-        if(isgrounded) {
-            this.consumeToken();
-        }
-
-        const tconstraint = this.parseTemplateConstraint(true);
-
-        return new TemplateTypeRestriction(new TemplateTypeSignature(sinfo, templatename), isunique, isgrounded, tconstraint);
-    }
-
-    private parseTermRestrictionList(): TemplateTypeRestriction[] {
-        const trl = this.parseSingleTermRestriction();
-        if (this.testAndConsumeTokenIf(SYM_ampamp)) {
-            const ands = this.parseTermRestrictionList();
-            return [trl, ...ands];
-        }
-        else {
-            return [trl];
-        }
-    }
-
-    private parseTermRestriction(parencheck: boolean): TypeConditionRestriction | undefined {
-        if(parencheck && !this.testToken(SYM_lbrace)) {
-            return undefined;
-        }
-        this.testAndConsumeTokenIf(SYM_lbrace);
-
-        if(parencheck) {
-            this.testAndConsumeTokenIf(KW_when);
-        }
-        
-        const trl = this.parseTermRestrictionList();
-
-        if(parencheck) {
-            this.ensureAndConsumeToken(SYM_rbrace, "template term restiction");
-        }
-
-        return new TypeConditionRestriction(trl);
-    }
 
     private parseNamespaceDep(): {fromns: string, asns: string} {
         //import NS;

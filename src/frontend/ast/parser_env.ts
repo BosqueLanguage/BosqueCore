@@ -1,5 +1,5 @@
 import { SourceInfo } from "../build_decls";
-import { Assembly, NamespaceDeclaration } from "./assembly";
+import { Assembly, NamespaceDeclaration, TypeDecl } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
@@ -115,12 +115,6 @@ class DeclLevelParserScope extends ParserScope {
     }
 }
 
-class StdParserFunctionScope extends ParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
-        super(args, boundtemplates, rtype);
-    }
-}
-
 abstract class CapturingParserScope extends ParserScope {
     capturedVars: Set<string>;
     capturedTemplates: Set<string>;
@@ -145,6 +139,12 @@ class ParserStandaloneExpressionScope extends CapturingParserScope {
     }
 }
 
+class StdParserFunctionScope extends CapturingParserScope {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
+        super(args, boundtemplates, rtype);
+    }
+}
+
 class ParserEnvironment {
     readonly assembly: Assembly;
 
@@ -153,6 +153,8 @@ class ParserEnvironment {
 
     enclosingScope: ParserScope;
     nestedScopes: CapturingParserScope[];
+
+    readonly SpecialVoidSignature: TypeSignature;
 
     readonly SpecialAnySignature: TypeSignature;
     readonly SpecialSomeSignature: TypeSignature;
@@ -170,12 +172,14 @@ class ParserEnvironment {
         this.enclosingScope = startScope;
         this.nestedScopes = [];
 
-        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Any", terms: []}]);
-        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Some", terms: []}]);
+        this.SpecialVoidSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Void", terms: []}]);
 
-        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "None", terms: []}]);
-        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Nothing", terms: []}]);
-        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), "Core", [{tname: "Bool", terms: []}]);
+        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Any", terms: []}]);
+        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Some", terms: []}]);
+
+        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "None", terms: []}]);
+        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Nothing", terms: []}]);
+        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Bool", terms: []}]);
         
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
     }
@@ -234,39 +238,50 @@ class ParserEnvironment {
         return tname;
     }
 
-    resolveImplicitNamespaceRoot(scopedname: string): [NamespaceDeclaration, string[]] | undefined {
-        const namesplit = scopedname.split("::");
-
-        //If core is explicit then we can skip the lookup
-        if (namesplit[0] === "Core") {
-            return [this.assembly.getToplevelNamespace("Core"), namesplit.slice(1)];
-        }
-
-        //We lookup in implicit Core first
-        const coredecl = this.assembly.getToplevelNamespace("Core");
-        if (coredecl.declaredNames.has(namesplit[0])) {
-            return [coredecl, namesplit];
-        }
-
-        //Then in implicit this namespace
-        const nsdecl = this.assembly.getToplevelNamespace(this.currentNamespace);
-        if (nsdecl.declaredNames.has(namesplit[0])) {
-            return [nsdecl, namesplit];
-        }
-        else {
-            const fromns = nsdecl.usings.find((nsuse) => nsuse.names.indexOf(namesplit[0]) !== -1);
-            if(fromns !== undefined) {
-                return this.resolveImplicitNamespaceRoot(fromns.fromns);
+    private resolveImplicitNamespaceRootRecursive(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]] | undefined {
+        if(access.length === 1) {
+            const nns = fromns.subns.find((ns) => ns.name === access[0].tname);
+            if(nns !== undefined) {
+                return [nns, []];
+            }
+            else if(fromns.declaredNames.has(access[0].tname)) {
+                return [fromns, access];
+            }
+            else {
+                return undefined;
             }
         }
+        else {
+            const nsdecl = fromns.subns.find((ns) => ns.name === access[0].tname);
+            return nsdecl !== undefined ? this.resolveImplicitNamespaceRootRecursive(nsdecl, scopedname.slice(1), declname) : undefined;    
+        }
+    }
 
-        //Then a global search assuming the name is explicitly scoped
-        const tlns = namesplit[0];
-        if (this.assembly.hasToplevelNamespace(tlns)) {
-            return [this.assembly.getToplevelNamespace(tlns), namesplit.slice(1)];
+    resolveEnclosingNamespaceInfo(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]]  | undefined {
+        const coredecl = this.assembly.getToplevelNamespace("Core");
+
+        //If core is explicit then we can skip any local lookup
+        if (scopedname.length === 1 && scopedname[0] === "Core") {
+            return coredecl.declaredNames.has(declname) ? this.assembly.getToplevelNamespace("Core") : undefined;
         }
 
-        return undefined;
+        //if the scoped then we are looking for a specific decl in Core or in this namespace
+        if (scopedname.length === 0) {
+            if(coredecl.declaredNames.has(declname)) {
+                return coredecl;
+            }
+            else {
+                return fromns.declaredNames.has(declname) ? fromns : undefined;
+            }
+        }
+        else {
+            //we are doing a recursive search -- check any usings for the first item and then start the search
+
+            const usingns = fromns.usings.find((nsuse) => nsuse.asns === scopedname[0])?.fromns.ns || [fromns.name];
+            
+            //TODO: we need to check that usingns is not Core or the current namespace -- which we should have already checked
+            return this.resolveImplicitNamespaceRootRecursive(fromns, [...usingns, ...scopedname.slice(1)], declname);
+        }
     }
 
     getBinderExtension(vname: string): string {

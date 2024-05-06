@@ -1,5 +1,25 @@
 
-import { FullyQualifiedNamespace, SourceInfo } from "../build_decls";
+import { SourceInfo } from "../build_decls";
+
+class FullyQualifiedNamespace {
+    readonly ns: string[];
+
+    constructor(ns: string[]) {
+        this.ns = ns;
+    }
+
+    emit(): string {
+        if(this.ns.length === 0) {
+            return "";
+        }
+        else if(this.ns[0] === "Core") {
+            return this.ns.slice(1).join("::");
+        }
+        else {
+            return this.ns.join("::");
+        }
+    }
+}
 
 abstract class TypeSignature {
     readonly sinfo: SourceInfo;
@@ -8,7 +28,7 @@ abstract class TypeSignature {
         this.sinfo = sinfo;
     }
 
-    abstract emit(): string;
+    abstract emit(toplevel: boolean): string;
 }
 
 class ErrorTypeSignature extends TypeSignature {
@@ -16,8 +36,18 @@ class ErrorTypeSignature extends TypeSignature {
         super(sinfo);
     }
 
-    emit(): string {
+    emit(toplevel: boolean): string {
         return "[Parse Error]";
+    }
+}
+
+class VoidTypeSignature extends TypeSignature {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo);
+    }
+
+    emit(toplevel: boolean): string {
+        return "[Void Type]";
     }
 }
 
@@ -26,7 +56,7 @@ class AutoTypeSignature extends TypeSignature {
         super(sinfo);
     }
 
-    emit(): string {
+    emit(toplevel: boolean): string {
         return "[Auto Type]";
     }
 }
@@ -39,34 +69,34 @@ class TemplateTypeSignature extends TypeSignature {
         this.name = name;
     }
 
-    emit(): string {
+    emit(toplevel: boolean): string {
         return this.name;
     }
 }
 
 class NominalTypeSignature extends TypeSignature {
-    readonly ns: FullyQualifiedNamespace;
+    readonly ns: string[];
     readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
-    constructor(sinfo: SourceInfo, ns: FullyQualifiedNamespace, tscope: {tname: string, terms: TypeSignature[]}[]) {
+    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[]) {
         super(sinfo);
         this.ns = ns;
         this.tscope = tscope;
     }
 
-    emit(): string {
+    emit(toplevel: boolean): string {
         let nscope: string;
-        if(this.ns === "Core") {
+        if(this.ns.length === 0) {
             nscope = "";
         }
-        else if(this.ns.startsWith("Core::")) {
-            nscope = this.ns.substring(6) + "::";
+        else if(this.ns.length !== 0 && this.ns[0] === "Core") {
+            nscope = this.ns.slice(1).join("::") + "::";
         }
         else {
-            nscope = this.ns + "::";
+            nscope = this.ns.join("::") + "::";
         }
 
-        const rrtscope = this.tscope.map((t) => t.tname + (t.terms.length !== 0 ? ("<" + t.terms.map((tt) => tt.emit()).join(", ") + ">") : ""));
+        const rrtscope = this.tscope.map((t) => t.tname + (t.terms.length !== 0 ? ("<" + t.terms.map((tt) => tt.emit(true)).join(", ") + ">") : ""));
         return nscope + rrtscope.join("::");
     }
 }
@@ -79,8 +109,8 @@ class TupleTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    emit(): string {
-        return "[" + this.entries.map((tt) => tt.emit()).join(", ") + "]";
+    emit(toplevel: boolean): string {
+        return "[" + this.entries.map((tt) => tt.emit(true)).join(", ") + "]";
     }
 }
 
@@ -92,8 +122,8 @@ class RecordTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    emit(): string {
-        return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].emit())).join(", ") + "}";
+    emit(toplevel: boolean): string {
+        return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].emit(true))).join(", ") + "}";
     }
 }
 
@@ -105,8 +135,8 @@ class EListTypeSignature extends TypeSignature {
         this.entries = entries;
     }
 
-    emit(): string {
-        return "[" + this.entries.map((tt) => tt.emit()).join(", ") + "]";
+    emit(toplevel: boolean): string {
+        return "(" + this.entries.map((tt) => tt.emit(true)).join(", ") + ")";
     }
 }
 
@@ -120,9 +150,9 @@ class StringTemplateType extends TypeSignature {
         this.argtypes = argtypes;
     }
 
-    emit(): string {
+    emit(toplevel: boolean): string {
         const sk = this.kind === "ascii" ? "ASCIIStringTemplate" : "StringTemplate";
-        const uu = this.argtypes.map((tt) => tt.emit()).join(", ");
+        const uu = this.argtypes.map((tt) => tt.emit(true)).join(", ");
 
         return `${sk}<${uu}>`;
     }
@@ -144,7 +174,7 @@ class FunctionParameter {
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}: ${this.type.emit()}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}: ${this.type.emit(true)}`;
     }
 }
 
@@ -162,40 +192,60 @@ class LambdaTypeSignature extends TypeSignature {
         this.resultType = resultType;
     }
 
-    emit(): string {
-        return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType ? this.resultType.emit() : "void"}`;
+    emit(toplevel: boolean): string {
+        return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType ? this.resultType.emit(true) : "void"}`;
     }
 }
 
 class AndTypeSignature extends TypeSignature {
-    readonly types: TypeSignature[];
+    readonly ltype: TypeSignature;
+    readonly rtype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, types: TypeSignature[]) {
+    constructor(sinfo: SourceInfo, ltype: TypeSignature, rtype: TypeSignature) {
         super(sinfo);
-        this.types = types;
+        this.ltype = ltype;
+        this.rtype = rtype;
     }
 
-    emit(): string {
-        return this.types.map((tt) => tt.emit()).join("&");
+    emit(toplevel: boolean): string {
+        const bb = this.ltype.emit(false) + "&" + this.rtype.emit(false);
+        return (toplevel) ? bb : "(" + bb + ")";
+    }
+}
+
+class NoneableTypeSignature extends TypeSignature {
+    readonly type: TypeSignature;
+
+    constructor(sinfo: SourceInfo, type: TypeSignature) {
+        super(sinfo);
+        this.type = type;
+    }
+
+    emit(toplevel: boolean): string {
+        return this.type.emit(false) + "?";
     }
 }
 
 class UnionTypeSignature extends TypeSignature {
-    readonly types: TypeSignature[];
+    readonly ltype: TypeSignature;
+    readonly rtype: TypeSignature;
 
-    constructor(sinfo: SourceInfo, types: TypeSignature[]) {
+    constructor(sinfo: SourceInfo, ltype: TypeSignature, rtype: TypeSignature) {
         super(sinfo);
-        this.types = types;
+        this.ltype = ltype;
+        this.rtype = rtype;
     }
 
-    emit(): string {
-        return this.types.map((tt) => tt.emit()).join(" | ");
+    emit(toplevel: boolean): string {
+        const bb = this.ltype.emit(false) + " | " + this.rtype.emit(false);
+        return (toplevel) ? bb : "(" + bb + ")";
     }
 }
 
-export { 
-    TypeSignature, ErrorTypeSignature, AutoTypeSignature, 
+export {
+    FullyQualifiedNamespace,
+    TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateType,
-    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, AndTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, AndTypeSignature, NoneableTypeSignature, UnionTypeSignature
 };

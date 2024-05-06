@@ -1,7 +1,7 @@
 
-import { AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
 
-import { BuildLevel, CodeFormatter, FullyQualifiedNamespace, SourceInfo } from "../build_decls";
+import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
 import { LambdaDecl } from "./assembly";
 
 class BinderInfo {
@@ -39,7 +39,7 @@ class ITestType extends ITest {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `${this.isnot ? "!" : ""}<${this.ttype.emit()}>`;
+        return `${this.isnot ? "!" : ""}<${this.ttype.emit(true)}>`;
     }
 }
 
@@ -397,7 +397,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value + this.stype.emit();
+        return this.value + this.stype.emit(true);
     }
 }
 
@@ -438,7 +438,7 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}_${this.constype.emit()}`;
+        return `${this.value.emit(toplevel, fmt)}_${this.constype.emit(true)}`;
     }
 }
 
@@ -511,7 +511,7 @@ class AccessNamespaceConstantExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ns}::${this.name}`;
+        return `${this.ns.emit()}::${this.name}`;
     }
 }
 
@@ -526,7 +526,7 @@ class AccessStaticFieldExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.stype.emit()}::${this.name}`;
+        return `${this.stype.emit(false)}::${this.name}`;
     }
 }
 
@@ -563,7 +563,7 @@ class ConstructorPrimaryExpression extends ConstructorExpression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.ctype.emit()}${this.args.emit(fmt, "{", "}")}`;
+        return `${this.ctype.emit(true)}${this.args.emit(fmt, "{", "}")}`;
     }
 }
 
@@ -623,7 +623,7 @@ class LetExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit() : ""} = ${dd.value.emit(true, fmt)};`).join(", ");
+        const dds = this.decls.map((dd) => `${dd.vname}${dd.vtype !== undefined ? ":" + dd.vtype.emit(true) : ""} = ${dd.value.emit(true, fmt)};`).join(", ");
         return `{| let ${dds} in ${this.body.emit(true, fmt)} |}`;
     }
 }
@@ -689,10 +689,10 @@ class CallNamespaceFunctionExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
-        return `${this.ns}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `${this.ns.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -720,10 +720,10 @@ class CallTypeFunctionExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
-        return `${this.ttype.emit()}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
+        return `${this.ttype.emit(false)}::${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -749,7 +749,7 @@ class CallRefThisExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
         return `ref this.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -778,7 +778,7 @@ class CallRefSelfExpression extends Expression {
         
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
         return `ref self.${this.name}${rec}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -800,7 +800,7 @@ class CallTaskActionExpression extends Expression {
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
         return `do self.${this.name}${terms}${this.args.emit(fmt, "(", ")")}`;
@@ -844,7 +844,7 @@ class ParseAsTypeExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `<${this.exp.emit(toplevel, fmt)}> ${this.ttype.emit()}`;
+        return `<${this.ttype.emit(true)}> ${this.exp.emit(toplevel, fmt)}`;
     }
 }
 
@@ -1024,7 +1024,7 @@ class PostfixInvoke extends PostfixOperation {
             rec = "[" + (this.rec === "yes" ? "recursive" : "recursive?") + "]";
         }
 
-        return `${this.specificResolve ? this.specificResolve.emit() + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
+        return `${this.specificResolve ? this.specificResolve.emit(false) + "::" : ""}${this.name}${rec}${this.args.emit(fmt, "(", ")")}`;
     }
 }
 
@@ -1485,7 +1485,7 @@ class TaskRunExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `Task::run<${this.task.emit() + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(this.args.emit("(", ")"), ${this.enva.emit(fmt)})`;
+        return `Task::run<${this.task.emit(true) + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(this.args.emit("(", ")"), ${this.enva.emit(fmt)})`;
     }
 }
 
@@ -1503,7 +1503,7 @@ class TaskMultiExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::run<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::run<${this.tasks.map((tt) => tt.emit(true)).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1521,7 +1521,7 @@ class TaskDashExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::dash<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::dash<${this.tasks.map((tt) => tt.emit(true)).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1539,7 +1539,7 @@ class TaskAllExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::all<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::all<${this.tasks.map((tt) => tt.emit(true)).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1557,7 +1557,7 @@ class TaskRaceExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         const argl = this.args.map((arg) => `${arg[0].emit(fmt, "", "")}, ${arg[1].emit(fmt)}`);
-        return `Task::race<${this.tasks.map((tt) => tt.emit()).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
+        return `Task::race<${this.tasks.map((tt) => tt.emit(true)).join(", ") + (this.envi !== undefined ? ", " + this.envi.emit(fmt) : "")}>(${argl.join("; ")})`;
     }
 }
 
@@ -1644,7 +1644,7 @@ class VariableDeclarationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.name}: ${this.vtype.emit()}$;`;
+        return `var ${this.name}: ${this.vtype.emit(true)}$;`;
     }
 }
 
@@ -1657,7 +1657,7 @@ class VariableMultiDeclarationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.decls.map(([name, vtype]) => `${name}: ${vtype.emit()}`).join(", ")};`;
+        return `var ${this.decls.map(([name, vtype]) => `${name}: ${vtype.emit(true)}`).join(", ")};`;
     }
 }
 
@@ -1677,7 +1677,7 @@ class VariableInitializationStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
-        const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit()}`;
+        const tt = this.vtype instanceof AutoTypeSignature ? "" : `: ${this.vtype.emit(true)}`;
 
         return `${dc} ${this.name}${tt} = ${this.exp.emit(true, fmt)};`;
     }
@@ -1697,7 +1697,7 @@ class VariableMultiInitializationStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
-        const ttdecls = this.decls.map((dd) => dd[0] + (dd[1] instanceof AutoTypeSignature ? "" : `: ${dd[1].emit()}`));
+        const ttdecls = this.decls.map((dd) => dd[0] + (dd[1] instanceof AutoTypeSignature ? "" : `: ${dd[1].emit(true)}`));
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${dc} ${ttdecls.join(", ")} = ${ttexp};`;
@@ -1803,7 +1803,7 @@ class MatchStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         const mheader = `match ${this.sval[1] !== undefined ? this.sval[1].emit() : ""}(${this.sval[0].emit(true, fmt)})`;
         fmt.indentPush();
-        const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit() : "_"} => ${mf.value.emit(fmt)}`);
+        const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit(true) : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();
 
         const iil = fmt.indent(ttmf[0]);
@@ -1980,7 +1980,7 @@ class TaskYieldStatement extends Statement {
     emit(fmt: CodeFormatter): string {
         let terms = "";
         if(this.terms.length !== 0) {
-            terms = "<" + this.terms.map((tt) => tt.emit()).join(", ") + ">";
+            terms = "<" + this.terms.map((tt) => tt.emit(true)).join(", ") + ">";
         }
 
         return `yield self.${this.name}${terms}${this.args.emit(fmt, "(", ")")};`;
