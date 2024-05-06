@@ -116,7 +116,7 @@ class DeclLevelParserScope extends ParserScope {
 }
 
 class StdParserFunctionScope extends ParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
         super(args, boundtemplates, rtype);
     }
 }
@@ -125,7 +125,7 @@ abstract class CapturingParserScope extends ParserScope {
     capturedVars: Set<string>;
     capturedTemplates: Set<string>;
 
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
         super(args, boundtemplates, rtype);
 
         this.capturedVars = new Set<string>();
@@ -134,13 +134,13 @@ abstract class CapturingParserScope extends ParserScope {
 }
 
 class LambdaBodyParserScope extends CapturingParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
         super(args, boundtemplates, rtype);
     }
 }
 
 class ParserStandaloneExpressionScope extends CapturingParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
         super(args, boundtemplates, rtype);
     }
 }

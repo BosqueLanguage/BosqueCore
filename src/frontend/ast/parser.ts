@@ -1,10 +1,10 @@
 
-import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope } from "./parser_env";
+import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
 import { AutoTypeSignature, ErrorTypeSignature, FunctionParameter, TypeSignature } from "./type";
 import { BodyImplementation, ErrorExpression, ErrorStatement } from "./body";
-import { Assembly, FunctionInvokeDecl, LambdaDecl } from "./assembly";
+import { Assembly, FunctionInvokeDecl, InvokeExample, LambdaDecl, PostConditionDecl, PreConditionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_debug, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_debug, KW_ensures, KW_example, KW_fn, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_spec, KW_test, KeywordStrings, LeftScanParens, RightScanParens, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coma, SYM_dotdotdot, SYM_lparen, SYM_question, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1360,6 +1360,70 @@ class Parser {
     ////
     //Misc parsing
 
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
+        let preconds: PreConditionDecl[] = [];
+        
+        const prescope = new ParserStandaloneExpressionScope(argnames, boundtemplates, rtype);
+        this.env.pushFunctionScope(prescope);
+        while (this.testToken(KW_requires)) {
+            this.consumeToken();
+                
+            const level = this.parseBuildInfo(KW_release);
+            const exp = this.parseExpression();
+
+            preconds.push(new PreConditionDecl(sinfo, level, exp));
+
+            this.ensureAndConsumeToken(SYM_semicolon, "requires");
+        }
+        this.env.popFunctionScope();
+
+        let postconds: PostConditionDecl[] = [];
+
+        const rargs = new Set<string>(argnames).add("$return").add("$this");
+        const postscope = new ParserStandaloneExpressionScope(rargs, boundtemplates, rtype);
+        this.env.pushFunctionScope(postscope);
+        while (this.testToken(KW_ensures)) {
+            this.consumeToken();
+
+            const level = this.parseBuildInfo(KW_release);
+            const exp = this.parseExpression();
+
+            postconds.push(new PostConditionDecl(sinfo, level, exp));
+
+            this.ensureAndConsumeToken(SYM_semicolon, "ensures");
+        }
+        this.env.popFunctionScope();
+
+        return [preconds, postconds];
+    }
+
+    private parseSamples(sinfo: SourceInfo): InvokeExample[] {
+        let samples: InvokeExample[] = [];
+        while (this.testToken(KW_test) || this.testToken(KW_example)) {
+            const istest = this.testAndConsumeTokenIf(KW_test);
+            this.ensureAndConsumeToken(KW_example, "example");
+
+            if (this.testToken(TokenStrings.BSQON_EXAMPLE_FILE)) {
+                const fp = this.consumeTokenAndGetValue();
+
+                samples.push(new InvokeSampleDeclFile(sinfo, istest, fp));
+            }
+            else {
+                this.ensureToken(TokenStrings.BSQON_EXAMPLE_ARGS, "example");
+                const args = this.consumeTokenAndGetValue();
+
+                this.ensureToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
+                const result = this.consumeTokenAndGetValue();
+
+                samples.push(new InvokeSampleDeclInline(sinfo, istest, args, result));
+            }
+
+            this.ensureAndConsumeToken(SYM_semicolon, "example");
+        }
+
+        return samples;
+    }
+
     private parseInvokeSignatureParameter(autotypeok: boolean): FunctionParameter {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
@@ -1408,7 +1472,7 @@ class Parser {
         return params;
     }
 
-    private parseLambdaDecl(): LambdaDecl {
+    private parseLambdaDecl(): LambdaDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
@@ -1433,7 +1497,7 @@ class Parser {
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
-
+            return undefined;
         }
 
         const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, true, true);
@@ -1469,7 +1533,6 @@ class Parser {
             this.consumeToken();
         }
         
-        
         const lambdaenv = new LambdaBodyParserScope(argNames, boundtemplates, resultInfo);
         this.env.pushFunctionScope(lambdaenv);
         const body = this.parseBody();
@@ -1478,7 +1541,42 @@ class Parser {
         return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.capturedTemplates);
     }
 
-    private parseFunctionInvokeDecl(): FunctionInvokeDecl {
+    private parseFunctionInvokeDecl(): FunctionInvokeDecl | undefined {
+        const cinfo = this.lexer.peekNext().getSourceInfo();
+
+        let isrecursive: "yes" | "no" | "cond" = "no";
+        if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
+            isrecursive = this.testToken(KW_recursive) ? "yes" : "cond";
+            this.consumeToken();
+        }
+
+        this.ensureToken(TokenStrings.IdentifierName, "function name");
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+
+        const okdecl = this.testToken(SYM_lparen);
+        if(!okdecl) {
+            return undefined;
+        }
+
+        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, true);
+        
+        let resultInfo = this.env.SpecialVoidSignature;
+        if (this.testAndConsumeTokenIf(SYM_colon)) {
+            resultInfo = this.parseTypeSignature();
+        }
+
+        const argNames = new Set<string>(params.map((param) => param.name));
+        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        const samples = this.parseSamples(cinfo);
+    
+        const lambdaenv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
+        this.env.pushFunctionScope(lambdaenv);
+        const body = this.parseBody();
+        this.env.popFunctionScope();
+
+        xxxx;
     }
 
     private parseInvokableCommon(ikind: InvokableKind, noBody: boolean, attributes: string[], isrecursive: "yes" | "no" | "cond", terms: TemplateTermDecl[], implicitTemplates: string[], termRestrictions: TypeConditionRestriction | undefined, optSelfRef: boolean): InvokeDecl {
@@ -3970,72 +4068,6 @@ class Parser {
         }
 
         return new TypeConditionRestriction(trl);
-    }
-
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
-        let preconds: PreConditionDecl[] = [];
-        try {
-            this.m_penv.pushFunctionScope(new FunctionScope(argnames, boundtemplates, rtype, false));
-            while (this.testToken(KW_requires)) {
-                this.consumeToken();
-                
-                const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseExpression();
-
-                preconds.push(new PreConditionDecl(sinfo, level, exp));
-
-                this.ensureAndConsumeToken(SYM_semicolon, "requires");
-            }
-        } finally {
-            this.m_penv.popFunctionScope();
-        }
-
-        let postconds: PostConditionDecl[] = [];
-        try {
-            const rargs = new Set<string>(argnames).add("$return").add("$this");
-            this.m_penv.pushFunctionScope(new FunctionScope(rargs, boundtemplates, rtype, true));
-            while (this.testToken(KW_ensures)) {
-                this.consumeToken();
-
-                const level = this.parseBuildInfo(KW_release);
-                const exp = this.parseExpression();
-
-                postconds.push(new PostConditionDecl(sinfo, level, exp));
-
-                this.ensureAndConsumeToken(SYM_semicolon, "ensures");
-            }
-        } finally {
-            this.m_penv.popFunctionScope();
-        }
-
-        return [preconds, postconds];
-    }
-
-    private parseSamples(sinfo: SourceInfo): (InvokeSampleDeclInline | InvokeSampleDeclFile)[] {
-        let samples: (InvokeSampleDeclInline | InvokeSampleDeclFile)[] = [];
-        while (this.testToken(KW_test) || this.testToken(KW_example)) {
-            const istest = this.testAndConsumeTokenIf(KW_test);
-            this.ensureAndConsumeToken(KW_example, "example");
-
-            if (this.testToken(TokenStrings.BSQON_EXAMPLE_FILE)) {
-                const fp = this.consumeTokenAndGetValue();
-
-                samples.push(new InvokeSampleDeclFile(sinfo, istest, fp));
-            }
-            else {
-                this.ensureToken(TokenStrings.BSQON_EXAMPLE_ARGS, "example");
-                const args = this.consumeTokenAndGetValue();
-
-                this.ensureToken(TokenStrings.BSQON_EXAMPLE_RESULT, "example");
-                const result = this.consumeTokenAndGetValue();
-
-                samples.push(new InvokeSampleDeclInline(sinfo, istest, args, result));
-            }
-
-            this.ensureAndConsumeToken(SYM_semicolon, "example");
-        }
-
-        return samples;
     }
 
     private parseNamespaceDep(): {fromns: string, asns: string} {
