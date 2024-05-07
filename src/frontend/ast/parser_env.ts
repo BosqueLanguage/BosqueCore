@@ -1,5 +1,5 @@
 import { SourceInfo } from "../build_decls";
-import { Assembly, NamespaceDeclaration, NamespaceUsing } from "./assembly";
+import { Assembly, NamespaceDeclaration } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
@@ -260,39 +260,6 @@ class ParserEnvironment {
                 }
             }
         }
-    }
-
-    resolveEnclosingNamespaceInfo(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]]  | undefined {
-        //If core is explicit then we can skip any local lookup
-        if (access.length === 1 && access[0].tname === "Core") {
-            return [this.assembly.getToplevelNamespace("Core"), []];
-        }
-
-        //if the scoped then we are looking for a specific decl in Core or in this namespace
-        let realns: {tname: string, terms: TypeSignature[]}[];
-        const coredecl = this.assembly.getToplevelNamespace("Core");
-        if(coredecl.declaredNames.has(access[0].tname)) {
-            realns = [{tname: "Core", terms: []}, ...access];
-        }
-        else if(fromns.declaredNames.has(access[0].tname)) {
-            realns = [...fromns.fullnamespace.ns.map((nns) => {return {tname: nns, terms: []}; }), ...access];
-        }
-        else if(fromns.usings.find((nsuse) => nsuse.asns === access[0].tname)) {
-            const uns = (fromns.usings.find((nsuse) => nsuse.asns === access[0].tname) as NamespaceUsing).fromns.ns;
-            realns = [...uns.map((nns) => {return {tname: nns, terms: []}; }), ...(access.slice(1))];
-        }
-        else {
-            const tlns = this.assembly.getToplevelNamespace(access[0].tname);
-            if(tlns === undefined) {
-                return undefined;
-            }
-            else {
-                realns = access;
-            }
-        }
-        
-        const realroot = this.assembly.getToplevelNamespace(realns[0].tname);
-        return this.resolveImplicitNamespaceRootRecursive(realroot, realns.slice(1));
     }
 
     getBinderExtension(vname: string): string {
