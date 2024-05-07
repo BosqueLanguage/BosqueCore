@@ -1907,12 +1907,16 @@ class Parser {
         return {tname: tname, terms: terms};
     }
 
+    private isNomimalTypeLookahead(): boolean {
+        return this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_le) || this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_colon);
+    }
+
     private parseNominalType(): TypeSignature {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         let tscope: {tname: string, terms: TypeSignature[]}[] = [this.parseNominalStep()];
 
-        while (this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_le) || this.testFollows(SYM_coloncolon, TokenStrings.IdentifierName, SYM_colon)) {
+        while (this.isNomimalTypeLookahead()) {
             tscope.push(this.parseNominalStep());
         }
 

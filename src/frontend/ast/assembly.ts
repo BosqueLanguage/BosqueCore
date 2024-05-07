@@ -1395,6 +1395,7 @@ class NamespaceUsing {
 
 class NamespaceDeclaration {
     readonly name: string; 
+    readonly fullnamespace: FullyQualifiedNamespace;
 
     usings: NamespaceUsing[];
     declaredNames: Set<string>;
@@ -1409,8 +1410,9 @@ class NamespaceDeclaration {
     apis: APIDecl[];
     tasks: TaskDecl[];
 
-    constructor(name: string) {
+    constructor(name: string, fullnamespace: FullyQualifiedNamespace) {
         this.name = name;
+        this.fullnamespace = fullnamespace;
 
         this.usings = [];
         this.declaredNames = new Set<string>();
@@ -1552,7 +1554,7 @@ class Assembly {
 
     ensureToplevelNamespace(ns: string): NamespaceDeclaration {
         if (!this.hasToplevelNamespace(ns)) {
-            this.toplevelNamespaces.push(new NamespaceDeclaration(ns));
+            this.toplevelNamespaces.push(new NamespaceDeclaration(ns, new FullyQualifiedNamespace([ns])));
         }
 
         return this.getToplevelNamespace(ns);

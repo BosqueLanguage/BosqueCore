@@ -1,5 +1,5 @@
 import { SourceInfo } from "../build_decls";
-import { Assembly, NamespaceDeclaration, TypeDecl } from "./assembly";
+import { Assembly, NamespaceDeclaration, NamespaceUsing } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
@@ -239,49 +239,60 @@ class ParserEnvironment {
     }
 
     private resolveImplicitNamespaceRootRecursive(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]] | undefined {
-        if(access.length === 1) {
-            const nns = fromns.subns.find((ns) => ns.name === access[0].tname);
-            if(nns !== undefined) {
-                return [nns, []];
-            }
-            else if(fromns.declaredNames.has(access[0].tname)) {
-                return [fromns, access];
-            }
-            else {
-                return undefined;
-            }
+        if(access.length === 0) {
+            return [fromns, []];
         }
         else {
             const nsdecl = fromns.subns.find((ns) => ns.name === access[0].tname);
-            return nsdecl !== undefined ? this.resolveImplicitNamespaceRootRecursive(nsdecl, scopedname.slice(1), declname) : undefined;    
+            if(nsdecl !== undefined) {
+                return this.resolveImplicitNamespaceRootRecursive(nsdecl, access.slice(1));
+            }
+            else {
+                const tdef = fromns.typeDefs.find((tdef) => tdef.name === access[0].tname);
+                const tdecl = fromns.typedecls.find((tdecl) => tdecl.name === access[0].tname);
+                const tsk = fromns.tasks.find((tsk) => tsk.name === access[0].tname);
+
+                if(tdecl === undefined || tdef === undefined || tsk === undefined) {
+                    return undefined;
+                }
+                else {
+                    return [fromns, access];
+                }
+            }
         }
     }
 
     resolveEnclosingNamespaceInfo(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]]  | undefined {
-        const coredecl = this.assembly.getToplevelNamespace("Core");
-
         //If core is explicit then we can skip any local lookup
-        if (scopedname.length === 1 && scopedname[0] === "Core") {
-            return coredecl.declaredNames.has(declname) ? this.assembly.getToplevelNamespace("Core") : undefined;
+        if (access.length === 1 && access[0].tname === "Core") {
+            return [this.assembly.getToplevelNamespace("Core"), []];
         }
 
         //if the scoped then we are looking for a specific decl in Core or in this namespace
-        if (scopedname.length === 0) {
-            if(coredecl.declaredNames.has(declname)) {
-                return coredecl;
-            }
-            else {
-                return fromns.declaredNames.has(declname) ? fromns : undefined;
-            }
+        let realns: {tname: string, terms: TypeSignature[]}[];
+        const coredecl = this.assembly.getToplevelNamespace("Core");
+        if(coredecl.declaredNames.has(access[0].tname)) {
+            realns = [{tname: "Core", terms: []}, ...access];
+        }
+        else if(fromns.declaredNames.has(access[0].tname)) {
+            realns = [...fromns.fullnamespace.ns.map((nns) => {return {tname: nns, terms: []}; }), ...access];
+        }
+        else if(fromns.usings.find((nsuse) => nsuse.asns === access[0].tname)) {
+            const uns = (fromns.usings.find((nsuse) => nsuse.asns === access[0].tname) as NamespaceUsing).fromns.ns;
+            realns = [...uns.map((nns) => {return {tname: nns, terms: []}; }), ...(access.slice(1))];
         }
         else {
-            //we are doing a recursive search -- check any usings for the first item and then start the search
-
-            const usingns = fromns.usings.find((nsuse) => nsuse.asns === scopedname[0])?.fromns.ns || [fromns.name];
-            
-            //TODO: we need to check that usingns is not Core or the current namespace -- which we should have already checked
-            return this.resolveImplicitNamespaceRootRecursive(fromns, [...usingns, ...scopedname.slice(1)], declname);
+            const tlns = this.assembly.getToplevelNamespace(access[0].tname);
+            if(tlns === undefined) {
+                return undefined;
+            }
+            else {
+                realns = access;
+            }
         }
+        
+        const realroot = this.assembly.getToplevelNamespace(realns[0].tname);
+        return this.resolveImplicitNamespaceRootRecursive(realroot, realns.slice(1));
     }
 
     getBinderExtension(vname: string): string {
