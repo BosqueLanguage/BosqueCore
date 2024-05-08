@@ -2,11 +2,11 @@
 import {strict as assert, ifError} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { BodyImplementation, ErrorExpression, ErrorStatement, Expression } from "./body";
+import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { AccessVariableExpression, ArgumentList, ArgumentValue, BodyImplementation, ConstantExpressionValue, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_example, KW_fn, KW_method, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_arrow, SYM_at, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_ge, SYM_lbrace, SYM_lbrack, SYM_le, SYM_lparen, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_arrow, SYM_at, SYM_bang, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_eq, SYM_ge, SYM_lbrace, SYM_lbrack, SYM_le, SYM_lparen, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -181,6 +181,10 @@ class LexerState {
 
     recover() {
         this.cpos = this.epos;
+    }
+
+    hasErrors(): boolean {
+        return this.errors.length > 0;
     }
 }
 
@@ -1981,6 +1985,21 @@ class Parser {
     ////
     //Type parsing
 
+    private tryParseTypeSignature(): TypeSignature | undefined {
+        this.lexer.prepStateStackForTry("typesig");
+
+        const ts = this.parseTypeSignature();
+
+        if(ts instanceof ErrorTypeSignature || this.lexer.currentState().hasErrors()) {
+            this.lexer.popStateReset();
+            return undefined;
+        }
+        else {
+            this.lexer.popStateIntoParentOk();
+            return ts;
+        }
+    } 
+
     private parseTypeSignature(): TypeSignature {
         return this.parseOrCombinatorType();
     }
@@ -2050,14 +2069,29 @@ class Parser {
                 return this.parseLambdaType();
             }
             case SYM_lparen: {
+                const sinfo = this.lexer.peekNext().getSourceInfo();
+                const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+
+                const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
+                this.lexer.prepStateStackForNested("paren-type", closepos, undefined);
+
                 this.consumeToken();
-                const ptype = this.parseTypeSignature();
-                if(this.testAndConsumeTokenIf(SYM_rparen)) {
-                    return ptype;
+                let ptype = this.parseTypeSignature();
+                if(!this.testAndConsumeTokenIf(SYM_rparen)) {
+                    ptype = this.completeEListParse(sinfo, ptype, closeparen !== undefined);
                 }
                 else {
-                    this.completeEListParse(ptype);
+                    if(this.testToken(SYM_rparen)) {
+                        this.consumeToken();
+                    }
+                    else {
+                        if(closeparen !== undefined) {
+                            this.lexer.currentState().recover();
+                        }
+                    }
                 }
+
+                return ptype;
             }
             default: {
                 return new ErrorTypeSignature(this.lexer.peekNext().getSourceInfo(), undefined);
@@ -2124,7 +2158,7 @@ class Parser {
 
             const name = this.consumeTokenAndGetValue();
             if(pnames.has(name)) {
-                this.raiseError(this.getCurrentLine(), `Duplicate property name "${name}" in record declaration`);
+                this.recordErrorGeneral(this.lexer.peekNext(), `Duplicate property name ${name} in record type`);
             }
             pnames.add(name);
 
@@ -2138,37 +2172,72 @@ class Parser {
     }
 
     private parseLambdaType(): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        let recursive: "yes" | "no" | "cond" = "no";
-        if (this.testAndConsumeTokenIf(KW_recursive_q)) {
-            recursive = "cond";
-        }
-        if (this.testAndConsumeTokenIf(KW_recursive)) {
-            recursive = "yes";
+        let isrecursive: "yes" | "no" | "cond" = "no";
+        if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
+            isrecursive = this.testToken(KW_recursive) ? "yes" : "cond";
+            this.consumeToken();
         }
 
-        const ispred = this.testToken(KW_pred);
-        const isfn = this.testToken(KW_fn);
-        this.consumeToken();
+        let name: "fn" | "pred" = "fn";
+        if(this.testToken(KW_fn) && this.testToken(KW_pred)) {
+            name = this.consumeTokenAndGetValue() as "fn" | "pred";
+        }
+        else {
+            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda type must be either a fn or pred");
 
-            const params = this.parseListOf<FunctionParameter>("lambda function parameters", SYM_lparen, SYM_rparen, SYM_coma, () => {
-                return new FunctionParameter("_", this.parseTypeSignature(), undefined);
-            });
+            if(!this.testToken(SYM_lparen)) {
+                this.consumeToken();
+            }
+        }
 
-            this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
-            const resultInfo = this.parseTypeSignature();
+        const params = this.parseInvokeSignatureParameters(sinfo, false, false);
 
-        return new LambdaTypeSignature(sinfo, recursive, name, params, resultInfo);
+        this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
+        const resultInfo = this.parseTypeSignature();
+
+        return new LambdaTypeSignature(sinfo, isrecursive, name, params, resultInfo);
     }
 
-    private completeEListParse(ptype: TypeSignature): TypeSignature {
-        xxxx;
+    private completeEListParse(sinfo: SourceInfo, ptype: TypeSignature, canrecover: boolean): TypeSignature {
+        let rtypes = [ptype];
+
+        while (!this.testAndConsumeTokenIf(SYM_rparen)) {
+            const v = this.parseTypeSignature();
+            rtypes.push(v);
+            
+            if(this.testToken(SYM_rparen)) {
+                ; //great this is the happy path we will exit next iter
+            }
+            else if(this.testToken(SYM_coma)) {
+                //consume the sep
+                this.consumeToken();
+
+                //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                if(this.testToken(SYM_rparen)) {
+                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                }
+            }
+            else {
+                //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
+                //maybe this is where we want to do some tryParse stuff to recover as robustly as possible -- like in the TypeSpec list parse implementation
+
+                if(!canrecover) {
+                    break; //we can't scan to a known recovery token so just break and let it sort itself out
+                }
+                else {
+                    this.lexer.currentState().recover();
+                }
+            }
+        }
+
+        return new EListTypeSignature(sinfo, rtypes);
     }
 
     ////
     //Expression parsing
-    private parseITest(): ITest {
+    private parseITest(): ITest | undefined {
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
 
         if(this.testToken(SYM_le)) {
@@ -2203,8 +2272,8 @@ class Parser {
                 return new ITestErr(isnot);
             }
             else {
-                this.raiseError(this.getCurrentLine(), `Unknown option for ITest -- ${this.peekTokenData()}`);
-                return (undefined as any) as ITest;
+                this.recordErrorGeneral(this.lexer.peekNext(), "Expected ITest");
+                return undefined;
             }
         }
     }
@@ -2212,45 +2281,60 @@ class Parser {
     private parseITypeTest(isnot: boolean): ITest {
         this.consumeToken();
         const ttype = this.parseTypeSignature();
-        this.ensureAndConsumeToken(SYM_ge, "itype test");
+        this.ensureAndConsumeToken(SYM_ge, "ITest");
 
         return new ITestType(isnot, ttype);
     }
 
     private parseILiteralTest(isnot: boolean): ITest {
         this.consumeToken();
-        const literal = this.parseLiteralExpression("itype test");
-        this.ensureAndConsumeToken(SYM_rbrack, "itype test");
+        const literal = this.parseLiteralExpression("ITest");
+        this.ensureAndConsumeToken(SYM_rbrack, "ITest");
 
         return new ITestLiteral(isnot, literal);
     }
 
-    private parseArguments(lparen: string, rparen: string): Expression[] {
-        let args: Expression[] = [];
-
-        try {
-            this.setRecover(this.scanMatchingParens(lparen, rparen));
-
-            this.ensureAndConsumeToken(lparen, "argument list");
-            while (!this.testAndConsumeTokenIf(rparen)) {
+    private parseArguments(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean): ArgumentList {
+        const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
+            if(this.testToken(KW_ref)) {
+                if(!refok) {
+                    this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have a reference argument in this context");
+                }
+                this.consumeToken();
                 const exp = this.parseExpression();
-                args.push(exp);
+                if(!(exp instanceof AccessVariableExpression)) {
+                    this.recordErrorGeneral(exp.sinfo, "Expected variable as target in ref argument");
+                }
 
-                if (this.testAndConsumeTokenIf(SYM_coma)) {
-                    this.ensureNotToken(rparen, "argument list after \",\"");
-                }
-                else {
-                    this.ensureToken(rparen, "argument list -- maybe missing a \",\"");
-                }
+                return new RefArgumentValue(exp as AccessVariableExpression);
             }
+            else if(this.testToken(SYM_dotdotdot)) {
+                if(!spreadok) {
+                    this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have a spread argument in this context");
+                }
+                this.consumeToken();
+                const exp = this.parseExpression();
 
-            this.clearRecover();
-            return args;
-        }
-        catch (ex) {
-            this.processRecover();
-            return [];
-        }
+                return new SpreadArgumentValue(exp);
+            }
+            else if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+                const name = this.consumeTokenAndGetValue();
+                this.consumeToken();
+                const exp = this.parseExpression();
+
+                return new NamedArgumentValue(name, exp);
+            }
+            else {
+                const exp = this.parseExpression();
+                
+                return new PositionalArgumentValue(exp);
+            }
+        });
+
+        const allNamed = new Set<string>(...args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name));
+            xxxx;
+
+        return new ArgumentList(args);
     }
 
     private parseArgumentsNamed(lparen: string, rparen: string): {name: string, value: Expression}[] {
@@ -2268,55 +2352,6 @@ class Parser {
 
                 const exp = this.parseExpression();
                 args.push({name: name, value: exp});
-
-                if (this.testAndConsumeTokenIf(SYM_coma)) {
-                    this.ensureNotToken(rparen, "argument list after \",\"");
-                }
-                else {
-                    this.ensureToken(rparen, "argument list -- maybe missing a \",\"");
-                }
-            }
-
-            this.clearRecover();
-            return args;
-        }
-        catch (ex) {
-            this.processRecover();
-            return [];
-        }
-    }
-
-    private parseEnvUpdateArguments(lparen: string, rparen: string): {name: string, value: [TypeSignature, Expression] | undefined}[] {
-        let args: {name: string, value: [TypeSignature, Expression] | undefined}[] = [];
-
-        try {
-            this.setRecover(this.scanMatchingParens(lparen, rparen));
-
-            this.consumeToken();
-            while (!this.testAndConsumeTokenIf(rparen)) {
-                this.ensureToken(TokenStrings.Identifier, "name in environment argument list");
-                const name = this.consumeTokenAndGetValue();
-
-                if(this.testToken(SYM_eq)) {
-                    this.consumeToken();
-
-                    this.ensureToken(TokenStrings.Identifier, "null value in environment argument list");
-                    const vv = this.consumeTokenAndGetValue();
-                    if(vv !== "_") {
-                        this.raiseError(this.getCurrentLine(), "expected _");
-                    }
-
-                    args.push({ name: name, value: undefined });
-                }
-                else {
-                    this.ensureAndConsumeToken(SYM_colon, "type in environment argument list");
-                    const ttype = this.parseTypeSignature();
-
-                    this.ensureAndConsumeToken(SYM_eq, "value in environment argument list")
-                    const exp = this.parseExpression();
-
-                    args.push({ name: name, value: [ttype, exp] });
-                }
 
                 if (this.testAndConsumeTokenIf(SYM_coma)) {
                     this.ensureNotToken(rparen, "argument list after \",\"");
@@ -2384,7 +2419,7 @@ class Parser {
         return new ConstructorPrimaryExpression(sinfo, otype, args);
     }
     
-    private parsePCodeTerm(): Expression {
+    private parseLambdaTerm(): Expression {
         const line = this.getCurrentLine();
         const sinfo = this.getCurrentSrcInfo();
 
@@ -2418,36 +2453,6 @@ class Parser {
         });
 
         return new ConstructorPCodeExpression(sinfo, allAuto, sig);
-    }
-
-    private parseFollowTypeTag(incontext: string, hassep: boolean): TypeSignature {
-        const sinfo = this.getCurrentSrcInfo();
-
-        if(hassep) {
-            this.ensureAndConsumeToken(TokenStrings.FollowTypeSep, incontext);
-        }
-
-        if (this.testToken(TokenStrings.Template)) {
-            return this.parseTemplateTypeReference();
-        }
-        else {
-            const line = this.getCurrentLine();
-
-            let ns: string | undefined = undefined;
-            if (this.testToken(TokenStrings.Namespace)) {
-                ns = this.consumeTokenAndGetValue();
-                this.ensureAndConsumeToken(SYM_coloncolon, "namespace scope resolve");
-            }
-
-            const tname = this.consumeTokenAndGetValue();
-            const ons = ns;
-            ns = this.m_penv.tryResolveNamespace(ns, tname);
-            if (ns === undefined) {
-                this.raiseError(line, `Could not resolve namespace/type${ns !== undefined ? (" " + ons + SYM_coloncolon + tname) : tname}`);
-            }
-
-            return new NominalTypeSignature(sinfo, ns as string, [tname], []);
-        }
     }
 
     private parseLiteralExpression(incontext: string | undefined): LiteralExpressionValue {
@@ -2492,13 +2497,6 @@ class Parser {
             this.m_penv.popFunctionScope();
             throw ex;
         }
-    }
-
-    private checkTypeScopeBasedExpressionFollowsParens(): boolean {
-        const lpos = this.scanMatchingParens(SYM_lparen, SYM_rparen);
-        const ptok = this.peekToken(lpos - this.m_cpos);
-
-        return ptok === "::";
     }
 
     private parsePrimaryExpression(): [Expression, boolean] {
@@ -4161,7 +4159,7 @@ class Parser {
         }
     }
 
-    private parseBody(file: string): BodyImplementation {
+    private parseBody(): BodyImplementation {
         if(this.testToken(SYM_eq)) {
             this.consumeToken();
             const iname = this.consumeTokenAndGetValue();

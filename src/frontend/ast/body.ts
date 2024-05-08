@@ -126,6 +126,16 @@ abstract class ArgumentValue {
     abstract emit(fmt: CodeFormatter): string;
 }
 
+class RefArgumentValue extends ArgumentValue {
+    constructor(exp: AccessVariableExpression) {
+        super(exp);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return `ref ${this.exp.emit(true, fmt)}`;
+    }
+}
+
 class PositionalArgumentValue extends ArgumentValue {
     constructor(exp: Expression) {
         super(exp);
@@ -2145,7 +2155,7 @@ class StandardBodyImplementation extends BodyImplementation {
 export {
     RecursiveAnnotation,
     BinderInfo, ITest, ITestType, ITestLiteral, ITestNone, ITestSome, ITestNothing, ITestSomething, ITestOk, ITestErr,
-    ArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
+    ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
     LiteralTypeDeclValueExpression,
