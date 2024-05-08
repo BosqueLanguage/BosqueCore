@@ -1349,93 +1349,91 @@ class Parser {
     ////
     //Misc parsing
 
-    private parseIdentifierAccessChainHelperTypeTail(currentns: NamespaceDeclaration, tailAccess: boolean, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[], tailAccess: boolean} {
-        if(!tailAccess) {
-            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [], tailAccess: false};
+    private parseIdentifierAccessChainHelperTypeTail(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} {
+        if(leadingscoper) {
+            this.consumeToken();
         }
-
         const tsroot = this.peekTokenData();
 
         if(currentns.name === "Core" && (tsroot === "Result" || tsroot === "APIResult")) {
             this.consumeToken();
             const terms = this.parseTermList();
 
-            this.ensureAndConsumeToken(SYM_coloncolon, "type tail");
-            this.ensureToken(TokenStrings.IdentifierName, "type tail");
-            const ttname = (this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]");
-
-            if(tsroot === "Result" && (ttname === "Ok" || ttname === "Err")) {
-                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}], tailAccess: false};
-            }
-            else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
-                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}], tailAccess: false};
+            if(!this.testToken(SYM_coloncolon)) {
+                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
             }
             else {
-                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", tterms: terms}], tailAccess: false};
+                this.consumeToken();
+                this.ensureToken(TokenStrings.IdentifierName, "type tail");
+                const ttname = (this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]");
+
+                if(tsroot === "Result" && (ttname === "Ok" || ttname === "Err")) {
+                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
+                }
+                else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
+                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}]};
+                }
+                else {
+                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", tterms: terms}]};
+                }
             }
         }
         else {
             this.consumeToken();
             const terms = this.parseTermList();
 
-            const tailAccess = this.testAndConsumeTokenIf(SYM_coloncolon);
-            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}], tailAccess: tailAccess};
+            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
         }
     }
 
-    private parseIdentifierAccessChainHelper(currentns: NamespaceDeclaration, tailAccess: boolean, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[], tailAccess: boolean} | undefined {
-        if(!tailAccess) {
-            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [], tailAccess: false};
-        }
-
-        const nsroot = this.peekTokenData();
+    private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
+        const nsroot = this.peekTokenData(leadingscoper ? 1 : 0);
+        const hasterms = this.peekToken(leadingscoper ? 2 : 1) === SYM_le;
 
         if(nsroot === "Core") {
             this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot shadow the Core namespace");
             return undefined;
         }
 
-        if(this.testFollows(TokenStrings.IdentifierName, SYM_le)) {
-            return this.parseIdentifierAccessChainHelperTypeTail(currentns, tailAccess, scopeTokens);
+        const nns = currentns.subns.find((ns) => ns.name === nsroot);
+        const nnt = currentns.typeDefs.find((t) => t.name === nsroot) || currentns.typedecls.find((t) => t.name === nsroot) || currentns.tasks.find((t) => t.name === nsroot);
+        if(nns !== undefined && !hasterms) {
+            if(leadingscoper) {
+                this.consumeToken();
+            }
+            this.consumeToken();
+            return this.parseIdentifierAccessChainHelper(this.testToken(SYM_coloncolon), nns, [...scopeTokens, nsroot]);
+        }
+        else if(nnt !== undefined) {
+            return this.parseIdentifierAccessChainHelperTypeTail(this.testToken(SYM_coloncolon), currentns, scopeTokens);
         }
         else {
-            const nns = currentns.subns.find((ns) => ns.name === nsroot);
-            const nnt = currentns.typeDefs.find((t) => t.name === nsroot) || currentns.typedecls.find((t) => t.name === nsroot) || currentns.tasks.find((t) => t.name === nsroot);
-            if(nns !== undefined) {
-                this.consumeToken();
-                const tailAccess = this.testAndConsumeTokenIf(SYM_coloncolon);
-
-                return this.parseIdentifierAccessChainHelper(nns, tailAccess, [...scopeTokens, nsroot]);
-            }
-            else if(nnt !== undefined) {
-                return this.parseIdentifierAccessChainHelperTypeTail(currentns, tailAccess, scopeTokens);
-            }
-            else {
-                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [], tailAccess: tailAccess};
-            }
+            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: []};
         }
     }
 
-    private parseIdentifierAccessChain(): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[], tailAccess: boolean} | undefined {
+    private parseIdentifierAccessChain(): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData();
 
         const coredecl = this.env.assembly.getToplevelNamespace("Core");
         if (nsroot === "Core") {
             this.consumeToken();
-            const tailAccess = this.testAndConsumeTokenIf(SYM_coloncolon);
-
-            return this.parseIdentifierAccessChainHelper(coredecl, tailAccess, ["Core"]);
+            if(this.testToken(SYM_coloncolon)) {
+                return this.parseIdentifierAccessChainHelper(true, coredecl, ["Core"]);
+            }
+            else {
+                return {nsScope: coredecl.fullnamespace.ns, scopeTokens: ["Core"], typeTokens: []};
+            }
         }
         else if(coredecl.declaredNames.has(nsroot)) {
-            return this.parseIdentifierAccessChainHelper(coredecl, true /*implicit Core::*/, []);
+            return this.parseIdentifierAccessChainHelper(false, coredecl, []);
         }
         else if(this.currentNamespace.declaredNames.has(nsroot)) {
-            return this.parseIdentifierAccessChainHelper(this.currentNamespace, true /*implicit NS::*/, []);
+            return this.parseIdentifierAccessChainHelper(false, this.currentNamespace, []);
         }
         else if(this.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
             const uns = (this.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;
             this.consumeToken();
-            const tailAccess = this.testAndConsumeTokenIf(SYM_coloncolon);
 
             let iidx = 1;
             const rrns = this.env.assembly.getToplevelNamespace(uns[0]);
@@ -1448,18 +1446,27 @@ class Parser {
                 return undefined;
             }
 
-            return this.parseIdentifierAccessChainHelper(rrns, tailAccess, [nsroot]);
+            if(this.testToken(SYM_coloncolon)) {
+                return this.parseIdentifierAccessChainHelper(true, rrns, [nsroot]);
+            }
+            else {
+                return {nsScope: rrns.fullnamespace.ns, scopeTokens: [nsroot], typeTokens: []};
+            }
         }
         else {
             this.consumeToken();
-            const tailAccess = this.testAndConsumeTokenIf(SYM_coloncolon);
 
             const tlns = this.env.assembly.getToplevelNamespace(nsroot);
             if(tlns === undefined) {
                 return undefined;
             }
             else {
-                return this.parseIdentifierAccessChainHelper(tlns, tailAccess, [nsroot]);
+                if(this.testToken(SYM_coloncolon)) {
+                    return this.parseIdentifierAccessChainHelper(tlns, [nsroot]);
+                }
+                else {
+                    return {nsScope: tlns.fullnamespace.ns, scopeTokens: [nsroot], typeTokens: []};
+                }
             }
         }
     }
