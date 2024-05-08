@@ -2,9 +2,9 @@
 import {strict as assert, ifError} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, ErrorTypeSignature, FunctionParameter, NominalTypeSignature, NoneableTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { AndTypeSignature, AutoTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { BodyImplementation, ErrorExpression, ErrorStatement, Expression } from "./body";
-import { Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
+import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
 import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_example, KW_fn, KW_method, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_arrow, SYM_at, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_ge, SYM_lbrace, SYM_lbrack, SYM_le, SYM_lparen, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
 
@@ -1090,27 +1090,6 @@ class Parser {
         cstate.errors.push(new ParserError(sinfo, msg));
     }
 
-    private raiseErrorTypeNode(sinfo: SourceInfo, msg: string): ErrorTypeSignature {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(sinfo, msg));
-
-        return new ErrorTypeSignature(sinfo);
-    }
-
-    private raiseErrorExpressionNode(sinfo: SourceInfo, msg: string): ErrorExpression {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(sinfo, msg));
-
-        return new ErrorExpression(sinfo);
-    }
-
-    private raiseErrorStatement(sinfo: SourceInfo, msg: string): ErrorStatement {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(sinfo, msg));
-
-        return new ErrorStatement(sinfo);
-    }
-
     private scanMatchingParens(lp: string, rp: string): number | undefined {
         let pscount = 1;
         let tpos = 1;
@@ -1349,7 +1328,7 @@ class Parser {
     ////
     //Misc parsing
 
-    private parseIdentifierAccessChainHelperTypeTail(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} {
+    private parseIdentifierAccessChainHelperTypeTail(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} {
         if(leadingscoper) {
             this.consumeToken();
         }
@@ -1360,7 +1339,7 @@ class Parser {
             const terms = this.parseTermList();
 
             if(!this.testToken(SYM_coloncolon)) {
-                return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
+                return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, terms: terms}]};
             }
             else {
                 this.consumeToken();
@@ -1368,13 +1347,13 @@ class Parser {
                 const ttname = (this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]");
 
                 if(tsroot === "Result" && (ttname === "Ok" || ttname === "Err")) {
-                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", tterms: terms}, {tname: ttname, tterms: []}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "Result", terms: terms}, {tname: ttname, terms: []}]};
                 }
                 else if(tsroot === "APIResult" && (ttname === "Rejected" || ttname === "Error" || ttname === "Failed" || ttname === "Success")) {
-                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", tterms: terms}, {tname: ttname, tterms: []}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "APIResult", terms: terms}, {tname: ttname, terms: []}]};
                 }
                 else {
-                    return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", tterms: terms}]};
+                    return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: "error", terms: terms}]};
                 }
             }
         }
@@ -1382,11 +1361,11 @@ class Parser {
             this.consumeToken();
             const terms = this.parseTermList();
 
-            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, tterms: terms}]};
+            return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: [{tname: tsroot, terms: terms}]};
         }
     }
 
-    private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
+    private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData(leadingscoper ? 1 : 0);
         const hasterms = this.peekToken(leadingscoper ? 2 : 1) === SYM_le;
 
@@ -1408,11 +1387,11 @@ class Parser {
             return this.parseIdentifierAccessChainHelperTypeTail(this.testToken(SYM_coloncolon), currentns, scopeTokens);
         }
         else {
-            return {nsScope: currentns.fullnamespace.ns, scopeTokens: scopeTokens, typeTokens: []};
+            return {nsScope: currentns, scopeTokens: scopeTokens, typeTokens: []};
         }
     }
 
-    private parseIdentifierAccessChain(): {nsScope: string[], scopeTokens: string[], typeTokens: {tname: string, tterms: TypeSignature[]}[]} | undefined {
+    private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData();
 
         const coredecl = this.env.assembly.getToplevelNamespace("Core");
@@ -1422,7 +1401,7 @@ class Parser {
                 return this.parseIdentifierAccessChainHelper(true, coredecl, ["Core"]);
             }
             else {
-                return {nsScope: coredecl.fullnamespace.ns, scopeTokens: ["Core"], typeTokens: []};
+                return {nsScope: coredecl, scopeTokens: ["Core"], typeTokens: []};
             }
         }
         else if(coredecl.declaredNames.has(nsroot)) {
@@ -1450,7 +1429,7 @@ class Parser {
                 return this.parseIdentifierAccessChainHelper(true, rrns, [nsroot]);
             }
             else {
-                return {nsScope: rrns.fullnamespace.ns, scopeTokens: [nsroot], typeTokens: []};
+                return {nsScope: rrns, scopeTokens: [nsroot], typeTokens: []};
             }
         }
         else {
@@ -1462,13 +1441,95 @@ class Parser {
             }
             else {
                 if(this.testToken(SYM_coloncolon)) {
-                    return this.parseIdentifierAccessChainHelper(tlns, [nsroot]);
+                    return this.parseIdentifierAccessChainHelper(true, tlns, [nsroot]);
                 }
                 else {
-                    return {nsScope: tlns.fullnamespace.ns, scopeTokens: [nsroot], typeTokens: []};
+                    return {nsScope: tlns, scopeTokens: [nsroot], typeTokens: []};
                 }
             }
         }
+    }
+
+    private tryNormalizeCoreType(corens: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): AbstractNominalTypeDecl | undefined {
+        const tname = typeTokens[0].tname;
+        const nnt = corens.typedecls.find((t) => t.name === typeTokens[0].tname);
+
+        if(tname === "Result" || tname === "APIResult") {
+            if(typeTokens.length === 1) {
+                return nnt;
+            }
+            else {
+                const extname = typeTokens[1].tname;
+                if(tname === "Result") {
+                    return (nnt as ResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === extname);
+                }
+                else {
+                    return (nnt as APIResultTypeDecl).nestedEntityDecls.find((ned) => ned.name === extname);
+                }
+            }
+        }
+        else {
+            return nnt;
+        }
+    }
+
+    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): [{name: string, type: TypeSignature}[], TypeSignature | undefined, AbstractNominalTypeDecl | undefined] | undefined {
+        const tydef = ns.typeDefs.find((t) => t.name === typeTokens[0].tname);
+        if(tydef !== undefined) {
+            if(typeTokens[0].terms.length !== tydef.terms.length) {
+                this.recordErrorGeneral(sinfo, `Type ${tydef.name} expects ${tydef.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
+            };
+
+            const rterms = typeTokens[0].terms.length === tydef.terms.length ? typeTokens[0].terms.map((t, i) => { 
+                return {name: tydef.terms[i].name, type: t}; 
+            }) : [];
+
+            return [rterms, tydef.boundType, undefined];
+        }
+        
+        const taskdef = ns.tasks.find((t) => t.name === typeTokens[0].tname);
+        if(taskdef !== undefined) {
+            if(typeTokens[0].terms.length !== taskdef.terms.length) {
+                this.recordErrorGeneral(sinfo, `Task ${taskdef.name} expects ${taskdef.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
+            };
+
+            const rterms = typeTokens[0].terms.length === taskdef.terms.length ? typeTokens[0].terms.map((t, i) => { 
+                return {name: taskdef.terms[i].name, type: t}; 
+            }) : [];
+
+            return [rterms, undefined, taskdef];
+        }
+
+        //handle special Core types first
+        if(ns.name === "Core") {
+            const ndecl = this.tryNormalizeCoreType(ns, typeTokens);
+            if(ndecl !== undefined) {
+                if(typeTokens[0].terms.length !== ndecl.terms.length) {
+                    this.recordErrorGeneral(sinfo, `Type ${ndecl.name} expects ${ndecl.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
+                };
+    
+                const rterms = typeTokens[0].terms.length === ndecl.terms.length ? typeTokens[0].terms.map((t, i) => { 
+                    return {name: ndecl.terms[i].name, type: t}; 
+                }) : [];
+
+                return [rterms, undefined, ndecl];
+            }
+        }
+
+        const nnt = ns.typedecls.find((t) => t.name === typeTokens[0].tname);
+        if(nnt !== undefined) {
+            if(typeTokens[0].terms.length !== nnt.terms.length) {
+                this.recordErrorGeneral(sinfo, `Type ${nnt.name} expects ${nnt.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
+            };
+
+            const rterms = typeTokens[0].terms.length === nnt.terms.length ? typeTokens[0].terms.map((t, i) => { 
+                return {name: nnt.terms[i].name, type: t}; 
+            }) : [];
+
+            return [rterms, undefined, nnt];
+        }
+
+        return undefined;
     }
 
     private parseAttribute(): DeclarationAttibute {
@@ -1973,7 +2034,7 @@ class Parser {
                 }
                 else {
                     this.recordErrorGeneral(sinfo, `Invalid type reference "${idtype}"`);
-                    return new ErrorTypeSignature(sinfo);
+                    return new ErrorTypeSignature(sinfo, undefined);
                 }
             }
             case SYM_lbrack: {
@@ -1999,7 +2060,7 @@ class Parser {
                 }
             }
             default: {
-                return new ErrorTypeSignature(this.lexer.peekNext().getSourceInfo());
+                return new ErrorTypeSignature(this.lexer.peekNext().getSourceInfo(), undefined);
             }
         }
     }
@@ -2028,10 +2089,20 @@ class Parser {
 
         const nsr = this.parseIdentifierAccessChain();
         if(nsr === undefined) {
-            return new ErrorTypeSignature(sinfo);
+            return new ErrorTypeSignature(sinfo, undefined);
         }
-
-        xxxx;
+        else if(nsr.typeTokens.length === 0) {
+            return new ErrorTypeSignature(sinfo, new FullyQualifiedNamespace(nsr.scopeTokens));
+        }
+        else {
+            const resolved = this.normalizeTypeNameChain(sinfo, nsr.nsScope, nsr.typeTokens);
+            if(resolved === undefined) {
+                return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
+            }
+            else {
+                return new NominalTypeSignature(sinfo, nsr.scopeTokens, nsr.typeTokens, ...resolved);
+            }
+        }
     }
 
     private parseTupleType(): TypeSignature {
@@ -2055,21 +2126,15 @@ class Parser {
             if(pnames.has(name)) {
                 this.raiseError(this.getCurrentLine(), `Duplicate property name "${name}" in record declaration`);
             }
-                pnames.add(name);
+            pnames.add(name);
 
-                this.ensureAndConsumeToken(SYM_colon, "record type property type");
-                const rtype = this.parseTypeSignature();
+            this.ensureAndConsumeToken(SYM_colon, "record type property type");
+            const rtype = this.parseTypeSignature();
 
-                return [name, rtype];
-            });
+            return [name, rtype];
+        });
 
-            this.clearRecover();
-            return new RecordTypeSignature(sinfo, entries);
-        }
-        catch (ex) {
-            this.processRecover();
-            return new ParseErrorTypeSignature(sinfo);
-        }
+        return new RecordTypeSignature(sinfo, entries);
     }
 
     private parseLambdaType(): TypeSignature {
@@ -2084,10 +2149,8 @@ class Parser {
         }
 
         const ispred = this.testToken(KW_pred);
+        const isfn = this.testToken(KW_fn);
         this.consumeToken();
-
-        try {
-            this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
 
             const params = this.parseListOf<FunctionParameter>("lambda function parameters", SYM_lparen, SYM_rparen, SYM_coma, () => {
                 return new FunctionParameter("_", this.parseTypeSignature(), undefined);
@@ -2096,13 +2159,11 @@ class Parser {
             this.ensureAndConsumeToken(SYM_arrow, "lambda type reference");
             const resultInfo = this.parseTypeSignature();
 
-            this.clearRecover();
-            return new FunctionTypeSignature(sinfo, false, recursive, params, resultInfo, ispred);
-        }
-        catch (ex) {
-            this.processRecover();
-            return new ParseErrorTypeSignature(sinfo);
-        }
+        return new LambdaTypeSignature(sinfo, recursive, name, params, resultInfo);
+    }
+
+    private completeEListParse(ptype: TypeSignature): TypeSignature {
+        xxxx;
     }
 
     ////

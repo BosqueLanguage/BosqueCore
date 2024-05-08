@@ -1,5 +1,6 @@
 
 import { SourceInfo } from "../build_decls";
+import { AbstractNominalTypeDecl } from "./assembly";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -32,12 +33,16 @@ abstract class TypeSignature {
 }
 
 class ErrorTypeSignature extends TypeSignature {
-    constructor(sinfo: SourceInfo) {
+    readonly completionNamespace: FullyQualifiedNamespace | undefined;
+
+    constructor(sinfo: SourceInfo, completionNamespace: FullyQualifiedNamespace | undefined) {
         super(sinfo);
+
+        this.completionNamespace = completionNamespace;
     }
 
     emit(toplevel: boolean): string {
-        return "[Parse Error]";
+        return `[Parse Error] @ ${this.completionNamespace ? this.completionNamespace.emit() + "::" : ""}?`;
     }
 }
 
@@ -78,10 +83,18 @@ class NominalTypeSignature extends TypeSignature {
     readonly ns: string[];
     readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
-    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[]) {
+    readonly resolvedTerms: {name: string, type: TypeSignature}[];
+    readonly resolvedTypeSignature: TypeSignature | undefined;
+    readonly typeDeclaration: AbstractNominalTypeDecl | undefined;
+
+    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTerms: {name: string, type: TypeSignature}[], resolvedTypeSignature: TypeSignature | undefined, typeDeclaration: AbstractNominalTypeDecl | undefined) {
         super(sinfo);
         this.ns = ns;
         this.tscope = tscope;
+
+        this.resolvedTerms = resolvedTerms;
+        this.resolvedTypeSignature = resolvedTypeSignature;
+        this.typeDeclaration = typeDeclaration;
     }
 
     emit(toplevel: boolean): string {

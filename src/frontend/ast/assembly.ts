@@ -509,21 +509,10 @@ class MemberFieldDecl extends AbstractCoreDecl {
     }
 }
 
-abstract class TypeDecl extends AbstractDecl {
+abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
     readonly name: string;
-    
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(sinfo);
 
-        this.attributes = attributes;
-        this.name = name;
-    }
-
-    abstract hasTerms(): boolean;
-}
-
-abstract class AbstractNominalTypeDecl extends TypeDecl {
     readonly terms: TypeTemplateTermDecl[];
     readonly provides: TypeSignature[];
 
@@ -535,7 +524,10 @@ abstract class AbstractNominalTypeDecl extends TypeDecl {
     readonly methods: MethodDecl[];
 
     constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], provides: TypeSignature[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[]) {
-        super(sinfo, attributes, name);
+        super(sinfo);
+
+        this.attributes = attributes;
+        this.name = name;
 
         this.terms = terms;
         this.provides = provides;
@@ -1365,17 +1357,20 @@ class NamespaceConstDecl extends AbstractCoreDecl {
 }
 
 class NamespaceTypedef extends AbstractCoreDecl {
+    readonly terms: TypeTemplateTermDecl[];
     readonly boundType: TypeSignature;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, btype: TypeSignature) {
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], btype: TypeSignature) {
         super(sinfo, attributes, name);
 
+        this.terms = terms;
         this.boundType = btype;
     }
 
     emit(): string {
         const attr = this.attributes.length !== 0 ? this.attributes.map((a) => a.emit()).join(" ") + " " : "";
-        return `${attr}type ${this.name} = ${this.boundType.emit(true)};`;
+        const tstr = this.terms.length !== 0 ? `<${this.terms.map((t) => t.emit()).join(", ")}> ` : "";
+        return `${attr}type ${this.name}${tstr} = ${this.boundType.emit(true)};`;
     }
 }
 
@@ -1405,7 +1400,7 @@ class NamespaceDeclaration {
     typeDefs: NamespaceTypedef[];
     consts: NamespaceConstDecl[];
     functions: NamespaceFunctionDecl[];
-    typedecls: TypeDecl[];
+    typedecls: AbstractNominalTypeDecl[];
 
     apis: APIDecl[];
     tasks: TaskDecl[];
@@ -1573,7 +1568,7 @@ export {
     FunctionInvokeDecl, NamespaceFunctionDecl, TypeFunctionDecl,
     MethodDecl, TaskMethodDecl, TaskActionDecl,
     ConstMemberDecl, MemberFieldDecl,
-    TypeDecl, AbstractNominalTypeDecl, 
+    AbstractNominalTypeDecl, 
     EnumTypeDecl,
     TypedeclTypeDecl,
     InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
