@@ -3,12 +3,12 @@ import {strict as assert, ifError} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
-import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
+import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralSimpleExpression, LiteralSingletonExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
+import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_ge, SYM_geq, SYM_lbrace, SYM_lbrack, SYM_le, SYM_leq, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_ge, SYM_geq, SYM_lbrace, SYM_lbrack, SYM_le, SYM_leq, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SymbolStrings } from "./parser_kw";
 
-const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
+const { accepts, endsWith, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
 const TokenStrings = {
     Clear: "[CLEAR]",
@@ -22,6 +22,8 @@ const TokenStrings = {
     TaggedNumberinoInt: "[LITERAL_TAGGED_NUMBERINO_INT]",
     TaggedNumberinoFloat: "[LITERAL_TAGGED_NUMBERINO_FLOAT]",
     TaggedNumberinoRational: "[LITERAL_TAGGED_NUMBERINO_RATIONAL]",
+
+    TaggedBoolean: "[LITERAL_TAGGED_BOOLEAN]",
 
     Nat: "[LITERAL_NAT]",
     Int: "[LITERAL_INT]",
@@ -369,7 +371,7 @@ class Lexer {
         return accepts(Lexer._s_templateNameRe, str);
     }
 
-    private static readonly _s_literalTDOnlyTagRE = '"_"[A-Z][_a-zA-Z0-9]*';
+    private static readonly _s_literalTDOnlyTagRE = `"_"`;
 
     private static readonly _s_intvalRE = '0|[1-9][0-9]*';
     private static readonly _s_floatvalRE = '([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?';
@@ -602,7 +604,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /^_?[A-Z][_a-zA-Z0-9]*/y;
+    private static readonly _s_literalGeneralTagRE = new RegExp(`^_?[A-Z(]`, "y");
 
     private tryLexUnicodeString(): boolean {
         const cstate = this.currentState();
@@ -630,6 +632,8 @@ class Lexer {
         }
         else {
             epos++;
+
+            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
@@ -667,6 +671,8 @@ class Lexer {
         }
         else {
             epos++;
+
+            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
@@ -708,9 +714,8 @@ class Lexer {
         return true;
     }
 
-    private static readonly _s_literalGeneralTagValueRE = '"_"?[A-Z][_a-zA-Z0-9]*';
-
-    private static _s_pathRe = `/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;("*"|${Lexer._s_literalGeneralTagValueRE})"/`;
+    xxxx;
+    private static _s_pathRe = `/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;("*"|"_"?[A-Z(])"/`;
     private tryLexPath() {
         const cstate = this.currentState();
 
@@ -876,9 +881,16 @@ class Lexer {
         }
     }
 
+    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[A-Z(]?/`;
     private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
         const cstate = this.currentState();
+
+        const mtb = lexFront(Lexer._s_taggedBooleanRE, cstate.cpos);
+        if (mtb !== null) {
+            this.recordLexTokenWData(cstate.cpos + mtb.length, TokenStrings.TaggedBoolean, mtb);
+            return true;
+        }
 
         const identifiermatch = lexFront(Lexer._s_identiferName, cstate.cpos);
         const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, cstate.cpos));
@@ -1054,7 +1066,7 @@ class Parser {
     private currentNamespace: NamespaceDeclaration;
 
     private static _s_nsre = /^\s*namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*;/
-    constructor(currentFile: string, contents: string, macrodefs: string[], assembly: Assembly) {
+    constructor(currentFile: string, contents: string, macrodefs: string[], assembly: Assembly, wellknownTypes: Map<string, NominalTypeSignature>) {
         const allToplevelNamespaces = assembly.toplevelNamespaces.map((nsd) => nsd.name);
         if(!allToplevelNamespaces.includes("Core")) {
             allToplevelNamespaces.push("Core");
@@ -1068,7 +1080,7 @@ class Parser {
             nns = nsmatch[0].trim().split(/\s+/)[1].slice(0, -1);
         }
 
-        this.env = new ParserEnvironment(assembly, currentFile, nns, new DeclLevelParserScope());
+        this.env = new ParserEnvironment(assembly, currentFile, nns, new DeclLevelParserScope(), wellknownTypes);
         this.currentNamespace = assembly.ensureToplevelNamespace(nns);
     }
 
@@ -1751,7 +1763,7 @@ class Parser {
 
         const isinferable = this.testAndConsumeTokenIf(SYM_question);
 
-        let ttype = this.env.SpecialAnySignature;
+        let ttype = this.env.wellknownTypes.get("Any") as TypeSignature;
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             ttype = this.parseTypeSignature();
         }
@@ -1831,7 +1843,7 @@ class Parser {
             this.consumeToken();
         }
         
-        const lambdaenv = new LambdaBodyParserScope(argNames, boundtemplates, resultInfo);
+        const lambdaenv = new LambdaBodyParserScope(argNames, boundtemplates, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
         this.env.pushFunctionScope(lambdaenv);
         const body = this.parseBody();
         this.env.popFunctionScope();
@@ -2288,7 +2300,7 @@ class Parser {
 
     private parseILiteralTest(isnot: boolean): ITest {
         this.consumeToken();
-        const literal = this.parseLiteralExpression("ITest");
+        const literal = this.parseLiteralExpression();
         this.ensureAndConsumeToken(SYM_rbrack, "ITest");
 
         return new ITestLiteral(isnot, literal);
@@ -2398,74 +2410,86 @@ class Parser {
         return new ConstructorLambdaExpression(sinfo, isAuto, ldecl);
     }
 
-    private parseLiteralExpression(incontext: string | undefined): LiteralExpressionValue {
+    private parseLiteralExpression(): LiteralExpressionValue {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.getCurrentFunctionScope().getBoundTemplates(), this.m_penv.SpecialAutoSignature, true));
-            const exp = this.parsePrefixExpression();
-            const captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
-
-            if(captured.size !== 0) {
-                this.raiseError(sinfo.line, "Cannot reference local variables in literal expression");
-            }
-
-            this.m_penv.popFunctionScope();
-
-            return new LiteralExpressionValue(exp);
+        const expenv = new ParserStandaloneExpressionScope(new Set<string>(), this.env.enclosingScope.boundtemplates, undefined);
+        this.env.pushFunctionScope(expenv);
+        
+        const exp = this.parseExpression();
+        if(expenv.capturedVars.size !== 0) {
+            this.recordErrorGeneral(sinfo, "Cannot reference local variables in literal expression");
         }
-        catch (ex) {
-            this.m_penv.popFunctionScope();
-            throw ex;
-        }
+
+        this.env.popFunctionScope();
+
+        return new LiteralExpressionValue(exp);
     }
 
     private parseConstExpression(capturesok: boolean): ConstantExpressionValue {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), new Set<string>(), this.m_penv.SpecialAutoSignature, true));
-            const exp = this.parseMapEntryConstructorExpression();
-            const captured = this.m_penv.getCurrentFunctionScope().getCaptureVars();
-
-            if(!capturesok && captured.size !== 0) {
-                this.raiseError(sinfo.line, "Cannot reference local variables in constant expression");
-            }
-
-            this.m_penv.popFunctionScope();
-
-            return new ConstantExpressionValue(exp, captured);
+        const expenv = new ParserStandaloneExpressionScope(new Set<string>(), this.env.enclosingScope.boundtemplates, undefined);
+        this.env.pushFunctionScope(expenv);
+        
+        const exp = this.parseExpression();
+        if(!capturesok && expenv.capturedVars.size !== 0) {
+            this.recordErrorGeneral(sinfo, "Cannot reference local variables in const expression");
         }
-        catch (ex) {
-            this.m_penv.popFunctionScope();
-            throw ex;
-        }
+
+        this.env.popFunctionScope();
+
+        return new ConstantExpressionValue(exp, expenv.capturedVars);
+
     }
 
-    private parsePrimaryExpression(): [Expression, boolean] {
+    private static isTaggedLiteral(val: string): boolean {
+        return val.endsWith("_");
+    }
+
+    private processTaggedLiteral(val: string): [string, TypeSignature] {
+        const vval = val.slice(0, val.length - 1);
+        const ttype = this.parseTypeSignature();
+        return [vval, ttype];
+    }
+
+    private static isOfTaggedLiteral(val: string): boolean {
+        return !val.endsWith('"') && !val.endsWith("'") && !val.endsWith("\\");
+    }
+
+    private static isTypeTaggedLiteral(val: string): boolean {
+        return val.endsWith("_")
+    }
+
+    private processOfTaggedLiteral(val: string): [string, TypeSignature] {
+
+    private parsePrimaryExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         const tk = this.peekToken();
         if (tk === KW_none) {
             this.consumeToken();
-            return [new LiteralNoneExpression(sinfo), false];
+            return new LiteralSingletonExpression(ExpressionTag.LiteralNoneExpression, sinfo, "none");
         }
         else if (tk === KW_nothing) {
             this.consumeToken();
-            return [new LiteralNothingExpression(sinfo), false];
+            return new LiteralSingletonExpression(ExpressionTag.LiteralNothingExpression, sinfo, "nothing");
         }
         else if (tk === KW_true || tk === KW_false) {
             this.consumeToken();
             return [new LiteralBoolExpression(sinfo, tk === KW_true), false];
         }
-        else if (tk === TokenStrings.Int) {
-            const istr = this.consumeTokenAndGetValue();
-            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialIntSignature), false];
-        }
         else if (tk === TokenStrings.Nat) {
             const istr = this.consumeTokenAndGetValue();
-            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialNatSignature), false];
+            xxxx;
+            return Parser.isTaggedLiteral(istr) ? new  : new LiteralSimpleExpression(ExpressionTag.LiteralNatExpression, sinfo, istr);
         }
+        else if (tk === TokenStrings.Int) {
+            const istr = this.consumeTokenAndGetValue();
+            xxxx;
+            return new LiteralSimpleExpression(ExpressionTag.LiteralIntExpression, sinfo, istr);
+        }
+        
         else if (tk === TokenStrings.Float) {
             const fstr = this.consumeTokenAndGetValue();
             return [new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialFloatSignature), false];

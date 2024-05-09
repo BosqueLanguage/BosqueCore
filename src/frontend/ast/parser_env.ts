@@ -1,6 +1,6 @@
 import { SourceInfo } from "../build_decls";
-import { Assembly, NamespaceDeclaration } from "./assembly";
-import { NominalTypeSignature, TypeSignature, AutoTypeSignature } from "./type";
+import { Assembly } from "./assembly";
+import { NominalTypeSignature, TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
 
 class LocalScopeVariableInfo {
     readonly srcname: string;
@@ -25,7 +25,7 @@ class LocalScopeInfo {
 }
 
 abstract class ParserScope {
-    readonly resultingType: TypeSignature | undefined; //undefined if this is a void call
+    readonly resultingType: TypeSignature | undefined; //undefined if this is a void call or an expression we don't know the type of
     
     readonly args: Set<string>;
     readonly boundtemplates: Set<string>;
@@ -119,7 +119,7 @@ abstract class CapturingParserScope extends ParserScope {
     capturedVars: Set<string>;
     capturedTemplates: Set<string>;
 
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
 
         this.capturedVars = new Set<string>();
@@ -128,13 +128,13 @@ abstract class CapturingParserScope extends ParserScope {
 }
 
 class LambdaBodyParserScope extends CapturingParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
     }
 }
 
 class ParserStandaloneExpressionScope extends CapturingParserScope {
-    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature) {
+    constructor(args: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature | undefined) {
         super(args, boundtemplates, rtype);
     }
 }
@@ -155,15 +155,11 @@ class ParserEnvironment {
     nestedScopes: CapturingParserScope[];
 
     readonly SpecialVoidSignature: TypeSignature;
-
-    readonly SpecialAnySignature: TypeSignature;
-    readonly SpecialSomeSignature: TypeSignature;
-    readonly SpecialNoneSignature: TypeSignature;
-    readonly SpecialBoolSignature: TypeSignature;
-
     readonly SpecialAutoSignature: TypeSignature;
 
-    constructor(assembly: Assembly, currentFile: string, currentNamespace: string, startScope: ParserScope) {
+    readonly wellknownTypes: Map<string, NominalTypeSignature>;
+
+    constructor(assembly: Assembly, currentFile: string, currentNamespace: string, startScope: ParserScope, wellknownTypes: Map<string, NominalTypeSignature>) {
         this.assembly = assembly;
 
         this.currentFile = currentFile;
@@ -172,16 +168,10 @@ class ParserEnvironment {
         this.enclosingScope = startScope;
         this.nestedScopes = [];
 
-        this.SpecialVoidSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Void", terms: []}]);
-
-        this.SpecialAnySignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Any", terms: []}]);
-        this.SpecialSomeSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Some", terms: []}]);
-
-        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "None", terms: []}]);
-        this.SpecialNoneSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Nothing", terms: []}]);
-        this.SpecialBoolSignature = new NominalTypeSignature(SourceInfo.implicitSourceInfo(), ["Core"], [{tname: "Bool", terms: []}]);
-        
+        this.SpecialVoidSignature = new VoidTypeSignature(SourceInfo.implicitSourceInfo());
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
+
+        this.wellknownTypes = wellknownTypes;
     }
 
     getCurrentFunctionScope(): ParserScope {
@@ -236,30 +226,6 @@ class ParserEnvironment {
         }
 
         return tname;
-    }
-
-    private resolveImplicitNamespaceRootRecursive(fromns: NamespaceDeclaration, access: {tname: string, terms: TypeSignature[]}[]): [NamespaceDeclaration, {tname: string, terms: TypeSignature[]}[]] | undefined {
-        if(access.length === 0) {
-            return [fromns, []];
-        }
-        else {
-            const nsdecl = fromns.subns.find((ns) => ns.name === access[0].tname);
-            if(nsdecl !== undefined) {
-                return this.resolveImplicitNamespaceRootRecursive(nsdecl, access.slice(1));
-            }
-            else {
-                const tdef = fromns.typeDefs.find((tdef) => tdef.name === access[0].tname);
-                const tdecl = fromns.typedecls.find((tdecl) => tdecl.name === access[0].tname);
-                const tsk = fromns.tasks.find((tsk) => tsk.name === access[0].tname);
-
-                if(tdecl === undefined || tdef === undefined || tsk === undefined) {
-                    return undefined;
-                }
-                else {
-                    return [fromns, access];
-                }
-            }
-        }
     }
 
     getBinderExtension(vname: string): string {
