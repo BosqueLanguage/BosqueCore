@@ -218,101 +218,103 @@ const SYM_rbrack = "]";
 const SYM_rparen = ")";
 const SYM_rbrace = "}";
 const SYM_rbracebar = "|}";
+const SYM_langle = "<";
+const SYM_rangle = ">";
 
 const SYM_at = "@";
-const SYM_hash = "#";
-const SYM_amp = "&";
-const SYM_ampamp = "&&";
 const SYM_bang = "!";
-const SYM_bangeq = "!=";
-const SYM_bangeqeq = "!==";
 const SYM_colon = ":";
 const SYM_coloncolon = "::";
 const SYM_coma = ",";
 const SYM_dot = ".";
 const SYM_eq = "=";
-const SYM_eqeq = "==";
-const SYM_eqeqeq = "===";
-const SYM_bigarrow = "=>";
-const SYM_implies = "==>";
-const SYM_iff = "<==>";
-const SYM_arrow = "->";
 const SYM_semicolon = ";";
-const SYM_bar = "|";
-const SYM_barbar = "||";
-const SYM_plus = "+";
 const SYM_question = "?";
-const SYM_le = "<";
-const SYM_leq = "<=";
-const SYM_ge = ">";
-const SYM_geq = ">=";
-const SYM_minus = "-";
-const SYM_times = "*";
-const SYM_div = "//";
 const SYM_land = "/\\";
 const SYM_lor = "\\/";
 const SYM_dotdotdot = "...";
 const SYM_HOLE = "$?_";
 
+const SYM_amp = " & ";
+const SYM_ampamp = " && ";
+const SYM_bangeq = " != ";
+const SYM_bangeqeq = " !== ";
+const SYM_eqeq = " == ";
+const SYM_eqeqeq = " === ";
+const SYM_bigarrow = " => ";
+const SYM_implies = " ==> ";
+const SYM_iff = " <==> ";
+const SYM_arrow = " -> ";
+const SYM_bar = " | ";
+const SYM_barbar = " || ";
+const SYM_plus = " + ";
+const SYM_lt = " < ";
+const SYM_lteq = " <= ";
+const SYM_gt = " > ";
+const SYM_gteq = " >= ";
+const SYM_minus = " - ";
+const SYM_times = " * ";
+const SYM_div = " // ";
+
 //Reserved
 const SYM_atat = "@@";
 const SYM_questionquestion = "??";
 
-const SymbolStrings = [
-    SYM_lbrack,
-    SYM_lparen,
-    SYM_lbrace,
-    SYM_lbracebar,
-    SYM_rbrack,
-    SYM_rparen,
-    SYM_rbrace,
-    SYM_rbracebar,
+const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar, SYM_langle];
+const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar, SYM_rangle];
 
+const StandardSymbols = [
     SYM_at,
-    SYM_atat,
-    SYM_hash,
-    SYM_amp,
     SYM_bang,
-    SYM_ampamp,
-    SYM_bangeq,
-    SYM_bangeqeq,
     SYM_colon,
     SYM_coloncolon,
     SYM_coma,
     SYM_dot,
     SYM_eq,
+    SYM_semicolon,
+    SYM_question,
+    SYM_land,
+    SYM_lor,
+    SYM_dotdotdot,
+    SYM_HOLE,
+
+    SYM_atat,
+    SYM_questionquestion
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const SpaceRequiredSymbols = [
+    SYM_amp,
+    SYM_ampamp,
+    SYM_bangeq,
+    SYM_bangeqeq,
     SYM_eqeq,
     SYM_eqeqeq,
     SYM_bigarrow,
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_semicolon,
     SYM_bar,
     SYM_barbar,
     SYM_plus,
-    SYM_question,
-    SYM_questionquestion,
-    SYM_le,
-    SYM_leq,
-    SYM_ge,
-    SYM_geq,
+    SYM_lt,
+    SYM_lteq,
+    SYM_gt,
+    SYM_gteq,
     SYM_minus,
     SYM_times,
-    SYM_div,
-    SYM_land,
-    SYM_lor,
-    SYM_dotdotdot,
-    SYM_HOLE
+    SYM_div
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
-const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar];
-const RightScanParens = [SYM_rbrack, SYM_rparen, SYM_rbrace, SYM_rbracebar];
+const ParenSymbols = [
+    ...LeftScanParens,
+    ...RightScanParens
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 export {
     KeywordStrings,
     GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes, AllAttributes,
-    SymbolStrings, LeftScanParens, RightScanParens,
+    LeftScanParens, RightScanParens,
+    SpaceRequiredSymbols, StandardSymbols, ParenSymbols,
 
     KW_recursive_q,
     KW_recursive,
@@ -388,46 +390,46 @@ export {
     SYM_lbrack,
     SYM_lparen,
     SYM_lbrace,
+    SYM_langle,
     SYM_lbracebar,
     SYM_rbrack,
     SYM_rparen,
     SYM_rbrace,
+    SYM_rangle,
     SYM_rbracebar,
 
     SYM_at,
-    SYM_atat,
-    SYM_hash,
-    SYM_amp,
     SYM_bang,
-    SYM_ampamp,
-    SYM_bangeq,
-    SYM_bangeqeq,
     SYM_colon,
     SYM_coloncolon,
     SYM_coma,
     SYM_dot,
     SYM_eq,
+    SYM_semicolon,
+    SYM_question,
+    SYM_land,
+    SYM_lor,
+    SYM_dotdotdot,
+    SYM_HOLE,
+
+    SYM_amp,
+    SYM_ampamp,
+    SYM_bangeq,
+    SYM_bangeqeq,
     SYM_eqeq,
     SYM_eqeqeq,
     SYM_bigarrow,
     SYM_implies,
     SYM_iff,
     SYM_arrow,
-    SYM_semicolon,
     SYM_bar,
     SYM_barbar,
     SYM_plus,
-    SYM_question,
-    SYM_questionquestion,
-    SYM_le,
-    SYM_leq,
-    SYM_ge,
-    SYM_geq,
+    SYM_lt,
+    SYM_lteq,
+    SYM_gt,
+    SYM_gteq,
     SYM_minus,
     SYM_times,
-    SYM_div,
-    SYM_land,
-    SYM_lor,
-    SYM_dotdotdot,
-    SYM_HOLE
+    SYM_div
 };

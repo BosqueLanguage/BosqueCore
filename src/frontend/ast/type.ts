@@ -221,7 +221,7 @@ class AndTypeSignature extends TypeSignature {
     }
 
     emit(toplevel: boolean): string {
-        const bb = this.ltype.emit(false) + "&" + this.rtype.emit(false);
+        const bb = this.ltype.emit(false) + " & " + this.rtype.emit(false);
         return (toplevel) ? bb : "(" + bb + ")";
     }
 }

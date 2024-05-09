@@ -6,7 +6,7 @@ import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSigna
 import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralSimpleExpression, LiteralSingletonExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_ge, SYM_geq, SYM_lbrace, SYM_lbrack, SYM_le, SYM_leq, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, endsWith, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -282,9 +282,17 @@ class Lexer {
         }
     }
 
+    private static readonly _s_spaceSensitiveOps = SpaceRequiredSymbols.map((op) => `"${op.trim()}"`).join("|")
+    private static readonly _s_spaceSensitiveOpsRe = `/[ %n;%v;%f;%r;%t;]+(${Lexer._s_spaceSensitiveOps})[ %n;%v;%f;%r;%t;]+/`;
+
     private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]+/';
     private tryLexWS(): boolean {
         const cstate = this.currentState();
+
+        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, cstate.cpos);
+        if (arop !== null) {
+            return false;
+        }
 
         const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
         if (m === null) {
@@ -373,35 +381,45 @@ class Lexer {
 
     private static readonly _s_literalTDOnlyTagRE = `"_"`;
 
-    private static readonly _s_intvalRE = '0|[1-9][0-9]*';
-    private static readonly _s_floatvalRE = '([0-9]+"."[0-9]+)([eE][-+]?[0-9]+)?';
-    private static readonly _s_floatsimplevalRE = '([0-9]+"."[0-9]+)';
+    private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
+    private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
+    private static readonly _s_intValueNoSignRE = `"0"|${Lexer._s_nonzeroIntValNoSignRE}`;
+    private static readonly _s_intValueRE = `"0"|${Lexer._s_nonzeroIntValRE}`;
 
-    private static readonly _s_intNumberinoRe = `/${Lexer._s_intvalRE}/`;
+    private static readonly _s_nonzeroFloatValueNoSignRE = `[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?`;
+    private static readonly _s_nonzeroFloatValueRE = `([+-]?${Lexer._s_nonzeroFloatValueNoSignRE})([eE][-+]?[0-9]+)?`;
+    private static readonly _s_floatValueNoSignRE = `"0.0"|${Lexer._s_nonzeroFloatValueNoSignRE}`;
+    private static readonly _s_floatValueRE = `"0.0"|${Lexer._s_nonzeroFloatValueRE}`;
 
-    private static readonly _s_intTaggedNumberinoRe = `/${Lexer._s_intvalRE}${Lexer._s_literalTDOnlyTagRE}/`;
-    private static readonly _s_floatTaggedNumberinoRe = `/${Lexer._s_floatvalRE}${Lexer._s_literalTDOnlyTagRE}/`;
-    private static readonly _s_rationalTaggedNumberinoRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_nonzeroFloatSimpleValueNoSignRE = '([0-9]+"."[0-9]+)';
+    private static readonly _s_floatSimpleValueNoSignRE = `"0.0"|${Lexer._s_nonzeroFloatSimpleValueNoSignRE}`;
+    private static readonly _s_floatSimpleValueRE = `"0.0"|[+-]?${Lexer._s_nonzeroFloatSimpleValueNoSignRE}`;
 
-    private static readonly _s_intRe = `/(${Lexer._s_intvalRE})"i"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_natRe = `/(${Lexer._s_intvalRE})"n"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_bigintRe = `/(${Lexer._s_intvalRE})"I"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_bignatRe = `/(${Lexer._s_intvalRE})"N"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
 
-    private static readonly _s_floatRe = `/(${Lexer._s_floatvalRE})"f"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_decimalRe = `/(${Lexer._s_floatvalRE})"d"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_rationalRe = `/(${Lexer._s_intvalRE})"%slash;"(${Lexer._s_intvalRE})"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_complexRe = `/(${Lexer._s_floatvalRE})[+-](${Lexer._s_floatvalRE})"j"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_intTaggedNumberinoRe = `/${Lexer._s_intValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_floatTaggedNumberinoRe = `/${Lexer._s_floatValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_rationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})${Lexer._s_literalTDOnlyTagRE}/`;
 
-    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatsimplevalRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_latlongRe = `/(${Lexer._s_floatsimplevalRE})"lat"[+-]${Lexer._s_floatsimplevalRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_intRe = `/(${Lexer._s_intValueRE})"i"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_natRe = `/(${Lexer._s_intValueRE})"n"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_bigintRe = `/(${Lexer._s_intValueRE})"I"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_bignatRe = `/(${Lexer._s_intValueRE})"N"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static readonly _s_floatRe = `/(${Lexer._s_floatValueRE})"f"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_decimalRe = `/(${Lexer._s_floatValueRE})"d"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_complexRe = `/(${Lexer._s_floatValueRE})[+-](${Lexer._s_floatValueNoSignRE})"j"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_latlongRe = `/(${Lexer._s_floatSimpleValueRE})"lat"[+-]${Lexer._s_floatSimpleValueNoSignRE}"long"(${Lexer._s_literalTDOnlyTagRE})?/`;
     
-    private static readonly _s_ticktimeRe = `/(${Lexer._s_intvalRE})"t"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intvalRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_ticktimeRe = `/(${Lexer._s_intValueRE})"t"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_logicaltimeRe = `/(${Lexer._s_intValueRE})"l"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
-    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatsimplevalRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intvalRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intvalRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltasecondsRE = `/[+-](${Lexer._s_floatValueNoSignRE})"ds"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexFloatCompositeLikeToken(): boolean {
         const cstate = this.currentState();
@@ -834,13 +852,24 @@ class Lexer {
     private tryLexSymbol() {
         const cstate = this.currentState();
 
-        const mm = SymbolStrings.find((value) => this.input.startsWith(value, cstate.cpos));
-        if(mm !== undefined) {
-            this.recordLexToken(cstate.cpos + mm.length, mm);
-            return true;
+        const spaceop = lexFront(Lexer._s_spaceSensitiveOpsRe, cstate.cpos);
+        if(spaceop !== null) {
+            const realstr = " " + spaceop.trim() + " ";
+
+            const mm = SpaceRequiredSymbols.find((realstr) => realstr.startsWith(realstr));
+            this.recordLexToken(cstate.cpos + spaceop.length, mm as string);
+            return true; 
         }
+        else {
+            const mm = StandardSymbols.find((value) => this.input.startsWith(value, cstate.cpos)) || ParenSymbols.find((value) => this.input.startsWith(value, cstate.cpos));
+            if(mm !== undefined) {
+                this.recordLexToken(cstate.cpos + mm.length, mm);
+                return true;
+            }
+
         
-        return false;
+            return false;
+        }
     }
 
     private tryLexAttribute() {
