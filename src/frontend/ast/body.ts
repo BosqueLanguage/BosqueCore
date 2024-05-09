@@ -3,6 +3,7 @@ import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSi
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
 import { LambdaDecl } from "./assembly";
+import { NamespaceDecl } from "../tree_ir/typeinfo";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -319,8 +320,14 @@ abstract class Expression {
 }
 
 class ErrorExpression extends Expression {
-    constructor(sinfo: SourceInfo) {
+    readonly staticPrefix: {ns: NamespaceDecl, typeopt: TypeSignature} | undefined;
+    readonly dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined;
+
+    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDecl, typeopt: TypeSignature} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
         super(ExpressionTag.ErrorExpresion, sinfo);
+
+        this.staticPrefix = staticPrefix;
+        this.dotaccess = dotaccess;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {

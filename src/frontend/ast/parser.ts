@@ -2,11 +2,11 @@
 import {strict as assert, ifError} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AccessVariableExpression, ArgumentList, ArgumentValue, BodyImplementation, ConstantExpressionValue, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, NamedArgumentValue, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
+import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_arrow, SYM_at, SYM_bang, SYM_bar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_dotdotdot, SYM_eq, SYM_ge, SYM_lbrace, SYM_lbrack, SYM_le, SYM_lparen, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SymbolStrings } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_type, KW_when, KeywordStrings, LeftScanParens, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_ge, SYM_geq, SYM_lbrace, SYM_lbrack, SYM_le, SYM_leq, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SymbolStrings } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1817,7 +1817,7 @@ class Parser {
         }
         else {
             if (!ispred && params.some((param) => param.isRefParam)) {
-                resultInfo = this.env.SpecialNoneSignature; //void conversion
+                resultInfo = this.env.SpecialVoidSignature; //void conversion
             }
         }
 
@@ -2331,69 +2331,35 @@ class Parser {
             }
         });
 
-        const allNamed = new Set<string>(...args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name));
-            xxxx;
+        const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
+        const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
+        if(duplicateNames !== undefined) {
+            this.recordErrorGeneral(this.lexer.peekNext(), `Duplicate argument name ${duplicateNames}`);
+        }
+
+        const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
+        if(multiplerefs) {
+            this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have multiple reference arguments");
+        }
+
+        const spreadidx = args.findIndex((arg, index) => arg instanceof SpreadArgumentValue && index !== args.length - 1);
+        const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof NamedArgumentValue));
+        if(badspread) {
+            this.recordErrorGeneral(this.lexer.peekNext(), "Spread argument must be the last argument");
+        }
 
         return new ArgumentList(args);
     }
 
-    private parseArgumentsNamed(lparen: string, rparen: string): {name: string, value: Expression}[] {
-        let args: {name: string, value: Expression}[] = [];
-
-        try {
-            this.setRecover(this.scanMatchingParens(lparen, rparen));
-
-            this.consumeToken();
-            while (!this.testAndConsumeTokenIf(rparen)) {
-                this.ensureToken(TokenStrings.Identifier, "name in argument list");
-
-                const name = this.consumeTokenAndGetValue();
-                this.ensureAndConsumeToken(SYM_eq, "named argument list");
-
-                const exp = this.parseExpression();
-                args.push({name: name, value: exp});
-
-                if (this.testAndConsumeTokenIf(SYM_coma)) {
-                    this.ensureNotToken(rparen, "argument list after \",\"");
-                }
-                else {
-                    this.ensureToken(rparen, "argument list -- maybe missing a \",\"");
-                }
-            }
-
-            this.clearRecover();
-            return args;
-        }
-        catch (ex) {
-            this.processRecover();
-            return [];
-        }
-    }
-
     private parseTemplateArguments(): TypeSignature[] {
-        try {
-            this.setRecover(this.scanMatchingParens(SYM_le, SYM_ge));
-            let targs: TypeSignature[] = [];
-
-            this.consumeToken();
-            while (!this.testAndConsumeTokenIf(SYM_ge)) {
-                targs.push(this.parseTypeSignature());
-
-                if (this.testAndConsumeTokenIf(SYM_coma)) {
-                    this.ensureNotToken(SYM_ge, "template argument list after \",\"");
-                }
-                else {
-                    this.ensureToken(SYM_ge, "template argument list -- maybe missing a \",\"");
-                }
-            }
-
-            this.clearRecover();
-            return targs;
+        let targs: TypeSignature[] = [];
+        if(this.testToken(SYM_le)) {
+            targs = this.parseListOf<TypeSignature>("template argument list", SYM_le, SYM_ge, SYM_coma, () => {
+                return this.parseTypeSignature();
+            });
         }
-        catch (ex) {
-            this.processRecover();
-            return [];
-        }
+
+        return targs;
     }
 
     private parseRecursiveAnnotation(): RecursiveAnnotation {
@@ -2401,7 +2367,7 @@ class Parser {
         
         this.consumeToken();
         if (!this.testToken(KW_recursive) && !this.testToken(KW_recursive_q)) {
-            this.raiseError(this.getCurrentLine(), "Expected recursive annotation");
+            this.recordErrorGeneral(this.lexer.peekNext(), "Expected recursive annotation");
         }
 
         recursive = this.testToken("recursive") ? "yes" : "cond";
@@ -2411,52 +2377,29 @@ class Parser {
          
         return recursive;
     }
-
-    private parseConstructorPrimary(otype: TypeSignature): Expression {
-        const sinfo = this.getCurrentSrcInfo();
-        const args = this.parseArguments(SYM_lbrace, SYM_rbrace);
-
-        return new ConstructorPrimaryExpression(sinfo, otype, args);
-    }
     
     private parseLambdaTerm(): Expression {
-        const line = this.getCurrentLine();
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        let isrecursive: "yes" | "no" | "cond" = "no";
-        if(this.testAndConsumeTokenIf(KW_recursive)) {
-            isrecursive = "yes";
-        }
-        else if(this.testAndConsumeTokenIf(KW_recursive_q)) {
-            isrecursive = "cond";
-        }
-        else {
-            isrecursive = "no";
+        const ldecl = this.parseLambdaDecl();
+        if(ldecl === undefined) {
+            return new ErrorExpression(sinfo, undefined, undefined);
         }
 
-        const ispred = this.testToken(KW_pred);
-        this.consumeToken();
-
-        const sig = this.parseInvokableCommon(ispred ? InvokableKind.PCodePred : InvokableKind.PCodeFn, false, [], isrecursive, [], [...this.m_penv.getCurrentFunctionScope().getBoundTemplates()], undefined, false);
-        const someAuto = sig.params.some((param) => param.type instanceof AutoTypeSignature) || (sig.resultType instanceof AutoTypeSignature);
-        const allAuto = sig.params.every((param) => param.type instanceof AutoTypeSignature) && (sig.resultType instanceof AutoTypeSignature);
-        if (someAuto && !allAuto) {
-            this.raiseError(line, "Cannot have mixed of auto propagated and explicit types on lambda arguments/return");
-        }
-
-        sig.captureVarSet.forEach((v) => {
-            this.m_penv.useLocalVar(v);
+        ldecl.captureVarSet.forEach((v) => {
+            this.env.useLocalVar(v);
         });
 
-        sig.captureTemplateSet.forEach((t) => {
-            this.m_penv.useTemplateType(t);
+        ldecl.captureTemplateSet.forEach((t) => {
+            this.env.useTemplateType(t);
         });
 
-        return new ConstructorPCodeExpression(sinfo, allAuto, sig);
+        const isAuto = ldecl.params.every((param) => param.type instanceof AutoTypeSignature);
+        return new ConstructorLambdaExpression(sinfo, isAuto, ldecl);
     }
 
     private parseLiteralExpression(incontext: string | undefined): LiteralExpressionValue {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         try {
             this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), this.m_penv.getCurrentFunctionScope().getBoundTemplates(), this.m_penv.SpecialAutoSignature, true));
@@ -2478,7 +2421,7 @@ class Parser {
     }
 
     private parseConstExpression(capturesok: boolean): ConstantExpressionValue {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         try {
             this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), new Set<string>(), this.m_penv.SpecialAutoSignature, true));
@@ -2500,8 +2443,7 @@ class Parser {
     }
 
     private parsePrimaryExpression(): [Expression, boolean] {
-        const line = this.getCurrentLine();
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         const tk = this.peekToken();
         if (tk === KW_none) {
@@ -3038,7 +2980,7 @@ class Parser {
     }
 
     private parseMultiplicativeExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         const exp = this.parsePrefixExpression();
 
         if(!this.isMultiplicativeFollow()) {
@@ -3073,7 +3015,7 @@ class Parser {
     }
 
     private parseAdditiveExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         const exp = this.parseMultiplicativeExpression();
 
         if(!this.isAdditiveFollow()) {
@@ -3099,7 +3041,7 @@ class Parser {
     }
 
     private parseRelationalExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         const exp = this.parseAdditiveExpression();
 
         if (this.testAndConsumeTokenIf(SYM_eqeqeq)) {
@@ -3132,7 +3074,7 @@ class Parser {
     }
 
     private parseAndExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         const exp = this.parseRelationalExpression();
 
         if (this.testAndConsumeTokenIf(SYM_ampamp)) {
@@ -3144,7 +3086,7 @@ class Parser {
     }
 
     private parseOrExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         const exp = this.parseAndExpression();
 
         if (this.testAndConsumeTokenIf(SYM_barbar)) {
@@ -3185,6 +3127,7 @@ class Parser {
         const tk = this.peekToken();
         
         if(tk !== SYM_lparen) {
+            xxxx;
             const itest = this.parseITest();
             
             this.ensureAndConsumeToken(SYM_lparen, "if test");
@@ -3243,100 +3186,6 @@ class Parser {
         const [elsebind, elsebody] = this.parseExpressionWithBinder();
 
         return new IfExpression(sinfo, conds, {value: elsebody, binderinfo: elsebind ? bindername : undefined});
-    }
-
-    private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
-        if (this.testToken(TokenStrings.Identifier)) {
-            const tv = this.consumeTokenAndGetValue();
-            if (tv !== "_") {
-                this.raiseError(this.getCurrentSrcInfo().line, "Expected wildcard match");
-            }
-
-            return undefined;
-        }
-        else {
-            return this.parseLiteralExpression("switch literal guard");
-        }
-    }
-
-    private parseSwitchExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
-
-        this.ensureAndConsumeToken(KW_switch, "switch expression dispatch value");
-
-        this.ensureAndConsumeToken(SYM_lparen, "switch expression dispatch value");
-        const mexp = this.parseExpression();
-        this.ensureAndConsumeToken(SYM_rparen, "switch expression dispatch value");
-
-        let entries: { condlit: LiteralExpressionValue | undefined, value: Expression, bindername: string | undefined }[] = [];
-        this.ensureAndConsumeToken(SYM_lbrace, "switch expression options");
-
-        const swlit = this.parseSwitchLiteralGuard();
-        this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-        const [swbind, swvalue] = this.parseExpressionWithBinder();
-
-        entries.push({ condlit: swlit, value: swvalue, bindername: swbind ? bindername : undefined });
-        
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
-
-            const swlitx = this.parseSwitchLiteralGuard();
-            this.ensureAndConsumeToken(SYM_bigarrow, "switch expression entry");
-            const [swbindx, swvaluex] = this.parseExpressionWithBinder();
-
-            entries.push({ condlit: swlitx, value: swvaluex, bindername: swbindx ? bindername : undefined });
-        }
-        this.ensureAndConsumeToken(SYM_rbrace, "switch expression options");
-
-        return new SwitchExpression(sinfo, mexp, entries);
-    }
-
-    private parseMatchTypeGuard(): TypeSignature | undefined {
-        if (this.testToken(TokenStrings.Identifier)) {
-            const tv = this.consumeTokenAndGetValue();
-            if (tv !== "_") {
-                this.raiseError(this.getCurrentSrcInfo().line, "Expected wildcard match");
-            }
-
-            return undefined;
-        }
-        else {
-            return this.parseTypeSignature();
-        }
-    }
-
-    private parseMatchExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
-
-        this.ensureAndConsumeToken(KW_match, "match expression dispatch value");
-
-        this.ensureAndConsumeToken(SYM_lparen, "match expression dispatch value");
-        const mexp = this.parseExpression();
-        this.ensureAndConsumeToken(SYM_rparen, "match expression dispatch value");
- 
-        let entries: { mtype: TypeSignature | undefined, value: Expression, bindername: string | undefined }[] = [];
-        this.ensureAndConsumeToken(SYM_lbrace, "match expression options");
-
-        const mtype = this.parseMatchTypeGuard();
-        this.ensureAndConsumeToken(SYM_bigarrow, "match expression entry");
-        const [mbind, mvalue] = this.parseExpressionWithBinder();
-
-        entries.push({ mtype: mtype, value: mvalue, bindername: mbind ? bindername : undefined });
-        while (this.testToken(SYM_bar)) {
-            this.consumeToken();
-            
-            const mtypex = this.parseMatchTypeGuard();
-            this.ensureAndConsumeToken(SYM_bigarrow, "match expression entry");
-            const [mbindx, mvaluex] = this.parseExpressionWithBinder();
-
-
-            entries.push({ mtype: mtypex, value: mvaluex, bindername: mbindx ? bindername : undefined });
-        }
-        this.ensureAndConsumeToken(SYM_rbrace, "match expression options");
-
-        return new MatchExpression(sinfo, mexp, entries);
     }
 
     private parseExpression(): Expression {
