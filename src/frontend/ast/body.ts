@@ -1807,15 +1807,23 @@ class VariableRetypeStatement extends Statement {
 }
 
 class ReturnStatement extends Statement {
-    readonly value: Expression | Expression[]; //array is implicitly converted to EList
+    readonly value: Expression[] | Expression | undefined; //array is implicitly converted to EList and undefined is a void return
 
-    constructor(sinfo: SourceInfo, value: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, value: Expression[] | Expression | undefined) {
         super(StatementTag.ReturnStatement, sinfo);
         this.value = value;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `return ${Array.isArray(this.value) ? this.value.map((vv) => vv.emit(true, fmt)).join(", ") : this.value.emit(true, fmt)};`;
+        if(this.value === undefined) {
+            return `return;`;
+        }
+        else if(!Array.isArray(this.value)) {
+            return `return ${this.value.emit(true, fmt)};`;
+        }
+        else {
+            return `return ${this.value.map((vv) => vv.emit(true, fmt)).join(", ")};`;
+        }
     }
 }
 

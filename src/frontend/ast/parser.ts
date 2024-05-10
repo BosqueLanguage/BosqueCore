@@ -3,10 +3,10 @@ import {strict as assert} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, SpreadArgumentValue, Statement } from "./body";
+import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_this, KW_true, KW_type, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -2773,7 +2773,18 @@ class Parser {
                 return new LiteralPathExpression(ptag, sinfo, sstr, undefined);
             }
         }
-        
+        else if (tk === KW_this) {
+            this.consumeToken();
+
+            const scopename = this.env.useLocalVar("this");
+            return new AccessVariableExpression(sinfo, "this", scopename);
+        }
+        else if (tk === TokenStrings.IdentifierName && this.env.isVarDefinedInAnyScope(this.peekTokenData())) {
+            const idname = this.consumeTokenAndGetValue();
+            
+            const scopename = this.env.useLocalVar(idname);
+            return new AccessVariableExpression(sinfo, idname, scopename);
+        }
         /*
         else if (tk === KW_ok || tk === KW_err || tk === KW_something || tk === KW_result) {
             this.consumeToken();
@@ -2809,29 +2820,6 @@ class Parser {
             this.ensureToken(SYM_rbrack, "environment access");
 
             return [new AccessEnvValueExpression(sinfo, keyname, opttype, isNoneMode), false];
-        }
-        else if (tk === TokenStrings.Identifier && this.peekTokenData() === "self") {
-            this.ensureTaskOpOk();
-            this.consumeToken();
-
-            this.ensureAndConsumeToken(SYM_dot, "self field access");
-            this.ensureNotToken(TokenStrings.Identifier, "self field access");
-            const sfname = this.consumeTokenAndGetValue();
-
-            if (!this.testToken(SYM_le) && !this.testToken(SYM_lparen)) {
-                if(sfname !== "cntl") {
-                    return [new TaskSelfFieldExpression(sinfo, sfname), false];
-                }
-                else {
-                    return [new PostfixOp(sinfo, new TaskSelfControlExpression(sinfo), [new PostfixAccessFromName(sinfo, sfname)]), false];
-                }
-            }
-            else {
-                const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-                const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-                return [new TaskSelfActionExpression(sinfo, sfname, targs, args, false), false];
-            }
         }
         else if (tk === KW_ref && this.peekToken(1) === TokenStrings.Identifier && this.peekTokenData(1) === "self") {
             this.ensureTaskOpOk();
@@ -3531,17 +3519,6 @@ class Parser {
     }
     */
 
-    private parseBlockStatement(inctx: string): BlockStatement {
-        if(this.testToken(SYM_lbrace)) {
-            return this.parseScopedBlockStatement();
-        }
-        else {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
-            this.recordErrorGeneral(sinfo, `Expected "{" to start ${inctx} block`);
-            return new BlockStatement(sinfo, [new ErrorStatement(sinfo)]);
-        }
-    }
-
     private parseLineStatement(): Statement {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
@@ -3586,7 +3563,7 @@ class Parser {
                 return new VariableDeclarationStatement(sinfo, vvar.name, isConst, vvar.vtype, exp, sccinfo);
             }
         }
-        else if (tk === TokenStrings.Identifier) {
+        else if (tk === TokenStrings.IdentifierName) {
             if(this.peekToken(1) === SYM_at) {
                 const name = this.consumeTokenAndGetValue();
                 this.consumeToken();
@@ -3641,17 +3618,16 @@ class Parser {
             this.consumeToken();
 
             if(this.testAndConsumeTokenIf(SYM_semicolon)) {
-                return new ReturnStatement(sinfo, new LiteralNoneExpression(sinfo));
+                return new ReturnStatement(sinfo, undefined);
             }
             else {
-                if(this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                    return this.parseTaskRunStatement(sinfo, false, false, undefined);
+                const rexp = this.parseExpression();
+                if(this.testToken(SYM_semicolon)) {
+                    return new ReturnStatement(sinfo, rexp);
                 }
                 else {
-                    const exp = this.parseExpression();
-
-                    this.ensureAndConsumeToken(SYM_semicolon, "return statement");
-                    return new ReturnStatement(sinfo, exp);
+                    //TODO: it is a multi-return statement
+                    assert(false, "Not implemented -- multi-return");
                 }
             }
         }
@@ -3710,6 +3686,8 @@ class Parser {
         }
         else if (tk === KW_assert) {
             this.consumeToken();
+
+            xxxx;
 
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseExpression();
@@ -3991,6 +3969,9 @@ class Parser {
             return this.parseMatchStatement();
         }
         */
+        else if(this.testToken(SYM_lbrace)) {
+            return this.parseScopedBlockStatement();
+        }
         else {
             return this.parseLineStatement();
         }
