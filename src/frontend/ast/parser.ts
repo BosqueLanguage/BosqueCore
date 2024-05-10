@@ -3912,6 +3912,7 @@ class Parser {
         }
     }
 
+    /*
     private parseSwitchStatement(): Statement {
         const sinfo = this.getCurrentSrcInfo();
         const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
@@ -3976,17 +3977,20 @@ class Parser {
 
         return new MatchStatement(sinfo, mexp, entries);
     }
+    */
 
     private parseStatement(): Statement {
         if (this.testToken(KW_if)) {
             return this.parseIfElseStatement();
         }
+        /*
         else if (this.testToken(KW_switch)) {
             return this.parseSwitchStatement();
         }
         else if (this.testToken(KW_match)) {
             return this.parseMatchStatement();
         }
+        */
         else {
             return this.parseLineStatement();
         }

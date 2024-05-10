@@ -1631,6 +1631,7 @@ enum StatementTag {
     ReturnStatement = "ReturnStatement",
 
     IfElseStatement = "IfElseStatement",
+    SwitchStatement = "SwitchStatement",
     MatchStatement = "MatchStatement",
 
     AbortStatement = "AbortStatement",
@@ -1840,6 +1841,29 @@ class IfStatement extends Statement {
         }
 
         return [iif, ...ielifs].join("\n");
+    }
+}
+
+class SwitchStatement extends Statement {
+    readonly sval: [Expression, BinderInfo | undefined];
+    readonly switchflow: {lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined}[];
+
+    constructor(sinfo: SourceInfo, sval: [Expression, BinderInfo | undefined], flow: {lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined}[]) {
+        super(StatementTag.SwitchStatement, sinfo);
+        this.sval = sval;
+        this.switchflow = flow;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const mheader = `switch ${this.sval[1] !== undefined ? this.sval[1].emit() : ""}(${this.sval[0].emit(true, fmt)})`;
+        fmt.indentPush();
+        const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.exp.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
+        fmt.indentPop();
+
+        const iil = fmt.indent(ttmf[0]);
+        const iir = ttmf.slice(1).map((cc) => fmt.indent("| " + cc));
+
+        return `${mheader}{\n${[iil, ...iir].join("\n")}\n${fmt.indent("}")}`;
     }
 }
 
@@ -2181,7 +2205,7 @@ class StandardBodyImplementation extends BodyImplementation {
                 return ss;
             }
             else {
-                if(stmt.tag === StatementTag.IfElseStatement || stmt.tag === StatementTag.MatchStatement || stmt.tag === StatementTag.BlockStatement) {
+                if(stmt.tag === StatementTag.IfElseStatement || stmt.tag === StatementTag.SwitchStatement || stmt.tag === StatementTag.MatchStatement || stmt.tag === StatementTag.BlockStatement) {
                     return ss + "\n";
                 }
                 else {
@@ -2235,7 +2259,7 @@ export {
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
     ReturnStatement,
-    IfStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
+    IfStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,
