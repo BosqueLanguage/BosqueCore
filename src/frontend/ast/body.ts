@@ -437,14 +437,16 @@ class LiteralTemplateStringExpression extends Expression {
 
 class LiteralPathExpression extends Expression {
     readonly value: string;
+    readonly ptype: TypeSignature | undefined; 
 
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
+    constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string, ptype: TypeSignature | undefined) {
         super(tag, sinfo);
         this.value = value;
+        this.ptype = ptype;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value;
+        return this.value + (this.ptype !== undefined ? this.ptype.emit(false) : "");
     }
 }
 

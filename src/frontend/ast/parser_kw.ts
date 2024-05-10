@@ -235,6 +235,9 @@ const SYM_lor = "\\/";
 const SYM_dotdotdot = "...";
 const SYM_HOLE = "$?_";
 
+const SYM_positive = " +";
+const SYM_negate = " -";
+
 const SYM_amp = " & ";
 const SYM_ampamp = " && ";
 const SYM_bangeq = " != ";
@@ -305,6 +308,12 @@ const SpaceRequiredSymbols = [
     SYM_div
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
+
+const SpaceFrontSymbols = [
+    SYM_positive,
+    SYM_negate
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
 const ParenSymbols = [
     ...LeftScanParens,
     ...RightScanParens
@@ -314,7 +323,7 @@ export {
     KeywordStrings,
     GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, CheckerAttributes, InvokeAttributes, AllAttributes,
     LeftScanParens, RightScanParens,
-    SpaceRequiredSymbols, StandardSymbols, ParenSymbols,
+    SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 
     KW_recursive_q,
     KW_recursive,
@@ -411,6 +420,9 @@ export {
     SYM_lor,
     SYM_dotdotdot,
     SYM_HOLE,
+
+    SYM_positive,
+    SYM_negate,
 
     SYM_amp,
     SYM_ampamp,
