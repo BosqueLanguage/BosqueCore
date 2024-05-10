@@ -195,6 +195,8 @@ enum ExpressionTag {
     LiteralBoolExpression = "LiteralBoolExpression",
     LiteralNatExpression = "LiteralNatExpression",
     LiteralIntExpression = "LiteralIntExpression",
+    LiteralBigNatExpression = "LiteralBigNatExpression",
+    LiteralBigIntExpression = "LiteralBigIntExpression",
     LiteralRationalExpression = "LiteralRationalExpression",
     LiteralFloatExpression = "LiteralFloatExpression",
     LiteralDecimalExpression = "LiteralDecimalExpression",
@@ -237,6 +239,8 @@ enum ExpressionTag {
     LiteralPathGlobExpression = "LiteralPathGlobExpression",
 
     LiteralTypeDeclValueExpression = "LiteralTypeDeclValueExpression",
+    LiteralTypeDeclIntegralValueExpression = "LiteralTypeDeclIntegralValueExpression",
+    LiteralTypeDeclFloatPointValueExpression = "LiteralTypeDeclFloatPointValueExpression",
 
     StringSliceExpression = "StringSliceExpression",
     ASCIIStringSliceExpression = "ASCIIStringSliceExpression",
@@ -414,7 +418,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value + this.stype.emit(true);
+        return this.value + this.stype.emit(false);
     }
 }
 
@@ -455,7 +459,37 @@ class LiteralTypeDeclValueExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.value.emit(toplevel, fmt)}_${this.constype.emit(true)}`;
+        return `${this.value.emit(toplevel, fmt)}_${this.constype.emit(false)}`;
+    }
+}
+
+class LiteralTypeDeclIntegralValueExpression extends Expression {
+    readonly value: string;
+    readonly constype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
+        super(ExpressionTag.LiteralTypeDeclIntegralValueExpression, sinfo);
+        this.value = value;
+        this.constype = constype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.value}_${this.constype.emit(false)}`;
+    }
+}
+
+class LiteralTypeDeclFloatPointValueExpression extends Expression {
+    readonly value: string;
+    readonly constype: TypeSignature;
+
+    constructor(sinfo: SourceInfo, value: string, constype: TypeSignature) {
+        super(ExpressionTag.LiteralTypeDeclFloatPointValueExpression, sinfo);
+        this.value = value;
+        this.constype = constype;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.value}_${this.constype.emit(false)}`;
     }
 }
 
@@ -2165,7 +2199,7 @@ export {
     ArgumentValue, RefArgumentValue, PositionalArgumentValue, NamedArgumentValue, SpreadArgumentValue, ArgumentList,
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
-    LiteralTypeDeclValueExpression,
+    LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
     StringSliceExpression, InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,

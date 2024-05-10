@@ -3,10 +3,10 @@ import {strict as assert, ifError} from "assert";
 
 import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserScope, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralSimpleExpression, LiteralSingletonExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
+import { AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, ConstructorPrimaryExpression, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, RefArgumentValue, SpreadArgumentValue } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW_action, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_true, KW_type, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_minus, SYM_plus, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, endsWith, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -18,6 +18,7 @@ const TokenStrings = {
     DocComment: "[DOC_COMMENT]",
 
     NumberinoInt: "[LITERAL_NUMBERINO_INT]",
+    NumberinoFloat: "[LITERAL_NUMBERINO_FLOAT]",
 
     TaggedNumberinoInt: "[LITERAL_TAGGED_NUMBERINO_INT]",
     TaggedNumberinoFloat: "[LITERAL_TAGGED_NUMBERINO_FLOAT]",
@@ -183,6 +184,7 @@ class LexerState {
 
     recover() {
         this.cpos = this.epos;
+        this.tokens = [];
     }
 
     hasErrors(): boolean {
@@ -396,6 +398,7 @@ class Lexer {
     private static readonly _s_floatSimpleValueRE = `"0.0"|[+-]?${Lexer._s_nonzeroFloatSimpleValueNoSignRE}`;
 
     private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
+    private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatValueRE}/`;
 
     private static readonly _s_intTaggedNumberinoRe = `/${Lexer._s_intValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
     private static readonly _s_floatTaggedNumberinoRe = `/${Lexer._s_floatValueRE}${Lexer._s_literalTDOnlyTagRE}/`;
@@ -469,6 +472,12 @@ class Lexer {
         const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, cstate.cpos);
         if(mnumberino !== null) {
             this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
+            return true;
+        }
+
+        const unumberino = lexFront(Lexer._s_floatNumberinoRe, cstate.cpos);
+        if(mnumberino !== null) {
+            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoFloat, mnumberino);
             return true;
         }
 
@@ -622,7 +631,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = new RegExp(`^_?[A-Z(]`, "y");
+    private static readonly _s_literalGeneralTagRE = /^_?[A-Z(]/y;
 
     private tryLexUnicodeString(): boolean {
         const cstate = this.currentState();
@@ -650,16 +659,27 @@ class Lexer {
         }
         else {
             epos++;
+            let strval = this.input.substring(ncpos, epos);
 
-            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
-                epos = mtag.index + mtag[0].length;
+                if(istemplate) {
+                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Template strings cannot have type tags");
+                }
+                else {
+                    if(!mtag[0].startsWith("_")) {
+                        strval += "[OF]"; //put special marker on back of string value for later
+                    }
+                    else {
+                        epos++; //eat the underscore and include it in the string
+                        strval += "_";
+                    }
+                }   
             }
 
             this.updatePositionInfo(cstate.cpos, epos);
-            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, this.input.substring(cstate.cpos, epos));
+            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
             return true;
         }
     }
@@ -689,16 +709,27 @@ class Lexer {
         }
         else {
             epos++;
+            let strval = this.input.substring(ncpos, epos);
 
-            xxxx;
             Lexer._s_literalGeneralTagRE.lastIndex = epos;
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
-                epos = mtag.index + mtag[0].length;
+                if(istemplate) {
+                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Template strings cannot have type tags");
+                }
+                else {
+                    if(!mtag[0].startsWith("_")) {
+                        strval += "[OF]"; //put special marker on back of string value for later
+                    }
+                    else {
+                        epos++; //eat the underscore and include it in the string
+                        strval += "_";
+                    }
+                }   
             }
 
             this.updatePositionInfo(cstate.cpos, epos);
-            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateASCIIString : TokenStrings.ASCIIString, this.input.substring(cstate.cpos, epos));
+            this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateASCIIString : TokenStrings.ASCIIString, strval);
             return true;
         }
     }
@@ -732,18 +763,40 @@ class Lexer {
         return true;
     }
 
-    xxxx;
-    private static _s_pathRe = `/[gf]"%backslash;"[ !-Z%lbracket;%rbracket;^-~]+"%backslash;("*"|"_"?[A-Z(])"/`;
+    
+    private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
+    private static readonly _s_literalPathTagRE = /^(*|_?[A-Z(])/y;
     private tryLexPath() {
         const cstate = this.currentState();
 
-        const rem = lexFront(Lexer._s_pathRe, cstate.cpos);
-        if(rem === null) {
-            return false;
+        Lexer._s_pathRe.lastIndex = cstate.cpos;
+        const mpth = Lexer._s_pathRe.exec(this.input);
+        if(mpth !== null) {
+            let epos = cstate.cpos + mpth[0].length;
+            let pthval = mpth[0];
+
+            Lexer._s_literalGeneralTagRE.lastIndex = epos;
+            const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
+            if(mtag !== null) {
+                if(mtag[0].startsWith("*")) {
+                    epos++; //eat the star and include it in the string
+                    pthval += "*"; 
+                }
+                else if(!mtag[0].startsWith("_")) {
+                    pthval += "[OF]"; //put special marker on back of string value for later
+                }
+                else {
+                    epos++; //eat the underscore and include it in the string
+                    pthval += "_";
+                }
+            }
+
+            this.updatePositionInfo(cstate.cpos, epos);
+            this.recordLexTokenWData(epos, TokenStrings.PathItem, pthval);
+            return true;
         }
 
-        this.recordLexTokenWData(cstate.cpos + rem.length, TokenStrings.PathItem, rem);
-        return true;
+        return false;
     }
 
     private static _s_datevalueRE = '([0-9]{4})-([0-9]{2})-([0-9]{2})';
@@ -1328,7 +1381,11 @@ class Parser {
 
         let result: T[] = [];
         this.ensureAndConsumeToken(start, contextinfobase);
-        while (!this.testAndConsumeTokenIf(end)) {
+        while (!this.testAndConsumeTokenIf(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+            const nextcomma = this.scanToRecover(sep);
+            const nextpos = nextcomma !== undefined ? this.lexer.peekK(nextcomma).pos : closepos;
+            this.lexer.prepStateStackForNested("element-" + contextinfobase, nextpos, undefined);
+
             const v = fn();
             result.push(v);
             
@@ -1345,16 +1402,28 @@ class Parser {
                 }
             }
             else {
-                //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
-                //maybe this is where we want to do some tryParse stuff to recover as robustly as possible -- like in the TypeSpec list parse implementation
-
-                if(closeparen === undefined) {
-                    break; //we can't scan to a known recovery token so just break and let it sort itself out
+                //Maybe we have a missing , or want to try and parse another T and maybe recover, if that doesn't work then we just hard recover out
+                const vopt = fn();
+                result.push(vopt);
+                if(this.testToken(end)) {
+                    ; //great this is the happy path we will exit next iter
+                }
+                else if(this.testToken(sep)) {
+                    //consume the sep
+                    this.consumeToken();
+    
+                    //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                    if(this.testToken(end)) {
+                        this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                    }
                 }
                 else {
+                    //ok all going wrong lets get out of here 
                     this.lexer.currentState().recover();
                 }
             }
+
+            this.lexer.popStateIntoParentOk();
         }
 
         this.lexer.popStateIntoParentOk();
@@ -1412,7 +1481,7 @@ class Parser {
 
     private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData(leadingscoper ? 1 : 0);
-        const hasterms = this.peekToken(leadingscoper ? 2 : 1) === SYM_le;
+        const hasterms = this.peekToken(leadingscoper ? 2 : 1) === SYM_langle;
 
         if(nsroot === "Core") {
             this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot shadow the Core namespace");
@@ -1802,8 +1871,8 @@ class Parser {
 
     private parseInvokeTemplateTerms(): InvokeTemplateTermDecl[] { 
         let terms: InvokeTemplateTermDecl[] = [];
-        if(this.testToken(SYM_le)) {
-            terms = this.parseListOf<InvokeTemplateTermDecl>("template terms", SYM_le, SYM_ge, SYM_coma, () => {
+        if(this.testToken(SYM_langle)) {
+            terms = this.parseListOf<InvokeTemplateTermDecl>("template terms", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseInvokeTemplateTermDecl();
             });
         }
@@ -2151,8 +2220,8 @@ class Parser {
 
     private parseTermList(): TypeSignature[] {
         let terms: TypeSignature[] = [];
-        if (this.testToken(SYM_le)) {
-            terms = this.parseListOf<TypeSignature>("template term list", SYM_le, SYM_ge, SYM_coma, () => {
+        if (this.testToken(SYM_langle)) {
+            terms = this.parseListOf<TypeSignature>("template term list", SYM_langle, SYM_rangle, SYM_coma, () => {
                 return this.parseTypeSignature();
             });
         }
@@ -2281,7 +2350,7 @@ class Parser {
     private parseITest(): ITest | undefined {
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
 
-        if(this.testToken(SYM_le)) {
+        if(this.testToken(SYM_langle)) {
             return this.parseITypeTest(isnot);
         }
         else if(this.testToken(SYM_lbrack)) {
@@ -2322,7 +2391,7 @@ class Parser {
     private parseITypeTest(isnot: boolean): ITest {
         this.consumeToken();
         const ttype = this.parseTypeSignature();
-        this.ensureAndConsumeToken(SYM_ge, "ITest");
+        this.ensureAndConsumeToken(SYM_rangle, "ITest");
 
         return new ITestType(isnot, ttype);
     }
@@ -2390,17 +2459,6 @@ class Parser {
         }
 
         return new ArgumentList(args);
-    }
-
-    private parseTemplateArguments(): TypeSignature[] {
-        let targs: TypeSignature[] = [];
-        if(this.testToken(SYM_le)) {
-            targs = this.parseListOf<TypeSignature>("template argument list", SYM_le, SYM_ge, SYM_coma, () => {
-                return this.parseTypeSignature();
-            });
-        }
-
-        return targs;
     }
 
     private parseRecursiveAnnotation(): RecursiveAnnotation {
@@ -2482,15 +2540,15 @@ class Parser {
         return [vval, ttype];
     }
 
-    private static isOfTaggedLiteral(val: string): boolean {
-        return !val.endsWith('"') && !val.endsWith("'") && !val.endsWith("\\");
+    private processSimplyTaggableLiteral(sinfo: SourceInfo, tag: ExpressionTag, val: string): Expression {
+        if(!Parser.isTaggedLiteral(val)) {
+            return new LiteralSimpleExpression(tag, sinfo, val);
+        }
+        else {
+            const [vval, ttype] = this.processTaggedLiteral(val);
+            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(tag, sinfo, vval), ttype);
+        }
     }
-
-    private static isTypeTaggedLiteral(val: string): boolean {
-        return val.endsWith("_")
-    }
-
-    private processOfTaggedLiteral(val: string): [string, TypeSignature] {
 
     private parsePrimaryExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
@@ -2506,39 +2564,160 @@ class Parser {
         }
         else if (tk === KW_true || tk === KW_false) {
             this.consumeToken();
-            return [new LiteralBoolExpression(sinfo, tk === KW_true), false];
+            return new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, tk);
+        }
+        else if(tk === TokenStrings.TaggedBoolean) {
+            const bstr = this.consumeTokenAndGetValue();
+            const [vval, ttype] = this.processTaggedLiteral(bstr);
+            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, vval), ttype);
+        }
+        else if(tk === TokenStrings.NumberinoInt || tk === TokenStrings.NumberinoFloat) {
+            this.consumeToken();
+            this.recordErrorGeneral(sinfo, "Un-annotated numeric literals are not supported");
+            return new ErrorExpression(sinfo, undefined, undefined);
+        }
+        else if(tk === TokenStrings.TaggedNumberinoInt) {
+            const istr = this.consumeTokenAndGetValue();
+            const [vval, ttype] = this.processTaggedLiteral(istr);
+            return new LiteralTypeDeclIntegralValueExpression(sinfo, vval, ttype);
+        }
+        else if(tk === TokenStrings.TaggedNumberinoFloat) {
+            const fstr = this.consumeTokenAndGetValue();
+            const [vval, ttype] = this.processTaggedLiteral(fstr);
+            return new LiteralTypeDeclFloatPointValueExpression(sinfo, vval, ttype);
+        }
+        else if(tk === TokenStrings.TaggedNumberinoRational) {
+            const rstr = this.consumeTokenAndGetValue();
+            const [vval, ttype] = this.processTaggedLiteral(rstr);
+            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, vval + "R"), ttype);
         }
         else if (tk === TokenStrings.Nat) {
             const istr = this.consumeTokenAndGetValue();
-            xxxx;
-            return Parser.isTaggedLiteral(istr) ? new  : new LiteralSimpleExpression(ExpressionTag.LiteralNatExpression, sinfo, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralNatExpression, istr);
         }
         else if (tk === TokenStrings.Int) {
             const istr = this.consumeTokenAndGetValue();
-            xxxx;
-            return new LiteralSimpleExpression(ExpressionTag.LiteralIntExpression, sinfo, istr);
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralIntExpression, istr);
         }
-        
-        else if (tk === TokenStrings.Float) {
-            const fstr = this.consumeTokenAndGetValue();
-            return [new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialFloatSignature), false];
-        }
-        else if (tk === TokenStrings.Decimal) {
-            const fstr = this.consumeTokenAndGetValue();
-            return [new LiteralFloatPointExpression(sinfo, fstr, this.m_penv.SpecialDecimalSignature), false];
+        else if(tk === TokenStrings.BigNat) {
+            const istr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigNatExpression, istr);
         }
         else if (tk === TokenStrings.BigInt) {
             const istr = this.consumeTokenAndGetValue();
-            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigIntSignature), false];
-        }
-        else if (tk === TokenStrings.BigNat) {
-            const istr = this.consumeTokenAndGetValue();
-            return [new LiteralIntegralExpression(sinfo, istr, this.m_penv.SpecialBigNatSignature), false];
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralBigIntExpression, istr);
         }
         else if (tk === TokenStrings.Rational) {
-            const istr = this.consumeTokenAndGetValue();
-            return [new LiteralRationalExpression(sinfo, istr, this.m_penv.SpecialRationalSignature), false];
+            const rstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralRationalExpression, rstr);
         }
+        else if (tk === TokenStrings.Float) {
+            const fstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralFloatExpression, fstr);
+        }
+        else if (tk === TokenStrings.Decimal) {
+            const fstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDecimalExpression, fstr);
+        }
+        else if(tk === TokenStrings.DecimalDegree) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDecimalDegreeExpression, dstr);
+        }
+        else if(tk === TokenStrings.LatLong) {
+            const llstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralLatLongCoordinateExpression, llstr);
+        }
+        else if(tk === TokenStrings.Complex) {
+            const cstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralComplexNumberExpression, cstr);
+        }
+        else if(tk === TokenStrings.ByteBuffer) {
+            const bbstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralByteBufferExpression, bbstr);
+        }
+        else if(tk === TokenStrings.UUIDValue) {
+            const ustr = this.consumeTokenAndGetValue();
+            const tag = ustr.startsWith("uuid4{") ? ExpressionTag.LiteralUUIDv4Expression : ExpressionTag.LiteralUUIDv7Expression;
+            return this.processSimplyTaggableLiteral(sinfo, tag, ustr);
+        }
+        else if(tk === TokenStrings.ShaHashcode) {
+            const hstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralSHAContentHashExpression, hstr);
+        }
+        else if(tk === TokenStrings.DateTime) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDateTimeExpression, dstr);
+        }
+        else if(tk === TokenStrings.UTCDateTime) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralUTCDateTimeExpression, dstr);
+        }
+        else if(tk === TokenStrings.PlainDate) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralPlainDateExpression, dstr);
+        }
+        else if(tk === TokenStrings.PlainTime) {
+            const tstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralPlainTimeExpression, tstr);
+        }
+        else if(tk === TokenStrings.LogicalTime) {
+            const tstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralLogicalTimeExpression, tstr);
+        }
+        else if(tk === TokenStrings.TickTime) {
+            const tstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralTickTimeExpression, tstr);
+        }
+        else if(tk === TokenStrings.Timestamp) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralISOTimeStampExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaDateTime) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaDateTimeExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaPlainDate) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainDateExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaPlainTime) {
+            const tstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaPlainTimeExpression, tstr);
+        }
+        else if(tk === TokenStrings.DeltaTimestamp) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaISOTimeStampExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaSeconds) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaSecondsExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaTickTime) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaTickExpression, dstr);
+        }
+        else if(tk === TokenStrings.DeltaLogicalTime) {
+            const dstr = this.consumeTokenAndGetValue();
+            return this.processSimplyTaggableLiteral(sinfo, ExpressionTag.LiteralDeltaLogicalExpression, dstr);
+        }
+       
+
+    LiteralUnicodeRegexExpression = "LiteralUnicodeRegexExpression",
+    LiteralASCIIRegexExpression = "LiteralASCIIRegexExpression",
+
+    LiteralStringExpression = "LiteralStringExpression",
+    LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
+    
+    LiteralTypedStringExpression = "LiteralTypedStringExpression",
+    LiteralASCIITypedStringExpression = "LiteralASCIITypedStringExpression",
+    
+    LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
+    LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
+    
+    LiteralPathExpression = "LiteralPathExpression",
+    LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
+    LiteralPathGlobExpression = "LiteralPathGlobExpression",
+
         else if (tk === TokenStrings.String) {
             const sstr = this.consumeTokenAndGetValue(); //keep in original format
 
