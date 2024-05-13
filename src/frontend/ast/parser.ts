@@ -1,12 +1,12 @@
 
 import {strict as assert} from "assert";
 
-import { DeclLevelParserScope, LambdaBodyParserScope, ParserEnvironment, ParserStandaloneExpressionScope, StdParserFunctionScope } from "./parser_env";
+import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement } from "./body";
+import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_some, KW_something, KW_spec, KW_test, KW_this, KW_true, KW_type, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_test, KW_this, KW_true, KW_type, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1186,7 +1186,7 @@ class Parser {
             nns = nsmatch[0].trim().split(/\s+/)[1].slice(0, -1);
         }
 
-        this.env = new ParserEnvironment(assembly, currentFile, nns, new DeclLevelParserScope(), wellknownTypes);
+        this.env = new ParserEnvironment(assembly, currentFile, nns, wellknownTypes);
         this.currentNamespace = assembly.ensureToplevelNamespace(nns);
     }
 
@@ -1728,11 +1728,10 @@ class Parser {
         }
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, boundtemplates: Set<string>, rtype: TypeSignature): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
         
-        const prescope = new ParserStandaloneExpressionScope(argnames, boundtemplates, rtype);
-        this.env.pushFunctionScope(prescope);
+        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), boundtemplates, this.env.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -1752,13 +1751,13 @@ class Parser {
 
             this.ensureAndConsumeToken(SYM_semicolon, "requires");
         }
-        this.env.popFunctionScope();
+        this.env.scope = undefined;
 
         let postconds: PostConditionDecl[] = [];
 
-        const rargs = new Set<string>(argnames).add("$return").add("$this");
-        const postscope = new ParserStandaloneExpressionScope(rargs, boundtemplates, rtype);
-        this.env.pushFunctionScope(postscope);
+        const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo("$" + v, true));
+        this.env.scope = new StandardScopeInfo([...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)], boundtemplates, this.env.wellknownTypes.get("Bool") as TypeSignature);
+        
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
 
@@ -1778,7 +1777,7 @@ class Parser {
 
             this.ensureAndConsumeToken(SYM_semicolon, "ensures");
         }
-        this.env.popFunctionScope();
+        this.env.scope = undefined;
 
         return [preconds, postconds];
     }
@@ -2195,7 +2194,7 @@ class Parser {
                 this.consumeToken();
                 let ptype = this.parseTypeSignature();
                 if(!this.testAndConsumeTokenIf(SYM_rparen)) {
-                    ptype = this.completeEListParse(sinfo, ptype, closeparen !== undefined);
+                    ptype = this.completeEListTypeParse(sinfo, ptype, closeparen !== undefined);
                 }
                 else {
                     if(this.testToken(SYM_rparen)) {
@@ -2317,7 +2316,7 @@ class Parser {
         return new LambdaTypeSignature(sinfo, isrecursive, name, params, resultInfo);
     }
 
-    private completeEListParse(sinfo: SourceInfo, ptype: TypeSignature, canrecover: boolean): TypeSignature {
+    private completeEListTypeParse(sinfo: SourceInfo, ptype: TypeSignature, canrecover: boolean): TypeSignature {
         let rtypes = [ptype];
 
         while (!this.testAndConsumeTokenIf(SYM_rparen)) {
@@ -2779,7 +2778,22 @@ class Parser {
             const scopename = this.env.useLocalVar("this");
             return new AccessVariableExpression(sinfo, "this", scopename);
         }
+        else if (tk === KW_self) {
+            assert(false, "Need to handle various self cases");
+        }
+        else if (tk === KW_this) {
+            this.consumeToken();
+
+            const scopename = this.env.useLocalVar("this");
+            return new AccessVariableExpression(sinfo, "this", scopename);
+        }
         else if (tk === TokenStrings.IdentifierName && this.env.isVarDefinedInAnyScope(this.peekTokenData())) {
+            const idname = this.consumeTokenAndGetValue();
+            
+            const scopename = this.env.useLocalVar(idname);
+            return new AccessVariableExpression(sinfo, idname, scopename);
+        }
+        else if (tk === TokenStrings.IdentifierName && this.peekTokenData().startsWith("$")) {
             const idname = this.consumeTokenAndGetValue();
             
             const scopename = this.env.useLocalVar(idname);
@@ -2993,10 +3007,69 @@ class Parser {
             }
         }
         */
+        else if(tk === SYM_lparen) {
+            const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+
+            const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
+            this.lexer.prepStateStackForNested("paren-type", closepos, undefined);
+
+            this.consumeToken();
+            let exp = this.parseExpression();
+            if(!this.testAndConsumeTokenIf(SYM_rparen)) {
+                exp = this.completeEListConstructorParse(sinfo, exp, closeparen !== undefined);
+            }
+            else {
+                if(this.testToken(SYM_rparen)) {
+                    this.consumeToken();
+                }
+                else {
+                    if(closeparen !== undefined) {
+                        this.lexer.currentState().recover();
+                    }
+                }
+            }
+
+            return exp;
+        }
         else {
             this.recordErrorGeneral(sinfo, `Unexpected token in expression -- ${tk}`);
             return new ErrorExpression(sinfo, undefined, undefined);
         }
+    }
+
+    private completeEListConstructorParse(sinfo: SourceInfo, exp: Expression, canrecover: boolean): Expression {
+        let exps = [new PositionalArgumentValue(exp)];
+
+        while (!this.testAndConsumeTokenIf(SYM_rparen)) {
+            const v = this.parseExpression();
+            exps.push(new PositionalArgumentValue(v));
+            
+            if(this.testToken(SYM_rparen)) {
+                ; //great this is the happy path we will exit next iter
+            }
+            else if(this.testToken(SYM_coma)) {
+                //consume the sep
+                this.consumeToken();
+
+                //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                if(this.testToken(SYM_rparen)) {
+                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                }
+            }
+            else {
+                //error token check here -- we have a valid parse then assume a missing , and continue -- otherwise try to cleanup as best possible and continue
+                //maybe this is where we want to do some tryParse stuff to recover as robustly as possible -- like in the TypeSpec list parse implementation
+
+                if(!canrecover) {
+                    break; //we can't scan to a known recovery token so just break and let it sort itself out
+                }
+                else {
+                    this.lexer.currentState().recover();
+                }
+            }
+        }
+
+        return new ConstructorEListExpression(sinfo, new ArgumentList(exps));
     }
 
     private parsePostfixExpression(): Expression {
@@ -3010,14 +3083,19 @@ class Parser {
                 this.consumeToken();
 
                 const ttest = this.parseITest();
-                ops.push(new PostfixIsTest(sinfo, ttest));
+                if(ttest !== undefined) {
+                    ops.push(new PostfixIsTest(sinfo, ttest));
+                }
             }
             else if(this.testToken(SYM_at)) {
                 this.consumeToken();
                 
                 const ttest = this.parseITest();
-                ops.push(new PostfixAsConvert(sinfo, ttest));
+                if(ttest !== undefined) {
+                    ops.push(new PostfixAsConvert(sinfo, ttest));
+                }
             }
+            /*
             else if (this.testToken(SYM_dot)) {
                 this.consumeToken();
 
@@ -3074,6 +3152,7 @@ class Parser {
                     }
                 }
             }
+            */
             else {
                 if (ops.length === 0) {
                     return rootexp;
@@ -3116,7 +3195,7 @@ class Parser {
             exp = this.parseIfExpression();
         }
         else {
-            exp = this.parsePostfixExpression(false);
+            exp = this.parsePostfixExpression();
         }
 
         return this.prefixStackApplicationHandler(exp, sinfo, ops.reverse());
@@ -3347,42 +3426,99 @@ class Parser {
         }
     }
 
-    private parseStatementExpression(isref: boolean): Expression {
-        //
-        //TODO
-        //
-        assert(false, "Not implemented");
+    private parseRHSExpression(): Expression {
+        //todo we need to handle ref calls and such
+        if(this.testToken(KW_ref)) {
+            assert(false, "Not implemented -- ref expression");
+        }
+        else {
+            return this.parseExpression();
+        }
+    }
+
+    private parseStatementExpression(isref: boolean): Statement | undefined {
+        if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
+            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const name = this.consumeTokenAndGetValue();
+            this.consumeToken();
+
+            const ttest = this.parseITest();
+            if(ttest === undefined) {
+                this.recordErrorGeneral(sinfo, "Expected test expression after @");
+                return undefined;
+            }
+
+            return new VariableRetypeStatement(sinfo, name, ttest);
+        }
+        else {
+            assert(false, "Not implemented -- statement expression");
+        }
     }
 
     ////
     //Statement parsing
 
-    /*
-    parseAssignmentVarInfo(sinfo: SourceInfo, vars: "let" | "var" | undefined): {name: string, vtype: TypeSignature} {
-        this.ensureToken(TokenStrings.Identifier, "assignment statement");
+    parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
         const name = this.consumeTokenAndGetValue();
 
-        let itype = this.m_penv.SpecialAutoSignature;
+        let itype = this.env.SpecialAutoSignature;
         if (this.testAndConsumeTokenIf(":")) {
             itype = this.parseTypeSignature();
         }
 
-        if (vars !== undefined) {
-            return { name: name, vtype: itype };
+        if(this.env.getCurrentFunctionScope().isVarSourceNameDefined(name)) {
+            this.recordErrorGeneral(sinfo, `Variable "${name}" is already defined in scope`);
         }
-        else {
-            if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(name)) {
-                this.raiseError(sinfo.line, `Variable "${name}" is not defined in scope`);
-            }
 
-            if (!(itype instanceof AutoTypeSignature)) {
-                this.raiseError(sinfo.line, `Cannot redeclare type of variable "${name}" on assignment`);
-            }
-
-            return { name: name, vtype: itype };
-        }
+        return { name: name, vtype: itype };
     }
 
+    parseMultiDeclarationVarInfo(): {name: string, vtype: TypeSignature}[] {
+        let decls: {name: string, vtype: TypeSignature}[] = [];
+
+        while(this.testToken(SYM_coma)) {
+            const dd = this.parseSingleDeclarationVarInfo();
+            decls.push(dd);
+        }
+
+        return decls;
+    }
+
+    parseSingleAssignmentVarInfo(): string {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
+        const name = this.consumeTokenAndGetValue();
+
+        xxxx;
+
+        const vinfo = this.env.getCurrentFunctionScope().getVarInfoForSourceNameTry(name);
+        if(vinfo === undefined) {
+            this.recordErrorGeneral(sinfo, `Variable "${name}" is already defined in scope`);
+        }
+        
+        if(vinfo !== undefined && vinfo.isconst) {
+            this.recordErrorGeneral(sinfo, `Variable "${name}" is const and cannot be reassigned`);
+        }
+
+        return name;
+    }
+
+    parseMultiAssignmentVarInfo(): string[] {
+        let assigns: string[] = [];
+
+        while(this.testToken(SYM_coma)) {
+            const dd = this.parseSingleAssignmentVarInfo();
+            assigns.push(dd);
+        }
+
+        return assigns;
+    }
+
+    /*
     private parseTaskRunStatement(sinfo: SourceInfo, isdefine: boolean, isconst: boolean, vv: {name: string, vtype: TypeSignature} | undefined): Statement {
         this.ensureTaskOpOk();
         
@@ -3519,115 +3655,112 @@ class Parser {
     }
     */
 
-    private parseLineStatement(): Statement {
+    private parseLineStatement(): Statement | undefined {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        const tk = this.peekToken();
-        if (tk === SYM_semicolon) {
-            this.consumeToken();
+        if (this.testToken(SYM_semicolon)) {
             return new EmptyStatement(sinfo);
         }
-        else if (tk === KW_let || tk === KW_var) {
+        else if (this.testToken(KW_var) || this.testToken(KW_let)) {
+            const isConst = this.testToken(KW_let);
+            
             this.consumeToken();
-            const isConst = tk === KW_let;
-
-            const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), isConst ? KW_let : KW_var);
-            const vvar = { name: assign.name, vtype: assign.vtype };
-
-            if (this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                this.raiseError(line, "Variable name is already defined");
-            }
-            this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name, assign.name, false);
-
-            const hasassign = this.testAndConsumeTokenIf(SYM_eq);
-            const ismulti = this.testToken(SYM_coma);
-            if(ismulti || (hasassign && this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task")) {
-                return this.parseTaskRunStatement(sinfo, true, tk === KW_let, vvar);
-            }
-            else {
-                if(ismulti) {
-                    this.raiseError(this.getCurrentLine(), "Multiple variable assignement not generally supported yet!");
+            const assigns = this.parseMultiDeclarationVarInfo();
+            if(this.testToken(SYM_semicolon)) {
+                if(isConst) {
+                    this.recordErrorGeneral(sinfo, "Cannot declare as const without an assignment");
                 }
 
-                let exp: Expression | undefined = undefined;
-                let sccinfo: {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined} | undefined = undefined;
-                if (hasassign) {
-                    [exp, sccinfo] = this.parseSCAssignExpression();
-                }
-                this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
-                if ((exp === undefined && isConst)) {
-                    this.raiseError(line, "Const variable declaration must include an assignment to the variable");
+                if(assigns.some((vv) => vv.vtype instanceof AutoTypeSignature)) {
+                    this.recordErrorGeneral(sinfo, "Cannot declare a variable with an auto type without an assignment");
                 }
 
-                return new VariableDeclarationStatement(sinfo, vvar.name, isConst, vvar.vtype, exp, sccinfo);
-            }
-        }
-        else if (tk === TokenStrings.IdentifierName) {
-            if(this.peekToken(1) === SYM_at) {
-                const name = this.consumeTokenAndGetValue();
-                this.consumeToken();
-                
-                const ttest = this.parseITest()
-                this.ensureAndConsumeToken(SYM_semicolon, "variable retype");
+                xxxx;
 
-                return new VariableRetypeStatement(sinfo, name, ttest);
+                return assigns.length === 1 ? new VariableDeclarationStatement(sinfo, assigns[0].name, assigns[0].vtype) : new VariableMultiDeclarationStatement(sinfo, assigns);
             }
-            else if(this.peekToken(1) === SYM_atat || this.peekToken(1) === SYM_questionquestion) {
-                const name = this.consumeTokenAndGetValue();
-
-                const isconvert = this.testToken(SYM_atat);
+            else if(this.testToken(SYM_eq)) {
                 this.consumeToken();
 
-                const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
-                if(isconvert) {
-                    const sctest = this.parseITest();
-                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpressionWithBinder() : undefined;
+                const exp = this.parseRHSExpression();
+                if(this.testToken(SYM_semicolon)) {
+                    //could be elist type expression but we need to wait for type checking
+                    xxxx;
 
-                    return new VariableSCRetypeStatement(sinfo, name, sctest, scaction !== undefined ? scaction[1] : undefined, (scaction !== undefined && scaction[0]) ? bindername : undefined);
+                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exp);
                 }
                 else {
-                    const sctest = this.parseSCReturnTest();
-                    const scaction = this.testAndConsumeTokenIf(SYM_colon) ? this.parseExpressionWithBinder() : undefined;
+                    //we need as many expressions as there are variables
+                    let exps = [exp];
+                    while(this.testToken(SYM_coma) && exps.length < assigns.length) {
+                        this.consumeToken();
+                        exps.push(this.parseRHSExpression());
+                    }
 
-                    return new ExpressionSCReturnStatement(sinfo, new AccessVariableExpression(sinfo, name), sctest, scaction !== undefined ? scaction[1] : undefined, (scaction !== undefined && scaction[0]) ? bindername : undefined);
+                    if(exps.length !== assigns.length) {
+                        this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
+                    }
+
+                    xxxx;
+
+                    return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exps[0]) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exps);
                 }
             }
             else {
-                const assign = this.parseAssignmentVarInfo(this.getCurrentSrcInfo(), undefined);
-                const vvar = { name: assign.name, vtype: assign.vtype };
-
-                if (!this.m_penv.getCurrentFunctionScope().isVarNameDefined(assign.name)) {
-                    this.raiseError(line, "Variable name not defined");
-                }
-                this.m_penv.getCurrentFunctionScope().defineLocalVar(assign.name, assign.name, false);
-
-                this.ensureAndConsumeToken(SYM_eq, "assignment statement");
-                if (this.testToken(TokenStrings.Namespace) && this.peekTokenData() === "Task") {
-                    return this.parseTaskRunStatement(sinfo, false, false, vvar);
-                }
-                else {
-                    const [exp, scinfo] = this.parseSCAssignExpression();
-                    this.ensureAndConsumeToken(SYM_semicolon, "assignment statement");
-
-                    return new VariableAssignmentStatement(sinfo, vvar.name, exp, scinfo);
-                }
+                //recover
+                return undefined;
             }
         }
-        else if (tk === KW_return) {
+        else if (this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+            const vname = this.parseSingleAssignmentVarInfo();
+            const exp = this.parseRHSExpression();
+
+            return new VariableAssignmentStatement(sinfo, vname, exp);
+        }
+        else if (this.testFollows(TokenStrings.IdentifierName, SYM_coma)) {
+            const vnames = this.parseMultiAssignmentVarInfo();
+
+            this.ensureAndConsumeToken(SYM_eq, "assignment statement");
+            const exp = this.parseRHSExpression();
+
+            if(this.testToken(SYM_semicolon)) {
+                //could be elist type expression but we need to wait for type checking
+                return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exp) : new VariableMultiAssignmentStatement(sinfo, vnames, exp);
+            }
+            else {
+                //we need as many expressions as there are variables
+                let exps = [exp];
+                while(this.testToken(SYM_coma) && exps.length < vnames.length) {
+                    this.consumeToken();
+                    exps.push(this.parseRHSExpression());
+                }
+
+                if(exps.length !== vnames.length) {
+                    this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
+                }
+
+                return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exps[0]) : new VariableMultiAssignmentStatement(sinfo, vnames, exps);
+            }
+        }
+        else if (this.testToken(KW_return)) {
             this.consumeToken();
 
-            if(this.testAndConsumeTokenIf(SYM_semicolon)) {
+            if(this.testToken(SYM_semicolon)) {
                 return new ReturnStatement(sinfo, undefined);
             }
             else {
-                const rexp = this.parseExpression();
+                const rexp = this.parseRHSExpression();
                 if(this.testToken(SYM_semicolon)) {
                     return new ReturnStatement(sinfo, rexp);
                 }
                 else {
-                    //TODO: it is a multi-return statement
-                    assert(false, "Not implemented -- multi-return");
+                    let rexps = [rexp];
+                    while(this.testToken(SYM_coma)) {
+                        this.consumeToken();
+                        rexps.push(this.parseRHSExpression());
+                    }
+
+                    return new ReturnStatement(sinfo, rexps);
                 }
             }
         }
@@ -3678,31 +3811,40 @@ class Parser {
             }
         }
         */
-        else if (tk === KW_abort) {
+        else if (this.testToken(KW_abort)) {
             this.consumeToken();
-
-            this.ensureAndConsumeToken(SYM_semicolon, "abort statement");
             return new AbortStatement(sinfo);
         }
-        else if (tk === KW_assert) {
+        else if (this.testToken(KW_assert)) {
             this.consumeToken();
-
-            xxxx;
 
             const level = this.parseBuildInfo(KW_release);
             const exp = this.parseExpression();
 
-            this.ensureAndConsumeToken(SYM_semicolon, "assert statement");
             return new AssertStatement(sinfo, exp, level);
         }
-        else if (tk === KW__debug) {
+        else if (this.testToken(KW_validate)) {
+            this.consumeToken();
+
+            let diagnosticTag: string | undefined = undefined;
+            if(this.testToken(SYM_lbrack)) {
+                this.consumeToken();
+                this.ensureToken(TokenStrings.ASCIIString, "validate statement tag");
+                diagnosticTag = this.consumeTokenAndGetValue();
+                this.ensureAndConsumeToken(SYM_rbrack, "validate statement tag");
+            }
+
+            const exp = this.parseExpression();
+
+            return new ValidateStatement(sinfo, exp, diagnosticTag);
+        }
+        else if (this.testToken(KW__debug)) {
             this.consumeToken();
 
             this.ensureAndConsumeToken(SYM_lparen, "_debug statement");
             const value = this.parseExpression();
             this.ensureAndConsumeToken(SYM_rparen, "_debug statement");
             
-            this.ensureAndConsumeToken(SYM_semicolon, "_debug statement");
             return new DebugStatement(sinfo, value);
         }
         /*
@@ -3782,63 +3924,30 @@ class Parser {
             }
         }
         */
-        else if(tk === SYM_lbrace) {
-            xxxx;
-        }
         else {
-            const [exp, tsccinfo] = this.parseSCAssignExpression();
-            if(tsccinfo === undefined) {
-                this.raiseError(line, `expected short-circuit return guard but did not find it`);
-            }
-            const sccinfo = tsccinfo as {sctest: ITest | Expression, scaction: Expression | undefined, binderinfo: string | undefined};
-
-            this.ensureAndConsumeToken(SYM_semicolon, "short-circuit return guard");
-            return new ExpressionSCReturnStatement(sinfo, exp, sccinfo.sctest, sccinfo.scaction, sccinfo.binderinfo);
+            const isref = this.testToken(KW_ref);
+            return this.parseStatementExpression(isref);
         }
     }
 
-    private parseScopedBlockStatement(): ScopedBlockStatement {
-        const sinfo = this.getCurrentSrcInfo();
+    private parseScopedBlockStatement(): BlockStatement {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        this.m_penv.getCurrentFunctionScope().pushLocalScope();
-        let stmts: Statement[] = [];
-        try {
-            this.setRecover(this.scanMatchingParens(SYM_lbrace, SYM_rbrace));
+        this.env.getCurrentFunctionScope().pushLocalScope();
+        const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+            return this.parseStatement();
+        });
+        this.env.getCurrentFunctionScope().popLocalScope();
 
-            this.consumeToken();
-            while (!this.testAndConsumeTokenIf(SYM_rbrace)) {
-                stmts.push(this.parseStatement());
-            }
-
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
-
-            if (stmts.length === 0) {
-                this.raiseError(this.getCurrentLine(), "No empty blocks -- requires at least ';'");
-            }
-
-            this.clearRecover();
-            return new ScopedBlockStatement(sinfo, stmts);
+        if(stmts.length === 0) {
+            this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
         }
-        catch (ex) {
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
-            this.processRecover();
-            return new ScopedBlockStatement(sinfo, [new InvalidStatement(sinfo)]);
-        }
+
+        return new BlockStatement(sinfo, stmts);
     }
 
-    private parseScopedBlockStatementWithBinder(): [boolean, ScopedBlockStatement] {
-        try {
-            this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension("$")}`, true);
-
-            const ss = this.parseScopedBlockStatement();
-            const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
-
-            return [isbind, ss];
-        }
-        finally {
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
-        }
+    private parseScopedBlockStatementWithBinderTracking(): [boolean, BlockStatement] {
+        xxxx;
     }
 
     private parseIfElseStatement(): Statement {
@@ -3973,6 +4082,62 @@ class Parser {
             return this.parseScopedBlockStatement();
         }
         else {
+            
+            const closeparen = this.scanMatchingParens(start, end);
+
+        const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
+        this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, undefined);
+
+        let result: T[] = [];
+        this.ensureAndConsumeToken(start, contextinfobase);
+        while (!this.testAndConsumeTokenIf(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+            const nextcomma = this.scanToRecover(sep);
+            const nextpos = nextcomma !== undefined ? this.lexer.peekK(nextcomma).pos : closepos;
+            this.lexer.prepStateStackForNested("element-" + contextinfobase, nextpos, undefined);
+
+            const v = fn();
+            result.push(v);
+            
+            if(this.testToken(end)) {
+                ; //great this is the happy path we will exit next iter
+            }
+            else if(this.testToken(sep)) {
+                //consume the sep
+                this.consumeToken();
+
+                //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                if(this.testToken(end)) {
+                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                }
+            }
+            else {
+                //Maybe we have a missing , or want to try and parse another T and maybe recover, if that doesn't work then we just hard recover out
+                const vopt = fn();
+                result.push(vopt);
+                if(this.testToken(end)) {
+                    ; //great this is the happy path we will exit next iter
+                }
+                else if(this.testToken(sep)) {
+                    //consume the sep
+                    this.consumeToken();
+    
+                    //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
+                    if(this.testToken(end)) {
+                        this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                    }
+                }
+                else {
+                    //ok all going wrong lets get out of here 
+                    this.lexer.currentState().recover();
+                }
+            }
+
+            this.lexer.popStateIntoParentOk();
+        }
+
+        this.lexer.popStateIntoParentOk();
+        return result;
+
             return this.parseLineStatement();
         }
     }

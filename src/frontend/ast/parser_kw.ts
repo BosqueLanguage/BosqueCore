@@ -77,6 +77,11 @@ const KW_example = "example";
 const KW_event = "event";
 const KW_status = "status";
 const KW_validator = "validator";
+const KW_predicate = "predicate";
+
+const KW_softcheck = "softcheck";
+const KW_errtest = "errtest";
+const KW_chktest = "chktest";
 
 //reserved
 const KW_operator = "operator";
@@ -122,6 +127,7 @@ const KeywordStrings = [
     KW_ok,
     KW_operator,
     KW_pred,
+    KW_predicate,
     KW_provides,
     KW_ref,
     KW_release,
@@ -151,7 +157,10 @@ const KeywordStrings = [
     KW_example,
     KW_event,
     KW_status,
-    KW_validator
+    KW_validator,
+    KW_softcheck,
+    KW_errtest,
+    KW_chktest
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -365,6 +374,7 @@ export {
     KW_ok,
     KW_operator,
     KW_pred,
+    KW_predicate,
     KW_provides,
     KW_ref,
     KW_release,
@@ -395,6 +405,9 @@ export {
     KW_event,
     KW_status,
     KW_validator,
+    KW_softcheck,
+    KW_errtest,
+    KW_chktest,
 
     SYM_lbrack,
     SYM_lparen,

@@ -1698,20 +1698,20 @@ class VariableDeclarationStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.name}: ${this.vtype.emit(true)}$;`;
+        return `var ${this.name}: ${this.vtype.emit(true)};`;
     }
 }
 
 class VariableMultiDeclarationStatement extends Statement {
-    readonly decls: [string, TypeSignature][];
+    readonly decls: {name: string, vtype: TypeSignature}[];
 
-    constructor(sinfo: SourceInfo, decls: [string, TypeSignature][]) {
+    constructor(sinfo: SourceInfo, decls: {name: string, vtype: TypeSignature}[]) {
         super(StatementTag.VariableMultiDeclarationStatement, sinfo);
         this.decls = decls;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `var ${this.decls.map(([name, vtype]) => `${name}: ${vtype.emit(true)}`).join(", ")};`;
+        return `var ${this.decls.map((dd) => `${dd.name}: ${dd.vtype.emit(true)}`).join(", ")};`;
     }
 }
 
@@ -1739,10 +1739,10 @@ class VariableInitializationStatement extends Statement {
 
 class VariableMultiInitializationStatement extends Statement {
     readonly isConst: boolean;
-    readonly decls: [string, TypeSignature][]; //maybe Auto
+    readonly decls: {name: string, vtype: TypeSignature}[]; //maybe Auto
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
-    constructor(sinfo: SourceInfo, isConst: boolean, decls: [string, TypeSignature][], exp: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, isConst: boolean, decls: {name: string, vtype: TypeSignature}[], exp: Expression | Expression[]) {
         super(StatementTag.VariableMultiInitializationStatement, sinfo);
         this.isConst = isConst;
         this.decls = decls;
@@ -1751,7 +1751,7 @@ class VariableMultiInitializationStatement extends Statement {
 
     emit(fmt: CodeFormatter): string {
         const dc = this.isConst ? "let" : "var";
-        const ttdecls = this.decls.map((dd) => dd[0] + (dd[1] instanceof AutoTypeSignature ? "" : `: ${dd[1].emit(true)}`));
+        const ttdecls = this.decls.map((dd) => dd.name + (dd.vtype instanceof AutoTypeSignature ? "" : `: ${dd.vtype.emit(true)}`));
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${dc} ${ttdecls.join(", ")} = ${ttexp};`;
