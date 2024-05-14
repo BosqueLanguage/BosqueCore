@@ -4,7 +4,7 @@ import * as Path from "path";
 
 import { BuildLevel, CodeFileInfo, PackageConfig } from "./build_decls";
 import { TIRAssembly } from "./tree_ir/tir_assembly";
-import { TypeChecker } from "./typechecker/type_checker";
+import { TypeChecker } from "./ast/type_checker";
 
 const bosque_dir: string = Path.join(__dirname, "../../");
 let fullargs = process.argv;

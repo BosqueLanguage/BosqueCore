@@ -2,7 +2,7 @@
 import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
+import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
 
 class TypeTemplateTermDecl {
     readonly name: string;

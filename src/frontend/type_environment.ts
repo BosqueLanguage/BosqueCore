@@ -1,7 +1,4 @@
-
-import { ResolvedFunctionType, ResolvedType, TemplateBindScope } from "../ast/resolved_type";
-import { TIRCodePack, TIRExpression, TIRInvalidExpression } from "../tree_ir/tir_body";
-import { SourceInfo } from "../build_decls";
+import {strict as assert} from "assert";
 
 class VarInfo {
     readonly declaredType: ResolvedType;

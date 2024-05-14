@@ -1,7 +1,7 @@
 
 import {strict as assert} from "assert";
 
-import { SourceInfo } from "../build_decls";
+import { SourceInfo } from "./build_decls";
 import { Assembly } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
 

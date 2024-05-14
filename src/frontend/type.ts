@@ -1,5 +1,5 @@
 
-import { SourceInfo } from "../build_decls";
+import { SourceInfo } from "./build_decls";
 import { AbstractNominalTypeDecl } from "./assembly";
 
 class FullyQualifiedNamespace {

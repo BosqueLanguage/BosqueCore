@@ -1,9 +1,8 @@
 
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "../build_decls";
-import { LambdaDecl } from "./assembly";
-import { NamespaceDecl } from "../tree_ir/typeinfo";
+import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
+import { LambdaDecl, NamespaceDeclaration } from "./assembly";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code
@@ -324,10 +323,10 @@ abstract class Expression {
 }
 
 class ErrorExpression extends Expression {
-    readonly staticPrefix: {ns: NamespaceDecl, typeopt: TypeSignature} | undefined;
+    readonly staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature} | undefined;
     readonly dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined;
 
-    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDecl, typeopt: TypeSignature} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
+    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
         super(ExpressionTag.ErrorExpresion, sinfo);
 
         this.staticPrefix = staticPrefix;

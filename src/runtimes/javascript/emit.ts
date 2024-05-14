@@ -4,7 +4,7 @@ import * as Path from "path";
 
 import { BuildLevel, CodeFileInfo, PackageConfig } from "../../frontend/build_decls";
 import { TIRAssembly } from "../../frontend/tree_ir/tir_assembly";
-import { TypeChecker } from "../../frontend/typechecker/type_checker";
+import { TypeChecker } from "../../frontend/ast/type_checker";
 
 const bosque_dir: string = Path.join(__dirname, "../../../");
 
