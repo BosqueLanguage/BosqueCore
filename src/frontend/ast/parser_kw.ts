@@ -34,7 +34,6 @@ const KW_some = "some";
 const KW_this = "this";
 const KW_type = "type";
 const KW_self = "self";
-const KW_synth = "defer";
 const KW_switch = "switch";
 const KW_then = "then";
 const KW_true = "true";
@@ -138,7 +137,6 @@ const KeywordStrings = [
     KW_some,
     KW_safety,
     KW_spec,
-    KW_synth,
     KW_switch,
     KW_task,
     KW_test,
@@ -385,7 +383,6 @@ export {
     KW_some,
     KW_safety,
     KW_spec,
-    KW_synth,
     KW_switch,
     KW_task,
     KW_test,
