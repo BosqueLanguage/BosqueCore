@@ -1,20 +1,24 @@
 import {strict as assert} from "assert";
+import { Assembly } from "./assembly";
+import { BuildLevel, SourceInfo } from "./build_decls";
+import { FullyQualifiedNamespace, TypeSignature, VoidTypeSignature } from "./type";
+import { Expression } from "./body";
 
-const NAT_MAX = Number.MAX_SAFE_INTEGER; //Int <-> Nat conversions are always safe (for non-negative values)
+const MIN_SAFE_INT = -9223372036854775807n;
+const MAX_SAFE_INT = 9223372036854775807n;
 
-const INT_MAX = Number.MAX_SAFE_INTEGER;
-const INT_MIN = -INT_MAX; //negation is always safe
+//negation and conversion are always safe
+const MAX_SAFE_NAT = 9223372036854775807n;
 
-class TypeError extends Error {
+class TypeError {
     readonly file: string;
     readonly line: number;
+    readonly msg: string;
 
-    constructor(file: string, line: number, message?: string) {
-        super(`Type error on ${line} -- ${message}`);
-        Object.setPrototypeOf(this, new.target.prototype);
-
+    constructor(file: string, line: number, msg: string) {
         this.file = file;
         this.line = line;
+        this.msg = `Type error on ${line} -- ${msg}`;
     }
 }
 
@@ -49,123 +53,25 @@ enum ResolveResultFlag {
     failure
 }
 
-class TIRIDGenerator {
-    static generateTermsBinds(terms: TIRTypeKey[]): string {
-        if(terms.length === 0) {
-            return "";
-        }
-
-        return `<${terms.join(", ")}>`;
-    }
-
-    static generatePCodeBinds(pcodes: TIRPCodeKey[]): string {
-        if(pcodes.length === 0) {
-            return "";
-        }
-
-        return `[${pcodes.join(", ")}]`;
-    }
-
-    static generatePCodeIDInfoForLambda(srcfile: string, sinfo: SourceInfo, lambdaid: number, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]): [TIRPCodeKey, TIRInvokeKey] {
-        const pcc = `$Lambda_$${lambdaid}$${sinfo.line}`;
-        const invk = pcc + "_invk";
-
-        return [pcc, invk];
-    }
-
-    static generateInvokeIDForNamespaceFunction(ns: string, name: string, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]): TIRInvokeKey {
-        return `${ns}::${name}${TIRIDGenerator.generateTermsBinds(terms)}${TIRIDGenerator.generatePCodeBinds(pcodes)}`;
-    }
-
-    static generateInvokeIDForNamespaceOperatorBase(ns: string, name: string): TIRInvokeKey {
-        return `operator_base_${ns}::${name}`;
-    }
-
-    static generateInvokeIDForNamespaceOperatorImpl(ns: string, name: string, idx: number): TIRInvokeKey {
-        return `operator_impl_${idx}_${ns}::${name}`;
-    }
-
-    static generateInvokeForMemberFunction(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]): TIRInvokeKey {
-        return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}${TIRIDGenerator.generatePCodeBinds(pcodes)}`;
-    }
-
-    static generateInvokeForMemberMethod(ttype: TIRTypeKey, name: string, terms: TIRTypeKey[], pcodes: TIRPCodeKey[]): TIRInvokeKey {
-        return `${ttype}::${name}${TIRIDGenerator.generateTermsBinds(terms)}${TIRIDGenerator.generatePCodeBinds(pcodes)}`;
-    }
-
-    static generateMemberFieldID(typeid: string, fname: string): TIRFieldKey {
-        return `${typeid}$${fname}`;
-    }
-}
-
-enum ReturnMode {
-    Standard,
-    MemberRef,
-    MemberSelf,
-    MemberAction
-}
-
 class TypeChecker {
-    private readonly m_assembly: Assembly;
-    private m_buildLevel: BuildLevel;
+    private readonly assembly: Assembly;
+    private readonly buildLevel: BuildLevel;
 
-    private m_file: string;
-    private m_ns: string;
-    private m_rtype: ResolvedType;
-    private m_returnMode: ReturnMode;
-    private m_taskOpsOk: boolean;
-    private m_taskSelfOk: "no" | "read" | "write";
-    private m_taskType: {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>} | undefined;
-    private m_errors: [string, number, string][];
+    private readonly file: string;
+    private readonly ns: FullyQualifiedNamespace;
 
-    private m_specialTypeMap: Map<string, ResolvedType> = new Map<string, ResolvedType>();
+    private rtype: TypeSignature;
 
-    private m_subtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
-    private m_atomSubtypeRelationMemo: Map<string, Map<string, boolean>> = new Map<string, Map<string, boolean>>();
+    readonly errors: TypeError[] = [];
 
-    private m_typedefResolutions: Map<string, ResolvedType> = new Map<string, ResolvedType>();
+    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace) {
+        this.assembly = assembly;
+        this.buildLevel = buildlevel;
 
-    private m_tirTypeMap: Map<string, TIRType> = new Map<string, TIRType>();
-    private m_tirNamespaceMap: Map<string, TIRNamespaceDeclaration> = new Map<string, TIRNamespaceDeclaration>();
-    private m_tirFieldMap: Map<string, TIRMemberFieldDecl> = new Map<string, TIRMemberFieldDecl>();
-    private m_tirInvokeMap: Map<string, TIRInvoke> = new Map<string, TIRInvoke>();
-    private m_tirCodePackMap: Map<TIRPCodeKey, TIRCodePack> = new Map<TIRPCodeKey, TIRCodePack>();
-    private m_toTIRprocessingstack: ResolvedAtomType[] = [];
+        this.file = file;
+        this.ns = ns;
 
-    private m_instantiatedVTableTypes: ResolvedObjectEntityAtomType[] = [];
-
-    private m_pendingEntityDecls: {tirtype: TIRObjectEntityType, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
-    private m_pendingEnumDecls: {tirtype: TIREnumEntityType, rtype: ResolvedEnumEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
-    private m_pendingTypedeclDecls: {tirtype: TIRTypedeclEntityType, rtype: ResolvedTypedeclEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
-    private m_pendingConceptDecls: {tirtype: TIRConceptType, rtype: ResolvedConceptAtomTypeEntry, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
-    private m_pendingTaskDecls: {tirtype: TIRTaskType, rtype: ResolvedTaskAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>}[] = [];
-
-    private m_pendingNamespaceConsts: NamespaceConstDecl[] = [];
-    private m_pendingNamespaceFunctions: {fkey: TIRInvokeKey, decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-    private m_pendingNamespaceOperators: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl, impls: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl}[]}[] = [];
-
-    private m_pendingConstMemberDecls: OOMemberLookupInfo<StaticMemberDecl>[] = [];
-    private m_pendingFunctionMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-    private m_pendingMethodMemberDecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-
-    private m_lambdaCtr = 0;
-    private m_pendingCodeDecls: {cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-
-    private m_scratchCtr = 0;
-
-    constructor(assembly: Assembly, buildlevel: BuildLevel) {
-        this.m_assembly = assembly;
-
-        this.m_buildLevel = buildlevel;
-
-        this.m_file = "[No File]";
-        this.m_ns = "[NOT SET]";
-        this.m_rtype = this.getSpecialNoneType();
-        this.m_returnMode = ReturnMode.Standard;
-        this.m_taskOpsOk = false;
-        this.m_taskSelfOk = "no";
-        this.m_scratchCtr = 0;
-        this.m_errors = [];
+        this.rtype = new VoidTypeSignature(SourceInfo.implicitSourceInfo());
     }
 
     private raiseError(sinfo: SourceInfo, msg?: string) {

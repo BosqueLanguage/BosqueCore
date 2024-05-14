@@ -1,25 +1,51 @@
 import {strict as assert} from "assert";
 
+import { TypeSignature } from "./type";
+
 class VarInfo {
-    readonly declaredType: ResolvedType;
+    readonly declaredType: TypeSignature;
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
 
-    constructor(dtype: ResolvedType, isConst: boolean, mustDefined: boolean) {
+    constructor(dtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
         this.declaredType = dtype;
 
         this.isConst = isConst;
         this.mustDefined = mustDefined;
     }
+}
 
-    updateTypeAndDef(tt: ResolvedType, mustdef: boolean): VarInfo {
-        return new VarInfo(tt, this.isConst, mustdef);
+class TemplateBindingScope {
+    readonly typebinds: Map<string, TypeSignature>;
+    readonly invokebinds: Map<string, TypeSignature>;
+
+    constructor(typebinds: Map<string, TypeSignature>, invokebinds: Map<string, TypeSignature>) {
+        this.typebinds = typebinds;
+        this.invokebinds = invokebinds;
+    }
+
+    static createEmptyScope(): TemplateBindingScope {
+        return new TemplateBindingScope(new Map<string, TypeSignature>(), new Map<string, TypeSignature>());
+    }
+
+    resolveTypeBinding(name: string): TypeSignature | undefined {
+        let rtype: TypeSignature | undefined = undefined;
+
+        if(this.invokebinds.has(name)) {
+            rtype = this.invokebinds.get(name);
+        }
+
+        if(this.typebinds.has(name)) {
+            rtype = this.typebinds.get(name);
+        }
+
+        return rtype;
     }
 }
 
 class ExpressionTypeEnvironment {
-    readonly binds: TemplateBindScope;
+    readonly binds: TemplateBindingScope;
     readonly capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>;
     readonly capturedvars: Map<string, VarInfo>;
 
@@ -27,7 +53,6 @@ class ExpressionTypeEnvironment {
     readonly args: Map<string, VarInfo>;
     readonly locals: Map<string, VarInfo>[];
 
-    readonly expressionResult: TIRExpression;
     readonly trepr: ResolvedType; //The type of the expression (value representation)
 
     private constructor(binds: TemplateBindScope, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, VarInfo>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, locals: Map<string, VarInfo>[], expressionResult: TIRExpression, trepr: ResolvedType) {
