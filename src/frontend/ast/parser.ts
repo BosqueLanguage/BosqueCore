@@ -1,7 +1,7 @@
 
 import {strict as assert} from "assert";
 
-import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
+import { LambdaScopeInfo, LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
@@ -1937,9 +1937,6 @@ class Parser {
             }
         }
 
-        const argNames = new Set<string>(params.map((param) => param.name));
-        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
-
         if(!this.testToken(SYM_bigarrow)) {
             this.recordExpectedError(this.lexer.peekNext(), SYM_bigarrow, "lambda declaration");
         }
@@ -1947,12 +1944,12 @@ class Parser {
             this.consumeToken();
         }
         
-        const lambdaenv = new LambdaBodyParserScope(argNames, boundtemplates, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
-        this.env.pushFunctionScope(lambdaenv);
+        const lambdaargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        const lambdaenv = this.env.pushLambdaScope(lambdaargs, (resultInfo instanceof AutoTypeSignature) ? undefined : resultInfo);
         const body = this.parseBody();
-        this.env.popFunctionScope();
+        this.env.popLambdaScope();
 
-        return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.capturedTemplates);
+        return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.boundtemplates);
     }
 
     private parseFunctionInvokeDecl(typescope: boolean): FunctionInvokeDecl | undefined {
@@ -1988,15 +1985,16 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+        const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        const boundtemplates = new Set<string>(...terms.map((term) => term.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates);
         const samples = this.parseSamples(cinfo);
     
-        const funcenv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
-        this.env.pushFunctionScope(funcenv);
+        this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody();
-        this.env.popFunctionScope();
+        this.env.popStandardFunctionScope();
 
         if(typescope) {
             return new TypeFunctionDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
@@ -2006,7 +2004,7 @@ class Parser {
         }
     }
 
-    private parseMethodInvokeDecl(taskscope: boolean): MethodDecl | TaskMethodDecl | undefined {
+    private parseMethodInvokeDecl(taskscope: boolean, typeTerms: Set<string>): MethodDecl | TaskMethodDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
         const attributes = this.parseAttributeList();
@@ -2040,15 +2038,31 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+        let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        if(taskscope) {
+            argNames.add("self");
+            cargs = [new LocalVariableDefinitionInfo("self", !isref), ...cargs];
+            if(isref) {
+                refparams.add("self");
+            }
+        }
+        else {
+            argNames.add("this");
+            cargs = [new LocalVariableDefinitionInfo("self", !isref), ...cargs];
+            if(isref) {
+                refparams.add("this");
+            }
+        }
+
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates);
         const samples = this.parseSamples(cinfo);
     
-        const menv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
-        this.env.pushFunctionScope(menv);
+        this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody();
-        this.env.popFunctionScope();
+        this.env.popStandardFunctionScope();
 
         if(taskscope) {
             return new TaskMethodDecl(cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, isref);
@@ -2058,7 +2072,7 @@ class Parser {
         }
     }
 
-    private parseActionInvokeDecl(): TaskActionDecl | undefined {
+    private parseActionInvokeDecl(typeTerms: Set<string>): TaskActionDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
         const attributes = this.parseAttributeList();
@@ -2085,15 +2099,20 @@ class Parser {
         }
 
         const argNames = new Set<string>(params.map((param) => param.name));
-        const boundtemplates = new Set<string>(this.env.getCurrentFunctionScope().boundtemplates);
+        let cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+        const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, boundtemplates, resultInfo);
+        argNames.add("self");
+        cargs = [new LocalVariableDefinitionInfo("self", true), ...cargs];
+        refparams.add("self");
+    
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates);
         const samples = this.parseSamples(cinfo);
     
-        const menv = new StdParserFunctionScope(argNames, boundtemplates, resultInfo);
-        this.env.pushFunctionScope(menv);
+        this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody();
-        this.env.popFunctionScope();
+        this.env.popStandardFunctionScope();
 
         return new TaskActionDecl(cinfo, attributes, fname, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
     }
@@ -2219,8 +2238,6 @@ class Parser {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         const tname = this.consumeTokenAndGetValue();
-        this.env.useTemplateType(tname);
-
         return new TemplateTypeSignature(sinfo, tname);
     }
 
@@ -2492,11 +2509,7 @@ class Parser {
         }
 
         ldecl.captureVarSet.forEach((v) => {
-            this.env.useLocalVar(v);
-        });
-
-        ldecl.captureTemplateSet.forEach((t) => {
-            this.env.useTemplateType(t);
+            this.env.useVariable(v);
         });
 
         const isAuto = ldecl.params.every((param) => param.type instanceof AutoTypeSignature);
@@ -2775,7 +2788,7 @@ class Parser {
         else if (tk === KW_this) {
             this.consumeToken();
 
-            const scopename = this.env.useLocalVar("this");
+            const scopename = this.env.useVariable("this");
             return new AccessVariableExpression(sinfo, "this", scopename);
         }
         else if (tk === KW_self) {
@@ -2784,19 +2797,19 @@ class Parser {
         else if (tk === KW_this) {
             this.consumeToken();
 
-            const scopename = this.env.useLocalVar("this");
+            const scopename = this.env.useVariable("this");
             return new AccessVariableExpression(sinfo, "this", scopename);
         }
         else if (tk === TokenStrings.IdentifierName && this.env.isVarDefinedInAnyScope(this.peekTokenData())) {
             const idname = this.consumeTokenAndGetValue();
             
-            const scopename = this.env.useLocalVar(idname);
+            const scopename = this.env.useVariable(idname);
             return new AccessVariableExpression(sinfo, idname, scopename);
         }
         else if (tk === TokenStrings.IdentifierName && this.peekTokenData().startsWith("$")) {
             const idname = this.consumeTokenAndGetValue();
             
-            const scopename = this.env.useLocalVar(idname);
+            const scopename = this.env.useVariable(idname);
             return new AccessVariableExpression(sinfo, idname, scopename);
         }
         /*

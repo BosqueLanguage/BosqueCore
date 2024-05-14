@@ -15,7 +15,7 @@ abstract class SourceNameDefinitionInfo {
     abstract isConst(): boolean;
     abstract getScopedName(): string;
 
-    abstract markUsed();
+    abstract markUsed(): void;
 }
 
 class LocalVariableDefinitionInfo extends SourceNameDefinitionInfo {
@@ -33,7 +33,7 @@ class LocalVariableDefinitionInfo extends SourceNameDefinitionInfo {
         return this.srcname;
     }
 
-    markUsed() {
+    markUsed(): void {
         ;
     }
 }
@@ -54,7 +54,7 @@ class BinderVariableDefinitionInfo extends SourceNameDefinitionInfo {
         return this.scopedname;
     }
 
-    markUsed() {
+    markUsed(): void {
         this.isUsed = true;
     }
 }
@@ -138,6 +138,10 @@ abstract class ParserScopeInfo {
             }
         }
 
+        if(this.args.some((arg) => arg.srcname === srcname)) {
+            bcount++;
+        }
+
         return bcount;
     }
 
@@ -158,57 +162,25 @@ abstract class ParserScopeInfo {
         return argi !== undefined && !argi.isConst;
     }
 
-    abstract getBinderVarName(srcname: string): string;
-
-    /*
-    isVarSourceNameDefined(name: string): boolean {
-        return this.args.has(name) || this.localscope.some((frame) => frame.locals.some((nn) => nn.srcname === name));
-    }
-
-    isVarScopeResolvedNameDefined(name: string): boolean {
-        return this.localscope.some((frame) => frame.locals.some((nn) => nn.scopedname === name));
-    }
-
-    isTemplateNameDefined(name: string): boolean {
-        return this.boundtemplates.has(name);
-    }
-
-    getVarInfoForSourceNameTry(name: string): LocalScopeVariableInfo | undefined {
-        for (let i = this.localscope.length - 1; i >= 0; --i) {
-            const vinfo = this.localscope[i].locals.find((fr) => fr.srcname === name);
-            if (vinfo !== undefined) {
-                return vinfo;
+    useVariable_helper(srcname: string): string | undefined {
+        for (let i = this.blockscope.length - 1; i >= 0; --i) {
+            const vv = this.blockscope[i].lookupVariableInfo(srcname);
+            if(vv !== undefined) {
+                vv.markUsed();
+                return vv.getScopedName();
             }
+        }
+
+        if(this.args.some((arg) => arg.srcname === srcname)) {
+            return srcname;
         }
 
         return undefined;
     }
 
-    getResolvedVarName(srcname: string): string {
-        const vinfo = this.getVarInfoForSourceNameTry(srcname);
-        return vinfo !== undefined ? vinfo.scopedname : srcname;
-    }
+    abstract getBinderVarName(srcname: string): string;
 
-    markUsedImplicitBinderIfNeeded(srcname: string) {
-        const vinfo = this.getVarInfoForSourceNameTry(srcname);
-        if (vinfo !== undefined && vinfo.isbinder) {
-            vinfo.isUsed = true;
-        }
-    }
-
-    getUsedImplicitBinderFromThisDef(srcname: string): boolean {
-        if(this.localscope.length !== 0) {
-            return false;
-        }
-
-        const thisvinfo = this.localscope[this.localscope.length - 1].locals.find((fr) => fr.srcname === srcname);
-        return thisvinfo !== undefined ? thisvinfo.isUsed : false;
-    }
-
-    defineLocalVar(name: string, scopedname: string, isconst: boolean, isbinder: boolean) {
-        this.localscope[this.localscope.length - 1].locals.push(new LocalScopeVariableInfo(name, scopedname, isconst, isbinder));
-    }
-    */
+    abstract useVariable(srcname: string): string | undefined;
 }
 
 class StandardScopeInfo extends ParserScopeInfo {
@@ -218,7 +190,11 @@ class StandardScopeInfo extends ParserScopeInfo {
 
     getBinderVarName(srcname: string): string {
         const ctr = this.getBinderVarName_helper(srcname);
-        return "$_" + srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+        return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+    }
+
+    useVariable(srcname: string): string | undefined {
+        return this.useVariable_helper(srcname);
     }
 }
 
@@ -235,7 +211,21 @@ class LambdaScopeInfo extends ParserScopeInfo {
 
     getBinderVarName(srcname: string): string {
         const ctr = (this.enclosing.getBinderVarName_helper(srcname) + this.getBinderVarName_helper(srcname));
-        return "$_" + srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+        return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
+    }
+
+    useVariable(srcname: string): string | undefined {
+        const rname = this.useVariable_helper(srcname);
+        if(rname !== undefined) {
+            return rname;
+        }
+
+        const rvar = this.enclosing.useVariable(srcname);
+        if(rvar !== undefined) {
+            this.capturedVars.add(srcname);
+        }
+
+        return rvar;
     }
 }
 
@@ -319,43 +309,44 @@ class ParserEnvironment {
         return this.scope.checkCanAssignVariable(srcname);
     }
 
-    useVariable(srcname: string): string {
+    useVariable(srcname: string): string | undefined {
         assert(this.scope !== undefined);
 
-        xxxx;
+        return this.scope.useVariable(srcname);
     }
 
-    /*
-    isVarDefinedInAnyScope(srcname: string): boolean {
-        return this.enclosingScope.isVarSourceNameDefined(srcname) || this.nestedScopes.some((sc) => sc.isVarSourceNameDefined(srcname));
+    isTemplateNameDefined(name: string): boolean {
+        assert(this.scope !== undefined);
+
+        return this.scope.boundtemplates.has(name);
     }
 
-    useLocalVar(srcname: string): string {
-        let rname: string | undefined = undefined;
-        if (srcname.startsWith("$")) {
-            for (let i = this.nestedScopes.length - 1; i >= 0; --i) {
-                if (this.nestedScopes[i].isVarSourceNameDefined(srcname)) {
-                    rname = this.nestedScopes[i].getResolvedVarName(srcname);
-                    break;
-                }
-            }
+    pushLambdaScope(args: LocalVariableDefinitionInfo[], rtype: TypeSignature | undefined): LambdaScopeInfo {
+        assert(this.scope !== undefined);
 
-            if(rname === undefined) {
-                rname = this.enclosingScope.getResolvedVarName(srcname);
-            }
-        }
-        else {
-            rname = srcname;
-        }
-
-        const cscope = this.getCurrentFunctionScope();
-        if (!cscope.isVarScopeResolvedNameDefined(srcname) && (cscope instanceof CapturingParserScope)) {
-            cscope.capturedVars.add(rname);
-        }
-        
-        return rname;
+        this.scope = new LambdaScopeInfo(args, this.scope.boundtemplates, rtype, this.scope);
+        return this.scope as LambdaScopeInfo;
     }
-    */
+
+    popLambdaScope() {
+        assert(this.scope !== undefined);
+        assert(this.scope instanceof LambdaScopeInfo);
+
+        this.scope = (this.scope as LambdaScopeInfo).enclosing;
+    }
+
+    pushStandardFunctionScope(args: LocalVariableDefinitionInfo[], terms: Set<string>, rtype: TypeSignature | undefined) {
+        assert(this.scope === undefined);
+
+        this.scope = new StandardScopeInfo(args, terms, rtype);
+    }
+
+    popStandardFunctionScope() {
+        assert(this.scope !== undefined);
+        assert(this.scope instanceof StandardScopeInfo);
+
+        this.scope = undefined;
+    }
 }
 
 export { 
