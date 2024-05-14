@@ -17,7 +17,7 @@ class BinderInfo {
     }
 
     emit(): string {
-        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.scopename ? ("%*" + this.scopename + "*%") : ""}  = ` : "";
+        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.scopename ? ("%*" + this.scopename + "*%") : ""}=` : "";
     }
 }
 

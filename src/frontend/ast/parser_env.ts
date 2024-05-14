@@ -286,10 +286,18 @@ class ParserEnvironment {
         this.scope.blockscope.push(bscope);
     }
 
-    popBinderExpressionScope(): string[] {
+    popBinderExpressionScope(): {srcname: string, scopedname: string}[] {
         assert(this.scope !== undefined);
         
-        return (this.scope.blockscope.pop() as BinderBlockScopeInfo).binders.filter((b) => b.isUsed).map((b) => b.srcname);
+        return (this.scope.blockscope.pop() as BinderBlockScopeInfo).binders.filter((b) => b.isUsed).map((b) => {
+            return {srcname: b.srcname, scopedname: b.scopedname};
+        });
+    }
+
+    identifierResolvesAsVariable(srcname: string): boolean {
+        assert(this.scope !== undefined);
+
+        return this.scope.useVariable(srcname) !== undefined;
     }
 
     addVariable(srcname: string, isconst: boolean): boolean {

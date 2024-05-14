@@ -3,10 +3,10 @@ import {strict as assert} from "assert";
 
 import { LambdaScopeInfo, LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AbortStatement, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, Statement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "../build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_test, KW_this, KW_true, KW_type, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_test, KW_then, KW_this, KW_true, KW_type, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dot, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -2370,6 +2370,24 @@ class Parser {
 
     ////
     //Expression parsing
+    private parseBinderInfo(): string | undefined {
+        if(!this.testToken(TokenStrings.IdentifierName)) {
+            return undefined;
+        }
+        else {
+            let vname = this.consumeTokenAndGetValue();
+            this.consumeToken();
+
+            if(/^\$[a-z_]/.test(vname)) {
+                return vname;
+            }
+            else {
+                this.recordErrorGeneral(this.lexer.peekNext(), "Binder name must start with $ and be lower case");
+                return undefined;
+            }
+        }
+    }
+
     private parseITest(): ITest | undefined {
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
 
@@ -2517,36 +2535,21 @@ class Parser {
     }
 
     private parseLiteralExpression(): LiteralExpressionValue {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
-
-        const expenv = new ParserStandaloneExpressionScope(new Set<string>(), this.env.enclosingScope.boundtemplates, undefined);
-        this.env.pushFunctionScope(expenv);
-        
+        this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, undefined);        
         const exp = this.parseExpression();
-        if(expenv.capturedVars.size !== 0) {
-            this.recordErrorGeneral(sinfo, "Cannot reference local variables in literal expression");
-        }
-
-        this.env.popFunctionScope();
+        this.env.popStandardFunctionScope();
 
         return new LiteralExpressionValue(exp);
     }
 
-    private parseConstExpression(capturesok: boolean): ConstantExpressionValue {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
-
-        const expenv = new ParserStandaloneExpressionScope(new Set<string>(), this.env.enclosingScope.boundtemplates, undefined);
-        this.env.pushFunctionScope(expenv);
-        
+    private parseConstExpression(bindnames: string[], etype: TypeSignature | undefined): ConstantExpressionValue {
+        this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, etype);
+        this.env.pushBinderExpressionScope(bindnames);
         const exp = this.parseExpression();
-        if(!capturesok && expenv.capturedVars.size !== 0) {
-            this.recordErrorGeneral(sinfo, "Cannot reference local variables in const expression");
-        }
+        const usedbinds = this.env.popBinderExpressionScope();
+        this.env.popStandardFunctionScope();
 
-        this.env.popFunctionScope();
-
-        return new ConstantExpressionValue(exp, expenv.capturedVars);
-
+        return new ConstantExpressionValue(exp, new Set<string>(...usedbinds.map((bind) => bind.srcname)));
     }
 
     private static isTaggedLiteral(val: string): boolean {
@@ -2789,28 +2792,40 @@ class Parser {
             this.consumeToken();
 
             const scopename = this.env.useVariable("this");
-            return new AccessVariableExpression(sinfo, "this", scopename);
+            if(scopename !== undefined) {
+                return new AccessVariableExpression(sinfo, "this", scopename);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, "Variable 'this' is not defined in this context");
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
         }
         else if (tk === KW_self) {
-            assert(false, "Need to handle various self cases");
+            assert(false, "Need to handle any self cases");
         }
-        else if (tk === KW_this) {
-            this.consumeToken();
-
-            const scopename = this.env.useVariable("this");
-            return new AccessVariableExpression(sinfo, "this", scopename);
-        }
-        else if (tk === TokenStrings.IdentifierName && this.env.isVarDefinedInAnyScope(this.peekTokenData())) {
+        else if (tk === TokenStrings.IdentifierName && this.env.identifierResolvesAsVariable(this.peekTokenData())) {
             const idname = this.consumeTokenAndGetValue();
             
             const scopename = this.env.useVariable(idname);
-            return new AccessVariableExpression(sinfo, idname, scopename);
+            if(scopename !== undefined) {
+                return new AccessVariableExpression(sinfo, idname, scopename);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
         }
         else if (tk === TokenStrings.IdentifierName && this.peekTokenData().startsWith("$")) {
             const idname = this.consumeTokenAndGetValue();
             
             const scopename = this.env.useVariable(idname);
-            return new AccessVariableExpression(sinfo, idname, scopename);
+            if(scopename !== undefined) {
+                return new AccessVariableExpression(sinfo, idname, scopename);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
         }
         /*
         else if (tk === KW_ok || tk === KW_err || tk === KW_something || tk === KW_result) {
@@ -3356,11 +3371,10 @@ class Parser {
         }
     }
 
-    private parseIfTest(bindername: string): IfTest {
+    private parseIfTest(): IfTest {
         const tk = this.peekToken();
-        
+
         if(tk !== SYM_lparen) {
-            xxxx;
             const itest = this.parseITest();
             
             this.ensureAndConsumeToken(SYM_lparen, "if test");
@@ -3378,51 +3392,60 @@ class Parser {
         }
     }
 
-    private parseExpressionWithBinder(): [boolean, Expression] {
-        try {
-            this.m_penv.getCurrentFunctionScope().pushLocalScope();
-            this.m_penv.getCurrentFunctionScope().defineLocalVar("$", `$_$_${this.m_penv.getBinderExtension("$")}`, true);
-
-            const ee = this.parseExpression();
-            const isbind = this.m_penv.getCurrentFunctionScope().getUsedImplicitBinder();
-
-            return [isbind, ee];
-        }
-        finally {
-            this.m_penv.getCurrentFunctionScope().popLocalScope();
-        }
-    }
-
     private parseIfExpression(): Expression {
-        const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
-
-        let conds: {cond: IfTest, value: Expression, binderinfo: string | undefined}[] = [];
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         this.consumeToken();
-        const iftest = this.parseIfTest(bindername);
+        const binder = this.parseBinderInfo();
+        const iftest = this.parseIfTest();
 
         this.ensureAndConsumeToken(KW_then, "if expression value")
-        const [ifbind, ifbody] = this.parseExpressionWithBinder();
-        conds.push({ cond: iftest, value: ifbody, binderinfo: ifbind ? bindername : undefined });
 
-        while (this.testAndConsumeTokenIf(KW_elif)) {
-            const eliftest = this.parseIfTest(bindername);
+        let bnames: string[] = [];
+        let isimplicit = false;
+        if(iftest.itestopt !== undefined) {
+            if(binder !== undefined) {
+                bnames = [binder];
+            }
+            else if(iftest.exp instanceof AccessVariableExpression) {
+                const vname = iftest.exp.srcname;
+                if(!vname.startsWith("$")) {
+                    bnames = ["$" + vname];
+                }
+            }
+            else {
+                bnames = ["$_"];
+                isimplicit = true;
+            }
+        }
 
-            this.ensureAndConsumeToken(KW_then, "elif expression value")
-            const [elifbind, elifbody] = this.parseExpressionWithBinder();
-
-            conds.push({ cond: eliftest, value: elifbody, binderinfo: elifbind ? bindername : undefined});
+        const ifvalueinfo = this.parseExpressionWithBinder(bnames);
+        let btrue: BinderInfo | undefined = undefined;
+        if(ifvalueinfo.used.length > 0) {
+            btrue = new BinderInfo(ifvalueinfo.used[0].srcname, ifvalueinfo.used[0].scopedname, isimplicit);
         }
 
         this.ensureAndConsumeToken(KW_else, "if expression else value");
-        const [elsebind, elsebody] = this.parseExpressionWithBinder();
+        const elsevalueinfo = this.parseExpressionWithBinder(bnames);
 
-        return new IfExpression(sinfo, conds, {value: elsebody, binderinfo: elsebind ? bindername : undefined});
+        let belse: BinderInfo | undefined = undefined;
+        if(elsevalueinfo.used.length > 0) {
+            belse = new BinderInfo(elsevalueinfo.used[0].srcname, elsevalueinfo.used[0].scopedname, isimplicit);
+        }
+
+        return new IfExpression(sinfo, iftest, ifvalueinfo.exp, btrue, elsevalueinfo.exp, belse);
     }
 
     private parseExpression(): Expression {
         return this.parseImpliesExpression();
+    }
+
+    private parseExpressionWithBinder(bindernames: string[]): {exp: Expression, used: {srcname: string, scopedname: string}[]} {
+        this.env.pushBinderExpressionScope(bindernames)
+        const exp = this.parseExpression();
+        const used = this.env.popBinderExpressionScope();
+
+        return {exp: exp, used: used};
     }
 
     private parseMapEntryConstructorExpression(): Expression {
@@ -3482,8 +3505,8 @@ class Parser {
             itype = this.parseTypeSignature();
         }
 
-        if(this.env.getCurrentFunctionScope().isVarSourceNameDefined(name)) {
-            this.recordErrorGeneral(sinfo, `Variable "${name}" is already defined in scope`);
+        if(!/^[a-z_]/.test(name)) {
+            this.recordErrorGeneral(sinfo, `Local varialbes must start with a lowercase letter or underscore but got "${name}"`);
         }
 
         return { name: name, vtype: itype };
@@ -3506,15 +3529,9 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
         const name = this.consumeTokenAndGetValue();
 
-        xxxx;
-
-        const vinfo = this.env.getCurrentFunctionScope().getVarInfoForSourceNameTry(name);
-        if(vinfo === undefined) {
-            this.recordErrorGeneral(sinfo, `Variable "${name}" is already defined in scope`);
-        }
         
-        if(vinfo !== undefined && vinfo.isconst) {
-            this.recordErrorGeneral(sinfo, `Variable "${name}" is const and cannot be reassigned`);
+        if(!/^[a-z_]/.test(name)) {
+            this.recordErrorGeneral(sinfo, `Local varialbes must start with a lowercase letter or underscore but got "${name}"`);
         }
 
         return name;
@@ -3679,6 +3696,7 @@ class Parser {
             
             this.consumeToken();
             const assigns = this.parseMultiDeclarationVarInfo();
+
             if(this.testToken(SYM_semicolon)) {
                 if(isConst) {
                     this.recordErrorGeneral(sinfo, "Cannot declare as const without an assignment");
@@ -3688,7 +3706,9 @@ class Parser {
                     this.recordErrorGeneral(sinfo, "Cannot declare a variable with an auto type without an assignment");
                 }
 
-                xxxx;
+                assigns.forEach((vv) => {
+                    this.env.addVariable(vv.name, isConst);
+                });
 
                 return assigns.length === 1 ? new VariableDeclarationStatement(sinfo, assigns[0].name, assigns[0].vtype) : new VariableMultiDeclarationStatement(sinfo, assigns);
             }
@@ -3698,7 +3718,9 @@ class Parser {
                 const exp = this.parseRHSExpression();
                 if(this.testToken(SYM_semicolon)) {
                     //could be elist type expression but we need to wait for type checking
-                    xxxx;
+                    assigns.forEach((vv) => {
+                        this.env.addVariable(vv.name, isConst);
+                    });
 
                     return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exp);
                 }
@@ -3714,7 +3736,9 @@ class Parser {
                         this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                     }
 
-                    xxxx;
+                    assigns.forEach((vv) => {
+                        this.env.addVariable(vv.name, isConst);
+                    });
 
                     return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exps[0]) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exps);
                 }
@@ -3738,6 +3762,10 @@ class Parser {
 
             if(this.testToken(SYM_semicolon)) {
                 //could be elist type expression but we need to wait for type checking
+                vnames.forEach((vv) => {
+                    this.env.assignVariable(vv);
+                });
+
                 return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exp) : new VariableMultiAssignmentStatement(sinfo, vnames, exp);
             }
             else {
@@ -3751,6 +3779,10 @@ class Parser {
                 if(exps.length !== vnames.length) {
                     this.recordErrorGeneral(sinfo, "Mismatch in number of variables and expressions in assignment");
                 }
+
+                vnames.forEach((vv) => {
+                    this.env.assignVariable(vv);
+                });
 
                 return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exps[0]) : new VariableMultiAssignmentStatement(sinfo, vnames, exps);
             }
@@ -3946,11 +3978,11 @@ class Parser {
     private parseScopedBlockStatement(): BlockStatement {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        this.env.getCurrentFunctionScope().pushLocalScope();
+        this.env.pushStandardBlockScope();
         const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
             return this.parseStatement();
         });
-        this.env.getCurrentFunctionScope().popLocalScope();
+        this.env.popStandardBlockScope();
 
         if(stmts.length === 0) {
             this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
@@ -3959,13 +3991,24 @@ class Parser {
         return new BlockStatement(sinfo, stmts);
     }
 
-    private parseScopedBlockStatementWithBinderTracking(): [boolean, BlockStatement] {
-        xxxx;
+    private parseScopedBlockStatementWithBinderTracking(bindernames: string[]): {block: BlockStatement, used: {srcname: string, scopedname: string}[]} {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.env.pushBinderExpressionScope(bindernames);
+        const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+            return this.parseStatement();
+        });
+        const used = this.env.popBinderExpressionScope();
+
+        if(stmts.length === 0) {
+            this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
+        }
+
+        return {block: new BlockStatement(sinfo, stmts), used: used};
     }
 
     private parseIfElseStatement(): Statement {
-        const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         let conds: {cond: IfTest, value: ScopedBlockStatement, binderinfo: string | undefined }[] = [];
 
