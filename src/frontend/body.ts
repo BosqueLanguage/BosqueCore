@@ -1,3 +1,4 @@
+import {strict as assert} from "assert";
 
 import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
 
@@ -187,7 +188,7 @@ class ArgumentList {
 
 enum ExpressionTag {
     Clear = "[CLEAR]",
-    ErrorExpresion = "ErrorExpression",
+    ErrorExpression = "ErrorExpression",
 
     LiteralNoneExpression = "LiteralNoneExpression",
     LiteralNothingExpression = "LiteralNothingExpression",
@@ -314,9 +315,21 @@ abstract class Expression {
     readonly tag: ExpressionTag;
     readonly sinfo: SourceInfo;
 
+    private etype: TypeSignature | undefined = undefined;
+
     constructor(tag: ExpressionTag, sinfo: SourceInfo) {
         this.tag = tag;
         this.sinfo = sinfo;
+    }
+
+    getType(): TypeSignature {
+        assert(this.etype !== undefined, "Type signature not set");
+        return this.etype as TypeSignature;
+    }
+
+    setType(etype: TypeSignature): TypeSignature {
+        this.etype = etype;
+        return etype;
     }
 
     abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
@@ -327,7 +340,7 @@ class ErrorExpression extends Expression {
     readonly dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined;
 
     constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
-        super(ExpressionTag.ErrorExpresion, sinfo);
+        super(ExpressionTag.ErrorExpression, sinfo);
 
         this.staticPrefix = staticPrefix;
         this.dotaccess = dotaccess;

@@ -102,9 +102,6 @@ class NominalTypeSignature extends TypeSignature {
         if(this.ns.length === 0) {
             nscope = "";
         }
-        else if(this.ns.length !== 0 && this.ns[0] === "Core") {
-            nscope = this.ns.slice(1).join("::") + "::";
-        }
         else {
             nscope = this.ns.join("::") + "::";
         }

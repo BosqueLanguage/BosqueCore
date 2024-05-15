@@ -3,6 +3,39 @@ import {strict as assert} from "assert";
 import { Expression } from "./body";
 import { TemplateBindingScope } from "./checker_environment";
 import { SourceInfo } from "./build_decls";
+import { NominalTypeSignature, TypeSignature } from "./type";
+
+
+class OOMemberLookupInfo<T> {
+    readonly ttype: ResolvedType;
+    readonly ootype: OOPTypeDecl;
+    readonly oobinds: Map<string, ResolvedType>;
+    readonly decl: T;
+
+    constructor(ttype: ResolvedType, ootype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, decl: T) {
+        this.ttype = ttype;
+        this.ootype = ootype;
+        this.oobinds = oobinds;
+        this.decl = decl;
+    }
+}
+
+class OOMemberResolution<T> {
+    readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
+    readonly impl: OOMemberLookupInfo<T>[]; //may be no candidates for the actual implementation (then this is a virtual call)
+    readonly totalimpls: boolean; //true if every option resolved to an implementation (false if some resolutions didn't find a concrete implementation)
+
+    constructor(decl: OOMemberLookupInfo<T>, impl: OOMemberLookupInfo<T>[], istotal: boolean) {
+        this.decl = decl;
+        this.impl = impl;
+        this.totalimpls = istotal;
+    }
+}
+
+enum ResolveResultFlag {
+    notfound,
+    failure
+}
 
 class TypeCheckerResolver {
     compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindingScope): Expression | undefined {
@@ -62,177 +95,454 @@ class TypeCheckerResolver {
         }
     }
 
-    resolveREExp(sinfo: SourceInfo, cre: RegexConstClass): RegexComponent {
-        this.raiseErrorIf(sinfo, !this.m_assembly.hasNamespace(cre.ns), "Namespace not found");
-        const ns = this.m_assembly.getNamespace(cre.ns);
-
-        this.raiseErrorIf(sinfo, !ns.consts.has(cre.ccname), "Const name not found");
-        const cc = ns.consts.get(cre.ccname) as NamespaceConstDecl;
-
-        if(cc.value.exp instanceof LiteralRegexExpression) {
-            return cre;
-        }
-        else {
-            this.raiseErrorIf(sinfo, !(cc.value.exp instanceof AccessNamespaceConstantExpression), "Only literals and other const references allowed");
-
-            const cca = cc.value.exp as AccessNamespaceConstantExpression;
-            return this.resolveREExp(sinfo, new RegexConstClass(cca.ns, cca.name));
-        }
+    resolveStringRegexValidatorInfo(ttype: NominalTypeSignature): {vtype: TypeSignature, vre: string} | undefined {
+        //TODO: from the assembly resolve the 
+        xxxx;
     }
 
-    private splitConceptTypes(ofc: ResolvedConceptAtomType, withc: ResolvedConceptAtomType): {tp: ResolvedType | undefined, fp: ResolvedType | undefined} {
-        if (ofc.typeID === "Any" && withc.typeID === "Some") {
-            return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNoneType() };
-        }
-        else if (ofc.typeID.startsWith("Option<") && withc.typeID === "ISomething") {
-            const somthingres = ResolvedSomethingEntityAtomType.create(this.m_assembly.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType)
-            return { tp: ResolvedType.createSingle(somthingres), fp: this.getSpecialNothingType() };
-        }
-        else if (ofc.typeID === "IOption" && withc.typeID === "ISomething") {
-            return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNothingType() };
-        }
-        else {
-            const nand = this.normalizeAndList([...withc.conceptTypes, ...ofc.conceptTypes]);
-            return { tp: nand, fp: ResolvedType.createSingle(ofc) };
-        }
-    }
+    getAllOOFields(ttype: TypeSignature, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fmap?: Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
+        assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
 
-    private splitConceptEntityTypes(ofc: ResolvedConceptAtomType, withe: ResolvedEntityAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        const somethingdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Something") as EntityTypeDecl;
-        const okdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Ok") as EntityTypeDecl;
-        const errdecl = this.m_assembly.tryGetObjectTypeForFullyResolvedName("Result::Err") as EntityTypeDecl;
+        let declfields = fmap || new Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>();
 
-        //
-        //TODO: we may want to handle some ISomething, Something, Option, Nothing situations more precisely if they can arise
-        //
+        //Important to do traversal in Left->Right Topmost traversal order
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declfields = this.getAllOOFields(provide, concept.concept, concept.binds, declfields);
+        });
 
-        if (ofc.typeID === "Any" && withe.typeID === "None") {
-            return { tp: ResolvedType.createSingle(withe), fp: this.getSpecialSomeConceptType() };
-        }
-        else if (ofc.typeID.startsWith("Option<") && withe.typeID === "Nothing") {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedSomethingEntityAtomType.create(somethingdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType)) };
-        }
-        else if (ofc.typeID.startsWith("Option<") && withe.typeID === "Something<") {
-            return { tp: ResolvedType.createSingle(withe), fp: this.getSpecialNothingType() };
-        }
-        else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Ok<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedErrEntityAtomType.create(errdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
-        }
-        else if (ofc.typeID.startsWith("Result<") && withe.typeID.startsWith("Result::Err<")) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ResolvedOkEntityAtomType.create(okdecl, ofc.conceptTypes[0].binds.get("T") as ResolvedType, ofc.conceptTypes[0].binds.get("E") as ResolvedType)) };
-        }
-        else if(this.atomSubtypeOf(withe, ofc)) {
-            return { tp: ResolvedType.createSingle(withe), fp: ResolvedType.createSingle(ofc) };
-        }
-        else {
-            return { tp: undefined, fp: ResolvedType.createSingle(ofc) };
-        }
-    }
-
-    private splitConceptTuple(ofc: ResolvedConceptAtomType, witht: ResolvedTupleAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        const withc = this.getConceptsProvidedByTuple(witht);
-        if (this.atomSubtypeOf(withc, ofc)) {
-            return { tp: ResolvedType.createSingle(witht), fp: ResolvedType.createSingle(ofc) };
-        }
-        else {
-            return { tp: undefined, fp: ResolvedType.createSingle(ofc) };
-        }
-    }
-
-    private splitConceptRecord(ofc: ResolvedConceptAtomType, withr: ResolvedRecordAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        const withc = this.getConceptsProvidedByRecord(withr);
-        if (this.atomSubtypeOf(withc, ofc)) {
-            return { tp: ResolvedType.createSingle(withr), fp: ResolvedType.createSingle(ofc) };
-        }
-        else {
-            return { tp: undefined, fp: ResolvedType.createSingle(ofc) };
-        }
-    }
-
-    private splitAtomTypes(ofa: ResolvedAtomType, witha: ResolvedAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        if (this.atomSubtypeOf(ofa, witha)) {
-            return { tp: ResolvedType.createSingle(ofa), fp: undefined };
-        }
-
-        if(ofa instanceof ResolvedConceptAtomType) {
-            if (witha instanceof ResolvedEntityAtomType) {
-                return this.splitConceptEntityTypes(ofa, witha);
+        ooptype.memberFields.forEach((mf) => {
+            if (!declfields.has(mf.name)) {
+                declfields.set(mf.name, [ttype, ooptype, mf, oobinds]);
             }
-            else if(witha instanceof ResolvedConceptAtomType) {
-                return this.splitConceptTypes(ofa, witha);
-            }
-            else if (witha instanceof ResolvedTupleAtomType) {
-                return this.splitConceptTuple(ofa, witha);
-            }
-            else if (witha instanceof ResolvedRecordAtomType) {
-                return this.splitConceptRecord(ofa, witha);
+        });
+
+        return declfields;
+    }
+
+    getAllInvariantProvidingTypesInherit(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+        let declinvs: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
+
+        if (declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
+            return declinvs;
+        }
+
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        rprovides.forEach((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            declinvs = this.getAllInvariantProvidingTypesInherit(provide, concept.concept, concept.binds, declinvs);
+        });
+
+
+        if (ooptype.invariants.length !== 0 || ooptype.validates.length !== 0) {
+            declinvs.push([ttype, ooptype, oobinds]);
+        }
+
+        return declinvs;
+    }
+
+    getAllInvariantProvidingTypesTypedecl(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, invprovs?: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][]): [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] {
+        let declinvs: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>][] = [...(invprovs || [])];
+
+        if (declinvs.find((dd) => dd[0].typeID === ttype.typeID)) {
+            return declinvs;
+        }
+
+        if (ttype.tryGetUniqueEntityTypeInfo() instanceof ResolvedTypedeclEntityAtomType) {
+            const ccdecl = ttype.tryGetUniqueEntityTypeInfo() as ResolvedTypedeclEntityAtomType;
+            const oftype = ResolvedType.createSingle(ccdecl.valuetype);
+
+            declinvs = this.getAllInvariantProvidingTypesTypedecl(oftype, ccdecl.valuetype.object, ccdecl.valuetype.getBinds(), declinvs);
+        }
+
+        if ((ooptype.invariants.length !== 0 || ooptype.validates.length !== 0)
+            || (ooptype.attributes.includes("__stringof_type") || ooptype.attributes.includes("__asciistringof_type"))
+            || (ooptype.attributes.includes("__path_type") || ooptype.attributes.includes("__pathfragment_type") || ooptype.attributes.includes("__pathglob_type"))
+        ) {
+            declinvs.push([ttype, ooptype, oobinds]);
+        }
+
+        return declinvs;
+    }
+
+    entityTypeConstructorHasInvariants(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>): boolean {
+        const ccdecls = this.getAllInvariantProvidingTypesInherit(ttype, ooptype, oobinds);
+        return ccdecls.some((ccd) => {
+            return ccd[1].invariants.some((ii) => isBuildLevelEnabled(ii.level, this.m_buildLevel));
+        });
+    }
+
+    typedeclTypeConstructorHasInvariants(ttype: ResolvedType, ooptype: OOPTypeDecl): boolean {
+        const ccdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, new Map<string, ResolvedType>());
+        return ccdecls.some((ccd) => {
+            return ccd[1].invariants.some((ii) => isBuildLevelEnabled(ii.level, this.m_buildLevel));
+        });
+    }
+
+    typedeclTypeConstructorFromValueHasInvariants(ttype: ResolvedType, ooptype: OOPTypeDecl): boolean {
+        const ccdecls = this.getAllInvariantProvidingTypesTypedecl(ttype, ooptype, new Map<string, ResolvedType>());
+        return ccdecls.some((ccd) => {
+            return ccd[1].invariants.some((ii) => isBuildLevelEnabled(ii.level, this.m_buildLevel));
+        });
+    }
+
+    ////
+    //Type representation, normalization, and operations
+    private resolveTemplateBinds(sinfo: SourceInfo, declterms: TemplateTermDecl[], giventerms: TypeSignature[], binds: TemplateBindScope): Map<string, ResolvedType> {
+        let fullbinds = new Map<string, ResolvedType>();
+
+        for (let i = 0; i < declterms.length; ++i) {
+            const ttype = this.normalizeTypeOnly(giventerms[i], binds);
+            this.raiseErrorIf(sinfo, ttype.isInvalidType(), `Could not resolve template for ${declterms[i].name} given binding as ${giventerms[i].getDiagnosticName()}`)
+
+            fullbinds.set(declterms[i].name, ttype);
+        }
+
+        return fullbinds;
+    }
+
+    private tryGetMemberImpl_helper<T extends OOMemberDecl>(ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
+        const mdecl = fnlookup(ooptype);
+        if(mdecl !== undefined) {
+            if(mdecl.hasAttribute("abstract")) {
+                return ResolveResultFlag.notfound;
             }
             else {
-                return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
             }
         }
-        else if (ofa instanceof ResolvedTupleAtomType) {
-            if (witha instanceof ResolvedTupleAtomType) {
-                if(ofa.typeID === witha.typeID) {
-                    return { tp: ResolvedType.createSingle(witha), fp: undefined };
-                }
-                else {
-                    return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
-                }
-            }
-            else {
-                return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
-            }
+
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        if(rprovides.length === 0) {
+            return ResolveResultFlag.notfound;
         }
-        else if (ofa instanceof ResolvedRecordAtomType) {
-            if (witha instanceof ResolvedRecordAtomType) {
-                if(ofa.typeID === witha.typeID) {
-                    return { tp: ResolvedType.createSingle(witha), fp: undefined };
-                }
-                else {
-                    return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
-                }
-            }
-            else {
-                return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
-            }
+
+        const options = rprovides.map((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            return this.tryGetMemberImpl_helper<T>(provide, concept.concept, concept.binds, fnlookup);
+        })
+        .filter((opt) => Array.isArray(opt));
+
+        let impls: OOMemberLookupInfo<T>[] = [];
+        for(let i = 0; i < options.length; ++i) {
+            const newopts = (options[i] as OOMemberLookupInfo<T>[]).filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            impls.push(...newopts);
         }
-        else {
-            return { tp: undefined, fp: ResolvedType.createSingle(ofa) };
-        }
+
+        return impls;
     }
 
-    private splitAtomWithType(ofa: ResolvedAtomType, witht: ResolvedType): { tp: ResolvedType[], fp: ResolvedType[] } {
-        let tp: ResolvedType[] = [];
-        let fp: ResolvedType[] = [];
-        witht.options
-            .map((opt) => this.splitAtomTypes(ofa, opt))
-            .forEach((rr) => {
-                if(rr.tp !== undefined) {
-                    tp.push(rr.tp);
-                }
-                if(rr.fp !== undefined) {
-                    fp.push(rr.fp);
-                }
-            });
+    private tryGetMemberDecls_helper<T extends OOMemberDecl>(name: string, ttype: ResolvedType, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberLookupInfo<T>[] | ResolveResultFlag {
+        const mdecl = fnlookup(ooptype);
+        if(mdecl !== undefined) {
+            if(mdecl.hasAttribute("abstract") || mdecl.hasAttribute("virtual")) {
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
+            }
+        }
 
-        return { tp: tp, fp: fp };
+        const rprovides = this.resolveProvides(ooptype, TemplateBindScope.createBaseBindScope(oobinds));
+        if(rprovides.length === 0) {
+            return ResolveResultFlag.notfound;
+        }
+
+        const options = rprovides.map((provide) => {
+            const concept = (provide.options[0] as ResolvedConceptAtomType).conceptTypes[0];
+            return this.tryGetMemberDecls_helper<T>(name, provide, concept.concept, concept.binds, fnlookup);
+        });
+
+        if(options.includes(ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (options.includes(ResolveResultFlag.notfound)) {
+            if (mdecl !== undefined && !mdecl.hasAttribute("override")) {
+                return [new OOMemberLookupInfo<T>(ttype, ooptype, oobinds, mdecl)];
+            }
+        }
+
+        const ropts = options.filter((opt) => opt !== ResolveResultFlag.failure && opt !== ResolveResultFlag.notfound) as OOMemberLookupInfo<T>[][];
+        if(ropts.length === 0) {
+            return ResolveResultFlag.notfound;
+        }
+
+        let decls: OOMemberLookupInfo<T>[] = [];
+        for(let i = 0; i < ropts.length; ++i) {
+            const newopts = ropts[i].filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            decls.push(...newopts);
+        }
+
+        return decls;
     }
 
-    private splitTypes(oft: ResolvedType, witht: ResolvedType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
-        if (oft.isInvalidType() || witht.isInvalidType()) {
-            return { tp: undefined, fp: undefined };
+    //When resolving a member on a concept we must find a unique decl and 0 or more implementations
+    //const/function/field lookups will assert that an implementation was found -- method/operator lookups may be dynamic and just find a declration
+    resolveMemberFromConceptAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedConceptAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const declsopts = atom.conceptTypes
+            .map((cpt) => this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+            .filter((opt) => opt !== ResolveResultFlag.notfound);
+
+        //Lookup failed
+        if(declsopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
         }
 
-        if (oft.typeID === witht.typeID) {
-            return { tp: oft, fp: undefined };
+        let decls: OOMemberLookupInfo<T>[] = [];
+        for (let i = 0; i < declsopts.length; ++i) {
+            const newopts = (declsopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !decls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            decls.push(...newopts);
         }
 
-        const paths = oft.options.map((opt) => this.splitAtomWithType(opt, witht));
-        let tp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.tp));
-        let fp = ([] as ResolvedType[]).concat(...paths.map((pp) => pp.fp));
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
 
-        return {tp: tp.length !== 0 ? this.normalizeUnionList(tp) : undefined, fp: fp.length !== 0 ? this.normalizeUnionList(fp) : undefined};
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const implopts = atom.conceptTypes
+            .map((cpt) => this.tryGetMemberImpl_helper(ResolvedType.createSingle(ResolvedConceptAtomType.create([cpt])), cpt.concept, cpt.binds, fnlookup))
+            .filter((opt) => opt !== ResolveResultFlag.notfound);
+
+        //Lookup failed
+        if(implopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
+        //ok not to find an implementation
+
+        let impls: OOMemberLookupInfo<T>[] = [];
+        for (let i = 0; i < implopts.length; ++i) {
+            const newopts = (implopts[i] as OOMemberLookupInfo<T>[]).filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));
+            impls.push(...newopts);
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls, impls.length > 0);
+    }
+
+    //When resolving a member on an entity we must find a unique decl and a unique or more implementation
+    //const/function/field/method lookups will assert that an implementation was found
+    resolveMemberFromEntityAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedEntityAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const decls = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+        
+        //Lookup failed
+        if(decls === ResolveResultFlag.notfound) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if(decls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const impls = this.tryGetMemberImpl_helper(ResolvedType.createSingle(atom), atom.object, atom.getBinds(), fnlookup);
+
+        //Lookup failed
+        if(impls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls !== ResolveResultFlag.notfound ? impls : [], impls !== ResolveResultFlag.notfound);
+    }
+
+    //When resolving a member on an task we must find a unique decl and implementation
+    //const/function lookups will assert that an implementation was found
+    resolveMemberFromTaskAtom<T extends OOMemberDecl> (sinfo: SourceInfo, ttype: ResolvedType, atom: ResolvedTaskAtomType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        //decls
+        const decls = this.tryGetMemberDecls_helper(name, ResolvedType.createSingle(atom), atom.task, atom.binds, fnlookup);
+        
+        //Lookup failed
+        if(decls === ResolveResultFlag.notfound) {
+            this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if(decls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length === 0) {
+            this.raiseError(sinfo, `Missing declaraton for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        if (decls.length > 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${atom.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        //impls
+        const impls = this.tryGetMemberImpl_helper(ResolvedType.createSingle(atom), atom.task, atom.binds, fnlookup);
+
+        //Lookup failed
+        if(impls === ResolveResultFlag.failure) {
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls !== ResolveResultFlag.notfound ? impls : [], impls !== ResolveResultFlag.notfound);
+    }
+
+    resolveMember<T extends OOMemberDecl>(sinfo: SourceInfo, ttype: ResolvedType, name: string, fnlookup: (tt: OOPTypeDecl) => T | undefined): OOMemberResolution<T> | ResolveResultFlag {
+        const sopts = ttype.options.map((atom) => {
+            if (atom instanceof ResolvedEntityAtomType) {
+                return this.resolveMemberFromEntityAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
+            }
+            else if(atom instanceof ResolvedTaskAtomType) {
+                return this.resolveMemberFromTaskAtom(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
+            }
+            else if (atom instanceof ResolvedConceptAtomType) {
+                return this.resolveMemberFromConceptAtom<T>(sinfo, ResolvedType.createSingle(atom), atom, name, fnlookup);
+            }
+            else {
+                this.raiseError(sinfo, `Cannot resolve ${name} on type ${atom.typeID}`);
+                return ResolveResultFlag.failure;
+            }
+        });
+
+        if(sopts.some((opt) => opt === ResolveResultFlag.failure)) {
+            return ResolveResultFlag.failure;
+        }
+
+        let decls: OOMemberLookupInfo<T>[] = [];
+        let impls: OOMemberLookupInfo<T>[] = [];
+        let totalresolve = true;
+        for (let i = 0; i < sopts.length; ++i) {
+            const declopt = (sopts[i] as OOMemberResolution<T>).decl;
+            const implopts = (sopts[i] as OOMemberResolution<T>).impl;
+
+            if(!decls.some((info) => info.ttype.typeID === declopt.ttype.typeID)) {
+                decls.push(declopt);
+            }
+
+            const newimpls = implopts.filter((opt) => !impls.some((info) => info.ttype.typeID === opt.ttype.typeID));;
+            impls.push(...newimpls);
+
+            totalresolve = totalresolve && (sopts[i] as OOMemberResolution<T>).totalimpls;
+        }
+
+        if(decls.length !== 1) {
+            this.raiseError(sinfo, `Multiple declaratons possible for ${name} on type ${ttype.typeID}`);
+            return ResolveResultFlag.failure;
+        }
+
+        return new OOMemberResolution<T>(decls[0], impls, totalresolve);
+    }
+
+    resolveMemberConst(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticMemberDecl> | undefined {
+        const resl = this.resolveMember<StaticMemberDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticMembers.find((sm) => sm.name === name));
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
+            return undefined;
+        }
+
+        if(!resl.totalimpls) {
+            return undefined;
+        }
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple constant values found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
+        }
+
+        return resl.impl[0];
+    }
+
+    resolveMemberFunction(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<StaticFunctionDecl> | undefined {
+        const resl = this.resolveMember<StaticFunctionDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.staticFunctions.find((sf) => sf.name === name));
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
+            return undefined;
+        }
+
+        if(!resl.totalimpls) {
+            return undefined;
+        }
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple member function implementations found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
+        }
+
+        return resl.impl[0];
+    }
+
+    resolveMemberField(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberLookupInfo<MemberFieldDecl> | undefined {
+        const resl = this.resolveMember<MemberFieldDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberFields.find((sm) => sm.name === name));
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
+            return undefined;
+        }
+
+        if(!resl.totalimpls) {
+            return undefined;
+        }
+
+        if(resl.impl.length !== 1) {
+            this.raiseError(sinfo, `Multuple member field versions found for ${name} on type ${ttype.typeID} -- ${resl.impl.map((ii) => ii.ttype.typeID).join(", ")}`);
+            return undefined;
+        }
+
+        return resl.impl[0];
+    }
+
+    resolveMemberMethod(sinfo: SourceInfo, ttype: ResolvedType, name: string): OOMemberResolution<MemberMethodDecl> | undefined {
+        const resl = this.resolveMember<MemberMethodDecl>(sinfo, ttype, name, (tt: OOPTypeDecl) => tt.memberMethods.find((mf) => mf.name === name));
+        if(resl === ResolveResultFlag.failure || resl === ResolveResultFlag.notfound) {
+            return undefined;
+        }
+
+        return resl;
+    }
+
+    resolveProvides(tt: OOPTypeDecl, binds: TemplateBindScope): ResolvedType[] {
+        let scpt: [ResolvedConceptAtomTypeEntry, TypeConditionRestriction | undefined][] = [];
+        for (let i = 0; i < tt.provides.length; ++i) {
+            const rsig = this.normalizeTypeOnly(tt.provides[i][0], binds);
+            if(rsig.options.length !== 1 || !(rsig.options[0] instanceof ResolvedConceptAtomType)) {
+                this.raiseError(tt.sourceLocation, `provides types must be a concept -- got ${rsig.typeID}`);
+                return [];
+            }
+
+            const flatcpts = rsig.options[0].conceptTypes.map((rcpte) => [rcpte, tt.provides[i][1]] as [ResolvedConceptAtomTypeEntry, TypeConditionRestriction | undefined]);
+            scpt.push(...flatcpts)
+        }
+
+
+        let oktypes: ResolvedType[] = [];
+        
+        for (let i = 0; i < scpt.length; ++i) {
+            const rsig = ResolvedType.createSingle(ResolvedConceptAtomType.create([scpt[i][0]]));
+            const pcond = scpt[i][1];
+            if(pcond === undefined) {
+                oktypes.push(rsig);
+            }
+            else {
+                const allok = pcond.constraints.every((consinfo) => {
+                    const constype = this.normalizeTypeOnly(consinfo.t, binds)
+                    return this.subtypeOf(constype, this.normalizeTypeOnly(consinfo.tconstraint, binds));
+                });
+
+                if(allok) {
+                    oktypes.push(rsig);
+                }
+            }
+        }
+
+        return oktypes;
     }
 }
 

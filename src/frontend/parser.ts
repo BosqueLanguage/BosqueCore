@@ -2653,7 +2653,7 @@ class Parser {
         else if(tk === TokenStrings.TaggedNumberinoRational) {
             const rstr = this.consumeTokenAndGetValue();
             const [vval, ttype] = this.processTaggedLiteral(rstr);
-            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralBoolExpression, sinfo, vval + "R"), ttype);
+            return new LiteralTypeDeclValueExpression(sinfo, new LiteralSimpleExpression(ExpressionTag.LiteralRationalExpression, sinfo, vval + "R"), ttype);
         }
         else if (tk === TokenStrings.Nat) {
             const istr = this.consumeTokenAndGetValue();
