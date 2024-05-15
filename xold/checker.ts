@@ -1,4 +1,5 @@
 import {strict as assert} from "assert";
+
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { FullyQualifiedNamespace, TypeSignature, VoidTypeSignature } from "./type";
