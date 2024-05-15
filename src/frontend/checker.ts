@@ -2,7 +2,7 @@ import {strict as assert} from "assert";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { FullyQualifiedNamespace, TypeSignature, VoidTypeSignature } from "./type";
-import { Expression } from "./body";
+import { Expression, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType } from "./body";
 
 const MIN_SAFE_INT = -9223372036854775807n;
 const MAX_SAFE_INT = 9223372036854775807n;
@@ -217,49 +217,6 @@ class TypeChecker {
         }
     }
 
-    private processRegexComponent(sinfo: SourceInfo, rr: RegexComponent): RegexComponent {
-        if((rr instanceof RegexLiteral) || (rr instanceof RegexCharRange) || (rr instanceof RegexDotCharClass)) {
-            return rr;
-        } 
-        else if (rr instanceof RegexConstClass) {
-            return this.resolveREExp(sinfo, rr);
-        } 
-        else if(rr instanceof RegexNegatedComponent) {
-            return new RegexNegatedComponent(this.processRegexComponent(sinfo, rr.nregex));
-        }
-        else if (rr instanceof RegexStarRepeat) {
-            return new RegexStarRepeat(this.processRegexComponent(sinfo, rr.repeat));
-        } 
-        else if (rr instanceof RegexPlusRepeat) {
-            return new RegexPlusRepeat(this.processRegexComponent(sinfo, rr.repeat));
-        } 
-        else if (rr instanceof RegexRangeRepeat) {
-            return new RegexRangeRepeat(this.processRegexComponent(sinfo, rr.repeat), rr.min, rr.max);
-        } 
-        else if (rr instanceof RegexOptional) {
-            return new RegexOptional(this.processRegexComponent(sinfo, rr.opt));
-        } 
-        else if (rr instanceof RegexAlternation) {
-            return new RegexAlternation(rr.opts.map((ropt) => this.processRegexComponent(sinfo, ropt)));
-        } 
-        else {
-            assert(rr instanceof RegexSequence);
-            return new RegexSequence((rr as RegexSequence).elems.map((relem) => this.processRegexComponent(sinfo, relem)));
-        }
-    }
-
-    private processBSQRegex(sinfo: SourceInfo, re: BSQRegex): BSQRegex {
-        const prr = this.processRegexComponent(sinfo, re.re);
-        return new BSQRegex(re.regexid, prr, prr.bsqon_literal_emit());
-    }
-
-    private processValidatorRegex(sinfo: SourceInfo, vtype: string): BSQRegex {
-        const reopt = this.m_assembly.tryGetValidatorForFullyResolvedName(vtype);
-        this.raiseErrorIf(sinfo, reopt === undefined, `missing regex for validator ${vtype}`);
-
-        return this.processBSQRegex(sinfo, reopt as BSQRegex);
-    }
-
     private splitConceptTypes(ofc: ResolvedConceptAtomType, withc: ResolvedConceptAtomType): {tp: ResolvedType | undefined, fp: ResolvedType | undefined} {
         if (ofc.typeID === "Any" && withc.typeID === "Some") {
             return { tp: ResolvedType.createSingle(withc), fp: this.getSpecialNoneType() };
@@ -307,16 +264,6 @@ class TypeChecker {
         else {
             return { tp: undefined, fp: ResolvedType.createSingle(ofc) };
         }
-    }
-
-    private getConceptsProvidedByTuple(tt: ResolvedTupleAtomType): ResolvedConceptAtomType {
-        let tci: ResolvedConceptAtomTypeEntry[] = [...(this.getSpecialTupleConceptType().options[0] as ResolvedConceptAtomType).conceptTypes];
-        return ResolvedConceptAtomType.create(tci);
-    }
-
-    private getConceptsProvidedByRecord(rr: ResolvedRecordAtomType): ResolvedConceptAtomType {
-        let tci: ResolvedConceptAtomTypeEntry[] = [...(this.getSpecialSomeConceptType().options[0] as ResolvedConceptAtomType).conceptTypes];
-        return ResolvedConceptAtomType.create(tci);
     }
 
     private splitConceptTuple(ofc: ResolvedConceptAtomType, witht: ResolvedTupleAtomType): { tp: ResolvedType | undefined, fp: ResolvedType | undefined } {
@@ -1303,39 +1250,6 @@ class TypeChecker {
                 assert(tt instanceof ITestErr, "missing case in ITest");
                 return this.processITestAsConvert_Err(sinfo, ltype, flowtype, tirexp, tt.isnot, issafe);
             }
-        }
-    }
-
-    getDerivedTypeProjection(fromtype: ResolvedType, oftype: ResolvedType): ResolvedType | undefined {
-        if(oftype.typeID === "Some") {
-            return this.splitTypes(fromtype, this.getSpecialNoneType()).fp;
-        }
-        else if(oftype.typeID === "IOptionT") {
-            if(oftype.options.length === 1 && oftype.typeID.startsWith("Option<")) {
-                return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
-            }
-            else {
-                return ResolvedType.createInvalid();
-            }
-        }
-        else if(oftype.typeID === "IResultT") {
-            if(oftype.options.length === 1 && oftype.typeID.startsWith("Result<")) {
-                return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("T") as ResolvedType;
-            }
-            else {
-                return ResolvedType.createInvalid();
-            }
-        }
-        else if(oftype.typeID === "IResultE") {
-            if(oftype.options.length === 1 && oftype.typeID.startsWith("Result<")) {
-                return (oftype.options[0] as ResolvedConceptAtomType).conceptTypes[0].binds.get("E") as ResolvedType;
-            }
-            else {
-                return ResolvedType.createInvalid();
-            }
-        }
-        else {
-            return ResolvedType.createInvalid();
         }
     }
 
