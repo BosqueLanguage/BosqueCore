@@ -2835,7 +2835,7 @@ class Parser {
 
             const scopename = this.env.useVariable("this");
             if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, "this", scopename);
+                return new AccessVariableExpression(sinfo, "this", scopename[0], scopename[1]);
             }
             else {
                 this.recordErrorGeneral(sinfo, "Variable 'this' is not defined in this context");
@@ -2850,7 +2850,7 @@ class Parser {
             
             const scopename = this.env.useVariable(idname);
             if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename);
+                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
             }
             else {
                 this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
@@ -2862,7 +2862,7 @@ class Parser {
             
             const scopename = this.env.useVariable(idname);
             if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename);
+                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
             }
             else {
                 this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);

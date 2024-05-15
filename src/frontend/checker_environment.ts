@@ -277,5 +277,5 @@ class StatementTypeEnvironment {
 }
 
 export {
-    VarInfo, ExpressionTypeEnvironment, StatementTypeEnvironment
+    VarInfo, TemplateBindingScope
 };

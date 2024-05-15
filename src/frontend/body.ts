@@ -585,11 +585,13 @@ class AccessStaticFieldExpression extends Expression {
 class AccessVariableExpression extends Expression {
     readonly srcname: string; //the name in the source code
     readonly scopename: string;    //maybe a different name that gets used for shadowing binders
+    readonly isCaptured: boolean;
 
-    constructor(sinfo: SourceInfo, srcname: string, scopename: string) {
+    constructor(sinfo: SourceInfo, srcname: string, scopename: string, isCaptured: boolean) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
         this.scopename = scopename;
+        this.isCaptured = isCaptured;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {

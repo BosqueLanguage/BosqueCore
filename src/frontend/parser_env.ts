@@ -180,7 +180,7 @@ abstract class ParserScopeInfo {
 
     abstract getBinderVarName(srcname: string): string;
 
-    abstract useVariable(srcname: string): string | undefined;
+    abstract useVariable(srcname: string): [string, boolean] | undefined;
 }
 
 class StandardScopeInfo extends ParserScopeInfo {
@@ -193,8 +193,13 @@ class StandardScopeInfo extends ParserScopeInfo {
         return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
     }
 
-    useVariable(srcname: string): string | undefined {
-        return this.useVariable_helper(srcname);
+    useVariable(srcname: string): [string, boolean] | undefined {
+        const rname = this.useVariable_helper(srcname);
+        if(rname !== undefined) {
+            return [rname, false];
+        }
+
+        return undefined;
     }
 }
 
@@ -214,18 +219,19 @@ class LambdaScopeInfo extends ParserScopeInfo {
         return srcname + (ctr !== 0 ? "_" + ctr.toString() : "");
     }
 
-    useVariable(srcname: string): string | undefined {
+    useVariable(srcname: string): [string, boolean] | undefined {
         const rname = this.useVariable_helper(srcname);
         if(rname !== undefined) {
-            return rname;
+            return [rname, false];
         }
 
         const rvar = this.enclosing.useVariable(srcname);
         if(rvar !== undefined) {
             this.capturedVars.add(srcname);
+            return [rvar[0], true];
         }
 
-        return rvar;
+        return undefined;
     }
 }
 
@@ -317,7 +323,7 @@ class ParserEnvironment {
         return this.scope.checkCanAssignVariable(srcname);
     }
 
-    useVariable(srcname: string): string | undefined {
+    useVariable(srcname: string): [string, boolean] | undefined {
         assert(this.scope !== undefined);
 
         return this.scope.useVariable(srcname);
