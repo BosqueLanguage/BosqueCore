@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TypeSignature, VoidTypeSignature } from "./type";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, InterpolateExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, StringSliceExpression, TaskAccessInfoExpression } from "./body";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, StringSliceExpression, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "./body";
 import { TypeEnvironment } from "./checker_environment";
 import { TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_subtype";
@@ -1541,22 +1541,533 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkConstructorPrimaryExpression");
     }
     
-    private checkConstructorTupleExpression(env: TypeEnvironment, exp: ConstructorTupleExpression, infertype: TypeSignature): TypeSignature {
+    private checkConstructorTupleExpression(env: TypeEnvironment, exp: ConstructorTupleExpression, infertype: TypeSignature | undefined): TypeSignature {
         assert(false, "Not Implemented -- checkConstructorTupleExpression");
     }
     
-    private checkConstructorRecordExpression(env: TypeEnvironment, exp: ConstructorRecordExpression, infertype: TypeSignature): TypeSignature {
+    private checkConstructorRecordExpression(env: TypeEnvironment, exp: ConstructorRecordExpression, infertype: TypeSignature | undefined): TypeSignature {
         assert(false, "Not Implemented -- checkConstructorRecordExpression");
     }
     
-    private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeSignature): TypeSignature {
+    private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeSignature| undefined): TypeSignature {
         assert(false, "Not Implemented -- checkConstructorEListExpression");
     }
 
-    private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature): TypeSignature {
+    private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature| undefined): TypeSignature {
         assert(false, "Not Implemented -- checkConstructorLambdaExpression");
     }
 
+    private checkLetExpression(env: TypeEnvironment, exp: LetExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLetExpression");
+    }
+
+    private checkLambdaInvokeExpression(env: TypeEnvironment, exp: LambdaInvokeExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLambdaInvokeExpression");
+    }
+
+    private checkSpecialConstructorExpression(env: TypeEnvironment, exp: SpecialConstructorExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkSpecialConstructorExpression");
+    }
+
+    private checkCallNamespaceFunctionExpression(env: TypeEnvironment, exp: CallNamespaceFunctionExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallNamespaceFunctionExpression");
+    }
+
+    private checkCallTypeFunctionExpression(env: TypeEnvironment, exp: CallTypeFunctionExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallTypeFunctionExpression");
+    }
+    
+    private checkLogicActionAndExpression(env: TypeEnvironment, exp: LogicActionAndExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLogicActionAndExpression");
+    }
+
+    private checkLogicActionOrExpression(env: TypeEnvironment, exp: LogicActionOrExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkLogicActionOrExpression");
+    }
+
+    private checkParseAsTypeExpression(env: TypeEnvironment, exp: ParseAsTypeExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkParseAsTypeExpression");
+    }
+
+    ////////
+    // Postfix Expressions
+    private checkPostfixAccessFromIndex(env: TypeEnvironment, exp: PostfixAccessFromIndex, rcvrtype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixAccessFromIndex");
+    }
+
+    private checkPostfixProjectFromIndecies(env: TypeEnvironment, exp: PostfixProjectFromIndecies, rcvrtype: TypeSignature, expectedtype: TypeSignature | undefined): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixProjectFromIndecies");
+    }
+
+    private checkPostfixAccessFromName(env: TypeEnvironment, exp: PostfixAccessFromName, rcvrtype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixAccessFromName");
+    }
+
+    private checkPostfixProjectFromNames(env: TypeEnvironment, exp: PostfixProjectFromNames, rcvrtype: TypeSignature, expectedtype: TypeSignature | undefined): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixProjectFromNames");
+    }
+
+    private checkPostfixIsTest(env: TypeEnvironment, exp: PostfixIsTest, rcvrtype: TypeSignature): TypeSignature {
+        xxxx;
+    }
+
+    private checkPostfixAsConvert(env: TypeEnvironment, exp: PostfixAsConvert, rcvrtype: TypeSignature): TypeSignature {
+        xxxx;
+    }
+
+    private checkPostfixAssignFields(env: TypeEnvironment, exp: PostfixAssignFields, rcvrtype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixAssignFields");
+    }
+
+    private checkPostfixInvoke(env: TypeEnvironment, exp: PostfixInvoke, rcvrtype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixInvoke");
+    }
+
+    private checkPostfixLiteralKeyAccess(env: TypeEnvironment, exp: PostfixLiteralKeyAccess): TypeSignature {
+        assert(false, "Not Implemented -- checkPostfixLiteralKeyAccess");
+    }
+
+    private checkPostfixOp(env: TypeEnvironment, exp: PostfixOp, expectedtype: TypeSignature | undefined): TypeSignature {
+        let ctype = this.checkExpression(env, exp.rootExp, undefined);
+        if(ctype instanceof ErrorTypeSignature) {
+            return exp.setType(ctype);
+        }
+
+        for(let i = 0; i < exp.ops.length; ++i) {
+            const op = exp.ops[i];
+            const texpected = (i === exp.ops.length - 1) ? expectedtype : undefined;
+
+            op.setRcvrType(ctype);
+            switch(op.tag) {
+                case PostfixOpTag.PostfixAccessFromIndex: {
+                    ctype = this.checkPostfixAccessFromIndex(env, op as PostfixAccessFromIndex, ctype);
+                }
+                case PostfixOpTag.PostfixProjectFromIndecies: {
+                    ctype = this.checkPostfixProjectFromIndecies(env, op as PostfixProjectFromIndecies, ctype, texpected);
+                }
+                case PostfixOpTag.PostfixAccessFromName: {
+                    ctype = this.checkPostfixAccessFromName(env, op as PostfixAccessFromName, ctype);
+                }
+                case PostfixOpTag.PostfixProjectFromNames: {
+                    ctype = this.checkPostfixProjectFromNames(env, op as PostfixProjectFromNames, ctype, texpected);
+                }
+                case PostfixOpTag.PostfixIsTest: {
+                    ctype = this.checkPostfixIsTest(env, op as PostfixIsTest, ctype);
+                }
+                case PostfixOpTag.PostfixAsConvert: {
+                    ctype = this.checkPostfixAsConvert(env, op as PostfixAsConvert, ctype);
+                }
+                case PostfixOpTag.PostfixAssignFields: {
+                    ctype = this.checkPostfixAssignFields(env, op as PostfixAssignFields, ctype);
+                }
+                case PostfixOpTag.PostfixInvoke: {
+                    ctype = this.checkPostfixInvoke(env, op as PostfixInvoke, ctype);
+                }
+                case PostfixOpTag.PostfixLiteralKeyAccess: {
+                    ctype = this.checkPostfixLiteralKeyAccess(env, op as PostfixLiteralKeyAccess);
+                }
+                default: {
+                    assert(op.tag === PostfixOpTag.PostfixError, "Unknown postfix op");
+                    ctype = new ErrorTypeSignature(op.sinfo, undefined);
+                }
+            }
+            op.setType(ctype);
+
+            if(ctype instanceof ErrorTypeSignature) {
+                return exp.setType(ctype);
+            }
+        }
+
+        return exp.setType(ctype);
+    }
+
+    private checkPrefixNotOpExpression(env: TypeEnvironment, exp: PrefixNotOpExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkPrefixNegateOpExpression(env: TypeEnvironment, exp: PrefixNegateOpExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinAddExpression(env: TypeEnvironment, exp: BinAddExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinSubExpression(env: TypeEnvironment, exp: BinSubExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinMultExpression(env: TypeEnvironment, exp: BinMultExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinDivExpression(env: TypeEnvironment, exp: BinDivExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinKeyEqExpression(env: TypeEnvironment, exp: BinKeyEqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinKeyNeqExpression(env: TypeEnvironment, exp: BinKeyNeqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericNeqExpression(env: TypeEnvironment, exp: NumericNeqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericLessExpression(env: TypeEnvironment, exp: NumericLessExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericLessEqExpression(env: TypeEnvironment, exp: NumericLessEqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericGreaterExpression(env: TypeEnvironment, exp: NumericGreaterExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkNumericGreaterEqExpression(env: TypeEnvironment, exp: NumericGreaterEqExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinLogicAndExpression(env: TypeEnvironment, exp: BinLogicAndExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinLogicOrExpression(env: TypeEnvironment, exp: BinLogicOrExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinLogicImpliesExpression(env: TypeEnvironment, exp: BinLogicImpliesExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkBinLogicIFFExpression(env: TypeEnvironment, exp: BinLogicIFFExpression): TypeSignature {
+        xxxx;
+    }
+
+    private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        assert(false, "Not Implemented -- checkMapEntryConstructorExpression");
+    }
+
+    private checkIfExpression(env: TypeEnvironment, exp: IfExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx;
+    }
+
+    ////////
+    //statement expressions
+    private checkCallRefThisExpression(env: TypeEnvironment, exp: CallRefThisExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallRefThisExpression");
+    }
+
+    private checkCallRefSelfExpression(env: TypeEnvironment, exp: CallRefSelfExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallRefSelfExpression");
+    }
+
+    private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+    }
+
+    private checkTaskRunExpression(env: TypeEnvironment, exp: TaskRunExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskRunExpression");
+    }
+
+    private checkTaskMultiExpression(env: TypeEnvironment, exp: TaskMultiExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskMultiExpression");
+    }
+
+    private checkTaskDashExpression(env: TypeEnvironment, exp: TaskDashExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskDashExpression");
+    }
+
+    private checkTaskAllExpression(env: TypeEnvironment, exp: TaskAllExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskAllExpression");
+    }
+
+    private checkTaskRaceExpression(env: TypeEnvironment, exp: TaskRaceExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskRaceExpression");
+    }
+
+    private checkExpression(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
+        switch (exp.tag) {
+            case ExpressionTag.LiteralNoneExpression: {
+                return this.checkLiteralNoneExpression(env, exp as LiteralSingletonExpression);
+            }
+            case ExpressionTag.LiteralNothingExpression: {
+                return this.checkLiteralNothingExpression(env, exp as LiteralSingletonExpression);
+            }
+            case ExpressionTag.LiteralBoolExpression: {
+                return this.checkLiteralBoolExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralNatExpression: {
+                return this.checkLiteralNatExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralIntExpression: {
+                return this.checkLiteralIntExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralBigNatExpression: {
+                return this.checkLiteralBigNatExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralBigIntExpression: {
+                return this.checkLiteralBigIntExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralRationalExpression: {
+                return this.checkLiteralRationalExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralFloatExpression: {
+                return this.checkLiteralFloatExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDecimalExpression: {
+                return this.checkLiteralDecimalExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDecimalDegreeExpression: {
+                return this.checkLiteralDecimalDegreeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralLatLongCoordinateExpression: {
+                return this.checkLiteralLatLongCoordinateExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralComplexNumberExpression: {
+                return this.checkLiteralComplexNumberExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralByteBufferExpression: {
+                return this.checkLiteralByteBufferExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUUIDv4Expression: {
+                return this.checkLiteralUUIDv4Expression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUUIDv7Expression: {
+                return this.checkLiteralUUIDv7Expression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralSHAContentHashExpression: {
+                return this.checkLiteralSHAContentHashExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDateTimeExpression: {
+                return this.checkLiteralDateTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUTCDateTimeExpression: {
+                return this.checkLiteralUTCDateTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralPlainDateExpression: {
+                return this.checkLiteralPlainDateExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralPlainTimeExpression: {
+                return this.checkLiteralPlainTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralLogicalTimeExpression: {
+                return this.checkLiteralLogicalTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralTickTimeExpression: {
+                return this.checkLiteralTickTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralISOTimeStampExpression: {
+                return this.checkLiteralISOTimeStampExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaDateTimeExpression: {
+                return this.checkLiteralDeltaDateTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaPlainDateExpression: {
+                return this.checkLiteralDeltaPlainDateExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaPlainTimeExpression: {
+                return this.checkLiteralDeltaPlainTimeExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaISOTimeStampExpression: {
+                return this.checkLiteralDeltaISOTimeStampExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaSecondsExpression: {
+                return this.checkLiteralDeltaSecondsExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaTickExpression: {
+                return this.checkLiteralDeltaTickExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralDeltaLogicalExpression: {
+                return this.checkLiteralDeltaLogicalExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralUnicodeRegexExpression: {
+                return this.checkLiteralUnicodeRegexExpression(env, exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralASCIIRegexExpression: {
+                return this.checkLiteralASCIIRegexExpression(env, exp as LiteralRegexExpression);
+            }
+            case ExpressionTag.LiteralStringExpression: {
+                return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralASCIIStringExpression: {
+                return this.checkLiteralASCIIStringExpression(env, exp as LiteralSimpleExpression);
+            }
+            case ExpressionTag.LiteralTypedStringExpression: {
+                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
+            }
+            case ExpressionTag.LiteralASCIITypedStringExpression: {
+                return this.checkLiteralASCIITypedStringExpression(env, exp as LiteralTypedStringExpression);
+            }
+            case ExpressionTag.LiteralTemplateStringExpression: {
+                return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            }
+            case ExpressionTag.LiteralASCIITemplateStringExpression: {
+                return this.checkLiteralASCIITemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            }
+            case ExpressionTag.LiteralPathExpression: {
+                return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
+            }
+            case ExpressionTag.LiteralPathFragmentExpression: {
+                return this.checkLiteralPathFragmentExpression(env, exp as LiteralPathExpression);
+            }
+            case ExpressionTag.LiteralPathGlobExpression: {
+                return this.checkLiteralPathGlobExpression(env, exp as LiteralPathExpression);
+            }
+            case ExpressionTag.LiteralTypeDeclValueExpression: {
+                return this.checkLiteralTypeDeclValueExpression(env, exp as LiteralTypeDeclValueExpression);
+            }
+            case ExpressionTag.LiteralTypeDeclIntegralValueExpression: {
+                return this.checkLiteralTypeDeclIntegralValueExpression(env, exp as LiteralTypeDeclIntegralValueExpression);
+            }
+            case ExpressionTag.LiteralTypeDeclFloatPointValueExpression: {
+                return this.checkLiteralTypeDeclFloatPointValueExpression(env, exp as LiteralTypeDeclFloatPointValueExpression);
+            }
+            case ExpressionTag.StringSliceExpression: {
+                return this.checkStringSliceExpression(env, exp as StringSliceExpression);
+            }
+            case ExpressionTag.ASCIIStringSliceExpression: {
+                return this.checkASCIIStringSliceExpression(env, exp as StringSliceExpression);
+            }
+            case ExpressionTag.InterpolateExpression: {
+                return this.checkInterpolateExpression(env, exp as InterpolateExpression);
+            }
+            case ExpressionTag.HasEnvValueExpression: {
+                return this.checkHasEnvValueExpression(env, exp as AccessEnvValueExpression);
+            }
+            case ExpressionTag.AccessEnvValueExpression: {
+                return this.checkAccessEnvValueExpression(env, exp as AccessEnvValueExpression);
+            }
+            case ExpressionTag.TaskAccessInfoExpression: {
+                return this.checkTaskAccessInfoExpression(env, exp as TaskAccessInfoExpression);
+            }
+            case ExpressionTag.AccessNamespaceConstantExpression: {
+                return this.checkAccessNamespaceConstantExpression(env, exp as AccessNamespaceConstantExpression);
+            }
+            case ExpressionTag.AccessStaticFieldExpression: {
+                return this.checkAccessStaticFieldExpression(env, exp as AccessStaticFieldExpression);
+            }
+            case ExpressionTag.AccessVariableExpression: {
+                return this.checkAccessVariableExpression(env, exp as AccessVariableExpression);
+            }
+            case ExpressionTag.ConstructorPrimaryExpression: {
+                return this.checkConstructorPrimaryExpression(env, exp as ConstructorPrimaryExpression);
+            }
+            case ExpressionTag.ConstructorTupleExpression: {
+                return this.checkConstructorTupleExpression(env, exp as ConstructorTupleExpression, expectedtype);
+            }
+            case ExpressionTag.ConstructorRecordExpression: {
+                return this.checkConstructorRecordExpression(env, exp as ConstructorRecordExpression, expectedtype);
+            }
+            case ExpressionTag.ConstructorEListExpression: {
+                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, expectedtype);
+            }
+            case ExpressionTag.ConstructorLambdaExpression: {
+                return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, expectedtype);
+            }
+            case ExpressionTag.LetExpression: {
+                return this.checkLetExpression(env, exp as LetExpression);
+            }
+            case ExpressionTag.LambdaInvokeExpression: {
+                return this.checkLambdaInvokeExpression(env, exp as LambdaInvokeExpression);
+            }
+            case ExpressionTag.SpecialConstructorExpression: {
+                return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression);
+            }
+            case ExpressionTag.CallNamespaceFunctionExpression: {
+                return this.checkCallNamespaceFunctionExpression(env, exp as CallNamespaceFunctionExpression);
+            }
+            case ExpressionTag.CallTypeFunctionExpression: {
+                return this.checkCallTypeFunctionExpression(env, exp as CallTypeFunctionExpression);
+            }
+            case ExpressionTag.LogicActionAndExpression: {
+                return this.checkLogicActionAndExpression(env, exp as LogicActionAndExpression);
+            }
+            case ExpressionTag.LogicActionOrExpression: {
+                return this.checkLogicActionOrExpression(env, exp as LogicActionOrExpression);
+            }
+            case ExpressionTag.ParseAsTypeExpression: {
+                return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
+            }
+            case ExpressionTag.PostfixOpExpression: {
+                return this.checkPostfixOp(env, exp as PostfixOp, expectedtype);
+            }
+            case ExpressionTag.PrefixNotOpExpression: {
+                return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
+            }
+            case ExpressionTag.PrefixNegateOpExpression: {
+                return this.checkPrefixNegateOpExpression(env, exp as PrefixNegateOpExpression, expectedtype);
+            }
+            case ExpressionTag.BinAddExpression: {
+                return this.checkBinAddExpression(env, exp as BinAddExpression, expectedtype);
+            }
+            case ExpressionTag.BinSubExpression: {
+                return this.checkBinSubExpression(env, exp as BinSubExpression, expectedtype);
+            }
+            case ExpressionTag.BinMultExpression: {
+                return this.checkBinMultExpression(env, exp as BinMultExpression, expectedtype);
+            }
+            case ExpressionTag.BinDivExpression: {
+                return this.checkBinDivExpression(env, exp as BinDivExpression, expectedtype);
+            }
+            case ExpressionTag.BinKeyEqExpression: {
+                return this.checkBinKeyEqExpression(env, exp as BinKeyEqExpression);
+            }
+            case ExpressionTag.BinKeyNeqExpression: {
+                return this.checkBinKeyNeqExpression(env, exp as BinKeyNeqExpression);
+            }
+            case ExpressionTag.NumericEqExpression: {
+                return this.checkNumericEqExpression(env, exp as NumericEqExpression);
+            }
+            case ExpressionTag.NumericNeqExpression: {
+                return this.checkNumericNeqExpression(env, exp as NumericNeqExpression);
+            }
+            case ExpressionTag.NumericLessExpression: {
+                return this.checkNumericLessExpression(env, exp as NumericLessExpression);
+            }
+            case ExpressionTag.NumericLessEqExpression: {
+                return this.checkNumericLessEqExpression(env, exp as NumericLessEqExpression);
+            }
+            case ExpressionTag.NumericGreaterExpression: {
+                return this.checkNumericGreaterExpression(env, exp as NumericGreaterExpression);
+            }
+            case ExpressionTag.NumericGreaterEqExpression: {
+                return this.checkNumericGreaterEqExpression(env, exp as NumericGreaterEqExpression);
+            }
+            case ExpressionTag.BinLogicAndExpression: {
+                return this.checkBinLogicAndExpression(env, exp as BinLogicAndExpression);
+            }
+            case ExpressionTag.BinLogicOrExpression: {
+                return this.checkBinLogicOrExpression(env, exp as BinLogicOrExpression);
+            }
+            case ExpressionTag.BinLogicImpliesExpression: {
+                return this.checkBinLogicImpliesExpression(env, exp as BinLogicImpliesExpression);
+            }
+            case ExpressionTag.BinLogicIFFExpression: {
+                return this.checkBinLogicIFFExpression(env, exp as BinLogicIFFExpression);
+            }
+            case ExpressionTag.MapEntryConstructorExpression: {
+                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, expectedtype);
+            }
+            case ExpressionTag.IfExpression: {
+                return this.checkIfExpression(env, exp as IfExpression, expectedtype);
+            }
+            default: {
+                assert(exp.tag === ExpressionTag.ErrorExpression, "Unknown expression kind");
+            }
+        }
+    }
+
+    /*
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
         const constype = this.normalizeTypeOnly(exp.constype, env.binds);
         const lexp = this.reduceLiteralValueToCanonicalForm(exp.value, env.binds);
@@ -2772,160 +3283,6 @@ class TypeChecker {
         return env.setResultExpressionInfo(rexp, iftype);
     }
 
-    private checkSwitchExpression(env: ExpressionTypeEnvironment, exp: SwitchExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        const venv = this.checkExpression(env, exp.sval, undefined);
-        
-        const scratchidx = this.m_scratchCtr++;
-        let ctype: ResolvedType = venv.trepr;
-        let exhaustive = false;
-        let results: {test: TIRExpression | undefined, value: ExpressionTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
-
-        for (let i = 0; i < exp.switchflow.length; ++i) {
-            //it is a wildcard match
-            if(exp.switchflow[i].condlit === undefined) {
-                this.raiseErrorIf(exp.sinfo, i !== exp.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${exp.switchflow.length - (i + 1)} more that are unreachable`);
-
-                let senv = venv;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (exp.switchflow[i].bindername !== undefined) {
-                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(exp.switchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, exp.switchflow[i].value.sinfo, ctype), exp.switchflow[i].bindername as string];
-                    senv = senv.pushBinderFrame(exp.switchflow[i].bindername as string, ctype);
-                }
-                const trueenv = this.checkExpression(senv, exp.switchflow[i].value, desiredtype);
-
-                results.push({test: undefined, value: trueenv, binderinfo: binderinfo});
-
-                exhaustive = true;
-                break;
-            }
-            else {
-                const condsinfo = (exp.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo;
-
-                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
-                this.raiseErrorIf(condsinfo, !test.hastrueflow, `test always evaluates to false`);
-                this.raiseErrorIf(condsinfo, i !== exp.switchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
-                
-                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, exp.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
-                ctype = test.falseflow as ResolvedType;
-
-                let senv = venv;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (exp.switchflow[i].bindername !== undefined) {
-                    binderinfo = [conv.asexp as TIRExpression, exp.switchflow[i].bindername as string];
-                    senv = senv.pushBinderFrame(exp.switchflow[i].bindername as string, conv.trueflow as ResolvedType);
-                }
-                const trueenv = this.checkExpression(senv, exp.switchflow[i].value, desiredtype);
-                
-                results.push({test: test.testexp, value: trueenv, binderinfo: binderinfo});
-            }
-        }
-
-        const stype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
-        const clauses = results
-            .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => {
-                return { match: ffp.test as TIRExpression, value: this.emitCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult, binderinfo: ffp.binderinfo };
-            });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.switchflow[exp.switchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
-
-        const rexp = new TIRSwitchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
-        return env.setResultExpressionInfo(rexp, stype);
-    }
-
-    private checkMatchExpression(env: ExpressionTypeEnvironment, exp: MatchExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        const venv = this.checkExpression(env, exp.sval, undefined);
-        
-        const scratchidx = this.m_scratchCtr++;
-        let ctype: ResolvedType = venv.trepr;
-        let exhaustive = false;
-        let results: {test: TIRExpression | undefined, value: ExpressionTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
-
-        for (let i = 0; i < exp.matchflow.length; ++i) {
-            //it is a wildcard match
-            if(exp.matchflow[i].mtype === undefined) {
-                this.raiseErrorIf(exp.sinfo, i !== exp.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${exp.matchflow.length - (i + 1)} more that are unreachable`);
-
-                let senv = venv;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (exp.matchflow[i].bindername !== undefined) {
-                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(exp.matchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, exp.matchflow[i].value.sinfo, ctype), exp.matchflow[i].bindername as string];
-                    senv = senv.pushBinderFrame(exp.matchflow[i].bindername as string, ctype);
-                }
-                const trueenv = this.checkExpression(senv, exp.matchflow[i].value, desiredtype);
-
-                results.push({test: undefined, value: trueenv, binderinfo: binderinfo});
-
-                exhaustive = true;
-                break;
-            }
-            else {
-                const condsinfo = (exp.matchflow[i].mtype as TypeSignature).sinfo;
-
-                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds);
-                this.raiseErrorIf(condsinfo, !test.hastrueflow, `test always evaluates to false`);
-                this.raiseErrorIf(condsinfo, i !== exp.matchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
-                
-                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, exp.matchflow[i].mtype as TypeSignature), venv.binds, true);
-                ctype = test.falseflow as ResolvedType;
-
-                let senv = venv;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (exp.matchflow[i].bindername !== undefined) {
-                    binderinfo = [conv.asexp as TIRExpression, exp.matchflow[i].bindername as string];
-                    senv = senv.pushBinderFrame(exp.matchflow[i].bindername as string, conv.trueflow as ResolvedType);
-                }
-                const trueenv = this.checkExpression(senv, exp.matchflow[i].value, desiredtype);
-                
-                results.push({test: test.testexp, value: trueenv, binderinfo: binderinfo});
-            }
-        }
-
-        const stype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
-        const clauses = results
-            .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => {
-                return { match: ffp.test as TIRExpression, value: this.emitCoerceIfNeeded(ffp.value, ffp.value.expressionResult.sinfo, stype).expressionResult, binderinfo: ffp.binderinfo };
-            });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: this.emitCoerceIfNeeded(results[results.length - 1].value, exp.matchflow[exp.matchflow.length - 1].value.sinfo, stype).expressionResult, binderinfo: results[results.length - 1].binderinfo} : undefined;
-
-        const rexp = new TIRMatchExpression(exp.sinfo, this.toTIRTypeKey(stype), venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
-        return env.setResultExpressionInfo(rexp, stype);
-    }
-
-    private checkTaskAccessField(env: ExpressionTypeEnvironment, exp: TaskSelfFieldExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations (not a task method/action)");
-        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
-
-        const fftry = tsk.taskdecl.memberFields.find((f) => f.name === exp.sfield);
-        this.raiseErrorIf(exp.sinfo, fftry === undefined, `field ${exp.sfield} is not defined on task ${tsk.taskdecl.name}`);
-        const ff = fftry as MemberFieldDecl;
-
-        const fftype = this.normalizeTypeOnly(ff.declaredType, TemplateBindScope.createBaseBindScope(tsk.taskbinds));
-        const tirfftype = this.toTIRTypeKey(fftype);
-
-        const fkey = TIRIDGenerator.generateMemberFieldID(this.toTIRTypeKey(tasktype), exp.sfield);
-        return env.setResultExpressionInfo(new TIRTaskSelfFieldExpression(exp.sinfo, this.toTIRTypeKey(tasktype), fkey, exp.sfield, tirfftype), fftype);
-    }
-
-    private checkTaskAccessSelfControl(env: ExpressionTypeEnvironment, exp: TaskSelfControlExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations (not a task method/action)");
-        const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-        const tasktype = ResolvedType.createSingle(ResolvedTaskAtomType.create(tsk.taskdecl, tsk.taskbinds));
-
-        const ffctl = ResolvedType.createSingle(ResolvedRecordAtomType.create(tsk.taskdecl.econtrol.map((ec) => {
-            return {
-                pname: ec.name,
-                ptype: this.normalizeTypeOnly(ec.declaredType, TemplateBindScope.createBaseBindScope(tsk.taskbinds))
-            }
-        })));
-
-        const tirtask = this.toTIRTypeKey(tasktype);
-        const tirffctl = this.toTIRTypeKey(ffctl);
-
-        return env.setResultExpressionInfo(new TIRTaskSelfControlExpression(exp.sinfo, tirtask, tirffctl), ffctl);
-    }
-
     private checkTaskSelfAction(env: ExpressionTypeEnvironment, exp: TaskSelfActionExpression, refop: boolean): ExpressionTypeEnvironment {
         this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk !== "write", "This code does not permit task operations (not a task method/action)");
         const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
@@ -2980,197 +3337,7 @@ class TypeChecker {
 
         return env.setResultExpressionInfo(new TIRTaskGetIDExpression(exp.sinfo, this.toTIRTypeKey(tasktype),  this.toTIRTypeKey(this.getSpecialTaskIDType())), this.getSpecialTaskIDType());
     }
-
-    private checkExpression(env: ExpressionTypeEnvironment, exp: Expression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        switch (exp.tag) {
-            case ExpressionTag.LiteralNoneExpression: {
-                return this.checkLiteralNoneExpression(env, exp as LiteralNoneExpression);
-            }
-            case ExpressionTag.LiteralNothingExpression: {
-                return this.checkLiteralNothingExpression(env, exp as LiteralNothingExpression);
-            }
-            case ExpressionTag.LiteralBoolExpression: { 
-                return this.checkLiteralBoolExpression(env, exp as LiteralBoolExpression);
-            }
-            case ExpressionTag.LiteralIntegralExpression: {
-                return this.checkLiteralIntegralExpression(env, exp as LiteralIntegralExpression);
-            }
-            case ExpressionTag.LiteralRationalExpression: {
-                return this.checkLiteralRationalExpression(env, exp as LiteralRationalExpression);
-            }
-            case ExpressionTag.LiteralFloatPointExpression: {
-                return this.checkLiteralFloatExpression(env, exp as LiteralFloatPointExpression);
-            }
-            case ExpressionTag.LiteralRegexExpression: {
-                return this.checkLiteralRegexExpression(env, exp as LiteralRegexExpression);
-            }
-            case ExpressionTag.LiteralStringExpression: { 
-                return this.checkLiteralStringExpression(env, exp as LiteralStringExpression);
-            }
-            case ExpressionTag.LiteralASCIIStringExpression: { 
-                return this.checkLiteralASCIIStringExpression(env, exp as LiteralStringExpression);
-            }
-            case ExpressionTag.LiteralTypedStringExpression: {
-                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralASCIITypedStringExpression: {
-                return this.checkLiteralASCIITypedStringExpression(env, exp as LiteralTypedStringExpression);
-            }
-            case ExpressionTag.LiteralTemplateStringExpression: {
-                return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
-            }
-            case ExpressionTag.LiteralASCIITemplateStringExpression: {
-                return this.checkLiteralASCIITemplateStringExpression(env, exp as LiteralTemplateStringExpression);
-            }
-            case ExpressionTag.LiteralTypedPrimitiveConstructorExpression: {
-                return this.checkLiteralTypedPrimitiveConstructorExpression(env, exp as LiteralTypedPrimitiveConstructorExpression);
-            }
-            case ExpressionTag.BSQONLiteralExpression: {
-                return this.checkBSQONLiteralExpression(env, exp as BSQONLiteralExpression, desiredtype);
-            }
-            case ExpressionTag.AccessFormatInfoExpression: {
-                return this.checkAccessFormatInfo(env, exp as AccessFormatInfoExpression);
-            }
-            case ExpressionTag.AccessEnvValueExpression: {
-                return this.checkAccessEnvValue(env, exp as AccessEnvValueExpression);
-            }
-            case ExpressionTag.AccessNamespaceConstantExpression: {
-                return this.checkAccessNamespaceConstant(env, exp as AccessNamespaceConstantExpression);
-            }
-            case ExpressionTag.AccessStaticFieldExpression: {
-                return this.checkAccessStaticField(env, exp as AccessStaticFieldExpression);
-            }
-            case ExpressionTag.AccessVariableExpression: {
-                return this.checkAccessVariable(env, exp as AccessVariableExpression);
-            }
-            case ExpressionTag.ConstructorPrimaryExpression: {
-                return this.checkConstructorPrimary(env, exp as ConstructorPrimaryExpression);
-            }
-            case ExpressionTag.ConstructorTupleExpression: {
-                return this.checkTupleConstructor(env, exp as ConstructorTupleExpression, desiredtype);
-            }
-            case ExpressionTag.ConstructorRecordExpression: {
-                return this.checkRecordConstructor(env, exp as ConstructorRecordExpression, desiredtype);
-            }
-            //PCode constructor always handled in agrument processing -- can't just create them randomly
-            case ExpressionTag.PCodeInvokeExpression: {
-                return this.checkPCodeInvokeExpression(env, exp as PCodeInvokeExpression);
-            }
-            case ExpressionTag.SpecialConstructorExpression: {
-                return this.checkSpecialConstructorExpression(env, exp as SpecialConstructorExpression, desiredtype);
-            }
-            case ExpressionTag.CallNamespaceFunctionOrOperatorExpression: {
-                return this.checkCallNamespaceFunctionOrOperatorExpression(env, exp as CallNamespaceFunctionOrOperatorExpression);
-            }
-            case ExpressionTag.CallStaticFunctionExpression: {
-                return this.checkCallStaticFunctionExpression(env, exp as CallStaticFunctionExpression);
-            }
-            case ExpressionTag.LogicActionAndExpression: {
-                return this.checkLogicActionAndExpression(env, exp as LogicActionAndExpression);
-            }
-            case ExpressionTag.LogicActionOrExpression: {
-                return this.checkLogicActionOrExpression(env, exp as LogicActionOrExpression);
-            }
-            case ExpressionTag.PostfixOpExpression: {
-                return this.checkPostfixExpression(env, exp as PostfixOp, desiredtype, false)
-            }
-            case ExpressionTag.PrefixNotOpExpression: {
-                return this.checkPrefixNotOp(env, exp as PrefixNotOp);
-            }
-            case ExpressionTag.PrefixNegateOpExpression: {
-                return this.checkPrefixNegateOpExpression(env, exp as PrefixNegateOp);
-            }
-            case ExpressionTag.BinAddExpression: {
-                return this.checkBinAddExpression(env, exp as BinAddExpression);
-            }
-            case ExpressionTag.BinSubExpression: {
-                return this.checkBinSubExpression(env, exp as BinSubExpression);
-            }
-            case ExpressionTag.BinMultExpression: {
-                return this.checkBinMultExpression(env, exp as BinMultExpression);
-            }
-            case ExpressionTag.BinDivExpression: {
-                return this.checkBinDivExpression(env, exp as BinDivExpression);
-            }
-            case ExpressionTag.BinKeyEqExpression: {
-                const bke = exp as BinKeyEqExpression;
-                return this.strongEQ(exp.sinfo, env, bke.lhs, bke.rhs);
-            }
-            case ExpressionTag.BinKeyNeqExpression: {
-                const bkne = exp as BinKeyNeqExpression;
-                return this.strongNEQ(exp.sinfo, env, bkne.lhs, bkne.rhs);
-            }
-            case ExpressionTag.NumericEqExpression: {
-                return this.checkNumericEqExpression(env, exp as NumericEqExpression);
-            }
-            case ExpressionTag.NumericNeqExpression: {
-                return this.checkNumericNeqExpression(env, exp as NumericNeqExpression);
-            }
-            case ExpressionTag.NumericLessExpression: {
-                return this.checkNumericLessExpression(env, exp as NumericLessExpression);
-            }
-            case ExpressionTag.NumericLessEqExpression: {
-                return this.checkNumericLessEqExpression(env, exp as NumericLessEqExpression);
-            }
-            case ExpressionTag.NumericGreaterExpression: {
-                return this.checkNumericGreaterExpression(env, exp as NumericGreaterExpression);
-            }
-            case ExpressionTag.NumericGreaterEqExpression: {
-                return this.checkNumericGreaterEqExpression(env, exp as NumericGreaterEqExpression);
-            }
-            case ExpressionTag.BinLogicAndExpression: {
-                return this.checkBinLogicAnd(env, exp as BinLogicAndxpression);
-            }
-            case ExpressionTag.BinLogicOrExpression: {
-                return this.checkBinLogicOr(env, exp as BinLogicOrExpression);
-            }
-            case ExpressionTag.BinLogicImpliesExpression: {
-                return this.checkBinLogicImplies(env, exp as BinLogicImpliesExpression);
-            }
-            case ExpressionTag.MapEntryConstructorExpression: {
-                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, desiredtype);
-            }
-            case ExpressionTag.IfExpression: {
-                return this.checkIfExpression(env, exp as IfExpression, desiredtype);
-            }
-            case ExpressionTag.SwitchExpression: {
-                return this.checkSwitchExpression(env, exp as SwitchExpression, desiredtype);
-            }
-            case ExpressionTag.MatchExpression: {
-                return this.checkMatchExpression(env, exp as MatchExpression, desiredtype);
-            }
-            case ExpressionTag.TaskSelfFieldExpression: {
-                return this.checkTaskAccessField(env, exp as TaskSelfFieldExpression);
-            }
-            case ExpressionTag.TaskSelfControlExpression: {
-                return this.checkTaskAccessSelfControl(env, exp as TaskSelfControlExpression);
-            }
-            case ExpressionTag.TaskSelfActionExpression: {
-                return this.checkTaskSelfAction(env, exp as TaskSelfActionExpression, false);
-            }
-            case ExpressionTag.TaskGetIDExpression: {
-                return this.checkTaskGetIDExpression(env, exp as TaskGetIDExpression);
-            }
-            default: {
-                this.raiseError(exp.sinfo, `Unknown expression kind -- ${exp.tag}`);
-                return env;
-            }
-        }
-    }
-
-    private checkExpressionAtAssign(env: ExpressionTypeEnvironment, exp: Expression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        switch (exp.tag) {
-            case ExpressionTag.PostfixOpExpression: {
-                return this.checkPostfixExpression(env, exp as PostfixOp, desiredtype, true)
-            }
-            case ExpressionTag.TaskSelfActionExpression: {
-                return this.checkTaskSelfAction(env, exp as TaskSelfActionExpression, true);
-            }
-            default: {
-                return this.checkExpression(env, exp, desiredtype);
-            }
-        }
-    }
+    */
 
     private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
         this.raiseErrorIf(sinfo, env.lookupLocalVar(vname) !== null, `${vname} cannot shadow previous definition`);

@@ -1915,15 +1915,6 @@ class Parser {
         let resultInfo = this.env.SpecialAutoSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
             resultInfo = this.parseTypeSignature();
-
-            if(!allTypedParams) {
-                this.recordErrorGeneral(cinfo, "Cannot have a typed return with untyped parameters");
-            }
-        }
-        else {
-            if (!ispred && params.some((param) => param.isRefParam)) {
-                resultInfo = this.env.SpecialVoidSignature; //void conversion
-            }
         }
 
         if(!this.testToken(SYM_bigarrow)) {
@@ -1938,7 +1929,7 @@ class Parser {
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
 
-        return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.boundtemplates);
+        return new LambdaDecl(cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, lambdaenv.boundtemplates, !someTypedParams);
     }
 
     private parseFunctionInvokeDecl(functionkind: "namspace" | "predicate" | "typescope"): FunctionInvokeDecl | undefined {
@@ -2581,8 +2572,7 @@ class Parser {
             this.env.useVariable(v);
         });
 
-        const isAuto = ldecl.params.every((param) => param.type instanceof AutoTypeSignature);
-        return new ConstructorLambdaExpression(sinfo, isAuto, ldecl);
+        return new ConstructorLambdaExpression(sinfo, ldecl);
     }
 
     private parseLiteralExpression(): LiteralExpressionValue {
@@ -3519,7 +3509,7 @@ class Parser {
     }
 
     private parseExpression(): Expression {
-        return this.xxxx();
+        return this.parseImpliesExpression();
     }
 
     private parseExpressionWithBinder(bindernames: string[]): {exp: Expression, used: {srcname: string, scopedname: string}[]} {
@@ -3532,6 +3522,7 @@ class Parser {
 
     private parseMapEntryConstructorExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
+        //TODO: this will reject (2 => 3) since there are parens, maybe this is ok or maybe we should allow it?
 
         const lexp = this.parseExpression();   
         if(this.testAndConsumeTokenIf("=>")) {
@@ -3546,12 +3537,13 @@ class Parser {
 
     private parseLambdaOkExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
+        //TODO: this will reject (fn(x) => x) since there are parens, maybe this is ok or maybe we should allow it?
 
         if (this.testToken(KW_fn) || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn)) {
-            return this.parseLambdaDecl();
+            return this.parseLambdaTerm();
         }
-        else (this.testToken(KW_pred) || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
-            return this.parseLambdaDecl();
+        else if (this.testToken(KW_pred) || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
+            return this.parseLambdaTerm();
         }
         else {
             return this.parseExpression();

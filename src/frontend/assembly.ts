@@ -303,11 +303,14 @@ class LambdaDecl extends AbstractInvokeDecl {
     readonly captureVarSet: Set<string>;
     readonly captureTemplateSet: Set<string>;
 
-    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>) {
+    readonly isAuto: boolean;
+
+    constructor(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: "fn" | "pred", recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, captureVarSet: Set<string>, captureTemplateSet: Set<string>, isAuto: boolean) {
         super(sinfo, attributes, name, recursive, params, resultType, body);
 
         this.captureVarSet = captureVarSet;
         this.captureTemplateSet = captureTemplateSet;
+        this.isAuto = isAuto;
     }
 
     hasTerms(): boolean {

@@ -665,12 +665,10 @@ class ConstructorEListExpression extends ConstructorExpression {
 }
 
 class ConstructorLambdaExpression extends Expression {
-    readonly isAuto: boolean;
     readonly invoke: LambdaDecl;
 
-    constructor(sinfo: SourceInfo, isAuto: boolean, invoke: LambdaDecl) {
+    constructor(sinfo: SourceInfo, invoke: LambdaDecl) {
         super(ExpressionTag.ConstructorLambdaExpression, sinfo);
-        this.isAuto = isAuto;
         this.invoke = invoke;
     }
 
@@ -934,11 +932,34 @@ enum PostfixOpTag {
 
 abstract class PostfixOperation {
     readonly sinfo: SourceInfo;
-    readonly op: PostfixOpTag;
+    readonly tag: PostfixOpTag;
 
-    constructor(sinfo: SourceInfo, op: PostfixOpTag) {
+    private rcvrType: TypeSignature | undefined = undefined;
+    private etype: TypeSignature | undefined = undefined;
+
+    constructor(sinfo: SourceInfo, tag: PostfixOpTag) {
         this.sinfo = sinfo;
-        this.op = op;
+        this.tag = tag;
+    }
+
+    getRcvrType(): TypeSignature {
+        assert(this.rcvrType !== undefined, "Type signature not set");
+        return this.rcvrType as TypeSignature;
+    }
+
+    setRcvrType(rcvrType: TypeSignature): TypeSignature {
+        this.rcvrType = rcvrType;
+        return rcvrType;
+    }
+
+    getType(): TypeSignature {
+        assert(this.etype !== undefined, "Type signature not set");
+        return this.etype as TypeSignature;
+    }
+
+    setType(etype: TypeSignature): TypeSignature {
+        this.etype = etype;
+        return etype;
     }
 
     abstract emit(fmt: CodeFormatter): string;
@@ -1122,7 +1143,7 @@ abstract class UnaryExpression extends Expression {
     }
 }
 
-class PrefixNotOp extends UnaryExpression {
+class PrefixNotOpExpression extends UnaryExpression {
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNotOpExpression, sinfo, exp);
     }
@@ -1132,7 +1153,7 @@ class PrefixNotOp extends UnaryExpression {
     }
 }
 
-class PrefixNegateOp extends UnaryExpression {
+class PrefixNegateOpExpression extends UnaryExpression {
     constructor(sinfo: SourceInfo, exp: Expression) {
         super(ExpressionTag.PrefixNegateOpExpression, sinfo, exp);
     }
@@ -1326,7 +1347,7 @@ abstract class BinLogicExpression extends Expression {
     }
 }
 
-class BinLogicAndxpression extends BinLogicExpression {
+class BinLogicAndExpression extends BinLogicExpression {
     constructor(sinfo: SourceInfo, lhs: Expression, rhs: Expression) {
         super(ExpressionTag.BinLogicAndExpression, sinfo, lhs, rhs);
     }
@@ -2265,11 +2286,11 @@ export {
     PostfixAssignFields,
     PostfixInvoke,
     PostfixLiteralKeyAccess,
-    UnaryExpression, PrefixNotOp, PrefixNegateOp,
+    UnaryExpression, PrefixNotOpExpression, PrefixNegateOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
-    BinLogicExpression, BinLogicAndxpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
+    BinLogicExpression, BinLogicAndExpression, BinLogicOrExpression, BinLogicImpliesExpression, BinLogicIFFExpression,
     MapEntryConstructorExpression,
     IfTest,
     IfExpression,
