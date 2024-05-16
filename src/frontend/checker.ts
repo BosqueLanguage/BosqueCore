@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TypeSignature, VoidTypeSignature } from "./type";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, Expression, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, InterpolateExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, StringSliceExpression, TaskAccessInfoExpression } from "./body";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, InterpolateExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, StringSliceExpression, TaskAccessInfoExpression } from "./body";
 import { TypeEnvironment } from "./checker_environment";
 import { TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_subtype";
@@ -1537,11 +1537,25 @@ class TypeChecker {
         }
     }
 
-    ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
-    ConstructorTupleExpression = "ConstructorTupleExpression",
-    ConstructorRecordExpression = "ConstructorRecordExpression",
-    ConstructorEListExpression = "ConstructorEListExpression",
-    ConstructorLambdaExpression = "ConstructorLambdaExpression",
+    private checkConstructorPrimaryExpression(env: TypeEnvironment, exp: ConstructorPrimaryExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkConstructorPrimaryExpression");
+    }
+    
+    private checkConstructorTupleExpression(env: TypeEnvironment, exp: ConstructorTupleExpression, infertype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkConstructorTupleExpression");
+    }
+    
+    private checkConstructorRecordExpression(env: TypeEnvironment, exp: ConstructorRecordExpression, infertype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkConstructorRecordExpression");
+    }
+    
+    private checkConstructorEListExpression(env: TypeEnvironment, exp: ConstructorEListExpression, infertype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkConstructorEListExpression");
+    }
+
+    private checkConstructorLambdaExpression(env: TypeEnvironment, exp: ConstructorLambdaExpression, infertype: TypeSignature): TypeSignature {
+        assert(false, "Not Implemented -- checkConstructorLambdaExpression");
+    }
 
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
         const constype = this.normalizeTypeOnly(exp.constype, env.binds);

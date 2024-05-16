@@ -2487,7 +2487,7 @@ class Parser {
         return new ITestLiteral(isnot, literal);
     }
 
-    private parseArguments(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean): ArgumentList {
+    private parseArguments(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean, mapargs: boolean, lambdaok: boolean): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
                 if(!refok) {
@@ -2518,7 +2518,16 @@ class Parser {
                 return new NamedArgumentValue(name, exp);
             }
             else {
-                const exp = this.parseExpression();
+                let exp: Expression;
+                if(mapargs) {
+                    exp = this.parseMapEntryConstructorExpression();
+                }
+                else if(lambdaok) {
+                    exp = this.parseLambdaOkExpression();
+                }
+                else {
+                    exp = this.parseExpression();
+                }
                 
                 return new PositionalArgumentValue(exp);
             }
@@ -3510,7 +3519,7 @@ class Parser {
     }
 
     private parseExpression(): Expression {
-        return this.parseImpliesExpression();
+        return this.xxxx();
     }
 
     private parseExpressionWithBinder(bindernames: string[]): {exp: Expression, used: {srcname: string, scopedname: string}[]} {
@@ -3524,14 +3533,28 @@ class Parser {
     private parseMapEntryConstructorExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        const lexp = this.parseIfExpression();   
+        const lexp = this.parseExpression();   
         if(this.testAndConsumeTokenIf("=>")) {
-            const rexp = this.parseIfExpression();
+            const rexp = this.parseExpression();
         
             return new MapEntryConstructorExpression(sinfo, lexp, rexp);
         }
         else {
             return lexp;
+        }
+    }
+
+    private parseLambdaOkExpression(): Expression {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        if (this.testToken(KW_fn) || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn)) {
+            return this.parseLambdaDecl();
+        }
+        else (this.testToken(KW_pred) || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
+            return this.parseLambdaDecl();
+        }
+        else {
+            return this.parseExpression();
         }
     }
 
