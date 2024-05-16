@@ -1525,12 +1525,23 @@ class TypeChecker {
     }
 
     private checkAccessStaticFieldExpression(env: TypeEnvironment, exp: AccessStaticFieldExpression): TypeSignature {
-        xxxx;
+        assert(false, "Not Implemented -- checkAccessStaticFieldExpression");
     }
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
-        xxxx;
+        if(exp.isCaptured) {
+            xxxx;
+        }
+        else {
+            xxxx;
+        }
     }
+
+    ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
+    ConstructorTupleExpression = "ConstructorTupleExpression",
+    ConstructorRecordExpression = "ConstructorRecordExpression",
+    ConstructorEListExpression = "ConstructorEListExpression",
+    ConstructorLambdaExpression = "ConstructorLambdaExpression",
 
     private checkLiteralTypedPrimitiveConstructorExpression(env: ExpressionTypeEnvironment, exp: LiteralTypedPrimitiveConstructorExpression): ExpressionTypeEnvironment {
         const constype = this.normalizeTypeOnly(exp.constype, env.binds);
@@ -1580,29 +1591,6 @@ class TypeChecker {
             const nexp = new TIRLiteralTypedPrimitiveConstructorExpression(exp.sinfo, (lexp[0] as TIRLiteralValue).exp, this.toTIRTypeKey(constype), this.toTIRTypeKey(ResolvedType.createSingle(ccdecl.representation)));
             return env.setResultExpressionInfo(nexp, constype);
         }
-    }
-
-    private checkBSQONLiteralExpression(env: ExpressionTypeEnvironment, exp: BSQONLiteralExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, desiredtype === undefined && exp.bsqtype === undefined, "Cannot infer type of BSQON literal -- must provide type annotation");
-
-        if(desiredtype === undefined) {
-            const oftype = this.normalizeTypeOnly(exp.bsqtype as TypeSignature, env.binds);
-            return env.setResultExpressionInfo(new TIRBSQONLiteralExpression(exp.sinfo, exp.bsqonstr, this.toTIRTypeKey(oftype)), oftype);
-        }
-        else {
-            if(exp.bsqtype !== undefined) {
-                const oftype = this.normalizeTypeOnly(exp.bsqtype as TypeSignature, env.binds);
-                this.raiseErrorIf(exp.sinfo, oftype.typeID !== desiredtype.typeID, `BSQON literal type annotation ${oftype.typeID} does not match desired type ${desiredtype.typeID}`)
-            }
-
-            return env.setResultExpressionInfo(new TIRBSQONLiteralExpression(exp.sinfo, exp.bsqonstr, this.toTIRTypeKey(desiredtype)), desiredtype);
-        }
-    }
-
-    private checkAccessFormatInfo(env: ExpressionTypeEnvironment, exp: AccessFormatInfoExpression): ExpressionTypeEnvironment {
-        assert(false, "TODO: maybe this is ok for string formats but right now this shouldn't happen");
-
-        return env;
     }
 
     private checkAccessEnvValue(env: ExpressionTypeEnvironment, exp: AccessEnvValueExpression): ExpressionTypeEnvironment {

@@ -336,10 +336,10 @@ abstract class Expression {
 }
 
 class ErrorExpression extends Expression {
-    readonly staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature} | undefined;
+    readonly staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature | undefined} | undefined;
     readonly dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined;
 
-    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
+    constructor(sinfo: SourceInfo, staticPrefix: {ns: NamespaceDeclaration, typeopt: TypeSignature | undefined} | undefined, dotaccess: {btype: TypeSignature | undefined, names: string[]} | undefined) {
         super(ExpressionTag.ErrorExpression, sinfo);
 
         this.staticPrefix = staticPrefix;

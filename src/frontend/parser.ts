@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AbstractBodyImplementation, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
@@ -2614,6 +2614,74 @@ class Parser {
         }
     }
 
+    private parseNamespaceScopedFirstExpression(nspace: NamespaceDeclaration): Expression {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeToken(SYM_coloncolon, "namespace scoped expression");
+        this.ensureToken(TokenStrings.IdentifierName, "namespace scoped expression");
+
+        const idname = this.consumeTokenAndGetValue();
+
+        const constOpt = nspace.consts.find((c) => c.name === idname);
+        const funOpt = nspace.functions.find((f) => f.name === idname);
+        if(constOpt) {
+            return new AccessNamespaceConstantExpression(sinfo, nspace.fullnamespace, idname);
+        }
+        else if(funOpt) {
+            assert(false, "Not implemented -- parseNamespaceScopedFirstExpression");
+        }
+        else {
+            this.recordErrorGeneral(sinfo, `Name '${nspace.fullnamespace.emit()}::${idname}' is not defined in this context`);
+            return new ErrorExpression(sinfo, {ns: nspace, typeopt: undefined}, undefined);
+        }
+    }
+
+    private parseTypeScopedFirstExpression(access: {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]}): Expression {
+        assert(false, "Not implemented -- parseTypeScopedFirstExpression");
+    }
+
+    private parseIdentifierFirstExpression(): Expression {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        if (this.env.identifierResolvesAsVariable(this.peekTokenData())) {
+            const idname = this.consumeTokenAndGetValue();
+            
+            const scopename = this.env.useVariable(idname);
+            if(scopename !== undefined) {
+                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
+        }
+        else if (this.peekTokenData().startsWith("$")) {
+            const idname = this.consumeTokenAndGetValue();
+            
+            const scopename = this.env.useVariable(idname);
+            if(scopename !== undefined) {
+                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
+        }
+        else {
+            const access = this.parseIdentifierAccessChain();
+            if(access === undefined) {
+                this.recordErrorGeneral(sinfo, "Invalid expression -- could not resolve name");
+                return new ErrorExpression(sinfo, undefined, undefined);
+            }
+
+            if(access.typeTokens.length === 0) {
+                return this.parseNamespaceScopedFirstExpression(access.nsScope);
+            }
+            else {
+                return this.parseTypeScopedFirstExpression(access);
+            }
+        }
+    }
+
     private parsePrimaryExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
@@ -2844,30 +2912,6 @@ class Parser {
         }
         else if (tk === KW_self) {
             assert(false, "Need to handle any self cases");
-        }
-        else if (tk === TokenStrings.IdentifierName && this.env.identifierResolvesAsVariable(this.peekTokenData())) {
-            const idname = this.consumeTokenAndGetValue();
-            
-            const scopename = this.env.useVariable(idname);
-            if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
-            }
-            else {
-                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
-        }
-        else if (tk === TokenStrings.IdentifierName && this.peekTokenData().startsWith("$")) {
-            const idname = this.consumeTokenAndGetValue();
-            
-            const scopename = this.env.useVariable(idname);
-            if(scopename !== undefined) {
-                return new AccessVariableExpression(sinfo, idname, scopename[0], scopename[1]);
-            }
-            else {
-                this.recordErrorGeneral(sinfo, `Variable '${idname}' is not defined in this context`);
-                return new ErrorExpression(sinfo, undefined, undefined);
-            }
         }
         /*
         else if (tk === KW_ok || tk === KW_err || tk === KW_something || tk === KW_result) {
@@ -3100,6 +3144,9 @@ class Parser {
             }
 
             return exp;
+        }
+        else if (tk === TokenStrings.IdentifierName) {
+            return this.parseIdentifierFirstExpression();
         }
         else {
             this.recordErrorGeneral(sinfo, `Unexpected token in expression -- ${tk}`);
