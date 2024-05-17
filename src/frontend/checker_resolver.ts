@@ -1,93 +1,45 @@
 import {strict as assert} from "assert";
 
-import { Expression } from "./body";
-import { TemplateBindingScope } from "./checker_environment";
-import { SourceInfo } from "./build_decls";
-import { NominalTypeSignature, TypeSignature } from "./type";
+import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
+import { FullyQualifiedNamespace, NominalTypeSignature, TemplateBindingScope, TypeSignature } from "./type";
+import { AbstractNominalTypeDecl, Assembly, ConstMemberDecl, NamespaceConstDecl, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly";
 
 
-class OOMemberLookupInfo<T> {
-    readonly ttype: ResolvedType;
-    readonly ootype: OOPTypeDecl;
-    readonly oobinds: Map<string, ResolvedType>;
-    readonly decl: T;
+class MemberLookupInfo<T> {
+    readonly ttype: AbstractNominalTypeDecl;
+    readonly member: T;
+    readonly binds: TemplateBindingScope;
 
-    constructor(ttype: ResolvedType, ootype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, decl: T) {
+    constructor(ttype: AbstractNominalTypeDecl, member: T, binds: TemplateBindingScope) {
         this.ttype = ttype;
-        this.ootype = ootype;
-        this.oobinds = oobinds;
-        this.decl = decl;
+        this.member = member;
+        this.binds = binds;
     }
-}
-
-class OOMemberResolution<T> {
-    readonly decl: OOMemberLookupInfo<T>; //should be a unique declaration of the member
-    readonly impl: OOMemberLookupInfo<T>[]; //may be no candidates for the actual implementation (then this is a virtual call)
-    readonly totalimpls: boolean; //true if every option resolved to an implementation (false if some resolutions didn't find a concrete implementation)
-
-    constructor(decl: OOMemberLookupInfo<T>, impl: OOMemberLookupInfo<T>[], istotal: boolean) {
-        this.decl = decl;
-        this.impl = impl;
-        this.totalimpls = istotal;
-    }
-}
-
-enum ResolveResultFlag {
-    notfound,
-    failure
 }
 
 class TypeCheckerResolver {
-    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindingScope): Expression | undefined {
-        if(exp.isCompileTimeInlineValue()) {
-            if (exp instanceof LiteralTypedStringExpression) {
-                const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = oftype.tryGetUniqueEntityTypeInfo();
-                if (ootype instanceof ResolvedValidatorEntityAtomType) {
-                    return exp;
-                }
-                else {
-                    return undefined;
-                }
-            }
-            else if (exp instanceof LiteralASCIITypedStringExpression) {
-                const oftype = this.normalizeTypeOnly(exp.stype, binds);
-                const ootype = oftype.tryGetUniqueEntityTypeInfo();
-                if (ootype instanceof ResolvedValidatorEntityAtomType) {
-                    return exp;
-                }
-                else {
-                    return undefined;
-                }
-            }
-            else {
-                return exp;
-            }
+    private readonly assembly: Assembly;
+
+    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindingScope): [Expression, TemplateBindingScope] | undefined {
+        if(exp.isLiteralExpression()) {
+            return [exp, binds];
         }
         else if (exp instanceof AccessNamespaceConstantExpression) {
-            if (!this.m_assembly.hasNamespace(exp.ns)) {
-                return undefined;
-            }
-            const nsdecl = this.m_assembly.getNamespace(exp.ns);
-
-            if (!nsdecl.consts.has(exp.name)) {
-                return undefined;
-            }
-
-            const cdecl = nsdecl.consts.get(exp.name) as NamespaceConstDecl;
-            return this.compileTimeReduceConstantExpression(cdecl.value.exp, binds);
+            const nsresl = this.resolveNamespaceConstant(exp.ns, exp.name);
+            return nsresl !== undefined ? this.compileTimeReduceConstantExpression(nsresl.value.exp, binds) : undefined;
         }
         else if (exp instanceof AccessStaticFieldExpression) {
-            const sfimpl = this.resolveMemberConst(exp.sinfo, this.normalizeTypeOnly(exp.stype, binds), exp.name);
-            if(sfimpl === undefined) {
-                return undefined;
+            if(this.resolveEnumName(exp.stype, exp.name) !== undefined) {
+                return [exp, binds];
             }
-    
-            if(sfimpl.decl.attributes.includes("__enum_type")) {
-                return exp;
-            }
-            else {
-                return sfimpl.decl.value !== undefined ? this.compileTimeReduceConstantExpression(sfimpl.decl.value.exp, TemplateBindScope.createBaseBindScope(sfimpl.oobinds)) : undefined;
+            else
+            {
+                const cdecl = this.resolveTypeConstant(exp.stype, exp.name, binds);
+                if(cdecl === undefined) {
+                    return undefined;
+                }
+
+                return this.compileTimeReduceConstantExpression(cdecl.member.value.exp, cdecl.binds);
             }
         }
         else {
@@ -95,11 +47,32 @@ class TypeCheckerResolver {
         }
     }
 
-    resolveStringRegexValidatorInfo(ttype: NominalTypeSignature): {vtype: TypeSignature, vre: string} | undefined {
+    resolveStringRegexValidatorInfo(ttype: TypeSignature): {vtype: TypeSignature, vre: string} | undefined {
         //TODO: from the assembly resolve the 
         xxxx;
     }
 
+    resolveNamespaceConstant(ns: FullyQualifiedNamespace, name: string): NamespaceConstDecl | undefined {
+        xxxx;
+    }
+
+    resolveNamespaceFunction(ns: FullyQualifiedNamespace, name: string): NamespaceFunctionDecl | undefined {
+        xxxx;
+    }
+
+    resolveEnumName(ns: TypeSignature, name: string): MemberLookupInfo<string> | undefined {
+        xxxx;
+    }
+
+    resolveTypeConstant(ns: TypeSignature, name: string, binds: TemplateBindingScope): MemberLookupInfo<ConstMemberDecl> | undefined {
+        xxxx;
+    }
+
+    resolveTypeFunction(ns: FullyQualifiedNamespace, name: string, binds: TemplateBindingScope): MemberLookupInfo<TypeFunctionDecl> | undefined {
+        xxxx;
+    }
+
+    /*
     getAllOOFields(ttype: TypeSignature, ooptype: OOPTypeDecl, oobinds: Map<string, ResolvedType>, fmap?: Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]>): Map<string, [ResolvedType, OOPTypeDecl, MemberFieldDecl, Map<string, ResolvedType>]> {
         assert(!ooptype.attributes.includes("__constructable"), "Needs to be handled as special case");
 
@@ -544,6 +517,7 @@ class TypeCheckerResolver {
 
         return oktypes;
     }
+    */
 }
 
 export {

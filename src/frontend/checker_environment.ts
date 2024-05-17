@@ -1,6 +1,6 @@
 import {strict as assert} from "assert";
 
-import { TypeSignature } from "./type";
+import { TemplateBindingScope, TypeSignature } from "./type";
 
 class VarInfo {
     readonly declaredType: TypeSignature;
@@ -16,39 +16,24 @@ class VarInfo {
     }
 }
 
-class TemplateBindingScope {
-    readonly typebinds: Map<string, TypeSignature>;
-    readonly invokebinds: Map<string, TypeSignature>;
-
-    constructor(typebinds: Map<string, TypeSignature>, invokebinds: Map<string, TypeSignature>) {
-        this.typebinds = typebinds;
-        this.invokebinds = invokebinds;
-    }
-
-    static createEmptyScope(): TemplateBindingScope {
-        return new TemplateBindingScope(new Map<string, TypeSignature>(), new Map<string, TypeSignature>());
-    }
-
-    resolveTypeBinding(name: string): TypeSignature | undefined {
-        let rtype: TypeSignature | undefined = undefined;
-
-        if(this.invokebinds.has(name)) {
-            rtype = this.invokebinds.get(name);
-        }
-
-        if(this.typebinds.has(name)) {
-            rtype = this.typebinds.get(name);
-        }
-
-        return rtype;
-    }
-}
-
 class TypeEnvironment {
+    readonly binds: TemplateBindingScope;
 
+    //create a new environment with the given template bindings but no other vars
+    static createStandaloneEnvironment(binds: TemplateBindingScope): TypeEnvironment {
+        xxxx;
+    }
+
+    resolveLambdaCaptureVarType(scopename: string): TypeSignature {
+        xxxx;
+    }
+
+    resolveLocalVarInfo(scopename: string): VarInfo {
+        xxxx;
+    }
 }
 
 export {
-    VarInfo, TemplateBindingScope,
+    VarInfo,
     TypeEnvironment
 };

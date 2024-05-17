@@ -332,6 +332,10 @@ abstract class Expression {
         return etype;
     }
 
+    isLiteralExpression(): boolean {
+        return false;
+    }
+
     abstract emit(toplevel: boolean, fmt: CodeFormatter): string;
 }
 
@@ -388,6 +392,10 @@ class LiteralSingletonExpression extends Expression {
         this.value = value;
     }
 
+    isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value;
     }
@@ -399,6 +407,10 @@ class LiteralSimpleExpression extends Expression {
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
         this.value = value;
+    }
+
+    isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -429,6 +441,10 @@ class LiteralTypedStringExpression extends Expression {
         this.stype = stype;
     }
 
+    isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value + this.stype.emit(false);
     }
@@ -440,6 +456,10 @@ class LiteralTemplateStringExpression extends Expression {
     constructor(tag: ExpressionTag, sinfo: SourceInfo, value: string) {
         super(tag, sinfo);
         this.value = value;
+    }
+
+    isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -457,6 +477,10 @@ class LiteralPathExpression extends Expression {
         this.ptype = ptype;
     }
 
+    isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return this.value + (this.ptype !== undefined ? this.ptype.emit(false) : "");
     }
@@ -470,6 +494,10 @@ class LiteralTypeDeclValueExpression extends Expression {
         super(ExpressionTag.LiteralTypeDeclValueExpression, sinfo);
         this.value = value;
         this.constype = constype;
+    }
+
+    isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
@@ -487,6 +515,10 @@ class LiteralTypeDeclIntegralValueExpression extends Expression {
         this.constype = constype;
     }
 
+    isLiteralExpression(): boolean {
+        return true;
+    }
+
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.value}_${this.constype.emit(false)}`;
     }
@@ -500,6 +532,10 @@ class LiteralTypeDeclFloatPointValueExpression extends Expression {
         super(ExpressionTag.LiteralTypeDeclFloatPointValueExpression, sinfo);
         this.value = value;
         this.constype = constype;
+    }
+
+    isLiteralExpression(): boolean {
+        return true;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
