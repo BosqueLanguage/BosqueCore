@@ -63,6 +63,14 @@ class TypeCheckerRelations {
     isSubtypeOf(t1: TypeSignature, t2: TypeSignature): boolean {
         xxxx;
     }
+
+    typesEqual(t1: TypeSignature, t2: TypeSignature): boolean {
+        xxxx;
+    }
+
+    typesUniqueAndEqual(t1: TypeSignature, t2: TypeSignature): boolean {
+        xxxx;
+    }
 }
 
 export {

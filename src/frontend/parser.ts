@@ -2580,6 +2580,8 @@ class Parser {
         const exp = this.parseExpression();
         this.env.popStandardFunctionScope();
 
+        xxxx; //check exp is of possible literal kind
+
         return new LiteralExpressionValue(exp);
     }
 

@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TypeSignature, VoidTypeSignature } from "./type";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, StringSliceExpression, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskMultiExpression, TaskRaceExpression, TaskRunExpression } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment } from "./checker_environment";
 import { TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_subtype";
@@ -3339,33 +3339,113 @@ class TypeChecker {
     }
     */
 
-    private checkDeclareSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, rhs: ExpressionTypeEnvironment | undefined): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.lookupLocalVar(vname) !== null, `${vname} cannot shadow previous definition`);
-
-        const infertype = rhs !== undefined ? rhs.trepr : undefined;
-        this.raiseErrorIf(sinfo, infertype === undefined && isConst, "must define const var at declaration site");
-        this.raiseErrorIf(sinfo, infertype === undefined && decltype instanceof AutoTypeSignature, "must define auto typed var at declaration site");
-
-        const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
-        this.raiseErrorIf(sinfo, infertype !== undefined && !this.subtypeOf(infertype, vtype), `expression is not of declared type ${vtype.typeID}`);
-
-        return env.addVar(vname, isConst, vtype, infertype !== undefined);
+    private checkEmptyStatement(env: TypeEnvironment, stmt: EmptyStatement): TypeEnvironment {
+        return env;
     }
 
-    private checkAssignSingleVariableExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, rhs: ExpressionTypeEnvironment): StatementTypeEnvironment {
-        const vinfo = env.lookupLocalVar(vname);
-        this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vname} was not previously defined`);
-        this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vname} is defined as const`);
-
-        this.raiseErrorIf(sinfo, !this.subtypeOf(rhs.trepr, (vinfo as VarInfo).declaredType), `Assign value (${rhs.trepr.typeID}) is not subtype of declared variable type ${(vinfo as VarInfo).declaredType}`);
-
-        return env.setVar(vname);
+    private checkVariableDeclarationStatement(env: TypeEnvironment, stmt: VariableDeclarationStatement): TypeEnvironment {
+        xxxx;
     }
     
-    private checkEmptyStatement(env: StatementTypeEnvironment, stmt: EmptyStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        return [env, []];
+    private checkVariableMultiDeclarationStatement(env: TypeEnvironment, stmt: VariableMultiDeclarationStatement): TypeEnvironment {
+        xxxx;
     }
 
+    private checkVariableInitializationStatement(env: TypeEnvironment, stmt: VariableInitializationStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkVariableAssignmentStatement(env: TypeEnvironment, stmt: VariableAssignmentStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkVariableRetypeStatement(env: TypeEnvironment, stmt: VariableRetypeStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkIfElseStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkAssertStatement(env: TypeEnvironment, stmt: AssertStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkValidateStatement(env: TypeEnvironment, stmt: ValidateStatement): TypeEnvironment {
+        xxxx;
+    }
+
+    private checkDebugStatement(env: TypeEnvironment, stmt: DebugStatement): TypeEnvironment {
+        this.checkExpression(env, stmt.value, undefined);
+
+        return env;
+    }
+
+    private checkStandaloneExpressionStatement(env: TypeEnvironment, stmt: StandaloneExpressionStatement): TypeEnvironment {
+        assert(false, "Not implemented -- StandaloneExpressionStatement");
+    }
+
+    private checkThisUpdateStatement(env: TypeEnvironment, stmt: ThisUpdateStatement): TypeEnvironment {
+        assert(false, "Not implemented -- ThisUpdateStatement");
+    }
+
+    private checkSelfUpdateStatement(env: TypeEnvironment, stmt: SelfUpdateStatement): TypeEnvironment {
+        assert(false, "Not implemented -- SelfUpdateStatement");
+    }
+
+    private checkEnvironmentUpdateStatement(env: TypeEnvironment, stmt: EnvironmentUpdateStatement): TypeEnvironment {
+        assert(false, "Not implemented -- EnvironmentUpdateStatement");
+    }
+
+    private checkEnvironmentBracketStatement(env: TypeEnvironment, stmt: EnvironmentBracketStatement): TypeEnvironment {
+        assert(false, "Not implemented -- EnvironmentBracketStatement");
+    }
+
+    private checkTaskStatusStatement(env: TypeEnvironment, stmt: TaskStatusStatement): TypeEnvironment {
+        assert(false, "Not implemented -- TaskStatusStatement");
+    }
+
+    private checkTaskEventEmitStatement(env: TypeEnvironment, stmt: TaskEventEmitStatement): TypeEnvironment {
+        assert(false, "Not implemented -- TaskEventEmitStatement");
+    }
+
+    private checkTaskYieldStatement(env: TypeEnvironment, stmt: TaskYieldStatement): TypeEnvironment {
+        assert(false, "Not implemented -- TaskYieldStatement");
+    }
+
+    private checkBlockStatement(env: TypeEnvironment, stmt: BlockStatement): TypeEnvironment {
+        for (let i = 0; i < stmt.statements.length; ++i) {
+            env = this.checkStatement(env, stmt.statements[i]);
+        }
+
+        return env;
+    }
+
+    /*
     private checkVariableDeclarationStatement(env: StatementTypeEnvironment, stmt: VariableDeclarationStatement): [StatementTypeEnvironment, TIRStatement[]] {
         if(stmt.exp === undefined) {
             const declenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, undefined);
@@ -4023,81 +4103,6 @@ class TypeChecker {
         return [benv[0], [new TIREnvironmentSetStatementBracket(stmt.sinfo, assigns, benv[1], stmt.isFresh)]];
     }
 
-    private checkDeclareSingleVariableFromTaskExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, isConst: boolean, decltype: TypeSignature, infertype: ResolvedType): StatementTypeEnvironment {
-        this.raiseErrorIf(sinfo, env.lookupLocalVar(vname) !== null, `${vname} cannot shadow previous definition`);
-
-        const vtype = (decltype instanceof AutoTypeSignature) ? infertype as ResolvedType : this.normalizeTypeOnly(decltype, env.binds);
-        this.raiseErrorIf(sinfo, infertype.typeID !== vtype.typeID, `expression is not of (no conversion) declared type ${vtype.typeID}`);
-
-        return env.addVar(vname, isConst, vtype, true);
-    }
-
-    private checkAssignSingleVariableFromTaskExplicit(sinfo: SourceInfo, env: StatementTypeEnvironment, vname: string, infertype: ResolvedType): StatementTypeEnvironment {
-        const vinfo = env.lookupLocalVar(vname);
-        this.raiseErrorIf(sinfo, vinfo === null, `Variable ${vname} was not previously defined`);
-        this.raiseErrorIf(sinfo, (vinfo as VarInfo).isConst, `Variable ${vname} is defined as const`);
-
-        this.raiseErrorIf(sinfo, infertype.typeID !== (vinfo as VarInfo).declaredType.typeID, `expression is not of (no conversion) declared type ${(vinfo as VarInfo).declaredType.typeID}`);
-
-        return env.setVar(vname);
-    }
-
-    private extractTaskInfo(env: StatementTypeEnvironment, ttask: TypeSignature): [ResolvedTaskAtomType, TIRTypeKey, TaskTypeDecl] {
-        const rtasktry = this.normalizeTypeOnly(ttask, env.binds);
-        this.raiseErrorIf(ttask.sinfo, rtasktry.options.length !== 0 || !(rtasktry.options[0] instanceof ResolvedTaskAtomType), `Expecting Task type but got ${rtasktry.typeID}`);
-        const rtask = rtasktry.options[0] as ResolvedTaskAtomType;
-
-        const tirtask = this.toTIRTypeKey(rtasktry);
-
-        const taskdecltry = this.m_assembly.tryGetTaskTypeForFullyResolvedName(rtask.typeID);
-        this.raiseErrorIf(ttask.sinfo, taskdecltry !== undefined, `Could not resolve task ${rtask.typeID}`);
-        const taskdecl = taskdecltry as TaskTypeDecl;
-
-        return [rtask, tirtask, taskdecl];
-    }
-
-    private checkTaskDeclExecArgs(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: TaskTypeDecl, tbinds: TemplateBindScope, taskargs: {argn: string, argv: Expression}[]): {argn: string, argv: TIRExpression}[] {
-        const execargs = [...ttask.econtrol]
-            .sort((a, b) => ((a.name !== b.name) ? (a.name < b.name ? -1 : 1) : 0))
-            .map((cc) => {
-                const cctype = this.normalizeTypeOnly(cc.declaredType, tbinds);
-                const earg = taskargs.find((aa) => aa.argn === cc.name);
-                if(earg !== undefined) {
-                    return {argn: cc.name, argv: this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), earg.argv, cctype), earg.argv.sinfo, cctype).expressionResult};
-                }
-                else {
-                    this.raiseErrorIf(sinfo, cc.defaultValue === undefined, `control property ${cc.name} requires a value but not given one at call`);
-
-                    const lvaltry = this.reduceLiteralValueToCanonicalForm((cc.defaultValue as ConstantExpressionValue).exp, env.binds);
-                    this.raiseErrorIf(sinfo, lvaltry[1].typeID !== cctype.typeID, `expected default value of type ${cctype.typeID} but got ${lvaltry[1].typeID}`);
-                    this.raiseErrorIf(sinfo, lvaltry[0] === undefined, `only literal values are supported as default control values right now`);
-
-                    return {argn: cc.name, argv: (lvaltry[0] as TIRLiteralValue).exp};
-                }
-            });
-
-        return execargs;
-    }
-
-    private getTaskFieldsInitRecord(ttask: ResolvedTaskAtomType): ResolvedType {
-        const tfieldsrecord = ResolvedType.createSingle(ResolvedRecordAtomType.create(ttask.task.memberFields.map((fd) => {
-            return {
-                pname: fd.name,
-                ptype: this.normalizeTypeOnly(fd.declaredType, TemplateBindScope.createBaseBindScope(ttask.binds))
-            }
-        })));
-
-        return tfieldsrecord;
-    }
-
-    private getTaskArgsTuple(ttask: ResolvedTaskAtomType): ResolvedType {
-        const targstuple = ResolvedType.createSingle(ResolvedTupleAtomType.create(ttask.task.mainfunc.invoke.params.map((pp) => {
-            return this.normalizeTypeOnly(pp.type, TemplateBindScope.createBaseBindScope(ttask.binds));
-        })));
-
-        return targstuple;
-    }
-
     private checkVTargetOption(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: ResolvedTaskAtomType, isdefine: boolean, isconst: boolean, svtrgt: {name: string, vtype: TypeSignature}): [StatementTypeEnvironment, {name: string, vtype: TIRTypeKey}] {
         const rrtype = this.normalizeTypeOnly(ttask.task.mainfunc.invoke.resultType, TemplateBindScope.createBaseBindScope(ttask.binds));
         
@@ -4311,121 +4316,13 @@ class TypeChecker {
     private checkTaskEventEmitStatement(env: StatementTypeEnvironment, stmt: TaskEventEmitStatement): [StatementTypeEnvironment, TIRStatement[]] {
         return TYPECHECKER_NOT_IMPLEMENTED<[StatementTypeEnvironment, TIRStatement[]]>("TaskEventEmitStatement");
     }
+*/
 
-    private gatherInfoTemplateTypesAndChecks(sinfo: SourceInfo, env: StatementTypeEnvironment, tt: InfoTemplate, argexps: Map<number, ResolvedType>): boolean {
-        if(tt instanceof InfoTemplateConst) {
-            const ccir = this.reduceLiteralValueToCanonicalForm(tt.lexp.exp, env.binds);
-            return ccir[0] !== undefined;
+    private checkStatement(env: TypeEnvironment, stmt: Statement): TypeEnvironment {
+        if(!env.hasNormalFlow()) {
+            this.reportError(stmt.sinfo, "Unreachable code");
+            return env;
         }
-        else if (tt instanceof InfoTemplateMacro) {
-            return true;
-        }
-        else if (tt instanceof InfoTemplateValue) {
-            const oftype = this.normalizeTypeOnly(tt.argtype, env.binds);
-
-            if(argexps.has(tt.argpos)) {
-                return oftype.typeID !== (argexps.get(tt.argpos) as ResolvedType).typeID;
-            }
-
-            argexps.set(tt.argpos, oftype);
-            return true;
-        }
-        else if (tt instanceof InfoTemplateRecord) {
-            const mmok = tt.entries.map((ee) => this.gatherInfoTemplateTypesAndChecks(sinfo, env, ee.value, argexps));
-            return !mmok.includes(false);
-        }
-        else {
-            assert(tt instanceof InfoTemplateTuple);
-
-            const mmok = (tt as InfoTemplateTuple).entries.map((ee) => this.gatherInfoTemplateTypesAndChecks(sinfo, env, ee, argexps));
-            return !mmok.includes(false);
-        }
-    }
-
-    private checkLoggerEmitStatement(env: StatementTypeEnvironment, stmt: LoggerEmitStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
-
-        this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
-        const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
-
-        let tmap = new Map<number, ResolvedType>();
-        const ok = this.gatherInfoTemplateTypesAndChecks(stmt.sinfo, env, tt, tmap);
-        this.raiseErrorIf(stmt.sinfo, !ok, "Bad format + args");
-
-        this.raiseErrorIf(stmt.sinfo, stmt.args.length !== tmap.size, `number of expected args (${tmap.size}) and number provided (${stmt.args.length}) differ`);
-        const args = stmt.args.map((arg, ii) => {
-            this.raiseErrorIf(arg.sinfo, !tmap.has(ii), `Missing formatter for argument ${ii}`);
-            const etype = tmap.get(ii) as ResolvedType;
-            return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
-        });
-
-        return [env, [new TIRLoggerEmitStatement(stmt.sinfo, stmt.level, stmt.msg, args)]];
-    }
-
-    private checkLoggerEmitConditionalStatement(env: StatementTypeEnvironment, stmt: LoggerEmitConditionalStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
-
-        this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
-        const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
-
-        let tmap = new Map<number, ResolvedType>();
-        const ok = this.gatherInfoTemplateTypesAndChecks(stmt.sinfo, env, tt, tmap);
-        this.raiseErrorIf(stmt.sinfo, !ok, "Bad format + args");
-
-        this.raiseErrorIf(stmt.sinfo, stmt.args.length !== tmap.size, `number of expected args (${tmap.size}) and number provided (${stmt.args.length}) differ`);
-        const args = stmt.args.map((arg, ii) => {
-            this.raiseErrorIf(arg.sinfo, !tmap.has(ii), `Missing formatter for argument ${ii}`);
-            const etype = tmap.get(ii) as ResolvedType;
-            return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
-        });
-
-        const cond = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.cond, this.getSpecialBoolType()), stmt.cond.sinfo, this.getSpecialBoolType());
-
-        return [env, [new TIRLoggerEmitConditionalStatement(stmt.sinfo, stmt.level, cond.expressionResult, stmt.msg, args)]];
-    }
-
-    private checkLoggerLevelStatement(env: StatementTypeEnvironment, stmt: LoggerLevelStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        return TYPECHECKER_NOT_IMPLEMENTED<[StatementTypeEnvironment, TIRStatement[]]>("LoggerLevelStatement");
-    }
-
-    private checkLoggerCategoryStatement(env: StatementTypeEnvironment, stmt: LoggerCategoryStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        return TYPECHECKER_NOT_IMPLEMENTED<[StatementTypeEnvironment, TIRStatement[]]>("LoggerCategoryStatement");
-    }
-
-    private checkLoggerPrefixStatement(env: StatementTypeEnvironment, stmt: LoggerPrefixStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !this.m_assembly.hasNamespace(stmt.msg.ns), `the namespace ${stmt.msg.ns} does not exist in the application`);
-        const tns = this.m_assembly.getNamespace(stmt.msg.ns);
-
-        this.raiseErrorIf(stmt.sinfo, !tns.msgformats.has(stmt.msg.keyname), `the namespace does not have a format named ${stmt.msg.keyname}`);
-        const tt = tns.msgformats.get(stmt.msg.keyname) as InfoTemplate;
-
-        let tmap = new Map<number, ResolvedType>();
-        const ok = this.gatherInfoTemplateTypesAndChecks(stmt.sinfo, env, tt, tmap);
-        this.raiseErrorIf(stmt.sinfo, !ok, "Bad format + args");
-
-        this.raiseErrorIf(stmt.sinfo, stmt.args.length !== tmap.size, `number of expected args (${tmap.size}) and number provided (${stmt.args.length}) differ`);
-        const args = stmt.args.map((arg, ii) => {
-            this.raiseErrorIf(arg.sinfo, !tmap.has(ii), `Missing formatter for argument ${ii}`);
-            const etype = tmap.get(ii) as ResolvedType;
-            return this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), arg, etype), arg.sinfo, etype).expressionResult;
-        });
-
-        let renv = env;
-        let bblock: TIRScopedBlockStatement | TIRUnscopedBlockStatement | undefined = undefined;
-        if(stmt.block instanceof ScopedBlockStatement) {
-            [renv, bblock] = this.checkScopedBlockStatement(env, stmt.block);
-        }
-        else {
-            [renv, bblock] = this.checkUnscopedBlockStatement(env, stmt.block);
-        }
-
-        return [renv, [new TIRLoggerSetPrefixStatement(stmt.sinfo, stmt.msg, bblock, args)]];
-    }
-
-    private checkStatement(env: StatementTypeEnvironment, stmt: Statement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, !env.hasNormalFlow(), "Unreachable statements");
 
         switch(stmt.tag) {
             case StatementTag.EmptyStatement: {
@@ -4434,23 +4331,29 @@ class TypeChecker {
             case StatementTag.VariableDeclarationStatement: {
                 return this.checkVariableDeclarationStatement(env, stmt as VariableDeclarationStatement);
             }
+            case StatementTag.VariableMultiDeclarationStatement: {
+                return this.checkVariableMultiDeclarationStatement(env, stmt as VariableMultiDeclarationStatement);
+            }
+            case StatementTag.VariableInitializationStatement: {
+                return this.checkVariableInitializationStatement(env, stmt as VariableInitializationStatement);
+            }
+            case StatementTag.VariableMultiInitializationStatement: {
+                return this.checkVariableMultiInitializationStatement(env, stmt as VariableMultiInitializationStatement);
+            }
             case StatementTag.VariableAssignmentStatement: {
-                return this.checkVariableAssignStatement(env, stmt as VariableAssignmentStatement);
+                return this.checkVariableAssignmentStatement(env, stmt as VariableAssignmentStatement);
+            }
+            case StatementTag.VariableMultiAssignmentStatement: {
+                return this.checkVariableMultiAssignmentStatement(env, stmt as VariableMultiAssignmentStatement);
             }
             case StatementTag.VariableRetypeStatement: {
                 return this.checkVariableRetypeStatement(env, stmt as VariableRetypeStatement);
-            }
-            case StatementTag.ExpressionSCReturnStatement: {
-                return this.checkExpressionSCReturnStatement(env, stmt as ExpressionSCReturnStatement);
-            }
-            case StatementTag.VariableSCRetypeStatement: {
-                return this.checkVariableSCRetypeStatement(env, stmt as VariableSCRetypeStatement);
             }
             case StatementTag.ReturnStatement: {
                 return this.checkReturnStatement(env, stmt as ReturnStatement);
             }
             case StatementTag.IfElseStatement: {
-                return this.checkIfStatement(env, stmt as IfStatement);
+                return this.checkIfElseStatement(env, stmt as IfStatement);
             }
             case StatementTag.SwitchStatement: {
                 return this.checkSwitchStatement(env, stmt as SwitchStatement);
@@ -4464,98 +4367,45 @@ class TypeChecker {
             case StatementTag.AssertStatement: {
                 return this.checkAssertStatement(env, stmt as AssertStatement);
             }
+            case StatementTag.ValidateStatement: {
+                return this.checkValidateStatement(env, stmt as ValidateStatement);
+            }
             case StatementTag.DebugStatement: {
                 return this.checkDebugStatement(env, stmt as DebugStatement);
             }
-            case StatementTag.RefCallStatement: {
-                return this.checkRefCallStatement(env, stmt as RefCallStatement);
+            case StatementTag.StandaloneExpressionStatement: {
+                return this.checkStandaloneExpressionStatement(env, stmt as StandaloneExpressionStatement);
             }
-            case StatementTag.EnvironmentFreshStatement: {
-                return this.checkEnvironmentFreshStatement(env, stmt as EnvironmentFreshStatement);
+            case StatementTag.ThisUpdateStatement: {
+                return this.checkThisUpdateStatement(env, stmt as ThisUpdateStatement);
             }
-            case StatementTag.EnvironmentSetStatement: {
-                return this.checkEnvironmentSetStatement(env, stmt as EnvironmentSetStatement);
+            case StatementTag.SelfUpdateStatement: {
+                return this.checkSelfUpdateStatement(env, stmt as SelfUpdateStatement);
             }
-            case StatementTag.EnvironmentSetStatementBracket: {
-                return this.checkEnvironmentSetStatementBracket(env, stmt as EnvironmentSetStatementBracket);
+            case StatementTag.EnvironmentUpdateStatement: {
+                return this.checkEnvironmentUpdateStatement(env, stmt as EnvironmentUpdateStatement);
             }
-            case StatementTag.TaskRunStatement: {
-                return this.checkTaskRunStatement(env, stmt as TaskRunStatement);
+            case StatementTag.EnvironmentBracketStatement: {
+                return this.checkEnvironmentBracketStatement(env, stmt as EnvironmentBracketStatement);
             }
-            case StatementTag.TaskMultiStatement: {
-                return this.checkTaskMultiStatement(env, stmt as TaskMultiStatement);
-            }
-            case StatementTag.TaskDashStatement: {
-                return this.checkTaskDashStatement(env, stmt as TaskDashStatement);
-            }
-            case StatementTag.TaskAllStatement: {
-                return this.checkTaskAllStatement(env, stmt as TaskAllStatement);
-            }
-            case StatementTag.TaskRaceStatement: {
-                return this.checkTaskRaceStatement(env, stmt as TaskRaceStatement);
-            }
-            case StatementTag.TaskCallWithStatement: {
-                return this.checkTaskCallWithStatement(env, stmt as TaskCallWithStatement);
-            }
-            case StatementTag.TaskResultWithStatement: {
-                return this.checkTaskResultWithStatement(env, stmt as TaskResultWithStatement);
-            }
-            case StatementTag.TaskSetStatusStatement: {
-                return this.checkTaskSetStatusStatement(env, stmt as TaskSetStatusStatement);
-            }
-            case StatementTag.TaskSetSelfFieldStatement: {
-                return this.checkTaskSetSelfFieldStatement(env, stmt as TaskSetSelfFieldStatement);
+            case StatementTag.TaskStatusStatement: {
+                return this.checkTaskStatusStatement(env, stmt as TaskStatusStatement);
             }
             case StatementTag.TaskEventEmitStatement: {
                 return this.checkTaskEventEmitStatement(env, stmt as TaskEventEmitStatement);
             }
-            case StatementTag.LoggerEmitStatement: {
-                return this.checkLoggerEmitStatement(env, stmt as LoggerEmitStatement);
+            case StatementTag.TaskYieldStatement: {
+                return this.checkTaskYieldStatement(env, stmt as TaskYieldStatement);
             }
-            case StatementTag.LoggerEmitConditionalStatement: {
-                return this.checkLoggerEmitConditionalStatement(env, stmt as LoggerEmitConditionalStatement);
-            }
-            case StatementTag.LoggerLevelStatement: {
-                return this.checkLoggerLevelStatement(env, stmt as LoggerLevelStatement);
-            }
-            case StatementTag.LoggerCategoryStatement: {
-                return this.checkLoggerCategoryStatement(env, stmt as LoggerCategoryStatement);
-            }
-            case StatementTag.LoggerPrefixStatement: {
-                return this.checkLoggerPrefixStatement(env, stmt as LoggerPrefixStatement);
+            case StatementTag.BlockStatement: {
+                return this.checkBlockStatement(env, stmt as BlockStatement);
             }
             default: {
-                this.raiseError(stmt.sinfo, `Unknown statement kind -- ${stmt.tag}`);
-                return [env, []];
+                assert(stmt.tag === StatementTag.ErrorStatement, `Unknown statement kind -- ${stmt.tag}`);
+
+                return env;
             }
         }
-    }
-
-    private checkUnscopedBlockStatement(env: StatementTypeEnvironment, stmt: UnscopedBlockStatement): [StatementTypeEnvironment, TIRUnscopedBlockStatement] {
-        let ops: TIRStatement[][] = [];
-        let cenv = env;
-        for(let i = 0; i < stmt.statements.length; ++i) {
-            const [nenv, nops] = this.checkStatement(cenv, stmt.statements[i]);
-            ops.push(nops);
-            cenv = nenv;
-        }
-        this.raiseErrorIf(stmt.sinfo, !cenv.hasNormalFlow(), "unscoped blocks cannot have terminal (return/abort) operations in them");
-
-        const flatops = ([] as TIRStatement[]).concat(...ops);
-        return [cenv, new TIRUnscopedBlockStatement(flatops)];
-    }
-
-    private checkScopedBlockStatement(env: StatementTypeEnvironment, stmt: ScopedBlockStatement): [StatementTypeEnvironment, TIRScopedBlockStatement] {
-        let ops: TIRStatement[][] = [];
-        let cenv = env.pushLocalScope();
-        for(let i = 0; i < stmt.statements.length; ++i) {
-            const [nenv, nops] = this.checkStatement(cenv, stmt.statements[i]);
-            ops.push(nops);
-            cenv = nenv;
-        }
-
-        const flatops = ([] as TIRStatement[]).concat(...ops);
-        return [cenv.popLocalScope(), new TIRScopedBlockStatement(flatops, !cenv.hasNormalFlow())];
     }
 
     private checkBodyExpression(srcFile: string, env: ExpressionTypeEnvironment, body: Expression, rtype: ResolvedType, selfok: "no" | "read"): TIRStatement[] {
