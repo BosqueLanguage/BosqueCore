@@ -17,13 +17,6 @@ class VarInfo {
 }
 
 class TypeEnvironment {
-    readonly binds: TemplateBindingScope;
-
-    //create a new environment with the given template bindings but no other vars
-    static createStandaloneEnvironment(binds: TemplateBindingScope): TypeEnvironment {
-        xxxx;
-    }
-
     resolveLambdaCaptureVarType(scopename: string): TypeSignature {
         xxxx;
     }

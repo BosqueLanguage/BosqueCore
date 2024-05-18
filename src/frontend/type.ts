@@ -23,40 +23,49 @@ class FullyQualifiedNamespace {
     }
 }
 
-class TemplateBindingScope {
-    readonly typebinds: Map<string, TypeSignature>;
-    readonly invokebinds: Map<string, TypeSignature>;
-
+class TemplateConstraintScope {
     readonly constraints: Map<string, TypeSignature>;
 
-    constructor(typebinds: Map<string, TypeSignature>, invokebinds: Map<string, TypeSignature>, constraints: Map<string, TypeSignature>) {
-        this.typebinds = typebinds;
-        this.invokebinds = invokebinds;
-        
+    constructor(constraints: Map<string, TypeSignature>) {
         this.constraints = constraints;
-    }
-
-    static createEmptyScope(): TemplateBindingScope {
-        return new TemplateBindingScope(new Map<string, TypeSignature>(), new Map<string, TypeSignature>(), new Map<string, TypeSignature>());
-    }
-
-    resolveTypeBinding(name: string): TypeSignature {
-        assert(this.invokebinds.has(name) || this.typebinds.has(name), `Type binding ${name} not found in scope`);
-
-        let rtype = this.invokebinds.has(name) ? this.invokebinds.get(name) as TypeSignature : new TemplateTypeSignature(SourceInfo.implicitSourceInfo(), name);
-
-        if(rtype instanceof TemplateTypeSignature && this.typebinds.has(rtype.name)) {
-            return this.typebinds.get(rtype.name) as TypeSignature;
-        }
-        else {
-            return rtype;
-        }
     }
 
     resolveConstraint(name: string): TypeSignature {
         assert(this.constraints.has(name), `Constraint ${name} not found in scope`);
 
         return this.constraints.get(name) as TypeSignature;
+    }
+}
+
+class TemplateNameMapper {
+    readonly mapper: Map<string, TypeSignature>[];
+
+    constructor(mapper: Map<string, TypeSignature>[]) {
+        this.mapper = mapper;
+    }
+
+    static createEmpty(): TemplateNameMapper {
+        return new TemplateNameMapper([]);
+    }
+
+    static merge(m1: TemplateNameMapper, m2: TemplateNameMapper): TemplateNameMapper {
+        return new TemplateNameMapper([...m1.mapper, ...m2.mapper]);
+    }
+
+    resolveTemplateMapping(ttype: TemplateTypeSignature): TypeSignature {
+        for(let i = this.mapper.length - 1; i >= 0; ++i) {
+            const res = this.mapper[i].get(ttype.name);
+            if(res !== undefined) {
+                if(res instanceof TemplateTypeSignature) {
+                    ttype = res;
+                }
+                else {
+                    return res;
+                }
+            }
+        }
+        
+        return ttype;
     }
 }
 
@@ -69,7 +78,7 @@ abstract class TypeSignature {
 
     abstract emit(toplevel: boolean): string;
 
-    abstract remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature;
+    abstract remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature;
 }
 
 class ErrorTypeSignature extends TypeSignature {
@@ -85,7 +94,7 @@ class ErrorTypeSignature extends TypeSignature {
         return `[Parse Error] @ ${this.completionNamespace ? this.completionNamespace.emit() + "::" : ""}?`;
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
 }
@@ -99,7 +108,7 @@ class VoidTypeSignature extends TypeSignature {
         return "[Void Type]";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
 }
@@ -113,7 +122,7 @@ class AutoTypeSignature extends TypeSignature {
         return "[Auto Type]";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         return this;
     }
 }
@@ -130,8 +139,8 @@ class TemplateTypeSignature extends TypeSignature {
         return this.name;
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return bindings.resolveTypeBinding(this.name);
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return mapper.resolveTemplateMapping(this);
     }
 }
 
@@ -166,13 +175,13 @@ class NominalTypeSignature extends TypeSignature {
         return nscope + rrtscope.join("::");
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rtscope = this.tscope.map((t) => {
-            return { tname: t.tname, terms: t.terms.map((tt) => tt.remapTemplateBindings(bindings)) };
+            return { tname: t.tname, terms: t.terms.map((tt) => tt.remapTemplateBindings(mapper)) };
         });
 
         const rresolvedTerms = this.resolvedTerms.map((tt) => {
-            return { name: tt.name, type: tt.type.remapTemplateBindings(bindings) };
+            return { name: tt.name, type: tt.type.remapTemplateBindings(mapper) };
         });
 
         return new NominalTypeSignature(this.sinfo, this.ns, rtscope, rresolvedTerms, this.resolvedTypedef , this.resolvedDeclaration);
@@ -191,8 +200,8 @@ class TupleTypeSignature extends TypeSignature {
         return "[" + this.entries.map((tt) => tt.emit(true)).join(", ") + "]";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new TupleTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(bindings)));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new TupleTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 }
 
@@ -208,8 +217,8 @@ class RecordTypeSignature extends TypeSignature {
         return "{" + this.entries.map((tt) => (tt[0] + ": " + tt[1].emit(true))).join(", ") + "}";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new RecordTypeSignature(this.sinfo, this.entries.map((tt) => [tt[0], tt[1].remapTemplateBindings(bindings)]));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new RecordTypeSignature(this.sinfo, this.entries.map((tt) => [tt[0], tt[1].remapTemplateBindings(mapper)]));
     }
 }
 
@@ -225,8 +234,8 @@ class EListTypeSignature extends TypeSignature {
         return "(" + this.entries.map((tt) => tt.emit(true)).join(", ") + ")";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(bindings)));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new EListTypeSignature(this.sinfo, this.entries.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 }
 
@@ -247,8 +256,8 @@ class StringTemplateType extends TypeSignature {
         return `${sk}<${uu}>`;
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new StringTemplateType(this.sinfo, this.kind, this.argtypes.map((tt) => tt.remapTemplateBindings(bindings)));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new StringTemplateType(this.sinfo, this.kind, this.argtypes.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 }
 
@@ -290,9 +299,9 @@ class LambdaTypeSignature extends TypeSignature {
         return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType ? this.resultType.emit(true) : "void"}`;
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        const rbparams = this.params.map((pp) => new FunctionParameter(pp.name, pp.type.remapTemplateBindings(bindings), pp.isRefParam, pp.isSpreadParam));
-        return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType ? this.resultType.remapTemplateBindings(bindings) : undefined);
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        const rbparams = this.params.map((pp) => new FunctionParameter(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isSpreadParam));
+        return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType ? this.resultType.remapTemplateBindings(mapper) : undefined);
     }
 }
 
@@ -311,8 +320,8 @@ class AndTypeSignature extends TypeSignature {
         return (toplevel) ? bb : "(" + bb + ")";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new AndTypeSignature(this.sinfo, this.ltype.remapTemplateBindings(bindings), this.rtype.remapTemplateBindings(bindings));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new AndTypeSignature(this.sinfo, this.ltype.remapTemplateBindings(mapper), this.rtype.remapTemplateBindings(mapper));
     }
 }
 
@@ -328,8 +337,8 @@ class NoneableTypeSignature extends TypeSignature {
         return this.type.emit(false) + "?";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new NoneableTypeSignature(this.sinfo, this.type.remapTemplateBindings(bindings));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new NoneableTypeSignature(this.sinfo, this.type.remapTemplateBindings(mapper));
     }
 }
 
@@ -348,13 +357,13 @@ class UnionTypeSignature extends TypeSignature {
         return (toplevel) ? bb : "(" + bb + ")";
     }
 
-    remapTemplateBindings(bindings: TemplateBindingScope): TypeSignature {
-        return new UnionTypeSignature(this.sinfo, this.ltype.remapTemplateBindings(bindings), this.rtype.remapTemplateBindings(bindings));
+    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
+        return new UnionTypeSignature(this.sinfo, this.ltype.remapTemplateBindings(mapper), this.rtype.remapTemplateBindings(mapper));
     }
 }
 
 export {
-    FullyQualifiedNamespace, TemplateBindingScope,
+    FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateType,

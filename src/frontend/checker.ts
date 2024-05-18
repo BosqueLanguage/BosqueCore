@@ -2,7 +2,7 @@ import {strict as assert} from "assert";
 
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateBindingScope, TypeSignature, VoidTypeSignature } from "./type";
+import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment } from "./checker_environment";
 import { TypeCheckerResolver } from "./checker_resolver";
@@ -41,6 +41,7 @@ class TypeChecker {
 
     readonly errors: TypeError[] = [];
 
+    readonly constraints: TemplateConstraintScope;
     readonly resolver: TypeCheckerResolver;
     readonly relations: TypeCheckerRelations;
 
@@ -123,15 +124,21 @@ class TypeChecker {
             return this.processITest_Type(src, tt.ttype, tt.isnot);
         }
         else if(tt instanceof ITestLiteral) {
-            const ll = this.resolver.compileTimeReduceConstantExpression(tt.literal.exp, env.binds);
+            const ll = this.resolver.compileTimeReduceConstantExpression(tt.literal.exp);
             if(ll === undefined) {
                 this.reportError(sinfo, "Invalid literal expression value");
                 return { ttrue: src, tfalse: src };
             }
             else {
-                xxxx;
-                const lltype = this.checkExpression(TypeEnvironment.createStandaloneEnvironment(ll[1]), ll[0], undefined).remapTemplateBindings(ll[1]);
-                this.checkError(sinfo, !this.relations.isSubtypeOf(lltype, this.getWellKnownType("KeyType"), env.binds), "Literal value must be a key type");
+                let lltype: TypeSignature;
+                if(ll[1] !== undefined) {
+                    lltype = ll[1].remapTemplateBindings(ll[2]);
+                }
+                else {
+                    lltype = this.checkExpression(env, ll[0], undefined);
+                }
+                this.checkTypeSignature(env, lltype);
+                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(lltype, this.getWellKnownType("KeyType"), env.binds), "Literal value must be a key type");
 
                 return this.processITest_Literal(env, src, lltype, tt.isnot);
             }
@@ -179,7 +186,7 @@ class TypeChecker {
     }
 
 
-    //Given a type signature -- check that is is well formed 
+    //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(env: TypeEnvironment, type: TypeSignature): boolean {
         xxxx;
     }
@@ -282,76 +289,6 @@ class TypeChecker {
                 }
             }
         }
-    }
-
-    private checkPCodeExpression(env: ExpressionTypeEnvironment, exp: ConstructorPCodeExpression, expectedFunction: ResolvedFunctionType): [TIRCreateCodePackExpression, ResolvedFunctionType] {
-        this.raiseErrorIf(exp.sinfo, exp.isAuto && expectedFunction === undefined, "Could not infer auto function type");
-
-        let bodybinds = new Map<string, ResolvedType>();
-        exp.invoke.captureTemplateSet.forEach((ttname) => {
-            bodybinds.set(ttname, env.binds.templateResolveType(ttname));
-        });
-
-        const ltypetry = exp.isAuto ? expectedFunction : this.normalizeTypeFunction(exp.invoke.generateSig(exp.invoke.startSourceLocation), env.binds);
-        this.raiseErrorIf(exp.sinfo, ltypetry === undefined, "Invalid lambda type");
-        const ltype = ltypetry as ResolvedFunctionType;
-
-        this.raiseErrorIf(exp.sinfo, exp.invoke.params.length !== ltype.params.length, "Mismatch in expected parameter count and provided function parameter count");
-        this.raiseErrorIf(exp.sinfo, expectedFunction !== undefined && !this.functionSubtypeOf(ltype, expectedFunction), "Mismatch in expected and provided function signature");
-
-        let captures: string[] = [];
-        exp.invoke.captureVarSet.forEach((v) => captures.push(v));
-        captures.sort();
-
-        let capturedpcodes = new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
-        let capturedvars = new Map<string, {vname: string, vtype: ResolvedType}>();
-
-        let capturedirect: string[] = [];
-        let captureindirect: string[] = [];
-        let capturepackdirect: string[] = [];
-        let capturepackindirect: string[] = [];
-
-        captures.forEach((v) => {
-            if(env.lookupLocalVar(v) !== null) {
-                capturedirect.push(v);
-                capturedvars.set(v, {vname: v, vtype: (env.lookupLocalVar(v) as VarInfo).declaredType});
-            }
-            else if(env.lookupCapturedVar(v) !== null) {
-                captureindirect.push(v);
-                capturedvars.set(v, {vname: v, vtype: (env.lookupCapturedVar(v) as VarInfo).declaredType});
-            }
-            else if(env.lookupArgPCode(v) !== null) {
-                capturepackdirect.push(v);
-                capturedpcodes.set(v, (env.lookupArgPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
-            }
-            else if(env.lookupCapturedPCode(v) !== null) {
-                capturepackindirect.push(v);
-                capturedpcodes.set(v, (env.lookupCapturedPCode(v) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}));
-            }
-            else {
-                this.raiseError(exp.sinfo, `Could not find captured variable "${v}"`);
-            }
-        });
-
-        let argpcodes = new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>();
-        expectedFunction.params.forEach((ff) => {
-            if (ff.type instanceof ResolvedFunctionType) {
-                argpcodes.set(ff.name, env.argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType});
-            }
-        });
-
-        const pcterms = [...bodybinds].map((bb) => this.toTIRTypeKey(bb[1])).sort();
-        const pclcaptures = [...capturedpcodes].map((pm) => pm[1].pcode.codekey).sort();
-
-        const pcvarinfo = [...capturedvars].sort((a, b) => ((a[0] !== b[0]) ? (a[0] < b[0] ? -1 : 1) : 0)).map((cv) => { return {cname: cv[0], ctype: this.toTIRTypeKey(cv[1].vtype)}; });
-        const pclinfo = [...capturedpcodes].sort((a, b) => ((a[0] !== b[0]) ? (a[0] < b[0] ? -1 : 1) : 0)).map((cv) => { return {cpname: cv[0], cpval: cv[1].pcode.codekey}; });
-
-        const [lcodekey, linvkey] = TIRIDGenerator.generatePCodeIDInfoForLambda(this.m_file, exp.sinfo, this.m_lambdaCtr++, pcterms, pclcaptures);
-        const cpack = new TIRCodePack(this.m_ns, lcodekey, linvkey, exp.invoke.recursive === "yes", pcterms, pclcaptures, pcvarinfo, pclinfo);
-
-        this.m_pendingCodeDecls.push({cpdata: cpack, cpdecl: exp.invoke, desiredfunc: ltype, declbinds: env.binds, bodybinds: bodybinds, capturedpcodes: capturedpcodes, capturedvars: capturedvars, argpcodes: argpcodes});
-
-        return [new TIRCreateCodePackExpression(exp.sinfo, cpack, lcodekey, capturedirect, captureindirect, capturepackdirect, capturepackindirect), ltype];
     }
 
     private checkArgumentList(sinfo: SourceInfo, env: ExpressionTypeEnvironment, args: Expression[], calleeparams: FunctionParameter[], fbinds: TemplateBindScope): [TIRExpression[], [string, ResolvedFunctionType, TIRCodePack][], TIRPCodeKey[]] {
@@ -610,7 +547,7 @@ class TypeChecker {
     }
 
     private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(this.checkError(exp.sinfo, !this.checkTypeSignature(env, exp.stype), "Expected Validator type for StringOf")) {
+        if(!this.checkTypeSignature(env, exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
@@ -628,7 +565,7 @@ class TypeChecker {
     }
 
     private checkLiteralASCIITypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(this.checkError(exp.sinfo, !this.checkTypeSignature(env, exp.stype), "Expected Validator type for StringOf")) {
+        if(!this.checkTypeSignature(env, exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
@@ -712,6 +649,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
+        this.checkTypeSignature(env, cdecl.declaredType);
         return exp.setType(cdecl.declaredType);
     }
 
@@ -884,7 +822,13 @@ class TypeChecker {
     }
 
     private checkPrefixNotOpExpression(env: TypeEnvironment, exp: PrefixNotOpExpression): TypeSignature {
-        xxxx;
+        const etype = this.checkExpression(env, exp.exp, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return exp.setType(etype);
+        }
+
+        this.checkError(exp.sinfo, this.relations.typesEqual(etype, this.getWellKnownType("Bool"), this.constraints), "Prefix Not operator requires a Bool type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkPrefixNegateOpExpression(env: TypeEnvironment, exp: PrefixNegateOpExpression, expectedtype: TypeSignature | undefined): TypeSignature {

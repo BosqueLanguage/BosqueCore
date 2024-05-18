@@ -1,45 +1,59 @@
 import {strict as assert} from "assert";
 
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
-import { FullyQualifiedNamespace, NominalTypeSignature, TemplateBindingScope, TypeSignature } from "./type";
+import { FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "./type";
 import { AbstractNominalTypeDecl, Assembly, ConstMemberDecl, NamespaceConstDecl, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly";
 
 
 class MemberLookupInfo<T> {
     readonly ttype: AbstractNominalTypeDecl;
     readonly member: T;
-    readonly binds: TemplateBindingScope;
+    readonly mapping: TemplateNameMapper;
 
-    constructor(ttype: AbstractNominalTypeDecl, member: T, binds: TemplateBindingScope) {
+    constructor(ttype: AbstractNominalTypeDecl, member: T, mapping: TemplateNameMapper) {
         this.ttype = ttype;
         this.member = member;
-        this.binds = binds;
+        this.mapping = mapping;
     }
 }
 
 class TypeCheckerResolver {
     private readonly assembly: Assembly;
 
-    compileTimeReduceConstantExpression(exp: Expression, binds: TemplateBindingScope): [Expression, TemplateBindingScope] | undefined {
+    compileTimeReduceConstantExpression(exp: Expression): [Expression, TypeSignature | undefined, TemplateNameMapper] | undefined {
         if(exp.isLiteralExpression()) {
-            return [exp, binds];
+            return [exp, undefined, TemplateNameMapper.createEmpty()];
         }
         else if (exp instanceof AccessNamespaceConstantExpression) {
             const nsresl = this.resolveNamespaceConstant(exp.ns, exp.name);
-            return nsresl !== undefined ? this.compileTimeReduceConstantExpression(nsresl.value.exp, binds) : undefined;
+            if(nsresl === undefined) {
+                return undefined;
+            }
+
+            const nresolve = this.compileTimeReduceConstantExpression(nsresl.value.exp);
+            if(nresolve === undefined) {
+                return undefined;
+            }
+
+            return [nresolve[0], nsresl.declaredType, TemplateNameMapper.createEmpty()];
         }
         else if (exp instanceof AccessStaticFieldExpression) {
             if(this.resolveEnumName(exp.stype, exp.name) !== undefined) {
-                return [exp, binds];
+                return [exp, exp.stype, TemplateNameMapper.createEmpty()];
             }
             else
             {
-                const cdecl = this.resolveTypeConstant(exp.stype, exp.name, binds);
+                const cdecl = this.resolveTypeConstant(exp.stype, exp.name);
                 if(cdecl === undefined) {
                     return undefined;
                 }
 
-                return this.compileTimeReduceConstantExpression(cdecl.member.value.exp, cdecl.binds);
+                const nresolve = this.compileTimeReduceConstantExpression(cdecl.member.value.exp);
+                if(nresolve === undefined) {
+                    return undefined;
+                }
+
+                return [nresolve[0], cdecl.member.declaredType, cdecl.mapping];
             }
         }
         else {
@@ -64,11 +78,11 @@ class TypeCheckerResolver {
         xxxx;
     }
 
-    resolveTypeConstant(ns: TypeSignature, name: string, binds: TemplateBindingScope): MemberLookupInfo<ConstMemberDecl> | undefined {
+    resolveTypeConstant(ns: TypeSignature, name: string): MemberLookupInfo<ConstMemberDecl> | undefined {
         xxxx;
     }
 
-    resolveTypeFunction(ns: FullyQualifiedNamespace, name: string, binds: TemplateBindingScope): MemberLookupInfo<TypeFunctionDecl> | undefined {
+    resolveTypeFunction(ns: FullyQualifiedNamespace, name: string): MemberLookupInfo<TypeFunctionDecl> | undefined {
         xxxx;
     }
 

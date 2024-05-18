@@ -1,6 +1,6 @@
 import {strict as assert} from "assert";
 
-import { ErrorTypeSignature, TemplateBindingScope, TypeSignature } from "./type";
+import { ErrorTypeSignature, TemplateConstraintScope, TypeSignature } from "./type";
 
 class TypeCheckerRelations {
     getStringOfType(vtype: TypeSignature): TypeSignature {
@@ -29,19 +29,19 @@ class TypeCheckerRelations {
         xxxx;
     }
 
-    isSubtypeOf(t1: TypeSignature, t2: TypeSignature, tbinds: TemplateBindingScope): boolean {
+    isSubtypeOf(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert((t1 instanceof ErrorTypeSignature) || (t2 instanceof ErrorTypeSignature), "Checking subtypes on errors");
 
         xxxx;
     }
 
-    typesEqual(t1: TypeSignature, t2: TypeSignature, tbinds: TemplateBindingScope): boolean {
+    typesEqual(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert((t1 instanceof ErrorTypeSignature) || (t2 instanceof ErrorTypeSignature), "Checking type equaliey on errors");
 
         xxxx;
     }
 
-    typesUniqueAndEqual(t1: TypeSignature, t2: TypeSignature, tbinds: TemplateBindingScope): boolean {
+    typesUniqueAndEqual(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert((t1 instanceof ErrorTypeSignature) || (t2 instanceof ErrorTypeSignature), "Checking type equaliey on errors");
 
         xxxx;
