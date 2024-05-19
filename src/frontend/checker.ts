@@ -185,7 +185,6 @@ class TypeChecker {
         }
     }
 
-
     //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(env: TypeEnvironment, type: TypeSignature): boolean {
         xxxx;
@@ -233,38 +232,38 @@ class TypeChecker {
         }
     }
 
-    private checkValueEq(lhsexp: Expression, lhs: ResolvedType, rhsexp: Expression, rhs: ResolvedType): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
-        if (lhsexp instanceof LiteralNoneExpression && rhsexp instanceof LiteralNoneExpression) {
+    private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
+        if (lhsexp.tag === ExpressionTag.LiteralNoneExpression && rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
             return "truealways";
         }
 
-        if (lhsexp instanceof LiteralNothingExpression && rhsexp instanceof LiteralNothingExpression) {
+        if (lhsexp.tag === ExpressionTag.LiteralNothingExpression && rhsexp.tag === ExpressionTag.LiteralNothingExpression) {
             return "truealways";
         }
 
-        if (lhsexp instanceof LiteralNoneExpression) {
-            return this.subtypeOf(this.getSpecialNoneType(), rhs) ? "lhsnone" : "falsealways";
+        if (lhsexp.tag === ExpressionTag.LiteralNoneExpression) {
+            return this.relations.includesNoneType(rhs, this.constraints) ? "lhsnone" : "falsealways";
         }
 
-        if (rhsexp instanceof LiteralNoneExpression) {
-            return this.subtypeOf(this.getSpecialNoneType(), lhs) ? "rhsnone" : "falsealways";
+        if (rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
+            return this.relations.includesNoneType(lhs, this.constraints) ? "rhsnone" : "falsealways";
         }
 
-        if (lhsexp instanceof LiteralNothingExpression) {
-            return this.subtypeOf(this.getSpecialNothingType(), rhs) ? "lhsnothing" : "falsealways";
+        if (lhsexp.tag === ExpressionTag.LiteralNothingExpression) {
+            return this.relations.includesNothingType(rhs, this.constraints) ? "lhsnothing" : "falsealways";
         }
 
-        if (rhsexp instanceof LiteralNothingExpression) {
-            return this.subtypeOf(this.getSpecialNothingType(), lhs) ? "rhsnothing" : "falsealways";
+        if (rhsexp.tag === ExpressionTag.LiteralNothingExpression) {
+            return this.relations.includesNothingType(lhs, this.constraints) ? "rhsnothing" : "falsealways";
         }
 
         //should be a subtype on one of the sides
-        if (!this.subtypeOf(lhs, rhs) && !this.subtypeOf(rhs, lhs)) {
+        if (!this.relations.isSubtypeOf(lhs, rhs, this.constraints) && !this.relations.isSubtypeOf(rhs, lhs, this.constraints)) {
             return "err";
         }
 
-        if (lhs.typeID === rhs.typeID) {
-            if(ResolvedType.isUniqueType(lhs) && ResolvedType.isUniqueType(rhs)) { 
+        if (this.relations.areSameTypes(lhs, rhs, this.constraints)) {
+            if(this.relations.isUniqueType(lhs, this.constraints) && this.relations.isUniqueType(rhs, this.constraints)) { 
                 return "stdkeywithunique";
             }
             else {
@@ -272,8 +271,8 @@ class TypeChecker {
             }
         }
         else {
-            if(this.subtypeOf(lhs, rhs)) {
-                if(lhs.options.length === 1 && ResolvedType.isUniqueType(lhs.options[0])) {
+            if(this.relations.isSubtypeOf(lhs, rhs, this.constraints)) {
+                if(this.relations.isUniqueType(lhs, this.constraints)) {
                     return "lhssomekeywithunique";
                 }
                 else {
@@ -281,7 +280,7 @@ class TypeChecker {
                 }
             }
             else {
-                if(rhs.options.length === 1 && ResolvedType.isUniqueType(rhs.options[0])) {
+                if(this.relations.isUniqueType(rhs, this.constraints)) {
                     return "rhssomekeywithunique";
                 }
                 else {
@@ -865,10 +864,10 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        return tlhs;
+        return exp.setType(tlhs);
     }
 
-    private checkBinSubExpression(env: TypeEnvironment, exp: BinSubExpression, expectedtype: TypeSignature | undefined): TypeSignature {
+    private checkBinSubExpression(env: TypeEnvironment, exp: BinSubExpression): TypeSignature {
         const tlhs = this.checkExpression(env, exp.lhs, undefined);
         if(tlhs instanceof ErrorTypeSignature) {
             return exp.setType(tlhs);
@@ -889,23 +888,208 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        return tlhs;
+        return exp.setType(tlhs);
     }
 
-    private checkBinMultExpression(env: TypeEnvironment, exp: BinMultExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+    private checkBinMultExpression(env: TypeEnvironment, exp: BinMultExpression): TypeSignature {
+        const tlhs = this.checkExpression(env, exp.lhs, undefined);
+        if(tlhs instanceof ErrorTypeSignature) {
+            return exp.setType(tlhs);
+        }
+
+        const trhs = this.checkExpression(env, exp.rhs, undefined);
+        if(trhs instanceof ErrorTypeSignature) {
+            return exp.setType(trhs);
+        }
+
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Multiplication operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Multiplication operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        let res: TypeSignature;
+        if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Multiplication operator requires 2 arguments of the same type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = tlhs;
+        }
+        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = tlhs
+        }
+        else if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isTypeDeclType(trhs, this.constraints)) {
+            const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, baserhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = trhs;
+        }
+        else {
+            this.checkError(exp.sinfo, false, "Multiplication operator not allowed on 2 unit typed values");
+            res = new ErrorTypeSignature(exp.sinfo, undefined);
+        }
+
+        return exp.setType(res);
     }
 
-    private checkBinDivExpression(env: TypeEnvironment, exp: BinDivExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+    private checkBinDivExpression(env: TypeEnvironment, exp: BinDivExpression): TypeSignature {
+        const tlhs = this.checkExpression(env, exp.lhs, undefined);
+        if(tlhs instanceof ErrorTypeSignature) {
+            return exp.setType(tlhs);
+        }
+
+        const trhs = this.checkExpression(env, exp.rhs, undefined);
+        if(trhs instanceof ErrorTypeSignature) {
+            return exp.setType(trhs);
+        }
+
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Division operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Division operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        let res: TypeSignature;
+        if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = tlhs;
+        }
+        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
+            const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = tlhs
+        }
+        else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isTypeDeclType(trhs, this.constraints)) {
+            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+        }
+        else {
+            this.checkError(exp.sinfo, false, "Division operator not allowed on with unit typed divisor and a type-less value");
+            res = new ErrorTypeSignature(exp.sinfo, undefined);
+        }
+
+        return exp.setType(res);
     }
 
     private checkBinKeyEqExpression(env: TypeEnvironment, exp: BinKeyEqExpression): TypeSignature {
-        xxxx;
+        const lhstype = this.checkExpression(env, exp.lhs, undefined);
+        const rhstype = this.checkExpression(env, exp.rhs, undefined);
+
+        if (lhstype instanceof ErrorTypeSignature || rhstype instanceof ErrorTypeSignature) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        
+        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
+            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable -- one must be subtype of the other`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
+        if (action === "err") {
+            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        if(action === "truealways" || action === "falsealways") {
+            this.reportError(exp.sinfo, `Equality operation is always ${action === "truealways" ? "true" : "false"}`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        
+        if (action === "lhsnone" || action === "rhsnone" || action === "lhsnothing" || action === "rhsnothing") {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        else {
+            if (action === "stdkeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            }
+            else if (action === "lhssomekeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+            }
+            else if (action === "rhssomekeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            }
+            else {
+                if (action === "lhssomekey") {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                }
+                else if (action === "rhssomekey") {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+                }
+                else {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+                }
+            }
+
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
     }
 
     private checkBinKeyNeqExpression(env: TypeEnvironment, exp: BinKeyNeqExpression): TypeSignature {
-        xxxx;
+        const lhstype = this.checkExpression(env, exp.lhs, undefined);
+        const rhstype = this.checkExpression(env, exp.rhs, undefined);
+
+        if (lhstype instanceof ErrorTypeSignature || rhstype instanceof ErrorTypeSignature) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        
+        if (!this.relations.isSubtypeOf(lhstype, rhstype, this.constraints) && !this.relations.isSubtypeOf(rhstype, lhstype, this.constraints)) {
+            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable -- one must be subtype of the other`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        const action = this.checkValueEq(exp.lhs, lhstype, exp.rhs, rhstype);
+        if (action === "err") {
+            this.reportError(exp.sinfo, `Types ${lhstype.emit(true)} and ${rhstype.emit(true)} are not comparable`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        if(action === "truealways" || action === "falsealways") {
+            this.reportError(exp.sinfo, `Equality operation is always ${action === "truealways" ? "true" : "false"}`);
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        if (action === "lhsnone" || action === "rhsnone" || action === "lhsnothing" || action === "rhsnothing") {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+        else {
+            if (action === "stdkeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            }
+            else if (action === "lhssomekeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+            }
+            else if (action === "rhssomekeywithunique") {
+                this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+            }
+            else {
+                if (action === "lhssomekey") {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                }
+                else if (action === "rhssomekey") {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+                }
+                else {
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(lhstype, this.constraints), `left hand side of compare expression -- expected a KeyType but got ${lhstype.emit(true)}`);
+                    this.checkError(exp.sinfo, !this.relations.isKeyType(rhstype, this.constraints), `right hand side of compare expression -- expected a KeyType but got ${rhstype.emit(true)}`);
+                }
+            }
+
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
     }
 
     private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {
@@ -1200,19 +1384,19 @@ class TypeChecker {
                 return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
             }
             case ExpressionTag.PrefixNegateOpExpression: {
-                return this.checkPrefixNegateOpExpression(env, exp as PrefixNegateOpExpression, expectedtype);
+                return this.checkPrefixNegateOpExpression(env, exp as PrefixNegateOpExpression);
             }
             case ExpressionTag.BinAddExpression: {
-                return this.checkBinAddExpression(env, exp as BinAddExpression, expectedtype);
+                return this.checkBinAddExpression(env, exp as BinAddExpression);
             }
             case ExpressionTag.BinSubExpression: {
-                return this.checkBinSubExpression(env, exp as BinSubExpression, expectedtype);
+                return this.checkBinSubExpression(env, exp as BinSubExpression);
             }
             case ExpressionTag.BinMultExpression: {
-                return this.checkBinMultExpression(env, exp as BinMultExpression, expectedtype);
+                return this.checkBinMultExpression(env, exp as BinMultExpression);
             }
             case ExpressionTag.BinDivExpression: {
-                return this.checkBinDivExpression(env, exp as BinDivExpression, expectedtype);
+                return this.checkBinDivExpression(env, exp as BinDivExpression);
             }
             case ExpressionTag.BinKeyEqExpression: {
                 return this.checkBinKeyEqExpression(env, exp as BinKeyEqExpression);
@@ -2073,158 +2257,6 @@ class TypeChecker {
             this.raiseErrorIf(exp.sinfo, !(rnt instanceof ResolvedPrimitiveInternalEntityAtomType), `division requires a typed number as numerator and a typed number or a unit type as divisor but got ${lnt.typeID} / ${rnt.typeID}`);
 
             return env.setResultExpressionInfo(new TIRBinDivExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(lnt)), this.toTIRTypeKey(ResolvedType.createSingle(lnb))), ResolvedType.createSingle(lnt));
-        }
-    }
-
-    private strongEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment {
-        const lhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), lhsarg, undefined);
-        const lhstype = lhsenv.trepr;
-        const tirlhstype = this.toTIRTypeKey(lhstype);
-        
-        const rhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), rhsarg, undefined);
-        const rhstype = rhsenv.trepr;
-        const tirrhstype = this.toTIRTypeKey(rhstype);
-        
-        if (!this.subtypeOf(lhstype, rhstype) && !this.subtypeOf(rhstype, lhstype)) {
-            this.raiseError(sinfo, `Types ${lhstype.typeID} and ${rhstype.typeID} are not comparable or comparision is always true/false`);
-        }
-
-        const action = this.checkValueEq(lhsarg, lhstype, rhsarg, rhstype);
-        this.raiseErrorIf(sinfo, action === "err", "Types are not sufficiently overlapping");
-        this.raiseErrorIf(sinfo, (action === "truealways" || action === "falsealways"), "equality operation is always true/false");
-        
-        if (action === "lhsnone") {
-            const tr = this.processITestAsTest_None(sinfo, rhsenv.trepr, rhsenv.trepr, rhsenv.expressionResult, false);
-            return env.setResultExpressionInfo(tr.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "rhsnone") {
-            const tl = this.processITestAsTest_None(sinfo, lhsenv.trepr, lhsenv.trepr, lhsenv.expressionResult, false);
-            return env.setResultExpressionInfo(tl.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "lhsnothing") {
-            const tr = this.processITestAsTest_Nothing(sinfo, rhsenv.trepr, rhsenv.trepr, rhsenv.expressionResult, false);
-            return env.setResultExpressionInfo(tr.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "rhsnothing") {
-            const tl = this.processITestAsTest_Nothing(sinfo, lhsenv.trepr, lhsenv.trepr, lhsenv.expressionResult, false);
-            return env.setResultExpressionInfo(tl.testexp, this.getSpecialBoolType());
-        }
-        else {
-            if (action === "stdkeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                const eqop = new TIRBinKeyEqBothUniqueExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, tirlhstype);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else if (action === "lhssomekeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-
-                const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirlhstype, lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else if (action === "rhssomekeywithunique") {
-                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                const eqop = new TIRBinKeyEqOneUniqueExpression(sinfo, tirrhstype, rhsenv.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else {
-                const eqop = new TIRBinKeyEqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
-
-                if (action === "lhssomekey") {
-                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-                else if (action === "rhssomekey") {
-                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-                else {
-                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-            }
-        }
-    }
-
-    private strongNEQ(sinfo: SourceInfo, env: ExpressionTypeEnvironment, lhsarg: Expression, rhsarg: Expression): ExpressionTypeEnvironment {
-        const lhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), lhsarg, undefined);
-        const lhstype = lhsenv.trepr;
-        const tirlhstype = this.toTIRTypeKey(lhstype);
-        
-        const rhsenv = this.checkExpression(env.createFreshEnvExpressionFrom(), rhsarg, undefined);
-        const rhstype = rhsenv.trepr;
-        const tirrhstype = this.toTIRTypeKey(rhstype);
-        
-        if (!this.subtypeOf(lhstype, rhstype) && !this.subtypeOf(rhstype, lhstype)) {
-            this.raiseError(sinfo, `Types ${lhstype.typeID} and ${rhstype.typeID} are not comparable or comparision is always true/false`);
-        }
-
-        const action = this.checkValueEq(lhsarg, lhstype, rhsarg, rhstype);
-        this.raiseErrorIf(sinfo, action === "err", "Types are not sufficiently overlapping");
-        this.raiseErrorIf(sinfo, (action === "truealways" || action === "falsealways"), "equality operation is always true/false");
-
-        if (action === "lhsnone") {
-            const tr = this.processITestAsTest_None(sinfo, rhsenv.trepr, rhsenv.trepr, rhsenv.expressionResult, true);
-            return env.setResultExpressionInfo(tr.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "rhsnone") {
-            const tl = this.processITestAsTest_None(sinfo, lhsenv.trepr, lhsenv.trepr, lhsenv.expressionResult, true);
-            return env.setResultExpressionInfo(tl.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "lhsnothing") {
-            const tr = this.processITestAsTest_Nothing(sinfo, rhsenv.trepr, rhsenv.trepr, rhsenv.expressionResult, true);
-            return env.setResultExpressionInfo(tr.testexp, this.getSpecialBoolType());
-        }
-        else if (action === "rhsnothing") {
-            const tl = this.processITestAsTest_Nothing(sinfo, lhsenv.trepr, lhsenv.trepr, lhsenv.expressionResult, true);
-            return env.setResultExpressionInfo(tl.testexp, this.getSpecialBoolType());
-        }
-        else {
-            if (action === "stdkeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                const eqop = new TIRBinKeyNeqBothUniqueExpression(sinfo, lhsenv.expressionResult, rhsenv.expressionResult, tirlhstype);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else if (action === "lhssomekeywithunique") {
-                this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-
-                const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirlhstype, lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else if (action === "rhssomekeywithunique") {
-                this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                const eqop = new TIRBinKeyNeqOneUniqueExpression(sinfo, tirrhstype, rhsenv.expressionResult, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult);
-                return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-            }
-            else {
-                const eqop = new TIRBinKeyNeqGeneralExpression(sinfo, this.toTIRTypeKey(lhsenv.trepr), lhsenv.expressionResult, this.toTIRTypeKey(rhsenv.trepr), rhsenv.expressionResult);
-
-                if (action === "lhssomekey") {
-                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-                else if (action === "rhssomekey") {
-                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-                else {
-                    this.raiseErrorIf(lhsarg.sinfo, !(this.subtypeOf(lhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(lhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${lhstype.typeID}`);
-                    this.raiseErrorIf(rhsarg.sinfo, !(this.subtypeOf(rhstype, this.getSpecialKeyTypeConceptType()) && ResolvedType.isGroundedType(rhstype.options)), `left hand side of compare expression -- expected a grounded KeyType but got ${rhstype.typeID}`);
-
-                    return env.setResultExpressionInfo(eqop, this.getSpecialBoolType());
-                }
-            }
         }
     }
 

@@ -384,7 +384,7 @@ class Lexer {
         return true;
     }
 
-    private static readonly _s_templateNameRe = '/[A-Z] | "TNumeric"/';
+    private static readonly _s_templateNameRe = '/[A-Z]"Numeric"?/';
     private static isTemplateName(str: string): boolean {
         return accepts(Lexer._s_templateNameRe, str);
     }
