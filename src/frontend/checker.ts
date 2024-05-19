@@ -827,20 +827,69 @@ class TypeChecker {
             return exp.setType(etype);
         }
 
-        this.checkError(exp.sinfo, this.relations.typesEqual(etype, this.getWellKnownType("Bool"), this.constraints), "Prefix Not operator requires a Bool type");
+        this.checkError(exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), "Prefix Not operator requires a Bool type");
         return exp.setType(this.getWellKnownType("Bool"));
     }
 
-    private checkPrefixNegateOpExpression(env: TypeEnvironment, exp: PrefixNegateOpExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+    private checkPrefixNegateOpExpression(env: TypeEnvironment, exp: PrefixNegateOpExpression): TypeSignature {
+        const etype = this.checkExpression(env, exp.exp, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return exp.setType(etype);
+        }
+
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(etype, this.constraints), "Prefix Negate operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return exp.setType(etype);
     }
 
-    private checkBinAddExpression(env: TypeEnvironment, exp: BinAddExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+    private checkBinAddExpression(env: TypeEnvironment, exp: BinAddExpression): TypeSignature {
+        const tlhs = this.checkExpression(env, exp.lhs, undefined);
+        if(tlhs instanceof ErrorTypeSignature) {
+            return exp.setType(tlhs);
+        }
+
+        const trhs = this.checkExpression(env, exp.rhs, undefined);
+        if(trhs instanceof ErrorTypeSignature) {
+            return exp.setType(trhs);
+        }
+
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Addition operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Addition operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Addition operator requires 2 arguments of the same type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return tlhs;
     }
 
     private checkBinSubExpression(env: TypeEnvironment, exp: BinSubExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+        const tlhs = this.checkExpression(env, exp.lhs, undefined);
+        if(tlhs instanceof ErrorTypeSignature) {
+            return exp.setType(tlhs);
+        }
+
+        const trhs = this.checkExpression(env, exp.rhs, undefined);
+        if(trhs instanceof ErrorTypeSignature) {
+            return exp.setType(trhs);
+        }
+
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Subtraction operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Subtraction operator requires a unique numeric type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Subtraction operator requires 2 arguments of the same type")) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        return tlhs;
     }
 
     private checkBinMultExpression(env: TypeEnvironment, exp: BinMultExpression, expectedtype: TypeSignature | undefined): TypeSignature {
