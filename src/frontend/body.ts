@@ -1845,17 +1845,17 @@ class VariableAssignmentStatement extends Statement {
 }
 
 class VariableMultiAssignmentStatement extends Statement {
-    readonly name: string[];
+    readonly names: string[];
     readonly exp: Expression | Expression[]; //could be a single expression of type EList or multiple expressions
 
-    constructor(sinfo: SourceInfo, name: string[], exp: Expression | Expression[]) {
+    constructor(sinfo: SourceInfo, names: string[], exp: Expression | Expression[]) {
         super(StatementTag.VariableAssignmentStatement, sinfo);
-        this.name = name;
+        this.names = names;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttname = this.name.join(", ");
+        const ttname = this.names.join(", ");
         const ttexp = Array.isArray(this.exp) ? this.exp.map((ee) => ee.emit(true, fmt)).join(", ") : this.exp.emit(true, fmt);
 
         return `${ttname} = ${ttexp};`;

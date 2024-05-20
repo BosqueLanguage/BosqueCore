@@ -17,6 +17,36 @@ class MemberLookupInfo<T> {
     }
 }
 
+abstract class RegexValidatorPack {
+}
+
+class SingleRegexValidatorPack extends RegexValidatorPack {
+    readonly vre: string;
+
+    constructor(vre: string) {
+        super();
+        this.vre = vre;
+    }
+}
+
+class AndRegexValidatorPack extends RegexValidatorPack {
+    readonly validators: RegexValidatorPack[];
+
+    constructor(validators: RegexValidatorPack[]) {
+        super();
+        this.validators = validators;
+    }
+}
+
+class OrRegexValidatorPack extends RegexValidatorPack {
+    readonly validators: RegexValidatorPack[];
+
+    constructor(validators: RegexValidatorPack[]) {
+        super();
+        this.validators = validators;
+    }
+}
+
 class TypeCheckerResolver {
     private readonly assembly: Assembly;
 
@@ -61,7 +91,7 @@ class TypeCheckerResolver {
         }
     }
 
-    resolveStringRegexValidatorInfo(ttype: TypeSignature): {vtype: TypeSignature, vre: string} | undefined {
+    resolveStringRegexValidatorInfo(ttype: TypeSignature): RegexValidatorPack | undefined {
         //TODO: from the assembly resolve the 
         xxxx;
     }
@@ -535,5 +565,7 @@ class TypeCheckerResolver {
 }
 
 export {
+    RegexValidatorPack, SingleRegexValidatorPack, AndRegexValidatorPack, OrRegexValidatorPack,
+    MemberLookupInfo,
     TypeCheckerResolver
 };

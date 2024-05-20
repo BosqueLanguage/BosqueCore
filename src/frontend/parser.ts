@@ -3570,6 +3570,13 @@ class Parser {
             const name = this.consumeTokenAndGetValue();
             this.consumeToken();
 
+            const badbinder = name.startsWith("$");
+            const lambdacapture = this.env.identifierResolvesAsVariable(name)
+            if(badbinder || lambdacapture) {
+                this.recordErrorGeneral(sinfo, "Cannot retype lambda captured or binder variables");
+                return new ErrorStatement(sinfo);
+            }
+
             const ttest = this.parseITest();
             if(ttest === undefined) {
                 this.recordErrorGeneral(sinfo, "Expected test expression after @");

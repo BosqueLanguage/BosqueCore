@@ -2,10 +2,10 @@ import {strict as assert} from "assert";
 
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { TypeEnvironment } from "./checker_environment";
-import { TypeCheckerResolver } from "./checker_resolver";
+import { TypeEnvironment, VarInfo } from "./checker_environment";
+import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_relations";
 
 const { accepts } = require("@bosque/jsbrex");
@@ -545,21 +545,45 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("ASCIIString"));
     }
 
+    private runValidatorRegex(sinfo: SourceInfo, restr: string, litstr: string): boolean {
+        const res = accepts(restr, litstr);
+        if(res === null) {
+            this.reportError(sinfo, `Literal string failed Validator regex -- ${restr}`);
+        }
+
+        return !!res; //force to boolean
+    }
+
+    private checkValidatorRegexPack(sinfo: SourceInfo, restr: string, revalidator: RegexValidatorPack): boolean {
+        if(revalidator instanceof SingleRegexValidatorPack) {
+            return this.runValidatorRegex(sinfo, restr, revalidator.vre);
+        }
+        else if(revalidator instanceof AndRegexValidatorPack) {
+            //make sure to run all of them in case one is malformed -- we want to report that
+            return revalidator.validators.map((v) => this.checkValidatorRegexPack(sinfo, restr, v)).reduce((acc, v) => acc && v, true);
+        }
+        else if(revalidator instanceof OrRegexValidatorPack) {
+            //make sure to run all of them in case one is malformed -- we want to report that
+            return revalidator.validators.map((v) => this.checkValidatorRegexPack(sinfo, restr, v)).reduce((acc, v) => acc || v, false);
+        }
+        else {
+            assert(false, "Unknown Validator regex pack type");
+            return false;
+        }
+
+    }
+
     private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
         if(!this.checkTypeSignature(env, exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        const validatortype = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
-        if(this.checkError(exp.sinfo, validatortype === undefined, "Bad Validator type for StringOf")) {
+        const revalidator = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
+        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for StringOf")) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        //TODO: validate regex and string encoding are correct -- we are going to need to do something about references to other regexs too
-
-        assert(validatortype !== undefined);
-        this.checkError(exp.sinfo, accepts(validatortype.vre, exp.value.slice(1, exp.value.length - 1)), "Literal string failed Validator regex");
-            
+        this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
         return exp.setType(this.relations.getStringOfType(exp.stype));
     }
 
@@ -568,16 +592,12 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        const validatortype = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
-        if(this.checkError(exp.sinfo, validatortype === undefined, "Bad Validator type for StringOf")) {
+        const revalidator = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
+        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for ASCIIStringOf")) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        //TODO: validate regex and string encoding are correct -- we are going to need to do something about references to other regexs too
-
-        assert(validatortype !== undefined);
-        this.checkError(exp.sinfo, accepts(validatortype.vre, exp.value.slice(1, exp.value.length - 1)), "Literal string failed Validator regex");
-            
+        this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
         return exp.setType(this.relations.getASCIIStringOfType(exp.stype));
     }
 
@@ -658,13 +678,18 @@ class TypeChecker {
 
     private checkAccessVariableExpression(env: TypeEnvironment, exp: AccessVariableExpression): TypeSignature {
         if(exp.isCaptured) {
-            return exp.setType(env.resolveLambdaCaptureVarType(exp.scopename));
+            return exp.setType(env.resolveLambdaCaptureVarType(exp.scopename) || new ErrorTypeSignature(exp.sinfo, undefined));
         }
         else {
             const vinfo = env.resolveLocalVarInfo(exp.scopename);
-            this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} is not defined`);
-
-            return exp.setType(vinfo.declaredType);
+            if(vinfo === undefined) {
+                this.reportError(exp.sinfo, `Variable ${exp.scopename} is not declared here`);
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            else {
+                this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
+                return exp.setType(vinfo.declaredType);
+            }
         }
     }
 
@@ -843,24 +868,34 @@ class TypeChecker {
         return exp.setType(etype);
     }
 
-    private checkBinAddExpression(env: TypeEnvironment, exp: BinAddExpression): TypeSignature {
-        const tlhs = this.checkExpression(env, exp.lhs, undefined);
+    private checkBinaryNumericArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression): [boolean, TypeSignature, TypeSignature] {
+        const tlhs = this.checkExpression(env, lhs, undefined);
         if(tlhs instanceof ErrorTypeSignature) {
-            return exp.setType(tlhs);
+            return [false, tlhs, tlhs];
         }
 
-        const trhs = this.checkExpression(env, exp.rhs, undefined);
+        const trhs = this.checkExpression(env, rhs, undefined);
         if(trhs instanceof ErrorTypeSignature) {
-            return exp.setType(trhs);
+            return [false, tlhs, trhs];
         }
 
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Addition operator requires a unique numeric type")) {
+        if(this.checkError(lhs.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Binary operator requires a unique numeric type")) {
+            return [false, tlhs, trhs];
+        }
+        if(this.checkError(rhs.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Binary operator requires a unique numeric type")) {
+            return [false, tlhs, trhs];
+        }
+
+        return [true, tlhs, trhs];
+    }
+
+    private checkBinAddExpression(env: TypeEnvironment, exp: BinAddExpression): TypeSignature {
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Addition operator requires a unique numeric type")) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Addition operator requires 2 arguments of the same type")) {
+        
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Subtraction operator requires 2 arguments of the same type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -868,22 +903,11 @@ class TypeChecker {
     }
 
     private checkBinSubExpression(env: TypeEnvironment, exp: BinSubExpression): TypeSignature {
-        const tlhs = this.checkExpression(env, exp.lhs, undefined);
-        if(tlhs instanceof ErrorTypeSignature) {
-            return exp.setType(tlhs);
-        }
-
-        const trhs = this.checkExpression(env, exp.rhs, undefined);
-        if(trhs instanceof ErrorTypeSignature) {
-            return exp.setType(trhs);
-        }
-
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Subtraction operator requires a unique numeric type")) {
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Subtraction operator requires a unique numeric type")) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
+
         if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Subtraction operator requires 2 arguments of the same type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
@@ -892,20 +916,8 @@ class TypeChecker {
     }
 
     private checkBinMultExpression(env: TypeEnvironment, exp: BinMultExpression): TypeSignature {
-        const tlhs = this.checkExpression(env, exp.lhs, undefined);
-        if(tlhs instanceof ErrorTypeSignature) {
-            return exp.setType(tlhs);
-        }
-
-        const trhs = this.checkExpression(env, exp.rhs, undefined);
-        if(trhs instanceof ErrorTypeSignature) {
-            return exp.setType(trhs);
-        }
-
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Multiplication operator requires a unique numeric type")) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Multiplication operator requires a unique numeric type")) {
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -939,20 +951,8 @@ class TypeChecker {
     }
 
     private checkBinDivExpression(env: TypeEnvironment, exp: BinDivExpression): TypeSignature {
-        const tlhs = this.checkExpression(env, exp.lhs, undefined);
-        if(tlhs instanceof ErrorTypeSignature) {
-            return exp.setType(tlhs);
-        }
-
-        const trhs = this.checkExpression(env, exp.rhs, undefined);
-        if(trhs instanceof ErrorTypeSignature) {
-            return exp.setType(trhs);
-        }
-
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(tlhs, this.constraints), "Division operator requires a unique numeric type")) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
-        if(this.checkError(exp.sinfo, !this.relations.isUniqueNumericType(trhs, this.constraints), "Division operator requires a unique numeric type")) {
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
@@ -1093,43 +1093,105 @@ class TypeChecker {
     }
 
     private checkNumericEqExpression(env: TypeEnvironment, exp: NumericEqExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator == requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
+
     private checkNumericNeqExpression(env: TypeEnvironment, exp: NumericNeqExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator != requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkNumericLessExpression(env: TypeEnvironment, exp: NumericLessExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator < requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkNumericLessEqExpression(env: TypeEnvironment, exp: NumericLessEqExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator <= requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkNumericGreaterExpression(env: TypeEnvironment, exp: NumericGreaterExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator > requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkNumericGreaterEqExpression(env: TypeEnvironment, exp: NumericGreaterEqExpression): TypeSignature {
-        xxxx;
+        const [ok, tlhs, trhs] = this.checkBinaryNumericArgs(env, exp.lhs, exp.rhs);
+        if(!ok) {
+            return exp.setType(this.getWellKnownType("Bool"));
+        }
+
+        this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Operator >= requires 2 arguments of the same type");
+        return exp.setType(this.getWellKnownType("Bool"));
+    }
+
+    private checkBinaryBooleanArgs(env: TypeEnvironment, lhs: Expression, rhs: Expression) {
+        const tlhs = this.checkExpression(env, lhs, undefined);
+        if(tlhs instanceof ErrorTypeSignature) {
+            return;
+        }
+
+        const trhs = this.checkExpression(env, rhs, undefined);
+        if(trhs instanceof ErrorTypeSignature) {
+            return;
+        }
+
+        if(this.checkError(lhs.sinfo, !this.relations.isBooleanType(tlhs, this.constraints), "Binary operator requires a Bool type")) {
+            return;
+        }
+        if(this.checkError(rhs.sinfo, !this.relations.isBooleanType(trhs, this.constraints), "Binary operator requires a Bool type")) {
+            return;
+        }
+
+        return;
     }
 
     private checkBinLogicAndExpression(env: TypeEnvironment, exp: BinLogicAndExpression): TypeSignature {
-        xxxx;
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicOrExpression(env: TypeEnvironment, exp: BinLogicOrExpression): TypeSignature {
-        xxxx;
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicImpliesExpression(env: TypeEnvironment, exp: BinLogicImpliesExpression): TypeSignature {
-        xxxx;
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkBinLogicIFFExpression(env: TypeEnvironment, exp: BinLogicIFFExpression): TypeSignature {
-        xxxx;
+        this.checkBinaryBooleanArgs(env, exp.lhs, exp.rhs);
+        return exp.setType(this.getWellKnownType("Bool"));
     }
 
     private checkMapEntryConstructorExpression(env: TypeEnvironment, exp: MapEntryConstructorExpression, expectedtype: TypeSignature | undefined): TypeSignature {
@@ -1137,7 +1199,47 @@ class TypeChecker {
     }
 
     private checkIfExpression(env: TypeEnvironment, exp: IfExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx;
+        const eetype = this.checkExpression(env, exp.test.exp, undefined);
+        if(eetype instanceof ErrorTypeSignature) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+
+        let ttrue: TypeSignature;
+        let tfalse: TypeSignature;
+
+        if(exp.test.itestopt === undefined) {
+            ttrue = this.checkExpression(env, exp.trueValue, expectedtype);
+            tfalse = this.checkExpression(env, exp.falseValue, expectedtype);
+        }
+        else {
+            const splits = this.processITest(exp.sinfo, env, eetype, exp.test.itestopt);
+            this.checkError(exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+            if(exp.trueValueBinder === undefined) {
+                ttrue = this.checkExpression(env, exp.trueValue, expectedtype);
+            }
+            else {
+                const nenv = env.addLocalVariable(exp.trueValueBinder.scopename, splits.ttrue as TypeSignature, true, true);
+                ttrue = this.checkExpression(nenv, exp.trueValue, expectedtype);
+            }
+
+            if(exp.falseValueBinder === undefined) {
+                tfalse = this.checkExpression(env, exp.falseValue, expectedtype);
+            }
+            else {
+                const nenv = env.addLocalVariable(exp.falseValueBinder.scopename, splits.tfalse as TypeSignature, true, true);
+                tfalse = this.checkExpression(nenv, exp.falseValue, expectedtype);
+            }
+        }
+        
+        if(ttrue instanceof ErrorTypeSignature || tfalse instanceof ErrorTypeSignature) {
+            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        else {
+            const jtype = this.relations.joinTypes(ttrue, tfalse, this.constraints);
+            return exp.setType(jtype);
+        }
     }
 
     ////////
@@ -1445,6 +1547,12 @@ class TypeChecker {
                 return new ErrorTypeSignature(exp.sinfo, undefined);
             }
         }
+    }
+
+    private checkExpressionRHS(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
+        xxxx; //other RHS options here
+
+        return this.checkExpression(env, exp, expectedtype);
     }
 
     /*
@@ -1952,24 +2060,6 @@ class TypeChecker {
         }
     }
 
-    private checkLogicActionAndExpression(env: ExpressionTypeEnvironment, exp: LogicActionAndExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, exp.args.length === 0, "expected at least 1 argument");
-        this.raiseErrorIf(exp.sinfo, exp.args.length < 2, "should test single value directly");
-
-        const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
-        
-        return env.setResultExpressionInfo(new TIRLogicActionAndExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
-    }
-
-    private checkLogicActionOrExpression(env: ExpressionTypeEnvironment, exp: LogicActionOrExpression): ExpressionTypeEnvironment {
-        this.raiseErrorIf(exp.sinfo, exp.args.length === 0, "expected at least 1 argument");
-        this.raiseErrorIf(exp.sinfo, exp.args.length < 2, "should test single value directly");
-        
-        const bargs = exp.args.map((arg) => this.emitCoerceIfNeeded(this.checkExpression(env, arg, this.getSpecialBoolType()), exp.sinfo, this.getSpecialBoolType()));
-    
-        return env.setResultExpressionInfo(new TIRLogicActionOrExpression(exp.sinfo, bargs.map((ee) => ee.expressionResult)), this.getSpecialBoolType());
-    }
-
     private checkAccessFromIndex(env: ExpressionTypeEnvironment, op: PostfixAccessFromIndex): ExpressionTypeEnvironment {
         this.raiseErrorIf(op.sinfo, env.trepr.options.some((atom) => !(atom instanceof ResolvedTupleAtomType)), "Base of index expression must be of Tuple type");
         this.raiseErrorIf(op.sinfo, op.index < 0, "Index cannot be negative");
@@ -2260,19 +2350,6 @@ class TypeChecker {
         }
     }
 
-    private checkNumericEqExpression(env: ExpressionTypeEnvironment, exp: NumericEqExpression): ExpressionTypeEnvironment {
-        const lenv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.lhs, undefined);
-        this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(lenv.trepr.options), `expected a numeric type but got ${lenv.trepr.typeID}`);
-
-        const renv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.rhs, undefined);
-        this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(renv.trepr.options), `expected a numeric type but got ${renv.trepr.typeID}`);
-
-        this.raiseErrorIf(exp.sinfo, !lenv.trepr.isSameType(renv.trepr), `equality is defined on numeric values of same type but got -- ${lenv.trepr.typeID} == ${renv.trepr.typeID}`);
-        const nntype = ResolvedType.getNumericBaseRepresentation(renv.trepr.options);
-
-        return env.setResultExpressionInfo(new TIRNumericEqExpression(exp.sinfo, lenv.expressionResult, renv.expressionResult, this.toTIRTypeKey(ResolvedType.createSingle(nntype))), this.getSpecialBoolType());
-    }
-
     private checkNumericNeqExpression(env: ExpressionTypeEnvironment, exp: NumericNeqExpression): ExpressionTypeEnvironment {
         const lenv = this.checkExpression(env.createFreshEnvExpressionFrom(), exp.lhs, undefined);
         this.raiseErrorIf(exp.sinfo, !ResolvedType.isNumericType(lenv.trepr.options), `expected a numeric type but got ${lenv.trepr.typeID}`);
@@ -2550,35 +2627,157 @@ class TypeChecker {
     }
 
     private checkVariableDeclarationStatement(env: TypeEnvironment, stmt: VariableDeclarationStatement): TypeEnvironment {
-        xxxx;
+        this.checkTypeSignature(env, stmt.vtype);
+        
+        return env.addLocalVariable(stmt.name, stmt.vtype, false, false);
     }
     
     private checkVariableMultiDeclarationStatement(env: TypeEnvironment, stmt: VariableMultiDeclarationStatement): TypeEnvironment {
-        xxxx;
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            this.checkTypeSignature(env, stmt.decls[i].vtype);
+            env = env.addLocalVariable(stmt.decls[i].name, stmt.decls[i].vtype, false, false);
+        }
+        return env;
     }
 
     private checkVariableInitializationStatement(env: TypeEnvironment, stmt: VariableInitializationStatement): TypeEnvironment {
-        xxxx;
+        this.checkTypeSignature(env, stmt.vtype);
+
+        const itype = !(stmt.vtype instanceof AutoTypeSignature) ? stmt.vtype : undefined;
+        const rhs = this.checkExpressionRHS(env, stmt.exp, itype);
+        
+        //TODO: do we need to update any other type env info here based on RHS actions???
+
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${stmt.vtype.emit(true)}`);
+        return env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true); //try to recover a bit
     }
 
     private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
-        xxxx;
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            this.checkTypeSignature(env, stmt.decls[i].vtype);
+        }
+
+        const iopts = stmt.decls.map((decl) => !(decl.vtype instanceof AutoTypeSignature) ? decl.vtype : undefined);
+
+        let evals: TypeSignature[] = [];
+        if(!Array.isArray(stmt.exp)) {
+            const iinfer = iopts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, iopts as TypeSignature[]);    
+            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
+            if(etype instanceof EListTypeSignature) {
+                evals.push(...etype.entries);
+            }
+            else {
+                this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
+            }
+        }
+        else {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length ? iopts[i] : undefined); //undefined out-of-bounds is ok here
+                evals.push(etype);
+            }
+        }
+
+        this.checkError(stmt.sinfo, iopts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+        for(let i = evals.length; i < iopts.length; ++i) {
+            evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
+        }
+
+        for(let i = 0; i < stmt.decls.length; ++i) {
+            const decl = stmt.decls[i];
+            const itype = iopts[i];
+            const etype = evals[i];
+
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${etype.emit(true)}`);
+            env = env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+        }
+
+        return env;
     }
 
     private checkVariableAssignmentStatement(env: TypeEnvironment, stmt: VariableAssignmentStatement): TypeEnvironment {
-        xxxx;
+        const vinfo = env.resolveLocalVarInfo(stmt.name);
+        if(vinfo === undefined) {
+            this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
+            return env;
+        }
+
+        this.checkError(stmt.sinfo, !vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
+
+        const rhs = this.checkExpressionRHS(env, stmt.exp, vinfo.declaredType);
+        this.checkError(stmt.sinfo, !this.relations.isSubtypeOf(rhs, vinfo.declaredType, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable of type ${vinfo.declaredType.emit(true)}`);
+
+        return env.assignLocalVariable(stmt.name);
     }
 
     private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
-        xxxx;
+        const opts = stmt.names.map((vname) => env.resolveLocalVarInfo(vname));
+        for(let i = 0; i < opts.length; ++i) {
+            if(opts[i] !== undefined) {
+                this.checkError(stmt.sinfo, (opts[i] as VarInfo).isConst, `Variable ${stmt.names[i]} is declared as const and cannot be assigned`);
+            }
+            else {
+                this.reportError(stmt.sinfo, `Variable ${stmt.names[i]} is not declared`);
+            }
+        }
+
+        let evals: TypeSignature[] = [];
+        if(!Array.isArray(stmt.exp)) {
+            const iinfer = opts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, opts.map((opt) => (opt as VarInfo).declaredType));    
+            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
+            if(etype instanceof EListTypeSignature) {
+                evals.push(...etype.entries);
+            }
+            else {
+                this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
+            }
+        }
+        else {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                const etype = this.checkExpressionRHS(env, stmt.exp[i], (i < opts.length && opts[i] !== undefined) ? (opts[i] as VarInfo).declaredType : undefined);
+                evals.push(etype);
+            }
+        }
+
+        this.checkError(stmt.sinfo, opts.length !== evals.length, "Mismatch in number of variables and expressions in multi-variable initialization");
+        for(let i = evals.length; i < opts.length; ++i) {
+            evals.push(new ErrorTypeSignature(stmt.sinfo, undefined)); //try to recover a bit
+        }
+
+        for(let i = 0; i < stmt.names.length; ++i) {
+            const name = stmt.names[i];
+            const itype = opts[i] !== undefined ? (opts[i] as VarInfo).declaredType : undefined;
+            const etype = evals[i];
+
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${etype.emit(true)}`);
+            env = env.assignLocalVariable(name);
+        }
+
+        return env;
     }
 
     private checkVariableRetypeStatement(env: TypeEnvironment, stmt: VariableRetypeStatement): TypeEnvironment {
-        xxxx;
+        const vinfo = env.resolveLocalVarInfo(stmt.name);
+        if(vinfo === undefined) {
+            this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
+            return env;
+        }
+
+        const splits = this.processITest(stmt.sinfo, env, vinfo.declaredType, stmt.ttest);
+        this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
+
+        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.declaredType);
     }
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
-        xxxx;
+        if(stmt.value === undefined) {
+            xxxx;
+        }
+        else if(!Array.isArray(stmt.value)) {
+            xxxx;
+        }
+        else {  
+            xxxx;
+        }
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
@@ -2652,292 +2851,6 @@ class TypeChecker {
     }
 
     /*
-    private checkVariableDeclarationStatement(env: StatementTypeEnvironment, stmt: VariableDeclarationStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        if(stmt.exp === undefined) {
-            const declenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, undefined);
-
-            return [declenv, [new TIRVarDeclareStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey((declenv.lookupLocalVar(stmt.name) as VarInfo).declaredType))]];
-        }
-        else {
-            const itype = !(stmt.vtype instanceof AutoTypeSignature) ? this.normalizeTypeOnly(stmt.vtype, env.binds) : undefined;
-            let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, itype);
-
-            assert(stmt.scinfo === undefined, "NOT IMPLEMENTED -- short-circuit return on assignment in type checker");
-
-            let nstmt: TIRStatement[] = [];
-            let nenv: StatementTypeEnvironment | undefined = undefined;
-            if(rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-
-                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-                const refv = rhs.expressionResult.thisref;
-                const refvinfotry = env.lookupLocalVar(refv);
-                this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
-                const refvinfo = refvinfotry as VarInfo;
-
-                const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-                nstmt = [
-                    new TIRCallStatementWRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
-                    new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
-                    new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult, stmt.isConst)
-                ];
-            }
-            else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-
-                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-                const taskinfo = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-                const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-                const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-                nstmt = [
-                    new TIRCallStatementWTaskRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                    new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                    new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult, stmt.isConst)
-                ];
-            }
-            else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-
-                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-                const taskinfo = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
-                const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-                const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-                nstmt = [
-                    new TIRCallStatementWAction(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                    new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                    new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult, stmt.isConst)
-                ];
-            }
-            else {
-                nenv = this.checkDeclareSingleVariableExplicit(stmt.sinfo, env, stmt.name, stmt.isConst, stmt.vtype, rhs);
-
-                const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-                const rhsconv = this.emitCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
-
-                nstmt = [new TIRVarDeclareAndAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult, stmt.isConst)];
-            }
-            
-            return [nenv, nstmt];
-        }
-    }
-
-    private checkVariableAssignStatement(env: StatementTypeEnvironment, stmt: VariableAssignmentStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        this.raiseErrorIf(stmt.sinfo, env.lookupLocalVar(stmt.name) === null, `variable ${stmt.name} not previously declared`);
-        let rhs = this.checkExpressionAtAssign(env.createInitialEnvForExpressionEval(), stmt.exp, (env.lookupLocalVar(stmt.name) as VarInfo).declaredType);
-
-        assert(stmt.scinfo === undefined, "NOT IMPLEMENTED -- short-circuit return on assignment in type checker");
-
-        let nstmt: TIRStatement[] = [];
-        let nenv: StatementTypeEnvironment | undefined = undefined;
-        if (rhs.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
-
-            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-            const refv = rhs.expressionResult.thisref;
-            const refvinfotry = env.lookupLocalVar(refv);
-            this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
-            const refvinfo = refvinfotry as VarInfo;
-
-            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-            nstmt = [
-                new TIRCallStatementWRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
-                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rhs.expressionResult.scidx),
-                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
-            ];
-        }
-        else if (rhs.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-            nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
-
-            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
-            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-            nstmt = [
-                new TIRCallStatementWTaskRef(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
-            ];
-        }
-        else if (rhs.expressionResult instanceof TIRCallMemberActionExpression) {
-            nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
-
-            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
-            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-            const tirda = this.emitCoerceIfNeeded(rhs.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rhs.trepr), rhs.expressionResult.scidx), rhs.trepr), stmt.sinfo, dvtype);
-
-            nstmt = [
-                new TIRCallStatementWAction(stmt.sinfo, rhs.expressionResult, rhs.expressionResult.etype, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rhs.expressionResult.scidx),
-                new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), tirda.expressionResult)
-            ];
-        }
-        else {
-            nenv = this.checkAssignSingleVariableExplicit(stmt.sinfo, env, stmt.name, rhs);
-
-            const dvtype = (nenv.lookupLocalVar(stmt.name) as VarInfo).declaredType;
-            const rhsconv = this.emitCoerceIfNeeded(rhs, stmt.exp.sinfo, dvtype);
-
-            nstmt = [new TIRVarAssignStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(dvtype), rhsconv.expressionResult)];
-        }
-
-        return [nenv, nstmt];
-    }
-
-    private checkVariableRetypeStatement(env: StatementTypeEnvironment, stmt: VariableRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const vinfotry = env.lookupLocalVar(stmt.name);
-        this.raiseErrorIf(stmt.sinfo, vinfotry === null, "cannot retype captured variables");
-        const vinfo = vinfotry as VarInfo;
-
-        const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
-        const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, false);
-        this.raiseErrorIf(stmt.sinfo, !testinfo.hastrueflow, "variable retype operation will always fail");
-
-        return [
-            env.setVarFlowType(stmt.name, asinfo.trueflow as ResolvedType),
-            [new TIRVariableRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), this.toTIRTypeKey(asinfo.trueflow as ResolvedType), asinfo.asexp as TIRExpression)]
-        ]
-    }
-
-    private checkExpressionSCReturnStatement(env: StatementTypeEnvironment, stmt: ExpressionSCReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        if(stmt.ttest instanceof Expression) {
-            assert(false, "NOT IMPLEMENTED -- short-circuit return statement in type checker");
-        }
-        else {
-            assert(false, "NOT IMPLEMENTED -- short-circuit return statement in type checker");
-        }
-
-        //TODO: also see the SC return in assign code -- probably want common handling for eval expression + check flows in both cases
-        //---- see the TIRScratchSCRetypeStatement opcode for handling this -- assign result to var (or scratch in ref assign), process with SC opcode, and then do assign (or nothing) as needed
-        return [env, [new TIRAbortStatement(stmt.sinfo, "Not implemented -- short-circuit")]];
-    }
-    
-    private checkVariableSCRetypeStatement(env: StatementTypeEnvironment, stmt: VariableSCRetypeStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const vinfotry = env.lookupLocalVar(stmt.name);
-        this.raiseErrorIf(stmt.sinfo, vinfotry === null, "cannot retype captured variables");
-        const vinfo = vinfotry as VarInfo;
-
-        const testinfo = this.processITestAsTestOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds);
-        const asinfo = this.processITestAsConvertOp(stmt.sinfo, vinfo.declaredType, vinfo.declaredType, new TIRAccessVariableExpression(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType)), stmt.ttest, env.binds, true);
-        
-        this.raiseErrorIf(stmt.sinfo, testinfo.falseflow === undefined, "variable retypr operation is always successful");
-        this.raiseErrorIf(stmt.sinfo, !testinfo.hastrueflow, "variable retype operation will always fail");
-
-        let binderinfo: [TIRExpression, string] | undefined = undefined;
-        let retflow: TIRExpression | undefined = undefined;
-        if(stmt.res === undefined) {
-            retflow = this.emitCoerceIfNeeded(env.createInitialEnvForExpressionEval().setResultExpressionInfo(asinfo.asnotexp as TIRExpression, asinfo.falseflow as ResolvedType), stmt.sinfo, this.m_rtype).expressionResult;
-        }
-        else {
-            if(stmt.binderinfo === undefined) {
-                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.res, this.m_rtype);
-                retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
-            }
-            else {
-                binderinfo = [asinfo.asnotexp as TIRExpression, stmt.binderinfo as string];
-
-                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval().pushBinderFrame(stmt.binderinfo, asinfo.falseflow as ResolvedType), stmt.res, this.m_rtype);
-                retflow = this.emitCoerceIfNeeded(eenv, stmt.res.sinfo, this.m_rtype).expressionResult;
-            }
-        }
-
-        return [
-            env.setVarFlowType(stmt.name, asinfo.trueflow as ResolvedType),
-            [new TIRVariableSCRetypeStatement(stmt.sinfo, stmt.name, this.toTIRTypeKey(vinfo.declaredType), testinfo.testexp, asinfo.asexp as TIRExpression, retflow as TIRExpression, binderinfo)]
-        ];
-    }
-
-    private checkRefCallStatement(env: StatementTypeEnvironment, stmt: RefCallStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const ee = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.call, undefined);
-
-        if (ee.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            const refvtype = (env.lookupLocalVar(ee.expressionResult.thisref) as VarInfo).declaredType;
-            return [env, [new TIRCallStatementWRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, this.toTIRTypeKey(refvtype), this.m_scratchCtr++)]];
-        }
-        else if (ee.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-            return [env, [new TIRCallStatementWTaskRef(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, ee.expressionResult.tsktype, this.m_scratchCtr++)]];
-        }
-        else if (ee.expressionResult instanceof TIRCallMemberActionExpression) {
-            return [env, [new TIRCallStatementWAction(stmt.sinfo, ee.expressionResult, ee.expressionResult.etype, ee.expressionResult.tsktype, this.m_scratchCtr++)]];
-        }
-        else {
-            this.raiseError(stmt.sinfo, `Unknown op kind ${ee.expressionResult.tag}`);
-            return [env, [new TIRNopStatement(stmt.sinfo)]];
-        }
-    } 
-
-    private checkReturnStatement(env: StatementTypeEnvironment, stmt: ReturnStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        let rexp: TIRStatement[] | undefined = undefined;
-        let rval = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, this.m_rtype);
-
-        if (rval.expressionResult instanceof TIRCallMemberFunctionSelfRefExpression) {
-            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
-
-            const refv = rval.expressionResult.thisref;
-            const refvinfotry = env.lookupLocalVar(refv) ;
-            this.raiseErrorIf(stmt.sinfo, refvinfotry === null || refvinfotry.isConst, `cannot modify variable ${refv} as ref`);
-            const refvinfo = refvinfotry as VarInfo;
-
-            rexp = [
-                new TIRCallStatementWRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx),
-                new TIRVarRefAssignFromScratch(stmt.sinfo, refv, this.toTIRTypeKey(refvinfo.declaredType), rval.expressionResult.scidx)
-            ];
-            rval = tirda;
-        }
-        else if (rval.expressionResult instanceof TIRCallMemberFunctionTaskSelfRefExpression) {
-            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
-            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
-
-            rexp = [
-                new TIRCallStatementWTaskRef(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx)
-            ];
-            rval = tirda;
-        }
-        else if (rval.expressionResult instanceof TIRCallMemberActionExpression) {
-            const taskinfo = this.m_taskType as { taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType> };
-            const refvinfo = ResolvedType.createSingle(ResolvedTaskAtomType.create(taskinfo.taskdecl, taskinfo.taskbinds));
-
-            const tirda = this.emitCoerceIfNeeded(rval.setResultExpressionInfo(new TIRAccessScratchIndexExpression(stmt.sinfo, 1, this.toTIRTypeKey(rval.trepr), rval.expressionResult.scidx), rval.trepr), stmt.sinfo, this.m_rtype);
-
-            rexp = [
-                new TIRCallStatementWAction(stmt.sinfo, rval.expressionResult, rval.expressionResult.etype, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx),
-                new TIRTaskRefAssignFromScratch(stmt.sinfo, this.toTIRTypeKey(refvinfo), rval.expressionResult.scidx)
-            ];
-            rval = tirda;
-        }
-        else {
-            rexp = [];
-            rval = this.emitCoerceIfNeeded(rval, stmt.sinfo, this.m_rtype);
-        }
-
-        if(this.m_returnMode === ReturnMode.Standard) {
-            rexp.push(new TIRReturnStatement(stmt.sinfo, rval.expressionResult));
-        }
-        else if(this.m_returnMode === ReturnMode.MemberRef) {
-            rexp.push(new TIRReturnStatementWRef(stmt.sinfo, rval.expressionResult));
-        }
-        else if(this.m_returnMode === ReturnMode.MemberSelf) {
-            rexp.push(new TIRReturnStatementWTaskRef(stmt.sinfo, rval.expressionResult));
-        }
-        else {
-            rexp.push(new TIRReturnStatementWAction(stmt.sinfo, rval.expressionResult));
-        }
-
-        return [env.endOfExecution(), rexp as TIRStatement[]];
-    }
-
     private checkAbortStatement(env: StatementTypeEnvironment, stmt: AbortStatement): [StatementTypeEnvironment, TIRStatement[]] {
         return [env.endOfExecution(), [new TIRAbortStatement(stmt.sinfo, "Abort")]];
     }

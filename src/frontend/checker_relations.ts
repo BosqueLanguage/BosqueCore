@@ -110,6 +110,14 @@ class TypeCheckerRelations {
 
         xxxx;
     }
+
+    //Compute the upper bound of two types for use in control-flow join types
+    joinTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        assert(t1 instanceof ErrorTypeSignature, "Checking subtypes on errors");
+        assert(t2 instanceof ErrorTypeSignature, "Checking subtypes on errors");
+
+        xxxx;
+    }
 }
 
 export {

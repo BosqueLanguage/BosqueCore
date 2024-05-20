@@ -1,6 +1,6 @@
 import {strict as assert} from "assert";
 
-import { TemplateBindingScope, TypeSignature } from "./type";
+import { TypeSignature } from "./type";
 
 class VarInfo {
     readonly declaredType: TypeSignature;
@@ -17,11 +17,29 @@ class VarInfo {
 }
 
 class TypeEnvironment {
-    resolveLambdaCaptureVarType(scopename: string): TypeSignature {
+    readonly binds: Map<string, VarInfo>;
+
+    constructor(binds: Map<string, VarInfo>) {
+        this.binds = new Map<string, VarInfo>(binds);
+    }
+
+    resolveLambdaCaptureVarType(scopename: string): TypeSignature | undefined {
         xxxx;
     }
 
-    resolveLocalVarInfo(scopename: string): VarInfo {
+    resolveLocalVarInfo(scopename: string): VarInfo | undefined {
+        xxxx;
+    }
+
+    addLocalVariable(scopename: string, oftype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
+        xxxx;
+    }
+
+    assignLocalVariable(scopename: string): TypeEnvironment {
+        xxxx;
+    }
+
+    retypeLocalVariable(scopename: string, ttype: TypeSignature): TypeEnvironment {
         xxxx;
     }
 }
