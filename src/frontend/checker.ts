@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { Assembly } from "./assembly";
-import { BuildLevel, SourceInfo } from "./build_decls";
+import { BuildLevel, SourceInfo, isBuildLevelEnabled } from "./build_decls";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
@@ -2770,14 +2770,17 @@ class TypeChecker {
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
         if(stmt.value === undefined) {
-            xxxx;
+            this.checkError(stmt.sinfo, !this.relations.isVoidType(env.returnType, this.constraints), `Expected a return value of type ${env.returnType.emit(false)}`);
         }
         else if(!Array.isArray(stmt.value)) {
-            xxxx;
+            const rtype = this.checkExpression(env, stmt.value, env.returnType);
+            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.returnType, this.constraints), `Expected a return value of type ${env.returnType.emit(false)} but got ${rtype.emit(false)}`);
         }
         else {  
             xxxx;
         }
+
+        return env.setReturnFlow();
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
@@ -2793,15 +2796,27 @@ class TypeChecker {
     }
 
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
-        xxxx;
+        return env.setDeadFlow();
     }
 
     private checkAssertStatement(env: TypeEnvironment, stmt: AssertStatement): TypeEnvironment {
-        xxxx;
+        const etype = this.checkExpression(env, stmt.cond, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return env;
+        }
+
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for assert condition but got ${etype.emit(false)}`);
+        return env;
     }
 
     private checkValidateStatement(env: TypeEnvironment, stmt: ValidateStatement): TypeEnvironment {
-        xxxx;
+        const etype = this.checkExpression(env, stmt.cond, undefined);
+        if(etype instanceof ErrorTypeSignature) {
+            return env;
+        }
+
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for validate condition but got ${etype.emit(false)}`);
+        return env;
     }
 
     private checkDebugStatement(env: TypeEnvironment, stmt: DebugStatement): TypeEnvironment {
@@ -2851,90 +2866,6 @@ class TypeChecker {
     }
 
     /*
-    private checkAbortStatement(env: StatementTypeEnvironment, stmt: AbortStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        return [env.endOfExecution(), [new TIRAbortStatement(stmt.sinfo, "Abort")]];
-    }
-
-    private checkAssertStatement(env: StatementTypeEnvironment, stmt: AssertStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const test = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.cond, this.getSpecialBoolType()), stmt.sinfo, this.getSpecialBoolType());
-
-        if (!isBuildLevelEnabled(stmt.level, this.m_buildLevel)) {
-            return [env, []];
-        }
-        else {
-            const astmt = new TIRAssertCheckStatement(stmt.sinfo, test.expressionResult, `Assertion failed -- ${path.basename(this.m_file)} : ${stmt.sinfo.line}`);
-            return [env, [astmt]];
-        }
-    }
-
-    private checkDebugStatement(env: StatementTypeEnvironment, stmt: DebugStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        if (this.m_buildLevel !== "debug") {
-            return [env, []];
-        }
-        else {
-            return [env, [new TIRDebugStatement(stmt.sinfo, this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.value, undefined).expressionResult)]];
-        }
-    }
-
-    private mergeVarTypeMaps(envs: StatementTypeEnvironment[]): Map<string, ResolvedType> {
-        let rrm = new Map<string, ResolvedType[]>();
-        envs.forEach((eev) => {
-            eev.args.forEach((ai, an) => {
-                if(!rrm.has(an)) {
-                    rrm.set(an, []);
-                }
-                if((rrm.get(an) as ResolvedType[]).find((tt) => tt.typeID === ai.declaredType.typeID) === undefined) {
-                    (rrm.get(an) as ResolvedType[]).push(ai.declaredType);
-                }
-            });
-
-            eev.locals.forEach((lf) => {
-                lf.forEach((vi, vn) => {
-                    if(!rrm.has(vn)) {
-                        rrm.set(vn, []);
-                    }
-                    if((rrm.get(vn) as ResolvedType[]).find((tt) => tt.typeID === vi.declaredType.typeID) === undefined) {
-                        (rrm.get(vn) as ResolvedType[]).push(vi.declaredType);
-                    }
-                });
-            });
-        });
-
-        let mrm = new Map<string, ResolvedType>();
-        rrm.forEach((tl, vn) => {
-            const tt = this.normalizeUnionList(tl);
-            mrm.set(vn, tt);
-        });
-
-        return mrm;
-    }
-
-    private emitVarRetypeAtFlowJoin(sinfo: SourceInfo, env: StatementTypeEnvironment, remap: Map<string, ResolvedType>): {vname: string, cast: TIRExpression}[] {
-        let vrl: {vname: string, vtype: ResolvedType}[] = [];
-        remap.forEach((tt, vn) => {
-            const vvinfo = env.lookupLocalVar(vn) as VarInfo;
-            if(vvinfo.declaredType.typeID !== tt.typeID) {
-                vrl.push({vname: vn, vtype: tt});
-            }
-        });
-        vrl.sort((a, b) => ((a.vname !== b.vname) ? (a.vname < b.vname ? -1 : 1) : 0));
-
-        if(vrl.length === 0) {
-            return [];
-        }
-        else {
-            const rmps = vrl.map((rp) => {
-                const vvinfo = env.lookupLocalVar(rp.vname) as VarInfo;
-                const varenv = env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRAccessVariableExpression(sinfo, rp.vname, this.toTIRTypeKey(vvinfo.declaredType)), vvinfo.declaredType);
-                const aswrk = this.emitCoerceIfNeeded_NoCheck(varenv, sinfo, rp.vtype).expressionResult;
-                    
-                return {vname: rp.vname, cast: aswrk};
-            });
-
-            return rmps;
-        }
-    }
-
     private checkIfStatement(env: StatementTypeEnvironment, stmt: IfStatement): [StatementTypeEnvironment, TIRStatement[]] {
         let results: {test: ExpressionTypeEnvironment, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
 
@@ -3222,69 +3153,6 @@ class TypeChecker {
         return [benv[0], [new TIREnvironmentSetStatementBracket(stmt.sinfo, assigns, benv[1], stmt.isFresh)]];
     }
 
-    private checkVTargetOption(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: ResolvedTaskAtomType, isdefine: boolean, isconst: boolean, svtrgt: {name: string, vtype: TypeSignature}): [StatementTypeEnvironment, {name: string, vtype: TIRTypeKey}] {
-        const rrtype = this.normalizeTypeOnly(ttask.task.mainfunc.invoke.resultType, TemplateBindScope.createBaseBindScope(ttask.binds));
-        
-        let eenv = env;
-        if(!isdefine) {
-            eenv = this.checkAssignSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, rrtype);
-        }
-        else {
-            eenv = this.checkDeclareSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, isconst, svtrgt.vtype, rrtype);
-        }
-        const vtrgt = {name: svtrgt.name, vtype: this.toTIRTypeKey(rrtype)};
-
-        return [eenv, vtrgt];
-    }
-
-    private checkVTargetOptionWithNone(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: ResolvedTaskAtomType, isdefine: boolean, isconst: boolean, svtrgt: {name: string, vtype: TypeSignature}): [StatementTypeEnvironment, {name: string, vtype: TIRTypeKey, restype: TIRTypeKey}] {
-        const rrtypebase = this.normalizeTypeOnly(ttask.task.mainfunc.invoke.resultType, TemplateBindScope.createBaseBindScope(ttask.binds));
-        const rrtype = this.normalizeUnionList([rrtypebase, this.getSpecialNoneType()]);
-
-        let eenv = env;
-        if(!isdefine) {
-            eenv = this.checkAssignSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, rrtype);
-        }
-        else {
-            eenv = this.checkDeclareSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, isconst, svtrgt.vtype, rrtype);
-        }
-        const vtrgt = {name: svtrgt.name, vtype: this.toTIRTypeKey(rrtype), restype: this.toTIRTypeKey(rrtypebase)};
-
-        return [eenv, vtrgt];
-    }
-
-    private checkVTargetOptionWithList(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: ResolvedTaskAtomType, isdefine: boolean, isconst: boolean, svtrgt: {name: string, vtype: TypeSignature}): [StatementTypeEnvironment, {name: string, vtype: TIRTypeKey, elemtype: TIRTypeKey}] {
-        const rrtypebase = this.normalizeTypeOnly(ttask.task.mainfunc.invoke.resultType, TemplateBindScope.createBaseBindScope(ttask.binds));
-        const rrtype = ResolvedType.createSingle(ResolvedListEntityAtomType.create(this.m_assembly.tryGetConceptTypeForFullyResolvedName("List") as EntityTypeDecl, rrtypebase));
-
-        let eenv = env;
-        if(!isdefine) {
-            eenv = this.checkAssignSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, rrtype);
-        }
-        else {
-            eenv = this.checkDeclareSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, isconst, svtrgt.vtype, rrtype);
-        }
-        const vtrgt = {name: svtrgt.name, vtype: this.toTIRTypeKey(rrtype), elemtype: this.toTIRTypeKey(rrtypebase)};
-
-        return [eenv, vtrgt];
-    }
-
-    private checkVTargetOptionWithIndex(sinfo: SourceInfo, env: StatementTypeEnvironment, ttask: ResolvedTaskAtomType, isdefine: boolean, isconst: boolean, svtrgt: {name: string, vtype: TypeSignature}): [StatementTypeEnvironment, {name: string, vtype: TIRTypeKey, restype: TIRTypeKey}] {
-        const rrtypebase = this.normalizeTypeOnly(ttask.task.mainfunc.invoke.resultType, TemplateBindScope.createBaseBindScope(ttask.binds));
-        const rrtype = ResolvedType.createSingle(ResolvedTupleAtomType.create([this.getSpecialNatType(), rrtypebase]));
-
-        let eenv = env;
-        if(!isdefine) {
-            eenv = this.checkAssignSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, rrtype);
-        }
-        else {
-            eenv = this.checkDeclareSingleVariableFromTaskExplicit(sinfo, env, svtrgt.name, isconst, svtrgt.vtype, rrtype);
-        }
-        const vtrgt = {name: svtrgt.name, vtype: this.toTIRTypeKey(rrtype), restype: this.toTIRTypeKey(rrtypebase)};
-
-        return [eenv, vtrgt];
-    }
-
     private checkTaskRunStatement(env: StatementTypeEnvironment, stmt: TaskRunStatement): [StatementTypeEnvironment, TIRStatement[]] {
         this.raiseErrorIf(stmt.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk === "no", "This code does not permit task operations (not a task method/action)");
 
@@ -3438,7 +3306,7 @@ class TypeChecker {
 */
 
     private checkStatement(env: TypeEnvironment, stmt: Statement): TypeEnvironment {
-        if(!env.hasNormalFlow()) {
+        if(!env.normalflow) {
             this.reportError(stmt.sinfo, "Unreachable code");
             return env;
         }

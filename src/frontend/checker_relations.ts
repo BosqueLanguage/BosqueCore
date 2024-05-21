@@ -68,6 +68,13 @@ class TypeCheckerRelations {
         xxxx;
     }
 
+    //Check if t is the type Void (exactly)
+    isVoidType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+
+        xxxx;
+    }
+
     //Check is this type is unique (i.e. not a union or concept type)
     isUniqueType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");

@@ -1995,7 +1995,6 @@ class AssertStatement extends Statement {
     }
 }
 
-
 class ValidateStatement extends Statement {
     readonly cond: Expression;
     readonly diagnosticTag: string | undefined

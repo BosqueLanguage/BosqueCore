@@ -3,6 +3,7 @@ import {strict as assert} from "assert";
 import { TypeSignature } from "./type";
 
 class VarInfo {
+    readonly name: string;
     readonly declaredType: TypeSignature;
 
     readonly isConst: boolean;
@@ -17,10 +18,32 @@ class VarInfo {
 }
 
 class TypeEnvironment {
-    readonly binds: Map<string, VarInfo>;
+    readonly normalflow: boolean;
+    readonly returnflow: boolean;
+    readonly parent: TypeEnvironment | undefined;
 
-    constructor(binds: Map<string, VarInfo>) {
-        this.binds = new Map<string, VarInfo>(binds);
+    readonly args: VarInfo[];
+    readonly returnType: TypeSignature;
+
+    readonly locals: VarInfo[][];
+
+    constructor(normalflow: boolean, returnflow: boolean, parent: TypeEnvironment | undefined, args: VarInfo[], returnType: TypeSignature, locals: VarInfo[][]) {
+        this.normalflow = normalflow;
+        this.returnflow = returnflow;
+        this.parent = parent;
+
+        this.args = args;
+        this.returnType = returnType;
+
+        this.locals = locals;
+    }
+
+    static createInitialStdEnv(args: VarInfo[], returnType: TypeSignature): TypeEnvironment {
+        return new TypeEnvironment(false, undefined, args, returnType, []);
+    }
+
+    static createInitialLambdaEnv(args: VarInfo[], returnType: TypeSignature, enclosing: TypeEnvironment): TypeEnvironment {
+        return new TypeEnvironment(false, enclosing, args, returnType, []);
     }
 
     resolveLambdaCaptureVarType(scopename: string): TypeSignature | undefined {
@@ -40,6 +63,14 @@ class TypeEnvironment {
     }
 
     retypeLocalVariable(scopename: string, ttype: TypeSignature): TypeEnvironment {
+        xxxx;
+    }
+
+    setDeadFlow(): TypeEnvironment {
+        xxxx;
+    }
+
+    setReturnFlow(): TypeEnvironment {
         xxxx;
     }
 }
