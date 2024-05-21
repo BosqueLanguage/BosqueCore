@@ -3,10 +3,10 @@ import {strict as assert} from "assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndxpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOp, PrefixNotOp, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -2400,6 +2400,15 @@ class Parser {
         }
     }
 
+    private parseSwitchLiteralGuard(): LiteralExpressionValue | undefined {
+        if (this.testToken(KW_under)) {
+            return undefined;
+        }
+        else {
+            return this.parseLiteralExpression();
+        }
+    }
+
     private static generateMatchBinderName(exp: Expression, binder: string | undefined): [boolean, string[]] {
         let bnames: string[] = [];
         let isimplicit = false;
@@ -3289,10 +3298,10 @@ class Parser {
             const op = ops[i];
 
             if (op === SYM_bang) {
-                exp = new PrefixNotOp(sinfo, exp);
+                exp = new PrefixNotOpExpression(sinfo, exp);
             }
             else if (op === SYM_negate) {
-                exp = new PrefixNegateOp(sinfo, exp);
+                exp = new PrefixNegateOpExpression(sinfo, exp);
             }
             else {
                 ; //drop the redundant +
@@ -3429,7 +3438,7 @@ class Parser {
         const exp = this.parseRelationalExpression();
 
         if (this.testAndConsumeTokenIf(SYM_ampamp)) {
-            return new BinLogicAndxpression(sinfo, exp, this.parseAndExpression());
+            return new BinLogicAndExpression(sinfo, exp, this.parseAndExpression());
         }
         else {
             return exp;
@@ -3540,7 +3549,6 @@ class Parser {
     }
 
     private parseLambdaOkExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
         //TODO: this will reject (fn(x) => x) since there are parens, maybe this is ok or maybe we should allow it?
 
         if (this.testToken(KW_fn) || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn)) {
@@ -4109,8 +4117,6 @@ class Parser {
     private parseIfElseStatement(): Statement {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        let conds: {cond: IfTest, value: BlockStatement, binderinfo: BinderInfo | undefined }[] = [];
-
         this.ensureAndConsumeToken(KW_if, "if statement cond");
         const ifbinder = this.parseBinderInfo();
         const iftest = this.parseIfTest();
@@ -4122,77 +4128,80 @@ class Parser {
             ifbind = new BinderInfo(ifbody.used[0].srcname, ifbody.used[0].scopedname, ifisimplicit);
         }
 
-        conds.push({cond: iftest, value: ifbody.block, binderinfo: ifbind});
-
+        let conds: {cond: IfTest, block: BlockStatement}[] = [];
         while (this.testAndConsumeTokenIf(KW_elif)) {
-            const elifbinder = this.parseBinderInfo();
             const eliftest = this.parseIfTest();
-
-            const [elifisimplicit, elifbnames] = Parser.generateITestBinderName(eliftest.itestopt, eliftest.exp, elifbinder);
-            const elifbody = this.parseScopedBlockStatementWithBinderTracking(elifbnames);
-            let elifbind: BinderInfo | undefined = undefined;
-            if(elifbody.used.length > 0) {
-                elifbind = new BinderInfo(elifbody.used[0].srcname, elifbody.used[0].scopedname, elifisimplicit);
-            }
-
-            conds.push({cond: eliftest, value: elifbody.block, binderinfo: elifbind});
+            const elifbody = this.parseScopedBlockStatement();
+           
+            conds.push({cond: eliftest, block: elifbody});
         }
 
-        if(!this.testAndConsumeTokenIf(KW_else)) {
-            return new IfStatement(sinfo, conds, undefined);
+        if(conds.length === 0) {
+            if(!this.testAndConsumeTokenIf(KW_else)) {
+                return new IfStatement(sinfo, iftest, ifbody.block, ifbind);
+            }
+            else {
+                const elsebody = this.parseScopedBlockStatementWithBinderTracking([]);
+                let elsebind: BinderInfo | undefined = undefined;
+                if(elsebody.used.length > 0) {
+                    elsebind = new BinderInfo(elsebody.used[0].srcname, elsebody.used[0].scopedname, false);
+                }
+
+                return new IfElseStatement(sinfo, iftest, ifbody.block, ifbind, elsebody.block, elsebind);
+            }
         }
         else {
-            let elsebinder: BinderInfo | undefined = undefined;
-            if(conds.every((cc) => cc.binderinfo !== undefined) && conds.every((cc) => (cc.binderinfo as BinderInfo).srcname === (conds[0].binderinfo as BinderInfo).srcname)) {
-                elsebinder = conds[0].binderinfo as BinderInfo;
+            if(ifbody.used.length > 0) {
+                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
 
-            const elsebody = this.parseScopedBlockStatementWithBinderTracking(elsebinder ? [elsebinder.srcname] : []);
-            let elsebind: BinderInfo | undefined = undefined;
-            if(elsebody.used.length > 0) {
-                elsebind = new BinderInfo(elsebody.used[0].srcname, elsebody.used[0].scopedname, (elsebinder as BinderInfo).implicitdef);
-            }
-
-            return new IfStatement(sinfo, conds, {value: elsebody.block, binderinfo: elsebind});
+            const elssebody = this.parseScopedBlockStatement();
+            return new IfElifElseStatement(sinfo, [{cond: iftest, block: ifbody.block}, ...conds], elssebody);
         }
     }
 
-    /*
     private parseSwitchStatement(): Statement {
-        const sinfo = this.getCurrentSrcInfo();
-        const bindername = `$_$_${this.m_penv.getBinderExtension("$")}`;
-
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        
         this.ensureAndConsumeToken(KW_switch, "switch statement dispatch value");
 
+        const binder = this.parseBinderInfo();
+
         this.ensureAndConsumeToken(SYM_lparen, "switch statement dispatch value");
-        const mexp = this.parseExpression();
+        const sexp = this.parseExpression();
         this.ensureAndConsumeToken(SYM_rparen, "switch statement dispatch value");
 
-        let entries: { condlit: LiteralExpressionValue | undefined, value: ScopedBlockStatement, binderinfo: string | undefined }[] = [];
+        const [mimplicit, mbnames] = Parser.generateMatchBinderName(sexp, binder);
+
+        let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined }[] = [];
         this.ensureAndConsumeToken(SYM_lbrace, "switch statement options");
         
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-        const [swbind, swvalue] = this.parseStatementActionInBlock();
+        const svalue = this.parseScopedBlockStatementWithBinderTracking(mbnames);
 
-        entries.push({ condlit: swlit, value: swvalue, binderinfo: swbind ? bindername : undefined});
+        entries.push({ lval: swlit, value: svalue.block, bindername: svalue.used.length !== 0 ? svalue.used[0].srcname : undefined });
         while (this.testToken(SYM_bar)) {
             this.consumeToken();
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeToken(SYM_bigarrow, "switch statement entry");
-            const [swbindx, swvaluex] = this.parseStatementActionInBlock();
+            const svaluex = this.parseScopedBlockStatementWithBinderTracking(mbnames);
 
-            entries.push({ condlit: swlitx, value: swvaluex, binderinfo: swbindx ? bindername : undefined });
+            entries.push({ lval: swlitx, value: svaluex.block, bindername: svaluex.used.length !== 0 ? svaluex.used[0].srcname : undefined });
         }
         this.ensureAndConsumeToken(SYM_rbrace, "switch statement options");
 
-        return new SwitchStatement(sinfo, mexp, entries);
+        let bindinfo: BinderInfo | undefined = undefined;
+        if(entries.some((cc) => cc.bindername !== undefined)) {
+            bindinfo = new BinderInfo(mbnames[0], this.env.getScope().getBinderVarName(mbnames[0]), mimplicit);
+        }
+
+        return new SwitchStatement(sinfo, [sexp, bindinfo], entries);
     }
-    */
 
     private parseMatchStatement(): Statement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();;
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         
         this.ensureAndConsumeToken(KW_match, "match statement dispatch value");
 
@@ -4235,11 +4244,9 @@ class Parser {
         if (this.testToken(KW_if)) {
             return this.parseIfElseStatement();
         }
-        /*
         else if (this.testToken(KW_switch)) {
             return this.parseSwitchStatement();
         }
-        */
         else if (this.testToken(KW_match)) {
             return this.parseMatchStatement();
         }

@@ -3,16 +3,6 @@ import {strict as assert} from "assert";
 import { ErrorTypeSignature, TemplateConstraintScope, TypeSignature } from "./type";
 
 class TypeCheckerRelations {
-    getStringOfType(vtype: TypeSignature): TypeSignature {
-        //TODO: given a validator type return a StringOf<vtype> type reference
-        xxxx;
-    }
-
-    getASCIIStringOfType(vtype: TypeSignature): TypeSignature {
-        //TODO: given a validator type return a StringOf<vtype> type reference
-        xxxx;
-    }
-
     refineType(src: TypeSignature, refine: TypeSignature): { overlap: TypeSignature | undefined, remain: TypeSignature | undefined } {
         //If src is an error then just return error for both
         if(src instanceof ErrorTypeSignature) {
@@ -51,6 +41,12 @@ class TypeCheckerRelations {
 
     //Check if t includes None (e.g. None is a subtype of t)
     includesNoneType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+        xxxx;
+    }
+
+    //Check if t1 is the type Nothing (exactly)
+    isNothingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
         xxxx;
     }
@@ -123,6 +119,11 @@ class TypeCheckerRelations {
         assert(t1 instanceof ErrorTypeSignature, "Checking subtypes on errors");
         assert(t2 instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
+        xxxx;
+    }
+
+    //If possible resolve a single canonical type for a type -- e.g. not a union and no alias or constraint redirects
+    tryResolveSingleCanonicalType(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature | undefined {
         xxxx;
     }
 }

@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
-import { FullyQualifiedNamespace, TemplateNameMapper, TypeSignature } from "./type";
+import { FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper, TypeSignature } from "./type";
 import { AbstractNominalTypeDecl, Assembly, ConstMemberDecl, NamespaceConstDecl, NamespaceFunctionDecl, TypeFunctionDecl } from "./assembly";
 
 
@@ -49,6 +49,16 @@ class OrRegexValidatorPack extends RegexValidatorPack {
 
 class TypeCheckerResolver {
     private readonly assembly: Assembly;
+
+    getStringOfType(vtype: TypeSignature): TypeSignature {
+        //TODO: given a validator type return a StringOf<vtype> type reference
+        xxxx;
+    }
+
+    getASCIIStringOfType(vtype: TypeSignature): TypeSignature {
+        //TODO: given a validator type return a StringOf<vtype> type reference
+        xxxx;
+    }
 
     compileTimeReduceConstantExpression(exp: Expression): [Expression, TypeSignature | undefined, TemplateNameMapper] | undefined {
         if(exp.isLiteralExpression()) {

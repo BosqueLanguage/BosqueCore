@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 import { Assembly } from "./assembly";
 import { BuildLevel, SourceInfo, isBuildLevelEnabled } from "./build_decls";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, StringSliceExpression, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
 import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_relations";
@@ -37,15 +37,13 @@ class TypeChecker {
 
     private readonly wellknownTypes: Map<string, TypeSignature>;
 
-    private rtype: TypeSignature;
-
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
     readonly resolver: TypeCheckerResolver;
     readonly relations: TypeCheckerRelations;
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, resolver: TypeCheckerResolver, relations: TypeCheckerRelations) {
         this.assembly = assembly;
         this.buildLevel = buildlevel;
 
@@ -54,7 +52,9 @@ class TypeChecker {
 
         this.wellknownTypes = wellknownTypes;
 
-        this.rtype = new VoidTypeSignature(SourceInfo.implicitSourceInfo());
+        this.constraints = constraints;
+        this.resolver = resolver;
+        this.relations = relations;
     }
 
     private reportError(sinfo: SourceInfo, msg: string) {
@@ -109,8 +109,13 @@ class TypeChecker {
     }
 
     private processITest_Literal(env: TypeEnvironment, src: TypeSignature, literaltype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, literaltype);
-        return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+        if(this.relations.isNoneType(literaltype, this.constraints) || this.relations.isNothingType(literaltype, this.constraints)) {
+            const rinfo = this.relations.refineType(src, literaltype);
+            return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
+        }
+        else {
+            return { ttrue: src, tfalse: src };
+        }
     }
 
     private processITest_Type(src: TypeSignature, oftype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
@@ -190,6 +195,7 @@ class TypeChecker {
         xxxx;
     }
 
+    /*
     private checkTemplateTypesOnInvoke(sinfo: SourceInfo, terms: TemplateTermDecl[], enclosingscope: TemplateBindScope, binds: Map<string, ResolvedType>, optTypeRestrict?: TypeConditionRestriction) {
         for(let i = 0; i < terms.length; ++i) {
             const terminfo = terms[i];
@@ -231,6 +237,7 @@ class TypeChecker {
             return false;
         }
     }
+    */
 
     private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
         if (lhsexp.tag === ExpressionTag.LiteralNoneExpression && rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
@@ -290,6 +297,7 @@ class TypeChecker {
         }
     }
 
+    /*
     private checkArgumentList(sinfo: SourceInfo, env: ExpressionTypeEnvironment, args: Expression[], calleeparams: FunctionParameter[], fbinds: TemplateBindScope): [TIRExpression[], [string, ResolvedFunctionType, TIRCodePack][], TIRPCodeKey[]] {
         this.raiseErrorIf(sinfo, args.length !== calleeparams.length, `call expected ${calleeparams.length} arguments but got ${args.length}`);
         const eenvs = args.map((arg, ii) => {
@@ -334,6 +342,7 @@ class TypeChecker {
 
         return [cexps, ftypes, pckeys];
     }
+    */
 
     private checkLiteralNoneExpression(env: TypeEnvironment, exp: LiteralSingletonExpression): TypeSignature {
         return exp.setType(this.getWellKnownType("None"));
@@ -584,7 +593,7 @@ class TypeChecker {
         }
 
         this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.relations.getStringOfType(exp.stype));
+        return exp.setType(this.resolver.getStringOfType(exp.stype));
     }
 
     private checkLiteralASCIITypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -598,7 +607,7 @@ class TypeChecker {
         }
 
         this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.relations.getASCIIStringOfType(exp.stype));
+        return exp.setType(this.resolver.getASCIIStringOfType(exp.stype));
     }
 
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
@@ -688,7 +697,9 @@ class TypeChecker {
             }
             else {
                 this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
-                return exp.setType(vinfo.declaredType);
+                
+                exp.layoutType = vinfo.layoutType;
+                return exp.setType(vinfo.flowType);
             }
         }
     }
@@ -1199,15 +1210,20 @@ class TypeChecker {
     }
 
     private checkIfExpression(env: TypeEnvironment, exp: IfExpression, expectedtype: TypeSignature | undefined): TypeSignature {
-        const eetype = this.checkExpression(env, exp.test.exp, undefined);
-        if(eetype instanceof ErrorTypeSignature) {
-            return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
-        }
+        let eetype = this.checkExpression(env, exp.test.exp, undefined);
 
         let ttrue: TypeSignature;
         let tfalse: TypeSignature;
 
         if(exp.test.itestopt === undefined) {
+            if(eetype instanceof ErrorTypeSignature) {
+                eetype = this.getWellKnownType("Bool");
+            }
+
+            this.checkError(exp.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(exp.sinfo, exp.trueValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(exp.sinfo, exp.falseValueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+
             ttrue = this.checkExpression(env, exp.trueValue, expectedtype);
             tfalse = this.checkExpression(env, exp.falseValue, expectedtype);
         }
@@ -2477,95 +2493,6 @@ class TypeChecker {
         }
     }
 
-    private checkIfExpression(env: ExpressionTypeEnvironment, exp: IfExpression, desiredtype: ResolvedType | undefined): ExpressionTypeEnvironment {
-        let results: {test: ExpressionTypeEnvironment, value: ExpressionTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
-
-        let testflowtypes = new Map<string, ResolvedType>();
-        let elsebind: [TIRExpression, ResolvedType] | undefined | null = undefined;
-
-        for (let i = 0; i < exp.condflow.length; ++i) {
-            if(exp.condflow[i].cond.itestopt === undefined) {
-                const tenv = this.emitCoerceIfNeeded(this.checkExpression(env, exp.condflow[i].cond.exp, this.getSpecialBoolType()), exp.condflow[i].cond.exp.sinfo, this.getSpecialBoolType());
-                elsebind = null;
-
-                this.raiseErrorIf(exp.condflow[i].value.sinfo, exp.condflow[i].binderinfo !== undefined, "Binder doesn't make sense here -- will be bound to true");
-                
-                const resenv = this.checkExpression(env, exp.condflow[i].value, desiredtype);
-                results.push({ test: tenv, value: resenv, binderinfo: undefined });
-            }
-            else {
-                const eenv = this.checkExpression(env, exp.condflow[i].cond.exp, undefined);
-                const eenvflowtype = testflowtypes.get(eenv.expressionResult.expstr) || eenv.trepr;
-
-                if(elsebind === null) {
-                    elsebind = null;
-                }
-                else if(elsebind === undefined) {
-                    elsebind = [eenv.expressionResult, eenv.trepr];
-                }
-                else {
-                    elsebind = (elsebind[0].expstr === eenv.expressionResult.expstr) ? elsebind : null;
-                }
-
-                if(exp.condflow[i].binderinfo === undefined) {
-                    const resenv = this.checkExpression(env, exp.condflow[i].value, desiredtype);
-                    const testinfo = this.processITestAsTestOp(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, exp.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
-
-                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
-
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: undefined });
-                }
-                else {
-                    const scratchidx = this.m_scratchCtr++;
-                    const testinfo = this.processITestAsTestOp(exp.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
-                    this.raiseErrorIf(exp.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
-
-                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
-
-                    const asinfo = this.processITestAsConvertOp(exp.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(exp.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), exp.condflow[i].cond.itestopt as ITest, eenv.binds, true);
-                    const bindtype = asinfo.trueflow as ResolvedType;
-
-                    const flowenv = eenv.pushBinderFrame(exp.condflow[i].binderinfo as string, bindtype);
-                    const resenv = this.checkExpression(flowenv, exp.condflow[i].value, desiredtype);
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), value: resenv, binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp as TIRExpression, exp.condflow[i].binderinfo as string]});
-                }
-            }
-        }
-
-        if(exp.elseflow.binderinfo === undefined) {
-            const resenv = this.checkExpression(env, exp.elseflow.value, desiredtype);
-            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: undefined});
-        }
-        else {
-            this.raiseErrorIf(exp.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
-
-            const scratchidx = this.m_scratchCtr++;
-            const [elseexpr, elsetype] = elsebind as [TIRExpression, ResolvedType];
-            const bindtype = testflowtypes.get(elseexpr.expstr) as ResolvedType;
-            const bindexp = this.emitCoerceIfNeeded_NoCheck(env.setResultExpressionInfo(new TIRAccessScratchSingleValueExpression(exp.elseflow.value.sinfo, this.toTIRTypeKey(elsetype), scratchidx), elsetype), exp.elseflow.value.sinfo, bindtype).expressionResult;
-            
-            const flowenv = env.pushBinderFrame(exp.elseflow.binderinfo as string, bindtype);
-            const resenv = this.checkExpression(flowenv, exp.elseflow.value, desiredtype);
-
-            results.push({ test: env.setResultExpressionInfo(new TIRLiteralBoolExpression(exp.elseflow.value.sinfo, true), this.getSpecialBoolType()), value: resenv, binderinfo: [elseexpr as TIRExpression, scratchidx, bindexp, exp.elseflow.binderinfo as string]});
-        }
-        const iftype = this.normalizeUnionList([...(desiredtype !== undefined ? [desiredtype] : []), ...results.map((eev) => eev.value.trepr)]);
-        
-        const ifcl = {test: results[0].test.expressionResult, value: this.emitCoerceIfNeeded(results[0].value, results[0].value.expressionResult.sinfo, iftype).expressionResult, binderinfo: results[0].binderinfo};
-
-        const elifcl = results.slice(1, results.length - 1).map((rr) => {
-            return {test: rr.test.expressionResult, value: this.emitCoerceIfNeeded(rr.value, rr.value.expressionResult.sinfo, iftype).expressionResult, binderinfo: rr.binderinfo};
-        });
-        
-        const elsecl = {value: this.emitCoerceIfNeeded(results[results.length - 1].value, results[results.length - 1].value.expressionResult.sinfo, iftype).expressionResult, binderinfo: results[results.length - 1].binderinfo};
-
-        const rexp = new TIRIfExpression(exp.sinfo, this.toTIRTypeKey(iftype), ifcl, elifcl, elsecl);
-        return env.setResultExpressionInfo(rexp, iftype);
-    }
-
     private checkTaskSelfAction(env: ExpressionTypeEnvironment, exp: TaskSelfActionExpression, refop: boolean): ExpressionTypeEnvironment {
         this.raiseErrorIf(exp.sinfo, !this.m_taskOpsOk || this.m_taskSelfOk !== "write", "This code does not permit task operations (not a task method/action)");
         const tsk = this.m_taskType as {taskdecl: TaskTypeDecl, taskbinds: Map<string, ResolvedType>};
@@ -2648,7 +2575,7 @@ class TypeChecker {
         
         //TODO: do we need to update any other type env info here based on RHS actions???
 
-        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${stmt.vtype.emit(true)}`);
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression cannot be assigned to variable of type ${stmt.vtype.emit(true)}`);
         return env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true); //try to recover a bit
     }
 
@@ -2687,7 +2614,7 @@ class TypeChecker {
             const itype = iopts[i];
             const etype = evals[i];
 
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${etype.emit(true)}`);
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
             env = env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
         }
 
@@ -2703,8 +2630,8 @@ class TypeChecker {
 
         this.checkError(stmt.sinfo, !vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
 
-        const rhs = this.checkExpressionRHS(env, stmt.exp, vinfo.declaredType);
-        this.checkError(stmt.sinfo, !this.relations.isSubtypeOf(rhs, vinfo.declaredType, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable of type ${vinfo.declaredType.emit(true)}`);
+        const rhs = this.checkExpressionRHS(env, stmt.exp, vinfo.flowType);
+        this.checkError(stmt.sinfo, !this.relations.isSubtypeOf(rhs, vinfo.flowType, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable of type ${vinfo.flowType.emit(true)}`);
 
         return env.assignLocalVariable(stmt.name);
     }
@@ -2722,7 +2649,7 @@ class TypeChecker {
 
         let evals: TypeSignature[] = [];
         if(!Array.isArray(stmt.exp)) {
-            const iinfer = opts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, opts.map((opt) => (opt as VarInfo).declaredType));    
+            const iinfer = opts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, opts.map((opt) => (opt as VarInfo).flowType));    
             const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
             if(etype instanceof EListTypeSignature) {
                 evals.push(...etype.entries);
@@ -2733,7 +2660,7 @@ class TypeChecker {
         }
         else {
             for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpressionRHS(env, stmt.exp[i], (i < opts.length && opts[i] !== undefined) ? (opts[i] as VarInfo).declaredType : undefined);
+                const etype = this.checkExpressionRHS(env, stmt.exp[i], (i < opts.length && opts[i] !== undefined) ? (opts[i] as VarInfo).flowType : undefined);
                 evals.push(etype);
             }
         }
@@ -2745,10 +2672,10 @@ class TypeChecker {
 
         for(let i = 0; i < stmt.names.length; ++i) {
             const name = stmt.names[i];
-            const itype = opts[i] !== undefined ? (opts[i] as VarInfo).declaredType : undefined;
+            const itype = opts[i] !== undefined ? (opts[i] as VarInfo).flowType : undefined;
             const etype = evals[i];
 
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${(itype as TypeSignature).emit(true)} cannot be assigned to variable of type ${etype.emit(true)}`);
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
             env = env.assignLocalVariable(name);
         }
 
@@ -2762,10 +2689,10 @@ class TypeChecker {
             return env;
         }
 
-        const splits = this.processITest(stmt.sinfo, env, vinfo.declaredType, stmt.ttest);
+        const splits = this.processITest(stmt.sinfo, env, vinfo.flowType, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
 
-        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.declaredType);
+        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.flowType);
     }
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
@@ -2776,23 +2703,236 @@ class TypeChecker {
             const rtype = this.checkExpression(env, stmt.value, env.returnType);
             this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.returnType, this.constraints), `Expected a return value of type ${env.returnType.emit(false)} but got ${rtype.emit(false)}`);
         }
-        else {  
-            xxxx;
+        else {
+            const crtype = this.relations.tryResolveSingleCanonicalType(env.returnType, this.constraints);
+            if(this.checkError(stmt.sinfo, crtype === undefined || !(crtype instanceof EListTypeSignature), `Multiple return requires an Elist type but got ${env.returnType.emit(false)}`)) {
+                return env.setReturnFlow();
+            }
+
+            const rtypes = (crtype as EListTypeSignature).entries;
+            this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
+
+            for(let i = 0; i < stmt.value.length; ++i) {
+                const rtype = i < rtypes.length ? rtypes[i] : undefined;
+                const etype = this.checkExpression(env, stmt.value[i], rtype);
+
+                const rtname = rtype !== undefined ? rtype.emit(false) : "skip";
+                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit(false)}`);
+            }
+
+            return env.setReturnFlow();
         }
 
         return env.setReturnFlow();
     }
 
-    private checkIfElseStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
-        xxxx;
+    private checkIfStatement(env: TypeEnvironment, stmt: IfStatement): TypeEnvironment {
+        let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
+        
+        let ttrue: TypeEnvironment;
+        if(stmt.cond.itestopt === undefined) {
+            if(eetype instanceof ErrorTypeSignature) {
+                eetype = this.getWellKnownType("Bool");
+            }
+
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+
+            ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+        }
+        else {
+            const splits = this.processITest(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+            if(stmt.trueBinder === undefined) {
+                ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+            }
+            else {
+                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue as TypeSignature);
+                ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
+            }
+        }
+        
+        return TypeEnvironment.mergeEnvironments(ttrue, env);
+    }
+
+    private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
+        let eetype = this.checkExpression(env, stmt.cond.exp, undefined);
+
+        let ttrue: TypeEnvironment;
+        let tfalse: TypeEnvironment;
+        if(stmt.cond.itestopt === undefined) {
+            if(eetype instanceof ErrorTypeSignature) {
+                eetype = this.getWellKnownType("Bool");
+            }
+
+            this.checkError(stmt.sinfo, !this.relations.isBooleanType(eetype, this.constraints), "If test requires a Bool type");
+            this.checkError(stmt.sinfo, stmt.trueBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+            this.checkError(stmt.sinfo, stmt.falseBinder !== undefined, "Binder is not valid here -- requires use of an ITest");
+
+            ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+            tfalse = this.checkBlockStatement(env, stmt.falseBlock);
+        }
+        else {
+            const splits = this.processITest(stmt.sinfo, env, eetype, stmt.cond.itestopt);
+            this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+            this.checkError(stmt.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+            if(stmt.trueBinder === undefined) {
+                ttrue = this.checkBlockStatement(env, stmt.trueBlock);
+            }
+            else {
+                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue as TypeSignature);
+                ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
+            }
+
+            if(stmt.falseBinder === undefined) {
+                tfalse = this.checkBlockStatement(env, stmt.falseBlock);
+            }
+            else {
+                const nenv = env.pushNewLocalBinderScope(stmt.falseBinder.scopename, splits.tfalse as TypeSignature);
+                tfalse = this.checkStatement(nenv, stmt.falseBlock).popLocalScope();
+            }
+        }
+        
+        return TypeEnvironment.mergeEnvironments(ttrue, env);
+    }
+
+    private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
+        let branchflows: TypeEnvironment[] = [];
+
+        for(let i = 0; i < stmt.condflow.length; ++i) {
+            let etype = this.checkExpression(env, stmt.condflow[i].cond.exp, undefined);
+
+            if(stmt.condflow[i].cond.itestopt === undefined) {
+                if(etype instanceof ErrorTypeSignature) {
+                    etype = this.getWellKnownType("Bool");
+                }
+
+                this.checkError(stmt.condflow[i].cond.exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean expression but got ${etype.emit(false)}`);
+            
+                const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
+                branchflows.push(resenv);
+            }
+            else {
+                const splits = this.processITest(stmt.condflow[i].cond.exp.sinfo, env, etype, stmt.condflow[i].cond.itestopt as ITest);
+                this.checkError(stmt.condflow[i].cond.exp.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+                this.checkError(stmt.condflow[i].cond.exp.sinfo, splits.tfalse === undefined, "Test is never false -- false branch of if is unreachable");
+
+                const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
+                branchflows.push(resenv);
+            }
+        }
+
+        const elseflow = this.checkBlockStatement(env, stmt.elseflow);
+
+        return TypeEnvironment.mergeEnvironments(...branchflows, elseflow);
     }
 
     private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {
-        xxxx;
+        let ctype = this.checkExpression(env, stmt.sval[0], undefined);
+        
+        let exhaustive = false;
+        let results: TypeEnvironment[] = [];
+
+        this.checkError(stmt.sinfo, stmt.switchflow.length < 2, "Switch statement must have 2 or more choices");
+
+        for (let i = 0; i < stmt.switchflow.length && !exhaustive; ++i) {
+            //it is a wildcard match
+            if(stmt.switchflow[i].lval === undefined) {
+                this.checkError(stmt.sinfo, i !== stmt.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
+                exhaustive = true;
+
+                let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, ctype) : env;
+                cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+
+                if(stmt.switchflow[i].bindername !== undefined) {
+                    cenv = cenv.popLocalScope();
+                }
+                results.push(cenv);
+            }
+            else {
+                const ltype = this.checkExpression(env, (stmt.switchflow[i].lval as LiteralExpressionValue).exp, undefined);
+
+                if(ltype instanceof ErrorTypeSignature) {
+                    let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, ctype) : env;
+                    cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+
+                    if(stmt.switchflow[i].bindername !== undefined) {
+                        cenv = cenv.popLocalScope();
+                    }
+                    results.push(cenv);
+                }
+                else {
+                    const splits = this.processITest_Literal(env, ctype, ltype, false);
+                    this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+
+                    exhaustive = splits.tfalse === undefined;
+                    this.checkError(stmt.sinfo, splits.tfalse === undefined && i !== stmt.switchflow.length - 1, `Test is never false -- but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
+
+                    let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, splits.ttrue || ctype) : env;
+                    cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
+
+                    if(stmt.switchflow[i].bindername !== undefined) {
+                        cenv = cenv.popLocalScope();
+                    }
+
+                    ctype = splits.tfalse || ctype;
+                    results.push(cenv);
+                }
+            }
+        }
+        
+        this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
+        return TypeEnvironment.mergeEnvironments(...results);
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
-        xxxx;
+        let ctype = this.checkExpression(env, stmt.sval[0], undefined);
+        
+        let exhaustive = false;
+        let results: TypeEnvironment[] = [];
+
+        this.checkError(stmt.sinfo, stmt.matchflow.length < 2, "Switch statement must have 2 or more choices");
+
+        for (let i = 0; i < stmt.matchflow.length && !exhaustive; ++i) {
+            //it is a wildcard match
+            if(stmt.matchflow[i].mtype === undefined) {
+                this.checkError(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+                exhaustive = true;
+
+                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, ctype) : env;
+                cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+
+                if(stmt.matchflow[i].bindername !== undefined) {
+                    cenv = cenv.popLocalScope();
+                }
+                results.push(cenv);
+            }
+            else {
+                this.checkTypeSignature(env, stmt.matchflow[i].mtype as TypeSignature);
+
+                const splits = this.processITest_Type(ctype, stmt.matchflow[i].mtype as TypeSignature, false);
+                this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
+
+                exhaustive = splits.tfalse === undefined;
+                this.checkError(stmt.sinfo, splits.tfalse === undefined && i !== stmt.matchflow.length - 1, `Test is never false -- but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
+
+                let cenv = (stmt.matchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.matchflow[i].bindername as string, splits.ttrue || ctype) : env;
+                cenv = this.checkBlockStatement(env, stmt.matchflow[i].value);
+
+                if(stmt.matchflow[i].bindername !== undefined) {
+                    cenv = cenv.popLocalScope();
+                }
+
+                ctype = splits.tfalse || ctype;
+                results.push(cenv);
+            }
+        }
+        
+        this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
+        return TypeEnvironment.mergeEnvironments(...results);
     }
 
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
@@ -2858,251 +2998,16 @@ class TypeChecker {
     }
 
     private checkBlockStatement(env: TypeEnvironment, stmt: BlockStatement): TypeEnvironment {
+        env = env.pushNewLocalScope();
         for (let i = 0; i < stmt.statements.length; ++i) {
             env = this.checkStatement(env, stmt.statements[i]);
         }
+        env = env.popLocalScope();
 
         return env;
     }
 
     /*
-    private checkIfStatement(env: StatementTypeEnvironment, stmt: IfStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        let results: {test: ExpressionTypeEnvironment, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, number, TIRExpression, string] | undefined}[] = [];
-
-        let testflowtypes = new Map<string, ResolvedType>();
-        let elsebind: [TIRExpression, ResolvedType] | undefined | null = undefined;
-
-        for (let i = 0; i < stmt.condflow.length; ++i) {
-            if(stmt.condflow[i].cond.itestopt === undefined) {
-                const tenv = this.emitCoerceIfNeeded(this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.condflow[i].cond.exp, this.getSpecialBoolType()), stmt.condflow[i].cond.exp.sinfo, this.getSpecialBoolType());
-                elsebind = null;
-
-                this.raiseErrorIf(stmt.condflow[i].value.sinfo, stmt.condflow[i].binderinfo !== undefined, "Binder doesn't make sense here -- will be bound to true");
-                
-                const [resenv, blck] = this.checkScopedBlockStatement(env, stmt.condflow[i].value);
-                results.push({ test: tenv, blck: blck, fenv: resenv, binderinfo: undefined });
-            }
-            else {
-                const eenv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.condflow[i].cond.exp, undefined);
-                const eenvflowtype = testflowtypes.get(eenv.expressionResult.expstr) || eenv.trepr;
-
-                if(elsebind === null) {
-                    elsebind = null;
-                }
-                else if(elsebind === undefined) {
-                    elsebind = [eenv.expressionResult, eenv.trepr];
-                }
-                else {
-                    elsebind = (elsebind[0].expstr === eenv.expressionResult.expstr) ? elsebind : null;
-                }
-
-                if(stmt.condflow[i].binderinfo === undefined) {
-                    const testinfo = this.processITestAsTestOp(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, eenv.expressionResult, stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);  
-
-                    const [resenv, resblck] = this.checkScopedBlockStatement(env, stmt.condflow[i].value);
-                    
-                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv, binderinfo: undefined });
-                }
-                else {
-                    const scratchidx = this.m_scratchCtr++;
-                    const testinfo = this.processITestAsTestOp(stmt.condflow[i].cond.exp.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds);
-                    const asinfo = this.processITestAsConvertOp(stmt.condflow[i].value.sinfo, eenv.trepr, eenvflowtype, new TIRAccessScratchSingleValueExpression(stmt.condflow[i].cond.exp.sinfo, this.toTIRTypeKey(eenv.trepr), scratchidx), stmt.condflow[i].cond.itestopt as ITest, eenv.binds, true);
-                    const bindtype = asinfo.trueflow as ResolvedType;
-
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, testinfo.falseflow === undefined, `test always evaluates to true`);
-                    this.raiseErrorIf(stmt.condflow[i].cond.exp.sinfo, !testinfo.hastrueflow, `test always evaluates to false`);
-
-                    const flowenv = env.pushLocalScope().addVar(stmt.condflow[i].binderinfo as string, true, bindtype, true);
-                    const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.condflow[i].value);
-
-                    testflowtypes.set(eenv.expressionResult.expstr, testinfo.falseflow as ResolvedType);
-                    results.push({ test: eenv.setResultExpressionInfo(testinfo.testexp, this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [eenv.expressionResult, scratchidx, asinfo.asexp as TIRExpression, stmt.condflow[i].binderinfo as string]});
-                }
-            }
-        }
-
-        if (stmt.elseflow === undefined) {
-            results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: new TIRScopedBlockStatement([], false), fenv: env, binderinfo: undefined});
-        }
-        else {
-            if (stmt.elseflow.binderinfo === undefined) {
-                const [resenv, resblck] = this.checkScopedBlockStatement(env, stmt.elseflow.value);
-                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv, binderinfo: undefined });
-            }
-            else {
-                this.raiseErrorIf(stmt.elseflow.value.sinfo, elsebind === undefined || elsebind === null, "cannot use binder in else unless all previous clauses test same expression and use ITests");
-
-                const scratchidx = this.m_scratchCtr++;
-                const [elseexpr, elsetype] = elsebind as [TIRExpression, ResolvedType];
-                const bindtype = testflowtypes.get(elseexpr.expstr) as ResolvedType;
-
-                const flowenv = env.pushLocalScope().addVar(stmt.elseflow.binderinfo as string, true, bindtype, true);
-                const [resenv, resblck] = this.checkScopedBlockStatement(flowenv, stmt.elseflow.value);
-
-                const bindexp = this.emitCoerceIfNeeded_NoCheck(env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRAccessScratchSingleValueExpression(stmt.elseflow.value.sinfo, this.toTIRTypeKey(elsetype), scratchidx), elsetype), stmt.elseflow.value.sinfo, bindtype).expressionResult;
-                results.push({ test: env.createInitialEnvForExpressionEval().setResultExpressionInfo(new TIRLiteralBoolExpression(stmt.sinfo, true), this.getSpecialBoolType()), blck: resblck, fenv: resenv.popLocalScope(), binderinfo: [elseexpr as TIRExpression, scratchidx, bindexp, stmt.elseflow.binderinfo as string] });
-            }
-        }
-        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
-
-        const ifcl = {test: results[0].test.expressionResult, value: results[0].blck, binderinfo: results[0].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[0].fenv, mvinfo)};
-
-        const elifcl = results.slice(1, results.length - 1).map((rr) => {
-            return {test: rr.test.expressionResult, value: rr.blck, binderinfo: rr.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, rr.fenv, mvinfo)};
-        });
-        
-        const elsecl = {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)};
-
-        const rexp = new TIRIfStatement(stmt.sinfo, ifcl, elifcl, elsecl);
-        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
-        if(rflows.length === 0) {
-            return [env.endOfExecution(), [rexp]];
-        }
-        else {
-            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
-            return [jenv, [rexp]];
-        }
-    }
-
-    private checkSwitchStatement(env: StatementTypeEnvironment, stmt: SwitchStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const venv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined);
-        
-        const scratchidx = this.m_scratchCtr++;
-        let ctype: ResolvedType = venv.trepr;
-        let exhaustive = false;
-        let results: {test: TIRExpression | undefined, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
-
-        for (let i = 0; i < stmt.switchflow.length; ++i) {
-            //it is a wildcard match
-            if(stmt.switchflow[i].condlit === undefined) {
-                this.raiseErrorIf(stmt.sinfo, i !== stmt.switchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.switchflow.length - (i + 1)} more that are unreachable`);
-
-                let senv = env;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (stmt.switchflow[i].binderinfo !== undefined) {
-                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(stmt.switchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, stmt.switchflow[i].value.sinfo, ctype), stmt.switchflow[i].binderinfo as string];
-                    senv = senv.pushLocalScope().addVar(stmt.switchflow[i].binderinfo as string, true, ctype, true);
-                }
-                const trueenv = this.checkScopedBlockStatement(senv, stmt.switchflow[i].value);
-
-                results.push({test: undefined, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
-
-                exhaustive = true;
-                break;
-            }
-            else {
-                const condsinfo = (stmt.switchflow[i].condlit as LiteralExpressionValue).exp.sinfo;
-
-                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, stmt.switchflow[i].condlit as LiteralExpressionValue), venv.binds);
-                this.raiseErrorIf(condsinfo, !test.hastrueflow, "test is always false");
-                this.raiseErrorIf(condsinfo, i !== stmt.switchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
-                
-                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestLiteral(false, stmt.switchflow[i].condlit as LiteralExpressionValue), venv.binds, true);
-                ctype = test.falseflow as ResolvedType;
-
-                let senv = env;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (stmt.switchflow[i].binderinfo !== undefined) {
-                    binderinfo = [conv.asexp as TIRExpression, stmt.switchflow[i].binderinfo as string];
-                    senv = senv.pushLocalScope().addVar(stmt.switchflow[i].binderinfo as string, true, conv.trueflow as ResolvedType, true);
-                }
-                const trueenv = this.checkScopedBlockStatement(senv, stmt.switchflow[i].value);
-                
-                results.push({test: test.testexp, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
-            }
-        }
-        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
-
-        const clauses = results
-            .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => {
-                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, ffp.fenv, mvinfo)};
-            });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)} : undefined;
-
-        const rexp = new TIRSwitchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
-
-        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
-        if(rflows.length === 0) {
-            return [env.endOfExecution(), [rexp]];
-        }
-        else {
-            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
-            return [jenv, [rexp]];
-        }
-    }
-
-    private checkMatchStatement(env: StatementTypeEnvironment, stmt: MatchStatement): [StatementTypeEnvironment, TIRStatement[]] {
-        const venv = this.checkExpression(env.createInitialEnvForExpressionEval(), stmt.sval, undefined);
-        
-        const scratchidx = this.m_scratchCtr++;
-        let ctype: ResolvedType = venv.trepr;
-        let exhaustive = false;
-        let results: {test: TIRExpression | undefined, blck: TIRScopedBlockStatement, fenv: StatementTypeEnvironment, binderinfo: [TIRExpression, string] | undefined}[] = [];
-
-        for (let i = 0; i < stmt.matchflow.length; ++i) {
-            //it is a wildcard match
-            if(stmt.matchflow[i].mtype === undefined) {
-                this.raiseErrorIf(stmt.sinfo, i !== stmt.matchflow.length - 1, `wildcard should be last option in switch expression but there were ${stmt.matchflow.length - (i + 1)} more that are unreachable`);
-
-                let senv = env;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (stmt.matchflow[i].binderinfo !== undefined) {
-                    binderinfo = [this.generateCoerceExpForITestConv(new TIRAccessScratchSingleValueExpression(stmt.matchflow[i].value.sinfo, this.toTIRTypeKey(venv.trepr), scratchidx), venv.trepr, stmt.matchflow[i].value.sinfo, ctype), stmt.matchflow[i].binderinfo as string];
-                    senv = senv.pushLocalScope().addVar(stmt.matchflow[i].binderinfo as string, true, ctype, true);
-                }
-                const trueenv = this.checkScopedBlockStatement(senv, stmt.matchflow[i].value);
-
-                results.push({test: undefined, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
-
-                exhaustive = true;
-                break;
-            }
-            else {
-                const condsinfo = (stmt.matchflow[i].mtype as TypeSignature).sinfo;
-
-                const test = this.processITestAsTestOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, stmt.matchflow[i].mtype as TypeSignature), venv.binds);
-                this.raiseErrorIf(condsinfo, !test.hastrueflow, "test is always false");
-                this.raiseErrorIf(condsinfo, i !== stmt.matchflow.length - 1 && test.falseflow === undefined, "test is always true (and cases below will never be reached)");
-                
-                const conv = this.processITestAsConvertOp(condsinfo, venv.trepr, ctype, new TIRAccessScratchSingleValueExpression(condsinfo, this.toTIRTypeKey(venv.trepr), scratchidx), new ITestType(false, stmt.matchflow[i].mtype as TypeSignature), venv.binds, true);
-                ctype = test.falseflow as ResolvedType;
-
-                let senv = env;
-                let binderinfo: [TIRExpression, string] | undefined = undefined;
-                if (stmt.matchflow[i].binderinfo !== undefined) {
-                    binderinfo = [conv.asexp as TIRExpression, stmt.matchflow[i].binderinfo as string];
-                    senv = senv.pushLocalScope().addVar(stmt.matchflow[i].binderinfo as string, true, conv.trueflow as ResolvedType, true);
-                }
-                const trueenv = this.checkScopedBlockStatement(senv, stmt.matchflow[i].value);
-                
-                results.push({test: test.testexp, blck: trueenv[1], fenv: binderinfo !== undefined ? trueenv[0].popLocalScope() : trueenv[0], binderinfo: binderinfo});
-            }
-        }
-        const mvinfo = this.mergeVarTypeMaps(results.filter((rr) => !rr.blck.isterminal).map((rr) => rr.fenv));
-
-        const clauses = results
-            .filter((ffp) => ffp.test !== undefined)
-            .map((ffp) => {
-                return {match: ffp.test as TIRExpression, value: ffp.blck, binderinfo: ffp.binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, ffp.fenv, mvinfo)};
-            });
-        const edefault = results.find((ffp) => ffp.test === undefined) ? {value: results[results.length - 1].blck, binderinfo: results[results.length - 1].binderinfo, recasttypes: this.emitVarRetypeAtFlowJoin(stmt.sinfo, results[results.length - 1].fenv, mvinfo)} : undefined;
-
-        const rexp = new TIRMatchStatement(stmt.sinfo, venv.expressionResult, scratchidx, clauses, edefault, exhaustive || ctype === undefined);
-        
-        const rflows = [...results.map((ff) => ff.fenv)].filter((es) => !es.isDeadFlow);
-        if(rflows.length === 0) {
-            return [env.endOfExecution(), [rexp]];
-        }
-        else {
-            const jenv = env.updateFlowAtJoin(mvinfo, rflows);
-            return [jenv, [rexp]];
-        }
-    }
-
     private checkEnvironmentFreshStatement(env: StatementTypeEnvironment, stmt: EnvironmentFreshStatement): [StatementTypeEnvironment, TIRStatement[]] {
         const assigns = stmt.assigns.map((asgn) => {
             this.raiseErrorIf(stmt.sinfo, asgn.valexp === undefined, "cannot clear key in fresh environment creation");
@@ -3339,8 +3244,14 @@ class TypeChecker {
             case StatementTag.ReturnStatement: {
                 return this.checkReturnStatement(env, stmt as ReturnStatement);
             }
+            case StatementTag.IfStatement: {
+                return this.checkIfStatement(env, stmt as IfStatement);
+            }
             case StatementTag.IfElseStatement: {
-                return this.checkIfElseStatement(env, stmt as IfStatement);
+                return this.checkIfElseStatement(env, stmt as IfElseStatement);
+            }
+            case StatementTag.IfElifElseStatement: {
+                return this.checkIfElifElseStatement(env, stmt as IfElifElseStatement);
             }
             case StatementTag.SwitchStatement: {
                 return this.checkSwitchStatement(env, stmt as SwitchStatement);

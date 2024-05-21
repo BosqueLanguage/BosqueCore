@@ -636,6 +636,8 @@ class AccessVariableExpression extends Expression {
     readonly scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly isCaptured: boolean;
 
+    layoutType: TypeSignature | undefined = undefined;
+
     constructor(sinfo: SourceInfo, srcname: string, scopename: string, isCaptured: boolean) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;
@@ -1701,7 +1703,9 @@ enum StatementTag {
     VariableRetypeStatement = "VariableRetypeStatement",
     ReturnStatement = "ReturnStatement",
 
+    IfStatement = "IfStatement",
     IfElseStatement = "IfElseStatement",
+    IfElifElseStatement = "IfElifElseStatement",
     SwitchStatement = "SwitchStatement",
     MatchStatement = "MatchStatement",
 
@@ -1899,25 +1903,62 @@ class ReturnStatement extends Statement {
 }
 
 class IfStatement extends Statement {
-    readonly condflow: {cond: IfTest, value: BlockStatement, binderinfo: BinderInfo | undefined}[];
-    readonly elseflow: {value: BlockStatement, binderinfo: BinderInfo | undefined} | undefined;
+    readonly cond: IfTest;
+    readonly trueBlock: BlockStatement;
+    readonly trueBinder: BinderInfo | undefined;
+    
+    constructor(sinfo: SourceInfo, cond: IfTest, trueBlock: BlockStatement, trueBinder: BinderInfo | undefined) {
+        super(StatementTag.IfStatement, sinfo);
+        this.cond = cond;
+        this.trueBlock = trueBlock;
+        this.trueBinder = trueBinder;
+    }
 
-    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, value: BlockStatement, binderinfo: BinderInfo | undefined}[], elseflow: {value: BlockStatement, binderinfo: BinderInfo | undefined} | undefined) {
+    emit(fmt: CodeFormatter): string {
+        return `if ${this.trueBinder !== undefined ? this.trueBinder.emit() : ""}${this.cond.itestopt !== undefined ? this.cond.itestopt.emit(fmt) : ""}(${this.cond.exp.emit(true, fmt)}) ${this.trueBlock.emit(fmt)}`;
+    }
+}
+
+class IfElseStatement extends Statement {
+    readonly cond: IfTest;
+    readonly trueBlock: BlockStatement;
+    readonly trueBinder: BinderInfo | undefined;
+    readonly falseBlock: BlockStatement;
+    readonly falseBinder: BinderInfo | undefined;
+
+    constructor(sinfo: SourceInfo, cond: IfTest, trueBlock: BlockStatement, trueBinder: BinderInfo | undefined, falseBlock: BlockStatement, falseBinder: BinderInfo | undefined) {
         super(StatementTag.IfElseStatement, sinfo);
+        this.cond = cond;
+        this.trueBlock = trueBlock;
+        this.trueBinder = trueBinder;
+        this.falseBlock = falseBlock;
+        this.falseBinder = falseBinder;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const ttif = `${this.trueBinder !== undefined ? this.trueBinder.emit() : ""}${this.cond.itestopt !== undefined ? this.cond.itestopt.emit(fmt) : ""}(${this.cond.exp.emit(true, fmt)}) ${this.trueBlock.emit(fmt)}`;
+        const ttelse = this.falseBlock.emit(fmt);
+
+        return [`if ${ttif}`, `else ${ttelse}`].join("\n");
+    }
+}
+
+class IfElifElseStatement extends Statement {
+    readonly condflow: {cond: IfTest, block: BlockStatement}[];
+    readonly elseflow: BlockStatement;
+
+    constructor(sinfo: SourceInfo, condflow: {cond: IfTest, block: BlockStatement}[], elseflow: BlockStatement) {
+        super(StatementTag.IfElifElseStatement, sinfo);
         this.condflow = condflow;
         this.elseflow = elseflow;
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttcond = this.condflow.map((cf) => `${cf.binderinfo !== undefined ? cf.binderinfo.emit() : ""}${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.value.emit(fmt)}`);
-        const ttelse = this.elseflow !== undefined ? this.elseflow.value.emit(fmt) : undefined;
+        const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
+        const ttelse = this.elseflow.emit(fmt);
 
         const iif = `if ${ttcond[0]}`;
-        const ielifs = ttcond.slice(1).map((cc) => fmt.indent(`elif ${cc}`));
-
-        if(ttelse !== undefined) {
-            ielifs.push(fmt.indent(`else ${ttelse}`));
-        }
+        const ielifs = [...ttcond.slice(1).map((cc) => fmt.indent(`elif ${cc}`)), fmt.indent(`else ${ttelse}`)];
 
         return [iif, ...ielifs].join("\n");
     }
@@ -2337,7 +2378,7 @@ export {
     VariableDeclarationStatement, VariableMultiDeclarationStatement, VariableInitializationStatement, VariableMultiInitializationStatement, VariableAssignmentStatement, VariableMultiAssignmentStatement,
     VariableRetypeStatement,
     ReturnStatement,
-    IfStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
+    IfStatement, IfElseStatement, IfElifElseStatement, SwitchStatement, MatchStatement, AbortStatement, AssertStatement, ValidateStatement, DebugStatement,
     StandaloneExpressionStatement, ThisUpdateStatement, SelfUpdateStatement,
     EnvironmentUpdateStatement, EnvironmentBracketStatement,
     TaskStatusStatement, TaskEventEmitStatement,

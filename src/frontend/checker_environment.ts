@@ -3,17 +3,24 @@ import {strict as assert} from "assert";
 import { TypeSignature } from "./type";
 
 class VarInfo {
-    readonly name: string;
-    readonly declaredType: TypeSignature;
+    readonly srcname: string;
+    readonly layoutType: TypeSignature;
+    readonly flowType: TypeSignature;
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
 
-    constructor(dtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
-        this.declaredType = dtype;
+    constructor(srcname: string, ltype: TypeSignature, ftype: TypeSignature, isConst: boolean, mustDefined: boolean) {
+        this.srcname = srcname;
+        this.layoutType = ltype;
+        this.flowType = ftype;
 
         this.isConst = isConst;
         this.mustDefined = mustDefined;
+    }
+
+    updateFlowType(ttype: TypeSignature): VarInfo {
+        return new VarInfo(this.srcname, this.layoutType, ttype, this.isConst, this.mustDefined);
     }
 }
 
@@ -71,6 +78,22 @@ class TypeEnvironment {
     }
 
     setReturnFlow(): TypeEnvironment {
+        xxxx;
+    }
+
+    pushNewLocalScope(): TypeEnvironment {
+        xxxx;
+    }
+
+    pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
+        xxxx;
+    }
+
+    popLocalScope(): TypeEnvironment {
+        xxxx;
+    }
+
+    static mergeEnvironments(...envs: TypeEnvironment[]): TypeEnvironment {
         xxxx;
     }
 }
