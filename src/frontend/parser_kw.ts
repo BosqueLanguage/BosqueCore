@@ -58,7 +58,6 @@ const KW_entity = "entity";
 const KW_ensures = "ensures";
 const KW_field = "field";
 const KW_function = "function";
-const KW_import = "import";
 const KW_invariant = "invariant";
 const KW_method = "method";
 const KW_namespace = "namespace";
@@ -358,7 +357,6 @@ export {
     KW_function,
     KW_if,
     KW_implements,
-    KW_import,
     KW_in,
     KW_invariant,
     KW_let,

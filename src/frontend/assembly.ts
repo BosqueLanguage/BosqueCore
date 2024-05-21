@@ -1379,15 +1379,20 @@ class NamespaceTypedef extends AbstractCoreDecl {
 
 class NamespaceUsing {
     readonly fromns: FullyQualifiedNamespace;
-    readonly asns: string;
+    readonly asns: string | undefined;
 
-    constructor(fromns: FullyQualifiedNamespace, asns: string) {
+    constructor(fromns: FullyQualifiedNamespace, asns: string | undefined) {
         this.fromns = fromns;
         this.asns = asns;
     }
 
     emit(): string {
-        return `using ${this.fromns.emit()} as ${this.asns};`;
+        if(this.asns === undefined) {
+            return `using ${this.fromns.emit()};`;
+        }
+        else {
+            return `using ${this.fromns.emit()} as ${this.asns};`;
+        }
     }
 }
 

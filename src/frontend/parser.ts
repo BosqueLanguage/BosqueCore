@@ -4,9 +4,9 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
+import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -4327,46 +4327,26 @@ class Parser {
     ////
     //Decl parsing
 
-    private parseNamespaceDep(): {fromns: string, asns: string} {
-        //import NS;
-        //import NS as NS;
+    private parseNamespaceUsing(currentDecl: NamespaceDeclaration) {
+        this.ensureAndConsumeToken(KW_using, "namespce using");
+        this.ensureToken(TokenStrings.IdentifierName, "namespce using");
 
-        this.ensureAndConsumeToken(KW_import, "namespace import");
-        this.ensureToken(TokenStrings.ScopeName, "namespace import");
-        const fromns = this.consumeTokenAndGetValue();
-
-        let nsp = {fromns: fromns, asns: fromns}; //case of import NS;
-        if(this.testToken(TokenStrings.Identifier)) {
-            const nn = this.consumeTokenAndGetValue();
-            if(nn !== "as") {
-                this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
-            }
-
-            this.ensureToken(TokenStrings.ScopeName, "namespace import");
-            const asns = this.consumeTokenAndGetValue();
-
-            nsp = {fromns: fromns, asns: asns};
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const chain = this.parseIdentifierAccessChain();
+        if(chain === undefined || chain.typeTokens.length !== 0) {
+            this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
         }
         
-        this.ensureAndConsumeToken(SYM_semicolon, "namespce import");
-
-        return nsp;
-    }
-
-    private parseNamespaceUsing(currentDecl: NamespaceDeclaration) {
-        //import NS;
-        //import NS as NS;
-
-        this.ensureAndConsumeToken(KW_import, "namespce import");
-        this.ensureToken(TokenStrings.Namespace, "namespce import");
-        const fromns = this.consumeTokenAndGetValue();
-
-        let asns = fromns; //case of import NS;
-        if(this.testToken(TokenStrings.Identifier)) {
-            const nn = this.consumeTokenAndGetValue();
-            if(nn !== "as") {
-                this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
-            }
+        if(!this.testToken(KW_as)) {
+            currentDecl.usings.push(new NamespaceUsing(xxxx, undefined));
+        }
+        else {
+            let asns = fromns; //case of import NS;
+            if(this.testToken(TokenStrings.Identifier)) {
+                const nn = this.consumeTokenAndGetValue();
+                if(nn !== "as") {
+                    this.raiseError(this.getCurrentLine(), "Expected keyword 'as'");
+                }
 
             this.ensureToken(TokenStrings.Namespace, "namespace import");
             asns = this.consumeTokenAndGetValue();
@@ -4374,23 +4354,10 @@ class Parser {
         
         this.ensureAndConsumeToken(SYM_semicolon, "namespace import");
 
-        const ffns = this.m_penv.assembly.getNamespace(fromns);
-        const names = [...ffns.declaredNames];
+        const ffns = this.env.assembly.getNamespace(fromns);
 
-        //
-        //TODO: Packaging!!!!
-        //
-        //Our versioning trick is going to be looking at the imported types and signatures (including transative dependencies). We will split up the 
-        //package dependencies into "public" and "internal" -- internal dependencies can be resolved by finding a satisfying version OR cloning. The 
-        //public dependences can be part of the exported signatures and must be resolved by finding satifying versions with other packages. 
-        //
-        //The full NS SHOULD include a part like packageVN, where N is the major version number of the root package. This will allow multiple 
-        //coexisting major versions of a package to be used in an application. 
-        //Good design practice would be put the public API type decls in one package and the API sigs + impls in thier own -- this way changing 
-        //an API sig only forces updates to that package and the types + impl can be shared with the older versions if needed.
-        //
-
-        currentDecl.usings.push(new NamespaceUsing(fromns, asns, names));
+        currentDecl.usings.push(new NamespaceUsing(fromns, asns));
+        }
     }
 
     private parseNamespaceTypedef(currentDecl: NamespaceDeclaration) {
@@ -4418,18 +4385,12 @@ class Parser {
         currentDecl.typeDefs.set((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + tyname, new NamespaceTypedef(attributes, currentDecl.ns, tyname, btype));
     }
 
-    private parseProvides(sinfo: SourceInfo, iscorens: boolean, endtoken: string[]): [TypeSignature, TypeConditionRestriction | undefined][] {
-        let provides: [TypeSignature, TypeConditionRestriction | undefined][] = [];
+    private parseProvides(sinfo: SourceInfo, iscorens: boolean, endtoken: string[]): TypeSignature[] {
+        let provides: TypeSignature[] = [];
         if (this.testAndConsumeTokenIf(KW_provides)) {
             while (!endtoken.some((tok) => this.testToken(tok))) {
                 this.consumeTokenIf(SYM_coma);
-
-                const pv = this.parseTypeSignature();
-                let res: TypeConditionRestriction | undefined = undefined;
-                if(this.testAndConsumeTokenIf(KW_when)) {
-                    res = this.parseTermRestriction(false);
-                }
-                provides.push([pv, res]);
+                provides.push(this.parseTypeSignature());
             }
         }
         
@@ -4440,7 +4401,7 @@ class Parser {
         return provides;
     }
 
-    private parseConstMember(staticMembers: StaticMemberDecl[], allMemberNames: Set<string>, attributes: string[]) {
+    private parseConstMember(constMembers: ConstMemberDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], declpass: boolean) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] const NAME: T = exp;
@@ -4464,35 +4425,7 @@ class Parser {
         staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), attributes, sname, stype, value));
     }
 
-    private parseControlMember(controlMembers: ControlFieldDecl[], allControlNames: Set<string>, attributes: string[]) {
-        this.ensureTaskOpOk();
-
-        const sinfo = this.getCurrentSrcInfo();
-
-        //[attr] control NAME: T = exp;
-        this.ensureAndConsumeToken(KW_control, "control task value");
-
-        this.ensureToken(TokenStrings.Identifier, "control task value");
-        const sname = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_colon, "control task value");
-        const stype = this.parseTypeSignature();
-
-        let dval: ConstantExpressionValue | undefined = undefined;
-        if (this.testAndConsumeTokenIf(SYM_eq)) {
-            dval = this.parseConstExpression(true);
-        }
-
-        this.ensureAndConsumeToken(SYM_semicolon, "control task value");
-
-        if (allControlNames.has(sname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between control names");
-        }
-
-        allControlNames.add(sname);
-        controlMembers.push(new ControlFieldDecl(sinfo, this.m_penv.getCurrentFile(), [...attributes], sname, stype, dval));
-    }
-
-    private parseStaticFunction(staticFunctions: StaticFunctionDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
+    private parseMemberFunction(memberFunctions: TypeFunctionDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] function NAME<T where C...>(params): type [requires...] [ensures...] { ... }
@@ -4516,7 +4449,7 @@ class Parser {
         staticFunctions.push(new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, sig));
     }
 
-    private parseMemberField(memberFields: MemberFieldDecl[], allMemberNames: Set<string>, attributes: string[]) {
+    private parseMemberField(memberFields: MemberFieldDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] field NAME: T = exp;
@@ -4536,7 +4469,7 @@ class Parser {
         memberFields.push(new MemberFieldDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, stype));
     }
 
-    private parseMemberMethod(istask: boolean, thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
+    private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], typetemplates: string[]) {
         const sinfo = this.getCurrentSrcInfo();
 
         //[attr] method ref NAME<T where C...>(params): type [requires...] [ensures...] { ... }
@@ -4556,25 +4489,6 @@ class Parser {
         allMemberNames.add(mname);
 
         memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), attributes, mname, sig));
-    }
-
-    private parseMemberAction(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: string[], typetemplates: string[]) {
-        this.ensureTaskOpOk();
-
-        const sinfo = this.getCurrentSrcInfo();
-
-        //[attr] action NAME<T where C...>(params): type { ... }
-        this.ensureAndConsumeToken("action", "task action");
-        const termRestrictions = this.parseTermRestriction(true);
-
-        this.ensureToken(TokenStrings.Identifier, "task action");
-        const mname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        const sig = this.parseInvokableCommon(InvokableKind.SelfMember, false, ["task_action", ...attributes], "no", terms, typetemplates, termRestrictions, true);
-
-        allMemberNames.add(mname);
-
-        memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), ["task_action", ...attributes], mname, sig));
     }
 
     private parseInvariantsInto(sinfo: SourceInfo, invs: InvariantDecl[], vdates: ValidateDecl[], boundtemplates: Set<string>) {
