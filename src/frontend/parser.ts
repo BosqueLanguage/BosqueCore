@@ -6,16 +6,16 @@ import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSigna
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_example, KW_false, KW_fn, KW_if, KW_let, KW_match, KW_method, KW_none, KW_nothing, KW_ok, KW_pred, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, NAMESPACE_DECL_FIRSTS, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
 type ParsePhase = number;
-const ParsePhase_RegisterNames: ParsePhase = 1;
-const ParsePhase_RegisterMembers: ParsePhase = 2;
-const ParsePhase_Full: ParsePhase = 3;
+const ParsePhase_RegisterNamespaces: ParsePhase = 1;
+const ParsePhase_RegisterTypes: ParsePhase = 2;
+const ParsePhase_CompleteParse: ParsePhase = 3;
 
-function ParsePhase_Enabled(phase: ParsePhase, current: ParsePhase): boolean {
+function isParsePhase_Enabled(phase: ParsePhase, current: ParsePhase): boolean {
     return phase === current;
 }
 
@@ -1162,12 +1162,9 @@ class Parser {
     private lexer: Lexer;
     private env: ParserEnvironment;
 
-    private currentNamespace: NamespaceDeclaration;
-
     private currentPhase: ParsePhase;
 
-    private static _s_nsre = /^\s*namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*;/
-    constructor(currentFile: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase, wellknownTypes: Map<string, NominalTypeSignature>) {
+    constructor(currentFile: string, toplevelns: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase, wellknownTypes: Map<string, NominalTypeSignature>) {
         const allToplevelNamespaces = assembly.toplevelNamespaces.map((nsd) => nsd.name);
         if(!allToplevelNamespaces.includes("Core")) {
             allToplevelNamespaces.push("Core");
@@ -1175,14 +1172,8 @@ class Parser {
 
         this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(contents.length), allToplevelNamespaces.sort(), []);
 
-        const nsmatch = contents.match(Parser._s_nsre);
-        let nns = "NSDefault";
-        if(nsmatch !== null) {
-            nns = nsmatch[0].trim().split(/\s+/)[1].slice(0, -1);
-        }
-
+        const nns = assembly.ensureToplevelNamespace(toplevelns);
         this.env = new ParserEnvironment(assembly, currentFile, nns, wellknownTypes);
-        this.currentNamespace = assembly.ensureToplevelNamespace(nns);
 
         this.currentPhase = currentPhase;
     }
@@ -1302,6 +1293,35 @@ class Parser {
             }
 
             if(tsync.includes(tok.kind) && pscount === 0) {
+                return tpos;
+            }
+
+            tpos++;
+            tok = this.lexer.peekK(tpos);
+        }
+
+        return undefined;
+    }
+
+    private scanToSyncEatParens(lp: string, rp: string): number | undefined {
+        this.ensureAndConsumeToken(lp, "sync-eat-parens");
+        
+        let pscount = 1;
+        let tpos = 1;
+
+        let tok = this.lexer.peekK(tpos);
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (tok.kind === lp) {
+                pscount++;
+            }
+            else if (tok.kind === rp) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if (pscount === 0) {
                 return tpos;
             }
 
@@ -1511,7 +1531,7 @@ class Parser {
         }
 
         const nns = currentns.subns.find((ns) => ns.name === nsroot);
-        const nnt = currentns.typeDefs.find((t) => t.name === nsroot) || currentns.typedecls.find((t) => t.name === nsroot) || currentns.tasks.find((t) => t.name === nsroot);
+        const nnt = currentns.declaredTypeNames.find((t) => t.name === nsroot);
         if(nns !== undefined && !hasterms) {
             if(leadingscoper) {
                 this.consumeToken();
@@ -1528,6 +1548,8 @@ class Parser {
     }
 
     private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+
         const nsroot = this.peekTokenData();
 
         const coredecl = this.env.assembly.getToplevelNamespace("Core");
@@ -1543,11 +1565,11 @@ class Parser {
         else if(coredecl.declaredNames.has(nsroot)) {
             return this.parseIdentifierAccessChainHelper(false, coredecl, []);
         }
-        else if(this.currentNamespace.declaredNames.has(nsroot)) {
-            return this.parseIdentifierAccessChainHelper(false, this.currentNamespace, []);
+        else if(this.env.currentNamespace.declaredNames.has(nsroot)) {
+            return this.parseIdentifierAccessChainHelper(false, this.env.currentNamespace, []);
         }
-        else if(this.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
-            const uns = (this.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;
+        else if(this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) !== undefined) {
+            const uns = (this.env.currentNamespace.usings.find((nsuse) => nsuse.asns === nsroot) as NamespaceUsing).fromns.ns;
             this.consumeToken();
 
             let iidx = 1;
@@ -1956,10 +1978,8 @@ class Parser {
         return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, !someTypedParams);
     }
 
-    private parseFunctionInvokeDecl(functionkind: "namspace" | "predicate" | "typescope"): FunctionInvokeDecl | undefined {
+    private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[]): FunctionInvokeDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
-
-        const attributes = this.parseAttributeList();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -1967,7 +1987,22 @@ class Parser {
             this.consumeToken();
         }
 
-        this.ensureAndConsumeToken(KW_fn, "function declaration");
+        let fkind: "function" | "predicate" | "chktest" | "errtest" = "function";
+        if(functionkind === "predicate") { 
+            fkind = "predicate";
+            this.ensureAndConsumeToken(KW_predicate, "predicate declaration");
+        }
+        else if(functionkind === "errtest") {
+            fkind = "errtest";
+            this.ensureAndConsumeToken(KW_errtest, "errtest declaration");
+        }
+        else if(functionkind === "chktest") {
+            fkind = "chktest";
+            this.ensureAndConsumeToken(KW_chktest, "chktest declaration");
+        }
+        else {
+            this.ensureAndConsumeToken(KW_function, "function declaration");
+        }
 
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
@@ -1978,6 +2013,7 @@ class Parser {
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
+            this.recordErrorGeneral(cinfo, "Function declaration missing parameter list");
             return undefined;
         }
 
@@ -2004,7 +2040,7 @@ class Parser {
             return new TypeFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
         }
         else {
-            return new NamespaceFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples);
+            return new NamespaceFunctionDecl(this.env.currentFile, cinfo, attributes, fname, isrecursive, params, resultInfo, body, terms, termRestrictions, preconds, postconds, samples, fkind);
         }
     }
 
@@ -2031,6 +2067,7 @@ class Parser {
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
+            this.recordErrorGeneral(cinfo, "Method declaration missing parameter list");
             return undefined;
         }
 
@@ -2092,6 +2129,7 @@ class Parser {
 
         const okdecl = this.testToken(SYM_lparen);
         if(!okdecl) {
+            this.recordErrorGeneral(cinfo, "Action declaration missing parameter list");
             return undefined;
         }
 
@@ -2605,14 +2643,14 @@ class Parser {
         return new LiteralExpressionValue(exp);
     }
 
-    private parseConstExpression(bindnames: string[], etype: TypeSignature | undefined): ConstantExpressionValue {
+    private parseConstExpression(etype: TypeSignature | undefined): ConstantExpressionValue {
         this.env.pushStandardFunctionScope([], this.env.getScope().boundtemplates, etype);
-        this.env.pushBinderExpressionScope(bindnames);
+        this.env.pushBinderUnknownInConstantExpressionScope();
         const exp = this.parseExpression();
-        const usedbinds = this.env.popBinderExpressionScope();
+        const usedbinds = this.env.popBinderUnknownInConstantExpressionScope();
         this.env.popStandardFunctionScope();
 
-        return new ConstantExpressionValue(exp, new Set<string>(...usedbinds.map((bind) => bind.srcname)));
+        return new ConstantExpressionValue(exp, new Set<string>(...usedbinds));
     }
 
     private static isTaggedLiteral(val: string): boolean {
@@ -2663,7 +2701,7 @@ class Parser {
 
     private parseIdentifierFirstExpression(): Expression {
         const sinfo = this.lexer.peekNext().getSourceInfo();
-        if (this.env.identifierResolvesAsVariable(this.peekTokenData())) {
+        if (this.peekTokenData().startsWith("$")) {
             const idname = this.consumeTokenAndGetValue();
             
             const scopename = this.env.useVariable(idname);
@@ -2675,7 +2713,7 @@ class Parser {
                 return new ErrorExpression(sinfo, undefined, undefined);
             }
         }
-        else if (this.peekTokenData().startsWith("$")) {
+        else if (this.env.identifierResolvesAsVariable(this.peekTokenData())) {
             const idname = this.consumeTokenAndGetValue();
             
             const scopename = this.env.useVariable(idname);
@@ -4364,80 +4402,255 @@ class Parser {
         this.lexer.currentState().skipToPosition(spoc);
     }
 
-    private parseNamespaceUsing(currentDecl: NamespaceDeclaration, phase: ParsePhase) {
-        if(!ParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeToken(SYM_semicolon, "namespace using");
-            return;
-        }
+    private scanOverCodeParenSet(lp: string, rp: string) {
+        const spoc = this.scanToSyncEatParens(lp, rp);
+        this.lexer.currentState().skipToPosition(spoc);
+    }
+
+    private parseNamespaceUsing(phase: ParsePhase) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
         this.ensureAndConsumeToken(KW_using, "namespce using");
         this.ensureToken(TokenStrings.IdentifierName, "namespce using");
-
-        const sinfo = this.lexer.peekNext().getSourceInfo();
-        const chain = this.parseIdentifierAccessChain();
-        if(chain === undefined || chain.typeTokens.length !== 0) {
-            this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
-            return;
+            
+        const chain: string[] = [];
+        while(this.testToken(TokenStrings.IdentifierName)) {
+            chain.push(this.consumeTokenAndGetValue());
+            if(!this.testToken(SYM_coloncolon)) {
+                break;
+            }
+            this.consumeToken();
         }
-        
-        if(!this.testToken(KW_as)) {
-            currentDecl.usings.push(new NamespaceUsing(this.env.currentFile, chain.nsScope.fullnamespace, undefined));
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            if(chain.length === 0) {
+                this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
+
+                this.scanOverCodeTo(SYM_semicolon);
+            }
+            else {
+                if(!this.testToken(KW_as)) {
+                    if(this.env.currentNamespace.istoplevel) {
+                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), undefined));
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
+                    }
+                }
+                else {
+                    this.ensureToken(TokenStrings.IdentifierName, "namespace import");
+                    const asns = this.consumeTokenAndGetValue();
+
+                    if(!/^[A-Z].+/.test(asns)) {
+                        this.recordErrorGeneral(sinfo, `Invalid namespace alias ${asns}`);
+                        return;
+                    }
+
+                    if(this.env.currentNamespace.istoplevel) {
+                        this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), asns));
+                    }
+                    else {
+                        this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
+                    }
+                }
+
+                this.ensureAndConsumeToken(SYM_semicolon, "namespace import");
+            }
         }
         else {
-            this.ensureToken(TokenStrings.IdentifierName, "namespace import");
-            const asns = this.consumeTokenAndGetValue();
+            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+                //make sure namespace is valid
 
-            if(!/^[A-Z].+/.test(asns)) {
-                this.recordErrorGeneral(sinfo, `Invalid namespace alias ${asns}`);
-                return;
+                let iidx = 1;
+                const rrns = this.env.assembly.getToplevelNamespace(chain[0]);
+                while(rrns !== undefined && iidx < chain.length) {
+                    rrns.subns.find((sns) => sns.name === chain[iidx]);
+                    iidx++;
+                }
+    
+                if(rrns === undefined) {
+                    this.recordErrorGeneral(sinfo, `Unknown namespace ${chain.join("::")}`);
+                }
             }
-        
-            this.ensureAndConsumeToken(SYM_semicolon, "namespace import");
 
-            currentDecl.usings.push(new NamespaceUsing(this.env.currentFile, chain.nsScope.fullnamespace, asns));
+            this.scanOverCodeTo(SYM_semicolon);
+            this.ensureAndConsumeToken(SYM_semicolon, "namespace using");
         }
     }
 
-    private parseSubNamespace(currentDecl: NamespaceDeclaration) {
+    private parseNamespaceMembers() {
         xxxx;
     }
 
-    private parseNamespaceTypedef(currentDecl: NamespaceDeclaration, attributes: DeclarationAttibute[]) {
+    private parseSubNamespace() {
+        this.ensureAndConsumeToken(KW_namespace, "nested namespace declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "nested namespace declaration");
+
+        const nsname = this.consumeTokenAndGetValue();
+        if(!/^[A-Z].+/.test(nsname)) {
+            this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), `Invalid namespace name ${nsname}`);
+            return;
+        }
+
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            if (this.env.currentNamespace.checkDeclNameClashNS(nsname)) {
+                this.recordErrorGeneral(sinfo, `Collision between namespace and other names -- ${nsname}`);
+            }
+
+            const nsdecl = new NamespaceDeclaration(false, nsname, new FullyQualifiedNamespace([...this.env.currentNamespace.fullnamespace.ns, nsname]));
+
+            this.env.currentNamespace.subns.push(nsdecl);
+            this.env.currentNamespace.declaredSubNSNames.add(nsname);
+
+            const ons = this.env.currentNamespace;
+
+            this.env.currentNamespace = nsdecl;
+            this.ensureAndConsumeToken(SYM_lbrace, "nested namespace declaration");
+            this.parseNamespaceMembers();
+            this.ensureAndConsumeToken(SYM_rbrace, "nested namespace declaration");
+
+            this.env.currentNamespace = ons;
+        }
+        else {
+            const ons = this.env.currentNamespace;
+
+            const nsdecl = this.env.currentNamespace.subns.find((ns) => ns.name === nsname) as NamespaceDeclaration;
+            this.env.currentNamespace = nsdecl;
+            this.ensureAndConsumeToken(SYM_lbrace, "nested namespace declaration");
+            this.parseNamespaceMembers();
+            this.ensureAndConsumeToken(SYM_rbrace, "nested namespace declaration");
+
+            this.env.currentNamespace = ons;
+        }
+    }
+
+    private parseNamespaceTypedef(attributes: DeclarationAttibute[]) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         this.ensureAndConsumeToken(KW_type, "type alias");
         this.ensureToken(TokenStrings.IdentifierName, "type alias");
         const tyname = this.consumeTokenAndGetValue();
 
-        if(ParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
-            if (currentDecl.checkDeclNameClashMember(tyname, this.testToken(SYM_langle))) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            if (this.env.currentNamespace.checkDeclNameClashType(tyname, this.testToken(SYM_langle))) {
                 this.recordErrorGeneral(sinfo, `Collision between type alias and other names -- ${tyname}`);
-                return;
             }
+
+            this.env.currentNamespace.declaredNames.add(tyname);
+            this.env.currentNamespace.declaredTypeNames.push({name: tyname, hasterms: this.testToken(SYM_langle)});
             
-            currentDecl.typeDefs.push(new NamespaceTypedef(this.env.currentFile, sinfo, attributes, tyname, this.testToken(SYM_langle), new ErrorTypeSignature(sinfo, undefined)));
+            this.scanOverCodeTo(SYM_semicolon);
+            this.ensureAndConsumeToken(SYM_semicolon, "type alias");
+        }
+        else if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+            if(this.env.currentNamespace.typeDefs.find((td) => td.name === tyname) === undefined){
+                this.env.currentNamespace.typeDefs.push(new NamespaceTypedef(this.env.currentFile, sinfo, attributes, tyname, [], new ErrorTypeSignature(sinfo, undefined)));
+            }
 
             this.scanOverCodeTo(SYM_semicolon);
             this.ensureAndConsumeToken(SYM_semicolon, "type alias");
         }
-        else if(ParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterMembers)) {
+        else {
             const terms = this.parseTypeTemplateTerms();
             this.ensureAndConsumeToken(SYM_eq, "type alias");
 
             const btype = this.parseTypeSignature();
-            const tdll = currentDecl.typeDefs.find((td) => td.name === tyname) as NamespaceTypedef;
-            tdll.terms.push(...terms);
-            tdll.boundType = btype;
 
-            this.ensureAndConsumeToken(SYM_semicolon, "type alias");
-        }
-        else {
-            this.scanOverCodeTo(SYM_semicolon);
+            const nndl = this.env.currentNamespace.typeDefs.find((td) => td.name === tyname);
+            if(nndl !== undefined) {
+                nndl.terms = terms;
+                nndl.boundType = btype;
+            }
+
             this.ensureAndConsumeToken(SYM_semicolon, "type alias");
         }
     }
 
-    private parseProvides(sinfo: SourceInfo, iscorens: boolean, endtoken: string[]): TypeSignature[] {
+    private parseNamespaceConstant(attributes: DeclarationAttibute[]) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        this.ensureAndConsumeToken(KW_const, "const member");
+
+        this.ensureToken(TokenStrings.IdentifierName, "const member");
+        const sname = this.consumeTokenAndGetValue();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            if(this.env.currentNamespace.checkDeclNameClashMember(sname)) {
+                this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
+            }
+
+            this.env.currentNamespace.declaredNames.add(sname);
+            this.env.currentNamespace.declaredMemberNames.add(sname);
+
+            this.scanOverCodeTo(SYM_semicolon);
+            this.ensureAndConsumeToken(SYM_semicolon, "const member");
+        }
+        else if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+            this.scanOverCodeTo(SYM_semicolon);
+            this.ensureAndConsumeToken(SYM_semicolon, "const member");
+        }
+        else {
+            this.ensureAndConsumeToken(SYM_colon, "const member");
+            const stype = this.parseTypeSignature();
+
+            this.ensureAndConsumeToken(SYM_eq, "const member");
+            const value = this.parseConstExpression(stype);
+            if(value.captured.size !== 0) {
+                this.recordErrorGeneral(sinfo, "Cannot have captured variables in const member");
+            }
+
+            this.env.currentNamespace.consts.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
+
+            this.ensureAndConsumeToken(SYM_semicolon, "const member");
+        }
+    }
+
+    private parseNamespaceFunction(attributes: DeclarationAttibute[]) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            this.consumeTokenIf(KW_recursive);
+            this.consumeTokenIf(KW_recursive_q);
+            this.consumeToken();
+
+            const fname = this.consumeTokenAndGetValue();
+            if(this.env.currentNamespace.checkDeclNameClashMember(fname)) {
+                this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${fname}`);
+            }
+
+            this.env.currentNamespace.declaredNames.add(fname);
+            this.env.currentNamespace.declaredMemberNames.add(fname);
+
+            this.scanOverCodeTo(...NAMESPACE_DECL_FIRSTS);
+        }
+        else if (isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+            this.scanOverCodeTo(...NAMESPACE_DECL_FIRSTS);
+        }
+        else {
+            let fkind: "namespace" | "predicate" | "chktest" | "errtest" = "namespace";
+            if(this.testFollows(KW_predicate) || this.testFollows(KW_recursive, KW_predicate) || this.testFollows(KW_recursive_q, KW_predicate)) {
+                fkind = "predicate";
+            }
+            else if(this.testFollows(KW_chktest)) {
+                fkind = "chktest";
+            }
+            else if(this.testFollows(KW_errtest)) {
+                fkind = "errtest";
+            }
+            else {
+                ;
+            }
+
+            const fdecl = this.parseFunctionInvokeDecl(fkind, attributes);
+
+            if(fdecl !== undefined) {
+                this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
+            }
+        }
+    }
+
+    private parseProvides(sinfo: SourceInfo, endtoken: string[]): TypeSignature[] {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+
         let provides: TypeSignature[] = [];
         if (this.testAndConsumeTokenIf(KW_provides)) {
             while (!endtoken.some((tok) => this.testToken(tok))) {
@@ -4446,79 +4659,98 @@ class Parser {
             }
         }
         
-        if (!iscorens) {
-            provides.push([new NominalTypeSignature(sinfo, "Core", ["Object"]), undefined]);
+        if (this.env.currentNamespace.fullnamespace.ns[0] !== "Core") {
+            const corens = this.env.assembly.getToplevelNamespace("Core");
+            const otype = corens.typedecls.find((td) => td.name === "Object") as AbstractNominalTypeDecl;
+
+            provides.push(new NominalTypeSignature(sinfo, ["Core"], [{tname: "Object", terms: []}], [], undefined, otype));
         }
 
         return provides;
     }
 
-    private parseConstMember(constMembers: ConstMemberDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], declpass: boolean) {
-        const sinfo = this.getCurrentSrcInfo();
+    private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
-        //[attr] const NAME: T = exp;
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         this.ensureAndConsumeToken(KW_const, "const member");
 
-        this.ensureToken(TokenStrings.Identifier, "const member");
+        this.ensureToken(TokenStrings.IdentifierName, "const member");
         const sname = this.consumeTokenAndGetValue();
+
         this.ensureAndConsumeToken(SYM_colon, "const member");
         const stype = this.parseTypeSignature();
 
         this.ensureAndConsumeToken(SYM_eq, "const member");
-        const value = this.parseConstExpression(false);
+        const value = this.parseConstExpression(stype);
+
+        if(constMembers === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
+        }
+        if(allMemberNames.has(sname)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${sname}`);
+        }
+        allMemberNames.add(sname);
+
+        if(constMembers !== undefined && !constMembers.some((cm) => cm.name === sname)) {
+            constMembers.push(new ConstMemberDecl(this.env.currentFile, sinfo, attributes, sname, stype, value));
+        }
 
         this.ensureAndConsumeToken(SYM_semicolon, "const member");
-
-        if (allMemberNames.has(sname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between const and other names");
-        }
-
-        allMemberNames.add(sname);
-        staticMembers.push(new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), attributes, sname, stype, value));
     }
 
-    private parseMemberFunction(memberFunctions: TypeFunctionDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], typetemplates: string[]) {
-        const sinfo = this.getCurrentSrcInfo();
+    private parseMemberFunction(memberFunctions: TypeFunctionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
-        //[attr] function NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        this.ensureAndConsumeToken(KW_function, "function member");
-        const termRestrictions = this.parseTermRestriction(true);
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const fdecl = this.parseFunctionInvokeDecl("typescope", attributes);
 
-        this.ensureToken(TokenStrings.Identifier, "function member");
-        const fname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        let recursive: "yes" | "no" | "cond" = "no";
-        if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
-            recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
+        if(memberFunctions === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a function member on this type");
         }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("abstract", attributes) || Parser.attributeSetContains("opaque", attributes), attributes, recursive, terms, typetemplates, termRestrictions, false);
-
-        if (allMemberNames.has(fname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between static and other names");
+        if(fdecl === undefined) {
+            return;
+        } 
+        
+        if(allMemberNames.has(fdecl.name)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${fdecl.name}`);
         }
-        allMemberNames.add(fname);
+        allMemberNames.add(fdecl.name);
 
-        staticFunctions.push(new StaticFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, sig));
+        if(memberFunctions !== undefined && !memberFunctions.some((cm) => cm.name === fdecl.name)) {
+            memberFunctions.push(fdecl);
+        }
     }
 
     private parseMemberField(memberFields: MemberFieldDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
-        const sinfo = this.getCurrentSrcInfo();
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
-        //[attr] field NAME: T = exp;
+        const sinfo = this.lexer.peekNext().getSourceInfo();
         this.ensureAndConsumeToken(KW_field, "member field");
 
-        this.ensureToken(TokenStrings.Identifier, "member field");
+        this.ensureToken(TokenStrings.IdentifierName, "member field");
         const fname = this.consumeTokenAndGetValue();
         this.ensureAndConsumeToken(SYM_colon, "member field");
-        const stype = this.parseTypeSignature();
+        const ftype = this.parseTypeSignature();
 
-        this.ensureAndConsumeToken(SYM_semicolon, "member field");
-
-        if (allMemberNames.has(fname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between const and other names");
+        let ivalue: ConstantExpressionValue | undefined = undefined;
+        if (this.testAndConsumeTokenIf(SYM_eq)) {
+            ivalue = this.parseConstExpression(, ftype);
         }
 
-        memberFields.push(new MemberFieldDecl(sinfo, this.m_penv.getCurrentFile(), attributes, fname, stype));
+        if(memberFields === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a const member on this type");
+        }
+        if(allMemberNames.has(fname)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${fname}`);
+        }
+        allMemberNames.add(fname);
+
+        if(memberFields !== undefined && !memberFields.some((cm) => cm.name === fname)) {
+            memberFields.push(new MemberFieldDecl(this.env.currentFile, sinfo, attributes, fname, ftype, ivalue));
+        }
+
+        this.ensureAndConsumeToken(SYM_semicolon, "member field");
     }
 
     private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], typetemplates: string[]) {
@@ -4570,88 +4802,6 @@ class Parser {
         } finally {
             this.m_penv.popFunctionScope();
         }
-    }
-
-    private parseEffect(statuseffect: TaskStatusEffect, eventeffect: TaskEventEffect, enveffect: TaskEnvironmentEffect, resourceeffects: TaskResourceEffect[]) {
-        this.ensureTaskOpOk();
-
-        const sinfo = this.getCurrentSrcInfo();
-
-        this.ensureAndConsumeToken(KW_effect, "effect");
-
-        this.ensureAndConsumeToken(SYM_plus, "effect notation");
-        this.ensureToken(TokenStrings.Identifier, "effect type");
-        const effect = this.consumeTokenAndGetValue();
-
-        if(effect === "status") {
-            this.ensureToken(SYM_lbrack, "status effect");
-            const enames = this.parseListOf("status effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
-                return this.parseTypeSignature();
-            }); 
-            
-            statuseffect.statusinfo.push(...enames);
-        }
-        else if(effect === "event") {
-            this.ensureToken(SYM_lbrack, "event effect");
-            const enames = this.parseListOf("event effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
-                return this.parseTypeSignature();
-            }); 
-            
-            eventeffect.eventinfo.push(...enames);
-        }
-        else if(effect === "environment") {
-            this.ensureToken(SYM_lbrack, "environment effect");
-            const enames = this.parseListOf("environment effect", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
-                this.ensureToken(TokenStrings.String, "environment variable name");
-                const vv = this.consumeTokenAndGetValue();
-
-                let isw = false;
-                if(this.testAndConsumeTokenIf(SYM_plus)) {
-                    this.ensureToken(TokenStrings.Identifier, "environment effect write");
-                    const tt = this.consumeTokenAndGetValue();
-                    if(tt !== "w") {
-                        this.raiseError(this.getCurrentLine(), `expected a "w" modifier`);
-                    }
-                    isw = true;
-                }
-                return {vv: vv, isw: isw};
-            });
-
-            enveffect.evars.push(...enames);
-        }
-        else if(effect === "resource") {
-            let isread = true;
-            let iswrite = true;
-            if(this.testToken(TokenStrings.Identifier)) {
-                const rw = this.consumeTokenAndGetValue();
-
-                isread = rw.includes("r");
-                iswrite = rw.includes("w");
-                if (rw.length > 2 || (rw[0] !== "r" && rw[0] !== "w") || (rw[1] !== "r" && rw[1] !== "w")) {
-                    this.raiseError(sinfo.line, `Unknown read/write value "${rw}" on effect`);
-                }
-            }
-
-            const rtype = this.parseTypeSignature();
-            let rpathexp: ConstantExpressionValue | undefined = undefined;
-            if(this.testToken(SYM_lbrack)) {
-                this.ensureAndConsumeToken(SYM_lbrack, "Resource effect");
-                    
-                if(this.testAndConsumeTokenIf(SYM_coma)) {
-                    rpathexp = this.parseConstExpression(true);
-                }
-
-                this.ensureAndConsumeToken(SYM_rbrack, "Resource effect");
-            }
-
-            resourceeffects.push(new TaskResourceEffect(rtype, rpathexp, isread, iswrite));
-        }
-        else {
-            this.raiseError(sinfo.line, `Unknon effect kind ${effect}`);
-        }
-
-
-        this.ensureAndConsumeToken(SYM_semicolon, "effect notation");
     }
 
     private parseOOPMembersCommon(sinfo: SourceInfo, istask: boolean, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
@@ -5323,50 +5473,6 @@ class Parser {
         this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, cdecl);
     }
 
-    private parseNamespaceConst(currentDecl: NamespaceDeclaration) {
-        const sinfo = this.getCurrentSrcInfo();
-
-        //[attr] const NAME = exp;
-        const attributes = this.parseAttributes();
-
-        this.ensureAndConsumeToken(KW_const, "namespace const declaration");
-        this.ensureToken(TokenStrings.Identifier, "namespace const declaration");
-        const gname = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_colon, "namespace const declaration");
-        const gtype = this.parseTypeSignature();
-
-        this.ensureAndConsumeToken(SYM_eq, "namespace const declaration");
-        const value = this.parseConstExpression(false);
-
-        this.ensureAndConsumeToken(SYM_semicolon, "namespace const declaration");
-
-        if (currentDecl.checkDeclNameClash(gname)) {
-            this.raiseError(this.getCurrentLine(), "Collision between global and other names");
-        }
-
-        currentDecl.consts.set(gname, new NamespaceConstDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, gname, gtype, value));
-    }
-
-    private parseNamespaceFunction(currentDecl: NamespaceDeclaration) {
-        const sinfo = this.getCurrentSrcInfo();
-
-        //[attr] function NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        const attributes = this.parseAttributes();
-
-        this.ensureAndConsumeToken(KW_function, "namespace function declaration");
-        this.ensureToken(TokenStrings.Identifier, "namespace function declaration");
-        const fname = this.consumeTokenAndGetValue();
-
-        const terms = this.parseTermDeclarations();
-        let recursive: "yes" | "no" | "cond" = "no";
-        if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
-            recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
-        }
-        const sig = this.parseInvokableCommon(InvokableKind.Basic, Parser.attributeSetContains("opaque", attributes), attributes, recursive, terms, [], undefined, false);
-
-        currentDecl.functions.set(fname, new NamespaceFunctionDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, fname, sig));
-    }
-
     private parseEndOfStream() {
         if(!this.testToken(TokenStrings.EndOfStream)) {
             this.raiseError(this.getCurrentLine(), "Expected end-of-file");
@@ -5377,40 +5483,6 @@ class Parser {
 
     ////
     //Public methods
-    parseCompilationUnitGetNamespaceDeps(file: string, contents: string, macrodefs: string[]): {ns: string, deps: string[], remap: Map<string, string>} | undefined {
-        this.setNamespaceAndFile("[No Namespace]", file);
-
-        const lexer = new Lexer(contents, macrodefs, undefined);
-        this.initialize(lexer.lex());
-
-        //namespace NS; ...
-        this.ensureAndConsumeToken(KW_namespace, "missing namespace declaration");
-        this.ensureToken(TokenStrings.ScopeName, "namespace declaration");
-        const ns = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_semicolon, "namespace declaration");
-
-        this.setNamespaceAndFile(ns, file);
-
-        let deps: string[] = [];
-        let remap = new Map<string, string>();
-        while (this.m_cpos < this.m_epos) {
-            try {
-                this.m_cpos = this.scanTokenOptions("import");
-                if (this.m_cpos === this.m_epos) {
-                    break;
-                }
-
-                const dep = this.parseNamespaceDep();
-                deps.push(dep.fromns);
-                remap.set(dep.asns, dep.fromns);
-            }
-            catch(ex) {
-                return undefined;
-            }
-        }
-
-        return {ns: ns, deps: deps, remap: remap};
-    }
 
     parseCompilationUnitPass1(file: string, contents: string, macrodefs: string[]): boolean {
         this.setNamespaceAndFile("[No Namespace]", file);
@@ -5631,6 +5703,7 @@ class Parser {
         return parseok;
     }
 
+    private static _s_nsre = /^\s*namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*;/;
     parseCompilationUnitPass2(file: string, contents: string, macrodefs: string[], namespacestrings: Set<string>): boolean {
         this.setNamespaceAndFile("[No Namespace]", file);
         const lexer = new Lexer(contents, macrodefs, namespacestrings);

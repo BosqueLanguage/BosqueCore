@@ -401,21 +401,29 @@ abstract class FunctionInvokeDecl extends ExplicitInvokeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: InvokeExample[]) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
     }
-
-    getDeclarationTag(): string {
-        return "function";
-    }
 }
 
 class NamespaceFunctionDecl extends FunctionInvokeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: InvokeExample[]) {
+    readonly fkind: "function" | "predicate" | "errtest" | "chktest";
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: InvokeExample[], fkind: "function" | "predicate" | "errtest" | "chktest") {
         super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
+
+        this.fkind = fkind;
+    }
+
+    getDeclarationTag(): string {
+        return this.fkind;
     }
 }
 
 class TypeFunctionDecl extends FunctionInvokeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, recursive: "yes" | "no" | "cond", params: FunctionParameter[], resultType: TypeSignature, body: BodyImplementation, terms: InvokeTemplateTermDecl[], termRestriction: InvokeTemplateTypeRestriction | undefined, preconditions: PreConditionDecl[], postconditions: PostConditionDecl[], examples: InvokeExample[]) {
         super(file, sinfo, attributes, name, recursive, params, resultType, body, terms, termRestriction, preconditions, postconditions, examples);
+    }
+
+    getDeclarationTag(): string {
+        return "function";
     }
 }
 
@@ -895,12 +903,10 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
 }
 
 class EntityTypeDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[];
+    readonly members: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, members: MemberFieldDecl[]) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
         super(file, sinfo, attributes, name, hasTerms);
-
-        this.members = members;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -956,12 +962,10 @@ class OptionTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[];
+    readonly nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[]) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
         super(file, sinfo, attributes, name, hasTerms);
-
-        this.nestedEntityDecls = nestedEntityDecls;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -979,12 +983,10 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class APIResultTypeDecl extends InternalConceptTypeDecl {
-    readonly nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[];
+    readonly nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[]) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
         super(file, sinfo, attributes, name, hasTerms);
-
-        this.nestedEntityDecls = nestedEntityDecls;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1018,12 +1020,10 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ConceptTypeDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[];
+    readonly members: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, members: MemberFieldDecl[]) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
         super(file, sinfo, attributes, name, hasTerms);
-
-        this.members = members;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1289,8 +1289,6 @@ class TaskDeclOnAPI extends TaskDecl {
     
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
         super(file, sinfo, attributes, name, hasTerms);
-
-        this.api = api;
     }
 
     getImplementsAPI(): APIDecl | undefined {
@@ -1299,8 +1297,8 @@ class TaskDeclOnAPI extends TaskDecl {
 }
 
 class TaskDeclStandalone extends TaskDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], terms: TypeTemplateTermDecl[], invariants: InvariantDecl[], validates: ValidateDecl[], consts: ConstMemberDecl[], functions: TypeFunctionDecl[], methods: MethodDecl[], members: MemberFieldDecl[], actions: TaskActionDecl[], api: APIDecl) {
-        super(file, sinfo, attributes, "main", terms, invariants, validates, consts, functions, methods, members, actions);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
+        super(file, sinfo, attributes, name, hasTerms);
     }
 
     getImplementsAPI(): APIDecl | undefined {
@@ -1326,14 +1324,13 @@ class NamespaceConstDecl extends AbstractCoreDecl {
 }
 
 class NamespaceTypedef extends AbstractCoreDecl {
-    readonly hasTerms: boolean;
-    readonly terms: TypeTemplateTermDecl[] = [];
+    terms: TypeTemplateTermDecl[] = [];
     boundType: TypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, btype: TypeSignature) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, terms: TypeTemplateTermDecl[], btype: TypeSignature) {
         super(file, sinfo, attributes, name);
 
-        this.hasTerms = hasTerms;
+        this.terms = terms;
         this.boundType = btype;
     }
 
@@ -1368,38 +1365,30 @@ class NamespaceUsing {
 }
 
 class NamespaceDeclaration {
+    readonly istoplevel: boolean;
     readonly name: string; 
     readonly fullnamespace: FullyQualifiedNamespace;
 
-    usings: NamespaceUsing[];
-    declaredNames: Set<string>;
+    usings: NamespaceUsing[] = [];
+    declaredNames: Set<string> = new Set<string>();
+    declaredTypeNames: {name: string, hasterms: boolean}[] = []; //types, typedecls, and tasks
+    declaredSubNSNames: Set<string> = new Set<string>();
+    declaredMemberNames: Set<string> = new Set<string>(); //functions, apis, and consts
 
-    subns: NamespaceDeclaration[];
+    subns: NamespaceDeclaration[] = [];
 
-    typeDefs: NamespaceTypedef[];
-    consts: NamespaceConstDecl[];
-    functions: NamespaceFunctionDecl[];
-    typedecls: AbstractNominalTypeDecl[];
+    typeDefs: NamespaceTypedef[] = [];
+    consts: NamespaceConstDecl[] = [];
+    functions: NamespaceFunctionDecl[] = [];
+    typedecls: AbstractNominalTypeDecl[] = [];
 
-    apis: APIDecl[];
-    tasks: TaskDecl[];
+    apis: APIDecl[] = [];
+    tasks: TaskDecl[] = [];
 
-    constructor(name: string, fullnamespace: FullyQualifiedNamespace) {
+    constructor(istoplevel: boolean, name: string, fullnamespace: FullyQualifiedNamespace) {
+        this.istoplevel = istoplevel;
         this.name = name;
         this.fullnamespace = fullnamespace;
-
-        this.usings = [];
-        this.declaredNames = new Set<string>();
-
-        this.subns = [];
-
-        this.typeDefs = [];
-        this.consts = [];
-        this.functions = [];
-        this.typedecls = [];
-
-        this.apis = [];
-        this.tasks = [];
     }
 
     checkDeclNameClashNS(rname: string): boolean {
@@ -1407,77 +1396,42 @@ class NamespaceDeclaration {
             return false;
         }
 
-        if(this.subns.find((ns) => ns.name === rname) !== undefined) {
+        //namespace always clashes with other namespaces and with simple member names
+        if(this.declaredSubNSNames.has(rname) || this.declaredMemberNames.has(rname)) {
             return true;
         }
 
-        if(this.typeDefs.find((td) => td.name === rname && td.hasTerms) !== undefined) {
-            return true;
-        }
-
-        if(this.typedecls.find((t) => t.name === rname && t.hasTerms() === hasterms) !== undefined) {
-            return true;
-        }
-
-        if(this.tasks.find((t) => t.name === rname && t.hasTerms() === hasterms) !== undefined) {
-            return true;
-        }
-
-        if(this.consts.find((c) => c.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.apis.find((api) => api.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.functions.find((f) => f.name === rname) !== undefined) {
-            return true;
-        }
-
-        return false;
+        //we allow same names on types and subnamespaces IF the type has template terms
+        return this.declaredTypeNames.find((tn) => tn.name === rname && tn.hasterms) !== undefined;
     }
 
-    checkDeclNameClashMember(rname: string, hasterms: boolean): boolean {
+    checkDeclNameClashType(rname: string, hasterms: boolean): boolean {
         if(!this.declaredNames.has(rname)) {
             return false;
         }
 
-        if(!hasterms && this.subns.find((ns) => ns.name === rname) !== undefined) {
+        //types always simple member names
+        if(this.declaredMemberNames.has(rname)) {
             return true;
         }
 
-        if(this.typeDefs.find((td) => td.name === rname) !== undefined) {
+        //they also clash with each other even if they differ in termplates
+        if(this.declaredTypeNames.find((tn) => tn.name === rname) !== undefined) {
             return true;
         }
 
-        if(this.consts.find((c) => c.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.apis.find((api) => api.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.functions.find((f) => f.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.typedecls.find((t) => t.name === rname) !== undefined) {
-            return true;
-        }
-
-        if(this.tasks.find((t) => t.name === rname) !== undefined) {
-            return true;
-        }
-
-        return false;
+        //we allow same names on types and subnamespaces IF the type has template terms
+        return !hasterms && this.declaredSubNSNames.has(rname);
     }
 
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
+    checkDeclNameClashMember(rname: string): boolean {
+        return this.declaredNames.has(rname);
+    }
+
+    emit(fmt: CodeFormatter): string {
         let res = `namespace ${this.name}`;
 
-        if(toplevel) {
+        if(this.istoplevel) {
             res += ";\n\n";
         }
         else {
@@ -1493,7 +1447,7 @@ class NamespaceDeclaration {
         }
 
         this.subns.forEach((ns) => {
-            res += fmt.indent(ns.emit(false, fmt) + "\n");
+            res += fmt.indent(ns.emit(fmt) + "\n");
         });
         if(this.subns.length !== 0) {
             res += "\n";
@@ -1542,7 +1496,7 @@ class NamespaceDeclaration {
             res = res.slice(0, res.length - 1);
         }
 
-        if(!toplevel) {
+        if(!this.istoplevel) {
             fmt.indentPop();
             res += fmt.indent("}\n");
         }
@@ -1564,7 +1518,7 @@ class Assembly {
 
     ensureToplevelNamespace(ns: string): NamespaceDeclaration {
         if (!this.hasToplevelNamespace(ns)) {
-            this.toplevelNamespaces.push(new NamespaceDeclaration(ns, new FullyQualifiedNamespace([ns])));
+            this.toplevelNamespaces.push(new NamespaceDeclaration(true, ns, new FullyQualifiedNamespace([ns])));
         }
 
         return this.getToplevelNamespace(ns);

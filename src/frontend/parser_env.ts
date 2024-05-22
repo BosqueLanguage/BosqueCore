@@ -2,7 +2,7 @@
 import {strict as assert} from "assert";
 
 import { SourceInfo } from "./build_decls";
-import { Assembly } from "./assembly";
+import { Assembly, NamespaceDeclaration } from "./assembly";
 import { NominalTypeSignature, TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
 
 abstract class SourceNameDefinitionInfo {
@@ -81,7 +81,7 @@ class SimpleBlockScopeInfo extends BlockScopeInfo {
 }
 
 class BinderBlockScopeInfo extends BlockScopeInfo {
-    readonly binders: BinderVariableDefinitionInfo[] = [];
+    readonly binders: BinderVariableDefinitionInfo[];
 
     constructor(binders: BinderVariableDefinitionInfo[]) {
         super();
@@ -95,6 +95,30 @@ class BinderBlockScopeInfo extends BlockScopeInfo {
 
     definesBinderSourceName(srcname: string): boolean {
         return this.binders.find((nn) => nn.srcname === srcname) !== undefined;
+    }
+}
+
+class BinderUnknownInConstantScopeInfo extends BlockScopeInfo {
+    readonly binders: BinderVariableDefinitionInfo[] = [];
+
+    constructor() {
+        super();
+    }
+
+    lookupVariableInfo(srcname: string): SourceNameDefinitionInfo | undefined {
+        const idecl = this.locals.find((nn) => nn.srcname === srcname) || this.binders.find((nn) => nn.srcname === srcname);
+        if(idecl !== undefined) {
+            return idecl;
+        }
+
+        if(srcname.startsWith("$")) {
+            this.binders.push(new BinderVariableDefinitionInfo(srcname, srcname));
+        }
+        return this.binders.find((nn) => nn.srcname === srcname);
+    }
+
+    definesBinderSourceName(srcname: string): boolean {
+        return srcname.startsWith("$");
     }
 }
 
@@ -239,7 +263,7 @@ class ParserEnvironment {
     readonly assembly: Assembly;
 
     readonly currentFile: string;
-    readonly currentNamespace: string;
+    currentNamespace: NamespaceDeclaration;
 
     scope: ParserScopeInfo | undefined;
 
@@ -248,7 +272,7 @@ class ParserEnvironment {
 
     readonly wellknownTypes: Map<string, NominalTypeSignature>;
 
-    constructor(assembly: Assembly, currentFile: string, currentNamespace: string, wellknownTypes: Map<string, NominalTypeSignature>) {
+    constructor(assembly: Assembly, currentFile: string, currentNamespace: NamespaceDeclaration, wellknownTypes: Map<string, NominalTypeSignature>) {
         this.assembly = assembly;
 
         this.currentFile = currentFile;
@@ -298,6 +322,19 @@ class ParserEnvironment {
         return (this.scope.blockscope.pop() as BinderBlockScopeInfo).binders.filter((b) => b.isUsed).map((b) => {
             return {srcname: b.srcname, scopedname: b.scopedname};
         });
+    }
+
+    pushBinderUnknownInConstantExpressionScope() {
+        assert(this.scope !== undefined);
+
+        const bscope = new BinderUnknownInConstantScopeInfo();
+        this.scope.blockscope.push(bscope);
+    }
+
+    popBinderUnknownInConstantExpressionScope(): string[] {
+        assert(this.scope !== undefined);
+        
+        return (this.scope.blockscope.pop() as BinderUnknownInConstantScopeInfo).binders.filter((b) => b.isUsed).map((b) => b.srcname);
     }
 
     identifierResolvesAsVariable(srcname: string): boolean {
@@ -365,7 +402,7 @@ class ParserEnvironment {
 
 export { 
     SourceNameDefinitionInfo, LocalVariableDefinitionInfo, BinderVariableDefinitionInfo,
-    BlockScopeInfo, SimpleBlockScopeInfo, BinderBlockScopeInfo,
+    BlockScopeInfo, SimpleBlockScopeInfo, BinderBlockScopeInfo, BinderUnknownInConstantScopeInfo,
     ParserScopeInfo, StandardScopeInfo, LambdaScopeInfo,
     ParserEnvironment 
 };
