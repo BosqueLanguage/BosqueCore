@@ -111,7 +111,6 @@ const KeywordStrings = [
     KW_function,
     KW_if,
     KW_implements,
-    KW_import,
     KW_in,
     KW_invariant,
     KW_let,
