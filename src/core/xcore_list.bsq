@@ -1,0 +1,105 @@
+//The core namespace implements the primitive concepts used in the bosque core language
+namespace Core;
+
+#if EXEC_LIBS
+namespace ListOps {
+    __safe function s_list_value<T>(l: List<T>): ListRepr<T>? = s_list_value;
+    __safe function s_list_create<T>(lr: ListRepr<T>?): List<T> = s_list_create;
+
+    __safe function s_list_empty<T>(l: List<T>): Bool {
+        return ListOps::s_list_value(l)?none;
+    } 
+
+    __safe function s_list_size<T>(l: List<T>): Nat {
+        let vv = ListOps::s_list_value(l);
+        return if none(vv) then 0n else $vv.size();
+    } 
+
+    function s_list_get<T>(l: List<T>, i: Nat): T {
+        return ListOps::s_list_value(l)@<ListRepr<T>>.get(i);
+    }
+
+    function s_list_back<T>(l: List<T>): T {
+    }
+
+    function s_list_front<T>(l: List<T>): T {
+    }
+}
+
+protected datatype ListRepr<T> provides Some 
+of
+Leaf { value: T }
+| Node { count: Nat, l: ListRepr<T>?, r: ListRepr<T>? }
+& {
+    method size(): Nat {
+        match (this) {
+            Leaf   => return 1;
+            | Node => return $this.count;
+        }
+    }
+
+    method back(): T {
+        match (this) {
+            Leaf => {
+                return $this.value;
+            }
+            | Node => {
+                if($this.r?none) {
+                    return $this.r@!none.back();
+                }
+                else {
+                    return $this.l@!none.back();
+                }
+            }
+        }
+    }
+
+    method front(): T {
+        match (this) {
+            Leaf => {
+                return $this.value;
+            }
+            | Node => {
+                if($this.l?none) {
+                    return $this.l@!none.front();
+                }
+                else {
+                    return $this.r@!none.front();
+                }
+            }
+        }
+    }
+
+    method get(i: Nat): T {
+        match (this) {
+            Leaf => {
+                assert i == 0n;
+                return $this.value;
+            }
+            | Node => {
+                if($this.l?none) {
+                    return $this.r@!none.get(i);
+                }
+                else {
+                    if i < $this.l@!none.size() {
+                        return $this.l@!none.get(i);
+                    }
+                    else {
+                        return $this.r@!none.get(i - $this.l@!none.size());
+                    }
+                }
+            }
+        }
+    }
+}
+
+#else
+namespace ListOps {
+    __safe function s_list_empty<T>(l: List<T>): Bool = s_list_empty; 
+    __safe function s_list_size<T>(l: List<T>): Nat = s_list_size; 
+
+    __assume_safe function s_list_get<T>(l: List<T>, i: Nat): T = s_list_get;
+    __assume_safe function s_list_back<T>(l: List<T>): T = s_list_back;
+    __assume_safe function s_list_front<T>(l: List<T>): T = s_list_front;
+}
+#endif

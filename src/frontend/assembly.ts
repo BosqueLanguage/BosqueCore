@@ -508,7 +508,6 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
     readonly name: string;
 
-    readonly hasTerms: boolean;
     readonly terms: TypeTemplateTermDecl[] = [];
     readonly provides: TypeSignature[] = [];
 
@@ -519,13 +518,11 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly functions: TypeFunctionDecl[] = [];
     readonly methods: MethodDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo);
 
         this.attributes = attributes;
         this.name = name;
-
-        this.hasTerms = hasTerms;
     }
 
     hasAttribute(aname: string): boolean {
@@ -571,7 +568,7 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
     readonly members: string[];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[]) {
-        super(file, sinfo, attributes, name, false);
+        super(file, sinfo, attributes, name);
 
         this.members = members;
     }
@@ -590,8 +587,8 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
 class TypedeclTypeDecl extends AbstractNominalTypeDecl {
     readonly valuetype: TypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, valuetype: TypeSignature) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, valuetype: TypeSignature) {
+        super(file, sinfo, attributes, name);
 
         this.valuetype = valuetype;
     }
@@ -613,14 +610,14 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
 }
 
 abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 }
 
 class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, false);
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -638,7 +635,7 @@ class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
     readonly regex: string;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name, false);
+        super(file, sinfo, attributes, name);
 
         this.regex = regex;
     }
@@ -652,7 +649,7 @@ class ASCIIRegexValidatorTypeDecl extends InternalEntityTypeDecl {
     readonly regex: string;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name, false);
+        super(file, sinfo, attributes, name);
 
         this.regex = regex;
     }
@@ -666,7 +663,7 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
     readonly pathglob: string;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
-        super(file, sinfo, attributes, name, false);
+        super(file, sinfo, attributes, name);
 
         this.pathglob = pathglob;
     }
@@ -678,7 +675,7 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
 
 class ThingOfTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, true);
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -724,7 +721,7 @@ class PathGlobOfTypeDecl extends ThingOfTypeDecl {
 
 abstract class ConstructableTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, true);
+        super(file, sinfo, attributes, name);
     }
 }
 
@@ -858,7 +855,7 @@ class MapEntryEntityTypeDecl extends ConstructableTypeDecl {
 
 abstract class AbstractCollectionTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, true);
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -905,8 +902,8 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
 class EntityTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -924,14 +921,14 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 }
 
 abstract class InternalConceptTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 }
 
 class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -946,8 +943,8 @@ class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
 }
 
 class OptionTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -964,8 +961,8 @@ class OptionTypeDecl extends InternalConceptTypeDecl {
 class ResultTypeDecl extends InternalConceptTypeDecl {
     readonly nestedEntityDecls: (OkTypeDecl | ErrTypeDecl)[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -985,8 +982,8 @@ class ResultTypeDecl extends InternalConceptTypeDecl {
 class APIResultTypeDecl extends InternalConceptTypeDecl {
     readonly nestedEntityDecls: (APIErrorTypeDecl | APIFailedTypeDecl | APIRejectedTypeDecl | APISuccessTypeDecl)[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1004,8 +1001,8 @@ class APIResultTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ExpandoableTypeDecl extends InternalConceptTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1022,8 +1019,8 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 class ConceptTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1042,10 +1039,12 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 
 class DatatypeTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[] = [];
+
+    xxxx;
     readonly associatedEntityDecls: EntityTypeDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1247,8 +1246,8 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     abstract getImplementsAPI(): APIDecl | undefined;
@@ -1287,8 +1286,8 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
 class TaskDeclOnAPI extends TaskDecl {
     readonly api: APIDecl | undefined = undefined;
     
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     getImplementsAPI(): APIDecl | undefined {
@@ -1297,8 +1296,8 @@ class TaskDeclOnAPI extends TaskDecl {
 }
 
 class TaskDeclStandalone extends TaskDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
-        super(file, sinfo, attributes, name, hasTerms);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
     }
 
     getImplementsAPI(): APIDecl | undefined {
@@ -1429,21 +1428,27 @@ class NamespaceDeclaration {
     }
 
     emit(fmt: CodeFormatter): string {
-        let res = `namespace ${this.name}`;
+        let res = "";
 
         if(this.istoplevel) {
-            res += ";\n\n";
+            res += `declare namespace ${this.name}`;
+        
+            fmt.indentPush();
+            const usings = this.usings.map((u) => {
+                res += fmt.indent(u.emit());
+            });
+            fmt.indentPop();
+
+            if(this.usings.length === 0) {
+                res += ";\n\n";
+            }
+            else {
+                res += `{\n${usings.join("\n")}\n}\n\n`;
+            }
         }
         else {
-            res += " {\n";
+            res += `namespace ${this.name} {\n`;
             fmt.indentPush();
-        }
-
-        this.usings.forEach((u) => {
-            res += fmt.indent(u.emit() + "\n");
-        });
-        if(this.usings.length !== 0) {
-            res += "\n";
         }
 
         this.subns.forEach((ns) => {

@@ -205,29 +205,6 @@ const AllAttributes = [
     ...InvokeAttributes
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
-const NAMESPACE_DECL_FIRSTS = [
-    ...GeneralAttributes,
-    ...TypeDeclAttributes,
-    ...APIDeclAttributes,
-    ...InvokeAttributes,
-    KW_recursive, KW_recursive_q, 
-    KW_function, KW_predicate, 
-    KW_namespace, KW_api,
-    KW_const,
-    KW_enum, KW_type, KW_typedecl, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
-    KW_event, KW_status,
-    KW_validator,
-    KW_errtest, KW_chktest
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
-const TYPE_DECL_FIRSTS = [
-    ...GeneralAttributes,
-    ...TypeDeclAttributes,
-    KW_recursive, KW_recursive_q, 
-    KW_field, KW_const, KW_invariant, KW_validate, 
-    KW_function, KW_method, KW_action
-].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
-
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
 
@@ -345,8 +322,6 @@ export {
     GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
-
-    NAMESPACE_DECL_FIRSTS, TYPE_DECL_FIRSTS,
 
     KW_recursive_q,
     KW_recursive,

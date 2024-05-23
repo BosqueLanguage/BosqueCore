@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 
 import { SourceInfo } from "./build_decls";
 import { Assembly, NamespaceDeclaration } from "./assembly";
-import { NominalTypeSignature, TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
+import { TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
 
 abstract class SourceNameDefinitionInfo {
     readonly srcname: string;
@@ -270,9 +270,7 @@ class ParserEnvironment {
     readonly SpecialVoidSignature: TypeSignature;
     readonly SpecialAutoSignature: TypeSignature;
 
-    readonly wellknownTypes: Map<string, NominalTypeSignature>;
-
-    constructor(assembly: Assembly, currentFile: string, currentNamespace: NamespaceDeclaration, wellknownTypes: Map<string, NominalTypeSignature>) {
+    constructor(assembly: Assembly, currentFile: string, currentNamespace: NamespaceDeclaration) {
         this.assembly = assembly;
 
         this.currentFile = currentFile;
@@ -282,8 +280,6 @@ class ParserEnvironment {
 
         this.SpecialVoidSignature = new VoidTypeSignature(SourceInfo.implicitSourceInfo());
         this.SpecialAutoSignature = new AutoTypeSignature(SourceInfo.implicitSourceInfo());
-
-        this.wellknownTypes = wellknownTypes;
     }
 
     private getBinderVarName(vname: string): string {

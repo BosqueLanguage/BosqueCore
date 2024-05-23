@@ -4,9 +4,9 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, DeclarationAttibute, FunctionInvokeDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl } from "./assembly";
+import { APIResultTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, DeclarationAttibute, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, MemberFieldDecl, MethodDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, ResultTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, NAMESPACE_DECL_FIRSTS, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -82,6 +82,32 @@ const TokenStrings = {
 
     EndOfStream: "[EOS]"
 };
+
+
+const NAMESPACE_DECL_FIRSTS = [
+    TokenStrings.Attribute,
+    KW_recursive, KW_recursive_q, 
+    KW_function, KW_predicate, 
+    KW_namespace, KW_api,
+    KW_const,
+    KW_enum, KW_type, KW_typedecl, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
+    KW_event, KW_status,
+    KW_validator,
+    KW_errtest, KW_chktest
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const TYPE_DECL_FIRSTS = [
+    TokenStrings.Attribute,
+    KW_recursive, KW_recursive_q, 
+    KW_ref,
+    KW_field, KW_const, KW_invariant, KW_validate, 
+    KW_function, KW_method, KW_action,
+    KW_entity
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
+const PRIMITIVE_TYPE_NAMES = [
+
+];
 
 class Token {
     readonly line: number;
@@ -1163,8 +1189,11 @@ class Parser {
     private env: ParserEnvironment;
 
     private currentPhase: ParsePhase;
+    private declaredToplevelNamespaces: string[] = [];
 
-    constructor(currentFile: string, toplevelns: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase, wellknownTypes: Map<string, NominalTypeSignature>) {
+    wellknownTypes: Map<string, NominalTypeSignature> = new Map<string, NominalTypeSignature>();
+
+    constructor(currentFile: string, toplevelns: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase) {
         const allToplevelNamespaces = assembly.toplevelNamespaces.map((nsd) => nsd.name);
         if(!allToplevelNamespaces.includes("Core")) {
             allToplevelNamespaces.push("Core");
@@ -1173,7 +1202,7 @@ class Parser {
         this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(contents.length), allToplevelNamespaces.sort(), []);
 
         const nns = assembly.ensureToplevelNamespace(toplevelns);
-        this.env = new ParserEnvironment(assembly, currentFile, nns, wellknownTypes);
+        this.env = new ParserEnvironment(assembly, currentFile, nns);
 
         this.currentPhase = currentPhase;
     }
@@ -1716,12 +1745,6 @@ class Parser {
         }
     }
 
-    private parseAttributeList(): DeclarationAttibute[] {
-        return this.parseListOf<DeclarationAttibute>("attribute list", SYM_lbrack, SYM_rbrack, SYM_semicolon, () => {
-            return this.parseAttribute();
-        });
-    }
-
     private parseInvokeTermRestriction(): InvokeTemplateTypeRestriction  {
         this.ensureAndConsumeToken(SYM_lbrace, "template term restiction");
         this.ensureAndConsumeToken(KW_when, "template term restiction");
@@ -1766,7 +1789,7 @@ class Parser {
     private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
         
-        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), boundtemplates, this.env.wellknownTypes.get("Bool") as TypeSignature);
+        this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_requires)) {
             this.consumeToken();
             
@@ -1791,7 +1814,7 @@ class Parser {
         let postconds: PostConditionDecl[] = [];
 
         const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo("$" + v, true));
-        this.env.scope = new StandardScopeInfo([...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)], boundtemplates, this.env.wellknownTypes.get("Bool") as TypeSignature);
+        this.env.scope = new StandardScopeInfo([...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)], boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
@@ -1902,7 +1925,7 @@ class Parser {
 
         const isinferable = this.testAndConsumeTokenIf(SYM_question);
 
-        let ttype = this.env.wellknownTypes.get("Any") as TypeSignature;
+        let ttype = this.wellknownTypes.get("Any") as TypeSignature;
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             ttype = this.parseTypeSignature();
         }
@@ -1978,7 +2001,7 @@ class Parser {
         return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, !someTypedParams);
     }
 
-    private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[]): FunctionInvokeDecl | undefined {
+    private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
@@ -2027,7 +2050,7 @@ class Parser {
         const argNames = new Set<string>(params.map((param) => param.name));
         const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
-        const boundtemplates = new Set<string>(...terms.map((term) => term.name));
+        const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates);
         const samples = this.parseSamples(cinfo);
@@ -2044,10 +2067,8 @@ class Parser {
         }
     }
 
-    private parseMethodInvokeDecl(taskscope: boolean, typeTerms: Set<string>): MethodDecl | TaskMethodDecl | undefined {
+    private parseMethodInvokeDecl(taskscope: boolean, attributes: DeclarationAttibute[], typeTerms: Set<string>): MethodDecl | TaskMethodDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
-
-        const attributes = this.parseAttributeList();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -2113,10 +2134,8 @@ class Parser {
         }
     }
 
-    private parseActionInvokeDecl(typeTerms: Set<string>): TaskActionDecl | undefined {
+    private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>): TaskActionDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
-
-        const attributes = this.parseAttributeList();
 
         this.ensureAndConsumeToken(KW_action, "action declaration");
 
@@ -4378,7 +4397,7 @@ class Parser {
         this.ensureToken(TokenStrings.Template, "template term");
         const tname = this.consumeTokenAndGetValue();
 
-        let ttype = this.env.wellknownTypes.get("Any") as TypeSignature;
+        let ttype = this.wellknownTypes.get("Any") as TypeSignature;
         if(this.testAndConsumeTokenIf(SYM_colon)) {
             ttype = this.parseTypeSignature();
         }
@@ -4640,7 +4659,7 @@ class Parser {
                 ;
             }
 
-            const fdecl = this.parseFunctionInvokeDecl(fkind, attributes);
+            const fdecl = this.parseFunctionInvokeDecl(fkind, attributes, new Set<string>());
 
             if(fdecl !== undefined) {
                 this.env.currentNamespace.functions.push(fdecl as NamespaceFunctionDecl);
@@ -4699,11 +4718,11 @@ class Parser {
         this.ensureAndConsumeToken(SYM_semicolon, "const member");
     }
 
-    private parseMemberFunction(memberFunctions: TypeFunctionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+    private parseMemberFunction(memberFunctions: TypeFunctionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
-        const fdecl = this.parseFunctionInvokeDecl("typescope", attributes);
+        const fdecl = this.parseFunctionInvokeDecl("typescope", attributes, typeTerms);
 
         if(memberFunctions === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a function member on this type");
@@ -4722,7 +4741,7 @@ class Parser {
         }
     }
 
-    private parseMemberField(memberFields: MemberFieldDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+    private parseMemberField(memberFields: MemberFieldDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
@@ -4735,7 +4754,7 @@ class Parser {
 
         let ivalue: ConstantExpressionValue | undefined = undefined;
         if (this.testAndConsumeTokenIf(SYM_eq)) {
-            ivalue = this.parseConstExpression(, ftype);
+            ivalue = this.parseConstExpression(ftype);
         }
 
         if(memberFields === undefined) {
@@ -4753,177 +4772,219 @@ class Parser {
         this.ensureAndConsumeToken(SYM_semicolon, "member field");
     }
 
-    private parseMemberMethod(thisType: TypeSignature, memberMethods: MemberMethodDecl[], allMemberNames: Set<string>, attributes: DeclarationAttibute[], typetemplates: string[]) {
-        const sinfo = this.getCurrentSrcInfo();
+    private parseMemberMethod(memberMethods: MethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
-        //[attr] method ref NAME<T where C...>(params): type [requires...] [ensures...] { ... }
-        this.ensureAndConsumeToken(KW_method, "member method");
-        const refrcvr = this.testAndConsumeTokenIf(KW_ref);
-        const termRestrictions = this.parseTermRestriction(true);
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const mdecl = this.parseMethodInvokeDecl(false, attributes, typeTerms) as MethodDecl;
 
-        this.ensureToken(TokenStrings.Identifier, "member method");
-        const mname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        let recursive: "yes" | "no" | "cond" = "no";
-        if (Parser.attributeSetContains("recursive", attributes) || Parser.attributeSetContains("recursive?", attributes)) {
-            recursive = Parser.attributeSetContains("recursive", attributes) ? "yes" : "cond";
+        if(memberMethods === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a method member on this type");
         }
-        const sig = this.parseInvokableCommon(istask ? InvokableKind.SelfMember : InvokableKind.Member, Parser.attributeSetContains("abstract", attributes), attributes, recursive, terms, typetemplates, termRestrictions, refrcvr);
+        if(mdecl === undefined) {
+            return;
+        } 
+        
+        if(allMemberNames.has(mdecl.name)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${mdecl.name}`);
+        }
+        allMemberNames.add(mdecl.name);
 
-        allMemberNames.add(mname);
-
-        memberMethods.push(new MemberMethodDecl(sinfo, this.m_penv.getCurrentFile(), attributes, mname, sig));
+        if(memberMethods !== undefined && !memberMethods.some((cm) => cm.name === mdecl.name)) {
+            memberMethods.push(mdecl);
+        }
     }
 
-    private parseInvariantsInto(sinfo: SourceInfo, invs: InvariantDecl[], vdates: ValidateDecl[], boundtemplates: Set<string>) {
-        try {
-            this.m_penv.pushFunctionScope(new FunctionScope(new Set<string>(), boundtemplates, new NominalTypeSignature(sinfo, "Core", ["Bool"]), false));
-            while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
-                if(this.testToken(KW_validate)) {
-                    this.consumeToken();
+    private parseTaskMemberMethod(taskMemberMethods: TaskMethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
 
-                    const sinfo = this.getCurrentSrcInfo();
-                    const exp = this.parseConstExpression(true);
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const mdecl = this.parseMethodInvokeDecl(true, attributes, typeTerms) as TaskMethodDecl;
 
-                    vdates.push(new ValidateDecl(sinfo, exp));
+        if(taskMemberMethods === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
+        }
+        if(mdecl === undefined) {
+            return;
+        } 
+        
+        if(allMemberNames.has(mdecl.name)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${mdecl.name}`);
+        }
+        allMemberNames.add(mdecl.name);
+
+        if(taskMemberMethods !== undefined && !taskMemberMethods.some((cm) => cm.name === mdecl.name)) {
+            taskMemberMethods.push(mdecl);
+        }
+    }
+
+    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const adecl = this.parseActionInvokeDecl(attributes, typeTerms) ;
+
+        if(taskMemberAction === undefined) {
+            this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
+        }
+        if(adecl === undefined) {
+            return;
+        } 
+        
+        if(allMemberNames.has(adecl.name)) {
+            this.recordErrorGeneral(sinfo, `Duplicate const member ${adecl.name}`);
+        }
+        allMemberNames.add(adecl.name);
+
+        if(taskMemberAction !== undefined && !taskMemberAction.some((cm) => cm.name === adecl.name)) {
+            taskMemberAction.push(adecl);
+        }
+    }
+
+    private parseInvariantsInto(invs: InvariantDecl[] | undefined, vdates: ValidateDecl[] | undefined, typeTerms: Set<string>) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.env.pushStandardFunctionScope([], typeTerms, this.wellknownTypes.get("Bool") as TypeSignature);
+        while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+            const isvalidate = this.testToken(KW_validate);
+            this.consumeToken();
+
+            let tag: string | undefined = undefined;
+            if(this.testAndConsumeTokenIf(SYM_lbrack)) {
+                if(this.ensureToken(TokenStrings.ASCIIString, "invariant/validate tag")) {
+                    tag = this.consumeTokenAndGetValue();
+                }
+            
+                this.ensureAndConsumeToken(SYM_rbrack, "invariant/validate tag");
+            }
+
+            if(isvalidate) {
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature);
+
+                if(vdates === undefined) {
+                    this.recordErrorGeneral(sinfo, "Cannot have a validate on this type");
                 }
                 else {
-                    this.consumeToken();
-
-                    const level = this.parseBuildInfo(KW_release);
-                    const sinfo = this.getCurrentSrcInfo();
-                    const exp = this.parseConstExpression(true);
-
-                    invs.push(new InvariantDecl(sinfo, level, exp));
+                    vdates.push(new ValidateDecl(this.env.currentFile, sinfo, tag, exp));
                 }
-
-                this.ensureAndConsumeToken(SYM_semicolon, "invariant");
-            }
-        } finally {
-            this.m_penv.popFunctionScope();
-        }
-    }
-
-    private parseOOPMembersCommon(sinfo: SourceInfo, istask: boolean, thisType: TypeSignature, currentNamespace: NamespaceDeclaration, currentTypeNest: string[], currentTermNest: TemplateTermDecl[], currentTerms: Set<string>, 
-        nestedEntities: Map<string, EntityTypeDecl>, invariants: InvariantDecl[], validates: ValidateDecl[],
-        staticMembers: StaticMemberDecl[], staticFunctions: StaticFunctionDecl[], 
-        memberFields: MemberFieldDecl[], memberMethods: MemberMethodDecl[], 
-        controlFields: ControlFieldDecl[] | undefined,
-        statuseffects: TaskStatusEffect, eventeffects: TaskEventEffect, enveffects: TaskEnvironmentEffect, resourceeffects: TaskResourceEffect[]) {
-        let allMemberNames = new Set<string>();
-        let allControlNames = new Set<string>();
-        while (!this.testToken(SYM_rbrace)) {
-            const attributes = this.parseAttributes();
-
-            if(this.testToken(KW_entity)) {
-                this.parseObject(currentNamespace, nestedEntities, currentTypeNest, currentTermNest);
-            }
-            else if(this.testToken(KW_task)) {
-                this.parseTask(currentNamespace, currentTermNest);
-            }
-            else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
-                this.parseInvariantsInto(sinfo, invariants, validates, currentTerms);
-            }
-            else if (this.testToken(KW_const)) {
-                this.parseConstMember(staticMembers, allMemberNames, attributes);
-            }
-            else if (this.testToken(KW_control)) {
-                if(controlFields === undefined) {
-                    this.raiseError(this.getCurrentLine(), "control fields not allowed on declaration of non-task type");
-                }
-                this.parseControlMember(controlFields as ControlFieldDecl[], allControlNames, attributes);
-            }
-            else if (this.testToken(KW_function)) {
-                this.parseStaticFunction(staticFunctions, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
-            }
-            else if (this.testToken(KW_field)) {
-                this.parseMemberField(memberFields, allMemberNames, attributes);
-            }
-            else if(this.testToken(KW_method)) {
-                this.parseMemberMethod(istask, thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name));
-            }
-            else if(this.testToken(KW_action)) {
-                this.parseMemberAction(thisType, memberMethods, allMemberNames, attributes, currentTermNest.map((tt) => tt.name))
-            }
-            else if(this.testToken(KW_effect)) {
-                this.parseEffect(statuseffects, eventeffects, enveffects, resourceeffects);
             }
             else {
-                this.raiseError(this.getCurrentLine(), `Unknown member ${this.peekTokenData()}`);
-            }
-        }
-    }
+                const level = this.parseBuildInfo(KW_release);
+                const exp = this.parseConstExpression(this.wellknownTypes.get("Bool") as TypeSignature);
 
-    private parseConcept(currentDecl: NamespaceDeclaration) {
-        const line = this.getCurrentLine();
-
-        //[attr] concept NAME[T where C...] provides {...}
-        const attributes = this.parseAttributes();
-
-        const sinfo = this.getCurrentSrcInfo();
-        this.ensureAndConsumeToken(KW_concept, "concept declaration");
-        this.ensureToken(TokenStrings.Type, "concept declaration");
-
-        const cname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
-
-        try {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "concept declaration");
-
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [cname], terms.map((term) => new TemplateTypeSignature(sinfo, term.name)));
-
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            const nestedEntities = new Map<string, EntityTypeDecl>();
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [cname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
-
-            this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
-
-            if (currentDecl.checkDeclNameClash(cname)) {
-                this.raiseError(line, "Collision between concept and other names");
-            }
-
-            this.clearRecover();
-
-            if(currentDecl.ns === "Core") {
-                if(cname === "Result") {
-                    attributes.push("__result_type");
-                }
-                else if(cname === "Option") {
-                    attributes.push("__option_type");
+                if(invs === undefined) {
+                    this.recordErrorGeneral(sinfo, "Cannot have an invariant on this type");
                 }
                 else {
-                    //not special
+                    invs.push(new InvariantDecl(this.env.currentFile, sinfo, tag, level, exp));
                 }
             }
 
-            const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, cname, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntities);
-            currentDecl.concepts.set(cname, cdecl);
-            this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + cname, cdecl);
+            this.ensureAndConsumeToken(SYM_semicolon, "invariant");
         }
-        catch (ex) {
-            this.processRecover();
+        this.env.popStandardFunctionScope();
+    }
+
+    private parseOOPMembersCommonAll(istask: boolean, specialConcept: InternalConceptTypeDecl | undefined, typeTerms: Set<string>,
+        invariants: InvariantDecl[] | undefined, validates: ValidateDecl[] | undefined,
+        constMembers: ConstMemberDecl[] | undefined, functionMembers: TypeFunctionDecl[] | undefined, 
+        memberFields: MemberFieldDecl[] | undefined, memberMethods: MethodDecl[] | undefined, 
+        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined 
+        ) {
+        let allMemberNames = new Set<string>();
+
+        while (!this.testToken(SYM_rbrace)) {
+            let attributes: DeclarationAttibute[] = [];
+            while(this.testToken(TokenStrings.Attribute)) {
+                const attr = this.parseAttribute();
+                attributes.push(attr);
+            }
+
+            const sinfo = this.lexer.peekNext().getSourceInfo();
+            if (this.testToken(KW_field)) {
+                this.parseMemberField(memberFields, allMemberNames, attributes);
+            }
+            else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+                this.parseInvariantsInto(invariants, validates, typeTerms);
+            }
+            else if (this.testToken(KW_const)) {
+                this.parseConstMember(constMembers, allMemberNames, attributes);
+            }
+            else if (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
+                if(attributes.length !== 0) {
+                    this.recordErrorGeneral(sinfo, "Cannot have attributes on invariants/validates");
+                }
+
+                this.parseInvariantsInto(invariants, validates, typeTerms);
+            }
+            else if (this.testToken(KW_function) || this.testFollows(KW_recursive, KW_function) || this.testFollows(KW_recursive_q, KW_function)) {
+                this.parseMemberFunction(functionMembers, allMemberNames, attributes, typeTerms);
+            }
+            else if(this.testToken(KW_ref) || this.testFollows(KW_recursive, KW_ref) || this.testFollows(KW_recursive_q, KW_ref)) {
+                if(istask) {
+                    this.parseTaskMemberMethod(taskMemberMethods, allMemberNames, attributes, typeTerms);
+                }
+                else {
+                    this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
+                }
+            }
+            else if(this.testToken(KW_ref) || this.testFollows(KW_recursive, KW_method) || this.testFollows(KW_recursive_q, KW_method)) {
+                if(istask) {
+                    this.parseTaskMemberMethod(taskMemberMethods, allMemberNames, attributes, typeTerms);
+                }
+                else {
+                    this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
+                }
+            }
+            else if(this.testToken(KW_action)) {
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms);
+            }
+            else if(this.testToken(KW_entity)) {
+                if(specialConcept === undefined) {
+                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot have nested entities on this type");
+                }
+                else {
+                    this.parseNestedEntity(specialConcept, allMemberNames, attributes);
+                }
+            }
+            else {
+                this.recordErrorGeneral(sinfo, `Unknown member ${this.peekTokenData()}`);
+
+                //scan to the next declaration or end brace
+                const rpos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
+                if(rpos === undefined) {
+                    this.lexer.currentState().recover();
+                    return; 
+                }
+                else {
+                    this.lexer.currentState().skipToPosition(rpos);
+                }
+            }
         }
     }
 
-    private parseObject(currentDecl: NamespaceDeclaration, enclosingMap: Map<string, EntityTypeDecl> | undefined, currentTypeNest: string[], currentTermNest: TemplateTermDecl[]) {
-        const line = this.getCurrentLine();
+    private parseNestedEntity(specialConcept: InternalConceptTypeDecl, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
+        //special Concept should be Result or APIResult and this should be one of the known subtypes
 
-        //[attr] object NAME[T where C...] provides {...}
-        const attributes = this.parseAttributes();
+        assert(false, "Not implemented");
+    }
 
-        const sinfo = this.getCurrentSrcInfo();
+    private parseEntityRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean) {
+        xxxx;
+    }
+
+    private parseEntityCompleteParse(sinfo: SourceInfo, attributes: DeclarationAttibute[]) {
+        xxxx;
+    }
+
+    private parseEntity(attributes: DeclarationAttibute[]) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
         this.ensureAndConsumeToken(KW_entity, "entity declaration");
-        this.ensureToken(TokenStrings.Type, "entity declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
 
         const ename = this.consumeTokenAndGetValue();
         const terms = this.parseTermDeclarations();
@@ -5027,6 +5088,67 @@ class Parser {
             this.processRecover();
         }
     }
+
+    private parseConcept(attributes: DeclarationAttibute[]) {
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeToken(KW_concept, "concept declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
+
+        const cname = this.consumeTokenAndGetValue();
+        const terms = this.parseTermDeclarations();
+        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
+
+        try {
+            this.setRecover(this.scanCodeParens());
+            this.ensureAndConsumeToken(SYM_lbrace, "concept declaration");
+
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [cname], terms.map((term) => new TemplateTypeSignature(sinfo, term.name)));
+
+            const invariants: InvariantDecl[] = [];
+            const validates: ValidateDecl[] = [];
+            const staticMembers: StaticMemberDecl[] = [];
+            const staticFunctions: StaticFunctionDecl[] = [];
+            const memberFields: MemberFieldDecl[] = [];
+            const memberMethods: MemberMethodDecl[] = [];
+            const nestedEntities = new Map<string, EntityTypeDecl>();
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
+            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [cname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+
+            this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
+
+            if (currentDecl.checkDeclNameClash(cname)) {
+                this.raiseError(line, "Collision between concept and other names");
+            }
+
+            this.clearRecover();
+
+            if(currentDecl.ns === "Core") {
+                if(cname === "Result") {
+                    attributes.push("__result_type");
+                }
+                else if(cname === "Option") {
+                    attributes.push("__option_type");
+                }
+                else {
+                    //not special
+                }
+            }
+
+            const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, cname, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntities);
+            currentDecl.concepts.set(cname, cdecl);
+            this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + cname, cdecl);
+        }
+        catch (ex) {
+            this.processRecover();
+        }
+    }
+
+    
 
     private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
         const line = this.getCurrentLine();
