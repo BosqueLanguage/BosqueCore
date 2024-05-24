@@ -679,21 +679,21 @@ concept Result<T, E> provides IResult {
 }
 
 %** Result type for a top-level API. **%
-concept APIResult<T> provides Some {
+concept APIResult<T, E> provides Some {
     %** API rejected the input on preconds or validates **%
-    __internal __constructable entity Rejected provides APIResult<T> {
+    __internal __constructable entity Rejected provides APIResult<T, E> {
     }
 
     %** API rejected the result as failing a postcondition -- or explicit failure return **%
-    __internal __constructable entity Failed provides APIResult<T> {
+    __internal __constructable entity Failed provides APIResult<T, E> {
     }
 
     %** A hard failure -- unhandled exception **%
-    __internal __constructable entity Error provides APIResult<T> {
+    __internal __constructable entity Error provides APIResult<T, E> {
     }
 
     %** A value is produced any -- maybe softcheck ensures info along with explicit return **%
-    __internal __constructable entity Success provides Result<T> {
+    __internal __constructable entity Success provides Result<T, E> {
     }
 }
 

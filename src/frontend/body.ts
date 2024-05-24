@@ -242,9 +242,6 @@ enum ExpressionTag {
     LiteralTypeDeclIntegralValueExpression = "LiteralTypeDeclIntegralValueExpression",
     LiteralTypeDeclFloatPointValueExpression = "LiteralTypeDeclFloatPointValueExpression",
 
-    StringSliceExpression = "StringSliceExpression",
-    ASCIIStringSliceExpression = "ASCIIStringSliceExpression",
-
     InterpolateExpression = "InterpolateExpression",
 
     HasEnvValueExpression = "HasEnvValueExpression",
@@ -540,23 +537,6 @@ class LiteralTypeDeclFloatPointValueExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.value}_${this.constype.emit(false)}`;
-    }
-}
-
-class StringSliceExpression extends Expression {
-    readonly str: Expression;
-    readonly start: Expression | undefined;
-    readonly end: Expression | undefined;
-
-    constructor(tag: ExpressionTag, sinfo: SourceInfo, str: Expression, start: Expression | undefined, end: Expression | undefined) {
-        super(tag, sinfo);
-        this.str = str;
-        this.start = start;
-        this.end = end;
-    }
-
-    emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return `${this.str.emit(toplevel, fmt)}[${this.start ? this.start.emit(toplevel, fmt) : ""}:${this.end ? this.end.emit(toplevel, fmt) : ""}]`;
     }
 }
 
@@ -2345,7 +2325,7 @@ export {
     ExpressionTag, Expression, ErrorExpression, LiteralExpressionValue, ConstantExpressionValue,
     LiteralSingletonExpression, LiteralSimpleExpression, LiteralRegexExpression, LiteralTypedStringExpression, LiteralTemplateStringExpression, LiteralPathExpression,
     LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
-    StringSliceExpression, InterpolateExpression,
+    InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
     AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,

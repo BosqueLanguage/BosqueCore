@@ -117,33 +117,37 @@ abstract class ConditionDecl extends AbstractDecl {
 
 class PreConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
+    readonly issoft: boolean;
     readonly exp: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
         super(file, sinfo, tag);
 
         this.level = level;
+        this.issoft = issoft;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("requires" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 
 class PostConditionDecl extends ConditionDecl {
     readonly level: BuildLevel;
+    readonly issoft: boolean;
     readonly exp: Expression;
 
-    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, exp: Expression) {
+    constructor(file: string, sinfo: SourceInfo, tag: string | undefined, level: BuildLevel, issoft: boolean, exp: Expression) {
         super(file, sinfo, tag);
 
         this.level = level;
+        this.issoft = issoft;
         this.exp = exp;
     }
 
     emit(fmt: CodeFormatter): string {
-        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
+        return fmt.indent("ensures" + this.emitDiagnosticTag() + (this.issoft ? " softcheck" : "") + (this.level !== "release" ? (" " + this.level) : "") + " " + this.exp.emit(true, fmt) + ";");
     }
 }
 
@@ -837,7 +841,7 @@ class SomethingTypeDecl extends ConstructableTypeDecl {
     }
 }
 
-class MapEntryEntityTypeDecl extends ConstructableTypeDecl {
+class MapEntryTypeDecl extends ConstructableTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -875,7 +879,7 @@ class ListTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
-class StackypeDecl extends AbstractCollectionTypeDecl {
+class StackTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -900,7 +904,7 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
 }
 
 class EntityTypeDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[] = [];
+    readonly fields: MemberFieldDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -911,8 +915,8 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        if(this.members.length !== 0) {
-            bg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.fields.length !== 0) {
+            bg.push(this.fields.map((ff) => ff.emit(fmt)));
         }
         fmt.indentPop();
 
@@ -1017,7 +1021,7 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 }
 
 class ConceptTypeDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[] = [];
+    readonly fields: MemberFieldDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1028,8 +1032,8 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
-        if(this.members.length !== 0) {
-            bg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.fields.length !== 0) {
+            bg.push(this.fields.map((ff) => ff.emit(fmt)));
         }
         fmt.indentPop();
 
@@ -1548,8 +1552,8 @@ export {
     InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     RegexValidatorTypeDecl, ASCIIRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, ASCIIStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
-    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryEntityTypeDecl,
-    AbstractCollectionTypeDecl, ListTypeDecl, StackypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
+    ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
+    AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EntityTypeDecl, 
     InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 

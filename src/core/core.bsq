@@ -2,31 +2,31 @@
 namespace Core;
 
 %** Special type which all values are instances of. **%
-__universal concept Any {
+__internal __universal concept Any {
 }
 
 %** Special type for representing all non-none values. **%
-__universal concept Some provides Any {
+__internal __universal concept Some provides Any {
 }
 
 %** Special type for indicating a value can be used as a key in a collection. **%
-__universal concept KeyType provides Any {
+__internal __universal concept KeyType provides Any {
     function equal<T KeyType>(a: T, b: T): Bool = special_method;
     function less<T KeyType>(a: T, b: T): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__universal concept RegexValidator provides Any {
+__internal __universal concept RegexValidator provides Any {
     function accepts<T: RegexValidator>(s: String): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__universal concept ASCIIRegexValidator provides Any {
+__internal __universal concept ASCIIRegexValidator provides Any {
     function accepts<T: ASCIIRegexValidator>(s: ASCIIString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__universal concept PathValidator provides Any {
+__internal __universal concept PathValidator provides Any {
 }
 
 %** Type for representing the none value. **%
@@ -107,7 +107,6 @@ __internal __constructable __typedeclable entity ASCIIStringOf<T: ASCIIRegexVali
     } 
 }
 
-
 %** Primitive unicode regex value. **%
 __internal entity UnicodeRegex provides Some {
     __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
@@ -129,7 +128,6 @@ __internal entity ASCIIRegex provides Some {
 %** Primitive unicode regex value. **%
 __internal entity PathRegex provides Some {
 }
-
 
 %** Primitive template string value. **%
 __internal __typedeclable __typebase entity TemplateString provides Some {
@@ -155,7 +153,7 @@ namespace Interpolate {
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%
-__universal concept Object provides Some {
+__internal __universal concept Object provides Some {
 }
 
 #if CHECK_LIBS
@@ -165,7 +163,7 @@ internal function s_reshavoc<T>(): T = s_reshavoc;
 #endif
 
 %** All collections provide this concept so we can expand them with spread operators. **%
-__universal concept Expandoable<T> provides Some {
+__internal __universal concept Expandoable<T> provides Some {
 }
 
 __assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;
