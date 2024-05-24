@@ -7,85 +7,68 @@ namespace ListOps {
     __safe function s_list_create<T>(lr: ListRepr<T>?): List<T> = s_list_create;
 
     __safe function s_list_empty<T>(l: List<T>): Bool {
-        return ListOps::s_list_value(l)?none;
+        return ListOps::s_list_value<T>(l)?none;
     } 
 
     __safe function s_list_size<T>(l: List<T>): Nat {
-        let vv = ListOps::s_list_value(l);
-        return if none(vv) then 0n else $vv.size();
+        return ListRepr<T>::csize(ListOps::s_list_value<T>(l));
     } 
 
     function s_list_get<T>(l: List<T>, i: Nat): T {
-        return ListOps::s_list_value(l)@<ListRepr<T>>.get(i);
+        return ListOps::s_list_value<T>(l)@!none.get(i);
     }
 
     function s_list_back<T>(l: List<T>): T {
+        let ll = ListOps::s_list_value<T>(l);
+        return ll!none.get(ListRepr<T>::csize(ll) - 1n);
     }
 
     function s_list_front<T>(l: List<T>): T {
+        let ll = ListOps::s_list_value<T>(l);
+        return ll!none.get(0n);
     }
 }
 
 protected datatype ListRepr<T> provides Some 
 of
-Leaf { value: T }
-| Node { count: Nat, l: ListRepr<T>?, r: ListRepr<T>? }
+ListReprLeaf { 
+    field value: T; 
+}
+| ListReprNode { 
+    field count: Nat = ListRepr<T>::csize($l) + ListRepr<T>::csize($r);
+    field l: ListRepr<T>?;
+    field r: ListRepr<T>?;
+}
 & {
-    method size(): Nat {
-        match (this) {
-            Leaf   => return 1;
-            | Node => return $this.count;
+    function csize(l: ListRepr<T>?): Nat {
+        if none(l) {
+            return 0n;
         }
-    }
-
-    method back(): T {
-        match (this) {
-            Leaf => {
-                return $this.value;
-            }
-            | Node => {
-                if($this.r?none) {
-                    return $this.r@!none.back();
-                }
-                else {
-                    return $this.l@!none.back();
-                }
-            }
-        }
-    }
-
-    method front(): T {
-        match (this) {
-            Leaf => {
-                return $this.value;
-            }
-            | Node => {
-                if($this.l?none) {
-                    return $this.l@!none.front();
-                }
-                else {
-                    return $this.r@!none.front();
-                }
+        else {
+            match (l) {
+                ListReprLeaf<T>   => return 1n;
+                | ListReprNode<T> => return $l.count;
             }
         }
     }
 
     method get(i: Nat): T {
         match (this) {
-            Leaf => {
+            ListReprLeaf<T> => {
                 assert i == 0n;
                 return $this.value;
             }
-            | Node => {
-                if($this.l?none) {
+            | ListReprNode<T> => {
+                if $l = none ($this.l) {
                     return $this.r@!none.get(i);
                 }
                 else {
-                    if i < $this.l@!none.size() {
-                        return $this.l@!none.get(i);
+                    let lcount = ListRepr<T>::csize($l);
+                    if (i < lcount) {
+                        return $l.get(i);
                     }
                     else {
-                        return $this.r@!none.get(i - $this.l@!none.size());
+                        return $this.r@!none.get(i - lcount);
                     }
                 }
             }
