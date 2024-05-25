@@ -1041,11 +1041,28 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
     }
 }
 
+class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
+    readonly fields: MemberFieldDecl[] = [];
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        if(this.fields.length !== 0) {
+            bg.push(this.fields.map((ff) => ff.emit(fmt)));
+        }
+        fmt.indentPop();
+
+        return this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
 class DatatypeTypeDecl extends AbstractNominalTypeDecl {
     readonly members: MemberFieldDecl[] = [];
-
-    xxxx;
-    readonly associatedEntityDecls: EntityTypeDecl[] = [];
+    readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1067,7 +1084,7 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
         }
 
-        const edecls = this.associatedEntityDecls.map((aed) => {
+        const edecls = this.associatedMemberEntityDecls.map((aed) => {
             aed.emit(fmt)
         }).join("\n| ");
 
@@ -1557,7 +1574,7 @@ export {
     EntityTypeDecl, 
     InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
-    DatatypeTypeDecl,
+    DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
     TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
     NamespaceConstDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,

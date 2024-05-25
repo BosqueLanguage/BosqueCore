@@ -4,9 +4,9 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIResultTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConstMemberDecl, DeclarationAttibute, EntityTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, ValidateDecl } from "./assembly";
+import { APIResultTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -5115,7 +5115,7 @@ class Parser {
         }
     }
 
-    private parseEntityCompleteParse(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+    private parseEntityCompleteParse(sinfo: SourceInfo, name: string) {
         const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find entity type");
 
@@ -5178,7 +5178,7 @@ class Parser {
                 const hasterms = this.testToken(SYM_langle);
 
                 if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
-                    this.recordErrorGeneral(sinfo, `Collision between function and other names -- ${ename}`);
+                    this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
                 }
 
                 this.parseEntityRegisterType(sinfo, attributes, ename, hasterms, endtok);
@@ -5187,346 +5187,157 @@ class Parser {
                 this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
             }
             else {
-                this.parseEntityCompleteParse(sinfo, attributes, ename);
+                this.parseEntityCompleteParse(sinfo, ename);
             }
         }
+    }
 
-       
+    private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, endtok: string) {
+        let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
-        const ename = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
+        if(PRIMITIVE_ENTITY_TYPE_NAMES.includes(name)) {
+            tdecl = new PrimitiveConceptTypeDecl(this.env.currentFile, sinfo, attributes, name);
+        }
+        else if(name === "Expandoable") {
+            tdecl = new ExpandoableTypeDecl(this.env.currentFile, sinfo, attributes, "Expandoable");
+        }
+        else {
+            assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive concept parse");
 
-        try {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "entity declaration");
+            tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, name);
+        }
 
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [...currentTypeNest, ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
+        assert(tdecl !== undefined, "Failed to register entity type");
+        this.env.currentNamespace.typedecls.push(tdecl);
 
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            const nestedEntities = new Map<string, EntityTypeDecl>();
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [...currentTypeNest, ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
+        //scan to the next declaration or end brace
+        const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
+        if(rpos === undefined) {
+            this.lexer.currentState().recover();
+            return; 
+        }
+        else {
+            this.lexer.currentState().skipToPosition(rpos);
+        }
+    }
 
-            this.ensureAndConsumeToken(SYM_rbrace, "entity declaration");
+    private parseConceptCompleteParse(sinfo: SourceInfo, name: string) {
+        const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === name);
+        assert(tdecl !== undefined, "Failed to find entity type");
 
-            if (currentDecl.checkDeclNameClash([...currentTypeNest, ename].join("::"))) {
-                this.raiseError(line, "Collision between object and other names");
+        const terms = this.parseTypeTemplateTerms();
+        if(terms.length !== 0) {
+            tdecl.terms.push(...terms);
+        }
+
+        const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+        if(provides.length !== 0) {
+            tdecl.provides.push(...provides);
+        }
+
+        if(tdecl instanceof PrimitiveConceptTypeDecl) {
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+        }
+        else if(tdecl instanceof ExpandoableTypeDecl) {
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+        }
+        else {
+            const cdecl = tdecl as ConceptTypeDecl;
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined);
+        }
+    }
+
+    private parseConcept(attributes: DeclarationAttibute[], endtok: string) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            //scan to the next declaration or end brace
+            const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
+            if(rpos === undefined) {
+                this.lexer.currentState().recover();
+                return; 
             }
+            else {
+                this.lexer.currentState().skipToPosition(rpos);
+            }
+        }
+        else {
+            const sinfo = this.lexer.peekNext().getSourceInfo();
 
-            if(currentDecl.ns === "Core") {
-                if(ename === "StringOf") {
-                    attributes.push("__stringof_type");
+            this.ensureAndConsumeToken(KW_entity, "concept declaration");
+            this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
+            const ename = this.consumeTokenAndGetValue();
+
+            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+                const hasterms = this.testToken(SYM_langle);
+
+                if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
+                    this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
                 }
-                else if(ename === "ASCIIStringOf") {
-                    attributes.push("__asciistringof_type");
+
+                this.parseConceptRegisterType(sinfo, attributes, ename, hasterms, endtok);
+
+                this.env.currentNamespace.declaredNames.add(ename);
+                this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
+            }
+            else {
+                this.parseConceptCompleteParse(sinfo, ename);
+            }
+        }
+    }
+    
+    private parseEnum(attributes: DeclarationAttibute[], endtok: string) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+            //scan to the next declaration or end brace
+            const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
+            if(rpos === undefined) {
+                this.lexer.currentState().recover();
+                return; 
+            }
+            else {
+                this.lexer.currentState().skipToPosition(rpos);
+            }
+        }
+        else {
+            const sinfo = this.lexer.peekNext().getSourceInfo();
+
+            this.ensureAndConsumeToken(KW_enum, "enum declaration");
+            this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
+            const ename = this.consumeTokenAndGetValue();
+
+            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+                if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
+                    this.recordErrorGeneral(sinfo, `Collision between enum and other names -- ${ename}`);
                 }
-                else if(ename === "Ok") {
-                    attributes.push("__ok_type");
-                }
-                else if(ename === "Err") {
-                    attributes.push("__err_type");
-                }
-                else if(ename === "Nothing") {
-                    attributes.push("__nothing_type");
-                }
-                else if(ename === "Something") {
-                    attributes.push("__something_type");
-                }
-                else if(ename === "MapEntry") {
-                    attributes.push("__mapentry_type");
-                }
-                else if(ename === "List") {
-                    attributes.push("__list_type");
-                }
-                else if(ename === "Stack") {
-                    attributes.push("__stack_type");
-                }
-                else if(ename === "Queue") {
-                    attributes.push("__queue_type");
-                }
-                else if(ename === "Set") {
-                    attributes.push("__set_type");
-                }
-                else if(ename === "Map") {
-                    attributes.push("__map_type");
-                }
-                else if(ename === "SeqList") {
-                    attributes.push("__seqlist_type");
-                }
-                else if(ename === "SeqMap") {
-                    attributes.push("__seqmap_type");
-                }
-                else if(ename === "Path") {
-                    attributes.push("__path_type");
-                }
-                else if(ename === "PathFragment") {
-                    attributes.push("__pathfragment_type");
-                }
-                else if(ename === "PathGlob") {
-                    attributes.push("__pathglob_type");
+
+                const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
+                    this.ensureToken(TokenStrings.IdentifierName, "enum member");
+                    return this.consumeTokenAndGetValue();
+                });
+
+                const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members);
+                this.env.currentNamespace.typedecls.push(enumtype);
+
+                this.env.currentNamespace.declaredNames.add(ename);
+                this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: false});
+            }
+            else {
+                const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
+                assert(tdecl !== undefined, "Failed to find entity type");
+
+                tdecl.provides.push(this.wellknownTypes.get("Some") as TypeSignature);
+
+                //scan to the next declaration or end brace
+                const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
+                if(rpos === undefined) {
+                    this.lexer.currentState().recover();
                 }
                 else {
-                    //not special
+                    this.lexer.currentState().skipToPosition(rpos);
                 }
             }
-
-            this.clearRecover();
-
-            const fename = [...currentTypeNest, ename].join("::");
-            const feterms = [...currentTermNest, ...terms];
-
-            const edecl = new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, fename, feterms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntities);
-            this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + fename, edecl);
-            currentDecl.objects.set(ename, edecl);
-            
-            if(enclosingMap !== undefined) {
-                enclosingMap.set(ename, edecl);
-            }
-        }
-        catch (ex) {
-            this.processRecover();
         }
     }
 
-    private parseConcept(attributes: DeclarationAttibute[]) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
-
-        const sinfo = this.lexer.peekNext().getSourceInfo();
-
-        this.ensureAndConsumeToken(KW_concept, "concept declaration");
-        this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
-
-        const cname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [SYM_lbrace]);
-
-        try {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "concept declaration");
-
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [cname], terms.map((term) => new TemplateTypeSignature(sinfo, term.name)));
-
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            const nestedEntities = new Map<string, EntityTypeDecl>();
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [cname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
-
-            this.ensureAndConsumeToken(SYM_rbrace, "concept declaration");
-
-            if (currentDecl.checkDeclNameClash(cname)) {
-                this.raiseError(line, "Collision between concept and other names");
-            }
-
-            this.clearRecover();
-
-            if(currentDecl.ns === "Core") {
-                if(cname === "Result") {
-                    attributes.push("__result_type");
-                }
-                else if(cname === "Option") {
-                    attributes.push("__option_type");
-                }
-                else {
-                    //not special
-                }
-            }
-
-            const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, cname, terms, provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, nestedEntities);
-            currentDecl.concepts.set(cname, cdecl);
-            this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + cname, cdecl);
-        }
-        catch (ex) {
-            this.processRecover();
-        }
-    }
-
-    
-
-    private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
-        const line = this.getCurrentLine();
-
-        //[attr] task NAME[T where C...] provides {...}
-        const attributes = this.parseAttributes();
-
-        const sinfo = this.getCurrentSrcInfo();
-        this.ensureAndConsumeToken(KW_task, "task declaration");
-        this.ensureToken(TokenStrings.Type, "task declaration");
-
-        const ename = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-
-        try {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "task declaration");
-
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
-
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            const nestedEntities = new Map<string, EntityTypeDecl>();
-            
-            const controlfields: ControlFieldDecl[] = [];
-
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            const resourceeffects: TaskResourceEffect[] = [];
-            this.parseOOPMembersCommon(sinfo, true, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
-
-            if(invariants.length !== 0) {
-                this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
-            }
-
-            if(nestedEntities.size !== 0) {
-                this.raiseError(sinfo.line, "Cannot define nested types on tasks");
-            }
-
-            this.ensureAndConsumeToken(SYM_rbrace, "task declaration");
-
-            if (currentDecl.checkDeclNameClash(ename)) {
-                this.raiseError(line, "Collision between task and other names");
-            }
-
-            this.clearRecover();
-
-            const feterms = [...currentTermNest, ...terms];
-
-            const mainfunc = staticFunctions.find((ff) => ff.name === "main");
-            if(mainfunc === undefined) {
-                this.raiseError(sinfo.line, "Does not have a \"main\" function defined")
-            }
-
-            const actions = memberMethods.filter((mf) => mf.attributes.includes("task_action"));
-            const onfuncs = {
-                onCanel: memberMethods.find((mf) => mf.name === "onCancel"),
-                onFailure: memberMethods.find((mf) => mf.name === "onFailure"), 
-                onTimeout: memberMethods.find((mf) => mf.name === "onTimeout")
-            };
-
-            const lfuncs = {
-                logStart: memberMethods.find((mf) => mf.name === "logStart"),
-                logEnd: memberMethods.find((mf) => mf.name === "logEnd"), 
-                taskEnsures: memberMethods.find((mf) => mf.name === "taskEnsures"),
-                taskWarns: memberMethods.find((mf) => mf.name === "taskWarns")
-            };
-
-            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, lfuncs, statuseffect, eventeffect, enveffect, resourceeffects);
-            this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
-            currentDecl.tasks.set(ename, edecl);
-        }
-        catch (ex) {
-            this.processRecover();
-        }
-    }
-
-    private parseEnum(currentDecl: NamespaceDeclaration) {
-        const line = this.getCurrentLine();
-
-        //[attr] enum NAME {...} [& {...}]
-        const attributes = this.parseAttributes();
-
-        const sinfo = this.getCurrentSrcInfo();
-
-        this.ensureAndConsumeToken(KW_enum, "enum declaration");
-        this.ensureToken(TokenStrings.Type, "enum declaration");
-
-        const ename = this.consumeTokenAndGetValue();
-        const etype = new NominalTypeSignature(sinfo, currentDecl.ns, [ename]);
-
-        if (currentDecl.checkDeclNameClash(ename)) {
-            this.raiseError(line, "Collision between object and other names");
-        }
-
-        try {
-            this.setRecover(this.scanCodeParens());
-
-            const enums = this.parseListOf<string>("enum declaration", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                this.ensureToken(TokenStrings.Identifier, "enum member");
-                return this.consumeTokenAndGetValue();
-            });
-            
-            const provides = [
-                [new NominalTypeSignature(sinfo, "Core", ["Some"]), undefined],
-                [new NominalTypeSignature(sinfo, "Core", ["KeyType"]), undefined]
-            ] as [TypeSignature, TypeConditionRestriction | undefined][];
-
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-    
-            for(let i = 0; i < enums.length; ++i) {
-                const exp = new LiteralIntegralExpression(sinfo, i.toString() + "n", this.m_penv.SpecialNatSignature);
-                const enm = new StaticMemberDecl(sinfo, this.m_penv.getCurrentFile(), ["__enum"], enums[i], etype, new ConstantExpressionValue(exp, new Set<string>()));
-                staticMembers.push(enm);
-            }
-
-            if(this.testAndConsumeTokenIf(SYM_amp)) {
-                this.setRecover(this.scanCodeParens());
-                this.ensureAndConsumeToken(SYM_lbrace, "enum extension code");
-    
-                const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], []);
-    
-                const nestedEntities = new Map<string, EntityTypeDecl>();
-                const statuseffect = new TaskStatusEffect([]);
-                const eventeffect = new TaskEventEffect([]);
-                const enveffect = new TaskEnvironmentEffect([]);
-                this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [ename], [], new Set<string>(), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
-    
-                if(invariants.length !== 0 || validates.length !== 0) {
-                    this.raiseError(sinfo.line, "cannot declare invariants on enum");
-                }
-
-                if(memberFields.length !== 0) {
-                    this.raiseError(sinfo.line, "cannot declare member fields on enum");
-                }
-
-                this.ensureAndConsumeToken(SYM_rbrace, "enum extension code");
-    
-                this.clearRecover();
-            }
-
-            if (currentDecl.checkDeclNameClash(ename)) {
-                this.raiseError(line, "Collision between object and other names");
-            }
-
-            if(invariants.length !== 0) {
-                this.raiseError(line, "Cannot have invariant function on Enum types");
-            }
-
-            attributes.push("__enum_type", "__constructable");
-
-            this.clearRecover();
-            currentDecl.objects.set(ename, new EntityTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, [], provides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>()));
-            this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, currentDecl.objects.get(ename) as EntityTypeDecl);
-        }
-        catch (ex) {
-            this.processRecover();
-        }
-    }
-
-    private parseTypeDecl(currentDecl: NamespaceDeclaration) {
+    private parseTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
         const line = this.getCurrentLine();
         const attributes = this.parseAttributes();
 
@@ -5643,7 +5454,7 @@ class Parser {
         }
     }
 
-    private parseDataTypeDecl(currentDecl: NamespaceDeclaration) {
+    private parseDataTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
         const line = this.getCurrentLine();
         const sinfo = this.getCurrentSrcInfo();
        
@@ -5800,6 +5611,87 @@ class Parser {
         const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__adt_concept_type"], currentDecl.ns, iname, terms, provides, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, new Map<string, EntityTypeDecl>());
         currentDecl.concepts.set(iname, cdecl);
         this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, cdecl);
+    }
+
+    private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
+        const line = this.getCurrentLine();
+
+        //[attr] task NAME[T where C...] provides {...}
+        const attributes = this.parseAttributes();
+
+        const sinfo = this.getCurrentSrcInfo();
+        this.ensureAndConsumeToken(KW_task, "task declaration");
+        this.ensureToken(TokenStrings.Type, "task declaration");
+
+        const ename = this.consumeTokenAndGetValue();
+        const terms = this.parseTermDeclarations();
+
+        try {
+            this.setRecover(this.scanCodeParens());
+            this.ensureAndConsumeToken(SYM_lbrace, "task declaration");
+
+            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
+
+            const invariants: InvariantDecl[] = [];
+            const validates: ValidateDecl[] = [];
+            const staticMembers: StaticMemberDecl[] = [];
+            const staticFunctions: StaticFunctionDecl[] = [];
+            const memberFields: MemberFieldDecl[] = [];
+            const memberMethods: MemberMethodDecl[] = [];
+            const nestedEntities = new Map<string, EntityTypeDecl>();
+            
+            const controlfields: ControlFieldDecl[] = [];
+
+            const statuseffect = new TaskStatusEffect([]);
+            const eventeffect = new TaskEventEffect([]);
+            const enveffect = new TaskEnvironmentEffect([]);
+            const resourceeffects: TaskResourceEffect[] = [];
+            this.parseOOPMembersCommon(sinfo, true, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
+
+            if(invariants.length !== 0) {
+                this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
+            }
+
+            if(nestedEntities.size !== 0) {
+                this.raiseError(sinfo.line, "Cannot define nested types on tasks");
+            }
+
+            this.ensureAndConsumeToken(SYM_rbrace, "task declaration");
+
+            if (currentDecl.checkDeclNameClash(ename)) {
+                this.raiseError(line, "Collision between task and other names");
+            }
+
+            this.clearRecover();
+
+            const feterms = [...currentTermNest, ...terms];
+
+            const mainfunc = staticFunctions.find((ff) => ff.name === "main");
+            if(mainfunc === undefined) {
+                this.raiseError(sinfo.line, "Does not have a \"main\" function defined")
+            }
+
+            const actions = memberMethods.filter((mf) => mf.attributes.includes("task_action"));
+            const onfuncs = {
+                onCanel: memberMethods.find((mf) => mf.name === "onCancel"),
+                onFailure: memberMethods.find((mf) => mf.name === "onFailure"), 
+                onTimeout: memberMethods.find((mf) => mf.name === "onTimeout")
+            };
+
+            const lfuncs = {
+                logStart: memberMethods.find((mf) => mf.name === "logStart"),
+                logEnd: memberMethods.find((mf) => mf.name === "logEnd"), 
+                taskEnsures: memberMethods.find((mf) => mf.name === "taskEnsures"),
+                taskWarns: memberMethods.find((mf) => mf.name === "taskWarns")
+            };
+
+            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, lfuncs, statuseffect, eventeffect, enveffect, resourceeffects);
+            this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
+            currentDecl.tasks.set(ename, edecl);
+        }
+        catch (ex) {
+            this.processRecover();
+        }
     }
 
     private parseEndOfStream() {
