@@ -589,7 +589,7 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
 }
 
 class TypedeclTypeDecl extends AbstractNominalTypeDecl {
-    readonly valuetype: TypeSignature;
+    valuetype: TypeSignature;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, valuetype: TypeSignature) {
         super(file, sinfo, attributes, name);
@@ -604,7 +604,7 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
         const bg = this.emitBodyGroups(fmt);
         fmt.indentPop();
 
-        if(bg.length === 0) {
+        if(bg.length === 0 && this.provides.length === 1 && this.provides[0].emit(true) === "Some") {
             return tdcl + ";";
         }
         else {
