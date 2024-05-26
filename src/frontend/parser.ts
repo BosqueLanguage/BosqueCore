@@ -4,16 +4,15 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIResultTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, ValidateDecl } from "./assembly";
+import { APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
 type ParsePhase = number;
-const ParsePhase_RegisterNamespaces: ParsePhase = 1;
-const ParsePhase_RegisterTypes: ParsePhase = 2;
-const ParsePhase_CompleteParse: ParsePhase = 3;
+const ParsePhase_RegisterNames: ParsePhase = 1;
+const ParsePhase_CompleteParsing: ParsePhase = 2;
 
 function isParsePhase_Enabled(phase: ParsePhase, current: ParsePhase): boolean {
     return phase === current;
@@ -90,7 +89,7 @@ const NAMESPACE_DECL_FIRSTS = [
     KW_function, KW_predicate, 
     KW_namespace, KW_api,
     KW_const,
-    KW_enum, KW_type, KW_typedecl, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
+    KW_enum, KW_type, KW_entity, KW_concept, KW_typedecl, KW_datatype, KW_task,
     KW_event, KW_status,
     KW_validator,
     KW_errtest, KW_chktest
@@ -1606,7 +1605,7 @@ class Parser {
     }
 
     private parseIdentifierAccessChain(): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const nsroot = this.peekTokenData();
 
@@ -4536,7 +4535,7 @@ class Parser {
             this.consumeToken();
         }
 
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(chain.length === 0) {
                 this.recordErrorGeneral(sinfo, "Expected a namespace identifier");
 
@@ -4572,7 +4571,7 @@ class Parser {
             }
         }
         else {
-            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
+            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing)) {
                 //make sure namespace is valid
 
                 let iidx = 1;
@@ -4592,6 +4591,17 @@ class Parser {
         }
     }
 
+    //scan (or recover) to the next declaration or end brace
+    private namespaceParseScanCover(endtok: string) {
+        const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
+        if(rpos === undefined) {
+            this.lexer.currentState().recover();
+        }
+        else {
+            this.lexer.currentState().skipToPosition(rpos);
+        }
+    }
+
     private parseNamespaceMembers() {
         xxxx;
     }
@@ -4607,7 +4617,7 @@ class Parser {
         }
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if (this.env.currentNamespace.checkDeclNameClashNS(nsname)) {
                 this.recordErrorGeneral(sinfo, `Collision between namespace and other names -- ${nsname}`);
             }
@@ -4645,7 +4655,7 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "type alias");
         const tyname = this.consumeTokenAndGetValue();
 
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if (this.env.currentNamespace.checkDeclNameClashType(tyname, this.testToken(SYM_langle))) {
                 this.recordErrorGeneral(sinfo, `Collision between type alias and other names -- ${tyname}`);
             }
@@ -4653,14 +4663,6 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(tyname);
             this.env.currentNamespace.declaredTypeNames.push({name: tyname, hasterms: this.testToken(SYM_langle)});
             
-            this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeToken(SYM_semicolon, "type alias");
-        }
-        else if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
-            if(this.env.currentNamespace.typeDefs.find((td) => td.name === tyname) === undefined){
-                this.env.currentNamespace.typeDefs.push(new NamespaceTypedef(this.env.currentFile, sinfo, attributes, tyname, [], new ErrorTypeSignature(sinfo, undefined)));
-            }
-
             this.scanOverCodeTo(SYM_semicolon);
             this.ensureAndConsumeToken(SYM_semicolon, "type alias");
         }
@@ -4687,7 +4689,7 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "const member");
         const sname = this.consumeTokenAndGetValue();
 
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashMember(sname)) {
                 this.recordErrorGeneral(sinfo, `Collision between const and other names -- ${sname}`);
             }
@@ -4695,10 +4697,6 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(sname);
             this.env.currentNamespace.declaredMemberNames.add(sname);
 
-            this.scanOverCodeTo(SYM_semicolon);
-            this.ensureAndConsumeToken(SYM_semicolon, "const member");
-        }
-        else if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
             this.scanOverCodeTo(SYM_semicolon);
             this.ensureAndConsumeToken(SYM_semicolon, "const member");
         }
@@ -4718,10 +4716,10 @@ class Parser {
         }
     }
 
-    private parseNamespaceFunction(attributes: DeclarationAttibute[]) {
+    private parseNamespaceFunction(attributes: DeclarationAttibute[], endtok: string) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             this.consumeTokenIf(KW_recursive);
             this.consumeTokenIf(KW_recursive_q);
             this.consumeToken();
@@ -4734,10 +4732,7 @@ class Parser {
             this.env.currentNamespace.declaredNames.add(fname);
             this.env.currentNamespace.declaredMemberNames.add(fname);
 
-            this.scanOverCodeTo(...NAMESPACE_DECL_FIRSTS);
-        }
-        else if (isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
-            this.scanOverCodeTo(...NAMESPACE_DECL_FIRSTS);
+            this.namespaceParseScanCover(endtok);
         }
         else {
             let fkind: "namespace" | "predicate" | "chktest" | "errtest" = "namespace";
@@ -4763,7 +4758,7 @@ class Parser {
     }
 
     private parseProvides(sinfo: SourceInfo, endtoken: string[]): TypeSignature[] {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         let provides: TypeSignature[] = [];
         if (this.testAndConsumeTokenIf(KW_provides)) {
@@ -4784,7 +4779,7 @@ class Parser {
     }
 
     private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         this.ensureAndConsumeToken(KW_const, "const member");
@@ -4814,7 +4809,7 @@ class Parser {
     }
 
     private parseMemberFunction(memberFunctions: TypeFunctionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         const fdecl = this.parseFunctionInvokeDecl("typescope", attributes, typeTerms);
@@ -4837,7 +4832,7 @@ class Parser {
     }
 
     private parseMemberField(memberFields: MemberFieldDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         this.ensureAndConsumeToken(KW_field, "member field");
@@ -4868,7 +4863,7 @@ class Parser {
     }
 
     private parseMemberMethod(memberMethods: MethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         const mdecl = this.parseMethodInvokeDecl(false, attributes, typeTerms) as MethodDecl;
@@ -4891,7 +4886,7 @@ class Parser {
     }
 
     private parseTaskMemberMethod(taskMemberMethods: TaskMethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         const mdecl = this.parseMethodInvokeDecl(true, attributes, typeTerms) as TaskMethodDecl;
@@ -4914,7 +4909,7 @@ class Parser {
     }
 
     private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         const adecl = this.parseActionInvokeDecl(attributes, typeTerms) ;
@@ -4937,7 +4932,7 @@ class Parser {
     }
 
     private parseInvariantsInto(invs: InvariantDecl[] | undefined, vdates: ValidateDecl[] | undefined, typeTerms: Set<string>) {
-        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParse));
+        assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         this.env.pushStandardFunctionScope([], typeTerms, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -5065,7 +5060,7 @@ class Parser {
         assert(false, "Not implemented");
     }
 
-    private parseEntityRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, endtok: string) {
+    private parseEntityRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
         if(PRIMITIVE_ENTITY_TYPE_NAMES.includes(name)) {
@@ -5103,16 +5098,6 @@ class Parser {
 
         assert(tdecl !== undefined, "Failed to register entity type");
         this.env.currentNamespace.typedecls.push(tdecl);
-
-        //scan to the next declaration or end brace
-        const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-        if(rpos === undefined) {
-            this.lexer.currentState().recover();
-            return; 
-        }
-        else {
-            this.lexer.currentState().skipToPosition(rpos);
-        }
     }
 
     private parseEntityCompleteParse(sinfo: SourceInfo, name: string) {
@@ -5156,39 +5141,28 @@ class Parser {
     }
 
     private parseEntity(attributes: DeclarationAttibute[], endtok: string) {
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
-            //scan to the next declaration or end brace
-            const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            if(rpos === undefined) {
-                this.lexer.currentState().recover();
-                return; 
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeToken(KW_entity, "entity declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
+        const ename = this.consumeTokenAndGetValue();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            const hasterms = this.testToken(SYM_langle);
+
+            if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
+                this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
-            else {
-                this.lexer.currentState().skipToPosition(rpos);
-            }
+
+            this.parseEntityRegisterType(sinfo, attributes, ename);
+
+            this.env.currentNamespace.declaredNames.add(ename);
+            this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
+
+            this.namespaceParseScanCover(endtok);
         }
         else {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
-
-            this.ensureAndConsumeToken(KW_entity, "entity declaration");
-            this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
-            const ename = this.consumeTokenAndGetValue();
-
-            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
-                const hasterms = this.testToken(SYM_langle);
-
-                if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
-                    this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
-                }
-
-                this.parseEntityRegisterType(sinfo, attributes, ename, hasterms, endtok);
-
-                this.env.currentNamespace.declaredNames.add(ename);
-                this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
-            }
-            else {
-                this.parseEntityCompleteParse(sinfo, ename);
-            }
+            this.parseEntityCompleteParse(sinfo, ename);
         }
     }
 
@@ -5210,15 +5184,7 @@ class Parser {
         assert(tdecl !== undefined, "Failed to register entity type");
         this.env.currentNamespace.typedecls.push(tdecl);
 
-        //scan to the next declaration or end brace
-        const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-        if(rpos === undefined) {
-            this.lexer.currentState().recover();
-            return; 
-        }
-        else {
-            this.lexer.currentState().skipToPosition(rpos);
-        }
+        this.namespaceParseScanCover(endtok);
     }
 
     private parseConceptCompleteParse(sinfo: SourceInfo, name: string) {
@@ -5248,92 +5214,118 @@ class Parser {
     }
 
     private parseConcept(attributes: DeclarationAttibute[], endtok: string) {
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
-            //scan to the next declaration or end brace
-            const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            if(rpos === undefined) {
-                this.lexer.currentState().recover();
-                return; 
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeToken(KW_entity, "concept declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
+        const ename = this.consumeTokenAndGetValue();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            const hasterms = this.testToken(SYM_langle);
+
+            if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
+                this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
-            else {
-                this.lexer.currentState().skipToPosition(rpos);
-            }
+
+            this.parseConceptRegisterType(sinfo, attributes, ename, hasterms, endtok);
+
+            this.env.currentNamespace.declaredNames.add(ename);
+            this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
         }
         else {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
-
-            this.ensureAndConsumeToken(KW_entity, "concept declaration");
-            this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
-            const ename = this.consumeTokenAndGetValue();
-
-            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
-                const hasterms = this.testToken(SYM_langle);
-
-                if(this.env.currentNamespace.checkDeclNameClashType(ename, hasterms)) {
-                    this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
-                }
-
-                this.parseConceptRegisterType(sinfo, attributes, ename, hasterms, endtok);
-
-                this.env.currentNamespace.declaredNames.add(ename);
-                this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
-            }
-            else {
-                this.parseConceptCompleteParse(sinfo, ename);
-            }
+            this.parseConceptCompleteParse(sinfo, ename);
         }
     }
     
     private parseEnum(attributes: DeclarationAttibute[], endtok: string) {
-        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNamespaces)) {
-            //scan to the next declaration or end brace
-            const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            if(rpos === undefined) {
-                this.lexer.currentState().recover();
-                return; 
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeToken(KW_enum, "enum declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
+        const ename = this.consumeTokenAndGetValue();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
+                this.recordErrorGeneral(sinfo, `Collision between enum and other names -- ${ename}`);
             }
-            else {
-                this.lexer.currentState().skipToPosition(rpos);
-            }
+
+            const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
+                this.ensureToken(TokenStrings.IdentifierName, "enum member");
+                return this.consumeTokenAndGetValue();
+            });
+
+            const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members);
+            this.env.currentNamespace.typedecls.push(enumtype);
+
+            this.env.currentNamespace.declaredNames.add(ename);
+            this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: false});
         }
         else {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
+            assert(tdecl !== undefined, "Failed to find entity type");
 
-            this.ensureAndConsumeToken(KW_enum, "enum declaration");
-            this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
-            const ename = this.consumeTokenAndGetValue();
+            tdecl.provides.push(this.wellknownTypes.get("Some") as TypeSignature);
 
-            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterTypes)) {
-                if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
-                    this.recordErrorGeneral(sinfo, `Collision between enum and other names -- ${ename}`);
-                }
+            this.namespaceParseScanCover(endtok);
+        }
+    }
 
-                const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
-                    this.ensureToken(TokenStrings.IdentifierName, "enum member");
-                    return this.consumeTokenAndGetValue();
-                });
+    private parseValidatorTypedecl(attributes: DeclarationAttibute[], endtok: string) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-                const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members);
-                this.env.currentNamespace.typedecls.push(enumtype);
+        this.ensureAndConsumeToken(KW_validator, "validator declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "validator declaration");
+        const iname = this.consumeTokenAndGetValue();
 
-                this.env.currentNamespace.declaredNames.add(ename);
-                this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: false});
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
+                this.recordErrorGeneral(sinfo, `Collision between validator decl and other names -- ${iname}`);
             }
-            else {
-                const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
-                assert(tdecl !== undefined, "Failed to find entity type");
 
-                tdecl.provides.push(this.wellknownTypes.get("Some") as TypeSignature);
+            this.ensureAndConsumeToken(SYM_eq, "validator declaration");
+            if(this.testToken(TokenStrings.Regex)) {
+                const vregex = this.consumeTokenAndGetValue();
 
-                //scan to the next declaration or end brace
-                const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-                if(rpos === undefined) {
-                    this.lexer.currentState().recover();
+                if(vregex.endsWith("/")) {
+                    const vdecl = new RegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
+                    this.env.currentNamespace.typedecls.push(vdecl);
                 }
                 else {
-                    this.lexer.currentState().skipToPosition(rpos);
+                    const vdecl = new ASCIIRegexValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, vregex);
+                    this.env.currentNamespace.typedecls.push(vdecl);
                 }
+
+                assert(false, "TODO: we need to validate the regex parse too!!!");
             }
+            else if(this.testToken(TokenStrings.PathItem)) {
+                const pthglb = this.consumeTokenAndGetValue();
+
+                if(!pthglb.startsWith("g")) {
+                    this.recordErrorGeneral(sinfo, "Path glob must start with end with a 'g'");
+                }
+
+                const vdecl = new PathValidatorTypeDecl(this.env.currentFile, sinfo, attributes, iname, pthglb);
+                this.env.currentNamespace.typedecls.push(vdecl);
+
+                assert(false, "TODO: we need to validate the path glob parse too!!!");
+            }
+            else {
+                this.recordErrorGeneral(sinfo, "Invalid validator declaration");
+                this.namespaceParseScanCover(endtok);
+            }
+
+            this.env.currentNamespace.declaredNames.add(iname);
+            this.env.currentNamespace.declaredTypeNames.push({name: iname, hasterms: false});
+
+            this.ensureAndConsumeToken(SYM_semicolon, "validator declaration");
+        }
+        else {
+            const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === iname);
+            assert(tdecl !== undefined, "Failed to find entity type");
+
+            tdecl.provides.push(this.wellknownTypes.get("Some") as TypeSignature);
+
+            this.namespaceParseScanCover(endtok);
         }
     }
 
