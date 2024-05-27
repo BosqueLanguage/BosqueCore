@@ -4,9 +4,9 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
+import { APIDecl, APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -1776,6 +1776,30 @@ class Parser {
             }
 
             return new DeclarationAttibute(attr, args, undefined);
+        }
+    }
+
+    private parseAdditionalTypeDeclTag(): AdditionalTypeDeclTag {
+        let isStatus = false;
+        let isEvent = false;
+
+        while(this.testToken(KW_status) || this.testToken(KW_event)) {
+            if(isStatus || isEvent) {
+                this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot have multiple status/event tags");
+            }
+
+            isStatus = isStatus || this.testAndConsumeTokenIf(KW_status);
+            isEvent = isEvent || this.testAndConsumeTokenIf(KW_event);
+        }
+
+        if(isStatus) {
+            return AdditionalTypeDeclTag.Status;
+        }
+        else if(isEvent) {
+            return AdditionalTypeDeclTag.Event;
+        }
+        else {
+            return AdditionalTypeDeclTag.Std;
         }
     }
 
@@ -5066,7 +5090,7 @@ class Parser {
         assert(false, "Not implemented");
     }
 
-    private parseEntityRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+    private parseEntityRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
         if(PRIMITIVE_ENTITY_TYPE_NAMES.includes(name)) {
@@ -5099,7 +5123,7 @@ class Parser {
         else {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse");
 
-            tdecl = new EntityTypeDecl(this.env.currentFile, sinfo, attributes, name);
+            tdecl = new EntityTypeDecl(this.env.currentFile, sinfo, attributes, name, etag);
         }
 
         assert(tdecl !== undefined, "Failed to register entity type");
@@ -5149,6 +5173,7 @@ class Parser {
     private parseEntity(attributes: DeclarationAttibute[], endtok: string) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
+        const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
         const ename = this.consumeTokenAndGetValue();
@@ -5160,7 +5185,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            this.parseEntityRegisterType(sinfo, attributes, ename);
+            this.parseEntityRegisterType(sinfo, attributes, ename, etag);
 
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
@@ -5172,7 +5197,7 @@ class Parser {
         }
     }
 
-    private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, hasTerms: boolean, endtok: string) {
+    private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
         if(PRIMITIVE_ENTITY_TYPE_NAMES.includes(name)) {
@@ -5184,13 +5209,11 @@ class Parser {
         else {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive concept parse");
 
-            tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, name);
+            tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, name, etag);
         }
 
         assert(tdecl !== undefined, "Failed to register entity type");
         this.env.currentNamespace.typedecls.push(tdecl);
-
-        this.namespaceParseScanCover(endtok);
     }
 
     private parseConceptCompleteParse(sinfo: SourceInfo, name: string) {
@@ -5222,6 +5245,7 @@ class Parser {
     private parseConcept(attributes: DeclarationAttibute[], endtok: string) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
+        const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "concept declaration");
         this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
         const ename = this.consumeTokenAndGetValue();
@@ -5233,10 +5257,12 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            this.parseConceptRegisterType(sinfo, attributes, ename, hasterms, endtok);
+            this.parseConceptRegisterType(sinfo, attributes, ename, etag);
 
             this.env.currentNamespace.declaredNames.add(ename);
             this.env.currentNamespace.declaredTypeNames.push({name: ename, hasterms: hasterms});
+
+            this.namespaceParseScanCover(endtok);
         }
         else {
             this.parseConceptCompleteParse(sinfo, ename);
@@ -5246,6 +5272,7 @@ class Parser {
     private parseEnum(attributes: DeclarationAttibute[], endtok: string) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
+        const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_enum, "enum declaration");
         this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
         const ename = this.consumeTokenAndGetValue();
@@ -5260,7 +5287,7 @@ class Parser {
                 return this.consumeTokenAndGetValue();
             });
 
-            const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members);
+            const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members, etag);
             this.env.currentNamespace.typedecls.push(enumtype);
 
             this.env.currentNamespace.declaredNames.add(ename);
@@ -5338,6 +5365,7 @@ class Parser {
     private parseTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
+        const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_typedecl, "typedecl declaration");
         this.ensureToken(TokenStrings.IdentifierName, "typedecl declaration");
         const iname = this.consumeTokenAndGetValue();
@@ -5347,7 +5375,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${iname}`);
             }
 
-            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, attributes, iname, new ErrorTypeSignature(sinfo, undefined));
+            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, attributes, iname, etag, new ErrorTypeSignature(sinfo, undefined));
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(iname);
@@ -5384,7 +5412,7 @@ class Parser {
         }
     }
 
-    private parseDatatypeMemberEntityTypeDecl(attributes: DeclarationAttibute[], parenttype: DatatypeTypeDecl, hasterms: boolean) {
+    private parseDatatypeMemberEntityTypeDecl(attributes: DeclarationAttibute[], parenttype: DatatypeTypeDecl, hasterms: boolean, etag: AdditionalTypeDeclTag) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         this.consumeTokenIf(SYM_bar);
@@ -5397,7 +5425,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename);
+            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag);
             parenttype.associatedMemberEntityDecls.push(tdecl);
             this.env.currentNamespace.typedecls.push(tdecl);
 
@@ -5434,11 +5462,11 @@ class Parser {
         }
     }
 
-    private parseDataTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
+    private parseDataTypeDecl(attributes: DeclarationAttibute[]) {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
+        const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_datatype, "datatype declaration");
-
         this.ensureToken(TokenStrings.IdentifierName, "datatype declaration");
         const dname = this.consumeTokenAndGetValue();
 
@@ -5449,7 +5477,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${dname}`);
             }
 
-            tdecl = new DatatypeTypeDecl(this.env.currentFile, sinfo, attributes, dname);
+            tdecl = new DatatypeTypeDecl(this.env.currentFile, sinfo, attributes, dname, etag);
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(dname);
@@ -5492,7 +5520,7 @@ class Parser {
         this.ensureAndConsumeTokenIf(KW_of, "datatype");
 
         while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
-            this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms);
+            this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms, etag);
         }
 
         if(this.testAndConsumeTokenIf(SYM_amp)) {
@@ -5510,94 +5538,119 @@ class Parser {
         this.testAndConsumeTokenIf(SYM_semicolon);
     }
 
-    private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
-        const line = this.getCurrentLine();
+    private parseTask(attributes: DeclarationAttibute[], endtok: string) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        //[attr] task NAME[T where C...] provides {...}
-        const attributes = this.parseAttributes();
+        this.ensureAndConsumeTokenAlways(KW_task, "task declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "task declaration");
+        const tname = this.consumeTokenAndGetValue();
 
-        const sinfo = this.getCurrentSrcInfo();
-        this.ensureAndConsumeToken(KW_task, "task declaration");
-        this.ensureToken(TokenStrings.Type, "task declaration");
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            const hasterms = this.testToken(SYM_langle);
 
-        const ename = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
+            if(this.env.currentNamespace.checkDeclNameClashType(tname, hasterms)) {
+                this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${tname}`);
+            }
 
-        try {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "task declaration");
+            const tdecl = new TaskDecl(this.env.currentFile, sinfo, attributes, tname);
+            this.env.currentNamespace.typedecls.push(tdecl);
 
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [ename], [...terms, ...currentTermNest].map((term) => new TemplateTypeSignature(sinfo, term.name)));
+            this.env.currentNamespace.declaredNames.add(tname);
+            this.env.currentNamespace.declaredTypeNames.push({name: tname, hasterms: hasterms});
 
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            const memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            const nestedEntities = new Map<string, EntityTypeDecl>();
+            this.namespaceParseScanCover(endtok);
+        }
+        else {
+            const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === tname);
+            assert(tdecl !== undefined && tdecl instanceof TaskDecl, "Failed to find task type");
+
+            const terms = this.parseTypeTemplateTerms();
+            if(terms.length !== 0) {
+                tdecl.terms.push(...terms);
+            }
+
+            const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+            if(provides.length !== 0) {
+                this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
+            }
+
+            if(this.testAndConsumeTokenIf(KW_implements)) {
+                const iiaccess = this.parseIdentifierAccessChain();
+                if(iiaccess === undefined) {
+                    this.recordErrorGeneral(sinfo, "Invalid expression -- could not resolve name");
+                    
+                    //something went very wrong
+                    this.namespaceParseScanCover(endtok);
+                    return;
+                }
+
+                if(iiaccess.typeTokens.length !== 0) {
+                    this.recordErrorGeneral(sinfo, "Invalid API name");
+                }
+                else {
+                    this.ensureAndConsumeTokenAlways(SYM_coloncolon, "task declaration provides");
+                    const ok = this.ensureToken(TokenStrings.IdentifierName, "task declaration provides");
+
+                    if(ok) {
+                        const pn = this.consumeTokenAndGetValue();
+                        tdecl.implementsapi = [iiaccess.nsScope.fullnamespace, pn];
+                    }
+                }
+            }
+
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions);
+        }
+    }
+
+    private parseAPI(attributes: DeclarationAttibute[], endtok: string) {
+        const sinfo = this.lexer.peekNext().getSourceInfo();
+
+        this.ensureAndConsumeTokenAlways(KW_api, "api declaration");
+        this.ensureToken(TokenStrings.IdentifierName, "api declaration");
+        const apiname = this.consumeTokenAndGetValue();
+
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashMember(apiname)) {
+                this.recordErrorGeneral(sinfo, `Collision between API and other names -- ${apiname}`);
+            }
+
+            this.env.currentNamespace.declaredNames.add(apiname);
+            this.env.currentNamespace.declaredMemberNames.add(apiname);
+
+            this.namespaceParseScanCover(endtok);
+        }
+        else {
+            const okdecl = this.testToken(SYM_lparen);
+            if(!okdecl) {
+                this.recordErrorGeneral(sinfo, "API declaration missing parameter list");
+                return;
+            }
+
+            const params: FunctionParameter[] = this.parseInvokeSignatureParameters(sinfo, false, false);
+        
+            let resultInfo = this.env.SpecialVoidSignature;
+            if (this.testAndConsumeTokenIf(SYM_colon)) {
+                resultInfo = this.parseTypeSignature();
+            }
+
+            const argNames = new Set<string>(params.map((param) => param.name));
+            const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
+            const boundtemplates = new Set<string>();
+
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true);
+            const samples = this.parseSamples(sinfo);
+    
+            xxxx;
+
+            this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
+            const body = this.parseBody(attributes, false, false);
+            this.env.popStandardFunctionScope();
             
-            const controlfields: ControlFieldDecl[] = [];
-
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            const resourceeffects: TaskResourceEffect[] = [];
-            this.parseOOPMembersCommon(sinfo, true, thisType, currentDecl, [ename], [...currentTermNest, ...terms], new Set<string>([...currentTermNest, ...terms].map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, statuseffect, eventeffect, enveffect, resourceeffects);
-
-            if(invariants.length !== 0) {
-                this.raiseError(sinfo.line, "Cannot define invariants on tasks (only validates)");
-            }
-
-            if(nestedEntities.size !== 0) {
-                this.raiseError(sinfo.line, "Cannot define nested types on tasks");
-            }
-
-            this.ensureAndConsumeToken(SYM_rbrace, "task declaration");
-
-            if (currentDecl.checkDeclNameClash(ename)) {
-                this.raiseError(line, "Collision between task and other names");
-            }
-
-            this.clearRecover();
-
-            const feterms = [...currentTermNest, ...terms];
-
-            const mainfunc = staticFunctions.find((ff) => ff.name === "main");
-            if(mainfunc === undefined) {
-                this.raiseError(sinfo.line, "Does not have a \"main\" function defined")
-            }
-
-            const actions = memberMethods.filter((mf) => mf.attributes.includes("task_action"));
-            const onfuncs = {
-                onCanel: memberMethods.find((mf) => mf.name === "onCancel"),
-                onFailure: memberMethods.find((mf) => mf.name === "onFailure"), 
-                onTimeout: memberMethods.find((mf) => mf.name === "onTimeout")
-            };
-
-            const lfuncs = {
-                logStart: memberMethods.find((mf) => mf.name === "logStart"),
-                logEnd: memberMethods.find((mf) => mf.name === "logEnd"), 
-                taskEnsures: memberMethods.find((mf) => mf.name === "taskEnsures"),
-                taskWarns: memberMethods.find((mf) => mf.name === "taskWarns")
-            };
-
-            const edecl = new TaskTypeDecl(sinfo, this.m_penv.getCurrentFile(), attributes, currentDecl.ns, ename, feterms, validates, staticMembers, staticFunctions, memberFields, memberMethods, controlfields, mainfunc as StaticFunctionDecl, actions, onfuncs, lfuncs, statuseffect, eventeffect, enveffect, resourceeffects);
-            this.m_penv.assembly.addTaskDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, edecl);
-            currentDecl.tasks.set(ename, edecl);
-        }
-        catch (ex) {
-            this.processRecover();
+            const api = new APIDecl(this.env.currentFile, sinfo, attributes, apiname, params, resultInfo, preconds, postconds, samples, statusinfo, envinfo, resouceinfo, body);
+            this.env.currentNamespace.apis.push(api);
         }
     }
 
-    private parseEndOfStream() {
-        if(!this.testToken(TokenStrings.EndOfStream)) {
-            this.raiseError(this.getCurrentLine(), "Expected end-of-file");
-        }
-
-        this.consumeToken();
-    }
 
     ////
     //Public methods
@@ -5916,5 +5969,5 @@ class Parser {
 }
 
 export { 
-    ParseError, Parser
+    Parser
 };

@@ -508,6 +508,12 @@ class MemberFieldDecl extends AbstractCoreDecl {
     }
 }
 
+enum AdditionalTypeDeclTag {
+    Std,
+    Status,
+    Event
+}
+
 abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
     readonly name: string;
@@ -522,11 +528,15 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly functions: TypeFunctionDecl[] = [];
     readonly methods: MethodDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+    readonly etag: AdditionalTypeDeclTag;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
         this.attributes = attributes;
         this.name = name;
+
+        this.etag = etag;
     }
 
     hasAttribute(aname: string): boolean {
@@ -535,6 +545,14 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     emitAttributes(): string {
         return this.attributes.length !== 0 ? (this.attributes.map((attr) => attr.emit()).join(" ") + " ") : "";
+    }
+
+    emitAdditionalTag(): string {
+        switch(this.etag) {
+            case AdditionalTypeDeclTag.Status: return "status ";
+            case AdditionalTypeDeclTag.Event: return "event ";
+            default: return "";
+        }
     }
 
     emitTerms(): string {
@@ -571,34 +589,32 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 class EnumTypeDecl extends AbstractNominalTypeDecl {
     readonly members: string[];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[]) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[], etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
 
         this.members = members;
     }
 
     emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
         fmt.indentPush();
         const endl = this.members.map((e) => fmt.indent(e + ",")).join("\n");
         fmt.indentPop();
 
-        return fmt.indent(`${attrs}enum ${this.name} {${endl}${fmt.indent("\n}")}`);
+        return fmt.indent(`${this.emitAttributes()}${this.emitAdditionalTag()}enum ${this.name} {${endl}${fmt.indent("\n}")}`);
     }
 }
 
 class TypedeclTypeDecl extends AbstractNominalTypeDecl {
     valuetype: TypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, valuetype: TypeSignature) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
+        super(file, sinfo, attributes, name, etag);
 
         this.valuetype = valuetype;
     }
 
     emit(fmt: CodeFormatter): string {
-        const tdcl = `${this.emitAttributes()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.emit(true)}`;
+        const tdcl = `${this.emitAttributes()}${this.emitAdditionalTag()}typedecl ${this.name}${this.emitTerms()} = ${this.valuetype.emit(true)}`;
 
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
@@ -615,7 +631,7 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
 
 abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -906,13 +922,11 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
 class EntityTypeDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
         if(this.fields.length !== 0) {
@@ -920,13 +934,13 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
         }
         fmt.indentPop();
 
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return `${this.emitAttributes()}${this.emitAdditionalTag()}entity ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n ${this.joinBodyGroups(bg)}${fmt.indent("\n}")}`;
     }
 }
 
 abstract class InternalConceptTypeDecl extends AbstractNominalTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -1023,13 +1037,11 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 class ConceptTypeDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
         if(this.fields.length !== 0) {
@@ -1037,15 +1049,15 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
         }
         fmt.indentPop();
 
-        return attrs + "concept " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+        return `${this.emitAttributes}${this.emitAdditionalTag()}concept ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n${this.joinBodyGroups(bg)}${fmt.indent("\n")}}`;
     }
 }
 
 class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1064,13 +1076,11 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
         fmt.indentPush();
         const bg = this.emitBodyGroups(fmt);
 
@@ -1080,7 +1090,7 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
         }
         fmt.indentPop();
 
-        const rootdecl = attrs + "datatype " + this.name + this.emitTerms() + this.emitProvides(); 
+        const rootdecl = `${this.emitAttributes()}${this.emitAdditionalTag()}datatype ${this.name}${this.emitTerms()} ${this.emitProvides()}`; 
         let usingdecl = " of\n";
         if(mg.length !== 0 && bg.length === 0) {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
@@ -1155,11 +1165,12 @@ class EnvironmentVariableInformation {
 //  /x/y/**/*.*  <-- all files that are an extension of the prefix and with a file extension
 //
 
+//Are all of these in effect idempotent???
 enum ResourceAccessModes {
-    get,     //no side effects and idempotent -- reads the value or list (elements) 
-    modify,  //replaces or updates an existing value -- parent list modifications are implicit from the create/delete resource access info
-    create,  //creates a new value or list (that did not previously exist)
-    delete  //removes a value or list that may have previously existed
+    get    = "?",  //no side effects and -- reads the value or list (elements) 
+    modify = "!",  //replaces an existing value
+    create = "+",  //creates a new value or list (that did not previously exist)
+    delete = "-"   //removes a value or list that may have previously existed
 }
 
 class ResourceInformation {
@@ -1169,6 +1180,11 @@ class ResourceInformation {
     constructor(pathglob: ConstantExpressionValue, accessInfo: ResourceAccessModes[]) {
         this.pathglob = pathglob;
         this.accessInfo = accessInfo;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const mstr = this.accessInfo.join("");
+        return fmt.indent(`${this.pathglob.emit(true, fmt)}@${mstr}`);
     }
 }
 
@@ -1229,6 +1245,14 @@ class APIDecl extends AbstractCoreDecl {
             status = [ss];
         }
 
+        let resources: string[] = [];
+        if(this.resourceImpacts !== "*") {
+            resources = this.resourceImpacts.map((ri) => {
+                return fmt.indent(`${ri.pathglob.emit(true, fmt)}: ${ri.accessInfo.join(", ")}`);
+            });
+        }
+        xxxx;
+
         let evs: string[] = [];
         if(this.envVarRequirements.length !== 0) {
             const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
@@ -1261,23 +1285,27 @@ class APIDecl extends AbstractCoreDecl {
     }
 }
 
-abstract class TaskDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[] = [];
+class TaskDecl extends AbstractNominalTypeDecl {
+    readonly fields: MemberFieldDecl[] = [];
+    readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
+    implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
 
-    abstract getImplementsAPI(): APIDecl | undefined;
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+    }
 
     emit(fmt: CodeFormatter): string {
         const attrs = this.emitAttributes();
 
         fmt.indentPush();
         const mg: string[][] = [];
-        if(this.members.length !== 0) {
-            mg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.fields.length !== 0) {
+            mg.push(this.fields.map((ff) => ff.emit(fmt)));
+        }
+        if(this.selfmethods.length !== 0) {
+            mg.push(this.selfmethods.map((sm) => sm.emit(fmt)));
         }
         if(this.actions.length !== 0) {
             mg.push(this.actions.map((act) => act.emit(fmt)));
@@ -1285,8 +1313,8 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
         fmt.indentPop();
 
         let rootdecl = attrs + "task " + this.name + this.emitTerms(); 
-        if(this.getImplementsAPI() !== undefined) {
-            rootdecl += `implements ${this.getImplementsAPI()!.name}`;
+        if(this.implementsapi !== undefined) {
+            rootdecl += `implements ${this.implementsapi[0].emit()}::${this.implementsapi[1]}`;
         }
 
         fmt.indentPush();
@@ -1299,28 +1327,6 @@ abstract class TaskDecl extends AbstractNominalTypeDecl {
         }
 
         return `${rootdecl}${etail}`;
-    }
-}
-
-class TaskDeclOnAPI extends TaskDecl {
-    readonly api: APIDecl | undefined = undefined;
-    
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    getImplementsAPI(): APIDecl | undefined {
-        return this.api;
-    }
-}
-
-class TaskDeclStandalone extends TaskDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name);
-    }
-
-    getImplementsAPI(): APIDecl | undefined {
-        return undefined;
     }
 }
 
@@ -1561,7 +1567,7 @@ export {
     FunctionInvokeDecl, NamespaceFunctionDecl, TypeFunctionDecl,
     MethodDecl, TaskMethodDecl, TaskActionDecl,
     ConstMemberDecl, MemberFieldDecl,
-    AbstractNominalTypeDecl, 
+    AbstractNominalTypeDecl, AdditionalTypeDeclTag,
     EnumTypeDecl,
     TypedeclTypeDecl,
     InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
@@ -1574,7 +1580,7 @@ export {
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
-    TaskDecl, TaskDeclOnAPI, TaskDeclStandalone,
+    TaskDecl,
     NamespaceConstDecl, NamespaceTypedef, NamespaceUsing, NamespaceDeclaration,
     Assembly
 };
