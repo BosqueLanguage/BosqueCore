@@ -1061,7 +1061,7 @@ class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
 }
 
 class DatatypeTypeDecl extends AbstractNominalTypeDecl {
-    readonly members: MemberFieldDecl[] = [];
+    readonly fields: MemberFieldDecl[] = [];
     readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
@@ -1072,15 +1072,17 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
         const attrs = this.emitAttributes();
 
         fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+
         const mg: string[][] = [];
-        if(this.members.length !== 0) {
-            mg.push(this.members.map((ff) => ff.emit(fmt)));
+        if(this.fields.length !== 0) {
+            mg.push(this.fields.map((ff) => ff.emit(fmt)));
         }
         fmt.indentPop();
 
         const rootdecl = attrs + "datatype " + this.name + this.emitTerms() + this.emitProvides(); 
         let usingdecl = " of\n";
-        if(mg.length !== 0) {
+        if(mg.length !== 0 && bg.length === 0) {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
         }
 
@@ -1088,13 +1090,9 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
             aed.emit(fmt)
         }).join("\n| ");
 
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
         let etail = ";";
         if(bg.length !== 0) {
-            etail = "& {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+            etail = "& {\n" + this.joinBodyGroups([...mg, ...bg]) + fmt.indent("\n}");
         }
 
         return `${rootdecl}${usingdecl}${edecls}\n${etail}`;

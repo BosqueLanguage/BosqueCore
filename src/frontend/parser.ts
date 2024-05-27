@@ -6,7 +6,7 @@ import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSigna
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StringOfTypeDecl, TaskActionDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_err, KW_errtest, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_switch, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -5393,8 +5393,6 @@ class Parser {
         const ename = this.consumeTokenAndGetValue();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
-            
-
             if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
@@ -5410,7 +5408,7 @@ class Parser {
         }
         else {
             const tdecl = this.env.currentNamespace.typedecls.find((td) => td.name === ename);
-            assert(tdecl !== undefined && !(tdecl instanceof TypedeclTypeDecl), "Failed to find typedecl type");
+            assert(tdecl !== undefined && !(tdecl instanceof DatatypeMemberEntityTypeDecl), "Failed to find typedecl type");
 
             if(parenttype.terms.length !== 0) {
                 tdecl.terms.push(...parenttype.terms);
@@ -5437,162 +5435,79 @@ class Parser {
     }
 
     private parseDataTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
-        const line = this.getCurrentLine();
-        const sinfo = this.getCurrentSrcInfo();
-       
-        this.ensureAndConsumeToken(KW_datatype, "datatype");
+        const sinfo = this.lexer.peekNext().getSourceInfo();
 
-        const iname = this.consumeTokenAndGetValue();
-        const terms = this.parseTermDeclarations();
-        if (currentDecl.checkDeclNameClash(iname)) {
-            this.raiseError(line, "Collision between object and other names");
-        }
+        this.ensureAndConsumeTokenAlways(KW_datatype, "datatype declaration");
 
-        //[attr] datatype NAME<...> [provides ... ] [using {...}] of
-        // Foo {...}
-        // | ...
-        // [& {...}] | ;
+        this.ensureToken(TokenStrings.IdentifierName, "datatype declaration");
+        const dname = this.consumeTokenAndGetValue();
 
-        const concepttype = new NominalTypeSignature(sinfo, currentDecl.ns, [iname]);
-
-        const provides = this.parseProvides(sinfo, currentDecl.ns === "Core", [KW_of, KW_using]);
-
-        let complexheader = false;
-        let cinvariants: InvariantDecl[] = [];
-        let cvalidates: ValidateDecl[] = [];
-        let cstaticMembers: StaticMemberDecl[] = [];
-        let cstaticFunctions: StaticFunctionDecl[] = [];
-        let cusing: MemberFieldDecl[] = [];
-        let cmemberMethods: MemberMethodDecl[] = [];
-        if (this.testAndConsumeTokenIf("using")) {
-            if (this.testFollows(SYM_lbrace, TokenStrings.Identifier) && !Lexer.isAttributeKW(this.peekTokenData(1))) {
-                cusing = this.parseListOf<MemberFieldDecl>("datatype concept", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const mfinfo = this.getCurrentSrcInfo();
-
-                    this.ensureToken(TokenStrings.Identifier, "datatype concept field");
-                    const name = this.consumeTokenAndGetValue();
-                    this.ensureAndConsumeToken(SYM_colon, "datatype concept field");
-
-                    const ttype = this.parseTypeSignature();
-                    return new MemberFieldDecl(mfinfo, this.m_penv.getCurrentFile(), [], name, ttype);
-                });
-            }
-            else {
-                this.setRecover(this.scanCodeParens());
-                this.ensureAndConsumeToken(SYM_lbrace, "datatype declaration");
-
-                const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
-
-                const nestedEntities = new Map<string, EntityTypeDecl>();
-                const statuseffect = new TaskStatusEffect([]);
-                const eventeffect = new TaskEventEffect([]);
-                const enveffect = new TaskEnvironmentEffect([]);
-                this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
-
-                this.ensureAndConsumeToken(SYM_rbrace, "datatype declaration");
-                complexheader = cstaticMembers.length !== 0 || cstaticFunctions.length !== 0 || cmemberMethods.length !== 0;
-            }
-        }
-
-        this.ensureAndConsumeToken(KW_of, "datatype");
-
-        const edecls: EntityTypeDecl[] = [];
-        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
-            if (this.testToken(SYM_bar)) {
-                this.consumeToken();
-            }
-            let esinfo = this.getCurrentSrcInfo();
-
-            this.ensureToken(TokenStrings.Type, "datatype entities");
-            const ename = this.consumeTokenAndGetValue();
-            if (currentDecl.checkDeclNameClash(ename)) {
-                this.raiseError(line, "Collision between object and other names");
+        let tdecl: DatatypeTypeDecl;
+        let hasTerms = this.testToken(SYM_langle);
+        if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+            if(this.env.currentNamespace.checkDeclNameClashType(dname, false)) {
+                this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${dname}`);
             }
 
-            const invariants: InvariantDecl[] = [];
-            const validates: ValidateDecl[] = [];
-            const staticMembers: StaticMemberDecl[] = [];
-            const staticFunctions: StaticFunctionDecl[] = [];
-            let memberFields: MemberFieldDecl[] = [];
-            const memberMethods: MemberMethodDecl[] = [];
-            if (this.testToken(SYM_lbrace)) {
-                if (this.testFollows(SYM_lbrace, TokenStrings.Identifier) && !Lexer.isAttributeKW(this.peekTokenData(1))) {
-                    memberFields = this.parseListOf<MemberFieldDecl>("datatype entity", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                        const mfinfo = this.getCurrentSrcInfo();
+            tdecl = new DatatypeTypeDecl(this.env.currentFile, sinfo, attributes, dname);
+            this.env.currentNamespace.typedecls.push(tdecl);
 
-                        this.ensureToken(TokenStrings.Identifier, "datatype entity field");
-                        const name = this.consumeTokenAndGetValue();
-                        this.ensureAndConsumeToken(SYM_colon, "datatype entity field");
+            this.env.currentNamespace.declaredNames.add(dname);
+            this.env.currentNamespace.declaredTypeNames.push({name: dname, hasterms: hasTerms});
 
-                        const ttype = this.parseTypeSignature();
-                        return new MemberFieldDecl(mfinfo, this.m_penv.getCurrentFile(), [], name, ttype);
-                    });
-                }
-                else {
-                    this.setRecover(this.scanCodeParens());
-                    this.ensureAndConsumeToken(SYM_lbrace, "datatype entry");
-
-                    const thisType = new NominalTypeSignature(esinfo, currentDecl.ns, [ename], []);
-
-                    const nestedEntities = new Map<string, EntityTypeDecl>();
-                    const statuseffect = new TaskStatusEffect([]);
-                    const eventeffect = new TaskEventEffect([]);
-                    const enveffect = new TaskEnvironmentEffect([]);
-                    this.parseOOPMembersCommon(esinfo, false, thisType, currentDecl, [ename], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, [], statuseffect, eventeffect, enveffect, []);
-
-                    this.ensureAndConsumeToken(SYM_rbrace, "datatype entry");
-                }
-            }
-
-            const eprovides = [[concepttype, undefined]] as [TypeSignature, TypeConditionRestriction | undefined][];
-            const edecl = new EntityTypeDecl(esinfo, this.m_penv.getCurrentFile(), ["__adt_entity_type"], currentDecl.ns, ename, terms, eprovides, invariants, validates, staticMembers, staticFunctions, memberFields, memberMethods, new Map<string, EntityTypeDecl>());
-
-            edecls.push(edecl);
-            currentDecl.objects.set(ename, edecl);
-            this.m_penv.assembly.addObjectDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + ename, currentDecl.objects.get(ename) as EntityTypeDecl);
-        }
-
-        if (this.testAndConsumeTokenIf(SYM_amp)) {
-            this.setRecover(this.scanCodeParens());
-            this.ensureAndConsumeToken(SYM_lbrace, "datatype");
-
-            if (complexheader) {
-                this.raiseError(this.getCurrentLine(), "Cannot define complex ADT++ concept in multiple parts");
-            }
-
-            const thisType = new NominalTypeSignature(sinfo, currentDecl.ns, [iname], []);
-
-            const nestedEntities = new Map<string, EntityTypeDecl>();
-            const memberFields: MemberFieldDecl[] = [];
-            const statuseffect = new TaskStatusEffect([]);
-            const eventeffect = new TaskEventEffect([]);
-            const enveffect = new TaskEnvironmentEffect([]);
-            this.parseOOPMembersCommon(sinfo, false, thisType, currentDecl, [iname], [...terms], new Set<string>(terms.map((tt) => tt.name)), nestedEntities, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, memberFields, cmemberMethods, [], statuseffect, eventeffect, enveffect, []);
-
-            if (cusing.length !== 0 && memberFields.length !== 0) {
-                this.raiseError(this.getCurrentLine(), "Cannot define fields in multiple places in ADT++ decl");
-            }
-            cusing = [...cusing, ...memberFields];
-
-            this.ensureAndConsumeToken(SYM_rbrace, "datatype");
-
-            if (currentDecl.checkDeclNameClash(iname)) {
-                this.raiseError(line, "Collision between concept and other names");
-            }
-
-            this.clearRecover();
+            this.scanOverCodeTo(KW_of, SYM_amp, SYM_semicolon);
         }
         else {
-            this.ensureAndConsumeToken(SYM_semicolon, "datatype");
+            const ddecl = this.env.currentNamespace.typedecls.find((td) => td.name === dname);
+            assert(ddecl !== undefined && !(ddecl instanceof DatatypeTypeDecl), "Failed to find typedecl type");
+
+            tdecl = ddecl as DatatypeTypeDecl;
+
+            const terms = this.parseTypeTemplateTerms();
+            if(terms.length !== 0) {
+                tdecl.terms.push(...terms);
+            }
+
+            const provides = this.parseProvides(sinfo, [SYM_lbrace]);
+            if(provides.length !== 0) {
+                tdecl.provides.push(...provides);
+            }
+
+            if(this.testAndConsumeTokenIf(KW_using)) {
+                const cusing = this.parseListOf<MemberFieldDecl>("datatype", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                    const sinfo = this.lexer.peekNext().getSourceInfo();
+
+                    this.ensureToken(TokenStrings.IdentifierName, "datatype field");
+                    const name = this.consumeTokenAndGetValue();
+                    this.ensureAndConsumeTokenIf(SYM_colon, "datatype field");
+
+                    const ttype = this.parseTypeSignature();
+                    return new MemberFieldDecl(this.env.currentFile, sinfo, [], name, ttype, undefined);
+                });
+
+                tdecl.fields.push(...cusing);
+            }
         }
 
-        //
-        //TODO: may want to do a bit more linking of adt concept and entities for things like exhaustive checking
-        //
+        this.ensureAndConsumeTokenIf(KW_of, "datatype");
 
-        const cdecl = new ConceptTypeDecl(sinfo, this.m_penv.getCurrentFile(), ["__adt_concept_type"], currentDecl.ns, iname, terms, provides, cinvariants, cvalidates, cstaticMembers, cstaticFunctions, cusing, cmemberMethods, new Map<string, EntityTypeDecl>());
-        currentDecl.concepts.set(iname, cdecl);
-        this.m_penv.assembly.addConceptDecl((currentDecl.ns !== "Core" ? (currentDecl.ns + "::") : "") + iname, cdecl);
+        while (!this.testToken(SYM_semicolon) && !this.testToken(SYM_amp)) {
+            this.parseDatatypeMemberEntityTypeDecl(attributes, tdecl, hasTerms);
+        }
+
+        if(this.testAndConsumeTokenIf(SYM_amp)) {
+            if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
+                this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+            }
+            else {
+                if(tdecl.fields.length !== 0) {
+                    this.recordErrorGeneral(sinfo, "Cannot mix POD (using) declartion with full datatype (&) declaration");
+                }
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
+            }
+        }
+
+        this.testAndConsumeTokenIf(SYM_semicolon);
     }
 
     private parseTask(currentDecl: NamespaceDeclaration, currentTermNest: TemplateTermDecl[]) {
