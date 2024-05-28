@@ -74,6 +74,7 @@ const KW_when = "when";
 const KW_example = "example";
 const KW_event = "event";
 const KW_status = "status";
+const KW_resource = "resource";
 const KW_validator = "validator";
 const KW_predicate = "predicate";
 
@@ -153,6 +154,7 @@ const KeywordStrings = [
     KW_example,
     KW_event,
     KW_status,
+    KW_resource,
     KW_validator,
     KW_softcheck,
     KW_errtest,
@@ -256,6 +258,7 @@ const SYM_gteq = " >= ";
 const SYM_minus = " - ";
 const SYM_times = " * ";
 const SYM_div = " // ";
+const SYM_wildcard = "**";
 
 //Reserved
 const SYM_atat = "@@";
@@ -278,6 +281,7 @@ const StandardSymbols = [
     SYM_lor,
     SYM_dotdotdot,
     SYM_HOLE,
+    SYM_wildcard,
 
     SYM_atat,
     SYM_questionquestion
@@ -390,6 +394,7 @@ export {
     KW_under,
     KW_example,
     KW_event,
+    KW_resource,
     KW_status,
     KW_validator,
     KW_softcheck,
@@ -420,6 +425,7 @@ export {
     SYM_lor,
     SYM_dotdotdot,
     SYM_HOLE,
+    SYM_wildcard,
 
     SYM_positive,
     SYM_negate,

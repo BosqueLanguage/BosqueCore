@@ -1118,13 +1118,13 @@ class StatusInfoFilter {
         this.verbose = verbose;
     }
 
-    emit(): string | undefined {
+    emit(): string {
         if(this.standard === undefined) {
-            return undefined;
+            return "status []";
         }
 
         if(this.verbose === undefined) {
-            return `status ${this.standard.emit(true)}`;
+            return `status [${this.standard.emit(true)}]`;
         }
 
         return `status [${this.standard.emit(true)}, ${this.verbose.emit(true)}]`;
@@ -1134,9 +1134,9 @@ class StatusInfoFilter {
 class EnvironmentVariableInformation {
     readonly evname: string;
     readonly evtype: TypeSignature;
-    readonly optdefault: Expression | undefined;
+    readonly optdefault: ConstantExpressionValue | undefined;
 
-    constructor(evname: string, evtype: TypeSignature, optdefault: Expression | undefined) {
+    constructor(evname: string, evtype: TypeSignature, optdefault: ConstantExpressionValue | undefined) {
         this.evname = evname;
         this.evtype = evtype;
         this.optdefault = optdefault;
@@ -1160,7 +1160,7 @@ class EnvironmentVariableInformation {
 //
 //  /x/y/**   <-- all files that are extensions of the prefix
 //  /x/y/**/  <-- all directories that are extensions of the prefix
-//
+//  
 //  /x/y/*.*     <-- all files that have an extension with a file extension
 //  /x/y/**/*.*  <-- all files that are an extension of the prefix and with a file extension
 //
@@ -1170,11 +1170,12 @@ enum ResourceAccessModes {
     get    = "?",  //no side effects and -- reads the value or list (elements) 
     modify = "!",  //replaces an existing value
     create = "+",  //creates a new value or list (that did not previously exist)
-    delete = "-"   //removes a value or list that may have previously existed
+    delete = "-",  //removes a value or list that may have previously existed
+    any =    "*"   //any possible of the above
 }
 
 class ResourceInformation {
-    readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype
+    readonly pathglob: ConstantExpressionValue; //this is g\xxxx\* or g\xxxx\oftype or g\xxxx\_oftype, or constant, or an environment variable
     readonly accessInfo: ResourceAccessModes[];
 
     constructor(pathglob: ConstantExpressionValue, accessInfo: ResourceAccessModes[]) {
@@ -1184,7 +1185,7 @@ class ResourceInformation {
 
     emit(fmt: CodeFormatter): string {
         const mstr = this.accessInfo.join("");
-        return fmt.indent(`${this.pathglob.emit(true, fmt)}@${mstr}`);
+        return fmt.indent(`${this.pathglob.emit(true, fmt)}@[${mstr}]`);
     }
 }
 
@@ -1199,11 +1200,11 @@ class APIDecl extends AbstractCoreDecl {
 
     readonly statusOutputs: StatusInfoFilter;
     readonly envVarRequirements: EnvironmentVariableInformation[];
-    readonly resourceImpacts: ResourceInformation[] | "*"; //* means any possible resource impact
+    readonly resourceImpacts: ResourceInformation[] | "**" | "{}";
 
     readonly body: BodyImplementation;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "*", body: BodyImplementation) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, params: FunctionParameter[], resultType: TypeSignature, preconds: PreConditionDecl[], postconds: PostConditionDecl[], examples: InvokeExample[], statusOutputs: StatusInfoFilter, envVarRequirements: EnvironmentVariableInformation[], resourceImpacts: ResourceInformation[] | "**" | "{}", body: BodyImplementation) {
         super(file, sinfo, attributes, name);
         
         this.params = params;
@@ -1246,31 +1247,30 @@ class APIDecl extends AbstractCoreDecl {
         }
 
         let resources: string[] = [];
-        if(this.resourceImpacts !== "*") {
-            resources = this.resourceImpacts.map((ri) => {
-                return fmt.indent(`${ri.pathglob.emit(true, fmt)}: ${ri.accessInfo.join(", ")}`);
-            });
+        if(this.resourceImpacts === "**") {
+            resources = ["resource { ** }"];
         }
-        xxxx;
-
-        let evs: string[] = [];
-        if(this.envVarRequirements.length !== 0) {
-            const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
-
-            fmt.indentPush();
-            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-            fmt.indentPop();
-
-            evs.push(`env{ ${vvs} ${fmt.indent("}")}`);
+        else if(this.resourceImpacts === "{}") {
+            resources = ["resource { }"];
+        }
+        else {
+            resources = [`resource { ${this.resourceImpacts.map((ri) => ri.emit(fmt)).join(", ")} }`];
         }
 
+        const vvl = this.envVarRequirements.map((ev) => ev.emit(fmt));
+
+        fmt.indentPush();
+        const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
         fmt.indentPop();
 
+        const evs = [`env{ ${vvs} ${fmt.indent("}")}`];
+        
+        fmt.indentPop();
         if(prec.length === 0 && postc.length === 0 && examples.length === 0 && status.length === 0 && evs.length === 0) {
             return undefined;
         }
         else {
-            return [...prec, ...postc, ...examples, ...status, ...evs].join("\n");
+            return [...prec, ...postc, ...examples, ...status, ...evs, ...resources].join("\n");
         }
     }
 
@@ -1290,6 +1290,13 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
+
+    eventsInfo: TypeSignature[] | "{}" | undefined; //undefined means passthrough (or API is defined)
+    statusInfo: StatusInfoFilter | undefined; //undefined means passthrough
+    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; //undefined means passthrough
+    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | undefined; //* means any possible resource impact -- undefined means pass through
+    
+    //If this is defined then the info is all taken from the API
     implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
@@ -1301,6 +1308,38 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         fmt.indentPush();
         const mg: string[][] = [];
+        if(this.eventsInfo !== undefined) {
+            if(this.eventsInfo === "{}") {
+                mg.push(["event { }"]);
+            }
+            else {
+                mg.push([`event { ${this.eventsInfo.map((ei) => ei.emit(true)).join(", ")} }`]);
+            }
+        }
+        if(this.statusInfo !== undefined) {
+            mg.push([this.statusInfo.emit()]);
+        }
+        if(this.resourceImpactInfo !== undefined) {
+            if(this.resourceImpactInfo === "**") {
+                mg.push(["resource { ** }"]);
+            }
+            else if(this.resourceImpactInfo === "{}") {
+                mg.push(["resource { }"]);
+            }
+            else {
+                mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
+            }
+        }
+        if(this.envVarRequirementInfo !== undefined) {
+            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
+
+            fmt.indentPush();
+            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
+            fmt.indentPop();
+
+            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
+        }
+
         if(this.fields.length !== 0) {
             mg.push(this.fields.map((ff) => ff.emit(fmt)));
         }
