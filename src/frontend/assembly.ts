@@ -1291,10 +1291,10 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly actions: TaskActionDecl[] = [];
 
 
-    eventsInfo: TypeSignature[] | "{}" | undefined; //undefined means passthrough (or API is defined)
-    statusInfo: StatusInfoFilter | undefined; //undefined means passthrough
-    envVarRequirementInfo: EnvironmentVariableInformation[] | undefined; //undefined means passthrough
-    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | undefined; //* means any possible resource impact -- undefined means pass through
+    eventsInfo: TypeSignature[] | "{}" | "?" | undefined; //undefined means passthrough (or API is defined)
+    statusInfo: StatusInfoFilter | "?" | undefined; //undefined means passthrough
+    envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //undefined means passthrough
+    resourceImpactInfo: ResourceInformation[] | "**" | "{}" | "?" | undefined; //* means any possible resource impact -- undefined means pass through
     
     //If this is defined then the info is all taken from the API
     implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
@@ -1312,12 +1312,20 @@ class TaskDecl extends AbstractNominalTypeDecl {
             if(this.eventsInfo === "{}") {
                 mg.push(["event { }"]);
             }
+            else if(this.eventsInfo === "?") {
+                mg.push(["event { ? }"]);
+            }
             else {
                 mg.push([`event { ${this.eventsInfo.map((ei) => ei.emit(true)).join(", ")} }`]);
             }
         }
         if(this.statusInfo !== undefined) {
-            mg.push([this.statusInfo.emit()]);
+            if(this.statusInfo === "?") {
+                mg.push(["status ?"]);
+            }
+            else {
+                mg.push([this.statusInfo.emit()]);
+            }
         }
         if(this.resourceImpactInfo !== undefined) {
             if(this.resourceImpactInfo === "**") {
@@ -1326,18 +1334,26 @@ class TaskDecl extends AbstractNominalTypeDecl {
             else if(this.resourceImpactInfo === "{}") {
                 mg.push(["resource { }"]);
             }
+            else if(this.resourceImpactInfo === "?") {
+                mg.push(["resource { ? }"]);
+            }
             else {
                 mg.push([`resource { ${this.resourceImpactInfo.map((ri) => ri.emit(fmt)).join(", ")} }`]);
             }
         }
         if(this.envVarRequirementInfo !== undefined) {
-            const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
+            if(this.envVarRequirementInfo === "?") {
+                mg.push(["env { ? }"]);
+            }
+            else {
+                const vvl = this.envVarRequirementInfo.map((ev) => ev.emit(fmt));
 
-            fmt.indentPush();
-            const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
-            fmt.indentPop();
+                fmt.indentPush();
+                const vvs = [vvl[0], ...vvl.slice(1).map((vv) => fmt.indent(vv))].join("\n");
+                fmt.indentPop();
 
-            mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
+                mg.push([`env{ ${vvs} ${fmt.indent("}")}`]);
+            }
         }
 
         if(this.fields.length !== 0) {

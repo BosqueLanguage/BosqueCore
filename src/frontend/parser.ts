@@ -3,7 +3,7 @@ import {strict as assert} from "assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
-import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIDecl, APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
@@ -282,6 +282,7 @@ class Lexer {
     constructor(input: string, macrodefs: string[], istate: LexerState) {
         this.macrodefs = macrodefs;
         this.input = input;
+        inializeLexer(this.input);
 
         this.stateStack = [istate];
     }
@@ -1399,37 +1400,16 @@ class Parser {
         }
     }
 
-    //Ensure the token is the expected one ... always consume so that we make progress
     private ensureAndConsumeTokenAlways(kind: string, contextinfo: string) {
-        const ok = this.ensureToken(kind, contextinfo);
+        this.ensureToken(kind, contextinfo);
         this.consumeToken();
-
-        return ok;
     }
 
-    //Ensure the token is the expected one ... consume it if it matches (if it is missing then we can try to proceed anyway)
     private ensureAndConsumeTokenIf(kind: string, contextinfo: string) {
         const ok = this.ensureToken(kind, contextinfo);
         if(ok) {
             this.consumeToken();
         }
-
-        return ok;
-    }
-
-    private scanTokenOptions(...toks: string[]): number | undefined {
-        let pos = 0;
-        let tk = this.lexer.peekK(pos);
-        while(tk.kind !== TokenStrings.EndOfStream) {
-            if(toks.includes(tk.kind)) {
-                return pos;
-            }
-
-            pos++;
-            tk = this.lexer.peekK(pos);
-        }
-
-        return undefined;
     }
 
     private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
@@ -2584,6 +2564,37 @@ class Parser {
         return new ITestLiteral(isnot, literal);
     }
 
+    private parseInvokeTemplateArguments() {
+        let args: TypeSignature[] = [];
+        if (this.testToken(SYM_langle)) {
+            args = this.parseListOf<TypeSignature>("template arguments", SYM_langle, SYM_rangle, SYM_coma, () => {
+                return this.parseTypeSignature();
+            });
+        }
+
+        return args;
+    }
+
+    private parseInvokeRecursiveArgs(): "yes" | "no" | "cond" {
+        let recursive: "yes" | "no" | "cond" = "no";
+         
+        if(this.testToken(SYM_lbrack)) {
+            this.consumeToken();
+            if (!this.testToken(KW_recursive) && !this.testToken(KW_recursive_q)) {
+                this.recordErrorGeneral(this.lexer.peekNext(), "Expected recursive annotation");
+            }
+    
+            recursive = this.testToken("recursive") ? "yes" : "cond";
+            if(!this.testToken(SYM_rbrack)) {
+                this.consumeToken();
+            }
+    
+            this.ensureAndConsumeTokenIf(SYM_rbrack, "recursive annotation");
+        }
+             
+        return recursive;
+    }
+
     private parseArguments(lparen: string, rparen: string, sep: string, refok: boolean, spreadok: boolean, mapargs: boolean, lambdaok: boolean): ArgumentList {
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
@@ -2735,7 +2746,11 @@ class Parser {
             return new AccessNamespaceConstantExpression(sinfo, nspace.fullnamespace, idname);
         }
         else if(funOpt) {
-            assert(false, "Not implemented -- parseNamespaceScopedFirstExpression");
+            const targs = this.parseInvokeTemplateArguments();
+            const rec = this.parseInvokeRecursiveArgs();
+            const args = this.parseArguments(SYM_lparen, SYM_rparen, SYM_coma, true, true, false, true);
+
+            return new CallNamespaceFunctionExpression(sinfo, nspace.fullnamespace, idname, targs, rec, args);
         }
         else {
             this.recordErrorGeneral(sinfo, `Name '${nspace.fullnamespace.emit()}::${idname}' is not defined in this context`);
@@ -3054,214 +3069,6 @@ class Parser {
         else if (tk === KW_self) {
             assert(false, "Need to handle any self cases");
         }
-        /*
-        else if (tk === KW_ok || tk === KW_err || tk === KW_something || tk === KW_result) {
-            this.consumeToken();
-            this.ensureAndConsumeToken("(", tk + " constructor");
-            let arg = new LiteralNoneExpression(this.getCurrentSrcInfo());
-            if(tk === KW_ok || tk === KW_something) {
-                arg = this.parseExpression();
-            }
-            else {
-                if(!this.testToken(")")) {
-                    arg = this.parseExpression();
-                }
-            }
-            this.ensureAndConsumeToken(")", tk + "constructor -- missing closing \")\"?");
-
-            return [new SpecialConstructorExpression(sinfo, tk, arg), false];
-        }
-        else if (tk === KW_env) {
-            this.ensureTaskOpOk();
-            this.consumeToken();
-
-            let opttype = this.m_penv.SpecialStringSignature;
-            if(this.testAndConsumeTokenIf(SYM_le)) {
-                opttype = this.parseTypeSignature();
-                this.ensureAndConsumeToken(SYM_ge, "");
-            }
-
-            const isNoneMode = this.testAndConsumeTokenIf(SYM_question);
-
-            this.ensureAndConsumeToken(SYM_lbrack, "environment access");
-            this.ensureToken(TokenStrings.String, "environment access");
-            const keyname = this.consumeTokenAndGetValue();
-            this.ensureToken(SYM_rbrack, "environment access");
-
-            return [new AccessEnvValueExpression(sinfo, keyname, opttype, isNoneMode), false];
-        }
-        else if (tk === KW_ref && this.peekToken(1) === TokenStrings.Identifier && this.peekTokenData(1) === "self") {
-            this.ensureTaskOpOk();
-            this.consumeToken();
-            this.consumeToken();
-
-            this.ensureAndConsumeToken(SYM_dot, "self field access");
-            this.ensureNotToken(TokenStrings.Identifier, "self field access");
-            const sfname = this.consumeTokenAndGetValue();
-
-            const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-            return [new TaskSelfActionExpression(sinfo, sfname, targs, args, true), false];
-        }
-        else if (tk === TokenStrings.Identifier || this.testFollows(KW_ref, TokenStrings.Identifier)) {
-            const refstr = this.testAndConsumeTokenIf(KW_ref);
-            let namestr = this.consumeTokenAndGetValue();
-
-            const isvar = this.m_penv.isVarDefinedInAnyScope(namestr) || namestr === "this" || namestr.startsWith("$");
-            if (isvar) {
-                const istr = this.m_penv.useLocalVar(namestr);
-
-                if(refstr && (this.testToken(SYM_lbrack) || this.testToken(SYM_lparen))) {
-                    this.raiseError(line, "cannot use ref on lambda invoke");
-                }
-
-                if (this.testToken(SYM_lbrack)) {
-                    const rec = this.parseRecursiveAnnotation();
-                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-                    return [new PCodeInvokeExpression(sinfo, istr, rec, args), false];
-                }
-                else if (this.testToken(SYM_lparen)) {
-                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-                    return [new PCodeInvokeExpression(sinfo, istr, "no", args), false];
-                }
-                else {
-                    return [new AccessVariableExpression(sinfo, istr), refstr];
-                }
-            }
-            else {
-                const tryfunctionns = this.m_penv.tryResolveNamespace(undefined, namestr);
-                if (tryfunctionns === undefined) {
-                    this.raiseError(line, `Cannot resolve name "${namestr}"`);
-                }
-
-                if(refstr) {
-                    this.raiseError(line, "cannot use ref on namespace invoke");
-                }
-
-                const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-                const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
-                const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-                return [new CallNamespaceFunctionOrOperatorExpression(sinfo, tryfunctionns as string, namestr, targs, rec, args), false];
-            }
-        }
-        else if (tk === KW_fn || this.testFollows(KW_recursive, KW_fn) || this.testFollows(KW_recursive_q, KW_fn) || tk === KW_pred || this.testFollows(KW_recursive, KW_pred) || this.testFollows(KW_recursive_q, KW_pred)) {
-            return [this.parsePCodeTerm(), false];
-        }
-        else if (tk === SYM_lparen && !this.checkTypeScopeBasedExpressionFollowsParens()) {
-            try {
-                this.setRecover(this.scanMatchingParens(SYM_lparen, SYM_rparen));
-
-                this.consumeToken();
-                const exp = this.parseExpression();
-                this.ensureAndConsumeToken(SYM_rparen, "(Exp _<- Missing \")\"?");
-
-                this.clearRecover();
-                return [exp, false];
-            }
-            catch (ex) {
-                this.processRecover();
-                return [new InvalidExpression(sinfo), false];
-            }
-        }
-        else if (this.testToken(SYM_lbrack)) {
-            const args = this.parseArguments(SYM_lbrack, SYM_rbrack);
-            return [new ConstructorTupleExpression(sinfo, args), false];
-        }
-        else if  (this.testToken(SYM_lbrace)) {
-            const args = this.parseArgumentsNamed(SYM_lbrace, SYM_rbrace).sort((a, b) => ((a.name !== b.name) ? (a.name < b.name ? -1 : 1) : 0));
-            return [new ConstructorRecordExpression(sinfo, args.map((nn) => {
-                return {property: nn.name, value: nn.value};
-            })), false];
-        }
-        else if (this.testToken(SYM_land) || this.testToken(SYM_lor)) {
-            const op = this.consumeTokenAndGetValue() as "/\\" | "\\/";
-            const args = this.parseArguments(SYM_lparen, SYM_rparen);
-            if(op === SYM_land) {
-                return [new LogicActionAndExpression(sinfo, args), false];
-            }
-            else {
-                return [new LogicActionOrExpression(sinfo, args), false];
-            }
-        }
-        else if (this.testFollows(TokenStrings.Namespace, SYM_coloncolon, TokenStrings.Identifier)) {
-            //it is a namespace access of some type
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            if(ns === "Task" && (name === "getTaskID" || name === "isCanceled")) {
-                this.ensureTaskOpOk();
-
-                if(name === "getTaskID") {
-                    return [new TaskGetIDExpression(sinfo), false];
-                }
-                else {
-                    return [new TaskCancelRequestedExpression(sinfo), false];
-                }
-            }
-            else {
-                ns = this.m_penv.tryResolveNamespace(ns, name);
-                if (ns === undefined) {
-                    ns = "[Unresolved Namespace]";
-                }
-
-                if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen)) {
-                    //just a constant access
-                    return [new AccessNamespaceConstantExpression(sinfo, ns, name), false];
-                }
-                else {
-                    const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-                    const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
-                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
-
-                    return [new CallNamespaceFunctionOrOperatorExpression(sinfo, ns, name, targs, rec, args), false];
-                }
-            }
-        }
-        else if (this.testFollows(TokenStrings.Namespace, SYM_hash, TokenStrings.Identifier)) {
-            //it is a namespace access of some formatter info
-            let ns: string | undefined = this.consumeTokenAndGetValue();
-            this.consumeToken();
-            const name = this.consumeTokenAndGetValue();
-
-            return [new AccessFormatInfoExpression(sinfo, ns, name), false];
-        }
-        else {
-            if(this.testToken(TokenStrings.Numberino)) {
-                this.raiseError(this.getCurrentLine(), `expected numeric specifier, [i, n, I, N, f, d, R], on literal but got naked ${this.peekTokenData()}`)
-            }
-            const ttype = this.parseTypeSignature();
-
-            if (this.testFollows(SYM_coloncolon, TokenStrings.Identifier)) {
-                this.consumeToken();
-                const name = this.consumeTokenAndGetValue();
-                if (!this.testToken(SYM_le) && !this.testToken(SYM_lbrack) && !this.testToken(SYM_lparen) && !this.testToken(SYM_lbrace)) {
-                    //just a static access
-                    return [new AccessStaticFieldExpression(sinfo, ttype, name), false];
-                }
-                else {
-                    const targs = this.testToken(SYM_le) ? this.parseTemplateArguments() : [];
-                    const rec = this.testToken(SYM_lbrack) ? this.parseRecursiveAnnotation() : "no";
-                    const args = this.parseArguments(SYM_lparen, SYM_rparen);
-                    return [new CallStaticFunctionExpression(sinfo, ttype, name, targs, rec, args), false];
-                }
-            }
-            else if (this.testFollows(SYM_lbrace)) {
-                return [this.parseConstructorPrimary(ttype), false];
-            }
-            else {
-                //
-                //TODO: maybe a better error here -- slice the string at the position...
-                //
-                this.raiseError(line, `Unknown token sequence in parsing expression -- ${tk}`);
-                return [new InvalidExpression(sinfo), false];
-            }
-        }
-        */
         else if (tk === SYM_lbracebar) {
             return this.parseLetExpression();
         }
@@ -5226,7 +5033,7 @@ class Parser {
     private parseConceptRegisterType(sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         let tdecl: AbstractNominalTypeDecl | undefined = undefined;
 
-        if(PRIMITIVE_ENTITY_TYPE_NAMES.includes(name)) {
+        if(PRIMITIVE_CONCEPT_TYPE_NAMES.includes(name)) {
             tdecl = new PrimitiveConceptTypeDecl(this.env.currentFile, sinfo, attributes, name);
         }
         else if(name === "Expandoable") {
@@ -5636,6 +5443,11 @@ class Parser {
                         this.consumeToken();
                         tdecl.eventsInfo = "{}";
                     }
+                    else if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
+                        this.consumeToken();
+                        tdecl.eventsInfo = this.consumeTokenAndGetValue() as "?";
+                        this.consumeToken();
+                    }
                     else {
                         tdecl.eventsInfo = this.parseListOf<TypeSignature>("task event section", SYM_lbrace, SYM_rbrace, SYM_coma, () => this.parseTypeSignature());
                     }
@@ -5646,12 +5458,19 @@ class Parser {
                     }
 
                     this.consumeToken();
-                    const ttl = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseTypeSignature());
-                    if(ttl.length > 2) {
-                        this.recordErrorGeneral(sinfo, "Invalid status section");
+                    if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
+                        this.consumeToken();
+                        tdecl.statusInfo = this.consumeTokenAndGetValue() as "?";
+                        this.consumeToken();
                     }
+                    else {
+                        const ttl = this.parseListOf<TypeSignature>("task status section", SYM_lbrack, SYM_rbrack, SYM_coma, () => this.parseTypeSignature());
+                        if(ttl.length > 2) {
+                            this.recordErrorGeneral(sinfo, "Invalid status section");
+                        }
 
-                    tdecl.statusInfo = new StatusInfoFilter(ttl[0], ttl[1]); //implicit undefined is fine here
+                        tdecl.statusInfo = new StatusInfoFilter(ttl[0], ttl[1]); //implicit undefined is fine here
+                    }
                 }
                 else if(this.testToken(KW_resource)) {
                     if(tdecl.resourceImpactInfo !== undefined) {
@@ -5667,6 +5486,11 @@ class Parser {
                     else if(this.testFollows(SYM_lbrace, SYM_wildcard, SYM_rbrace)) {
                         this.consumeToken();
                         tdecl.resourceImpactInfo = this.consumeTokenAndGetValue() as "**";
+                        this.consumeToken();
+                    }
+                    else if(this.testFollows(SYM_lbrace, SYM_question, SYM_lbrace)) {
+                        this.consumeToken();
+                        tdecl.resourceImpactInfo = this.consumeTokenAndGetValue() as "?";
                         this.consumeToken();
                     }
                     else {
@@ -5687,20 +5511,27 @@ class Parser {
                     }
 
                     this.consumeToken();
-                    tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                        this.ensureToken(TokenStrings.IdentifierName, "task env section");
-                        const ename = this.consumeTokenAndGetValue();
-                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
+                    if(this.testFollows(SYM_lbrace, SYM_question, SYM_rbrace)) {
+                        this.consumeToken();
+                        tdecl.envVarRequirementInfo = this.consumeTokenAndGetValue() as "?";
+                        this.consumeToken();
+                    }
+                    else {
+                        tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                            this.ensureToken(TokenStrings.IdentifierName, "task env section");
+                            const ename = this.consumeTokenAndGetValue();
+                            this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
 
-                        const ttype = this.parseTypeSignature();
+                            const ttype = this.parseTypeSignature();
+                        
+                            let exp: ConstantExpressionValue | undefined = undefined;
+                            if(this.testAndConsumeTokenIf(SYM_eq)) {
+                                exp = this.parseConstExpression(ttype);
+                            }
 
-                        let exp: ConstantExpressionValue | undefined = undefined;
-                        if(this.testAndConsumeTokenIf(SYM_eq)) {
-                            exp = this.parseConstExpression(ttype);
-                        }
-
-                        return new EnvironmentVariableInformation(ename, ttype, exp);
-                    });
+                            return new EnvironmentVariableInformation(ename, ttype, exp);
+                        });
+                    }
                 }
             }
 
@@ -5834,10 +5665,10 @@ class Parser {
     }
 
     private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
-    private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} | undefined {
+    private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
         const nnsm = Parser._s_nsre.exec(contents);
         if(nnsm === null) {
-            return undefined;
+            return {ns: "[error]", isdecl: false, errors: [new ParserError(SourceInfo.implicitSourceInfo(), "Failed to find namespace declaration")]};
         }
         let nnt = nnsm[0].trim();
 
@@ -5871,8 +5702,35 @@ class Parser {
     ////
     //Public methods
 
-    static parse(): Assembly | ParserError[] {
-        xxxx;
+    static parse(code: {file: string, contents: string}[], macrodefs: string[]): Assembly | ParserError[] {
+        let assembly = new Assembly();
+        let errors: ParserError[] = [];
+
+        let registeredNamespaces = new Set<string>();
+
+        //load all the names and make sure every top-level namespace is declared
+        for(let i = 0; i < code.length; ++i) {
+            const cunit = Parser.parseCompilationUnit(ParsePhase_RegisterNames, code[i].file, code[i].contents, macrodefs, assembly);
+        
+            if(cunit.isdecl) {
+                if(registeredNamespaces.has(cunit.ns)) {
+                    errors.push(new ParserError(SourceInfo.implicitSourceInfo(), `Duplicate namespace declaration -- ${cunit.ns}`));
+                }
+                registeredNamespaces.add(cunit.ns);
+            }
+        }
+
+        if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
+            errors.push(new ParserError(SourceInfo.implicitSourceInfo(), "Missing namespace declaration"));
+        }
+
+        //parse the code
+        for(let i = 0; i < code.length; ++i) {
+            const cunit = Parser.parseCompilationUnit(ParsePhase_CompleteParsing, code[i].file, code[i].contents, macrodefs, assembly);
+            errors.push(...cunit.errors);
+        }
+
+        return errors.length === 0 ? assembly : errors;
     }
 }
 
