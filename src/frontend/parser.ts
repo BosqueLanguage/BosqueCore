@@ -1783,7 +1783,7 @@ class Parser {
         }
     }
 
-    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
+    private parsePreAndPostConditions(sinfo: SourceInfo, argnames: Set<string>, refParams: Set<string>, boundtemplates: Set<string>, taskcond: boolean, apicond: boolean): [PreConditionDecl[], PostConditionDecl[]] {
         let preconds: PreConditionDecl[] = [];
 
         this.env.scope = new StandardScopeInfo([...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -1818,7 +1818,13 @@ class Parser {
         let postconds: PostConditionDecl[] = [];
 
         const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo("$" + v, true));
-        this.env.scope = new StandardScopeInfo([...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)], boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
+
+        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)];
+        if(taskcond || apicond) {
+            postvardecls.push(new LocalVariableDefinitionInfo("$events", true));
+        }
+
+        this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
         
         while (this.testToken(KW_ensures)) {
             this.consumeToken();
@@ -2063,7 +2069,7 @@ class Parser {
         const refparams = new Set<string>(params.filter((param) => param.isRefParam).map((param) => param.name));
         const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
         const samples = this.parseSamples(cinfo);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
@@ -2130,7 +2136,7 @@ class Parser {
             }
         }
 
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
         const samples = this.parseSamples(cinfo);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
@@ -2145,7 +2151,7 @@ class Parser {
         }
     }
 
-    private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>): TaskActionDecl | undefined {
+    private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string): TaskActionDecl | undefined {
         const cinfo = this.lexer.peekNext().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_action, "action declaration");
@@ -2179,7 +2185,7 @@ class Parser {
         cargs = [new LocalVariableDefinitionInfo("self", true), ...cargs];
         refparams.add("self");
     
-        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false);
+        const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
         const samples = this.parseSamples(cinfo);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
@@ -4761,11 +4767,11 @@ class Parser {
         }
     }
 
-    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
+    private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
-        const adecl = this.parseActionInvokeDecl(attributes, typeTerms) ;
+        const adecl = this.parseActionInvokeDecl(attributes, typeTerms, taskmain);
 
         if(taskMemberAction === undefined) {
             this.recordErrorGeneral(sinfo, "Cannot have a task method member on this type");
@@ -4833,8 +4839,8 @@ class Parser {
         invariants: InvariantDecl[] | undefined, validates: ValidateDecl[] | undefined,
         constMembers: ConstMemberDecl[] | undefined, functionMembers: TypeFunctionDecl[] | undefined, 
         memberFields: MemberFieldDecl[] | undefined, memberMethods: MethodDecl[] | undefined, 
-        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined 
-        ) {
+        taskMemberMethods: TaskMethodDecl[] | undefined, taskMemberAction: TaskActionDecl[] | undefined, 
+        taskmain: string | undefined) {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanToSyncPos(SYM_rbrace);
@@ -4887,7 +4893,7 @@ class Parser {
                 }
             }
             else if(this.testToken(KW_action)) {
-                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms);
+                this.parseTaskMemberAction(taskMemberAction, allMemberNames, attributes, typeTerms, taskmain as string);
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
@@ -4978,28 +4984,28 @@ class Parser {
         }
 
         if(tdecl instanceof PrimitiveEntityTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof StringOfTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof ASCIIStringOfTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof ListTypeDecl || tdecl instanceof StackTypeDecl || tdecl instanceof QueueTypeDecl || tdecl instanceof SetTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof MapEntryTypeDecl) {
             this.parseTypeTemplateTerms();
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof MapTypeDecl) {
             this.parseTypeTemplateTerms();
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(edecl.terms.map((term) => term.name)), edecl.invariants, edecl.validates, edecl.consts, edecl.functions, edecl.fields, edecl.methods, undefined, undefined, undefined);
         }
     }
 
@@ -5064,14 +5070,14 @@ class Parser {
         }
 
         if(tdecl instanceof PrimitiveConceptTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else if(tdecl instanceof ExpandoableTypeDecl) {
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else {
             const cdecl = tdecl as ConceptTypeDecl;
-            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined);
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>(cdecl.terms.map((term) => term.name)), cdecl.invariants, cdecl.validates, cdecl.consts, cdecl.functions, cdecl.fields, cdecl.methods, undefined, undefined, undefined);
         }
     }
 
@@ -5240,7 +5246,7 @@ class Parser {
                     tdecl.provides.push(...provides);
                 }
 
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
             }
         }
     }
@@ -5290,7 +5296,7 @@ class Parser {
                 (tdecl as DatatypeMemberEntityTypeDecl).fields.push(...fields);
             }
             else {
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(parenttype.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, (tdecl as DatatypeMemberEntityTypeDecl).fields, tdecl.methods, undefined, undefined, undefined);
             }
         }
     }
@@ -5364,7 +5370,7 @@ class Parser {
                 if(tdecl.fields.length !== 0) {
                     this.recordErrorGeneral(sinfo, "Cannot mix POD (using) declartion with full datatype (&) declaration");
                 }
-                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined);
+                this.parseOOPMembersCommonAll(false, undefined, new Set<string>(tdecl.terms.map((tt) => tt.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, tdecl.methods, undefined, undefined, undefined);
             }
         }
 
@@ -5407,6 +5413,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, "Cannot have provides on tasks");
             }
 
+            let taskmain: string = "main";
             if(this.testAndConsumeTokenIf(KW_implements)) {
                 const iiaccess = this.parseIdentifierAccessChain();
                 if(iiaccess === undefined) {
@@ -5426,6 +5433,8 @@ class Parser {
 
                     if(ok) {
                         const pn = this.consumeTokenAndGetValue();
+
+                        taskmain = pn;
                         tdecl.implementsapi = [iiaccess.nsScope.fullnamespace, pn];
                     }
                 }
@@ -5535,7 +5544,7 @@ class Parser {
                 }
             }
 
-            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions);
+            this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions, taskmain);
         }
     }
 
@@ -5574,7 +5583,7 @@ class Parser {
             const cargs = params.map((param) => new LocalVariableDefinitionInfo(param.name, !param.isRefParam));
             const boundtemplates = new Set<string>();
 
-            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true);
+            const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
             const samples = this.parseSamples(sinfo);
     
             let statusinfo: StatusInfoFilter | undefined = undefined;
