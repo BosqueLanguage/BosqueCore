@@ -2,7 +2,7 @@
 import {strict as assert} from "assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
-import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, RecursiveAnnotation, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
+import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIDecl, APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
@@ -1203,12 +1203,12 @@ class Lexer {
 }
 
 class Parser {
-    private lexer: Lexer;
-    private env: ParserEnvironment;
+    private readonly lexer: Lexer;
+    private readonly env: ParserEnvironment;
 
-    private currentPhase: ParsePhase;
+    private readonly currentPhase: ParsePhase;
 
-    wellknownTypes: Map<string, NominalTypeSignature> = new Map<string, NominalTypeSignature>();
+    private wellknownTypes: Map<string, NominalTypeSignature> = new Map<string, NominalTypeSignature>();
 
     constructor(currentFile: string, toplevelns: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase) {
         this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(contents.length));
@@ -1216,7 +1216,7 @@ class Parser {
         const nns = assembly.ensureToplevelNamespace(toplevelns);
         this.env = new ParserEnvironment(assembly, currentFile, nns);
 
-        this.currentPhase = currentPhase;
+        this.currentPhase = currentPhase;   
     }
 
     ////
@@ -4504,7 +4504,7 @@ class Parser {
         this.lexer.currentState().skipToPosition(spoc);
     }
 
-    private parseNamespaceUsing(phase: ParsePhase) {
+    private parseNamespaceUsing() {
         const sinfo = this.lexer.peekNext().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_using, "namespce using");
@@ -4550,8 +4550,6 @@ class Parser {
                         this.recordErrorGeneral(sinfo, `Cannot "use" a namespace in a non-toplevel namespace`);
                     }
                 }
-
-                this.ensureAndConsumeTokenIf(SYM_semicolon, "namespace import");
             }
         }
         else {
@@ -5835,94 +5833,39 @@ class Parser {
         }
     }
 
-    private static _s_nsre = /^\s*declare[ ]+namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
-    private static parseCompilationUnitNamePass(file: string, contents: string, macrodefs: string[], assembly: Assembly): boolean {
-
-        const pp = new Parser(file, ns, contents, macrodefs, assembly, ParsePhase_RegisterNames);
-
-        //namespace NS; ...
-        this.ensureAndConsumeToken(KW_namespace, "namespace declaration");
-        this.ensureToken(TokenStrings.ScopeName, "namespace declaration");
-        const ns = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_semicolon, "namespace declaration");
-
-        this.setNamespaceAndFile(ns, file);
-        const nsdecl = this.m_penv.assembly.ensureNamespace(ns);
-
-        let parseok = true;
-        while (this.m_cpos < this.m_epos) {
-            try {
-                this.m_cpos = this.scanTokenOptions(...NS_KW);
-                if (this.m_cpos === this.m_epos) {
-                    const tokenIndexBeforeEOF = this.m_cpos - 2;
-                    if (tokenIndexBeforeEOF >= 0 && tokenIndexBeforeEOF < this.m_tokens.length) {
-                        const tokenBeforeEOF = this.m_tokens[tokenIndexBeforeEOF];
-                        if (tokenBeforeEOF.kind === TokenStrings.Error) {
-                            this.raiseError(tokenBeforeEOF.line, `Expected */ but found EOF`);
-                        }
-                    }
-                    break;
-                }
-
-                const op = this.peekToken();
-                
-
-                xxxx;
-            }
-            catch (ex) {
-                this.m_cpos++;
-                parseok = false;
-            }
+    private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
+    private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} | undefined {
+        const nnsm = Parser._s_nsre.exec(contents);
+        if(nnsm === null) {
+            return undefined;
         }
+        let nnt = nnsm[0].trim();
 
-        return parseok;
-    }
-
-    parseCompilationUnitComplete(file: string, contents: string, macrodefs: string[]): boolean {
-        this.setNamespaceAndFile("[No Namespace]", file);
-        const lexer = new Lexer(contents, macrodefs, namespacestrings);
-        this.initialize(lexer.lex());
-
-        //namespace NS; ...
-        this.ensureAndConsumeToken("namespace", "namespace declaration");
-        this.ensureToken(TokenStrings.Namespace, "namespace declaration");
-        const ns = this.consumeTokenAndGetValue();
-        this.ensureAndConsumeToken(SYM_semicolon, "namespace declaration");
-
-        this.setNamespaceAndFile(ns, file);
-        const nsdecl = this.m_penv.assembly.ensureNamespace(ns);
-
-        let importok = true;
-        let parseok = true;
-        while (this.m_cpos < this.m_epos) {
-            const rpos = this.scanTokenOptions(...NS_KW, TokenStrings.EndOfStream);
-
-            try {
-                if (rpos === this.m_epos) {
-                    break;
-                }
-
-                const tk = this.m_tokens[rpos].kind;
-                importok = importok && tk === KW_import;
-                if (tk === KW_import) {
-                    if (!importok) {
-                        this.raiseError(this.getCurrentLine(), "Using statements must come before other declarations");
-                    }
-
-                    this.parseNamespaceUsing(nsdecl);
-                }
-                xxxx;
-                else {
-                    this.raiseError(this.getCurrentLine(), "Invalid top-level definiton");
-                }
-            }
-            catch (ex) {
-                this.m_cpos = rpos + 1;
-                parseok = false;
-            }
+        let isdeclared = false;
+        if(nnt.startsWith("declare")) {
+            isdeclared = true;
+            nnt = nnt.slice(7).trim();
         }
+        nnt = nnt.slice(9).trim();
 
-        return parseok;
+        const ns = nnt;
+        const pp = new Parser(file, ns, contents.slice(nnsm[0].length), macrodefs, assembly, phase);
+
+        assembly.ensureToplevelNamespace(ns);
+        if(pp.testToken(SYM_lbrace)) {
+            pp.parseListOf<boolean>("namespace", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
+                pp.parseNamespaceUsing();
+                return true;
+            });
+            
+        }
+        else {
+            pp.ensureAndConsumeTokenIf(SYM_semicolon, "namespace declaration");
+        }
+        
+        pp.parseNamespaceMembers(TokenStrings.EndOfStream);
+
+        return {ns: ns, isdecl: isdeclared, errors: pp.lexer.currentState().errors};
     }
 
     ////
@@ -5931,12 +5874,8 @@ class Parser {
     static parse(): Assembly | ParserError[] {
         xxxx;
     }
-
-    getParseErrors(): [string, number, string][] | undefined {
-        return this..length !== 0 ? this.m_errors : undefined;
-    }
 }
 
 export { 
-    Parser
+    Parser, ParserError
 };
