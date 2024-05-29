@@ -4,6 +4,10 @@ import { Expression, BodyImplementation, ConstantExpressionValue } from "./body"
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
 
+const WELL_KNOWN_RETURN_VAR_NAME = "$return";
+const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
+const WELL_KNOWN_SRC_VAR_NAME = "$src";
+
 class TypeTemplateTermDecl {
     readonly name: string;
     readonly tconstraint: TypeSignature;
@@ -693,7 +697,7 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
     }
 }
 
-class ThingOfTypeDecl extends InternalEntityTypeDecl {
+abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -916,6 +920,22 @@ class SetTypeDecl extends AbstractCollectionTypeDecl {
 class MapTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
+    }
+}
+
+class EventListTypeDecl extends InternalEntityTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
+        super(file, sinfo, attributes, name);
+    }
+
+    emit(fmt: CodeFormatter): string {
+        const attrs = this.emitAttributes();
+
+        fmt.indentPush();
+        const bg = this.emitBodyGroups(fmt);
+        fmt.indentPop();
+
+        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
 }
 
@@ -1290,7 +1310,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
     readonly selfmethods: TaskMethodDecl[] = [];
     readonly actions: TaskActionDecl[] = [];
 
-
     eventsInfo: TypeSignature[] | "{}" | "?" | undefined; //undefined means passthrough (or API is defined)
     statusInfo: StatusInfoFilter | "?" | undefined; //undefined means passthrough
     envVarRequirementInfo: EnvironmentVariableInformation[] | "?" | undefined; //undefined means passthrough
@@ -1611,6 +1630,7 @@ class Assembly {
 }
 
 export {
+    WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
     TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
@@ -1630,6 +1650,7 @@ export {
     ThingOfTypeDecl, StringOfTypeDecl, ASCIIStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
+    EventListTypeDecl,
     EntityTypeDecl, 
     InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 

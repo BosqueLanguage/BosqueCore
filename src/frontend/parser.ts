@@ -4,7 +4,7 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AndTypeSignature, AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIDecl, APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl } from "./assembly";
+import { APIDecl, APIResultTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME } from "./assembly";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
@@ -1819,9 +1819,9 @@ class Parser {
 
         const refnames = [...refParams].map((v) => new LocalVariableDefinitionInfo("$" + v, true));
 
-        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo("$return", true)];
+        const postvardecls = [...[...argnames].map((v) => new LocalVariableDefinitionInfo(v, true)), ...refnames, new LocalVariableDefinitionInfo(WELL_KNOWN_RETURN_VAR_NAME, true)];
         if(taskcond || apicond) {
-            postvardecls.push(new LocalVariableDefinitionInfo("$events", true));
+            postvardecls.push(new LocalVariableDefinitionInfo(WELL_KNOWN_EVENTS_VAR_NAME, true));
         }
 
         this.env.scope = new StandardScopeInfo(postvardecls, boundtemplates, this.wellknownTypes.get("Bool") as TypeSignature);
@@ -1857,7 +1857,7 @@ class Parser {
         return [preconds, postconds];
     }
 
-    private parseSamples(sinfo: SourceInfo): InvokeExample[] {
+    private parseSamples(sinfo: SourceInfo, boundtemplates: Set<string>): InvokeExample[] {
         let samples: InvokeExample[] = [];
         while (this.testToken(KW_test) || this.testToken(KW_example)) {
             const istest = this.testToken(KW_test);
@@ -1871,9 +1871,15 @@ class Parser {
             else {
                 this.ensureToken(SYM_lbrace, "example");
                 const examples = this.parseListOf<{args: Expression[], output: Expression}>("examples", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
+                    this.env.scope = new StandardScopeInfo([], boundtemplates, undefined);
                     const args = this.parseListOf<Expression>("example args", SYM_lparen, SYM_rparen, SYM_coma, () => this.parseExpression());
+                    this.env.scope = undefined;
+
                     this.ensureAndConsumeTokenAlways(SYM_bigarrow, "example");
+
+                    this.env.scope = new StandardScopeInfo([new LocalVariableDefinitionInfo(WELL_KNOWN_SRC_VAR_NAME, true)], boundtemplates, undefined);
                     const result = this.parseExpression();
+                    this.env.scope = undefined;
 
                     return {args: args, output: result};
                 });
@@ -2070,7 +2076,7 @@ class Parser {
         const boundtemplates = new Set<string>(...typeTerms, ...terms.map((term) => term.name));
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
-        const samples = this.parseSamples(cinfo);
+        const samples = this.parseSamples(cinfo, boundtemplates);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, functionkind === "predicate", false);
@@ -2137,7 +2143,7 @@ class Parser {
         }
 
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, false, false);
-        const samples = this.parseSamples(cinfo);
+        const samples = this.parseSamples(cinfo, boundtemplates);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
@@ -2186,7 +2192,7 @@ class Parser {
         refparams.add("self");
     
         const [preconds, postconds] = this.parsePreAndPostConditions(cinfo, argNames, refparams, boundtemplates, fname === taskmain, false);
-        const samples = this.parseSamples(cinfo);
+        const samples = this.parseSamples(cinfo, boundtemplates);
     
         this.env.pushStandardFunctionScope(cargs, boundtemplates, resultInfo);
         const body = this.parseBody(attributes, false, false);
@@ -4959,6 +4965,9 @@ class Parser {
         else if(name === "Map") {
             tdecl = new MapTypeDecl(this.env.currentFile, sinfo, attributes, "Map");
         }
+        else if(name === "EventList") {
+            tdecl = new EventListTypeDecl(this.env.currentFile, sinfo, attributes, "EventList");
+        }
         else {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse");
 
@@ -5002,6 +5011,9 @@ class Parser {
         else if(tdecl instanceof MapTypeDecl) {
             this.parseTypeTemplateTerms();
             this.parseOOPMembersCommonAll(false, undefined, new Set<string>(["K", "V"]), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
+        }
+        else if(tdecl instanceof EventListTypeDecl) {
+            this.parseOOPMembersCommonAll(false, undefined, new Set<string>("T"), undefined, undefined, tdecl.consts, tdecl.functions, undefined, tdecl.methods, undefined, undefined, undefined);
         }
         else {
             const edecl = tdecl as EntityTypeDecl;
@@ -5544,6 +5556,19 @@ class Parser {
                 }
             }
 
+            if(tdecl.eventsInfo === undefined) {
+                tdecl.eventsInfo = "{}";
+            }
+            if(tdecl.statusInfo === undefined) {
+                tdecl.statusInfo = new StatusInfoFilter(undefined, undefined);
+            }
+            if(tdecl.envVarRequirementInfo === undefined) {
+                tdecl.envVarRequirementInfo = [];
+            }
+            if(tdecl.resourceImpactInfo === undefined) {
+                tdecl.resourceImpactInfo = "{}";
+            }
+
             this.parseOOPMembersCommonAll(true, undefined, new Set<string>(tdecl.terms.map((term) => term.name)), tdecl.invariants, tdecl.validates, tdecl.consts, tdecl.functions, tdecl.fields, undefined, tdecl.selfmethods, tdecl.actions, taskmain);
         }
     }
@@ -5584,7 +5609,7 @@ class Parser {
             const boundtemplates = new Set<string>();
 
             const [preconds, postconds] = this.parsePreAndPostConditions(sinfo, argNames, new Set<string>(), new Set<string>(), true, true);
-            const samples = this.parseSamples(sinfo);
+            const samples = this.parseSamples(sinfo, boundtemplates);
     
             let statusinfo: StatusInfoFilter | undefined = undefined;
             let resouceinfo: ResourceInformation[] | "**" | "{}" | undefined = undefined;
@@ -5673,6 +5698,15 @@ class Parser {
         }
     }
 
+    private loadWellKnownType(name: string) {
+        const ccore = this.env.assembly.getToplevelNamespace("Core");
+
+        const tdecl = ccore.typedecls.find((td) => td.name === name);
+        assert(tdecl !== undefined, "Failed to find well known type");
+
+        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
+    }
+
     private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
     private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
         const nnsm = Parser._s_nsre.exec(contents);
@@ -5697,12 +5731,21 @@ class Parser {
                 pp.parseNamespaceUsing();
                 return true;
             });
-            
         }
         else {
             pp.ensureAndConsumeTokenIf(SYM_semicolon, "namespace declaration");
         }
         
+
+        if(phase === ParsePhase_CompleteParsing) {
+            pp.loadWellKnownType("None");
+            pp.loadWellKnownType("Nothing");
+            pp.loadWellKnownType("Bool");
+
+            pp.loadWellKnownType("Any");
+            pp.loadWellKnownType("Some");
+        }
+
         pp.parseNamespaceMembers(TokenStrings.EndOfStream);
 
         return {ns: ns, isdecl: isdeclared, errors: pp.lexer.currentState().errors};

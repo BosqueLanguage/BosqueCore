@@ -60,6 +60,11 @@ class TypeCheckerResolver {
         xxxx;
     }
 
+    getEventListOf(vtype: TypeSignature): TypeSignature {
+        //return the event list type of the given type
+        xxxx;
+    }
+
     compileTimeReduceConstantExpression(exp: Expression): [Expression, TypeSignature | undefined, TemplateNameMapper] | undefined {
         if(exp.isLiteralExpression()) {
             return [exp, undefined, TemplateNameMapper.createEmpty()];

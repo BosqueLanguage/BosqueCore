@@ -1,9 +1,9 @@
 import {strict as assert} from "assert";
 
-import { Assembly } from "./assembly";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
 import { BuildLevel, SourceInfo, isBuildLevelEnabled } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
-import { AbortStatement, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, Statement, StatementTag, SwitchStatement, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TupleTypeSignature, TypeSignature, VoidTypeSignature } from "./type";
+import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
 import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerResolver } from "./checker_resolver";
 import { TypeCheckerRelations } from "./checker_relations";
@@ -125,7 +125,7 @@ class TypeChecker {
     
     private processITest(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
         if(tt instanceof ITestType) {
-            this.checkTypeSignature(env, tt.ttype);
+            this.checkTypeSignature(tt.ttype);
             return this.processITest_Type(src, tt.ttype, tt.isnot);
         }
         else if(tt instanceof ITestLiteral) {
@@ -142,8 +142,8 @@ class TypeChecker {
                 else {
                     lltype = this.checkExpression(env, ll[0], undefined);
                 }
-                this.checkTypeSignature(env, lltype);
-                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(lltype, this.getWellKnownType("KeyType"), env.binds), "Literal value must be a key type");
+                this.checkTypeSignature(lltype);
+                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(lltype, this.getWellKnownType("KeyType"), this.constraints), "Literal value must be a key type");
 
                 return this.processITest_Literal(env, src, lltype, tt.isnot);
             }
@@ -171,73 +171,37 @@ class TypeChecker {
         }
     }
 
-    private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TemplateTermDecl[], giventerms: TypeSignature[], typescope: TemplateBindScope) {
+    private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TypeTemplateTermDecl[]) {
+        let allnames = new Set<string>();
+
         for(let i = 0; i < terms.length; ++i) {
             const terminfo = terms[i];
-            const termtype = this.normalizeTypeOnly(giventerms[i], typescope);
 
-            const termconstraint = this.normalizeTypeOnly(terminfo.tconstraint, TemplateBindScope.createEmptyBindScope());
-            const boundsok = this.subtypeOf(termtype, termconstraint);
-            this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified bounds -- not subtype of ${termconstraint.typeID}`);
+            this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
+            allnames.add(terminfo.name);
 
-            if (terminfo.isunique) {
-                this.raiseErrorIf(sinfo, termtype.options.length !== 1 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
-            }
+            this.checkTypeSignature(terminfo.tconstraint);
+        }
+    }
 
-            if(terminfo.isgrounded) {
-                this.raiseErrorIf(sinfo, !ResolvedType.isGroundedType(termtype.options), `Template type ${termtype.typeID} is not grounded`);
-            }
+    private checkTemplateTypesOnInvoke(sinfo: SourceInfo, terms: InvokeTemplateTermDecl[]) {
+        let allnames = new Set<string>();
+
+        for(let i = 0; i < terms.length; ++i) {
+            const terminfo = terms[i];
+
+            this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
+            allnames.add(terminfo.name);
+
+            this.checkTypeSignature(terminfo.tconstraint);
         }
     }
 
     //Given a type signature -- check that is is well formed and report any issues
-    private checkTypeSignature(env: TypeEnvironment, type: TypeSignature): boolean {
+    private checkTypeSignature(type: TypeSignature): boolean {
         xxxx;
     }
 
-    /*
-    private checkTemplateTypesOnInvoke(sinfo: SourceInfo, terms: TemplateTermDecl[], enclosingscope: TemplateBindScope, binds: Map<string, ResolvedType>, optTypeRestrict?: TypeConditionRestriction) {
-        for(let i = 0; i < terms.length; ++i) {
-            const terminfo = terms[i];
-            const termtype = binds.get(terminfo.name) as ResolvedType;
-
-            const termconstraint = this.normalizeTypeOnly(terminfo.tconstraint, enclosingscope);
-            const boundsok = this.subtypeOf(termtype, termconstraint);
-            this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified bounds -- not subtype of ${termconstraint.typeID}`);
-
-            if (terminfo.isunique) {
-                this.raiseErrorIf(sinfo, termtype.options.length !== 0 || !ResolvedType.isUniqueType(termtype.options[0]), `Template type ${termtype.typeID} is not unique`);
-            }
-
-            if(terminfo.isgrounded) {
-                this.raiseErrorIf(sinfo, !ResolvedType.isGroundedType(termtype.options), `Template type ${termtype.typeID} is not grounded`);
-            }
-        }
-
-        if (optTypeRestrict !== undefined) {
-            for (let i = 0; i < optTypeRestrict.constraints.length; ++i) {
-                const consinfo = optTypeRestrict.constraints[i];
-                const constype = this.normalizeTypeOnly(consinfo.t, enclosingscope);
-
-                const constrainttype = this.normalizeTypeOnly(consinfo.tconstraint, enclosingscope);
-                const boundsok = this.subtypeOf(constype, constrainttype);
-                this.raiseErrorIf(sinfo, !boundsok, `Template instantiation does not satisfy specified restriction -- not subtype of ${constrainttype.typeID}`);
-            }
-        }
-    }
-
-    private isLambdaTypedExpression(e: Expression, env: ExpressionTypeEnvironment): boolean {
-        if(e instanceof ConstructorPCodeExpression) {
-            return true;
-        }
-        else if (e instanceof AccessVariableExpression) {
-            return env.argpcodes.has(e.name) || env.capturedpcodes.has(e.name);
-        }
-        else {
-            return false;
-        }
-    }
-    */
 
     private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
         if (lhsexp.tag === ExpressionTag.LiteralNoneExpression && rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
@@ -583,7 +547,7 @@ class TypeChecker {
     }
 
     private checkLiteralTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(!this.checkTypeSignature(env, exp.stype)) {
+        if(!this.checkTypeSignature(exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
@@ -597,7 +561,7 @@ class TypeChecker {
     }
 
     private checkLiteralASCIITypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
-        if(!this.checkTypeSignature(env, exp.stype)) {
+        if(!this.checkTypeSignature(exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
@@ -669,7 +633,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 
-        this.checkTypeSignature(env, cdecl.declaredType);
+        this.checkTypeSignature(cdecl.declaredType);
         return exp.setType(cdecl.declaredType);
     }
 
@@ -2540,21 +2504,21 @@ class TypeChecker {
     }
 
     private checkVariableDeclarationStatement(env: TypeEnvironment, stmt: VariableDeclarationStatement): TypeEnvironment {
-        this.checkTypeSignature(env, stmt.vtype);
+        this.checkTypeSignature(stmt.vtype);
         
         return env.addLocalVariable(stmt.name, stmt.vtype, false, false);
     }
     
     private checkVariableMultiDeclarationStatement(env: TypeEnvironment, stmt: VariableMultiDeclarationStatement): TypeEnvironment {
         for(let i = 0; i < stmt.decls.length; ++i) {
-            this.checkTypeSignature(env, stmt.decls[i].vtype);
+            this.checkTypeSignature(stmt.decls[i].vtype);
             env = env.addLocalVariable(stmt.decls[i].name, stmt.decls[i].vtype, false, false);
         }
         return env;
     }
 
     private checkVariableInitializationStatement(env: TypeEnvironment, stmt: VariableInitializationStatement): TypeEnvironment {
-        this.checkTypeSignature(env, stmt.vtype);
+        this.checkTypeSignature(stmt.vtype);
 
         const itype = !(stmt.vtype instanceof AutoTypeSignature) ? stmt.vtype : undefined;
         const rhs = this.checkExpressionRHS(env, stmt.exp, itype);
@@ -2567,7 +2531,7 @@ class TypeChecker {
 
     private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
         for(let i = 0; i < stmt.decls.length; ++i) {
-            this.checkTypeSignature(env, stmt.decls[i].vtype);
+            this.checkTypeSignature(stmt.decls[i].vtype);
         }
 
         const iopts = stmt.decls.map((decl) => !(decl.vtype instanceof AutoTypeSignature) ? decl.vtype : undefined);
@@ -2901,7 +2865,7 @@ class TypeChecker {
                 results.push(cenv);
             }
             else {
-                this.checkTypeSignature(env, stmt.matchflow[i].mtype as TypeSignature);
+                this.checkTypeSignature(stmt.matchflow[i].mtype as TypeSignature);
 
                 const splits = this.processITest_Type(ctype, stmt.matchflow[i].mtype as TypeSignature, false);
                 this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
@@ -3296,18 +3260,339 @@ class TypeChecker {
         }
     }
 
-    private checkBodyExpression(srcFile: string, env: ExpressionTypeEnvironment, body: Expression, rtype: ResolvedType, selfok: "no" | "read"): TIRStatement[] {
-        const evalue = this.emitCoerceIfNeeded(this.checkExpression(env, body, rtype), body.sinfo, rtype);
-        const sblck = new TIRScopedBlockStatement([new TIRReturnStatement(body.sinfo, evalue.expressionResult)], true);
+    private checkBodyImplementation(env: TypeEnvironment, rtype: TypeSignature, body: BodyImplementation) {
+        if(body instanceof AbstractBodyImplementation || body instanceof PredicateUFBodyImplementation || body instanceof BuiltinBodyImplementation || body instanceof SynthesisBodyImplementation) {
+            return;
+        }
 
-        return sblck.ops;
+        if(body instanceof ExpressionBodyImplementation) {
+            const etype = this.checkExpression(env, body.exp, rtype);
+            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expression body does not match expected return type -- expected ${rtype.emit(false)} but got ${etype.emit(false)}`);
+        }
+        else {
+            assert(body instanceof StandardBodyImplementation);
+            
+
+            for(let i = 0; i < body.statements.length; ++i) {
+                env = this.checkStatement(env, body.statements[i]);
+            }
+            this.checkError(body.sinfo, !env.normalflow, "Function does not have a return statement in all code paths");
+        }
     }
 
-    private checkBodyStatement(srcFile: string, env: StatementTypeEnvironment, body: ScopedBlockStatement, rtype: ResolvedType, taskok: boolean, selfok: "no" | "read" | "write"): TIRStatement[] {
-        const sblck = this.checkScopedBlockStatement(env, body);
-        return sblck[1].ops;
+    private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {
+        for(let i = 0; i < requires.length; ++i) {
+            const precond = requires[i];
+            const etype = this.checkExpression(env, precond.exp, this.wellknownTypes.get("Bool"));
+            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Requires expression does not have a boolean type -- got ${etype.emit(false)}`);
+        }
     }
 
+    private checkEnsures(env: TypeEnvironment, refvars: string[], eventtype: TypeSignature | undefined, ensures: PostConditionDecl[]) {
+        let eev = env.pushNewLocalScope();
+        
+        eev = eev.addLocalVariable(WELL_KNOWN_RETURN_VAR_NAME, env.returnType, true, true);
+        if(eventtype !== undefined) {
+            const eventlisttype = this.resolver.getEventListOf(eventtype);
+            eev = eev.addLocalVariable(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
+        }
+
+        for(let i = 0; i < refvars.length; ++i) {
+            const v = refvars[i];
+            eev = eev.addLocalVariable("$" + v, (env.resolveLocalVarInfo(v) as VarInfo).layoutType, true, true);
+        }
+
+        for(let i = 0; i < ensures.length; ++i) {
+            const postcond = ensures[i];
+            const etype = this.checkExpression(eev, postcond.exp, this.wellknownTypes.get("Bool"));
+            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Ensures expression does not have a boolean type -- got ${etype.emit(false)}`);
+        }
+    }
+
+    private checkInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
+        for(let i = 0; i < invariants.length; ++i) {
+            const inv = invariants[i];
+            const etype = this.checkExpression(env, inv.exp.exp, this.wellknownTypes.get("Bool"));
+            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Invariant expression does not have a boolean type -- got ${etype.emit(false)}`);
+        }
+    }
+
+    private checkValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
+        for(let i = 0; i < validates.length; ++i) {
+            const etype = this.checkExpression(env, validates[i].exp.exp, this.wellknownTypes.get("Bool"));
+            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Validate expression does not have a boolean type -- got ${etype.emit(false)}`);
+        }
+    }
+
+    private checkExamplesInline(sinfo: SourceInfo, args: TypeSignature[], resulttype: TypeSignature, example: InvokeExampleDeclInline) {
+        assert(false, "This should be checked as a BSQON value"); //maybe in a secondary pass
+    }
+
+    private checkExamplesFiles(sinfo: SourceInfo, args: TypeSignature[], resulttype: TypeSignature, example: InvokeExampleDeclFile) {
+        assert(false, "Not implemented -- checkExamplesFiles"); //We probably don't want to load the contents here -- but maybe as a separate pass????
+    }
+
+    private checkExamples(sinfo: SourceInfo, args: TypeSignature[], resulttype: TypeSignature, examples: InvokeExample[]) {
+        for(let i = 0; i < examples.length; ++i) {
+            const ex = examples[i];
+            if(ex instanceof InvokeExampleDeclInline) {
+                this.checkExamplesInline(sinfo, args, resulttype, ex);
+            }
+            else {
+                assert(ex instanceof InvokeExampleDeclFile);
+                this.checkExamplesFiles(sinfo, args, resulttype, ex);
+            }
+        }
+    }
+
+    private checkExplicitInvokeDeclTermInfo(idecl: ExplicitInvokeDecl) {
+        this.checkTemplateTypesOnInvoke(idecl.sinfo, idecl.terms);
+
+        if(idecl.termRestriction !== undefined) {
+            assert(false, "Not implemented -- checkExplicitInvokeDeclTermInfo"); //make sure it is well formed
+        }
+    }
+
+    private checkExplicitInvokeDeclSignature(idecl: ExplicitInvokeDecl) {
+        let argnames = new Set<string>();
+        for(let i = 0; i < idecl.params.length; ++i) {
+            const p = idecl.params[i];
+            this.checkError(idecl.sinfo, argnames.has(p.name), `Duplicate parameter name ${p.name}`);
+            argnames.add(p.name);
+
+            this.checkTypeSignature(p.type);
+        }
+
+        this.checkTypeSignature(idecl.resultType);
+    }
+
+    private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], refvars: string[], eventtype: TypeSignature | undefined) {
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, p.type, true, true))];
+        const fullrefvars = [...refvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
+        const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, idecl.resultType);
+        this.checkRequires(ienv, idecl.preconditions);
+        this.checkEnsures(ienv, fullrefvars, eventtype, idecl.postconditions);
+
+        this.checkExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples);
+    }
+
+    private checkNamespaceFunctionDecl(fdecl: NamespaceFunctionDecl) {
+        xxxx;
+    }
+
+    private checkTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl) {
+        assert(false, "Not implemented -- checkTypeFunctionDecl");
+    }
+
+    private checkMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: MethodDecl) {
+        assert(false, "Not implemented -- checkMethodDecl");
+    }
+
+    private checkTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: TaskMethodDecl) {
+        assert(false, "Not implemented -- checkTaskMethodDecl");
+    }
+
+    private checkTaskActionDecl(tdecl: AbstractNominalTypeDecl, mdecl: TaskActionDecl) {
+        assert(false, "Not implemented -- checkTaskActionDecl");
+    }
+
+    private checkConstMemberDecl(tdecl: AbstractNominalTypeDecl, mdecl: ConstMemberDecl) {
+        assert(false, "Not implemented -- checkConstMemberDecl");
+    }
+
+    private checkMemberFieldDecl(tdecl: AbstractNominalTypeDecl, mdecl: MemberFieldDecl) {
+        assert(false, "Not implemented -- checkMemberFieldDecl");
+    }
+
+    private checkEnumTypeDecl(tdecl: EnumTypeDecl) {
+        assert(false, "Not implemented -- checkEnumTypeDecl");
+    }
+
+    private checkTypedeclTypeDecl(tdecl: TypedeclTypeDecl) {
+        xxxx;
+    }
+
+    private checkPrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl) {
+        return; //trusted
+    }
+
+    private checkRegexValidatorTypeDecl(tdecl: RegexValidatorTypeDecl) {
+        return; //trusted
+    }
+
+    private checkASCIIRegexValidatorTypeDecl(tdecl: ASCIIRegexValidatorTypeDecl) {
+        return; //trusted
+    }
+
+    private checkPathValidatorTypeDecl(tdecl: PathValidatorTypeDecl) {
+        return; //trusted
+    }
+
+    private checkStringOfTypeDecl(tdecl: StringOfTypeDecl) {
+        return; //trusted
+    }
+
+    private checkASCIIStringOfTypeDecl(tdecl: ASCIIStringOfTypeDecl) {
+        return; //trusted
+    }
+
+    private checkPathOfTypeDecl(tdecl: PathOfTypeDecl) {
+        return; //trusted
+    }
+
+    private checkPathFragmentOfTypeDecl(tdecl: PathFragmentOfTypeDecl) {
+        return; //trusted
+    }
+
+    private checkPathGlobOfTypeDecl(tdecl: PathGlobOfTypeDecl) {
+        return; //trusted
+    }
+
+    private checkOkTypeDecl(tdecl: OkTypeDecl) {
+        return; //trusted
+    }
+
+    private checkErrTypeDecl(tdecl: ErrTypeDecl) {
+        return; //trusted
+    }
+
+    private checkAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl) {
+        return; //trusted
+    }
+
+    private checkAPIFailedTypeDecl(tdecl: APIFailedTypeDecl) {
+        return; //trusted
+    }
+
+    private checkAPIErrorTypeDecl(tdecl: APIErrorTypeDecl) {
+        return; //trusted
+    }
+
+    private checkAPISuccessTypeDecl(tdecl: APISuccessTypeDecl) {
+        return; //trusted
+    }
+
+    private checkSomethingTypeDecl(tdecl: SomethingTypeDecl) {
+        return; //trusted
+    }
+
+    private checkMapEntryTypeDecl(tdecl: MapEntryTypeDecl) {
+        assert(false, "Not implemented -- checkMapEntryTypeDecl");
+    }
+
+    private checkListTypeDecl(tdecl: ListTypeDecl) {
+        assert(false, "Not implemented -- checkListTypeDecl");
+    }
+
+    private checkStackTypeDecl(tdecl: StackTypeDecl) {
+        assert(false, "Not implemented -- checkStackTypeDecl");
+    }
+
+    private checkQueueTypeDecl(tdecl: QueueTypeDecl) {
+        assert(false, "Not implemented -- checkQueueTypeDecl");
+    }
+
+    private checkSetTypeDecl(tdecl: SetTypeDecl) {
+        assert(false, "Not implemented -- checkSetTypeDecl");
+    }
+
+    private checkMapTypeDecl(tdecl: MapTypeDecl) {
+        assert(false, "Not implemented -- checkMapTypeDecl");
+    }
+
+    private checkEventListTypeDecl(tdecl: EventListTypeDecl) {
+        assert(false, "Not implemented -- checkEventListTypeDecl");
+    }
+
+    private checkEntityTypeDecl(tdecl: EntityTypeDecl) {
+        xxxx;
+    }
+
+    private checkPrimitiveConceptTypeDecl(tdecl: PrimitiveConceptTypeDecl) {
+        return; //trusted
+    }
+
+    private checkOptionTypeDecl(tdecl: OptionTypeDecl) {
+        return; //trusted
+    }
+
+    private checkResultTypeDecl(tdecl: ResultTypeDecl) {
+        return; //trusted
+    }
+
+    private checkAPIResultTypeDecl(tdecl: APIResultTypeDecl) {
+        return; //trusted
+    }
+
+    private checkExpandoableTypeDecl(tdecl: ExpandoableTypeDecl) {
+        return; //trusted
+    }
+
+    private checkConceptTypeDecl(tdecl: ConceptTypeDecl) {
+        xxxx;
+    }
+
+    private checkDatatypeMemberEntityTypeDecl(parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
+        assert(false, "Not implemented -- checkDatatypeMemberEntityTypeDecl");
+    }
+
+    private checkDatatypeTypeDecl(tdecl: DatatypeTypeDecl) {
+        assert(false, "Not implemented -- checkDatatypeTypeDecl");
+    }
+
+    private checkEventInfo(einfo: TypeSignature[] | "{}" | "?") {
+        assert(false, "Not implemented -- checkEventInfo");
+    }
+
+    private checkStatusInfoFilter(status: StatusInfoFilter | "?") {
+        assert(false, "Not implemented -- checkStatusInfoFilter");
+    }
+
+    private checkEnvironmentVariableInformation(env: EnvironmentVariableInformation[] | "?") {
+        assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+    }
+
+    private checkResourceInformation(res: ResourceInformation[] | "**" | "{}" | "?") {
+        assert(false, "Not implemented -- checkResourceInformation");
+    }
+
+    private checkAPIDecl(adecl: APIDecl) {
+        assert(false, "Not implemented -- checkAPIDecl");
+    }
+
+    private checkTaskDecl(tdecl: TaskDecl) {
+        assert(false, "Not implemented -- checkTaskDecl");
+    }
+
+    private checkNamespaceConstDecl(cdecl: NamespaceConstDecl) {
+        xxxx;
+    }
+
+    private checkNamespaceTypedef(tdecl: NamespaceTypedef) {
+        xxxx;
+    }
+
+    private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
+        xxxx;
+    }
+
+    checkAssembly(assembly: Assembly) {
+        xxxx;
+    }
+
+
+
+
+
+
+
+
+
+    
     private processStdInvariantCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRObjectInvariantDecl[] {
         const decltypes = this.getAllInvariantProvidingTypesInherit(ttype, tdecl, binds);
         const allfields = [...this.getAllOOFields(ttype, tdecl, binds)];
@@ -3703,19 +3988,6 @@ class TypeChecker {
         args.forEach((vv) => {
             this.raiseErrorIf(sinfo, vv.declaredType.isInvalidType(), "Could not resolved declared argument type");
         });
-    }
-
-    private checkPCodeDecl(sinfo: SourceInfo, invoke: InvokeDecl, ibinds: TemplateBindScope) {
-        const allNames = new Set<string>();
-        for (let i = 0; i < invoke.params.length; ++i) {
-            if (invoke.params[i].name !== "_") {
-                this.raiseErrorIf(sinfo, allNames.has(invoke.params[i].name), `Duplicate name in invocation signature paramaters "${invoke.params[i].name}"`);
-                allNames.add(invoke.params[i].name);
-            }
-        
-            const rtype = this.normalizeTypeGeneral(invoke.params[i].type, ibinds);
-            this.raiseErrorIf(sinfo, rtype instanceof ResolvedFunctionType, "Cannot have nested function type param");
-        }
     }
 
     private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
@@ -4566,140 +4838,6 @@ class TypeChecker {
         catch(ex) {
             ;
         }
-    }
-
-    private anyTypesPending(): boolean {
-        return this.m_pendingEntityDecls.length !== 0 ||
-            this.m_pendingEnumDecls.length !== 0 ||
-            this.m_pendingTypedeclDecls.length !== 0 ||
-            this.m_pendingConceptDecls.length !== 0 ||
-            this.m_pendingTaskDecls.length !== 0;
-    }
-    
-    private anyPending(): boolean {
-        if(this.anyTypesPending()) {
-            return true;
-        }
-
-        return this.m_pendingNamespaceConsts.length !== 0 ||
-            this.m_pendingNamespaceFunctions.length !== 0 ||
-            this.m_pendingNamespaceOperators.length !== 0 ||
-            this.m_pendingConstMemberDecls.length !== 0 ||
-            this.m_pendingFunctionMemberDecls.length !== 0 ||
-            this.m_pendingMethodMemberDecls.length !== 0 ||
-            this.m_pendingCodeDecls.length !== 0;
-    }
-
-    private updateVirtualPending(virtualmemberdecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[]) {
-        for(let i = 0; i < virtualmemberdecls.length; ++i) {
-            const vmd = virtualmemberdecls[i];
-
-            for(let j = 0; j < this.m_instantiatedVTableTypes.length; ++j) {
-                const vtt = this.m_instantiatedVTableTypes[j];
-                const tirvtt = this.m_tirTypeMap.get(vtt.typeID) as TIRObjectEntityType;
-
-                if(this.subtypeOf(ResolvedType.createSingle(vtt), vmd.decl.ttype) && !tirvtt.vtable.has(vmd.decl.decl.name)) {
-                    const mresolvetry = this.resolveMemberMethod(vtt.object.sourceLocation, ResolvedType.createSingle(vtt), vmd.decl.decl.name);
-                    this.raiseErrorIf(vtt.object.sourceLocation, mresolvetry === undefined, `Could not resolve method name "${vmd.decl.decl.name}" from type ${vtt.typeID}`);
-                    const mresolve = mresolvetry as OOMemberResolution<MemberMethodDecl>;
-
-                    this.raiseErrorIf(vtt.object.sourceLocation, mresolve.impl.length !== 1, `Could not resolve implementation for non-virtual method ${vmd.decl.decl.name} from ${vtt.typeID}`);
-                    const knownimpl = mresolve.impl[0];
-
-                    const knowntype = this.toTIRTypeKey(knownimpl.ttype);
-                    const ptypes = vmd.decl.decl.invoke.params.map((pp) => {
-                        const rptype = this.normalizeTypeGeneral(pp.type, TemplateBindScope.createBaseBindScope(vmd.decl.oobinds).pushScope(vmd.binds));
-                        return {name: pp.name, rptype: rptype};
-                    });
-
-                    const knownkey = TIRIDGenerator.generateInvokeForMemberMethod(knowntype, vmd.decl.decl.name, knownimpl.decl.invoke.terms.map((tt) => this.toTIRTypeKey(vmd.binds.get(tt.name) as ResolvedType)), ptypes.filter((pp) => pp.rptype instanceof ResolvedFunctionType).map((pp) => (vmd.pcodes.get(pp.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-                
-                    this.m_pendingMethodMemberDecls.push({fkey: knownkey, decl: knownimpl, declaredecl: mresolve.decl, binds: vmd.binds, pcodes: vmd.pcodes});
-                    tirvtt.vtable.set(vmd.decl.decl.name, knownkey);
-                }
-            }
-        }
-    }
-
-    private processInfoTemplate(msg: InfoTemplate): TIRInfoTemplate {
-        if (msg instanceof InfoTemplateRecord) {
-            const entries = msg.entries.map((ee) => {
-                return {name: ee.name, value: this.processInfoTemplate(ee.value)};
-            });
-            return new TIRInfoTemplateRecord(entries);
-        }
-        else if (msg instanceof InfoTemplateTuple) {
-            const entries = msg.entries.map((ee) => {
-                return this.processInfoTemplate(ee);
-            });
-            return new TIRInfoTemplateTuple(entries);
-        }
-        else if (msg instanceof InfoTemplateConst) {
-            const [tirlit, _] = this.reduceLiteralValueToCanonicalForm(msg.lexp.exp, TemplateBindScope.createEmptyBindScope());
-            this.raiseErrorIf(msg.lexp.exp.sinfo, tirlit === undefined, `expected literal expression but got ${msg.lexp.exp}`);
-
-            return new TIRInfoTemplateConst(tirlit as TIRLiteralValue);
-        }
-        else if (msg instanceof InfoTemplateMacro) {
-            return new TIRInfoTemplateMacro(msg.macro);
-        }
-        else {
-            assert(msg instanceof InfoTemplateValue, `Unknown info template kind ${msg}`);
-
-            const vmsg = msg as InfoTemplateValue;
-            return new TIRInfoTemplateValue(vmsg.argpos, this.toTIRTypeKey(this.normalizeTypeOnly(vmsg.argtype, TemplateBindScope.createEmptyBindScope())));
-        }
-    }
-
-    private processSpecialTypes() {
-        this.toTIRTypeKey(this.getSpecialNoneType());
-        this.toTIRTypeKey(this.getSpecialBoolType());
-        this.toTIRTypeKey(this.getSpecialIntType());
-        this.toTIRTypeKey(this.getSpecialNatType());
-        this.toTIRTypeKey(this.getSpecialBigIntType());
-        this.toTIRTypeKey(this.getSpecialBigNatType());
-        this.toTIRTypeKey(this.getSpecialRationalType());
-        this.toTIRTypeKey(this.getSpecialFloatType());
-        this.toTIRTypeKey(this.getSpecialDecimalType());
-        this.toTIRTypeKey(this.getSpecialStringType());
-        this.toTIRTypeKey(this.getSpecialASCIIStringType());
-        this.toTIRTypeKey(this.getSpecialByteBufferType());
-        this.toTIRTypeKey(this.getSpecialDateTimeType());
-        this.toTIRTypeKey(this.getSpecialUTCDateTimeType());
-        this.toTIRTypeKey(this.getSpecialPlainDateType());
-        this.toTIRTypeKey(this.getSpecialPlainTimeType());
-
-        this.toTIRTypeKey(this.getSpecialTickTimeType());
-        this.toTIRTypeKey(this.getSpecialLogicalTimeType());
-        this.toTIRTypeKey(this.getSpecialISOTimeStampType());
-        this.toTIRTypeKey(this.getSpecialUUIDv4Type());
-        this.toTIRTypeKey(this.getSpecialUUIDv7Type());
-        this.toTIRTypeKey(this.getSpecialSHAContentHashType());
-        this.toTIRTypeKey(this.getSpecialRegexType());
-        this.toTIRTypeKey(this.getSpecialNothingType());
-        this.toTIRTypeKey(this.getSpecialTaskIDType());
-
-        this.toTIRTypeKey(this.getSpecialAnyConceptType());
-        this.toTIRTypeKey(this.getSpecialSomeConceptType());
-
-        this.toTIRTypeKey(this.getSpecialKeyTypeConceptType());
-        this.toTIRTypeKey(this.getSpecialValidatorConceptType());
-        this.toTIRTypeKey(this.getSpecialPathValidatorConceptType());
-
-        this.toTIRTypeKey(this.getSpecialTupleConceptType());
-        this.toTIRTypeKey(this.getSpecialRecordConceptType());
-
-        this.toTIRTypeKey(this.getSpecialISomethingConceptType());
-        this.toTIRTypeKey(this.getSpecialIOptionConceptType());
-        this.toTIRTypeKey(this.getSpecialIOptionTConceptType());
-
-        this.toTIRTypeKey(this.getSpecialIResultConceptType());
-        this.toTIRTypeKey(this.getSpecialIOkConceptType());
-        this.toTIRTypeKey(this.getSpecialIErrTConceptType());
-        this.toTIRTypeKey(this.getSpecialIResultTConceptType());
-        this.toTIRTypeKey(this.getSpecialIResultEConceptType());
-
-        this.toTIRTypeKey(this.getSpecialObjectConceptType());
     }
 
     static processAssembly(asm: Assembly, buildlevel: BuildLevel, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
