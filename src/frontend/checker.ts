@@ -3370,9 +3370,9 @@ class TypeChecker {
         this.checkTypeSignature(idecl.resultType);
     }
 
-    private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], refvars: string[], eventtype: TypeSignature | undefined) {
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, p.type, true, true))];
-        const fullrefvars = [...refvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
+    private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true))];
+        const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, idecl.resultType);
         this.checkRequires(ienv, idecl.preconditions);
         this.checkEnsures(ienv, fullrefvars, eventtype, idecl.postconditions);
@@ -3381,7 +3381,12 @@ class TypeChecker {
     }
 
     private checkNamespaceFunctionDecl(fdecl: NamespaceFunctionDecl) {
-        xxxx;
+        this.checkExplicitInvokeDeclTermInfo(fdecl);
+        this.checkExplicitInvokeDeclSignature(fdecl);
+        this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
+
+        const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
+        this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
     }
 
     private checkTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl) {
@@ -3703,99 +3708,6 @@ class TypeChecker {
         return ([] as TIRTypedeclInvariantDecl[]).concat(...chkinvsaa);
     }
 
-    private processPrecondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, exps: PreConditionDecl[]): TIRPreConditionDecl[] {
-        try {
-            let fargs: TIRFunctionParameter[] = [];
-
-            if (optthistype !== undefined) {
-                fargs.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
-            }
-
-            invk.params.forEach((ff, fname) => {
-                const ptype = this.normalizeTypeGeneral(ff.type, binds);
-                if (ptype instanceof ResolvedFunctionType) {
-                    fargs.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-                }
-                else {
-                    fargs.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-                }
-            });
-
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, args);
-            const clauses = exps
-                .filter((cev) => isBuildLevelEnabled(cev.level, this.m_buildLevel))
-                .map((cev) => {
-                    const exp = this.emitCoerceIfNeeded(this.checkExpression(env, cev.exp, this.getSpecialBoolType()), cev.exp.sinfo, this.getSpecialBoolType());
-
-                    return new TIRPreConditionDecl(exp.expressionResult, fargs);
-                });
-
-            return clauses;
-        }
-        catch (ex) {
-            return [];
-        }
-    }
-
-    private processPostcondition(invk: InvokeDecl, optthistype: ResolvedType | undefined, binds: TemplateBindScope, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, args: Map<string, VarInfo>, exps: PostConditionDecl[]): TIRPostConditionDecl[] {
-        try {
-            let fargs: TIRFunctionParameter[] = [];
-            let rargs: Map<string, VarInfo> = new Map<string, VarInfo>(args);
-
-            if (optthistype !== undefined) {
-                fargs.push(new TIRFunctionParameter("this", this.toTIRTypeKey(optthistype)));
-            }
-
-            invk.params.forEach((ff, fname) => {
-                const ptype = this.normalizeTypeGeneral(ff.type, binds);
-                if (ptype instanceof ResolvedFunctionType) {
-                    fargs.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-                }
-                else {
-                    fargs.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-                }
-            });
-
-            fargs.push(new TIRFunctionParameter("$return", this.toTIRTypeKey(this.normalizeTypeOnly(invk.resultType, binds))));
-            rargs.set("$return", new VarInfo(this.normalizeTypeOnly(invk.resultType, binds), true, true));
-
-            if(optthistype !== undefined && invk.isThisRef) {
-                fargs.push(new TIRFunctionParameter("$this", this.toTIRTypeKey(optthistype)));
-                rargs.set("$this", new VarInfo(optthistype, true, true));
-            }
-
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgsAndPCodeArgs(binds, argpcodes, rargs);
-            const clauses = exps
-                .filter((cev) => isBuildLevelEnabled(cev.level, this.m_buildLevel))
-                .map((cev) => {
-                    const exp = this.emitCoerceIfNeeded(this.checkExpression(env, cev.exp, this.getSpecialBoolType()), cev.exp.sinfo, this.getSpecialBoolType());
-
-                    return new TIRPostConditionDecl(exp.expressionResult, fargs);
-                });
-
-            return clauses;
-        }
-        catch (ex) {
-            return [];
-        }
-    }
-
-    processSamples(invk: InvokeDecl): [TIRInvokeSampleDeclInline[], TIRInvokeSampleDeclFile[]] {
-        let inline: TIRInvokeSampleDeclInline[] = [];
-        invk.samples.filter((sm) => sm instanceof InvokeSampleDeclInline).forEach((sm) => {
-            const ism = sm as InvokeSampleDeclInline;
-            inline.push(new TIRInvokeSampleDeclInline(ism.sinfo, ism.istest, ism.args, ism.output));
-        });
-
-        let file: TIRInvokeSampleDeclFile[] = [];
-        invk.samples.filter((sm) => sm instanceof InvokeSampleDeclFile).forEach((sm) => {
-            const fsm = sm as InvokeSampleDeclFile;
-            file.push(new TIRInvokeSampleDeclFile(fsm.sinfo, fsm.istest, fsm.filepath));
-        });
-
-        return [inline, file];
-    }
-
     processOOBaseType(tkey: TIRTypeKey, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
         if (rtype instanceof ResolvedObjectEntityAtomType) {
             const tiroo = this.m_tirTypeMap.get(tkey) as TIRObjectEntityType;
@@ -3878,100 +3790,6 @@ class TypeChecker {
         }
     }
 
-    private processTaskType(tkey: TIRTypeKey, rtype: ResolvedTaskAtomType, tdecl: TaskTypeDecl) {
-        const tiroo = this.m_tirTypeMap.get(tkey) as TIRTaskType;
-
-        //set member fields
-        tdecl.memberFields.forEach((mf) => {
-            const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
-            const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createEmptyBindScope()));
-
-            const tirmf = new TIRMemberFieldDecl(fkey, tkey, mf.name, mf.sourceLocation, mf.srcFile, mf.attributes, decltype);
-            tiroo.memberFields.push(tirmf);
-            this.m_tirFieldMap.set(fkey, tirmf);
-        });
-
-        //set controls fields
-        tdecl.econtrol.forEach((mf) => {
-            let litval: TIRLiteralValue | undefined = undefined;
-            if(mf.defaultValue !== undefined) {
-                litval = this.reduceLiteralValueToCanonicalForm(mf.defaultValue.exp, TemplateBindScope.createEmptyBindScope())[0];
-                this.raiseErrorIf(mf.defaultValue.exp.sinfo, litval === undefined, `Could not resolve default value, expected a literal -- ${mf.defaultValue.exp}`);
-            }
-
-            tiroo.controls.push({val: litval, cname: mf.name});
-        });
-
-        tdecl.statuseffect.statusinfo.forEach((eff) => {
-            const setype = this.normalizeTypeOnly(eff, TemplateBindScope.createEmptyBindScope());
-            this.raiseErrorIf(eff.sinfo, setype.options.some((tt) => !(tt instanceof ResolvedEntityAtomType) && !(tt instanceof ResolvedConceptAtomType)), "Only nominal types can be used for status effects");
-
-            tiroo.statuseffect.statusinfo.push(this.toTIRTypeKey(setype));
-        });
-
-        tdecl.statuseffect.statusinfo.forEach((eff) => {
-            const setype = this.normalizeTypeOnly(eff, TemplateBindScope.createEmptyBindScope());
-            this.raiseErrorIf(eff.sinfo, setype.options.some((tt) => !(tt instanceof ResolvedEntityAtomType) && !(tt instanceof ResolvedConceptAtomType)), "Only nominal types can be used for status effects");
-
-            tiroo.statuseffect.statusinfo.push(this.toTIRTypeKey(setype));
-        });
-
-        if(tdecl.enveffect.evars.find((ev) => ev.vv === "*" && !ev.isw)) {
-            tiroo.enveffect.readvars.push("*");
-        }
-        if(tdecl.enveffect.evars.find((ev) => ev.vv === "*" && ev.isw)) {
-            tiroo.enveffect.writevars.push("*");
-        }
-        
-        tdecl.enveffect.evars.forEach((eff) => {
-            if(!eff.isw) {
-                if(!tiroo.enveffect.readvars.includes("*") && !tiroo.enveffect.readvars.includes(eff.vv)) {
-                    tiroo.enveffect.readvars.push(eff.vv);
-                }
-            }
-            else {
-                if(!tiroo.enveffect.writevars.includes("*") && !tiroo.enveffect.writevars.includes(eff.vv)) {
-                    tiroo.enveffect.writevars.push(eff.vv);
-                }
-            }
-        });
-
-        assert(tdecl.resourceeffect.length === 0, "NOT IMPLEMENTED YET -- processTaskType");
-
-        //mainfunc
-        const dr = this.resolveMemberFunction(tdecl.sourceLocation, ResolvedType.createSingle(rtype), "main") as OOMemberLookupInfo<StaticFunctionDecl>;
-        const fkey = TIRIDGenerator.generateInvokeForMemberFunction(tkey, "main", [], []);
-        this.m_pendingFunctionMemberDecls.push({fkey: fkey, decl: dr, binds: new Map<string, ResolvedType>(), pcodes: new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>()});
-
-        if(tdecl.onfuncs.onCanel !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.onfuncs.onFailure !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.onfuncs.onTimeout !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.lfuncs.logStart !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.lfuncs.logEnd !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.lfuncs.taskEnsures !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-
-        if(tdecl.lfuncs.taskWarns !== undefined) {
-            assert(false, "NOT IMPLEMENTED YET -- processTaskType");
-        }
-    }
-
     private checkInvokeDecl(sinfo: SourceInfo, invoke: InvokeDecl) {
         const allNames = new Set<string>();
         for (let i = 0; i < invoke.params.length; ++i) {
@@ -3979,63 +3797,6 @@ class TypeChecker {
                 this.raiseErrorIf(sinfo, allNames.has(invoke.params[i].name), `Duplicate name in invocation signature paramaters "${invoke.params[i].name}"`);
                 allNames.add(invoke.params[i].name);
             }
-        }
-    }
-
-    private checkArgsAndResultTypes(sinfo: SourceInfo, args: Map<string, VarInfo>, rtype: ResolvedType) {
-        this.raiseErrorIf(sinfo, rtype.isInvalidType(), "Could not resolved declared result type");
-
-        args.forEach((vv) => {
-            this.raiseErrorIf(sinfo, vv.declaredType.isInvalidType(), "Could not resolved declared argument type");
-        });
-    }
-
-    private processNamespaceFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(ibinds), argpcodes, fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if(bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, bbimpl.body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)), false, "no");
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
         }
     }
 
