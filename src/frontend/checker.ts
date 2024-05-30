@@ -2,11 +2,10 @@ import {strict as assert} from "assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
 import { BuildLevel, SourceInfo, isBuildLevelEnabled } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TupleTypeSignature, TypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
-import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerResolver } from "./checker_resolver";
-import { TypeCheckerRelations } from "./checker_relations";
+import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
 
 const { accepts } = require("@bosque/jsbrex");
 
@@ -40,10 +39,9 @@ class TypeChecker {
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
-    readonly resolver: TypeCheckerResolver;
     readonly relations: TypeCheckerRelations;
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, resolver: TypeCheckerResolver, relations: TypeCheckerRelations) {
+    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.assembly = assembly;
         this.buildLevel = buildlevel;
 
@@ -53,7 +51,6 @@ class TypeChecker {
         this.wellknownTypes = wellknownTypes;
 
         this.constraints = constraints;
-        this.resolver = resolver;
         this.relations = relations;
     }
 
@@ -129,7 +126,7 @@ class TypeChecker {
             return this.processITest_Type(src, tt.ttype, tt.isnot);
         }
         else if(tt instanceof ITestLiteral) {
-            const ll = this.resolver.compileTimeReduceConstantExpression(tt.literal.exp);
+            const ll = this.relations.compileTimeReduceConstantExpression(tt.literal.exp);
             if(ll === undefined) {
                 this.reportError(sinfo, "Invalid literal expression value");
                 return { ttrue: src, tfalse: src };
@@ -199,6 +196,11 @@ class TypeChecker {
 
     //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(type: TypeSignature): boolean {
+        xxxx;
+    }
+
+    //Given a type signature -- check that is is well formed (and not an EList or EventList) and report any issues
+    private checkTypeSignatureAndStorable(type: TypeSignature): boolean {
         xxxx;
     }
 
@@ -551,13 +553,13 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        const revalidator = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
+        const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
         if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for StringOf")) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
         this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.resolver.getStringOfType(exp.stype));
+        return exp.setType(this.relations.getStringOfType(exp.stype));
     }
 
     private checkLiteralASCIITypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -565,13 +567,13 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
-        const revalidator = this.resolver.resolveStringRegexValidatorInfo(exp.stype);
+        const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
         if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for ASCIIStringOf")) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
         this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.resolver.getASCIIStringOfType(exp.stype));
+        return exp.setType(this.relations.getASCIIStringOfType(exp.stype));
     }
 
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
@@ -627,7 +629,7 @@ class TypeChecker {
     }
     
     private checkAccessNamespaceConstantExpression(env: TypeEnvironment, exp: AccessNamespaceConstantExpression): TypeSignature {
-        const cdecl = this.resolver.resolveNamespaceConstant(exp.ns, exp.name);
+        const cdecl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
         if(cdecl === undefined) {
             this.reportError(exp.sinfo, `Could not find namespace constant ${exp.ns}::${exp.name}`);
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
@@ -2658,8 +2660,8 @@ class TypeChecker {
             this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.returnType, this.constraints), `Expected a return value of type ${env.returnType.emit(false)} but got ${rtype.emit(false)}`);
         }
         else {
-            const crtype = this.relations.tryResolveSingleCanonicalType(env.returnType, this.constraints);
-            if(this.checkError(stmt.sinfo, crtype === undefined || !(crtype instanceof EListTypeSignature), `Multiple return requires an Elist type but got ${env.returnType.emit(false)}`)) {
+            const crtype = this.relations.tryResolveAsEListType(env.returnType, this.constraints);
+            if(this.checkError(stmt.sinfo, crtype === undefined, `Multiple return requires an Elist type but got ${env.returnType.emit(false)}`)) {
                 return env.setReturnFlow();
             }
 
@@ -3293,7 +3295,7 @@ class TypeChecker {
         
         eev = eev.addLocalVariable(WELL_KNOWN_RETURN_VAR_NAME, env.returnType, true, true);
         if(eventtype !== undefined) {
-            const eventlisttype = this.resolver.getEventListOf(eventtype);
+            const eventlisttype = this.relations.getEventListOf(eventtype);
             eev = eev.addLocalVariable(WELL_KNOWN_EVENTS_VAR_NAME, eventlisttype, true, true);
         }
 
@@ -3380,45 +3382,135 @@ class TypeChecker {
         this.checkExamples(idecl.sinfo, idecl.params.map((p) => p.type), idecl.resultType, idecl.examples);
     }
 
-    private checkNamespaceFunctionDecl(fdecl: NamespaceFunctionDecl) {
-        this.checkExplicitInvokeDeclTermInfo(fdecl);
-        this.checkExplicitInvokeDeclSignature(fdecl);
-        this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
+    private checkNamespaceFunctionDecls(fdecls: NamespaceFunctionDecl[]) {
+        for(let i = 0; i < fdecls.length; ++i) {
+            const fdecl = fdecls[i];
+    
+            this.checkExplicitInvokeDeclTermInfo(fdecl);
+            this.checkExplicitInvokeDeclSignature(fdecl);
+            this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
-        const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
-        this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
+            this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
+        }
     }
 
-    private checkTypeFunctionDecl(tdecl: AbstractNominalTypeDecl, fdecl: TypeFunctionDecl) {
-        assert(false, "Not implemented -- checkTypeFunctionDecl");
+    private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
+        for(let i = 0; i < fdecls.length; ++i) {
+            assert(false, "Not implemented -- checkTypeFunctionDecl");
+        }
     }
 
-    private checkMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: MethodDecl) {
-        assert(false, "Not implemented -- checkMethodDecl");
+    private checkMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: MethodDecl[]) {
+        for(let i = 0; i < mdecls.length; ++i) {   
+            assert(false, "Not implemented -- checkMethodDecl");
+        }
     }
 
-    private checkTaskMethodDecl(tdecl: AbstractNominalTypeDecl, mdecl: TaskMethodDecl) {
-        assert(false, "Not implemented -- checkTaskMethodDecl");
+    private checkTaskMethodDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskMethodDecl[]) {
+        for(let i = 0; i < mdecls.length; ++i) {
+            assert(false, "Not implemented -- checkTaskMethodDecl");
+        }
     }
 
-    private checkTaskActionDecl(tdecl: AbstractNominalTypeDecl, mdecl: TaskActionDecl) {
-        assert(false, "Not implemented -- checkTaskActionDecl");
+    private checkTaskActionDecls(tdecl: AbstractNominalTypeDecl, rcvr: TypeSignature, mdecls: TaskActionDecl[]) {
+        for(let i = 0; i < mdecls.length; ++i) {
+            assert(false, "Not implemented -- checkTaskActionDecl");
+        }
     }
 
-    private checkConstMemberDecl(tdecl: AbstractNominalTypeDecl, mdecl: ConstMemberDecl) {
-        assert(false, "Not implemented -- checkConstMemberDecl");
+    private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]) {
+        for(let i = 0; i < mdecls.length; ++i) {
+            const m = mdecls[i];
+
+            if(this.checkTypeSignatureAndStorable(m.declaredType)) {
+                this.checkError(m.sinfo, m.value.captured.size === 0, "Consts cannot capture variables");
+                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType), m.value.exp, m.declaredType);
+
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+            }
+        }
     }
 
-    private checkMemberFieldDecl(tdecl: AbstractNominalTypeDecl, mdecl: MemberFieldDecl) {
-        assert(false, "Not implemented -- checkMemberFieldDecl");
+    private checkMemberFieldDecls(bnames: {name: string, type: TypeSignature}[], fdecls: MemberFieldDecl[]) {
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
+        for(let i = 0; i < fdecls.length; ++i) {
+            const f = fdecls[i];
+            
+            if(this.checkTypeSignatureAndStorable(f.declaredType)) {
+                if(f.defaultValue !== undefined) {
+                    const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], f.declaredType), f.defaultValue.exp, f.declaredType);
+                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+                }
+            }
+        }
+    }
+
+    private checkProvides(provides: TypeSignature[]) {
+        for(let i = 0; i < provides.length; ++i) {
+            const p = provides[i];
+            this.checkTypeSignature(p);
+
+            if(!this.relations.isValidProvidesType(p, this.constraints)) {
+                this.reportError(p.sinfo, `Invalid provides type -- ${p.emit(false)}`);
+            }
+        }
     }
 
     private checkEnumTypeDecl(tdecl: EnumTypeDecl) {
-        assert(false, "Not implemented -- checkEnumTypeDecl");
+        this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
+        this.checkError(tdecl.sinfo, tdecl.provides.length !== 0, "Enums cannot provide other concepts -- maybe relax this later");
+ 
+        this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
+
+        this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
+        this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
+        this.checkError(tdecl.sinfo, tdecl.methods.length !== 0, "Enums cannot have methods -- maybe relax this later");
+
+        let opts = new Set<string>();
+        for(let i = 0; i < tdecl.members.length; ++i) {
+            this.checkError(tdecl.sinfo, opts.has(tdecl.members[i]), `Duplicate enum option ${tdecl.members[i]}`);
+            opts.add(tdecl.members[i]);
+        }
     }
 
-    private checkTypedeclTypeDecl(tdecl: TypedeclTypeDecl) {
-        xxxx;
+    private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl) {
+        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        }
+
+        this.checkProvides(tdecl.provides);
+
+        //Make sure that any provides types are not adding on fields!
+        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides, this.constraints);
+        for(let i = 0; i < providesdecls.length; ++i) {
+            const pdecl = providesdecls[i];
+            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.invariants.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+        }
+
+        if(this.checkTypeSignature(tdecl.valuetype)) {
+            //make sure the base type is typedeclable
+            this.checkError(tdecl.sinfo, this.relations.isTypeDeclType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(false)}`);
+
+            //make sure all of the invariants on this typecheck
+            this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
+            this.checkValidates([{name: "value", type: tdecl.valuetype}], tdecl.validates);
+        }
+        
+        this.checkConstMemberDecls(tdecl, tdecl.consts);
+        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
     }
 
     private checkPrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl) {
@@ -3513,8 +3605,37 @@ class TypeChecker {
         assert(false, "Not implemented -- checkEventListTypeDecl");
     }
 
-    private checkEntityTypeDecl(tdecl: EntityTypeDecl) {
+    private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
+        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        }
+
+        this.checkProvides(tdecl.provides);
+
+        //generate the bnames
         xxxx;
+
+        xxxx; //Check that all of the fields (bnames) are unique
+
+        xxxx; //Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
+
+        //make sure all of the invariants on this typecheck
+        this.checkInvariants(bnames, tdecl.invariants);
+        this.checkValidates(bnames, tdecl.validates);
+        
+        this.checkConstMemberDecls(tdecl, tdecl.consts);
+        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+
+        this.checkMemberFieldDecls(bnames, tdecl.fields);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
     }
 
     private checkPrimitiveConceptTypeDecl(tdecl: PrimitiveConceptTypeDecl) {

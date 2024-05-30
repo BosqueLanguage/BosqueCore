@@ -24,16 +24,28 @@ class FullyQualifiedNamespace {
 }
 
 class TemplateConstraintScope {
-    readonly constraints: Map<string, TypeSignature>;
+    constraints: Map<string, TypeSignature>[] = [];
 
-    constructor(constraints: Map<string, TypeSignature>) {
-        this.constraints = constraints;
+    constructor() {
+    }
+
+    pushConstraintScope(constraints: [string, TypeSignature][]) {
+        let nconstraints = new Map<string, TypeSignature>(constraints);
+        this.constraints.push(nconstraints);
+    }
+
+    popConstraintScope() {
+        this.constraints.pop();
     }
 
     resolveConstraint(name: string): TypeSignature {
-        assert(this.constraints.has(name), `Constraint ${name} not found in scope`);
-
-        return this.constraints.get(name) as TypeSignature;
+        for(let i = this.constraints.length - 1; i >= 0; ++i) {
+            const res = this.constraints[i].get(name);
+            if(res !== undefined) {
+                return res;
+            }
+        }
+        assert(false, `Constraint ${name} not found in scope`);
     }
 }
 
