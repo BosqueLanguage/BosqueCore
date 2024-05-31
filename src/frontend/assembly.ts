@@ -669,7 +669,7 @@ class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
     }
 }
 
-class ASCIIRegexValidatorTypeDecl extends InternalEntityTypeDecl {
+class ExRegexValidatorTypeDecl extends InternalEntityTypeDecl {
     readonly regex: string;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
@@ -719,7 +719,7 @@ class StringOfTypeDecl extends ThingOfTypeDecl {
     }
 }
 
-class ASCIIStringOfTypeDecl extends ThingOfTypeDecl {
+class ExStringOfTypeDecl extends ThingOfTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -1646,8 +1646,8 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
-    RegexValidatorTypeDecl, ASCIIRegexValidatorTypeDecl, PathValidatorTypeDecl,
-    ThingOfTypeDecl, StringOfTypeDecl, ASCIIStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
+    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
+    ThingOfTypeDecl, StringOfTypeDecl, ExStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,

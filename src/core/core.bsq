@@ -21,8 +21,8 @@ __internal __universal concept RegexValidator provides Any {
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept ASCIIRegexValidator provides Any {
-    function accepts<T: ASCIIRegexValidator>(s: ASCIIString): Bool = special_method;
+__internal __universal concept ExRegexValidator provides Any {
+    function accepts<T: ExRegexValidator>(s: ExString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
@@ -93,17 +93,17 @@ __internal __constructable __typedeclable entity StringOf<T: RegexValidator> pro
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __typebase entity ASCIIString provides Some, KeyType {
+__internal __typedeclable __typebase entity ExString provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __constructable __typedeclable entity ASCIIStringOf<T: ASCIIRegexValidator> provides Some, KeyType {
-    private function s_into(s: ASCIIString): ASCIIStringOf<T> = special_inject;
-    method value(): ASCIIString = special_extract;
+__internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
+    private function s_into(s: ExString): ExStringOf<T> = special_inject;
+    method value(): ExString = special_extract;
 
-    function coerce(s: ASCIIString): ASCIIStringOf<T> {
-        assert ASCIIRegexValidator::accepts<T>(s);
-        return ASCIIStringOf<T>::s_into(s);
+    function coerce(s: ExString): ExStringOf<T> {
+        assert ExRegexValidator::accepts<T>(s);
+        return ExStringOf<T>::s_into(s);
     } 
 }
 
@@ -117,10 +117,10 @@ __internal entity UnicodeRegex provides Some {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity ASCIIRegex provides Some {
-    __safe internal function s_accepts(re: ASCIIRegex, s: ASCIIString): Bool = regex_accepts;
+__internal entity ExRegex provides Some {
+    __safe internal function s_accepts(re: ExRegex, s: ExString): Bool = regex_accepts;
 
-    method accepts(s: ASCIIString): Bool {
+    method accepts(s: ExString): Bool {
         return Regex::s_accepts(this, s);
     }
 }
@@ -135,7 +135,7 @@ __internal __typedeclable __typebase entity TemplateString provides Some {
 
 
 %** Primitive string value. **%
-__internal __typedeclable __typebase entity ASCIITemplateString provides Some {
+__internal __typedeclable __typebase entity ExTemplateString provides Some {
 }
 
 namespace Interpolate {
@@ -146,10 +146,10 @@ namespace Interpolate {
     function stringOf<T: RegexValidator>(): StringOf<T> = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function ascii(): ASCIIString = special_method;
+    function Ex(): ExString = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function asciiOf<T: RegexValidator>(): ASCIIStringOf<T> = special_method;
+    function ExOf<T: RegexValidator>(): ExStringOf<T> = special_method;
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%

@@ -183,7 +183,7 @@ class TypeCheckerRelations {
         xxxx;
     }
 
-    getASCIIStringOfType(vtype: TypeSignature): TypeSignature {
+    getExStringOfType(vtype: TypeSignature): TypeSignature {
         //TODO: given a validator type return a StringOf<vtype> type reference
         xxxx;
     }
@@ -195,11 +195,16 @@ class TypeCheckerRelations {
 
     getNominalTypeForDecl(enclns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl): TypeSignature {
         const tterms = tdecl.terms.map((tterm) => new TemplateTypeSignature(tdecl.sinfo, tterm.name));
-        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: tdecl.name, terms: tterms}], [{name: "T", type: new TemplateTypeSignature(tdecl.sinfo, "T")}], undefined, tdecl)
+        const ttresolved = tterms.map((tterm) => { return {name: tterm.name, type: new TemplateTypeSignature(tdecl.sinfo, tterm.name)}; });
+
+        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: tdecl.name, terms: tterms}], ttresolved, undefined, tdecl);
     }
 
     getNominalTypeForNestedDecl(enclns: NamespaceDeclaration, encldecl: AbstractNominalTypeDecl, tdecl: AbstractNominalTypeDecl): TypeSignature {
-        xxxx; //for the nested API adn APIResult types
+        const tterms = encldecl.terms.map((tterm) => new TemplateTypeSignature(tdecl.sinfo, tterm.name));
+        const ttresolved = encldecl.terms.map((tterm) => { return {name: tterm.name, type: new TemplateTypeSignature(tdecl.sinfo, tterm.name)}; });
+
+        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: encldecl.name, terms: tterms}, {tname: tdecl.name, terms: []}], ttresolved, undefined, tdecl);
     }
 
     compileTimeReduceConstantExpression(exp: Expression): [Expression, TypeSignature | undefined, TemplateNameMapper] | undefined {

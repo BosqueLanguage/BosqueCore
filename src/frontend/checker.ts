@@ -1,8 +1,8 @@
 import {strict as assert} from "assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ASCIIRegexValidatorTypeDecl, ASCIIStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
-import { BuildLevel, SourceInfo, isBuildLevelEnabled } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, NominalTypeSignature, StringTemplateType, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, VoidTypeSignature } from "./type";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
+import { BuildLevel, SourceInfo } from "./build_decls";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
 import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
@@ -29,7 +29,6 @@ class TypeError {
 
 class TypeChecker {
     private readonly assembly: Assembly;
-    private readonly buildLevel: BuildLevel;
 
     private readonly file: string;
     private readonly ns: FullyQualifiedNamespace;
@@ -41,9 +40,8 @@ class TypeChecker {
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
-    constructor(assembly: Assembly, buildlevel: BuildLevel, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
+    constructor(assembly: Assembly, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.assembly = assembly;
-        this.buildLevel = buildlevel;
 
         this.file = file;
         this.ns = ns;
@@ -497,11 +495,11 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("UnicodeRegex"));
     }
 
-    private checkLiteralASCIIRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
+    private checkLiteralExRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
         //TODO: validate regex parse is error free
 
         if(exp.value.endsWith("a")) {
-            return exp.setType(this.getWellKnownType("ASCIIRegex"));
+            return exp.setType(this.getWellKnownType("ExRegex"));
         }
         else {
             return exp.setType(this.getWellKnownType("PathRegex"));
@@ -514,10 +512,10 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("String"));
     }
 
-    private checkLiteralASCIIStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralExStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: validate string encoding is correct
         
-        return exp.setType(this.getWellKnownType("ASCIIString"));
+        return exp.setType(this.getWellKnownType("ExString"));
     }
 
     private runValidatorRegex(sinfo: SourceInfo, restr: string, litstr: string): boolean {
@@ -562,18 +560,18 @@ class TypeChecker {
         return exp.setType(this.relations.getStringOfType(exp.stype));
     }
 
-    private checkLiteralASCIITypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
+    private checkLiteralExTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
         if(!this.checkTypeSignature(exp.stype)) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
         const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
-        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for ASCIIStringOf")) {
+        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for ExStringOf")) {
             return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
         }
 
         this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.relations.getASCIIStringOfType(exp.stype));
+        return exp.setType(this.relations.getExStringOfType(exp.stype));
     }
 
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
@@ -582,10 +580,10 @@ class TypeChecker {
         return exp.setType(new StringTemplateType(exp.sinfo, "utf8", []));
     }
 
-    private checkLiteralASCIITemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
+    private checkLiteralExTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
-        return exp.setType(new StringTemplateType(exp.sinfo, "ascii", []));
+        return exp.setType(new StringTemplateType(exp.sinfo, "ex", []));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
@@ -1218,38 +1216,6 @@ class TypeChecker {
 
     ////////
     //statement expressions
-    private checkCallRefThisExpression(env: TypeEnvironment, exp: CallRefThisExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkCallRefThisExpression");
-    }
-
-    private checkCallRefSelfExpression(env: TypeEnvironment, exp: CallRefSelfExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkCallRefSelfExpression");
-    }
-
-    private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkCallTaskActionExpression");
-    }
-
-    private checkTaskRunExpression(env: TypeEnvironment, exp: TaskRunExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskRunExpression");
-    }
-
-    private checkTaskMultiExpression(env: TypeEnvironment, exp: TaskMultiExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskMultiExpression");
-    }
-
-    private checkTaskDashExpression(env: TypeEnvironment, exp: TaskDashExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskDashExpression");
-    }
-
-    private checkTaskAllExpression(env: TypeEnvironment, exp: TaskAllExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskAllExpression");
-    }
-
-    private checkTaskRaceExpression(env: TypeEnvironment, exp: TaskRaceExpression): TypeSignature {
-        assert(false, "Not Implemented -- checkTaskRaceExpression");
-    }
-
     private checkExpression(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
@@ -1348,26 +1314,26 @@ class TypeChecker {
             case ExpressionTag.LiteralUnicodeRegexExpression: {
                 return this.checkLiteralUnicodeRegexExpression(env, exp as LiteralRegexExpression);
             }
-            case ExpressionTag.LiteralASCIIRegexExpression: {
-                return this.checkLiteralASCIIRegexExpression(env, exp as LiteralRegexExpression);
+            case ExpressionTag.LiteralExRegexExpression: {
+                return this.checkLiteralExRegexExpression(env, exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralASCIIStringExpression: {
-                return this.checkLiteralASCIIStringExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralExStringExpression: {
+                return this.checkLiteralExStringExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
             }
-            case ExpressionTag.LiteralASCIITypedStringExpression: {
-                return this.checkLiteralASCIITypedStringExpression(env, exp as LiteralTypedStringExpression);
+            case ExpressionTag.LiteralExTypedStringExpression: {
+                return this.checkLiteralExTypedStringExpression(env, exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralASCIITemplateStringExpression: {
-                return this.checkLiteralASCIITemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralExTemplateStringExpression: {
+                return this.checkLiteralExTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
@@ -1515,6 +1481,38 @@ class TypeChecker {
                 return new ErrorTypeSignature(exp.sinfo, undefined);
             }
         }
+    }
+
+    private checkCallRefThisExpression(env: TypeEnvironment, exp: CallRefThisExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallRefThisExpression");
+    }
+
+    private checkCallRefSelfExpression(env: TypeEnvironment, exp: CallRefSelfExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallRefSelfExpression");
+    }
+
+    private checkCallTaskActionExpression(env: TypeEnvironment, exp: CallTaskActionExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkCallTaskActionExpression");
+    }
+
+    private checkTaskRunExpression(env: TypeEnvironment, exp: TaskRunExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskRunExpression");
+    }
+
+    private checkTaskMultiExpression(env: TypeEnvironment, exp: TaskMultiExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskMultiExpression");
+    }
+
+    private checkTaskDashExpression(env: TypeEnvironment, exp: TaskDashExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskDashExpression");
+    }
+
+    private checkTaskAllExpression(env: TypeEnvironment, exp: TaskAllExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskAllExpression");
+    }
+
+    private checkTaskRaceExpression(env: TypeEnvironment, exp: TaskRaceExpression): TypeSignature {
+        assert(false, "Not Implemented -- checkTaskRaceExpression");
     }
 
     private checkExpressionRHS(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
@@ -3424,7 +3422,7 @@ class TypeChecker {
             const m = mdecls[i];
 
             if(this.checkTypeSignatureAndStorable(m.declaredType)) {
-                this.checkError(m.sinfo, m.value.captured.size === 0, "Consts cannot capture variables");
+                this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
                 const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType), m.value.exp, m.declaredType);
 
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
@@ -3458,7 +3456,14 @@ class TypeChecker {
         }
     }
 
-    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined) {
+    private checkAbstractNominalTypeDeclVCallAndInheritance(tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
+        ////
+        //TODO: Check that there are no name collisions on inhertied members and members in this
+        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented (depending on isentity)
+        ////
+    }
+
+    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
@@ -3479,9 +3484,7 @@ class TypeChecker {
             this.checkMemberFieldDecls(bnames, optfdecls);
         }
 
-        ////
-        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
-        ////
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, optfdecls, isentity);
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
@@ -3490,13 +3493,28 @@ class TypeChecker {
 
     private checkEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl) {
         this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
-        this.checkError(tdecl.sinfo, tdecl.provides.length !== 0, "Enums cannot provide other concepts -- maybe relax this later");
+        
+        this.checkProvides(tdecl.provides);
  
+        //Make sure that any provides types are not adding on fields, consts, or functions
+        const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides, this.constraints);
+        for(let i = 0; i < providesdecls.length; ++i) {
+            const pdecl = providesdecls[i];
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).consts.length !== 0, `Provides type cannot have consts -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).functions.length !== 0, `Provides type cannot have functions -- ${pdecl.ttype.name}`);
+        }
+
         this.checkError(tdecl.sinfo, tdecl.invariants.length !== 0 || tdecl.validates.length !== 0, "Enums cannot have invariants");
 
         this.checkError(tdecl.sinfo, tdecl.consts.length !== 0, "Enums cannot have consts");
         this.checkError(tdecl.sinfo, tdecl.functions.length !== 0, "Enums cannot have functions");
-        this.checkError(tdecl.sinfo, tdecl.methods.length !== 0, "Enums cannot have methods -- maybe relax this later");
+
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], true);
 
         let opts = new Set<string>();
         for(let i = 0; i < tdecl.members.length; ++i) {
@@ -3505,7 +3523,7 @@ class TypeChecker {
         }
     }
 
-    private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl) {
+    private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, isentity: boolean) {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
@@ -3518,9 +3536,8 @@ class TypeChecker {
         const providesdecls = this.relations.resolveAllProvidesDecls(tdecl.provides, this.constraints);
         for(let i = 0; i < providesdecls.length; ++i) {
             const pdecl = providesdecls[i];
-            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.invariants.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
-            this.checkError(tdecl.sinfo, !(pdecl.ttype instanceof ConceptTypeDecl) || pdecl.ttype.validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).fields.length !== 0, `Provides type cannot have member fields -- ${pdecl.ttype.name}`);
+            this.checkError(tdecl.sinfo, (pdecl.ttype as ConceptTypeDecl).invariants.length !== 0 || (pdecl.ttype as ConceptTypeDecl).validates.length !== 0, `Provides type cannot have invariants -- ${pdecl.ttype.name}`);
         }
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
@@ -3538,162 +3555,185 @@ class TypeChecker {
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
-        ////
-        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
-        ////
+        this.checkAbstractNominalTypeDeclVCallAndInheritance(tdecl, [], isentity);
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
         }
     }
 
-    private checkPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
+    private checkInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, isentity);
+    }
+
+    private checkInteralSimpleNestedTypeDeclHelper(ns: NamespaceDeclaration, encldecl: InternalEntityTypeDecl, tdecl: InternalEntityTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForNestedDecl(ns, encldecl, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined, true);
+    }
+
+    private checkPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: RegexValidatorTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkASCIIRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: ASCIIRegexValidatorTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+    private checkExRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: ExRegexValidatorTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkPathValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: PathValidatorTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: StringOfTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
-
-        xxxx;
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkASCIIStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: ASCIIStringOfTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
-
-        xxxx;
+    private checkExStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: ExStringOfTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkPathOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathOfTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
-
-        xxxx;
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkPathFragmentOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathFragmentOfTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
-
-        xxxx;
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkPathGlobOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathGlobOfTypeDecl) {
-        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
-
-        xxxx;
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkOkTypeDecl(tdecl: OkTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkOkTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: OkTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl)
     }
 
-    private checkErrTypeDecl(tdecl: ErrTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkErrTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: ErrTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
     }
 
-    private checkAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkAPIRejectedTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIRejectedTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
     }
 
-    private checkAPIFailedTypeDecl(tdecl: APIFailedTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkAPIFailedTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIFailedTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
     }
 
-    private checkAPIErrorTypeDecl(tdecl: APIErrorTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkAPIErrorTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APIErrorTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
     }
 
-    private checkAPISuccessTypeDecl(tdecl: APISuccessTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkAPISuccessTypeDecl(ns: NamespaceDeclaration, encldecl: InternalConceptTypeDecl, tdecl: APISuccessTypeDecl) {
+        this.checkInteralSimpleNestedTypeDeclHelper(ns, encldecl, tdecl);
     }
 
-    private checkSomethingTypeDecl(tdecl: SomethingTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkSomethingTypeDecl(ns: NamespaceDeclaration, tdecl: SomethingTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkMapEntryTypeDecl(tdecl: MapEntryTypeDecl) {
-        assert(false, "Not implemented -- checkMapEntryTypeDecl");
+    private checkMapEntryTypeDecl(ns: NamespaceDeclaration, tdecl: MapEntryTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkListTypeDecl(tdecl: ListTypeDecl) {
-        assert(false, "Not implemented -- checkListTypeDecl");
+    private checkListTypeDecl(ns: NamespaceDeclaration, tdecl: ListTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkStackTypeDecl(tdecl: StackTypeDecl) {
-        assert(false, "Not implemented -- checkStackTypeDecl");
+    private checkStackTypeDecl(ns: NamespaceDeclaration, tdecl: StackTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkQueueTypeDecl(tdecl: QueueTypeDecl) {
-        assert(false, "Not implemented -- checkQueueTypeDecl");
+    private checkQueueTypeDecl(ns: NamespaceDeclaration, tdecl: QueueTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkSetTypeDecl(tdecl: SetTypeDecl) {
-        assert(false, "Not implemented -- checkSetTypeDecl");
+    private checkSetTypeDecl(ns: NamespaceDeclaration, tdecl: SetTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkMapTypeDecl(tdecl: MapTypeDecl) {
-        assert(false, "Not implemented -- checkMapTypeDecl");
+    private checkMapTypeDecl(ns: NamespaceDeclaration, tdecl: MapTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkEventListTypeDecl(tdecl: EventListTypeDecl) {
-        assert(false, "Not implemented -- checkEventListTypeDecl");
+    private checkEventListTypeDecl(ns: NamespaceDeclaration, tdecl: EventListTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
 
-        xxxx;
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, tdecl.fields, true);
     }
 
-    private checkPrimitiveConceptTypeDecl(tdecl: PrimitiveConceptTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkPrimitiveConceptTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveConceptTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
     }
 
-    private checkOptionTypeDecl(tdecl: OptionTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkOptionTypeDecl(ns: NamespaceDeclaration, tdecl: OptionTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
     }
 
-    private checkResultTypeDecl(tdecl: ResultTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
+
+        this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
+            const ned = tdecl.nestedEntityDecls[i];
+            if(ned instanceof OkTypeDecl) {
+                this.checkOkTypeDecl(ns, tdecl, ned);
+            }
+            else {
+                this.checkErrTypeDecl(ns, tdecl, ned as ErrTypeDecl);
+            }
+        }
+        this.constraints.popConstraintScope();
     }
 
-    private checkAPIResultTypeDecl(tdecl: APIResultTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
+
+        this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
+            const ned = tdecl.nestedEntityDecls[i];
+            if(ned instanceof APIRejectedTypeDecl) {
+                this.checkAPIRejectedTypeDecl(ns, tdecl, ned);
+            }
+            else if(ned instanceof APIFailedTypeDecl) {
+                this.checkAPIFailedTypeDecl(ns, tdecl, ned);
+            }
+            else if(ned instanceof APIErrorTypeDecl) {
+                this.checkAPIErrorTypeDecl(ns, tdecl, ned);
+            }
+            else {
+                this.checkAPISuccessTypeDecl(ns, tdecl, ned as APISuccessTypeDecl);
+            }
+        }
+        this.constraints.popConstraintScope();
     }
 
-    private checkExpandoableTypeDecl(tdecl: ExpandoableTypeDecl) {
-        assert(false, "Not Implemented");
+    private checkExpandoableTypeDecl(ns: NamespaceDeclaration, tdecl: ExpandoableTypeDecl) {
+        this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
     }
 
-    private checkConceptTypeDecl(tdecl: ConceptTypeDecl) {
-        xxxx;
+    private checkConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, tdecl.fields, false);
     }
 
     private checkDatatypeMemberEntityTypeDecl(parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
-        assert(false, "Not implemented -- checkDatatypeMemberEntityTypeDecl");
+        xxxx;
     }
 
     private checkDatatypeTypeDecl(tdecl: DatatypeTypeDecl) {
-        assert(false, "Not implemented -- checkDatatypeTypeDecl");
+        xxxx;
     }
 
     private checkEventInfo(einfo: TypeSignature[] | "{}" | "?") {
@@ -3720,8 +3760,17 @@ class TypeChecker {
         assert(false, "Not implemented -- checkTaskDecl");
     }
 
-    private checkNamespaceConstDecl(cdecl: NamespaceConstDecl) {
-        xxxx;
+    private checkNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
+        for(let i = 0; i < cdecls.length; ++i) {
+            const m = cdecls[i];
+
+            if(this.checkTypeSignatureAndStorable(m.declaredType)) {
+                this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
+                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType), m.value.exp, m.declaredType);
+
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+            }
+        }
     }
 
     private checkNamespaceTypedef(tdecl: NamespaceTypedef) {
@@ -3732,1151 +3781,8 @@ class TypeChecker {
         xxxx;
     }
 
-    checkAssembly(assembly: Assembly) {
+    private checkAssembly(assembly: Assembly) {
         xxxx;
-    }
-
-
-
-
-
-
-
-
-
-    
-    private processStdInvariantCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRObjectInvariantDecl[] {
-        const decltypes = this.getAllInvariantProvidingTypesInherit(ttype, tdecl, binds);
-        const allfields = [...this.getAllOOFields(ttype, tdecl, binds)];
-
-        const fargs = allfields.map((ff) => {
-            return {fname: ff[1][2].name, ftype: this.normalizeTypeOnly(ff[1][2].declaredType, TemplateBindScope.createBaseBindScope(ff[1][3]))};
-        });
-
-        const chkinvsaa = decltypes.map((idp) => {
-            const args = new Map<string, VarInfo>();
-            fargs.forEach((ff) => {
-                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, true));
-            });
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
-
-            let invs = idp[1].invariants.filter((ie) => isBuildLevelEnabled(ie.level, this.m_buildLevel));
-            return invs.map((inv) => {
-                const iexp = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), inv.exp.exp, this.getSpecialBoolType()), inv.exp.exp.sinfo, this.getSpecialBoolType());
-                const params = fargs.map((fa) => new TIRFunctionParameter("$" + fa.fname, this.toTIRTypeKey(fa.ftype)));
-
-                return new TIRObjectInvariantDecl(iexp.expressionResult, params);
-            });
-        });
-        
-        return ([] as TIRObjectInvariantDecl[]).concat(...chkinvsaa);
-    }
-
-    private processStdValidateCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRObjectValidateDecl[] {
-        const decltypes = this.getAllInvariantProvidingTypesInherit(ttype, tdecl, binds);
-        const allfields = [...this.getAllOOFields(ttype, tdecl, binds)];
-
-        const fargs = allfields.map((ff) => {
-            return {fname: ff[1][2].name, ftype: this.normalizeTypeOnly(ff[1][2].declaredType, TemplateBindScope.createBaseBindScope(ff[1][3]))};
-        });
-
-        const chkinvsaa = decltypes.map((idp) => {
-            const args = new Map<string, VarInfo>();
-            fargs.forEach((ff) => {
-                args.set("$" + ff.fname, new VarInfo(ff.ftype, true, true));
-            });
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
-
-            let invs = idp[1].validates;
-            return invs.map((inv) => {
-                const iexp = this.emitCoerceIfNeeded(this.checkExpression(env, inv.exp.exp, this.getSpecialBoolType()), inv.exp.exp.sinfo, this.getSpecialBoolType());
-                const params = fargs.map((fa) => new TIRFunctionParameter("$" + fa.fname, this.toTIRTypeKey(fa.ftype)));
-
-                return new TIRObjectValidateDecl(iexp.expressionResult, params);
-            });
-        });
-        
-        return ([] as TIRObjectValidateDecl[]).concat(...chkinvsaa);
-    }
-
-    private processTypedeclInvariantsAllCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRTypedeclInvariantDecl[] {
-        const decltypes = this.getAllInvariantProvidingTypesTypedecl(ttype, tdecl, binds);
-
-        const chkinvsaa = decltypes.map((idp) => {
-            const vm = idp[1].memberMethods.find((mm) => mm.name === "value");
-            const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(idp[2])) : this.getSpecialAnyConceptType();
-            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
-
-            let invs = idp[1].invariants.filter((ie) => isBuildLevelEnabled(ie.level, this.m_buildLevel));
-            return invs.map((inv) => {
-                const iexp = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), inv.exp.exp, this.getSpecialBoolType()), inv.exp.exp.sinfo, this.getSpecialBoolType());
-                const vtype = this.toTIRTypeKey(idp[0]);
-
-                return new TIRTypedeclInvariantDecl(iexp.expressionResult, vtype);
-            });
-        });
-        
-        return ([] as TIRTypedeclInvariantDecl[]).concat(...chkinvsaa);
-    }
-
-    private processTypedeclInvariantsConsCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRTypedeclInvariantDecl[] {
-        const vm = tdecl.memberMethods.find((mm) => mm.name === "value");
-        const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(binds)) : this.getSpecialAnyConceptType();
-        const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
-        const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(binds), args);
-        
-        let invs = tdecl.invariants.filter((ie) => isBuildLevelEnabled(ie.level, this.m_buildLevel));
-        return invs.map((inv) => {
-            const iexp = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), inv.exp.exp, this.getSpecialBoolType()), inv.exp.exp.sinfo, this.getSpecialBoolType());
-            const vtype = this.toTIRTypeKey(ttype);
-
-            return new TIRTypedeclInvariantDecl(iexp.expressionResult, vtype);
-        });
-    }
-
-    private processTypedeclValidateCheck(ttype: ResolvedType, tdecl: EntityTypeDecl, binds: Map<string, ResolvedType>): TIRTypedeclValidateDecl[] {
-        const decltypes = this.getAllInvariantProvidingTypesTypedecl(ttype, tdecl, binds);
-
-        const chkinvsaa = decltypes.map((idp) => {
-            const vm = idp[1].memberMethods.find((mm) => mm.name === "value");
-            const vtype = vm !== undefined ? this.normalizeTypeOnly(vm.invoke.resultType, TemplateBindScope.createBaseBindScope(idp[2])) : this.getSpecialAnyConceptType();
-            const args = new Map<string, VarInfo>().set("$value", new VarInfo(vtype, true, true));
-            const env = ExpressionTypeEnvironment.createInitialEnvForEvalWArgs(TemplateBindScope.createBaseBindScope(idp[2]), args);
-
-            return idp[1].validates.map((inv) => {
-                const iexp = this.emitCoerceIfNeeded(this.checkExpression(env.createFreshEnvExpressionFrom(), inv.exp.exp, this.getSpecialBoolType()), inv.exp.exp.sinfo, this.getSpecialBoolType());
-                const vtype = this.toTIRTypeKey(idp[0]);
-
-                return new TIRTypedeclInvariantDecl(iexp.expressionResult, vtype);
-            });
-        });
-        
-        return ([] as TIRTypedeclInvariantDecl[]).concat(...chkinvsaa);
-    }
-
-    processOOBaseType(tkey: TIRTypeKey, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
-        if (rtype instanceof ResolvedObjectEntityAtomType) {
-            const tiroo = this.m_tirTypeMap.get(tkey) as TIRObjectEntityType;
-
-            //set member fields
-            tdecl.memberFields.forEach((mf) => {
-                const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
-                const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createBaseBindScope(binds)));
-
-                const tirmf = new TIRMemberFieldDecl(fkey, tkey, mf.name, mf.sourceLocation, mf.srcFile, mf.attributes, decltype);
-                tiroo.memberFields.push(tirmf);
-                this.m_tirFieldMap.set(fkey, tirmf);
-            });
-
-            //set all member fields
-            const allf = [...this.getAllOOFields(ResolvedType.createSingle(rtype), tdecl, binds)];
-            allf.forEach((ff) => {
-                const enctype = this.toTIRTypeKey(ff[1][0]);
-                const fkey = TIRIDGenerator.generateMemberFieldID(enctype, ff[0]);
-                const ftype = this.toTIRTypeKey(this.normalizeTypeOnly(ff[1][2].declaredType, TemplateBindScope.createBaseBindScope(ff[1][3])));
-
-                tiroo.allfields.push({ fkey: fkey, ftype: ftype });
-            });
-
-            //set invariants & validates
-            const allinv = this.processStdInvariantCheck(ResolvedType.createSingle(rtype), tdecl, binds);
-            tiroo.consinvariants.push(...allinv);
-
-            const allvalidates = this.processStdValidateCheck(ResolvedType.createSingle(rtype), tdecl, binds);
-            tiroo.apivalidates.push(...allvalidates);
-        }
-        else if (rtype instanceof ResolvedEnumEntityAtomType) {
-            const tirenum = this.m_tirTypeMap.get(tkey) as TIREnumEntityType;
-
-            //set all enum constants
-            tirenum.enums.forEach((enm) => {
-                const edcl = tdecl.staticMembers.find((sf) => sf.name === enm) as StaticMemberDecl;
-                const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(edcl.declaredType, TemplateBindScope.createBaseBindScope(binds)));
-                const lvalue = this.reduceLiteralValueToCanonicalForm((edcl.value as ConstantExpressionValue).exp, TemplateBindScope.createBaseBindScope(binds));
-
-                tirenum.litvals.set(enm, lvalue[0] as TIRLiteralValue);
-                tirenum.constMembers.push(new TIRConstMemberDecl(tkey, enm, edcl.sourceLocation, edcl.srcFile, edcl.attributes, decltype, (lvalue[0] as TIRLiteralValue).exp));
-            });
-        }
-        else if (rtype instanceof ResolvedTypedeclEntityAtomType) {
-            const tirdecl = this.m_tirTypeMap.get(tkey) as TIRTypedeclEntityType;
-
-            const allinv = this.processTypedeclInvariantsAllCheck(ResolvedType.createSingle(rtype), tdecl, binds);
-            tirdecl.consinvariantsall.push(...allinv);
-
-            const explicitinv = this.processTypedeclInvariantsConsCheck(ResolvedType.createSingle(rtype), tdecl, binds);
-            tirdecl.consinvariantsexplicit.push(...explicitinv);
-
-            const allvalidates = this.processTypedeclValidateCheck(ResolvedType.createSingle(rtype), tdecl, binds);
-            tirdecl.apivalidates.push(...allvalidates);
-        }
-        else {
-            ; //nothing else to do
-        }
-    }
-
-    processOOConceptType(tkey: TIRTypeKey, rtype: ResolvedConceptAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>) {
-        tdecl.memberFields.forEach((mf) => {
-            const fkey = TIRIDGenerator.generateMemberFieldID(tkey, mf.name);
-            const decltype = this.toTIRTypeKey(this.normalizeTypeOnly(mf.declaredType, TemplateBindScope.createEmptyBindScope()));
-
-            const tirmf = new TIRMemberFieldDecl(fkey, tkey, mf.name, mf.sourceLocation, mf.srcFile, mf.attributes, decltype);
-            this.m_tirFieldMap.set(fkey, tirmf);
-        });
-
-        //if this is a non-universal and non-template concept then we need to also process all of the subtypes!!!
-        if(!ResolvedType.isUniversalConceptType(rtype) && tdecl.terms.length === 0) {
-            const estl = this.m_assembly.getAllEntities()
-            .map((ee) => this.createResolvedTypeForEntityDeclExportable(ee))
-            .filter((ee) =>  ee !== undefined && this.atomSubtypeOf(ee, rtype)) as ResolvedEntityAtomType[];
-            
-            estl.forEach((est) => {
-                this.toTIRTypeKey(ResolvedType.createSingle(est));
-            });
-        }
-    }
-
-    private checkInvokeDecl(sinfo: SourceInfo, invoke: InvokeDecl) {
-        const allNames = new Set<string>();
-        for (let i = 0; i < invoke.params.length; ++i) {
-            if (invoke.params[i].name !== "_") {
-                this.raiseErrorIf(sinfo, allNames.has(invoke.params[i].name), `Duplicate name in invocation signature paramaters "${invoke.params[i].name}"`);
-                allNames.add(invoke.params[i].name);
-            }
-        }
-    }
-
-    private processNamespaceFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(ibinds)));
-        const body = (invoke.body as BodyImplementation).body as string;
-        const inv = new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, params, restype, body);
-
-        this.m_tirInvokeMap.set(invkey, inv);
-        return inv;
-    }
-
-    private processNamespaceOperatorDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-        this.raiseErrorIf(invoke.startSourceLocation, invoke.terms.length !== 0, "cannot have template parameters on operators");
-
-        const recursive = invoke.recursive === "yes";
-
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeOnly(ff.type, TemplateBindScope.createEmptyBindScope());
-            
-            fargs.set(ff.name, new VarInfo(ptype, true, true));
-            params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
-        
-        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        if(invoke.body === undefined) {
-            const inv = new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, true, params, false, restype, preconds, postconds, smapleinline, samplefile);
-            
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-        else {
-            this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
-            const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs);
-
-            const bbimpl = invoke.body as BodyImplementation;
-            if(bbimpl.body instanceof SynthesisBody) {
-                const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, preconds, postconds, smapleinline, samplefile);
-
-                this.m_tirInvokeMap.set(invkey, inv);
-                return inv;
-            }
-            else {
-                const body = this.checkBodyStatement(invoke.srcFile, env, bbimpl.body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
-                const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, preconds, postconds, smapleinline, samplefile, body);
-
-                this.m_tirInvokeMap.set(invkey, inv);
-                return inv;
-            }
-        }
-    }
-
-    private processNamespaceOperatorImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-        this.raiseErrorIf(invoke.startSourceLocation, invoke.terms.length !== 0, "cannot have template parameters on operators");
-
-        const recursive = invoke.recursive === "yes";
-
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeOnly(ff.type, TemplateBindScope.createEmptyBindScope());
-            let plit: TIRLiteralValue | undefined = undefined;
-            if (ff.ddlit !== undefined) {
-                const ll = this.reduceLiteralValueToCanonicalForm(ff.ddlit.exp, TemplateBindScope.createEmptyBindScope());
-                this.raiseErrorIf(invoke.startSourceLocation, ll[0] === undefined, "literal value could not be resolved for parameter");
-
-                plit = ll[0];
-            }
-
-            fargs.set(ff.name, new VarInfo(ptype, true, true));
-            params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype), plit));
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
-        this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions not supported on operators yet");
-
-        this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions cannot be applied on concrete operators -- that implicitly restricts the way the virtual operator can be used!");
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createEmptyBindScope(), new Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>(), fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if (bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], smapleinline, samplefile);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, bbimpl.body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope()), false, "no");
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, new Map<string, TIRTypeKey>(), new Map<string, TIRPCodeKey>(), false, false, true, false, params, false, restype, [], [], smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-    }
-
-    private processMemberFunctionInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, undefined, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if (bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, bbimpl.body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, "no");
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-    }
-
-    private processMemberFunctionPrimitiveInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokePrimitive {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-
-        const body = (invoke.body as BodyImplementation).body as string;
-        const inv = new TIRInvokePrimitive(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, params, restype, body);
-
-        this.m_tirInvokeMap.set(invkey, inv);
-        return inv;
-    }
-
-    private processMemberMethodPureDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeAbstractDeclaration {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        const inv = new TIRInvokeAbstractDeclaration(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, params, false, restype, preconds, postconds, smapleinline, samplefile);
-
-        this.m_tirInvokeMap.set(invkey, inv);
-        return inv;
-    }
-
-    private processMemberMethodVirtualDeclInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if (bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile);
-    
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, preconds, postconds, smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-    }
-
-    private processMemberMethodVirtualImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], declaredecl: [ResolvedType, InvokeDecl, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        fargs.set("this", new VarInfo(enclosingdecl[0], true, true));
-
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-
-        this.raiseErrorIf(invoke.startSourceLocation, invoke.preconditions.length !== 0 || invoke.postconditions.length !== 0, "pre/post conditions cannot be applied on concrete operators -- that implicitly restricts the way the virtual operator can be used!");
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if (bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, [], [], smapleinline, samplefile);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), false, this.m_taskSelfOk);
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, true, false, false, params, false, restype, [], [], smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-    }
-
-    private processMemberMethodImplInvokeInfo(name: string, invkey: TIRInvokeKey, invoke: InvokeDecl, enclosingdecl: [ResolvedType, OOPTypeDecl, Map<string, ResolvedType>], ibinds: Map<string, ResolvedType>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvoke {
-        this.checkInvokeDecl(invoke.startSourceLocation, invoke);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...ibinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff) => {
-            const ptype = this.normalizeTypeGeneral(ff.type, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds));
-            if (ptype instanceof ResolvedFunctionType) {
-                tirpcodes.set(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey);
-                params.push(new TIRFunctionParameter(ff.name, (argpcodes.get(ff.name) as {pcode: TIRCodePack, ftype: ResolvedFunctionType}).pcode.codekey));
-            }
-            else {
-                fargs.set(ff.name, new VarInfo(ptype, true, true));
-                params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-            }
-        });
-
-        fargs.set("this", new VarInfo(enclosingdecl[0], !invoke.isThisRef, true));
-        
-        const restype = this.toTIRTypeKey(this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const preconds = this.processPrecondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.preconditions);
-        const postconds = this.processPostcondition(invoke, enclosingdecl[0], TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs, invoke.postconditions);
-        const [smapleinline, samplefile] = this.processSamples(invoke);
-
-        this.checkArgsAndResultTypes(invoke.startSourceLocation, fargs, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)));
-        const env = StatementTypeEnvironment.createInitialEnvForStdBodyEval(TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds), argpcodes, fargs);
-
-        const bbimpl = invoke.body as BodyImplementation;
-        if (bbimpl.body instanceof SynthesisBody) {
-            const inv = new TIRInvokeSynthesis(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, false, false, params, invoke.isThisRef, restype, preconds, postconds, smapleinline, samplefile);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-        else {
-            const body = this.checkBodyStatement(invoke.srcFile, env, (invoke.body as BodyImplementation).body as ScopedBlockStatement, this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(enclosingdecl[2]).pushScope(ibinds)), this.m_taskOpsOk, this.m_taskSelfOk);
-            const inv = new TIRInvokeImplementation(invkey, name, invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, true, false, false, false, params, invoke.isThisRef, restype, preconds, postconds, smapleinline, samplefile, body);
-
-            this.m_tirInvokeMap.set(invkey, inv);
-            return inv;
-        }
-    }
-
-    private processPCodeInvokeInfo(codepack: TIRCodePack, invoke: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>): TIRInvokeImplementation {
-        this.checkPCodeDecl(invoke.startSourceLocation, invoke, declbinds);
-
-        const recursive = invoke.recursive === "yes" || (invoke.recursive === "cond" && [...argpcodes].some((pc) => pc[1].pcode.recursive));
-
-        const tbinds = new Map<string, TIRTypeKey>();
-        [...bodybinds].forEach((bb) => {
-            tbinds.set(bb[0], this.toTIRTypeKey(bb[1]));
-        });
-
-        let cvars = new Map<string, VarInfo>();
-        capturedvars.forEach((cv) => cvars.set(cv.vname, new VarInfo(cv.vtype, true, true)));
-
-        let tirpcodes = new Map<string, TIRPCodeKey>();
-        let fargs: Map<string, VarInfo> = new Map<string, VarInfo>();
-        let params: TIRFunctionParameter[] = [];
-        invoke.params.forEach((ff, ii) => {
-            const ptype = desiredfunc.params[ii].type as ResolvedType;
-           
-            fargs.set(ff.name, new VarInfo(ptype, true, true));
-            params.push(new TIRFunctionParameter(ff.name, this.toTIRTypeKey(ptype)));
-        });
-
-        const restype = this.toTIRTypeKey(desiredfunc.resultType);
-
-        let body: TIRStatement[] = [];
-        let bimpl = (invoke.body as BodyImplementation).body;
-        if(bimpl instanceof Expression) {
-            const env = ExpressionTypeEnvironment.createInitialEnvForExpressionEval(TemplateBindScope.createBaseBindScope(bodybinds), capturedpcodes, cvars, argpcodes, fargs, []);
-            body = this.checkBodyExpression(invoke.srcFile, env, bimpl, desiredfunc.resultType, "no");
-        }
-        else {
-            const env = StatementTypeEnvironment.createInitialEnvForStatementEval(TemplateBindScope.createBaseBindScope(bodybinds), capturedpcodes, cvars, argpcodes, fargs, []);
-            body = this.checkBodyStatement(invoke.srcFile, env, bimpl as ScopedBlockStatement, desiredfunc.resultType, false, "no");
-        }
-
-        const inv = new TIRInvokeImplementation(codepack.invk, "lambda", invoke.startSourceLocation, invoke.endSourceLocation, invoke.srcFile, invoke.attributes, recursive, tbinds, tirpcodes, false, false, false, true, params, false, restype, [], [], [], [], body);
-
-        this.m_tirInvokeMap.set(codepack.invk, inv);
-        return inv;
-    }
-
-    ensureTIRNamespaceDecl(ns: string): TIRNamespaceDeclaration {
-        if(!this.m_tirNamespaceMap.has(ns)) {
-            this.m_tirNamespaceMap.set(ns, new TIRNamespaceDeclaration(ns));
-        }
-
-        return this.m_tirNamespaceMap.get(ns) as TIRNamespaceDeclaration;
-    }
-
-    private ensureTIRTypeDecl(ns: string, tkey: TIRTypeKey): [TIRNamespaceDeclaration, TIROOType] {
-        const nsi = this.ensureTIRNamespaceDecl(ns);
-        assert(this.m_tirTypeMap.has(tkey), `Should always process types before any members -- ${tkey}`);
-
-        return [nsi, this.m_tirTypeMap.get(tkey) as TIROOType]
-    }
-
-    private processConstExpr(cdcl: NamespaceConstDecl) {
-        const tirns = this.ensureTIRNamespaceDecl(cdcl.ns);
-        if(tirns.consts.has(cdcl.name)) {
-            return;
-        }
-
-        try {
-            this.m_file = cdcl.srcFile;
-            this.m_ns = cdcl.ns;
-            this.m_rtype = this.getSpecialNoneType();
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const decltype = this.normalizeTypeOnly(cdcl.declaredType, TemplateBindScope.createEmptyBindScope());
-            const tirdecltype = this.toTIRTypeKey(decltype);
-
-            this.raiseErrorIf(cdcl.value.exp.sinfo, cdcl.value.captured.size !== 0, "cannot have unbound variables in namespace const expression");
-            const declvalue = this.emitCoerceIfNeeded(this.checkExpression(ExpressionTypeEnvironment.createInitialEnvForEvalStandalone(TemplateBindScope.createEmptyBindScope()), cdcl.value.exp, decltype), cdcl.value.exp.sinfo, decltype);
-
-            const tridecl = new TIRNamespaceConstDecl(cdcl.ns, cdcl.name, cdcl.sourceLocation, cdcl.srcFile, cdcl.attributes, tirdecltype, declvalue.expressionResult);
-            tirns.consts.set(cdcl.name, tridecl);
-        }
-        catch (ex) {
-            ;
-        }
-    }
-
-    private processNamespaceFunctionDecl(fkey: TIRInvokeKey, ns: string, name: string, invoke: InvokeDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const tirns = this.ensureTIRNamespaceDecl(ns);
-        if(tirns.functions.has(name) && (tirns.functions.get(name) as TIRNamespaceFunctionDecl[]).find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = invoke.srcFile;
-            this.m_ns = ns;
-            this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createBaseBindScope(binds));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            let iinv: TIRInvoke | undefined = undefined;
-            if(typeof((invoke.body as BodyImplementation).body) === "string") {
-                iinv = this.processNamespaceFunctionPrimitiveInvokeInfo(name, fkey, invoke, binds, pcodes);
-            }
-            else {
-                iinv = this.processNamespaceFunctionInvokeInfo(name, fkey, invoke, binds, pcodes);
-            }
-
-            if(!tirns.functions.has(name)) {
-                tirns.functions.set(name, []);
-            }
-            (tirns.functions.get(name) as TIRNamespaceFunctionDecl[]).push(new TIRNamespaceFunctionDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
-        }
-        catch (ex) {
-           ;
-        }
-    }
-
-    private processNamespaceOperatorDecl(fkey: TIRInvokeKey, ns: string, name: string, invoke: InvokeDecl) {
-        const tirns = this.ensureTIRNamespaceDecl(ns);
-        if(tirns.operators.has(name) && (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = invoke.srcFile;
-            this.m_ns = ns;
-            this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const iinv = this.processNamespaceOperatorDeclInvokeInfo(name, fkey, invoke);
-
-            const tirns = this.ensureTIRNamespaceDecl(ns);
-            if(!tirns.operators.has(name)) {
-                tirns.operators.set(name, []);
-            }
-            (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).push(new TIRNamespaceOperatorDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
-        }
-        catch (ex) {
-           ;
-        }
-    }
-
-    private processNamespaceOperatorImpl(fkey: TIRInvokeKey, ns: string, name: string, invoke: InvokeDecl) {
-        const tirns = this.ensureTIRNamespaceDecl(ns);
-        if(tirns.operators.has(name) && (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = invoke.srcFile;
-            this.m_ns = ns;
-            this.m_rtype = this.normalizeTypeOnly(invoke.resultType, TemplateBindScope.createEmptyBindScope());
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const iinv = this.processNamespaceOperatorImplInvokeInfo(name, fkey, invoke);
-
-            if(!tirns.operators.has(name)) {
-                tirns.operators.set(name, []);
-            }
-            (tirns.operators.get(name) as TIRNamespaceOperatorDecl[]).push(new TIRNamespaceOperatorDecl(ns, invoke.startSourceLocation, invoke.srcFile, iinv));
-        }
-        catch (ex) {
-           ;
-        }
-    }
-
-    private processLambdaFunction(cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const tirns = this.ensureTIRNamespaceDecl(cpdecl.namespace);
-        if(tirns.lambdas.has(cpdata.invk)) {
-            return;
-        }
-
-        try {
-            this.m_file = cpdecl.srcFile;
-            this.m_ns = cpdecl.namespace;
-            this.m_rtype = desiredfunc.resultType;
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const iinv = this.processPCodeInvokeInfo(cpdata, cpdecl, desiredfunc, declbinds, bodybinds, capturedpcodes, capturedvars, argpcodes);
-
-            tirns.lambdas.set(cpdata.invk, new TIRNamespaceLambdaDecl(cpdata.codekey, cpdecl.startSourceLocation, cpdecl.srcFile, iinv));
-            tirns.codepacks.set(cpdata.codekey, cpdata);
-
-            this.m_tirCodePackMap.set(cpdata.codekey, cpdata);
-        }
-        catch (ex) {
-           ;
-        }
-    }
-
-    private processMemberConst(decl: [ResolvedType, OOPTypeDecl, StaticMemberDecl, Map<string, ResolvedType>]) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl[1].ns, decl[0].typeID);
-        
-        if(tirtt.constMembers.find((tdcl) => tdcl.name === decl[2].name) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl[2].srcFile;
-            this.m_ns = decl[1].ns;
-            this.m_rtype = this.normalizeTypeOnly(decl[2].declaredType, TemplateBindScope.createBaseBindScope(decl[3]));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const decltype = this.normalizeTypeOnly(decl[2].declaredType, TemplateBindScope.createBaseBindScope(decl[3]));
-            const tirdecltype = this.toTIRTypeKey(decltype);
-
-            this.raiseErrorIf(decl[2].value.exp.sinfo, decl[2].value.captured.size !== 0, "cannot have unbound variables in namespace const expression");
-            const declvalue = this.emitCoerceIfNeeded(this.checkExpression(ExpressionTypeEnvironment.createInitialEnvForEvalStandalone(TemplateBindScope.createBaseBindScope(decl[3])), decl[2].value.exp, decltype), decl[2].value.exp.sinfo, decltype);
-
-            tirtt.constMembers.push(new TIRConstMemberDecl(tirtt.tkey, decl[2].name, decl[2].sourceLocation, decl[2].srcFile, decl[2].attributes, tirdecltype, declvalue.expressionResult));
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberFunction(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.staticFunctions.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_ns = decl.ootype.ns;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const tirinv = typeof((decl.decl.invoke.body as BodyImplementation).body) === "string" ? this.processMemberFunctionPrimitiveInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes) : this.processMemberFunctionInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
-            tirtt.staticFunctions.push(new TIRStaticFunctionDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberMethodVirtual(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>, virtualmemberdecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[]) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.memberMethods.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        virtualmemberdecls.push({fkey: fkey, decl: decl, binds: binds, pcodes: pcodes});
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_ns = decl.ootype.ns;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const tirinv = decl.decl.invoke.body === undefined ? this.processMemberMethodPureDeclInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes) : this.processMemberMethodVirtualDeclInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
-            tirtt.memberMethods.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberMethodOverride(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.memberMethods.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = false;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            const tirinv = this.processMemberMethodVirtualImplInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], [declaredecl.ttype, declaredecl.decl.invoke, declaredecl.ootype, declaredecl.oobinds], binds, pcodes);
-            tirtt.memberMethods.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberMethodDirect(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.memberMethods.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_ns = decl.ootype.ns;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            if(!decl.decl.invoke.isThisRef) {
-                this.m_returnMode = ReturnMode.Standard;
-            }
-            else {
-                this.m_returnMode = (decl.ootype instanceof TaskTypeDecl) ? ReturnMode.MemberSelf : ReturnMode.MemberRef;
-            }
-
-            this.m_taskOpsOk = decl.ootype instanceof TaskTypeDecl;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-            this.m_scratchCtr = 0;
-
-            if(this.m_taskOpsOk) {
-                this.m_taskType = {taskdecl: decl.ootype as TaskTypeDecl, taskbinds: binds};
-                this.m_taskSelfOk = (decl.decl.invoke.isThisRef) ? "write" : "read";
-            }
-
-            const tirinv = this.processMemberMethodImplInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
-            tirtt.memberMethods.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberTaskAction(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.memberMethods.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_ns = decl.ootype.ns;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            this.m_returnMode = ReturnMode.MemberAction;
-            this.m_taskOpsOk = true;
-            this.m_taskSelfOk = "no";
-            this.m_taskType = undefined;
-
-            if(this.m_taskOpsOk) {
-                this.m_taskType = {taskdecl: decl.ootype as TaskTypeDecl, taskbinds: binds};
-                this.m_taskSelfOk = (decl.decl.invoke.isThisRef) ? "write" : "read";
-            }
-
-            const tirinv = this.processMemberMethodImplInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
-            tirtt.memberMethods.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    private processMemberTaskMain(fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>) {
-        const [_, tirtt] = this.ensureTIRTypeDecl(decl.ootype.ns, decl.ttype.typeID);
-        
-        if(tirtt.staticFunctions.find((tdcl) => tdcl.ikey === fkey) !== undefined) {
-            return;
-        }
-
-        try {
-            this.m_file = decl.decl.srcFile;
-            this.m_ns = decl.ootype.ns;
-            this.m_rtype = this.normalizeTypeOnly(decl.decl.invoke.resultType, TemplateBindScope.createBaseBindScope(decl.oobinds).pushScope(binds));
-            this.m_returnMode = ReturnMode.Standard;
-            this.m_taskOpsOk = true;
-            this.m_taskSelfOk = "write";
-            this.m_taskType = {taskdecl: decl.ootype as TaskTypeDecl, taskbinds: binds};
-            this.m_scratchCtr = 0;
-
-            const tirinv = this.processMemberFunctionInvokeInfo(decl.decl.name, fkey, decl.decl.invoke, [decl.ttype, decl.ootype, decl.oobinds], binds, pcodes);
-            tirtt.staticFunctions.push(new TIRMemberMethodDecl(tirtt.tkey, decl.decl.sourceLocation, decl.decl.srcFile, tirinv));   
-        }
-        catch(ex) {
-            ;
-        }
-    }
-
-    static processAssembly(asm: Assembly, buildlevel: BuildLevel, exportvals: {ns: string, fname: string}[]): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
-        let tchecker = new TypeChecker(asm, buildlevel);
-
-        //Must always have Core namespace and special types registered -- even if just as default values
-        tchecker.m_tirNamespaceMap.set("Core", new TIRNamespaceDeclaration("Core"));
-        tchecker.processSpecialTypes();
-
-        asm.getNamespaces().forEach((nsdecl) => {
-            tchecker.ensureTIRNamespaceDecl(nsdecl.ns);
-        });
-
-        exportvals.forEach((ee) => {
-            //could be function, const, task, or type
-            const nsdecl = asm.getNamespace(ee.ns);
-
-            if(nsdecl.functions.has(ee.fname)) {
-                const fdecl = nsdecl.functions.get(ee.fname) as NamespaceFunctionDecl;
-                tchecker.raiseErrorIf(fdecl.invoke.startSourceLocation, fdecl.invoke.terms.length !== 0 || fdecl.invoke.params.some((pp) => pp.type instanceof FunctionTypeSignature), "Exported functions cannot have template params or lambdas");
-
-                const fkey = TIRIDGenerator.generateInvokeIDForNamespaceFunction(nsdecl.ns, ee.fname, [], []);
-                tchecker.m_pendingNamespaceFunctions.push({fkey: fkey, decl: fdecl, binds: new Map<string, ResolvedType>(), pcodes: new Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>()});
-            }
-            else {
-                assert(false, "export of non functions is not supported yet");
-            }
-        });
-
-        let virtualmemberdecls: {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>}[] = [];
-
-        //process info decls
-        let infoformats = new Map<string, TIRInfoTemplate>();
-        let stemplates = new Map<string, TIRStringTemplate>();
-        asm.getNamespaces().forEach((nsd) => {
-            nsd.msgformats.forEach((mfmt, name) => {
-                infoformats.set(name, tchecker.processInfoTemplate(mfmt));
-            });
-
-            nsd.stringformats.forEach((sfmt, name) => {
-                stemplates.set(name, new TIRStringTemplate(sfmt.str));
-            });
-        });
-
-        while(tchecker.anyPending()) {
-            while(tchecker.anyTypesPending()) {
-                if(tchecker.m_pendingEntityDecls.length !== 0) {
-                    const edecl = tchecker.m_pendingEntityDecls.shift() as {tirtype: TIRObjectEntityType, rtype: ResolvedEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
-                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
-                }
-                else if(tchecker.m_pendingEnumDecls.length !== 0) {
-                    const edecl = tchecker.m_pendingEnumDecls.shift() as {tirtype: TIREnumEntityType, rtype: ResolvedEnumEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
-                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
-                }
-                else if(tchecker.m_pendingTypedeclDecls.length !== 0) {
-                    const edecl = tchecker.m_pendingTypedeclDecls.shift() as {tirtype: TIRTypedeclEntityType, rtype: ResolvedTypedeclEntityAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
-                    tchecker.processOOBaseType(edecl.tirtype.tkey, edecl.rtype, edecl.tdecl, edecl.binds);
-                }
-                else if(tchecker.m_pendingConceptDecls.length !== 0) {
-                    const cdecl = tchecker.m_pendingConceptDecls.shift() as {tirtype: TIRConceptType, rtype: ResolvedConceptAtomTypeEntry, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
-                    tchecker.processOOConceptType(cdecl.tirtype.tkey, ResolvedConceptAtomType.create([cdecl.rtype]), cdecl.tdecl, cdecl.binds);
-                }
-                else {
-                    const tdecl = tchecker.m_pendingTaskDecls.shift() as {tirtype: TIRTaskType, rtype: ResolvedTaskAtomType, tdecl: OOPTypeDecl, binds: Map<string, ResolvedType>};
-                    tchecker.processTaskType(tdecl.tirtype.tkey, tdecl.rtype, tdecl.tdecl as TaskTypeDecl);
-                }
-            }
-
-            if(tchecker.m_pendingNamespaceConsts.length !== 0) {
-                const cdecl = tchecker.m_pendingNamespaceConsts.shift() as NamespaceConstDecl;
-                tchecker.processConstExpr(cdecl);
-            }
-            else if(tchecker.m_pendingNamespaceFunctions.length !== 0) {
-                const nfd = tchecker.m_pendingNamespaceFunctions.shift() as {fkey: TIRInvokeKey, decl: NamespaceFunctionDecl, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                tchecker.processNamespaceFunctionDecl(nfd.fkey, nfd.decl.ns, nfd.decl.name, nfd.decl.invoke, nfd.binds, nfd.pcodes);
-            }
-            else if(tchecker.m_pendingNamespaceOperators.length !== 0) {
-                const nfd = tchecker.m_pendingNamespaceOperators.shift() as {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl, impls: {fkey: TIRInvokeKey, decl: NamespaceOperatorDecl}[]};
-                tchecker.processNamespaceOperatorDecl(nfd.fkey, nfd.decl.ns, nfd.decl.name, nfd.decl.invoke);
-
-                nfd.impls.forEach((ff) => {
-                    tchecker.processNamespaceOperatorImpl(ff.fkey, ff.decl.ns, ff.decl.name, ff.decl.invoke);
-                });
-            }
-            else if(tchecker.m_pendingConstMemberDecls.length !== 0) {
-                const mcc = tchecker.m_pendingConstMemberDecls.shift() as OOMemberLookupInfo<StaticMemberDecl>;
-                tchecker.processMemberConst([mcc.ttype, mcc.ootype, mcc.decl, mcc.oobinds]);
-            }
-            else if(tchecker.m_pendingFunctionMemberDecls.length !== 0) {
-                const mfd = tchecker.m_pendingFunctionMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<StaticFunctionDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                if(mfd.decl.ootype instanceof TaskTypeDecl && mfd.decl.decl.name === "main") {
-                    tchecker.processMemberTaskMain(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
-                }
-                else {
-                    tchecker.processMemberFunction(mfd.fkey, mfd.decl, mfd.binds, mfd.pcodes);
-                }
-            }
-            else if(tchecker.m_pendingMethodMemberDecls.length !== 0) {
-                const mmd = tchecker.m_pendingMethodMemberDecls.shift() as {fkey: TIRInvokeKey, decl: OOMemberLookupInfo<MemberMethodDecl>, declaredecl: OOMemberLookupInfo<MemberMethodDecl>, binds: Map<string, ResolvedType>, pcodes: Map<string, {iscapture: boolean, pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                if(mmd.decl.decl.attributes.includes("virtual") || mmd.decl.decl.attributes.includes("abstract")) {
-                    tchecker.processMemberMethodVirtual(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes, virtualmemberdecls);
-                }
-                else if(mmd.decl.decl.attributes.includes("override")) {
-                    tchecker.processMemberMethodOverride(mmd.fkey, mmd.decl, mmd.declaredecl, mmd.binds, mmd.pcodes);
-                }
-                else if(mmd.decl.decl.attributes.includes("task_action")) {
-                    tchecker.processMemberTaskAction(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
-                }
-                else {
-                    tchecker.processMemberMethodDirect(mmd.fkey, mmd.decl, mmd.binds, mmd.pcodes);
-                }
-            }
-            else if (tchecker.m_pendingCodeDecls.length !== 0) {
-                const lmd = tchecker.m_pendingCodeDecls.shift() as {cpdata: TIRCodePack, cpdecl: InvokeDecl, desiredfunc: ResolvedFunctionType, declbinds: TemplateBindScope, bodybinds: Map<string, ResolvedType>, capturedpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>, capturedvars: Map<string, {vname: string, vtype: ResolvedType}>, argpcodes: Map<string, {pcode: TIRCodePack, ftype: ResolvedFunctionType}>};
-                tchecker.processLambdaFunction(lmd.cpdata, lmd.cpdecl, lmd.desiredfunc, lmd.declbinds, lmd.bodybinds, lmd.capturedpcodes, lmd.capturedvars, lmd.argpcodes);
-            }
-            else {
-                ;
-            }
-
-            if(!tchecker.anyPending()) {
-                tchecker.updateVirtualPending(virtualmemberdecls);
-            }
-        }
-
-        if(tchecker.m_errors.length !== 0) {
-            return { tasm: undefined, errors: tchecker.m_errors.map((ee) => `${ee[2]} -- ${ee[1]} @ ${ee[0]}`), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
-        }
-        else {
-            return { tasm: new TIRAssembly(tchecker.m_tirNamespaceMap, tchecker.m_tirTypeMap, tchecker.m_tirFieldMap, tchecker.m_tirInvokeMap, tchecker.m_tirCodePackMap, asm.m_literalRegexs, asm.m_literalPaths), errors: [], aliasmap: new Map<TIRTypeKey, TIRTypeKey>([...tchecker.m_typedefResolutions].map((rr) => [rr[0], rr[1].typeID])) };
-        }
     }
 
     static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {

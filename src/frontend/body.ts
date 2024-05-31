@@ -223,16 +223,16 @@ enum ExpressionTag {
     LiteralDeltaLogicalExpression = "LiteralDeltaLogicalExpression",
 
     LiteralUnicodeRegexExpression = "LiteralUnicodeRegexExpression",
-    LiteralASCIIRegexExpression = "LiteralASCIIRegexExpression",
+    LiteralExRegexExpression = "LiteralExRegexExpression",
 
     LiteralStringExpression = "LiteralStringExpression",
-    LiteralASCIIStringExpression = "LiteralASCIIStringExpression",
+    LiteralExStringExpression = "LiteralExStringExpression",
     
     LiteralTypedStringExpression = "LiteralTypedStringExpression",
-    LiteralASCIITypedStringExpression = "LiteralASCIITypedStringExpression",
+    LiteralExTypedStringExpression = "LiteralExTypedStringExpression",
     
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
-    LiteralASCIITemplateStringExpression = "LiteralASCIITemplateStringExpression",
+    LiteralExTemplateStringExpression = "LiteralExTemplateStringExpression",
     
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathFragmentExpression = "LiteralPathFragmentExpression",
@@ -460,7 +460,7 @@ class LiteralTemplateStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value; //should be $"" for unicode and $'' for ascii
+        return this.value; //should be $"" for unicode and $'' for exchange strings
     }
 }
 
@@ -2087,7 +2087,7 @@ class SelfUpdateStatement extends Statement {
 }
 
 class EnvironmentUpdateStatement extends Statement {
-    readonly updates: [LiteralExpressionValue, Expression][]; //ascii strings
+    readonly updates: [LiteralExpressionValue, Expression][]; //exchange strings
 
     constructor(sinfo: SourceInfo, updates: [LiteralExpressionValue, Expression][]) {
         super(StatementTag.EnvironmentUpdateStatement, sinfo);

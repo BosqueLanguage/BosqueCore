@@ -252,17 +252,17 @@ class EListTypeSignature extends TypeSignature {
 }
 
 class StringTemplateType extends TypeSignature {
-    readonly kind: "ascii" | "utf8";
+    readonly kind: "ex" | "utf8";
     readonly argtypes: TypeSignature[];
 
-    constructor(sinfo: SourceInfo, kind: "ascii" | "utf8", argtypes: TypeSignature[]) {
+    constructor(sinfo: SourceInfo, kind: "ex" | "utf8", argtypes: TypeSignature[]) {
         super(sinfo);
         this.kind = kind;
         this.argtypes = argtypes;
     }
 
     emit(toplevel: boolean): string {
-        const sk = this.kind === "ascii" ? "ASCIIStringTemplate" : "StringTemplate";
+        const sk = this.kind === "ex" ? "ExStringTemplate" : "StringTemplate";
         const uu = this.argtypes.map((tt) => tt.emit(true)).join(", ");
 
         return `${sk}<${uu}>`;
