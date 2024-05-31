@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
-import { BuildLevel, SourceInfo } from "./build_decls";
+import { SourceInfo } from "./build_decls";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
@@ -27,12 +27,10 @@ class TypeError {
     }
 }
 
+const CLEAR_FILENAME = "[GLOBAL]";
+
 class TypeChecker {
-    private readonly assembly: Assembly;
-
-    private readonly file: string;
-    private readonly ns: FullyQualifiedNamespace;
-
+    private file: string = CLEAR_FILENAME;
     private readonly wellknownTypes: Map<string, TypeSignature>;
 
     readonly errors: TypeError[] = [];
@@ -40,12 +38,7 @@ class TypeChecker {
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
-    constructor(assembly: Assembly, file: string, ns: FullyQualifiedNamespace, wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
-        this.assembly = assembly;
-
-        this.file = file;
-        this.ns = ns;
-
+    constructor(wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.wellknownTypes = wellknownTypes;
 
         this.constraints = constraints;
@@ -2750,7 +2743,7 @@ class TypeChecker {
             }
         }
         
-        return TypeEnvironment.mergeEnvironments(ttrue, env);
+        return TypeEnvironment.mergeEnvironments(ttrue, tfalse);
     }
 
     private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
@@ -3384,12 +3377,14 @@ class TypeChecker {
         for(let i = 0; i < fdecls.length; ++i) {
             const fdecl = fdecls[i];
     
+            this.file = fdecl.file;
             this.checkExplicitInvokeDeclTermInfo(fdecl);
             this.checkExplicitInvokeDeclSignature(fdecl);
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
             this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
+            this.file = CLEAR_FILENAME;
         }
     }
 
@@ -3418,12 +3413,14 @@ class TypeChecker {
     }
 
     private checkConstMemberDecls(tdecl: AbstractNominalTypeDecl, mdecls: ConstMemberDecl[]) {
+        const env = TypeEnvironment.createInitialStdEnv([], new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
         for(let i = 0; i < mdecls.length; ++i) {
             const m = mdecls[i];
 
             if(this.checkTypeSignatureAndStorable(m.declaredType)) {
                 this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
-                const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType), m.value.exp, m.declaredType);
+                const decltype = this.checkExpression(env, m.value.exp, m.declaredType);
 
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
             }
@@ -3438,7 +3435,7 @@ class TypeChecker {
             
             if(this.checkTypeSignatureAndStorable(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
-                    const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], f.declaredType), f.defaultValue.exp, f.declaredType);
+                    const decltype = this.checkExpression(env, f.defaultValue.exp, f.declaredType);
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(false)} but got ${decltype.emit(false)}`);
                 }
             }
@@ -3464,6 +3461,7 @@ class TypeChecker {
     }
 
     private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined, isentity: boolean) {
+        this.file = tdecl.file;
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
@@ -3489,9 +3487,11 @@ class TypeChecker {
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
         }
+        this.file = CLEAR_FILENAME;
     }
 
     private checkEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl) {
+        this.file = tdecl.file;
         this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
         
         this.checkProvides(tdecl.provides);
@@ -3521,9 +3521,11 @@ class TypeChecker {
             this.checkError(tdecl.sinfo, opts.has(tdecl.members[i]), `Duplicate enum option ${tdecl.members[i]}`);
             opts.add(tdecl.members[i]);
         }
+        this.file = CLEAR_FILENAME;
     }
 
     private checkTypedeclTypeDecl(ns: NamespaceDeclaration, tdecl: TypedeclTypeDecl, isentity: boolean) {
+        this.file = tdecl.file;
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
@@ -3560,6 +3562,7 @@ class TypeChecker {
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
         }
+        this.file = CLEAR_FILENAME;
     }
 
     private checkInteralSimpleTypeDeclHelper(ns: NamespaceDeclaration, tdecl: InternalEntityTypeDecl, isentity: boolean) {
@@ -3665,10 +3668,12 @@ class TypeChecker {
     }
 
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
+        this.file = tdecl.file;
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
         const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
 
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, tdecl.fields, true);
+        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
+        this.file = CLEAR_FILENAME;
     }
 
     private checkPrimitiveConceptTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveConceptTypeDecl) {
@@ -3722,18 +3727,32 @@ class TypeChecker {
     }
 
     private checkConceptTypeDecl(ns: NamespaceDeclaration, tdecl: ConceptTypeDecl) {
+        this.file = tdecl.file;
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
         const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
 
-        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, tdecl.fields, false);
+        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, false);
+        this.file = CLEAR_FILENAME;
     }
 
-    private checkDatatypeMemberEntityTypeDecl(parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
-        xxxx;
+    private checkDatatypeMemberEntityTypeDecl(ns: NamespaceDeclaration, parent: DatatypeTypeDecl, tdecl: DatatypeMemberEntityTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+
+        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
     }
 
-    private checkDatatypeTypeDecl(tdecl: DatatypeTypeDecl) {
-        xxxx;
+    private checkDatatypeTypeDecl(ns: NamespaceDeclaration, tdecl: DatatypeTypeDecl) {
+        this.file = tdecl.file;
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const bnames = this.relations.generateAllFieldBNamesInfo(tdecl, tdecl.fields, this.constraints);
+
+        this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
+
+        for(let i = 0; i < tdecl.associatedMemberEntityDecls.length; ++i) {
+            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i]);
+        }
+        this.file = CLEAR_FILENAME;
     }
 
     private checkEventInfo(einfo: TypeSignature[] | "{}" | "?") {
@@ -3756,127 +3775,212 @@ class TypeChecker {
         assert(false, "Not implemented -- checkAPIDecl");
     }
 
-    private checkTaskDecl(tdecl: TaskDecl) {
-        assert(false, "Not implemented -- checkTaskDecl");
+    private checkTaskDecl(ns: NamespaceDeclaration, tdecl: TaskDecl) {
+        this.file = tdecl.file;
+        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        }
+
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        const bnames = tdecl.fields.map((f) => { return {name: f.name, type: f.declaredType}; });
+
+        //make sure all of the invariants on this typecheck
+        this.checkInvariants(bnames, tdecl.invariants);
+        this.checkValidates(bnames, tdecl.validates);
+        
+        this.checkConstMemberDecls(tdecl, tdecl.consts);
+        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+        this.checkTaskMethodDecls(tdecl, rcvr, tdecl.selfmethods);
+        this.checkTaskActionDecls(tdecl, rcvr, tdecl.actions);
+
+        this.checkMemberFieldDecls(bnames, tdecl.fields);
+
+        assert(tdecl.implementsapi === undefined, "Not implemented -- checkTaskDecl implementsapi");
+
+        xxxx; //events and such
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
+        this.file = CLEAR_FILENAME;
     }
 
     private checkNamespaceConstDecls(cdecls: NamespaceConstDecl[]) {
         for(let i = 0; i < cdecls.length; ++i) {
             const m = cdecls[i];
 
+            this.file = m.file;
             if(this.checkTypeSignatureAndStorable(m.declaredType)) {
                 this.checkError(m.sinfo, m.value.captured.size !== 0, "Consts cannot capture variables");
                 const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType), m.value.exp, m.declaredType);
 
                 this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
             }
+            this.file = CLEAR_FILENAME;
         }
     }
 
     private checkNamespaceTypedef(tdecl: NamespaceTypedef) {
-        xxxx;
+        this.file = tdecl.file;
+        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        }
+
+        this.checkTypeSignature(tdecl.boundType);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
+        this.file = CLEAR_FILENAME;
+    }
+
+
+    private checkNamespaceTypeDecls(ns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl[]) {
+        for(let i = 0; i < tdecl.length; ++i) {
+            const tt = tdecl[i];
+
+            if(tt instanceof EnumTypeDecl) {
+                this.checkEnumTypeDecl(ns, tt);
+            }
+            else if(tt instanceof TypedeclTypeDecl) {
+                this.checkTypedeclTypeDecl(ns, tt, true);
+            }
+            else if(tt instanceof PrimitiveEntityTypeDecl) {
+                this.checkPrimitiveEntityTypeDecl(ns, tt);
+            }
+            else if(tt instanceof RegexValidatorTypeDecl) {
+                this.checkRegexValidatorTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ExRegexValidatorTypeDecl) {
+                this.checkExRegexValidatorTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PathValidatorTypeDecl) {
+                this.checkPathValidatorTypeDecl(ns, tt);
+            }
+            else if(tt instanceof StringOfTypeDecl) {
+                this.checkStringOfTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ExStringOfTypeDecl) {
+                this.checkExStringOfTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PathOfTypeDecl) {
+                this.checkPathOfTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PathFragmentOfTypeDecl) {
+                this.checkPathFragmentOfTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PathGlobOfTypeDecl) {
+                this.checkPathGlobOfTypeDecl(ns, tt);
+            }
+            else if(tt instanceof OkTypeDecl) {
+                this.checkOkTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof ErrTypeDecl) {
+                this.checkErrTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof APIRejectedTypeDecl) {
+                this.checkAPIRejectedTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof APIFailedTypeDecl) {
+                this.checkAPIFailedTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof APIErrorTypeDecl) {
+                this.checkAPIErrorTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof APISuccessTypeDecl) {
+                this.checkAPISuccessTypeDecl(ns, tt, tt);
+            }
+            else if(tt instanceof SomethingTypeDecl) {
+                this.checkSomethingTypeDecl(ns, tt);
+            }
+            else if(tt instanceof MapEntryTypeDecl) {
+                this.checkMapEntryTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ListTypeDecl) {
+                this.checkListTypeDecl(ns, tt);
+            }
+            else if(tt instanceof StackTypeDecl) {
+                this.checkStackTypeDecl(ns, tt);
+            }
+            else if(tt instanceof QueueTypeDecl) {
+                this.checkQueueTypeDecl(ns, tt);
+            }
+            else if(tt instanceof SetTypeDecl) {
+                this.checkSetTypeDecl(ns, tt);
+            }
+            else if(tt instanceof MapTypeDecl) {
+                this.checkMapTypeDecl(ns, tt);
+            }
+            else if(tt instanceof EventListTypeDecl) {
+                this.checkEventListTypeDecl(ns, tt);
+            }
+            else if(tt instanceof EntityTypeDecl) {
+                this.checkEntityTypeDecl(ns, tt);
+            }
+            else if(tt instanceof PrimitiveConceptTypeDecl) {
+                this.checkPrimitiveConceptTypeDecl(ns, tt);
+            }
+            else if(tt instanceof OptionTypeDecl) {
+                this.checkOptionTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ResultTypeDecl) {
+                this.checkResultTypeDecl(ns, tt);
+            }
+            else if(tt instanceof APIResultTypeDecl) {
+                this.checkAPIResultTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ExpandoableTypeDecl) {
+                this.checkExpandoableTypeDecl(ns, tt);
+            }
+            else if(tt instanceof ConceptTypeDecl) {
+                this.checkConceptTypeDecl(ns, tt);
+            }
+            else if(tt instanceof DatatypeTypeDecl) {
+                this.checkDatatypeTypeDecl(ns, tt);
+            }
+            else {
+                assert(false, "Unknown type decl kind");
+            }
+        }
     }
 
     private checkNamespaceDeclaration(decl: NamespaceDeclaration) {
-        xxxx;
-    }
+        //all usings should be resolved and valid so nothing to do there
 
-    private checkAssembly(assembly: Assembly) {
-        xxxx;
-    }
-
-    static generateTASM(pckge: PackageConfig[], buildLevel: BuildLevel, entrypoints: {ns: string, fname: string}[], depsmap: Map<string, string[]>): { tasm: TIRAssembly | undefined, errors: string[], aliasmap: Map<string, string> } {
-        ////////////////
-        //Parse the contents and generate the assembly
-        const assembly = new Assembly();
-        const allfiles = ([] as [PackageConfig, string, string, string][]).concat(...pckge.map((pk) => pk.src.map((srci) => [pk, srci.srcpath, srci.filename, srci.contents] as [PackageConfig, string, string, string])));
-
-        const p = new Parser(assembly);
-        let filetonsnamemap = new Map<string, Set<string>>();
-        let nsfilemap = new Map<string, [PackageConfig, string, string, string][]>();
-        let allfe: [PackageConfig, string, string, string][] = [];
-        try {
-            for(let i = 0; i < allfiles.length; ++i) {
-                const fe = allfiles[i];
-                const deps = p.parseCompilationUnitGetNamespaceDeps(fe[1], fe[3], fe[0].macrodefs);
-            
-                if(deps === undefined) {
-                    return { tasm: undefined, errors: ["Hard failure in parse of namespace deps"], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
-                }
-
-                if(deps.ns !== "Core") {
-                    deps.deps.push("Core");
-                }
-
-                const nsnamemap = ["Core", deps.ns, ...[...deps.remap].map((rrp) => rrp[0])];
-                filetonsnamemap.set(fe[1], new Set<string>(nsnamemap));
-
-                if(!depsmap.has(deps.ns)) {
-                    depsmap.set(deps.ns, []);
-                }
-                let ddm = depsmap.get(deps.ns) as string[];
-                deps.deps.forEach((dep) => {
-                    if(!ddm.includes(dep)) {
-                        ddm.push(dep);
-                    }
-                });
-                ddm.sort();
-
-                if(!nsfilemap.has(deps.ns)) {
-                    nsfilemap.set(deps.ns, []);
-                }
-                (nsfilemap.get(deps.ns) as [PackageConfig, string, string, string][]).push(fe);
-            }
-
-            const allns = [...depsmap].map((dm) => dm[0]).sort();
-            let nsdone = new Set<string>();
-            while(nsdone.size < allns.length) {
-                const nsopts = allns.filter((ns) => {
-                    const ndeps = depsmap.get(ns) as string[];
-                    return !nsdone.has(ns) && ndeps.every((dep) => nsdone.has(dep));
-                });
-
-                if(nsopts.length === 0) {
-                    //TODO: should hunt down the cycle -- or misspelled module name
-                    return { tasm: undefined, errors: ["Cyclic dependency in namespaces or misspelled import namespace"], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
-                }
-
-                const nns = nsopts[0];
-                const nsfiles = nsfilemap.get(nns) as [PackageConfig, string, string, string][];
-
-                for (let i = 0; i < nsfiles.length; ++i) {
-                    const parseok = p.parseCompilationUnitPass1(nsfiles[i][1], nsfiles[i][3], nsfiles[i][0].macrodefs);
-                    if (!parseok || p.getParseErrors() !== undefined) {
-                        const parseErrors = p.getParseErrors();
-                        if (parseErrors !== undefined) {
-                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
-                        }
-                    }
-                }
-    
-                for (let i = 0; i < nsfiles.length; ++i) {
-                    const parseok = p.parseCompilationUnitPass2(nsfiles[i][1], nsfiles[i][3], nsfiles[i][0].macrodefs, filetonsnamemap.get(nsfiles[i][1]) as Set<string>);
-                    if (!parseok || p.getParseErrors() !== undefined) {
-                        const parseErrors = p.getParseErrors();
-                        if (parseErrors !== undefined) {
-                            return { tasm: undefined, errors: parseErrors.map((err: [string, number, string]) => JSON.stringify(err)), aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
-                        }
-                    }
-                }
-
-                allfe = [...allfe, ...nsfiles].sort((a, b) => ((a[1] !== b[1]) ? (a[1] < b[1] ? -1 : 1) : 0));
-                nsdone.add(nns);
-            }
-        }
-        catch (ex) {
-            return { tasm: undefined, errors: [`Hard failure in parse with exception -- ${ex}`], aliasmap: new Map<TIRTypeKey, TIRTypeKey>() };
+        for(let i = 0; i < decl.typeDefs.length; ++i) {
+            this.checkNamespaceTypedef(decl.typeDefs[i]);
         }
 
-        //
-        //TODO: compute hash of sources here -- maybe bundle for debugging or something too?
-        //
+        this.checkNamespaceConstDecls(decl.consts);
+        this.checkNamespaceFunctionDecls(decl.functions);
+        this.checkNamespaceTypeDecls(decl, decl.typedecls);
 
-        return TypeChecker.processAssembly(assembly, buildLevel, entrypoints);
+        for(let i = 0; i < decl.apis.length; ++i) {
+            this.checkAPIDecl(decl.apis[i]);
+        }
+
+        for(let i = 0; i < decl.tasks.length; ++i) {
+            this.checkTaskDecl(decl, decl.tasks[i]);
+        }
+
+
+        for(let i = 0; i < decl.subns.length; ++i) {
+            this.checkNamespaceDeclaration(decl.subns[i]);
+        }
+    }
+
+    static checkAssembly(assembly: Assembly): TypeError[] {
+        const checker = new TypeChecker();
+        
+        for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
+            checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
+        }
+
+        return checker.errors;
     }
 }
 
