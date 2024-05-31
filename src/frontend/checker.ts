@@ -3458,7 +3458,37 @@ class TypeChecker {
         }
     }
 
-    private checkEnumTypeDecl(tdecl: EnumTypeDecl) {
+    private checkAbstractNominalTypeDeclHelper(bnames: {name: string, type: TypeSignature}[], rcvr: TypeSignature, tdecl: AbstractNominalTypeDecl, optfdecls: MemberFieldDecl[] | undefined) {
+        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        }
+
+        this.checkProvides(tdecl.provides);
+
+        //make sure all of the invariants on this typecheck
+        this.checkInvariants(bnames, tdecl.invariants);
+        this.checkValidates(bnames, tdecl.validates);
+        
+        this.checkConstMemberDecls(tdecl, tdecl.consts);
+        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
+        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
+
+        if(optfdecls !== undefined) {
+            this.checkMemberFieldDecls(bnames, optfdecls);
+        }
+
+        ////
+        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
+        ////
+
+        if(tdecl.terms.length !== 0) {
+            this.constraints.popConstraintScope();
+        }
+    }
+
+    private checkEnumTypeDecl(ns: NamespaceDeclaration, tdecl: EnumTypeDecl) {
         this.checkError(tdecl.sinfo, tdecl.terms.length !== 0, "Enums cannot have template terms");
         this.checkError(tdecl.sinfo, tdecl.provides.length !== 0, "Enums cannot provide other concepts -- maybe relax this later");
  
@@ -3508,73 +3538,96 @@ class TypeChecker {
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
         this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
+        ////
+        //TODO: Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
+        ////
+
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
         }
     }
 
-    private checkPrimitiveEntityTypeDecl(tdecl: PrimitiveEntityTypeDecl) {
-        return; //trusted
+    private checkPrimitiveEntityTypeDecl(ns: NamespaceDeclaration, tdecl: PrimitiveEntityTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
     }
 
-    private checkRegexValidatorTypeDecl(tdecl: RegexValidatorTypeDecl) {
-        return; //trusted
+    private checkRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: RegexValidatorTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
     }
 
-    private checkASCIIRegexValidatorTypeDecl(tdecl: ASCIIRegexValidatorTypeDecl) {
-        return; //trusted
+    private checkASCIIRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: ASCIIRegexValidatorTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
     }
 
-    private checkPathValidatorTypeDecl(tdecl: PathValidatorTypeDecl) {
-        return; //trusted
+    private checkPathValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: PathValidatorTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
     }
 
-    private checkStringOfTypeDecl(tdecl: StringOfTypeDecl) {
-        return; //trusted
+    private checkStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: StringOfTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+
+        xxxx;
     }
 
-    private checkASCIIStringOfTypeDecl(tdecl: ASCIIStringOfTypeDecl) {
-        return; //trusted
+    private checkASCIIStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: ASCIIStringOfTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+
+        xxxx;
     }
 
-    private checkPathOfTypeDecl(tdecl: PathOfTypeDecl) {
-        return; //trusted
+    private checkPathOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathOfTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+
+        xxxx;
     }
 
-    private checkPathFragmentOfTypeDecl(tdecl: PathFragmentOfTypeDecl) {
-        return; //trusted
+    private checkPathFragmentOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathFragmentOfTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+
+        xxxx;
     }
 
-    private checkPathGlobOfTypeDecl(tdecl: PathGlobOfTypeDecl) {
-        return; //trusted
+    private checkPathGlobOfTypeDecl(ns: NamespaceDeclaration, tdecl: PathGlobOfTypeDecl) {
+        const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
+        this.checkAbstractNominalTypeDeclHelper([], rcvr, tdecl, undefined);
+
+        xxxx;
     }
 
     private checkOkTypeDecl(tdecl: OkTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkErrTypeDecl(tdecl: ErrTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkAPIRejectedTypeDecl(tdecl: APIRejectedTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkAPIFailedTypeDecl(tdecl: APIFailedTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkAPIErrorTypeDecl(tdecl: APIErrorTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkAPISuccessTypeDecl(tdecl: APISuccessTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkSomethingTypeDecl(tdecl: SomethingTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkMapEntryTypeDecl(tdecl: MapEntryTypeDecl) {
@@ -3606,56 +3659,29 @@ class TypeChecker {
     }
 
     private checkEntityTypeDecl(ns: NamespaceDeclaration, tdecl: EntityTypeDecl) {
-        this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
-        }
-
-        this.checkProvides(tdecl.provides);
-
-        //generate the bnames
-        xxxx;
-
-        xxxx; //Check that all of the fields (bnames) are unique
-
-        xxxx; //Check that all of the vcall resolves are unique .... and all of the vcall decls are implemented
-
-        //make sure all of the invariants on this typecheck
-        this.checkInvariants(bnames, tdecl.invariants);
-        this.checkValidates(bnames, tdecl.validates);
-        
-        this.checkConstMemberDecls(tdecl, tdecl.consts);
-        this.checkTypeFunctionDecls(tdecl, tdecl.functions);
-
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
-        this.checkMethodDecls(tdecl, rcvr, tdecl.methods);
 
-        this.checkMemberFieldDecls(bnames, tdecl.fields);
-
-        if(tdecl.terms.length !== 0) {
-            this.constraints.popConstraintScope();
-        }
+        xxxx;
     }
 
     private checkPrimitiveConceptTypeDecl(tdecl: PrimitiveConceptTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkOptionTypeDecl(tdecl: OptionTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkResultTypeDecl(tdecl: ResultTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkAPIResultTypeDecl(tdecl: APIResultTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkExpandoableTypeDecl(tdecl: ExpandoableTypeDecl) {
-        return; //trusted
+        assert(false, "Not Implemented");
     }
 
     private checkConceptTypeDecl(tdecl: ConceptTypeDecl) {
