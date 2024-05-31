@@ -1,5 +1,3 @@
-import {strict as assert} from "assert";
-
 import { SourceInfo } from "./build_decls";
 import { AbstractNominalTypeDecl, NamespaceTypedef } from "./assembly";
 
@@ -38,14 +36,15 @@ class TemplateConstraintScope {
         this.constraints.pop();
     }
 
-    resolveConstraint(name: string): TypeSignature {
+    resolveConstraint(name: string): TypeSignature | undefined {
         for(let i = this.constraints.length - 1; i >= 0; ++i) {
             const res = this.constraints[i].get(name);
             if(res !== undefined) {
                 return res;
             }
         }
-        assert(false, `Constraint ${name} not found in scope`);
+        
+        return undefined;
     }
 }
 
@@ -58,6 +57,10 @@ class TemplateNameMapper {
 
     static createEmpty(): TemplateNameMapper {
         return new TemplateNameMapper([]);
+    }
+
+    static createInitialMapping(mapping: Map<string, TypeSignature>): TemplateNameMapper {
+        return new TemplateNameMapper([mapping]);
     }
 
     static merge(m1: TemplateNameMapper, m2: TemplateNameMapper): TemplateNameMapper {
@@ -251,7 +254,7 @@ class EListTypeSignature extends TypeSignature {
     }
 }
 
-class StringTemplateType extends TypeSignature {
+class StringTemplateTypeSignature extends TypeSignature {
     readonly kind: "ex" | "utf8";
     readonly argtypes: TypeSignature[];
 
@@ -269,7 +272,7 @@ class StringTemplateType extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new StringTemplateType(this.sinfo, this.kind, this.argtypes.map((tt) => tt.remapTemplateBindings(mapper)));
+        return new StringTemplateTypeSignature(this.sinfo, this.kind, this.argtypes.map((tt) => tt.remapTemplateBindings(mapper)));
     }
 }
 
@@ -317,26 +320,6 @@ class LambdaTypeSignature extends TypeSignature {
     }
 }
 
-class AndTypeSignature extends TypeSignature {
-    readonly ltype: TypeSignature;
-    readonly rtype: TypeSignature;
-
-    constructor(sinfo: SourceInfo, ltype: TypeSignature, rtype: TypeSignature) {
-        super(sinfo);
-        this.ltype = ltype;
-        this.rtype = rtype;
-    }
-
-    emit(toplevel: boolean): string {
-        const bb = this.ltype.emit(false) + " & " + this.rtype.emit(false);
-        return (toplevel) ? bb : "(" + bb + ")";
-    }
-
-    remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        return new AndTypeSignature(this.sinfo, this.ltype.remapTemplateBindings(mapper), this.rtype.remapTemplateBindings(mapper));
-    }
-}
-
 class NoneableTypeSignature extends TypeSignature {
     readonly type: TypeSignature;
 
@@ -378,6 +361,6 @@ export {
     FullyQualifiedNamespace, TemplateConstraintScope, TemplateNameMapper,
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
-    TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateType,
-    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, AndTypeSignature, NoneableTypeSignature, UnionTypeSignature
+    TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateTypeSignature,
+    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, NoneableTypeSignature, UnionTypeSignature
 };

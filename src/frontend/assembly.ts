@@ -588,6 +588,9 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     joinBodyGroups(groups: string[][]): string {
         return groups.map((g) => g.join("\n")).join("\n\n");
     }
+
+    abstract isUniqueNominal(): boolean;
+    abstract isTypeDeclable(): boolean;
 }
 
 class EnumTypeDecl extends AbstractNominalTypeDecl {
@@ -605,6 +608,13 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
         fmt.indentPop();
 
         return fmt.indent(`${this.emitAttributes()}${this.emitAdditionalTag()}enum ${this.name} {${endl}${fmt.indent("\n}")}`);
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return true;
     }
 }
 
@@ -631,6 +641,13 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
             return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
     }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return true;
+    }
 }
 
 abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
@@ -653,6 +670,13 @@ class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
 
         return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return this.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
+    }
 }
 
 class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
@@ -666,6 +690,13 @@ class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
 
     emit(fmt: CodeFormatter): string {
         return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -681,6 +712,13 @@ class ExRegexValidatorTypeDecl extends InternalEntityTypeDecl {
     emit(fmt: CodeFormatter): string {
         return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
     }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
+    }
 }
 
 class PathValidatorTypeDecl extends InternalEntityTypeDecl {
@@ -694,6 +732,13 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
 
     emit(fmt: CodeFormatter): string {
         return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -710,6 +755,13 @@ abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
         fmt.indentPop();
 
         return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -746,6 +798,13 @@ class PathGlobOfTypeDecl extends ThingOfTypeDecl {
 abstract class ConstructableTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -891,6 +950,13 @@ abstract class AbstractCollectionTypeDecl extends InternalEntityTypeDecl {
 
         return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
+    }
 }
 
 class ListTypeDecl extends AbstractCollectionTypeDecl {
@@ -923,7 +989,7 @@ class MapTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
-class EventListTypeDecl extends InternalEntityTypeDecl {
+class EventListTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
@@ -956,11 +1022,25 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 
         return `${this.emitAttributes()}${this.emitAdditionalTag()}entity ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n ${this.joinBodyGroups(bg)}${fmt.indent("\n}")}`;
     }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
+    }
 }
 
 abstract class InternalConceptTypeDecl extends AbstractNominalTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+    }
+
+    isUniqueNominal(): boolean {
+        return false;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -1071,6 +1151,13 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 
         return `${this.emitAttributes}${this.emitAdditionalTag()}concept ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n${this.joinBodyGroups(bg)}${fmt.indent("\n")}}`;
     }
+
+    isUniqueNominal(): boolean {
+        return false;
+    }
+    isTypeDeclable(): boolean {
+        return false;
+    }
 }
 
 class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
@@ -1089,6 +1176,13 @@ class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
         fmt.indentPop();
 
         return this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+
+    isUniqueNominal(): boolean {
+        return true;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -1126,6 +1220,13 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
         }
 
         return `${rootdecl}${usingdecl}${edecls}\n${etail}`;
+    }
+
+    isUniqueNominal(): boolean {
+        return false;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 
@@ -1401,6 +1502,13 @@ class TaskDecl extends AbstractNominalTypeDecl {
         }
 
         return `${rootdecl}${etail}`;
+    }
+
+    isUniqueNominal(): boolean {
+        return false;
+    }
+    isTypeDeclable(): boolean {
+        return false;
     }
 }
 

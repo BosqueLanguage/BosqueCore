@@ -2,10 +2,10 @@ import {strict as assert} from "assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
 import { SourceInfo } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, StringTemplateType, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
-import { AndRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
+import { OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
 
 const { accepts } = require("@bosque/jsbrex");
 
@@ -31,16 +31,14 @@ const CLEAR_FILENAME = "[GLOBAL]";
 
 class TypeChecker {
     private file: string = CLEAR_FILENAME;
-    private readonly wellknownTypes: Map<string, TypeSignature>;
+    private readonly wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
 
     readonly errors: TypeError[] = [];
 
     readonly constraints: TemplateConstraintScope;
     readonly relations: TypeCheckerRelations;
 
-    constructor(wellknownTypes: Map<string, TypeSignature>, constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
-        this.wellknownTypes = wellknownTypes;
-
+    constructor(constraints: TemplateConstraintScope, relations: TypeCheckerRelations) {
         this.constraints = constraints;
         this.relations = relations;
     }
@@ -524,10 +522,6 @@ class TypeChecker {
         if(revalidator instanceof SingleRegexValidatorPack) {
             return this.runValidatorRegex(sinfo, restr, revalidator.vre);
         }
-        else if(revalidator instanceof AndRegexValidatorPack) {
-            //make sure to run all of them in case one is malformed -- we want to report that
-            return revalidator.validators.map((v) => this.checkValidatorRegexPack(sinfo, restr, v)).reduce((acc, v) => acc && v, true);
-        }
         else if(revalidator instanceof OrRegexValidatorPack) {
             //make sure to run all of them in case one is malformed -- we want to report that
             return revalidator.validators.map((v) => this.checkValidatorRegexPack(sinfo, restr, v)).reduce((acc, v) => acc || v, false);
@@ -570,25 +564,25 @@ class TypeChecker {
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
-        return exp.setType(new StringTemplateType(exp.sinfo, "utf8", []));
+        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "utf8", []));
     }
 
     private checkLiteralExTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
-        return exp.setType(new StringTemplateType(exp.sinfo, "ex", []));
+        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "ex", []));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
-        xxxx;
+        assert(false, "Not Implemented -- checkLiteralPathExpression");
     }
 
     private checkLiteralPathFragmentExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
-        xxxx;
+        assert(false, "Not Implemented -- checkLiteralPathFragmentExpression");
     }
 
     private checkLiteralPathGlobExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
-        xxxx;
+        assert(false, "Not Implemented -- checkLiteralPathGlobExpression");
     }
 
     private checkLiteralTypeDeclValueExpression(env: TypeEnvironment, exp: LiteralTypeDeclValueExpression): TypeSignature {
@@ -1509,9 +1503,36 @@ class TypeChecker {
     }
 
     private checkExpressionRHS(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
-        xxxx; //other RHS options here
-
-        return this.checkExpression(env, exp, expectedtype);
+        const ttag = exp.tag;
+        switch (ttag) {
+            case ExpressionTag.CallRefThisExpression: {
+                return this.checkCallRefThisExpression(env, exp as CallRefThisExpression);
+            }
+            case ExpressionTag.CallRefSelfExpression: {
+                return this.checkCallRefSelfExpression(env, exp as CallRefSelfExpression);
+            }
+            case ExpressionTag.CallTaskActionExpression: {
+                return this.checkCallTaskActionExpression(env, exp as CallTaskActionExpression);
+            }
+            case ExpressionTag.TaskRunExpression: {
+                return this.checkTaskRunExpression(env, exp as TaskRunExpression);
+            }
+            case ExpressionTag.TaskMultiExpression: {
+                return this.checkTaskMultiExpression(env, exp as TaskMultiExpression);
+            }
+            case ExpressionTag.TaskDashExpression: {
+                return this.checkTaskDashExpression(env, exp as TaskDashExpression);
+            }
+            case ExpressionTag.TaskAllExpression: {
+                return this.checkTaskAllExpression(env, exp as TaskAllExpression);
+            }
+            case ExpressionTag.TaskRaceExpression: {
+                return this.checkTaskRaceExpression(env, exp as TaskRaceExpression);
+            }
+            default: {
+                return this.checkExpression(env, exp, expectedtype);
+            }
+        }
     }
 
     /*
@@ -3756,19 +3777,53 @@ class TypeChecker {
     }
 
     private checkEventInfo(einfo: TypeSignature[] | "{}" | "?") {
-        assert(false, "Not implemented -- checkEventInfo");
+        if(einfo === "{}" || einfo === "?") {
+            return;
+        }
+        else {
+            for(let i = 0; i < einfo.length; ++i) {
+                const oksig = this.checkTypeSignature(einfo[i]);
+                if(oksig) {
+                    this.checkError(einfo[i].sinfo, !this.relations.isEventDataType(einfo[i], this.constraints), `Event type is not a valid event type -- ${einfo[i].emit(false)}`);
+                }
+            }
+        }
     }
 
     private checkStatusInfoFilter(status: StatusInfoFilter | "?") {
-        assert(false, "Not implemented -- checkStatusInfoFilter");
+        if(status === "?") {
+            return;
+        }
+
+        const okstdsig = status.standard !== undefined && this.checkTypeSignature(status.standard);
+        if(okstdsig) {
+            this.checkError(status.standard.sinfo, !this.relations.isStatusDataType(status.standard, this.constraints), `Status type is not a valid status type -- ${status.standard.emit(false)}`);
+        }
+
+        const okverbosesig = status.verbose !== undefined && this.checkTypeSignature(status.verbose);
+        if(okverbosesig) {
+            this.checkError(status.verbose.sinfo, !this.relations.isStatusDataType(status.verbose, this.constraints), `Status type is not a valid status type -- ${status.verbose.emit(false)}`);
+        }
     }
 
     private checkEnvironmentVariableInformation(env: EnvironmentVariableInformation[] | "?") {
-        assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+        if(env === "?") {
+            return;
+        }
+
+        for(let i = 0; i < env.length; ++i) {
+            assert(false, "Not implemented -- checkEnvironmentVariableInformation");
+        }
     }
 
     private checkResourceInformation(res: ResourceInformation[] | "**" | "{}" | "?") {
-        assert(false, "Not implemented -- checkResourceInformation");
+        if(res === "**" || res === "{}" || res === "?") {
+            return;
+        }
+
+        for(let i = 0; i < res.length; ++i) {
+            assert(false, "Not implemented -- checkResourceInformation");
+        }
     }
 
     private checkAPIDecl(adecl: APIDecl) {
@@ -3797,9 +3852,15 @@ class TypeChecker {
 
         this.checkMemberFieldDecls(bnames, tdecl.fields);
 
-        assert(tdecl.implementsapi === undefined, "Not implemented -- checkTaskDecl implementsapi");
-
-        xxxx; //events and such
+        if(tdecl.implementsapi !== undefined) {
+            assert(false, "Not implemented -- checkTaskDecl implementsapi");
+        }
+        else {
+            this.checkEventInfo(tdecl.eventsInfo as TypeSignature[] | "{}" | "?");
+            this.checkStatusInfoFilter(tdecl.statusInfo as StatusInfoFilter | "?");
+            this.checkEnvironmentVariableInformation(tdecl.envVarRequirementInfo as EnvironmentVariableInformation[] | "?");
+            this.checkResourceInformation(tdecl.resourceImpactInfo as ResourceInformation[] | "**" | "{}" | "?");
+        }
 
         if(tdecl.terms.length !== 0) {
             this.constraints.popConstraintScope();
@@ -3973,9 +4034,20 @@ class TypeChecker {
         }
     }
 
+    private loadWellKnownType(assembly: Assembly, name: string) {
+        const ccore = assembly.getToplevelNamespace("Core");
+
+        const tdecl = ccore.typedecls.find((td) => td.name === name);
+        assert(tdecl !== undefined, "Failed to find well known type");
+
+        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
+    }
+
     static checkAssembly(assembly: Assembly): TypeError[] {
-        const checker = new TypeChecker();
-        
+        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly));
+        checker.loadWellKnownType(assembly, "None");
+        checker.loadWellKnownType(assembly, "Bool");
+
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
         }
