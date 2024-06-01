@@ -5,7 +5,7 @@ import { SourceInfo } from "./build_decls";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
-import { OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
+import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
 
 const { accepts } = require("@bosque/jsbrex");
 
@@ -539,12 +539,18 @@ class TypeChecker {
         }
 
         const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
-        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for StringOf")) {
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        if(revalidator === undefined) {
+            return exp.setType(this.relations.getStringOfType(exp.stype));
         }
 
-        this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.relations.getStringOfType(exp.stype));
+        if(revalidator instanceof ErrorRegexValidatorPack) {
+            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
+            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        }
+        else {
+            this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator); 
+            return exp.setType(this.relations.getStringOfType(exp.stype));
+        }
     }
 
     private checkLiteralExTypedStringExpression(env: TypeEnvironment, exp: LiteralTypedStringExpression): TypeSignature {
@@ -553,12 +559,18 @@ class TypeChecker {
         }
 
         const revalidator = this.relations.resolveStringRegexValidatorInfo(exp.stype);
-        if(this.checkError(exp.sinfo, revalidator === undefined, "Bad Validator type for ExStringOf")) {
-            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        if(revalidator === undefined) {
+            return exp.setType(this.relations.getStringOfType(exp.stype));
         }
 
-        this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator as RegexValidatorPack); 
-        return exp.setType(this.relations.getExStringOfType(exp.stype));
+        if(revalidator instanceof ErrorRegexValidatorPack) {
+            this.reportError(exp.sinfo, `Bad Validator type for StringOf -- could not resolve to a valid regex`);
+            return exp.setType(new ErrorTypeSignature(exp.stype.sinfo, undefined));
+        }
+        else {
+            this.checkValidatorRegexPack(exp.sinfo, exp.value.slice(1, exp.value.length - 1), revalidator); 
+            return exp.setType(this.relations.getStringOfType(exp.stype));
+        }
     }
 
     private checkLiteralTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {

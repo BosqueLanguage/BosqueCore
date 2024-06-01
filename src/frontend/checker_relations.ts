@@ -28,6 +28,9 @@ class MemberLookupInfo<T> {
 abstract class RegexValidatorPack {
 }
 
+class ErrorRegexValidatorPack extends RegexValidatorPack {
+}
+
 class SingleRegexValidatorPack extends RegexValidatorPack {
     readonly vre: string;
 
@@ -251,12 +254,12 @@ class TypeCheckerRelations {
         xxxx;
     }
 
-    //Check is t1 is a subtype of t2 -- template types are expanded in this check
+    //Check is t1 is a subtype of t2 -- template types are expanded when needed in this check
     isSubtypeOf(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking subtypes on errors");
 
-        const nt1 = this.normalizeTypeSignatureIncludingTemplate(t1, tconstrain);
-        const nt2 = this.normalizeTypeSignatureIncludingTemplate(t2, tconstrain);
+        const nt1 = this.normalizeTypeSignature(t1, tconstrain);
+        const nt2 = this.normalizeTypeSignature(t2, tconstrain);
         
         xxxx;
     }
@@ -951,7 +954,7 @@ class TypeCheckerRelations {
     */
 
 export {
-    RegexValidatorPack, SingleRegexValidatorPack, OrRegexValidatorPack,
+    RegexValidatorPack, ErrorRegexValidatorPack, SingleRegexValidatorPack, OrRegexValidatorPack,
     TypeLookupInfo, MemberLookupInfo,
     TypeCheckerRelations
 };
