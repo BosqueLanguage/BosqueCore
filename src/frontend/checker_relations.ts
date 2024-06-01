@@ -1,6 +1,6 @@
 import {strict as assert} from "assert";
 
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
 import { AbstractNominalTypeDecl, Assembly, MemberFieldDecl, NamespaceDeclaration } from "./assembly";
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
 import { SourceInfo } from "./build_decls";
@@ -52,6 +52,9 @@ class OrRegexValidatorPack extends RegexValidatorPack {
 class TypeCheckerRelations {
     readonly assembly: Assembly;
     readonly wellknowntypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
+
+    readonly memoizedTypeEqualRelation: Map<string, boolean> = new Map<string, boolean>();
+    readonly memoizedTypeSubtypeRelation: Map<string, boolean> = new Map<string, boolean>();
 
     constructor(assembly: Assembly) {
         this.assembly = assembly;
@@ -254,9 +257,72 @@ class TypeCheckerRelations {
         xxxx;
     }
 
+    private static areSameNameLists(nl1: string[], nl2: string[]): boolean {
+        if(nl1.length !== nl2.length) {
+            return false;
+        }
+
+        for(let i = 0; i < nl1.length; ++i) {
+            if(nl1[i] !== nl2[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private areSameTerms(terms1: {name: string, type: TypeSignature}[], terms2: {name: string, type: TypeSignature}[], tconstrain: TemplateConstraintScope): boolean {
+        if(terms1.length !== terms2.length) {
+            return false;
+        }
+
+        for(let i = 0; i < terms1.length; ++i) {
+            assert(terms1[i].name === terms2[i].name, "Mismatched terms in nominal type");
+
+            if(!this.areSameTypes(terms1[i].type, terms2[i].type, tconstrain)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private areSameTypeSignatureLists(tl1: TypeSignature[], tl2: TypeSignature[], tconstrain: TemplateConstraintScope): boolean {
+        if(tl1.length !== tl2.length) {
+            return false;
+        }
+
+        for(let i = 0; i < tl1.length; ++i) {
+            if(!this.areSameTypes(tl1[i], tl2[i], tconstrain)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private areSameFunctionParamLists(tl1: FunctionParameter[], tl2: FunctionParameter[], tconstrain: TemplateConstraintScope): boolean {
+        if(tl1.length !== tl2.length) {
+            return false;
+        }
+
+        for(let i = 0; i < tl1.length; ++i) {
+            if(tl1[i].name !== tl2[i].name || tl1[i].isRefParam !== tl2[i].isRefParam || tl1[i].isSpreadParam !== tl2[i].isSpreadParam) {
+                return false;
+            }
+            
+            if(!this.areSameTypes(tl1[i].type, tl2[i].type, tconstrain)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     //Check is t1 is a subtype of t2 -- template types are expanded when needed in this check
     isSubtypeOf(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking subtypes on auto");
 
         const nt1 = this.normalizeTypeSignature(t1, tconstrain);
         const nt2 = this.normalizeTypeSignature(t2, tconstrain);
@@ -266,12 +332,93 @@ class TypeCheckerRelations {
 
     //Check if t1 and t2 are the same type -- template types are not expanded in this check
     areSameTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t1 instanceof ErrorTypeSignature) && !(t2 instanceof ErrorTypeSignature), "Checking type same on errors");
+        assert(!(t1 instanceof AutoTypeSignature) && !(t2 instanceof AutoTypeSignature), "Checking type same on auto");
 
         const nt1 = this.normalizeTypeSignature(t1, tconstrain);
         const nt2 = this.normalizeTypeSignature(t2, tconstrain);
 
-        xxxx;
+        const kstr = `(${nt1.emit(true)} <> ${nt2.emit(true)})`;
+        const memoval = this.memoizedTypeEqualRelation.get(kstr);
+        if(memoval !== undefined) {
+            return memoval;
+        }
+
+        let res = false
+        if(nt1 instanceof VoidTypeSignature && nt2 instanceof VoidTypeSignature) {
+            res = true;
+        }
+        else if(nt1 instanceof TemplateTypeSignature && nt2 instanceof TemplateTypeSignature) {
+            res = (nt1.name === nt2.name);
+        }
+        else if(nt1 instanceof NominalTypeSignature && nt2 instanceof NominalTypeSignature) {
+            if(!TypeCheckerRelations.areSameNameLists(nt1.ns, nt2.ns)) {
+                res = false;
+            }
+            else {
+                const rd1 = nt1.resolvedDeclaration as AbstractNominalTypeDecl;
+                const rd2 = nt2.resolvedDeclaration as AbstractNominalTypeDecl;
+                res = (rd1.name === rd2.name) && this.areSameTerms(nt1.resolvedTerms, nt2.resolvedTerms, tconstrain);
+            }
+        }
+        else if(nt1 instanceof TupleTypeSignature && nt2 instanceof TupleTypeSignature) {
+            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries, tconstrain);
+        }
+        else if(nt1 instanceof RecordTypeSignature && nt2 instanceof RecordTypeSignature) {
+            const stl1 = [...nt1.entries].sort((a, b) => a[0].localeCompare(b[0]));
+            const stl2 = [...nt2.entries].sort((a, b) => a[0].localeCompare(b[0]));
+
+            const samenames = TypeCheckerRelations.areSameNameLists(stl1.map((st) => st[0]), stl2.map((st) => st[0]));
+            const sametypes = this.areSameTypeSignatureLists(stl1.map((st) => st[1]), stl2.map((st) => st[1]), tconstrain);
+
+            res = samenames && sametypes;
+        }
+        else if(nt1 instanceof EListTypeSignature && nt2 instanceof EListTypeSignature) {
+            res = this.areSameTypeSignatureLists(nt1.entries, nt2.entries, tconstrain);
+        }
+        else if(nt1 instanceof StringTemplateTypeSignature && nt2 instanceof StringTemplateTypeSignature) {
+            res = (nt1.kind === nt2.kind) && this.areSameTypeSignatureLists(nt1.argtypes, nt2.argtypes, tconstrain);
+        }
+        else if(nt1 instanceof LambdaTypeSignature && nt2 instanceof LambdaTypeSignature) {
+            if(nt1.recursive !== nt2.recursive || nt1.name !== nt2.name) {
+                res = false;
+            }
+            else {
+                const okargs = this.areSameFunctionParamLists(nt1.params, nt2.params, tconstrain);
+                const okres = this.areSameTypes(nt1.resultType, nt2.resultType, tconstrain);
+
+                res = okargs && okres;
+            }
+        }
+        else if(nt1 instanceof NoneableTypeSignature && nt2 instanceof NoneableTypeSignature) {
+            res = this.areSameTypes(nt1.type, nt2.type, tconstrain);
+        }
+        else if(nt1 instanceof UnionTypeSignature && nt2 instanceof UnionTypeSignature) {
+            const tl1: TypeSignature[] = [];
+            TypeCheckerRelations.flattenUnionType(nt1, tl1);
+
+            const tl2: TypeSignature[] = [];
+            TypeCheckerRelations.flattenUnionType(nt2, tl2);
+
+            if(tl1.length !== tl2.length) {
+                res = false;
+            }
+            else {
+                res = tl1.every((t1) => tl2.some((t2) => this.areSameTypes(t1, t2, tconstrain)));
+            }
+        }
+        else if(nt1 instanceof NoneableTypeSignature && nt2 instanceof UnionTypeSignature) {
+            res = this.areSameTypes(new UnionTypeSignature(nt2.sinfo, nt1.type, this.wellknowntypes.get("None") as TypeSignature), nt2, tconstrain);
+        }
+        else if(nt1 instanceof UnionTypeSignature && nt2 instanceof NoneableTypeSignature) {
+            res = this.areSameTypes(nt1, new UnionTypeSignature(nt1.sinfo, nt2.type, this.wellknowntypes.get("None") as TypeSignature), tconstrain);
+        }
+        else {
+            ; //for all other cases res stays false
+        }
+
+        this.memoizedTypeEqualRelation.set(kstr, res);
+        return res;
     }
 
     //Check is this type is unique (i.e. not a union or concept type)

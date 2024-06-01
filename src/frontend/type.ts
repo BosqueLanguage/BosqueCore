@@ -300,9 +300,9 @@ class LambdaTypeSignature extends TypeSignature {
     readonly recursive: RecursiveAnnotation;
     readonly name: "fn" | "pred";
     readonly params: FunctionParameter[];
-    readonly resultType: TypeSignature | undefined;
+    readonly resultType: TypeSignature;
 
-    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: FunctionParameter[], resultType: TypeSignature | undefined) {
+    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: FunctionParameter[], resultType: TypeSignature) {
         super(sinfo);
         this.recursive = recursive;
         this.name = name;
@@ -311,12 +311,12 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     emit(toplevel: boolean): string {
-        return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType ? this.resultType.emit(true) : "void"}`;
+        return `${this.recursive === "yes" ? "rec " : ""}${this.name}(${this.params.map((pp) => pp.emit()).join(", ")}): ${this.resultType.emit(true)}`;
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
         const rbparams = this.params.map((pp) => new FunctionParameter(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isSpreadParam));
-        return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType ? this.resultType.remapTemplateBindings(mapper) : undefined);
+        return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
     }
 }
 
