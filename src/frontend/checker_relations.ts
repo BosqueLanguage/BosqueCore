@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
-import { AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, MemberFieldDecl, NamespaceDeclaration, PrimitiveEntityTypeDecl, SomethingTypeDecl, TypedeclTypeDecl } from "./assembly";
+import { AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, EnumTypeDecl, MemberFieldDecl, NamespaceDeclaration, PrimitiveEntityTypeDecl, SomethingTypeDecl, TypedeclTypeDecl } from "./assembly";
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
 import { SourceInfo } from "./build_decls";
 
@@ -503,11 +503,21 @@ class TypeCheckerRelations {
     isUniqueType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         const ntype = this.normalizeTypeSignature(t, tconstrain);
 
-        if(!(ntype instanceof NominalTypeSignature)) {
+        if(ntype instanceof NominalTypeSignature) {
+            return ntype.resolvedDeclaration instanceof AbstractEntityTypeDecl;
+        }
+        else if((ntype instanceof TupleTypeSignature) || ntype instanceof RecordTypeSignature || ntype instanceof EListTypeSignature) {
+            return true;
+        }
+        else if(ntype instanceof StringTemplateTypeSignature) {
+            return true;
+        }
+        else if(ntype instanceof LambdaTypeSignature) {
+            return true;
+        }
+        else {
             return false;
         }
-
-        return (ntype.resolvedDeclaration as AbstractNominalTypeDecl).isUniqueNominal();
     }
 
     //Check if this type is unique and a numeric type of some sort (either primitive number or a typedecl of a numeric type)
@@ -518,7 +528,7 @@ class TypeCheckerRelations {
         const tnorm = this.normalizeTypeSignature(t, tconstrain);
         if(tnorm instanceof NominalTypeSignature) {
             const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
-            return tdecl.isUniqueNominal() && tdecl.attributes.find((attr) => attr.name === "__numeric") !== undefined;
+            return tdecl.attributes.find((attr) => attr.name === "__numeric") !== undefined;
         }
         else if(tnorm instanceof TypedeclTypeDecl) {
             const btype = this.getTypeDeclBasePrimitiveType(tnorm, tconstrain);
@@ -581,6 +591,7 @@ class TypeCheckerRelations {
     isValidProvidesType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
+        const ttnorm = this.normalizeTypeSignature(t, tconstrain);
         xxxx;
     }
 

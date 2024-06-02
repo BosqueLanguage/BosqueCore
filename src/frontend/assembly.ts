@@ -588,12 +588,15 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
     joinBodyGroups(groups: string[][]): string {
         return groups.map((g) => g.join("\n")).join("\n\n");
     }
-
-    abstract isUniqueNominal(): boolean;
-    abstract isTypeDeclable(): boolean;
 }
 
-class EnumTypeDecl extends AbstractNominalTypeDecl {
+abstract class AbstractEntityTypeDecl extends AbstractNominalTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
+    }
+}
+
+class EnumTypeDecl extends AbstractEntityTypeDecl {
     readonly members: string[];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[], etag: AdditionalTypeDeclTag) {
@@ -609,16 +612,9 @@ class EnumTypeDecl extends AbstractNominalTypeDecl {
 
         return fmt.indent(`${this.emitAttributes()}${this.emitAdditionalTag()}enum ${this.name} {${endl}${fmt.indent("\n}")}`);
     }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return true;
-    }
 }
 
-class TypedeclTypeDecl extends AbstractNominalTypeDecl {
+class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
@@ -641,16 +637,9 @@ class TypedeclTypeDecl extends AbstractNominalTypeDecl {
             return tdcl + " &" + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
         }
     }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return true;
-    }
 }
 
-abstract class InternalEntityTypeDecl extends AbstractNominalTypeDecl {
+abstract class InternalEntityTypeDecl extends AbstractEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
     }
@@ -670,76 +659,6 @@ class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
 
         return attrs + "entity " + this.name + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return this.attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
-    }
-}
-
-class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
-}
-
-class ExRegexValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
-}
-
-class PathValidatorTypeDecl extends InternalEntityTypeDecl {
-    readonly pathglob: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
-        super(file, sinfo, attributes, name);
-
-        this.pathglob = pathglob;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
-    }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
 }
 
 abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
@@ -755,13 +674,6 @@ abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
         fmt.indentPop();
 
         return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
     }
 }
 
@@ -798,13 +710,6 @@ class PathGlobOfTypeDecl extends ThingOfTypeDecl {
 abstract class ConstructableTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
-    }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
     }
 }
 
@@ -950,13 +855,6 @@ abstract class AbstractCollectionTypeDecl extends InternalEntityTypeDecl {
 
         return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
 }
 
 class ListTypeDecl extends AbstractCollectionTypeDecl {
@@ -1005,7 +903,7 @@ class EventListTypeDecl extends AbstractCollectionTypeDecl {
     }
 }
 
-class EntityTypeDecl extends AbstractNominalTypeDecl {
+class EntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
@@ -1022,25 +920,17 @@ class EntityTypeDecl extends AbstractNominalTypeDecl {
 
         return `${this.emitAttributes()}${this.emitAdditionalTag()}entity ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n ${this.joinBodyGroups(bg)}${fmt.indent("\n}")}`;
     }
+}
 
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
+abstract class AbstractConceptTypeDecl extends AbstractNominalTypeDecl {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, name, etag);
     }
 }
 
-abstract class InternalConceptTypeDecl extends AbstractNominalTypeDecl {
+abstract class InternalConceptTypeDecl extends AbstractConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
-    }
-
-    isUniqueNominal(): boolean {
-        return false;
-    }
-    isTypeDeclable(): boolean {
-        return false;
     }
 }
 
@@ -1057,6 +947,48 @@ class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
         fmt.indentPop();
 
         return attrs + "concept " + this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
+    }
+}
+
+class RegexValidatorTypeDecl extends InternalConceptTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
+        super(file, sinfo, attributes, name);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class ExRegexValidatorTypeDecl extends InternalConceptTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
+        super(file, sinfo, attributes, name);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class PathValidatorTypeDecl extends InternalConceptTypeDecl {
+    readonly pathglob: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
+        super(file, sinfo, attributes, name);
+
+        this.pathglob = pathglob;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
     }
 }
 
@@ -1134,7 +1066,7 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
     }
 }
 
-class ConceptTypeDecl extends AbstractNominalTypeDecl {
+class ConceptTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
@@ -1151,16 +1083,9 @@ class ConceptTypeDecl extends AbstractNominalTypeDecl {
 
         return `${this.emitAttributes}${this.emitAdditionalTag()}concept ${this.name}${this.emitTerms()} ${this.emitProvides()} {\n${this.joinBodyGroups(bg)}${fmt.indent("\n")}}`;
     }
-
-    isUniqueNominal(): boolean {
-        return false;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
 }
 
-class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
+class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
@@ -1177,16 +1102,9 @@ class DatatypeMemberEntityTypeDecl extends AbstractNominalTypeDecl {
 
         return this.name + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
     }
-
-    isUniqueNominal(): boolean {
-        return true;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
 }
 
-class DatatypeTypeDecl extends AbstractNominalTypeDecl {
+class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
@@ -1220,13 +1138,6 @@ class DatatypeTypeDecl extends AbstractNominalTypeDecl {
         }
 
         return `${rootdecl}${usingdecl}${edecls}\n${etail}`;
-    }
-
-    isUniqueNominal(): boolean {
-        return false;
-    }
-    isTypeDeclable(): boolean {
-        return false;
     }
 }
 
@@ -1503,13 +1414,6 @@ class TaskDecl extends AbstractNominalTypeDecl {
 
         return `${rootdecl}${etail}`;
     }
-
-    isUniqueNominal(): boolean {
-        return false;
-    }
-    isTypeDeclable(): boolean {
-        return false;
-    }
 }
 
 class NamespaceConstDecl extends AbstractCoreDecl {
@@ -1753,14 +1657,15 @@ export {
     AbstractNominalTypeDecl, AdditionalTypeDeclTag,
     EnumTypeDecl,
     TypedeclTypeDecl,
-    InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
-    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
+    AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, ExStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
-    InternalConceptTypeDecl, PrimitiveConceptTypeDecl, OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
+    AbstractConceptTypeDecl, InternalConceptTypeDecl, PrimitiveConceptTypeDecl, 
+    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
+    OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
     StatusInfoFilter, EnvironmentVariableInformation, ResourceAccessModes, ResourceInformation, APIDecl,
