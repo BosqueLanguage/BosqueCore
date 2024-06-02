@@ -129,7 +129,7 @@ class TypeChecker {
                     lltype = this.checkExpression(env, ll[0], undefined);
                 }
                 this.checkTypeSignature(lltype);
-                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(lltype, this.getWellKnownType("KeyType"), this.constraints), "Literal value must be a key type");
+                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isKeyType(lltype, this.constraints), "Literal value must be a key type");
 
                 return this.processITest_Literal(env, src, lltype, tt.isnot);
             }
@@ -166,7 +166,9 @@ class TypeChecker {
             this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
             allnames.add(terminfo.name);
 
-            this.checkTypeSignature(terminfo.tconstraint);
+            if(this.checkTypeSignature(terminfo.tconstraint)) {
+                this.checkError(sinfo, this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+            }
         }
     }
 
@@ -179,7 +181,9 @@ class TypeChecker {
             this.checkError(sinfo, allnames.has(terminfo.name), `Template type ${terminfo.name} is already defined`);
             allnames.add(terminfo.name);
 
-            this.checkTypeSignature(terminfo.tconstraint);
+            if(this.checkTypeSignature(terminfo.tconstraint)) {
+                this.checkError(sinfo, this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+            }
         }
     }
 

@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
-import { AbstractNominalTypeDecl, Assembly, MemberFieldDecl, NamespaceDeclaration } from "./assembly";
+import { AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, MemberFieldDecl, NamespaceDeclaration, PrimitiveEntityTypeDecl, SomethingTypeDecl, TypedeclTypeDecl } from "./assembly";
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
 import { SourceInfo } from "./build_decls";
 
@@ -327,7 +327,22 @@ class TypeCheckerRelations {
         const nt1 = this.normalizeTypeSignature(t1, tconstrain);
         const nt2 = this.normalizeTypeSignature(t2, tconstrain);
         
-        xxxx;
+        const kstr = `(${nt1.emit(true)} <: ${nt2.emit(true)})`;
+        const memoval = this.memoizedTypeSubtypeRelation.get(kstr);
+        if(memoval !== undefined) {
+            return memoval;
+        }
+
+        let res = false;
+        if(this.areSameTypes(nt1, nt2, tconstrain)) {
+            res = true;
+        }
+        else {
+            xxxx;
+        }
+
+        this.memoizedTypeSubtypeRelation.set(kstr, res);
+        return res;
     }
 
     //Check if t1 and t2 are the same type -- template types are not expanded in this check
@@ -421,17 +436,6 @@ class TypeCheckerRelations {
         return res;
     }
 
-    //Check is this type is unique (i.e. not a union or concept type)
-    isUniqueType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        const ntype = this.normalizeTypeSignatureIncludingTemplate(t, tconstrain);
-
-        if(!(ntype instanceof NominalTypeSignature)) {
-            return false;
-        }
-
-        return (ntype.resolvedDeclaration as AbstractNominalTypeDecl).isUniqueNominal();
-    }
-
     //Check if t1 is the type None (exactly)
     isNoneType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
@@ -439,25 +443,11 @@ class TypeCheckerRelations {
         return this.areSameTypes(t, this.wellknowntypes.get("None") as TypeSignature, tconstrain);
     }
 
-    //Check if t includes None (e.g. None is a subtype of t)
-    includesNoneType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
-        
-        return this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t, tconstrain);
-    }
-
     //Check if t1 is the type Nothing (exactly)
     isNothingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
         
         return this.areSameTypes(t, this.wellknowntypes.get("Nothing") as TypeSignature, tconstrain);
-    }
-
-    //Check if t incudes Nothing (e.g. Nothing is a subtype of t)
-    includesNothingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
-        
-        return this.isSubtypeOf(this.wellknowntypes.get("Nothing") as TypeSignature, t, tconstrain);
     }
 
     //Check if t1 is the type Some (exactly)
@@ -471,7 +461,14 @@ class TypeCheckerRelations {
     isSomethingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
         
-        xxxx;
+        const frt = this.normalizeTypeSignature(t, tconstrain);
+        if(!(frt instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        assert(frt.resolvedDeclaration !== undefined);
+        const tdecl = frt.resolvedDeclaration as AbstractNominalTypeDecl;
+        return tdecl instanceof SomethingTypeDecl;
     }
 
     //Check if t is the type Bool (exactly)
@@ -488,47 +485,96 @@ class TypeCheckerRelations {
         return this.areSameTypes(t, this.wellknowntypes.get("Void") as TypeSignature, tconstrain);
     }
 
+    //Check if t includes None (e.g. None is a subtype of t)
+    includesNoneType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+        
+        return this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t, tconstrain);
+    }
+
+    //Check if t incudes Nothing (e.g. Nothing is a subtype of t)
+    includesNothingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+        
+        return this.isSubtypeOf(this.wellknowntypes.get("Nothing") as TypeSignature, t, tconstrain);
+    }
+
+    //Check is this type is unique (i.e. not a union or concept type)
+    isUniqueType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        const ntype = this.normalizeTypeSignature(t, tconstrain);
+
+        if(!(ntype instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        return (ntype.resolvedDeclaration as AbstractNominalTypeDecl).isUniqueNominal();
+    }
+
     //Check if this type is unique and a numeric type of some sort (either primitive number or a typedecl of a numeric type)
+    static readonly _s_tnumericTemplateNameRE = /^[A-Z]Numeric$/;
     isUniqueNumericType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
         
-        //check special TNumeric template as well as the specific possibilities
-        xxxx;
+        const tnorm = this.normalizeTypeSignature(t, tconstrain);
+        if(tnorm instanceof NominalTypeSignature) {
+            const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
+            return tdecl.isUniqueNominal() && tdecl.attributes.find((attr) => attr.name === "__numeric") !== undefined;
+        }
+        else if(tnorm instanceof TypedeclTypeDecl) {
+            const btype = this.getTypeDeclBasePrimitiveType(tnorm, tconstrain);
+            return this.isUniqueNumericType(btype, tconstrain);
+        }
+        else if(tnorm instanceof TemplateTypeSignature) {
+            return TypeCheckerRelations._s_tnumericTemplateNameRE.test(tnorm.name);
+        }
+        else {
+            return false;
+        }
     }
 
     //Check if this type is a primitive type in Core
     isPrimitiveType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
+        const tnorm = this.normalizeTypeSignature(t, tconstrain);
+        if(!(tnorm instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        return tnorm.resolvedDeclaration instanceof PrimitiveEntityTypeDecl;
+
     }
 
     //Check if this type is a typedecl of some sort
     isTypeDeclType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
+        const tnorm = this.normalizeTypeSignature(t, tconstrain);
+        return tnorm instanceof TypedeclTypeDecl;
     }
 
     //Check if this type is a valid event type
     isEventDataType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
+        const ttnorm = this.normalizeTypeSignatureIncludingTemplate(t, tconstrain);
+        if(!(ttnorm instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        return (ttnorm.resolvedDeclaration as AbstractNominalTypeDecl).etag === AdditionalTypeDeclTag.Event;
     }
 
     //Check if this type is a valid status
     isStatusDataType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
-    }
+        const ttnorm = this.normalizeTypeSignatureIncludingTemplate(t, tconstrain);
+        if(!(ttnorm instanceof NominalTypeSignature)) {
+            return false;
+        }
 
-    //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
-    getTypeDeclBasePrimitiveType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
-
-        xxxx;
+        return (ttnorm.resolvedDeclaration as AbstractNominalTypeDecl).etag === AdditionalTypeDeclTag.Status;
     }
 
     //Check if this type is a valid type to have as a provides type -- must be a unique CONCEPT type
@@ -538,8 +584,24 @@ class TypeCheckerRelations {
         xxxx;
     }
 
+    //Check if this is a valid type to have a template restriction set to
+    //Currently must be a Concept or union
+    //TODO: this precludes accidentally setting it to a vacuous instantiation option but we will need to adjust if/when we allow for template literals
+    isValidTemplateRestrictionType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+
+        xxxx;
+    }
+
     //Check if this type is a KeyType (e.g. a subtype of KeyType)
     isKeyType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+
+        return this.isSubtypeOf(t, this.wellknowntypes.get("KeyType") as TypeSignature, tconstrain);
+    }
+
+    //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
+    getTypeDeclBasePrimitiveType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
         xxxx;
