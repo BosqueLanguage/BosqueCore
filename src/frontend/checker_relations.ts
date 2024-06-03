@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
-import { AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, EnumTypeDecl, MemberFieldDecl, NamespaceDeclaration, PrimitiveEntityTypeDecl, SomethingTypeDecl, TypedeclTypeDecl } from "./assembly";
+import { AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, EnumTypeDecl, MemberFieldDecl, NamespaceDeclaration, PrimitiveEntityTypeDecl, SomethingTypeDecl, TypedeclTypeDecl } from "./assembly";
 import { AccessNamespaceConstantExpression, AccessStaticFieldExpression, Expression } from "./body";
 import { SourceInfo } from "./build_decls";
 
@@ -555,12 +555,21 @@ class TypeCheckerRelations {
 
     }
 
-    //Check if this type is a typedecl of some sort
-    isTypeDeclType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
-
+    //Check if we can assign this type as the RHS of a typedecl declaration
+    isTypedeclableType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         const tnorm = this.normalizeTypeSignature(t, tconstrain);
-        return tnorm instanceof TypedeclTypeDecl;
+        if(tnorm instanceof EnumTypeDecl) {
+            return true;
+        }
+        else if(tnorm instanceof TypedeclTypeDecl) {
+            return true;
+        }
+        else if(tnorm instanceof NominalTypeSignature) {
+            return (tnorm.resolvedDeclaration as AbstractNominalTypeDecl).attributes.find((attr) => attr.name === "__typedeclable") !== undefined;
+        }
+        else {
+            return false;
+        }
     }
 
     //Check if this type is a valid event type
@@ -592,7 +601,11 @@ class TypeCheckerRelations {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
         const ttnorm = this.normalizeTypeSignature(t, tconstrain);
-        xxxx;
+        if(!(ttnorm instanceof NominalTypeSignature)) {
+            return false;
+        }
+
+        return ttnorm.resolvedDeclaration instanceof AbstractConceptTypeDecl;
     }
 
     //Check if this is a valid type to have a template restriction set to
@@ -601,7 +614,22 @@ class TypeCheckerRelations {
     isValidTemplateRestrictionType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
+        const ttnorm = this.normalizeTypeSignature(t, tconstrain);
+        if(ttnorm instanceof UnionTypeSignature) {
+            return true;
+        }
+        else if(ttnorm instanceof NoneableTypeSignature) {
+            return true;
+        }
+        else if(ttnorm instanceof NominalTypeSignature) {
+            return ttnorm.resolvedDeclaration instanceof AbstractConceptTypeDecl;
+        }
+        else if(ttnorm instanceof TemplateTypeSignature) {
+            return tconstrain.resolveConstraint(ttnorm.name) !== undefined;
+        }
+        else {
+            return false;
+        }
     }
 
     //Check if this type is a KeyType (e.g. a subtype of KeyType)
@@ -611,11 +639,31 @@ class TypeCheckerRelations {
         return this.isSubtypeOf(t, this.wellknowntypes.get("KeyType") as TypeSignature, tconstrain);
     }
 
-    //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
-    getTypeDeclBasePrimitiveType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+    //Check if this type is a typedecl of some sort
+    isTypeDeclType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
 
-        xxxx;
+        const tnorm = this.normalizeTypeSignature(t, tconstrain);
+        return tnorm instanceof TypedeclTypeDecl;
+    }
+
+    //Get the base primitive type of a typedecl (resolving through typedecls and aliases as needed)
+    getTypeDeclBasePrimitiveType(t: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature | undefined {
+        assert(t instanceof ErrorTypeSignature, "Checking subtypes on errors");
+
+        const tnorm = this.normalizeTypeSignature(t, tconstrain);
+        if(tnorm instanceof EnumTypeDecl) {
+            return tnorm;
+        }
+        else if(tnorm instanceof TypedeclTypeDecl) {
+            return xxxx;
+        }
+        else if(tnorm instanceof NominalTypeSignature) {
+            return xxxx;
+        }
+        else {
+            return undefined;
+        }
     }
 
     //If possible resolve this type as an elist type

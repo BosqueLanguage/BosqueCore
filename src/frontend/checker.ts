@@ -900,14 +900,14 @@ class TypeChecker {
         }
         else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
             const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
         }
         else if(this.relations.isPrimitiveType(tlhs, this.constraints) && this.relations.isTypeDeclType(trhs, this.constraints)) {
             const baserhs = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, baserhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
+            if(this.checkError(exp.sinfo, baserhs === undefined || !this.relations.areSameTypes(tlhs, baserhs, this.constraints), "Multiplication operator requires a unit-less argument that matches underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = trhs;
@@ -935,7 +935,7 @@ class TypeChecker {
         }
         else if(this.relations.isTypeDeclType(tlhs, this.constraints) && this.relations.isPrimitiveType(trhs, this.constraints)) {
             const baselhs = this.relations.getTypeDeclBasePrimitiveType(tlhs, this.constraints);
-            if(this.checkError(exp.sinfo, !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
+            if(this.checkError(exp.sinfo, baselhs === undefined || !this.relations.areSameTypes(baselhs, trhs, this.constraints), "Division operator requires a unit-less divisor argument that matches the underlying unit type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
             res = tlhs
@@ -944,7 +944,11 @@ class TypeChecker {
             if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Division operator requires 2 arguments of the same type")) {
                 return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
             }
-            res = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+            const basetype = this.relations.getTypeDeclBasePrimitiveType(trhs, this.constraints);
+            if(this.checkError(exp.sinfo, basetype === undefined, "Division operator requires matching types on the arguments")) {
+                return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
+            }
+            res = basetype as TypeSignature;
         }
         else {
             this.checkError(exp.sinfo, false, "Division operator not allowed on with unit typed divisor and a type-less value");
@@ -3581,7 +3585,7 @@ class TypeChecker {
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
             //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypeDeclType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(false)}`);
+            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(false)}`);
 
             //make sure all of the invariants on this typecheck
             this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
