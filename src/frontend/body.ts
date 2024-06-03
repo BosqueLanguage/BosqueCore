@@ -941,6 +941,7 @@ enum PostfixOpTag {
 
     PostfixIsTest = "PostfixIsTest",
     PostfixAsConvert = "PostfixAsConvert",
+    PostfixTypeDeclValue = "PostfixTypeDeclValue",
 
     PostfixAssignFields = "PostfixAssignFields",
 
@@ -1092,6 +1093,19 @@ class PostfixAsConvert extends PostfixOperation {
 
     emit(fmt: CodeFormatter): string {
         return "@" + this.ttest.emit(fmt);
+    }
+}
+
+class PostfixTypeDeclValue extends PostfixOperation {
+    readonly opr: "value" | "base";
+
+    constructor(sinfo: SourceInfo, opr: "value" | "base") {
+        super(sinfo, PostfixOpTag.PostfixTypeDeclValue);
+        this.opr = opr;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return this.opr;
     }
 }
 
@@ -2338,7 +2352,7 @@ export {
     ParseAsTypeExpression,
     PostfixOpTag, PostfixOperation, PostfixOp,
     PostfixError, PostfixAccessFromIndex, PostfixProjectFromIndecies, PostfixAccessFromName, PostfixProjectFromNames,
-    PostfixIsTest, PostfixAsConvert,
+    PostfixIsTest, PostfixAsConvert, PostfixTypeDeclValue,
     PostfixAssignFields,
     PostfixInvoke,
     PostfixLiteralKeyAccess,

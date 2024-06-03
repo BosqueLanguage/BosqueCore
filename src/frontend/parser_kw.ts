@@ -178,7 +178,6 @@ const TypeDeclAttributes = [
     "__typedeclable",
     "__constructable",
     "__numeric",
-    "__typebase",
     "__universal"
 ];
 

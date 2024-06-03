@@ -34,51 +34,51 @@ __internal entity None provides KeyType {
 }
 
 %** Primitive boolean value. **%
-__internal __typedeclable __typebase entity Bool provides Some, KeyType {
+__internal __typedeclable entity Bool provides Some, KeyType {
 }
 
 %** Primitive natural number value. **%
-__internal __typedeclable __typebase __numeric entity Nat provides Some, KeyType {
+__internal __typedeclable __numeric entity Nat provides Some, KeyType {
 }
 
 %** Primitive integer value. **%
-__internal __typedeclable __typebase __numeric entity Int provides Some, KeyType {
+__internal __typedeclable __numeric entity Int provides Some, KeyType {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __typebase __numeric entity BigNat provides Some, KeyType {
+__internal __typedeclable __numeric entity BigNat provides Some, KeyType {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __typebase __numeric entity BigInt provides Some, KeyType {
+__internal __typedeclable __numeric entity BigInt provides Some, KeyType {
 }
 
 %** Primitive rational value. **%
-__internal __typedeclable __typebase __numeric entity Rational provides Some {
+__internal __typedeclable __numeric entity Rational provides Some {
 }
 
 %** Primitive float value. **%
-__internal __typedeclable __typebase __numeric entity Float provides Some {
+__internal __typedeclable __numeric entity Float provides Some {
 }
 
 %** Primitive float decimal value. **%
-__internal __typedeclable __typebase __numeric entity Decimal provides Some {
+__internal __typedeclable __numeric entity Decimal provides Some {
 }
 
 %** Primitive decimal degree value. **%
-__internal __typedeclable __typebase __numeric entity DecimalDegree provides Some {
+__internal __typedeclable __numeric entity DecimalDegree provides Some {
 }
 
 %** Primitive latitude/longitude value. **%
-__internal __typedeclable __typebase entity LatLongCoordinate provides Some {
+__internal __typedeclable entity LatLongCoordinate provides Some {
 }
 
 %** Primitive complex number value. **%
-__internal __typedeclable __typebase __numeric entity Complex provides Some {
+__internal __typedeclable __numeric entity Complex provides Some {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __typebase entity String provides Some, KeyType {
+__internal __typedeclable entity String provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
@@ -93,7 +93,7 @@ __internal __constructable __typedeclable entity StringOf<T: RegexValidator> pro
 }
 
 %** Primitive string value. **%
-__internal __typedeclable __typebase entity ExString provides Some, KeyType {
+__internal __typedeclable entity ExString provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
@@ -130,12 +130,12 @@ __internal entity PathRegex provides Some {
 }
 
 %** Primitive template string value. **%
-__internal __typedeclable __typebase entity TemplateString provides Some {
+__internal __typedeclable entity TemplateString provides Some {
 }
 
 
 %** Primitive string value. **%
-__internal __typedeclable __typebase entity ExTemplateString provides Some {
+__internal __typedeclable entity ExTemplateString provides Some {
 }
 
 namespace Interpolate {

@@ -1628,8 +1628,12 @@ class Assembly {
         return this.toplevelNamespaces.find((nsd) => nsd.name === ns) !== undefined;
     }
 
-    getToplevelNamespace(ns: string): NamespaceDeclaration {
-        return this.toplevelNamespaces.find((nsd) => nsd.name === ns) as NamespaceDeclaration;
+    getCoreNamespace(): NamespaceDeclaration {
+        return this.toplevelNamespaces.find((nsd) => nsd.name === "Core") as NamespaceDeclaration;
+    }
+
+    getToplevelNamespace(ns: string): NamespaceDeclaration | undefined {
+        return this.toplevelNamespaces.find((nsd) => nsd.name === ns);
     }
 
     ensureToplevelNamespace(ns: string): NamespaceDeclaration {
@@ -1637,7 +1641,7 @@ class Assembly {
             this.toplevelNamespaces.push(new NamespaceDeclaration(true, ns, new FullyQualifiedNamespace([ns])));
         }
 
-        return this.getToplevelNamespace(ns);
+        return this.getToplevelNamespace(ns) as NamespaceDeclaration;
     }
 }
 
