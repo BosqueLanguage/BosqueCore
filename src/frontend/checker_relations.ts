@@ -119,17 +119,10 @@ class TypeCheckerRelations {
         return TemplateNameMapper.createInitialMapping(mapping);
     }
 
-    private static computeTemplateScopeFromDirectResolvedTerms(directResolved: {name: string, type: TypeSignature}[]): TemplateConstraintScope {
-        let cscope = new TemplateConstraintScope();
-        cscope.pushConstraintScope(directResolved.map((tterm) => [tterm.name, tterm.type]));
-
-        return cscope;
-    }
-
     /**
      * Given a the signature resolve it (at the top-level) with any aliases or union / intersection simplifications
      */
-    private normalizeTypeSignature(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+    normalizeTypeSignature(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
         if(tsig instanceof ErrorTypeSignature || tsig instanceof VoidTypeSignature || tsig instanceof AutoTypeSignature) {
             return tsig;
         }
@@ -733,48 +726,6 @@ class TypeCheckerRelations {
         const ttresolved = encldecl.terms.map((tterm) => { return {name: tterm.name, type: new TemplateTypeSignature(tdecl.sinfo, tterm.name)}; });
 
         return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: encldecl.name, terms: tterms}, {tname: tdecl.name, terms: []}], ttresolved, undefined, tdecl);
-    }
-
-    compileTimeReduceConstantExpression(exp: Expression, tconstrain: TemplateConstraintScope): [Expression, TypeSignature | undefined, TemplateNameMapper] | undefined {
-        if(exp.isLiteralExpression()) {
-            return [exp, undefined, TemplateNameMapper.createEmpty()];
-        }
-        else if (exp instanceof AccessNamespaceConstantExpression) {
-            const nsresl = this.resolveNamespaceConstant(exp.ns, exp.name);
-            if(nsresl === undefined) {
-                return undefined;
-            }
-
-            const nresolve = this.compileTimeReduceConstantExpression(nsresl.value.exp, new TemplateConstraintScope());
-            if(nresolve === undefined) {
-                return undefined;
-            }
-
-            return [nresolve[0], nsresl.declaredType, TemplateNameMapper.createEmpty()];
-        }
-        else if (exp instanceof AccessStaticFieldExpression) {
-            if(this.isAccessToEnum(exp.stype, exp.name)) {
-                return [exp, exp.stype, TemplateNameMapper.createEmpty()];
-            }
-            else
-            {
-                const resolvedstype = this.normalizeTypeSignature(exp.stype, tconstrain);
-                const cdecl = this.resolveTypeConstant(resolvedstype, exp.name, tconstrain);
-                if(cdecl === undefined) {
-                    return undefined;
-                }
-
-                const nresolve = this.compileTimeReduceConstantExpression(cdecl.member.value.exp, TypeCheckerRelations.computeTemplateScopeFromDirectResolvedTerms((resolvedstype as NominalTypeSignature).resolvedTerms));
-                if(nresolve === undefined) {
-                    return undefined;
-                }
-
-                return [nresolve[0], cdecl.member.declaredType, cdecl.typeinfo.mapping];
-            }
-        }
-        else {
-            return undefined;
-        }
     }
 
     private resolveNamespaceDecL(ns: string[]): NamespaceDeclaration | undefined {

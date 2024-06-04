@@ -2,7 +2,7 @@ import {strict as assert} from "assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
 import { SourceInfo } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, NominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
@@ -64,6 +64,37 @@ class TypeChecker {
         return this.wellknownTypes.get(name) as TypeSignature;
     }
 
+    private canCompileTimeReduceConstantExpression(exp: Expression): boolean {
+        if(exp.isLiteralExpression()) {
+            return true;
+        }
+        else if (exp instanceof AccessNamespaceConstantExpression) {
+            const nsresl = this.relations.resolveNamespaceConstant(exp.ns, exp.name);
+            if(nsresl === undefined) {
+                return false;
+            }
+
+            return this.canCompileTimeReduceConstantExpression(nsresl.value.exp);
+        }
+        else if (exp instanceof AccessStaticFieldExpression) {
+            if(this.relations.isAccessToEnum(exp.stype, exp.name)) {
+                return true;
+            }
+            else
+            {
+                const cdecl = this.relations.resolveTypeConstant(exp.stype, exp.name, this.constraints);
+                if(cdecl === undefined) {
+                    return false;
+                }
+
+                return this.canCompileTimeReduceConstantExpression(cdecl.member.value.exp);
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
     private processITest_None(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
         const rinfo = this.relations.refineType(src, this.getWellKnownType("None"));
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
@@ -115,20 +146,12 @@ class TypeChecker {
             return this.processITest_Type(src, tt.ttype, tt.isnot);
         }
         else if(tt instanceof ITestLiteral) {
-            const ll = this.relations.compileTimeReduceConstantExpression(tt.literal.exp);
-            if(ll === undefined) {
+            if(!this.canCompileTimeReduceConstantExpression(tt.literal.exp)) {
                 this.reportError(sinfo, "Invalid literal expression value");
                 return { ttrue: src, tfalse: src };
             }
             else {
-                let lltype: TypeSignature;
-                if(ll[1] !== undefined) {
-                    lltype = ll[1].remapTemplateBindings(ll[2]);
-                }
-                else {
-                    lltype = this.checkExpression(env, ll[0], undefined);
-                }
-                this.checkTypeSignature(lltype);
+                const lltype = this.checkExpression(env, tt.literal.exp, undefined);
                 this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isKeyType(lltype, this.constraints), "Literal value must be a key type");
 
                 return this.processITest_Literal(env, src, lltype, tt.isnot);
@@ -189,14 +212,50 @@ class TypeChecker {
 
     //Given a type signature -- check that is is well formed and report any issues
     private checkTypeSignature(type: TypeSignature): boolean {
-        xxxx;
+        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
+
+        if(tnorm instanceof ErrorTypeSignature || tnorm instanceof AutoTypeSignature) {
+            return false;
+        }
+        else if(tnorm instanceof VoidTypeSignature) {
+            return true;
+        }
+        else if(tnorm instanceof TemplateTypeSignature) {
+            return this.constraints.resolveConstraint(tnorm.name) !== undefined;
+        }
+        else if(tnorm instanceof NominalTypeSignature) {
+            return this.relations.isNominalType(tnorm, this.constraints);
+        }
+        else if(tnorm instanceof TupleTypeSignature) {
+            xxxx;
+        }
+        else if(tnorm instanceof RecordTypeSignature) {
+            xxxx;
+        }
+        else if(tnorm instanceof EListTypeSignature) {
+            return this.checkTypeSignature(tnorm.inner);
+        }
+        else if(tnorm instanceof StringTemplateTypeSignature) {
+            return xxx;
+        }
+        else if(tnorm instanceof LambdaTypeSignature) {
+            xxxx;
+        }
+        else if(tnorm instanceof NoneableTypeSignature) {
+            return this.checkTypeSignature(tnorm.type);
+        }
+        else if(tnorm instanceof UnionTypeSignature) {
+            return this.checkTypeSignature(tnorm.ltype) && this.checkTypeSignature(tnorm.rtype);
+        }
+        else {
+            assert(false, "Unknown TypeSignature type");
+        }
     }
 
     //Given a type signature -- check that is is well formed (and not an EList or EventList) and report any issues
     private checkTypeSignatureAndStorable(type: TypeSignature): boolean {
         xxxx;
     }
-
 
     private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
         if (lhsexp.tag === ExpressionTag.LiteralNoneExpression && rhsexp.tag === ExpressionTag.LiteralNoneExpression) {
@@ -2848,9 +2907,12 @@ class TypeChecker {
                 results.push(cenv);
             }
             else {
-                const ltype = this.checkExpression(env, (stmt.switchflow[i].lval as LiteralExpressionValue).exp, undefined);
+                const slitexp = (stmt.switchflow[i].lval as LiteralExpressionValue).exp;
 
-                if(ltype instanceof ErrorTypeSignature) {
+                const isconsteval = this.canCompileTimeReduceConstantExpression(slitexp)
+                const ltype = this.checkExpression(env, slitexp, undefined);
+
+                if(!isconsteval || ltype instanceof ErrorTypeSignature) {
                     let cenv = (stmt.switchflow[i].bindername !== undefined) ? env.pushNewLocalBinderScope(stmt.switchflow[i].bindername as string, ctype) : env;
                     cenv = this.checkBlockStatement(env, stmt.switchflow[i].value);
 
@@ -2860,6 +2922,8 @@ class TypeChecker {
                     results.push(cenv);
                 }
                 else {
+                    this.checkError(slitexp.sinfo, !this.relations.isKeyType(ltype, this.constraints), "Literal value must be a key type");
+
                     const splits = this.processITest_Literal(env, ctype, ltype, false);
                     this.checkError(stmt.sinfo, splits.ttrue === undefined, "Test is never true -- true branch of if is unreachable");
 
