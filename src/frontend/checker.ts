@@ -2,7 +2,7 @@ import {strict as assert} from "assert";
 
 import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
 import { SourceInfo } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { TypeEnvironment, VarInfo } from "./checker_environment";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
@@ -96,38 +96,38 @@ class TypeChecker {
     }
 
     private processITest_None(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("None"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("None"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Some(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("Some"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("Some"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Nothing(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("Nothing"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("Nothing"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Something(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("ISomething"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("ISomething"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Ok(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("IOk"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("IOk"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Err(src: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, this.getWellKnownType("IErr"));
+        const rinfo = this.relations.refineType(src, this.getWellKnownType("IErr"), this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
 
     private processITest_Literal(env: TypeEnvironment, src: TypeSignature, literaltype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
         if(this.relations.isNoneType(literaltype, this.constraints) || this.relations.isNothingType(literaltype, this.constraints)) {
-            const rinfo = this.relations.refineType(src, literaltype);
+            const rinfo = this.relations.refineType(src, literaltype, this.constraints);
             return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
         }
         else {
@@ -136,7 +136,7 @@ class TypeChecker {
     }
 
     private processITest_Type(src: TypeSignature, oftype: TypeSignature, isnot: boolean): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
-        const rinfo = this.relations.refineType(src, oftype);
+        const rinfo = this.relations.refineType(src, oftype, this.constraints);
         return { ttrue: isnot ? rinfo.remain : rinfo.overlap, tfalse: isnot ? rinfo.overlap : rinfo.remain };
     }
     
@@ -224,22 +224,65 @@ class TypeChecker {
             return this.constraints.resolveConstraint(tnorm.name) !== undefined;
         }
         else if(tnorm instanceof NominalTypeSignature) {
-            return this.relations.isNominalType(tnorm, this.constraints);
+            let tnames: Set<string> = new Set<string>();
+            return tnorm.resolvedTerms.every((entry) => {
+                if(tnames.has(entry.name)) {
+                    return false;
+                }
+                tnames.add(entry.name);
+                if(!this.checkTypeSignatureAndStorable(entry.type)) {
+                    return false;
+                }
+
+                return true;
+            });
         }
         else if(tnorm instanceof TupleTypeSignature) {
-            xxxx;
+            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
         }
         else if(tnorm instanceof RecordTypeSignature) {
-            xxxx;
+            let pnames: Set<string> = new Set<string>();
+            return tnorm.entries.every((entry) => {
+                if(pnames.has(entry[0])) {
+                    return false;
+                }
+                pnames.add(entry[0]);
+                if(!this.checkTypeSignatureAndStorable(entry[1])) {
+                    return false;
+                }
+
+                return true;
+            });
         }
         else if(tnorm instanceof EListTypeSignature) {
-            return this.checkTypeSignature(tnorm.inner);
+            return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
         }
         else if(tnorm instanceof StringTemplateTypeSignature) {
-            return xxx;
+            return tnorm.argtypes.every((entry) => this.checkTypeSignature(entry));
         }
         else if(tnorm instanceof LambdaTypeSignature) {
-            xxxx;
+            const oksig = tnorm.params.every((pp) => this.checkTypeSignatureParam(pp)) && this.checkTypeSignature(tnorm.resultType);
+            if(!oksig) {
+                return false;
+            }
+
+            let pnames: Set<string> = new Set<string>();
+            let refct = 0;
+            for(let i = 0; i < tnorm.params.length; ++i) {
+                const pp = tnorm.params[i];
+
+                refct += pp.isRefParam ? 1 : 0;
+                if(pp.isSpreadParam && i !== tnorm.params.length - 1) {
+                    return false;
+                }
+
+                if(pnames.has(pp.name)) {
+                    return false;
+                }
+                pnames.add(pp.name);
+            }
+
+            return refct <= 1;
         }
         else if(tnorm instanceof NoneableTypeSignature) {
             return this.checkTypeSignature(tnorm.type);
@@ -254,7 +297,29 @@ class TypeChecker {
 
     //Given a type signature -- check that is is well formed (and not an EList or EventList) and report any issues
     private checkTypeSignatureAndStorable(type: TypeSignature): boolean {
-        xxxx;
+        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
+
+        const isok = this.checkTypeSignature(type);
+        if(!isok) {
+            return false;
+        }
+
+        return !(tnorm instanceof EListTypeSignature) && !(tnorm instanceof EventListTypeDecl);
+    }
+
+    //Given a type signature parameter
+    private checkTypeSignatureParam(pp: FunctionParameter): boolean {
+        const tnorm = this.relations.normalizeTypeSignature(pp.type, this.constraints);
+        if(tnorm instanceof EListTypeSignature) {
+            return false;
+        }
+
+        const isok = this.checkTypeSignature(tnorm);
+        if(!isok) {
+            return false;
+        }
+
+        return !(pp.isRefParam && pp.isSpreadParam);
     }
 
     private checkValueEq(lhsexp: Expression, lhs: TypeSignature, rhsexp: Expression, rhs: TypeSignature): "err" | "truealways" | "falsealways" | "lhsnone" | "rhsnone" | "lhsnothing" | "rhsnothing" | "lhssomekey" | "rhssomekey" | "lhssomekeywithunique" | "rhssomekeywithunique" | "stdkey" | "stdkeywithunique" {
@@ -809,7 +874,14 @@ class TypeChecker {
     }
 
     private checkPostfixTypeDeclValue(env: TypeEnvironment, exp: PostfixTypeDeclValue, rcvrtype: TypeSignature): TypeSignature {
-        xxxx;
+        if(exp.opr === "value") {
+            const vtype = this.relations.getTypeDeclValueType(rcvrtype, this.constraints);
+            return exp.setType(vtype || new ErrorTypeSignature(exp.sinfo, undefined));
+        }
+        else {
+            const btype = this.relations.getTypeDeclBasePrimitiveType(rcvrtype, this.constraints);
+            return exp.setType(btype || new ErrorTypeSignature(exp.sinfo, undefined));
+        }
     }
 
     private checkPostfixAssignFields(env: TypeEnvironment, exp: PostfixAssignFields, rcvrtype: TypeSignature): TypeSignature {

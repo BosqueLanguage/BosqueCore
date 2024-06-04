@@ -16,17 +16,17 @@ __internal __universal concept KeyType provides Any {
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept RegexValidator provides Any {
+__internal __universal concept RegexValidator provides Some {
     function accepts<T: RegexValidator>(s: String): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept ExRegexValidator provides Any {
+__internal __universal concept ExRegexValidator provides Some {
     function accepts<T: ExRegexValidator>(s: ExString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept PathValidator provides Any {
+__internal __universal concept PathValidator provides Some {
 }
 
 %** Type for representing the none value. **%
@@ -132,7 +132,6 @@ __internal entity PathRegex provides Some {
 %** Primitive template string value. **%
 __internal __typedeclable entity TemplateString provides Some {
 }
-
 
 %** Primitive string value. **%
 __internal __typedeclable entity ExTemplateString provides Some {

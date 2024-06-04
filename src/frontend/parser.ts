@@ -5278,7 +5278,10 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag);
+            const parentterms = parenttype.terms.map((term) => { return {name: term.name, type: new TemplateTypeSignature(sinfo, term.name) }; });
+            const tparent = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], parentterms, undefined, parenttype);
+
+            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, tparent);
             parenttype.associatedMemberEntityDecls.push(tdecl);
             this.env.currentNamespace.typedecls.push(tdecl);
 

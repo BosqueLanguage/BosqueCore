@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature } from "./type";
+import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, NominalTypeSignature } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
@@ -661,6 +661,51 @@ class PrimitiveEntityTypeDecl extends InternalEntityTypeDecl {
     }
 }
 
+class RegexValidatorTypeDecl extends InternalEntityTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
+        super(file, sinfo, attributes, name);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class ExRegexValidatorTypeDecl extends InternalEntityTypeDecl {
+    readonly regex: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
+        super(file, sinfo, attributes, name);
+
+        this.regex = regex;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
+    }
+}
+
+class PathValidatorTypeDecl extends InternalEntityTypeDecl {
+    readonly pathglob: string;
+
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
+        super(file, sinfo, attributes, name);
+
+        this.pathglob = pathglob;
+    }
+
+    emit(fmt: CodeFormatter): string {
+        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
+    }
+}
+
+
+
+
 abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -950,48 +995,6 @@ class PrimitiveConceptTypeDecl extends InternalConceptTypeDecl {
     }
 }
 
-class RegexValidatorTypeDecl extends InternalConceptTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class ExRegexValidatorTypeDecl extends InternalConceptTypeDecl {
-    readonly regex: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, regex: string) {
-        super(file, sinfo, attributes, name);
-
-        this.regex = regex;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.regex};`);
-    }
-}
-
-class PathValidatorTypeDecl extends InternalConceptTypeDecl {
-    readonly pathglob: string;
-
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, pathglob: string) {
-        super(file, sinfo, attributes, name);
-
-        this.pathglob = pathglob;
-    }
-
-    emit(fmt: CodeFormatter): string {
-        return fmt.indent(`${this.emitAttributes()}validator ${this.name} = ${this.pathglob};`);
-    }
-}
-
 class OptionTypeDecl extends InternalConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
@@ -1087,9 +1090,12 @@ class ConceptTypeDecl extends AbstractConceptTypeDecl {
 
 class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
+    readonly parentTypeDecl: NominalTypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: NominalTypeSignature) {
         super(file, sinfo, attributes, name, etag);
+
+        this.parentTypeDecl = parentTypeDecl;
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1662,13 +1668,13 @@ export {
     EnumTypeDecl,
     TypedeclTypeDecl,
     AbstractEntityTypeDecl, InternalEntityTypeDecl, PrimitiveEntityTypeDecl,
+    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
     ThingOfTypeDecl, StringOfTypeDecl, ExStringOfTypeDecl, PathOfTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl,
     ConstructableTypeDecl, OkTypeDecl, ErrTypeDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, SomethingTypeDecl, MapEntryTypeDecl,
     AbstractCollectionTypeDecl, ListTypeDecl, StackTypeDecl, QueueTypeDecl, SetTypeDecl, MapTypeDecl,
     EventListTypeDecl,
     EntityTypeDecl, 
     AbstractConceptTypeDecl, InternalConceptTypeDecl, PrimitiveConceptTypeDecl, 
-    RegexValidatorTypeDecl, ExRegexValidatorTypeDecl, PathValidatorTypeDecl,
     OptionTypeDecl, ResultTypeDecl, APIResultTypeDecl, ExpandoableTypeDecl,
     ConceptTypeDecl, 
     DatatypeMemberEntityTypeDecl, DatatypeTypeDecl,
