@@ -154,6 +154,9 @@ class TypeCheckerRelations {
             if(this.includesNoneType(ots, tconstrain)) {
                 return ots;
             }
+            else if() {
+                xxxx; //Any
+            }
             else {
                 return new NoneableTypeSignature(tsig.sinfo, ots);
             }
@@ -170,6 +173,12 @@ class TypeCheckerRelations {
             }
             else if(this.isNothingType(rnorm, tconstrain) && this.isSomethingType(lnorm, tconstrain)) {
                 return this.getOptionTypeForSomethingT(lnorm, tconstrain);
+            }
+            else if() {
+                xxxx; //result
+            }
+            else if() {
+                xxxx; //result
             }
             else {
                 return this.simplifyUnionType(new UnionTypeSignature(tsig.sinfo, lnorm, rnorm), tconstrain);
@@ -219,6 +228,9 @@ class TypeCheckerRelations {
             if(this.includesNoneType(ots, tconstrain)) {
                 return ots;
             }
+            else if() {
+                xxxx; //Any
+            }
             else {
                 return new NoneableTypeSignature(tsig.sinfo, ots);
             }
@@ -235,6 +247,12 @@ class TypeCheckerRelations {
             }
             else if(this.isNothingType(rnorm, tconstrain) || this.isSomethingType(lnorm, tconstrain)) {
                 return this.getOptionTypeForSomethingT(lnorm, tconstrain);
+            }
+            else if() {
+                xxxx; //result
+            }
+            else if() {
+                xxxx; //result
             }
             else {
                 return this.simplifyUnionType(new UnionTypeSignature(tsig.sinfo, lnorm, rnorm), tconstrain);
@@ -269,19 +287,39 @@ class TypeCheckerRelations {
             return { overlap: this.wellknowntypes.get("Some"), remain: this.wellknowntypes.get("None") };
         }
         else if(srcdecl instanceof OptionTypeDecl && this.areSameTypes(refine, this.wellknowntypes.get("Nothing") as TypeSignature, tconstrain)) {
-            xxxx;
+            return {overlap: refine, remain: this.getSomethingTypeForOptionT(nsrc, tconstrain)};
         }
-        else if(srcdecl instanceof OptionTypeDecl && this.areSameTypes(refine, this.getSomethingTypeForOptionT, tconstrain)) {
-            xxxx;
+        else if(srcdecl instanceof OptionTypeDecl && this.areSameTypes(refine, this.getSomethingTypeForOptionT(nsrc, tconstrain), tconstrain)) {
+            return {overlap: refine, remain: this.wellknowntypes.get("Nothing") as TypeSignature};
         }
-        else if(srcdecl instanceof ResultTypeDecl && this.areSameTypes(refine, this.getErrorTypeForResultTE, tconstrain)) {
-            xxxx;
+        else if(srcdecl instanceof ResultTypeDecl && this.areSameTypes(refine, this.getErrorTypeForResultTE(nsrc, tconstrain), tconstrain)) {
+            return {overlap: refine, remain: this.getOkTypeForResultTE(nsrc, tconstrain)};
         }
-        else if(srcdecl instanceof ResultTypeDecl && this.areSameTypes(refine, this.getErrorTypeForResultTE, tconstrain)) {
-            xxxx;
+        else if(srcdecl instanceof ResultTypeDecl && this.areSameTypes(refine, this.getErrorTypeForResultTE(nsrc, tconstrain), tconstrain)) {
+            return {overlap: refine, remain: this.getOkTypeForResultTE(nsrc, tconstrain)};
         }
         else if(srcdecl instanceof DatatypeTypeDecl) {
-            xxxx;
+            const opts = srcdecl.associatedMemberEntityDecls.map((mem) => this.refineNominal(mem, refine, tconstrain));
+            const ovlp = opts.map((opt) => opt.overlap).filter((opt) => opt !== undefined);
+            const rmn = opts.map((opt) => opt.remain).filter((opt) => opt !== undefined);
+
+            let ovlres: TypeSignature | undefined = undefined;
+            if(ovlp.length !== 0) {
+                ovlres = ovlp[0];
+                for(let i = 1; i < ovlp.length; ++i) {
+                    ovlres = this.joinTypes(ovlres as TypeSignature, ovlp[i] as TypeSignature, tconstrain);
+                }
+            }
+
+            let rmnres: TypeSignature | undefined = undefined;
+            if(rmn.length !== 0) {
+                rmnres = rmn[0];
+                for(let i = 1; i < rmn.length; ++i) {
+                    rmnres = this.joinTypes(rmnres as TypeSignature, rmn[i] as TypeSignature, tconstrain);
+                }
+            }
+
+            return { overlap: ovlres, remain: rmnres };
         }
         else {
             return { overlap: refine, remain: src };
@@ -982,13 +1020,50 @@ class TypeCheckerRelations {
     }
 
     //given a type that is of the form Something<T> return the corresponding type Option<T>
-    getOptionTypeForSomethingT(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+    private getOptionTypeForSomethingT(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
         const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
 
         const corens = this.assembly.getCoreNamespace();
-        const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "Option");
+        const optiondecl = corens.typedecls.find((tdecl) => tdecl.name === "Option");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Option", terms: [ttype]}], [{name: "T", type: ttype}], undefined, stringofdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Option", terms: [ttype]}], [{name: "T", type: ttype}], undefined, optiondecl);
+    }
+
+    //given a type that is of the form Option<T> return the corresponding type Something<T>
+    private getSomethingTypeForOptionT(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+
+        const corens = this.assembly.getCoreNamespace();
+        const somethingdecl = corens.typedecls.find((tdecl) => tdecl.name === "Something");
+
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Something", terms: [ttype]}], [{name: "T", type: ttype}], undefined, somethingdecl);
+    }
+
+    private getResultTypeForErrorTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+        const etype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "E")!.type;
+
+        const corens = this.assembly.getCoreNamespace();
+        const resultdecl = corens.typedecls.find((tdecl) => tdecl.name === "Result");
+
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}], [{name: "T", type: ttype}, {name: "E", type: etype}], undefined, resultdecl);
+    }
+
+    private getResultTypeForOkTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+
+        const corens = this.assembly.getCoreNamespace();
+        const resultdecl = corens.typedecls.find((tdecl) => tdecl.name === "Result");
+
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, this.wellknowntypes.get("None") as TypeSignature]}], [{name: "T", type: ttype}, {name: "E", type: this.wellknowntypes.get("None") as TypeSignature}], undefined, resultdecl);
+    }
+
+    private getErrorTypeForResultTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        xxxx;
+    }
+
+    private getOkTypeForResultTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        xxxx;
     }
 
     getNominalTypeForDecl(enclns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl): TypeSignature {

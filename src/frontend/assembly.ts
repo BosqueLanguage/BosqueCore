@@ -1112,7 +1112,7 @@ class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
 
 class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
-    readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
+    readonly associatedMemberEntityDecls: NominalTypeSignature[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo, attributes, name, etag);
@@ -1135,7 +1135,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
         }
 
         const edecls = this.associatedMemberEntityDecls.map((aed) => {
-            aed.emit(fmt)
+            (aed.resolvedDeclaration as DatatypeMemberEntityTypeDecl).emit(fmt)
         }).join("\n| ");
 
         let etail = ";";

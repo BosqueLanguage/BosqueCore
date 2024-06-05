@@ -5282,7 +5282,9 @@ class Parser {
             const tparent = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], parentterms, undefined, parenttype);
 
             const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, tparent);
-            parenttype.associatedMemberEntityDecls.push(tdecl);
+            const dtype = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], parentterms, undefined, tdecl);
+            
+            parenttype.associatedMemberEntityDecls.push(dtype);
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(ename);
