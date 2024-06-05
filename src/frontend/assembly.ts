@@ -933,16 +933,6 @@ class EventListTypeDecl extends AbstractCollectionTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);
     }
-
-    emit(fmt: CodeFormatter): string {
-        const attrs = this.emitAttributes();
-
-        fmt.indentPush();
-        const bg = this.emitBodyGroups(fmt);
-        fmt.indentPop();
-
-        return attrs + "entity " + this.name + this.emitTerms() + this.emitProvides() + " {\n" + this.joinBodyGroups(bg) + fmt.indent("\n}");
-    }
 }
 
 class EntityTypeDecl extends AbstractEntityTypeDecl {

@@ -389,7 +389,7 @@ class LiteralSingletonExpression extends Expression {
         this.value = value;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -406,7 +406,7 @@ class LiteralSimpleExpression extends Expression {
         this.value = value;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -438,7 +438,7 @@ class LiteralTypedStringExpression extends Expression {
         this.stype = stype;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -455,7 +455,7 @@ class LiteralTemplateStringExpression extends Expression {
         this.value = value;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -474,7 +474,7 @@ class LiteralPathExpression extends Expression {
         this.ptype = ptype;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -493,7 +493,7 @@ class LiteralTypeDeclValueExpression extends Expression {
         this.constype = constype;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -512,7 +512,7 @@ class LiteralTypeDeclIntegralValueExpression extends Expression {
         this.constype = constype;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 
@@ -531,7 +531,7 @@ class LiteralTypeDeclFloatPointValueExpression extends Expression {
         this.constype = constype;
     }
 
-    isLiteralExpression(): boolean {
+    override isLiteralExpression(): boolean {
         return true;
     }
 

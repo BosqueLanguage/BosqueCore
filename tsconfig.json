@@ -1,12 +1,13 @@
 {
     "compilerOptions": {
-        "module": "Node16",
+        "module": "NodeNext",
         "alwaysStrict": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noUnusedLocals": true,
+        "noImplicitOverride": true,
         "strictNullChecks": true,
         "target": "es2020",
         "sourceMap": true,
@@ -14,8 +15,5 @@
     },
     "include": [
         "src/frontend/*.ts",
-        "src/runtimes/javascript/*.ts",
-        "src/runtimes/javascript/compiler/*.ts",
-        "src/transformer/*.ts"
     ]
 }
