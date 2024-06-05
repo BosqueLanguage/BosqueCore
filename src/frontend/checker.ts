@@ -31,7 +31,6 @@ const CLEAR_FILENAME = "[GLOBAL]";
 
 class TypeChecker {
     private file: string = CLEAR_FILENAME;
-    private readonly wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
 
     readonly errors: TypeError[] = [];
 
@@ -60,8 +59,8 @@ class TypeChecker {
     }
 
     private getWellKnownType(name: string): TypeSignature {
-        assert(this.wellknownTypes.has(name), `Well known type ${name} not found`);
-        return this.wellknownTypes.get(name) as TypeSignature;
+        assert(this.relations.wellknowntypes.has(name), `Well known type ${name} not found`);
+        return this.relations.wellknowntypes.get(name) as TypeSignature;
     }
 
     private canCompileTimeReduceConstantExpression(exp: Expression): boolean {
@@ -3474,7 +3473,7 @@ class TypeChecker {
     private checkRequires(env: TypeEnvironment, requires: PreConditionDecl[]) {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
-            const etype = this.checkExpression(env, precond.exp, this.wellknownTypes.get("Bool"));
+            const etype = this.checkExpression(env, precond.exp, this.getWellKnownType("Bool"));
             this.checkError(precond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Requires expression does not have a boolean type -- got ${etype.emit(false)}`);
         }
     }
@@ -3495,7 +3494,7 @@ class TypeChecker {
 
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
-            const etype = this.checkExpression(eev, postcond.exp, this.wellknownTypes.get("Bool"));
+            const etype = this.checkExpression(eev, postcond.exp, this.relations.wellknowntypes.get("Bool"));
             this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Ensures expression does not have a boolean type -- got ${etype.emit(false)}`);
         }
     }
@@ -3505,7 +3504,7 @@ class TypeChecker {
 
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
-            const etype = this.checkExpression(env, inv.exp.exp, this.wellknownTypes.get("Bool"));
+            const etype = this.checkExpression(env, inv.exp.exp, this.relations.wellknowntypes.get("Bool"));
             this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Invariant expression does not have a boolean type -- got ${etype.emit(false)}`);
         }
     }
@@ -3514,7 +3513,7 @@ class TypeChecker {
         const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
 
         for(let i = 0; i < validates.length; ++i) {
-            const etype = this.checkExpression(env, validates[i].exp.exp, this.wellknownTypes.get("Bool"));
+            const etype = this.checkExpression(env, validates[i].exp.exp, this.relations.wellknowntypes.get("Bool"));
             this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Validate expression does not have a boolean type -- got ${etype.emit(false)}`);
         }
     }
@@ -4211,19 +4210,45 @@ class TypeChecker {
         }
     }
 
-    private loadWellKnownType(assembly: Assembly, name: string) {
+    private static loadWellKnownType(assembly: Assembly, name: string, wellknownTypes: Map<string, TypeSignature>) {
         const ccore = assembly.getCoreNamespace();
 
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
+        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {
-        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly));
-        checker.loadWellKnownType(assembly, "None");
-        checker.loadWellKnownType(assembly, "Bool");
+        let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
+        TypeChecker.loadWellKnownType(assembly, "Any", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Some", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ISomething", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "IOk", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "IErr", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "Void", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "None", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Nothing", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Bool", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Int", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Nat", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "BigInt", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "BigNat", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Rational", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Float", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Decimal", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ExTemplateString", wellknownTypes);
+
+        TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "ExRegexValidator", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
+
+        const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
+        
 
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);

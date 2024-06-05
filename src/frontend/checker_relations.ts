@@ -52,13 +52,14 @@ class OrRegexValidatorPack extends RegexValidatorPack {
 
 class TypeCheckerRelations {
     readonly assembly: Assembly;
-    readonly wellknowntypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
+    readonly wellknowntypes: Map<string, TypeSignature>;
 
     readonly memoizedTypeEqualRelation: Map<string, boolean> = new Map<string, boolean>();
     readonly memoizedTypeSubtypeRelation: Map<string, boolean> = new Map<string, boolean>();
 
-    constructor(assembly: Assembly) {
+    constructor(assembly: Assembly, wellknowntypes: Map<string, TypeSignature>) {
         this.assembly = assembly;
+        this.wellknowntypes = wellknowntypes;
     }
 
     private static flattenUnionType(tt: UnionTypeSignature, into: TypeSignature[]) {

@@ -15,5 +15,7 @@
     },
     "include": [
         "src/frontend/*.ts",
+        "src/cmd/*.ts",
+        "test/**/*.ts"   
     ]
 }
