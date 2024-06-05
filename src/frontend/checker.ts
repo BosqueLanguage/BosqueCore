@@ -726,7 +726,21 @@ class TypeChecker {
     }
 
     private checkLiteralTypeDeclValueExpression(env: TypeEnvironment, exp: LiteralTypeDeclValueExpression): TypeSignature {
-        xxxx;
+        if(!this.checkTypeSignature(exp.constype)) {
+            return exp.setType(exp.constype);
+        }
+
+        const rconsttype = this.relations.normalizeTypeSignature(exp.constype, this.constraints);
+        if(!(rconsttype instanceof NominalTypeSignature) || !(rconsttype.resolvedDeclaration instanceof TypedeclTypeDecl)) {
+            this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
+            return exp.setType(exp.constype);
+        }
+
+        const btype = this.relations.getTypeDeclBasePrimitiveType(rconsttype, this.constraints);
+        const bvalue = this.checkExpression(env, exp.value, btype);
+        this.checkError(exp.sinfo, !(bvalue instanceof ErrorTypeSignature) && btype !== undefined && !this.relations.areSameTypes(bvalue, btype, this.constraints), `Literal value is not the same type (${bvalue.emit(true)}) as the typedecl base type (${btype !== undefined ? btype.emit(true) : "[unset]"})`);
+
+        return exp.setType(exp.constype);
     }
 
     private checkLiteralTypeDeclIntegralValueExpression(env: TypeEnvironment, exp: LiteralTypeDeclIntegralValueExpression): TypeSignature {
@@ -3934,7 +3948,7 @@ class TypeChecker {
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
 
         for(let i = 0; i < tdecl.associatedMemberEntityDecls.length; ++i) {
-            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i]);
+            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i].resolvedDeclaration as DatatypeMemberEntityTypeDecl);
         }
         this.file = CLEAR_FILENAME;
     }

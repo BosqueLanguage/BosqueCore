@@ -4359,11 +4359,6 @@ class Parser {
                     this.ensureToken(TokenStrings.IdentifierName, "namespace import");
                     const asns = this.consumeTokenAndGetValue();
 
-                    if(!/^[A-Z].+/.test(asns)) {
-                        this.recordErrorGeneral(sinfo, `Invalid namespace alias ${asns}`);
-                        return;
-                    }
-
                     if(this.env.currentNamespace.istoplevel) {
                         this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), asns));
                     }
@@ -4478,10 +4473,6 @@ class Parser {
         this.ensureToken(TokenStrings.IdentifierName, "nested namespace declaration");
 
         const nsname = this.consumeTokenAndGetValue();
-        if(!/^[A-Z].+/.test(nsname)) {
-            this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), `Invalid namespace name ${nsname}`);
-            return;
-        }
 
         const sinfo = this.lexer.peekNext().getSourceInfo();
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
@@ -5714,7 +5705,7 @@ class Parser {
         this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
     }
 
-    private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
+    private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*/;
     private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
         const nnsm = Parser._s_nsre.exec(contents);
         if(nnsm === null) {

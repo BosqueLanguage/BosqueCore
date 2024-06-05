@@ -703,9 +703,6 @@ class PathValidatorTypeDecl extends InternalEntityTypeDecl {
     }
 }
 
-
-
-
 abstract class ThingOfTypeDecl extends InternalEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
         super(file, sinfo, attributes, name);

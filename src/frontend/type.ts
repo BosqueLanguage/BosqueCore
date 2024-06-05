@@ -348,7 +348,10 @@ class UnionTypeSignature extends TypeSignature {
     }
 
     emit(toplevel: boolean): string {
-        const bb = this.ltype.emit(false) + " | " + this.rtype.emit(false);
+        const ll = (this.ltype instanceof UnionTypeSignature) ? this.ltype.emit(true) : this.ltype.emit(false);
+        const rr = (this.rtype instanceof UnionTypeSignature) ? this.rtype.emit(true) : this.rtype.emit(false);
+
+        const bb = ll + " | " + rr;
         return (toplevel) ? bb : "(" + bb + ")";
     }
 
