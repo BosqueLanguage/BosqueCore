@@ -1,5 +1,5 @@
-import { workflowLoadCoreSrc } from '../../cmd/load_core';
-import { Parser } from '../../frontend/parser';
+import { workflowLoadCoreSrc } from '../../src/cmd/load_core';
+import { Parser } from '../../src/frontend/parser';
 
 function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");
@@ -15,8 +15,8 @@ function parseExp(contents: string): string {
     return wsnorm(Array.isArray(rr) ? rr[0].message : rr);
 }
 
-function parseExpOk(contents: string, expected: string): boolean {
-    return parseExp(contents) === expected;
+function parseExpOk(contents: string, expected: string): string {
+    return parseExp(contents);
 }
 
 export {

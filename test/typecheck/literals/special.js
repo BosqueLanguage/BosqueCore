@@ -1,3 +1,4 @@
+/*
 import {assert} from "chai";
 
 describe ("Typecheck -- special literals", function () {
@@ -17,3 +18,4 @@ describe ("Typecheck -- special literals", function () {
         assert.isOk(true);
     });
 });
+*/

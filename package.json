@@ -16,10 +16,7 @@
     },
     "devDependencies": {
         "fs-extra": "11.2.0",
-        "mocha": "10.4.0",
-        "@types/mocha": "10.0.6",
-        "chai": "5.1.1",
-        "@types/chai": "4.3.16"
+        "mocha": "10.4.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",

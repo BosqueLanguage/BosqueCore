@@ -2970,7 +2970,7 @@ class TypeChecker {
 
         const elseflow = this.checkBlockStatement(env, stmt.elseflow);
 
-        return TypeEnvironment.mergeEnvironments(...branchflows, elseflow);
+        return TypeEnvironment.mergeEnvironments(env, ...branchflows, elseflow);
     }
 
     private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {
@@ -3033,7 +3033,7 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironments(...results);
+        return TypeEnvironment.mergeEnvironments(env, ...results);
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
@@ -3079,8 +3079,8 @@ class TypeChecker {
             }
         }
         
-        this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironments(...results);
+        this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
+        return TypeEnvironment.mergeEnvironments(env, ...results);
     }
 
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
