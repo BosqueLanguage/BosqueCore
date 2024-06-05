@@ -2827,6 +2827,10 @@ class TypeChecker {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is declared as const and cannot be re-typed`);
             return env;
         }
+        if(!vinfo.mustDefined) {
+            this.reportError(stmt.sinfo, `Variable ${stmt.name} is not defined`);
+            return env;
+        }
 
         const splits = this.processITest(stmt.sinfo, env, vinfo.flowType, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
