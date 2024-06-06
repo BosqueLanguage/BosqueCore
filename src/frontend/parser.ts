@@ -190,7 +190,7 @@ class LexerState {
         this.cline = cline;
         this.linestart = linestart;
         this.cpos = cpos;
-        this.tokens = [];
+        this.tokens = tokens;
 
         this.attributes = attributes;
     }
@@ -200,7 +200,7 @@ class LexerState {
     }
 
     cloneForNested(mode: string, epos: number, attribs: string[] | undefined): LexerState {
-        return new LexerState(mode, this.scanmode, epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes || []);
+        return new LexerState(mode, this.scanmode, epos, this.cline, this.linestart, this.cpos, [...this.tokens], attribs || []);
     }
 
     cloneForTry(mode: string): LexerState {
@@ -211,12 +211,12 @@ class LexerState {
         return new LexerState(this.modetag, smode, this.epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes);
     }
 
-    moveStateIntoParent(parent: LexerState) {
-        parent.cline = this.cline;
-        parent.linestart = this.linestart;
-        parent.cpos = this.cpos;
-        parent.tokens = this.tokens;
-        parent.errors = this.errors;
+    moveStateIntoParent(child: LexerState) {
+        this.cline = child.cline;
+        this.linestart = child.linestart;
+        this.cpos = child.cpos;
+        this.tokens = child.tokens;
+        this.errors = child.errors;
     }
 
     pushError(sinfo: SourceInfo, message: string) {
@@ -270,8 +270,8 @@ class Lexer {
     }
 
     popStateIntoParentOk() {
-        const pf = this.stateStack.pop() as LexerState;
-        this.currentState().moveStateIntoParent(pf);
+        const cf = this.stateStack.pop() as LexerState;
+        this.currentState().moveStateIntoParent(cf);
     }
 
     popStateReset() {
@@ -1081,14 +1081,13 @@ class Lexer {
             return undefined;
         }
 
-        const name = m[0].trim();
-        cstate.cpos += m[0].length;
+        cstate.cpos += m.length;
 
-        if(name.slice(0, "#if".length) === "#if") {
-            return ["#if", name.slice("#if".length).trim()];
+        if(m.slice(0, "#if".length) === "#if") {
+            return ["#if", m.slice("#if".length).trim()];
         }
         else {
-            return [name, undefined]
+            return [m, undefined]
         }
     }
 
@@ -1245,6 +1244,8 @@ class Parser {
         let pscount = 1;
         let tpos = 1;
 
+        this.lexer.prepStateStackForNested("scan-matching-parens", this.lexer.currentState().epos, this.lexer.currentState().attributes);
+
         let tok = this.lexer.peekK(tpos);
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
             if (tok.kind === lp) {
@@ -1258,6 +1259,7 @@ class Parser {
             }
 
             if (pscount === 0) {
+                this.lexer.popStateReset();
                 return tpos;
             }
 
@@ -1265,12 +1267,15 @@ class Parser {
             tok = this.lexer.peekK(tpos);
         }
 
+        this.lexer.popStateReset();
         return undefined;
     }
 
     private scanToRecover(trecover: string): number | undefined {
         let pscount = 0;
         let tpos = 0;
+
+        this.lexer.prepStateStackForNested("scan-to-recover", this.lexer.currentState().epos, this.lexer.currentState().attributes);
 
         let tok = this.lexer.peekK(tpos);
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
@@ -1285,6 +1290,7 @@ class Parser {
             }
 
             if(tok.kind === trecover && pscount === 0) {
+                this.lexer.popStateReset();
                 return tpos;
             }
 
@@ -1292,12 +1298,15 @@ class Parser {
             tok = this.lexer.peekK(tpos);
         }
 
+        this.lexer.popStateReset();
         return undefined;
     }
 
     private scanToSyncPos(...tsync: string[]): number | undefined {
         let pscount = 0;
         let tpos = 0;
+
+        this.lexer.prepStateStackForNested("scan-to-sync", this.lexer.currentState().epos, this.lexer.currentState().attributes);
 
         let tok = this.lexer.peekK(tpos);
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
@@ -1312,6 +1321,7 @@ class Parser {
             }
 
             if(tsync.includes(tok.kind) && pscount === 0) {
+                this.lexer.popStateReset();
                 return tpos;
             }
 
@@ -1319,6 +1329,7 @@ class Parser {
             tok = this.lexer.peekK(tpos);
         }
 
+        this.lexer.popStateReset();
         return undefined;
     }
 
@@ -1327,6 +1338,8 @@ class Parser {
         
         let pscount = 1;
         let tpos = 1;
+
+        this.lexer.prepStateStackForNested("scan-to-sync-eat-parens", this.lexer.currentState().epos, this.lexer.currentState().attributes);
 
         let tok = this.lexer.peekK(tpos);
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
@@ -1341,6 +1354,7 @@ class Parser {
             }
 
             if (pscount === 0) {
+                this.lexer.popStateReset();
                 return tpos;
             }
 
@@ -1348,6 +1362,7 @@ class Parser {
             tok = this.lexer.peekK(tpos);
         }
 
+        this.lexer.popStateReset();
         return undefined;
     }
 
@@ -1424,14 +1439,14 @@ class Parser {
         const closeparen = this.scanMatchingParens(start, end);
 
         const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
-        this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, undefined);
+        this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, this.lexer.currentState().attributes);
 
         let result: T[] = [];
         this.ensureAndConsumeTokenAlways(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
             const nextcomma = this.scanToRecover(sep);
             const nextpos = nextcomma !== undefined ? this.lexer.peekK(nextcomma).pos : closepos;
-            this.lexer.prepStateStackForNested("element-" + contextinfobase, nextpos, undefined);
+            this.lexer.prepStateStackForNested("element-" + contextinfobase, nextpos, this.lexer.currentState().attributes);
 
             const v = fn();
             result.push(v);
@@ -4400,7 +4415,7 @@ class Parser {
 
     private parseNamespaceMembers(endtok: string) {
         const rpos = this.scanToSyncPos(endtok);
-        this.lexer.prepStateStackForNested("namespace", rpos || this.lexer.currentState().epos, undefined);
+        this.lexer.prepStateStackForNested("namespace", rpos || this.lexer.currentState().epos, AllAttributes);
 
         while (!this.testToken(endtok)) {
             let attributes: DeclarationAttibute[] = [];
@@ -4410,7 +4425,7 @@ class Parser {
             }
 
             const eepos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            this.lexer.prepStateStackForNested("namespace-member", eepos || this.lexer.currentState().epos, undefined);
+            this.lexer.prepStateStackForNested("namespace-member", eepos || this.lexer.currentState().epos, AllAttributes);
 
             const sinfo = this.lexer.peekNext().getSourceInfo();
             if(this.testToken(KW_type)) {
@@ -4841,7 +4856,7 @@ class Parser {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanToSyncPos(SYM_rbrace);
-        this.lexer.prepStateStackForNested("type", rpos || this.lexer.currentState().epos, undefined);
+        this.lexer.prepStateStackForNested("type", rpos || this.lexer.currentState().epos, AllAttributes);
 
         while (!this.testToken(SYM_rbrace)) {
             let attributes: DeclarationAttibute[] = [];
@@ -4851,7 +4866,7 @@ class Parser {
             }
 
             const eepos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
-            this.lexer.prepStateStackForNested("type-member", eepos || this.lexer.currentState().epos, undefined);
+            this.lexer.prepStateStackForNested("type-member", eepos || this.lexer.currentState().epos, AllAttributes);
 
             const sinfo = this.lexer.peekNext().getSourceInfo();
             if (this.testToken(KW_field)) {
