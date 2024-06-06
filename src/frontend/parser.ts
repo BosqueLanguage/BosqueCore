@@ -6,9 +6,9 @@ import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifi
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
-const { accepts, inializeLexer, lexFront } = require("@bosque/jsbrex");
+const { accepts, initializeLexer, lexFront } = require("@bosque/jsbrex");
 
 type ParsePhase = number;
 const ParsePhase_RegisterNames: ParsePhase = 1;
@@ -281,7 +281,7 @@ class Lexer {
     constructor(input: string, macrodefs: string[], istate: LexerState) {
         this.macrodefs = macrodefs;
         this.input = input;
-        inializeLexer(this.input);
+        initializeLexer(this.input);
 
         this.stateStack = [istate];
     }
@@ -659,7 +659,7 @@ class Lexer {
         return false;
     }
 
-    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexUUID(): boolean {
         const cstate = this.currentState();
 
@@ -685,7 +685,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /^_?[A-Z(]/y;
+    private static readonly _s_literalGeneralTagRE = /^_?[a-zA-Z(]/y;
 
     private tryLexUnicodeString(): boolean {
         const cstate = this.currentState();
@@ -696,7 +696,7 @@ class Lexer {
             ncpos += 2;
             istemplate = true;
         }
-        else if(!this.input.startsWith('"', cstate.cpos)) {
+        else if(this.input.startsWith('"', cstate.cpos)) {
             ncpos += 1;
         }
         else {
@@ -748,7 +748,7 @@ class Lexer {
             ncpos += 2;
             istemplate = true;
         }
-        else if(!this.input.startsWith("'", cstate.cpos)) {
+        else if(this.input.startsWith("'", cstate.cpos)) {
             ncpos += 1;
         }
         else {
@@ -827,7 +827,7 @@ class Lexer {
 
     
     private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /^_?[A-Z(]/y;
+    private static readonly _s_literalPathTagRE = /^_?[a-zA-Z(]/y;
     private tryLexPath() {
         const cstate = this.currentState();
 
@@ -861,8 +861,8 @@ class Lexer {
         return false;
     }
 
-    private static _s_datevalueRE = '([0-9]{4})-([0-9]{2})-([0-9]{2})';
-    private static _s_timevalueRE = '([0-9]{2}):([0-9]{2}):([0-9]{2})';
+    private static _s_datevalueRE = '([0-9]{4})"-"([0-9]{2})"-"([0-9]{2})';
+    private static _s_timevalueRE = '([0-9]{2})":"([0-9]{2})":"([0-9]{2})';
     private static _s_tzvalueRE = '(("%lbrace;"[a-zA-Z0-9/, _-]+"%rbrace;")|[A-Z]+)';
 
     private static _s_datatimeRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"@"${Lexer._s_tzvalueRE}(${Lexer._s_literalTDOnlyTagRE})?/`;
@@ -1027,15 +1027,14 @@ class Lexer {
             this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.Template, idm);
             return true;
         }
-        else
-        {        
+        else {        
             this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.IdentifierName, idm);
             return true;
         }
     }
 
-    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[A-Z(]?/`;
-    private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
+    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[a-zA-Z(]?/`;
+    private static readonly _s_identiferName = '/("$_")|("$"?[a-zA-Z][_a-zA-Z0-9]*)/';
     private tryLexName(): boolean {
         const cstate = this.currentState();
 
@@ -1099,7 +1098,6 @@ class Lexer {
             return cstate.tokens;
         }
 
-        cstate.tokens = [];
         while (cstate.cpos < cstate.epos && cstate.tokens.length < k) {
             const macro = this.tryLexMacroOp();
             if(macro !== undefined) {
@@ -1204,6 +1202,7 @@ class Lexer {
         const tks = this.currentState().tokens;
         while(k > 0 && (tks[0].kind !== TokenStrings.EndOfStream && tks[0].kind !== TokenStrings.Recover)) {
             tks.shift();
+            k--;
         }
     }
 
@@ -5704,9 +5703,41 @@ class Parser {
         this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
     }
 
-    private static _s_nsre = /^\s*(declare[ ]+)namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*/;
+    private static _s_lcre = /^%%[^\n]*/y;
+    private static _s_bcre = /^%\*[\s\S]*?\*%/y;
+    private static _s_wsre = /^\s+/y;
+
+    private static eatDeadTextAtFileStart(contents: string): string {
+        while(true) {
+            let ocontents = contents;
+            let m = Parser._s_lcre.exec(contents);
+            while(m !== null) {
+                contents = contents.slice(m[0].length);
+                m = Parser._s_lcre.exec(contents);
+            }
+
+            m = Parser._s_bcre.exec(contents);
+            while(m !== null) {
+                contents = contents.slice(m[0].length);
+                m = Parser._s_bcre.exec(contents);
+            }
+
+            m = Parser._s_wsre.exec(contents);
+            while(m !== null) {
+                contents = contents.slice(m[0].length);
+                m = Parser._s_wsre.exec(contents);
+            }
+
+            if(ocontents.length === contents.length) {
+                return contents;
+            }
+        }
+    }
+
+    private static _s_nsre = /^(declare[ ]+)?namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*/;
     private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
-        const nnsm = Parser._s_nsre.exec(contents);
+        const tcontents = Parser.eatDeadTextAtFileStart(contents);
+        const nnsm = Parser._s_nsre.exec(tcontents);
         if(nnsm === null) {
             return {ns: "[error]", isdecl: false, errors: [new ParserError(SourceInfo.implicitSourceInfo(), "Failed to find namespace declaration")]};
         }
@@ -5720,9 +5751,14 @@ class Parser {
         nnt = nnt.slice(9).trim();
 
         const ns = nnt;
-        const pp = new Parser(file, ns, contents.slice(nnsm[0].length), macrodefs, assembly, phase);
-
         assembly.ensureToplevelNamespace(ns);
+
+        const pp = new Parser(file, ns, contents, macrodefs, assembly, phase);
+
+        pp.testAndConsumeTokenIf(KW_declare);
+        pp.ensureAndConsumeTokenAlways(KW_namespace, "namespace declaration");
+        pp.ensureAndConsumeTokenAlways(TokenStrings.IdentifierName, "namespace declaration");
+
         if(pp.testToken(SYM_lbrace)) {
             pp.parseListOf<boolean>("namespace", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
                 pp.parseNamespaceUsing();
@@ -5732,7 +5768,6 @@ class Parser {
         else {
             pp.ensureAndConsumeTokenIf(SYM_semicolon, "namespace declaration");
         }
-        
 
         if(phase === ParsePhase_CompleteParsing) {
             pp.loadWellKnownType("None");

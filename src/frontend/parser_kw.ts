@@ -53,6 +53,7 @@ const KW_api = "api";
 const KW_as = "as";
 const KW_concept = "concept";
 const KW_const = "const";
+const KW_declare = "declare";
 const KW_enum = "enum";
 const KW_entity = "entity";
 const KW_ensures = "ensures";
@@ -98,6 +99,7 @@ const KeywordStrings = [
     KW_assert,
     KW_concept,
     KW_const,
+    KW_declare,
     KW_debug,
     KW_elif,
     KW_else,
@@ -337,6 +339,7 @@ export {
     KW_assert,
     KW_concept,
     KW_const,
+    KW_declare,
     KW_debug,
     KW_elif,
     KW_else,

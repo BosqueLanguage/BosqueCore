@@ -8,7 +8,7 @@ import { Parser, ParserError } from "../frontend/parser";
 import { TypeChecker, TypeError } from "../frontend/checker";
 
 
-const bosque_src_dir: string = path.join(__dirname, "../");
+const bosque_dir: string = path.join(__dirname, "../../../");
 
 function workflowLoadUserSrc(files: string[]): CodeFileInfo[] | undefined {
     try {
@@ -33,7 +33,7 @@ function workflowLoadCoreSrc(): CodeFileInfo[] | undefined {
     try {
         let code: CodeFileInfo[] = [];
 
-        const coredir = path.join(bosque_src_dir, "bin/core");
+        const coredir = path.join(bosque_dir, "bin/core");
         const corefiles = fs.readdirSync(coredir);
         for (let i = 0; i < corefiles.length; ++i) {
             const cfpath = path.join(coredir, corefiles[i]);
