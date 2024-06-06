@@ -1,4 +1,4 @@
-import { workflowLoadCoreSrc } from '../../src/cmd/load_core';
+import { workflowLoadCoreSrc } from '../../src/cmd/workflows';
 import { Parser } from '../../src/frontend/parser';
 
 function wsnorm(s: string): string {

@@ -1,8 +1,11 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { CodeFileInfo } from "../frontend/build_decls";
+import { CodeFileInfo, PackageConfig } from "../frontend/build_decls";
 import { Status } from "./status_output";
+import { Assembly } from "../frontend/assembly";
+import { Parser, ParserError } from "../frontend/parser";
+import { TypeChecker, TypeError } from "../frontend/checker";
 
 
 const bosque_src_dir: string = path.join(__dirname, "../");
@@ -57,6 +60,28 @@ function workflowLoadAllSrc(files: string[]): CodeFileInfo[] | undefined {
     }
 }
 
+function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserError[], TypeError[]]{
+    const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
+
+    Status.output(`parsing...\n`);
+    const parseres = Parser.parse([...corecode, ...usercode.src], usercode.macrodefs);
+
+    let tasm: Assembly | undefined = undefined;
+    let parseerrors: ParserError[] = [];
+    let typeerrors: TypeError[] = [];
+
+    if(Array.isArray(parseres)) {
+        parseerrors = parseres;
+    }
+    else {
+        Status.output(`type checking...\n`);
+        tasm = parseres;
+        typeerrors = TypeChecker.checkAssembly(tasm);
+    }
+
+    return [tasm, parseerrors, typeerrors];
+}
+
 export { 
-    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc
+    workflowLoadUserSrc, workflowLoadCoreSrc, workflowLoadAllSrc, generateASM
 };

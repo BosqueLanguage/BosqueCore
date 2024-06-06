@@ -156,7 +156,6 @@ class ParserError {
         this.sinfo = sinfo;
         this.message = message;
     }
-
 }
 
 enum LexerStateScanMode {
