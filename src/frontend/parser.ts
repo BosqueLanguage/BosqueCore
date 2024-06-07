@@ -4,7 +4,7 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME } from "./assembly";
+import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
@@ -1242,10 +1242,10 @@ class Parser {
         let tok = this.peekToken();
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
             if (tok.kind === lp) {
-                pscount++;
+                pscount = pscount + 1;
             }
             else if (tok.kind === rp) {
-                pscount--;
+                pscount = Math.max(pscount - 1, 0);
             }
             else {
                 //nop
@@ -1253,7 +1253,7 @@ class Parser {
 
             if (pscount === 0) {
                 this.popStateReset();
-                return tpos;
+                return tpos + 1;
             }
 
             tpos++;
@@ -1272,19 +1272,19 @@ class Parser {
         let tpos = this.currentState().cpos;
         let tok = this.peekToken();
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if(tok.kind === trecover && pscount === 0) {
+                this.popStateReset();
+                return tpos + 1;
+            }
+
             if (LeftScanParens.indexOf(tok.kind) !== -1) {
-                pscount++;
+                pscount = pscount + 1;
             }
             else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount--;
+                pscount = Math.max(pscount - 1, 0);
             }
             else {
                 //nop
-            }
-
-            if(tok.kind === trecover && pscount === 0) {
-                this.popStateReset();
-                return tpos;
             }
 
             tpos++;
@@ -1303,19 +1303,19 @@ class Parser {
         let tpos = this.currentState().cpos;
         let tok = this.peekToken();
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (LeftScanParens.indexOf(tok.kind) !== -1) {
-                pscount++;
-            }
-            else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount--;
-            }
-            else {
-                //nop
-            }
-
             if(tsync.includes(tok.kind) && pscount === 0) {
                 this.popStateReset();
                 return tpos;
+            }
+
+            if (LeftScanParens.indexOf(tok.kind) !== -1) {
+                pscount = pscount + 1;
+            }
+            else if (RightScanParens.indexOf(tok.kind) !== -1) {
+                pscount = Math.max(pscount - 1, 0);
+            }
+            else {
+                //nop
             }
 
             tpos++;
@@ -1337,10 +1337,10 @@ class Parser {
         let tok = this.peekToken();
         while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
             if (tok.kind === lp) {
-                pscount++;
+                pscount = pscount + 1;
             }
             else if (tok.kind === rp) {
-                pscount--;
+                pscount = Math.max(pscount - 1, 0);
             }
             else {
                 //nop
@@ -1366,7 +1366,7 @@ class Parser {
 
         let result: T[] = [];
         this.ensureAndConsumeTokenAlways(start, contextinfobase);
-        while (!this.testAndConsumeTokenIf(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+        while (!this.testToken(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
             const nextcomma = this.scanToRecover(sep);
             this.prepStateStackForNested("element-" + contextinfobase, nextcomma);
 
@@ -1400,6 +1400,8 @@ class Parser {
         }
 
         this.popStateIntoParentOk();
+        this.ensureAndConsumeTokenIf(end, contextinfobase);
+
         return result;
     }
 
@@ -4330,10 +4332,10 @@ class Parser {
     }
 
     private parseNamespaceMembers(endtok: string) {
-        const rpos = this.scanToSyncPos(endtok);
+        const rpos = this.scanToRecover(endtok);
         this.prepStateStackForNested("namespace", rpos);
 
-        while (!this.testToken(endtok)) {
+        while (!this.testToken(endtok) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
             let attributes: DeclarationAttibute[] = [];
             while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
                 const attr = this.parseAttribute();
@@ -4343,8 +4345,6 @@ class Parser {
             this.prepStateStackForNested("namespace-member", undefined);
 
             const sinfo = this.peekToken().getSourceInfo();
-            console.log(sinfo.line);
-
             if(this.testToken(KW_type)) {
                 this.parseNamespaceTypedef(attributes);
             }
@@ -4775,8 +4775,9 @@ class Parser {
         let allMemberNames = new Set<string>();
 
         this.prepStateStackForNested("type", undefined);
+        this.ensureAndConsumeTokenAlways(SYM_lbrace, "type members");
 
-        while (!this.testToken(SYM_rbrace)) {
+        while (!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.EndOfStream) && !this.testToken(TokenStrings.Recover)) {
             let attributes: DeclarationAttibute[] = [];
             while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
                 const attr = this.parseAttribute();
@@ -4827,6 +4828,17 @@ class Parser {
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
                     this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have nested entities on this type");
+
+                    //scan to the next declaration or end brace
+                    this.consumeToken();
+                    const rpos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
+                    if(rpos === undefined) {
+                        this.currentState().moveToRecoverPosition();
+                        return; 
+                    }
+                    else {
+                        this.currentState().skipToPosition(rpos);
+                    }
                 }
                 else {
                     this.parseNestedEntity(specialConcept, allMemberNames, attributes);
@@ -4851,6 +4863,7 @@ class Parser {
         }
 
         this.popStateIntoParentOk();
+        this.ensureAndConsumeTokenIf(SYM_rbrace, "type members");
     }
 
     private parseNestedEntity(specialConcept: InternalConceptTypeDecl, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
@@ -4870,6 +4883,9 @@ class Parser {
         }
         else if(name === "ExStringOf") {
             tdecl = new ExStringOfTypeDecl(this.env.currentFile, sinfo, attributes, "ExStringOf");
+        }
+        else if(name === "Something") {
+            tdecl = new SomethingTypeDecl(this.env.currentFile, sinfo, attributes, "Something");
         }
         else if(name === "List") {
             tdecl = new ListTypeDecl(this.env.currentFile, sinfo, attributes, "List");
