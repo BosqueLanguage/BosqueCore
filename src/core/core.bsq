@@ -85,11 +85,12 @@ __internal __typedeclable entity String provides Some, KeyType {
 __internal __constructable __typedeclable entity StringOf<T: RegexValidator> provides Some, KeyType {
     private function s_into(s: String): StringOf<T> = special_inject;
     method value(): String = special_extract;
-
+    %*
     function coerce(s: String): StringOf<T> {
         assert RegexValidator::accepts<T>(s);
         return StringOf<T>::s_into(s);
     }
+    *%
 }
 
 %** Primitive string value. **%
@@ -100,29 +101,32 @@ __internal __typedeclable entity ExString provides Some, KeyType {
 __internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
     private function s_into(s: ExString): ExStringOf<T> = special_inject;
     method value(): ExString = special_extract;
-
+    %*
     function coerce(s: ExString): ExStringOf<T> {
         assert ExRegexValidator::accepts<T>(s);
         return ExStringOf<T>::s_into(s);
-    } 
+    }
+    *%
 }
 
 %** Primitive unicode regex value. **%
 __internal entity UnicodeRegex provides Some {
     __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
-
+    %*
     method accepts(s: String): Bool {
         return UnicodeRegex::s_accepts(this, s);
     }
+    *%
 }
 
 %** Primitive unicode regex value. **%
 __internal entity ExRegex provides Some {
     __safe internal function s_accepts(re: ExRegex, s: ExString): Bool = regex_accepts;
-
+    %*
     method accepts(s: ExString): Bool {
         return Regex::s_accepts(this, s);
     }
+    *%
 }
 
 %** Primitive unicode regex value. **%

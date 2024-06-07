@@ -224,16 +224,13 @@ class TypeChecker {
         }
         else if(tnorm instanceof NominalTypeSignature) {
             let tnames: Set<string> = new Set<string>();
-            return tnorm.resolvedTerms.every((entry) => {
-                if(tnames.has(entry.name)) {
+            return tnorm.tscope.every((entry) => {
+                if(tnames.has(entry.tname)) {
                     return false;
                 }
-                tnames.add(entry.name);
-                if(!this.checkTypeSignatureAndStorable(entry.type)) {
-                    return false;
-                }
+                tnames.add(entry.tname);
 
-                return true;
+                return entry.terms.every((ttval) => this.checkTypeSignatureAndStorable(ttval));
             });
         }
         else if(tnorm instanceof TupleTypeSignature) {
@@ -4220,7 +4217,7 @@ class TypeChecker {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
+        wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], undefined, tdecl));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {

@@ -163,16 +163,14 @@ class NominalTypeSignature extends TypeSignature {
     readonly ns: string[];
     readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
-    readonly resolvedTerms: {name: string, type: TypeSignature}[];
     readonly resolvedTypedef: NamespaceTypedef | undefined;
     readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
 
-    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTerms: {name: string, type: TypeSignature}[], resolvedTypedef: NamespaceTypedef | undefined, resolvedDeclaration: AbstractNominalTypeDecl | undefined) {
+    constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTypedef: NamespaceTypedef | undefined, resolvedDeclaration: AbstractNominalTypeDecl | undefined) {
         super(sinfo);
         this.ns = ns;
         this.tscope = tscope;
 
-        this.resolvedTerms = resolvedTerms;
         this.resolvedTypedef = resolvedTypedef;
         this.resolvedDeclaration = resolvedDeclaration;
     }
@@ -195,11 +193,7 @@ class NominalTypeSignature extends TypeSignature {
             return { tname: t.tname, terms: t.terms.map((tt) => tt.remapTemplateBindings(mapper)) };
         });
 
-        const rresolvedTerms = this.resolvedTerms.map((tt) => {
-            return { name: tt.name, type: tt.type.remapTemplateBindings(mapper) };
-        });
-
-        return new NominalTypeSignature(this.sinfo, this.ns, rtscope, rresolvedTerms, this.resolvedTypedef , this.resolvedDeclaration);
+        return new NominalTypeSignature(this.sinfo, this.ns, rtscope, this.resolvedTypedef , this.resolvedDeclaration);
     }
 }
 

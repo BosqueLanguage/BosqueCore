@@ -4,7 +4,7 @@ import {strict as assert} from "assert";
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl } from "./assembly";
+import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
@@ -1580,60 +1580,28 @@ class Parser {
         }
     }
 
-    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): [{name: string, type: TypeSignature}[], NamespaceTypedef | undefined, AbstractNominalTypeDecl | undefined] | undefined {
+    private normalizeTypeNameChain(sinfo: SourceInfo, ns: NamespaceDeclaration, typeTokens: {tname: string, terms: TypeSignature[]}[]): [NamespaceTypedef | undefined, AbstractNominalTypeDecl | undefined] | undefined {
         const tydef = ns.typeDefs.find((t) => t.name === typeTokens[0].tname);
         if(tydef !== undefined) {
-            if(typeTokens[0].terms.length !== tydef.terms.length) {
-                this.recordErrorGeneral(sinfo, `Type ${tydef.name} expects ${tydef.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
-            };
-
-            const rterms = typeTokens[0].terms.length === tydef.terms.length ? typeTokens[0].terms.map((t, i) => { 
-                return {name: tydef.terms[i].name, type: t}; 
-            }) : [];
-
-            return [rterms, tydef, undefined];
+            return [tydef, undefined];
         }
         
         const taskdef = ns.tasks.find((t) => t.name === typeTokens[0].tname);
         if(taskdef !== undefined) {
-            if(typeTokens[0].terms.length !== taskdef.terms.length) {
-                this.recordErrorGeneral(sinfo, `Task ${taskdef.name} expects ${taskdef.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
-            };
-
-            const rterms = typeTokens[0].terms.length === taskdef.terms.length ? typeTokens[0].terms.map((t, i) => { 
-                return {name: taskdef.terms[i].name, type: t}; 
-            }) : [];
-
-            return [rterms, undefined, taskdef];
+            return [undefined, taskdef];
         }
 
         //handle special Core types first
         if(ns.name === "Core") {
             const ndecl = this.tryNormalizeCoreType(ns, typeTokens);
             if(ndecl !== undefined) {
-                if(typeTokens[0].terms.length !== ndecl.terms.length) {
-                    this.recordErrorGeneral(sinfo, `Type ${ndecl.name} expects ${ndecl.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
-                };
-    
-                const rterms = typeTokens[0].terms.length === ndecl.terms.length ? typeTokens[0].terms.map((t, i) => { 
-                    return {name: ndecl.terms[i].name, type: t}; 
-                }) : [];
-
-                return [rterms, undefined, ndecl];
+                return [undefined, ndecl];
             }
         }
 
         const nnt = ns.typedecls.find((t) => t.name === typeTokens[0].tname);
         if(nnt !== undefined) {
-            if(typeTokens[0].terms.length !== nnt.terms.length) {
-                this.recordErrorGeneral(sinfo, `Type ${nnt.name} expects ${nnt.terms.length} type arguments but got ${typeTokens[0].terms.length}`);
-            };
-
-            const rterms = typeTokens[0].terms.length === nnt.terms.length ? typeTokens[0].terms.map((t, i) => { 
-                return {name: nnt.terms[i].name, type: t}; 
-            }) : [];
-
-            return [rterms, undefined, nnt];
+            return [undefined, nnt];
         }
 
         return undefined;
@@ -2183,15 +2151,7 @@ class Parser {
                 return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                const sinfo = this.peekToken().getSourceInfo();
-                const idtype = this.peekTokenData();
-                if(/[^A-Z].*/.test(idtype)) {
-                    return this.parseNominalType();
-                }
-                else {
-                    this.recordErrorGeneral(sinfo, `Invalid type reference "${idtype}"`);
-                    return new ErrorTypeSignature(sinfo, undefined);
-                }
+                return this.parseNominalType();
             }
             case SYM_lbrack: {
                 return this.parseTupleType();
@@ -4562,7 +4522,7 @@ class Parser {
             const corens = this.env.assembly.getCoreNamespace();
             const otype = corens.typedecls.find((td) => td.name === "Object") as AbstractNominalTypeDecl;
 
-            provides.push(new NominalTypeSignature(sinfo, ["Core"], [{tname: "Object", terms: []}], [], undefined, otype));
+            provides.push(new NominalTypeSignature(sinfo, ["Core"], [{tname: "Object", terms: []}], undefined, otype));
         }
 
         return provides;
@@ -4814,7 +4774,7 @@ class Parser {
                     this.parseMemberMethod(memberMethods, allMemberNames, attributes, typeTerms);
                 }
             }
-            else if(this.testToken(KW_ref) || this.testFollows(KW_recursive, KW_method) || this.testFollows(KW_recursive_q, KW_method)) {
+            else if(this.testToken(KW_method) || this.testFollows(KW_recursive, KW_method) || this.testFollows(KW_recursive_q, KW_method)) {
                 if(istask) {
                     this.parseTaskMemberMethod(taskMemberMethods, allMemberNames, attributes, typeTerms);
                 }
@@ -4868,6 +4828,8 @@ class Parser {
 
     private parseNestedEntity(specialConcept: InternalConceptTypeDecl, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
         //special Concept should be Result or APIResult and this should be one of the known subtypes
+
+        //need to set the template terms here from parent as well!!!
 
         assert(false, "Not implemented");
     }
@@ -4993,6 +4955,9 @@ class Parser {
 
         if(PRIMITIVE_CONCEPT_TYPE_NAMES.includes(name)) {
             tdecl = new PrimitiveConceptTypeDecl(this.env.currentFile, sinfo, attributes, name);
+        }
+        else if(name === "Option") {
+            tdecl = new OptionTypeDecl(this.env.currentFile, sinfo, attributes, "Option");
         }
         else if(name === "Expandoable") {
             tdecl = new ExpandoableTypeDecl(this.env.currentFile, sinfo, attributes, "Expandoable");
@@ -5217,10 +5182,10 @@ class Parser {
             }
 
             const parentterms = parenttype.terms.map((term) => { return {name: term.name, type: new TemplateTypeSignature(sinfo, term.name) }; });
-            const tparent = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], parentterms, undefined, parenttype);
+            const tparent = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], undefined, parenttype);
 
             const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, tparent);
-            const dtype = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], parentterms, undefined, tdecl);
+            const dtype = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], undefined, tdecl);
             
             parenttype.associatedMemberEntityDecls.push(dtype);
             this.env.currentNamespace.typedecls.push(tdecl);

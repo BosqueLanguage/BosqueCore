@@ -1,7 +1,7 @@
 import {strict as assert} from "assert";
 
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
-import { AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, ExRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly";
+import { APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, ExRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly";
 import { SourceInfo } from "./build_decls";
 
 class TypeLookupInfo {
@@ -99,9 +99,10 @@ class TypeCheckerRelations {
         //check for complete set of datatype members
         const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof NominalTypeSignature) && (t.resolvedDeclaration instanceof DatatypeMemberEntityTypeDecl));
         if(dts.length !== 0) {
+            xxxx;
             for(let i = 0; i < dts.length; ++i) {
                 const pptype = ((dts[i] as NominalTypeSignature).resolvedDeclaration as DatatypeMemberEntityTypeDecl).parentTypeDecl;
-                const realmapper = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms((dts[i] as NominalTypeSignature).resolvedTerms);
+                const realmapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo((dts[i] as NominalTypeSignature));
                 const realptype = pptype.remapTemplateBindings(realmapper);
 
                 const allmembers = ((realptype as NominalTypeSignature).resolvedDeclaration as DatatypeTypeDecl).associatedMemberEntityDecls.every((mem) => {
@@ -157,9 +158,37 @@ class TypeCheckerRelations {
         }
     }
 
-    private static computeNameMapperFromDirectResolvedTerms(directResolved: {name: string, type: TypeSignature}[]): TemplateNameMapper {
+    private static computeNameMapperFromDirectTypeSignatureInfo(nsig: NominalTypeSignature): TemplateNameMapper {
         let mapping = new Map<string, TypeSignature>();
-        directResolved.forEach((tterm) => mapping.set(tterm.name, tterm.type));
+
+        const sigterms: TypeSignature[] = [];
+        for(let i = 0; i < nsig.tscope.length; ++i) {
+            for(let j = 0; j < nsig.tscope[i].terms.length; ++j) {
+                sigterms.push(nsig.tscope[i].terms[j]);
+            }
+        }
+
+        if(nsig.resolvedTypedef !== undefined) {
+            const tparams = nsig.resolvedTypedef.terms;
+            for(let i = 0; i < tparams.length; ++i) {
+                mapping.set(tparams[i].name, sigterms[i] || new TemplateTypeSignature(nsig.sinfo, tparams[i].name));
+            }
+        }
+        else {
+            if((nsig.resolvedDeclaration instanceof OkTypeDecl) || (nsig.resolvedDeclaration instanceof ErrTypeDecl)) {
+                mapping.set("T", sigterms[0] || new TemplateTypeSignature(nsig.sinfo, "T"));
+                mapping.set("E", sigterms[1] || new TemplateTypeSignature(nsig.sinfo, "E"));
+            }
+            else if((nsig.resolvedDeclaration instanceof APIRejectedTypeDecl) || (nsig.resolvedDeclaration instanceof APIFailedTypeDecl) || (nsig.resolvedDeclaration instanceof APIErrorTypeDecl) || (nsig.resolvedDeclaration instanceof APISuccessTypeDecl)) {
+                mapping.set("T", sigterms[0] || new TemplateTypeSignature(nsig.sinfo, "T"));
+            }
+            else {
+                const tparams = (nsig.resolvedDeclaration as AbstractNominalTypeDecl).terms;
+                for(let i = 0; i < tparams.length; ++i) {
+                    mapping.set(tparams[i].name, sigterms[i] || new TemplateTypeSignature(nsig.sinfo, tparams[i].name));
+                }
+            }
+        }
 
         return TemplateNameMapper.createInitialMapping(mapping);
     }
@@ -179,7 +208,7 @@ class TypeCheckerRelations {
                 return tsig;
             }
             else {
-                const remapper = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tsig.resolvedTerms);
+                const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tsig);
                 return this.normalizeTypeSignature(tsig.resolvedTypedef.boundType.remapTemplateBindings(remapper), tconstrain);
             }
         }
@@ -236,7 +265,7 @@ class TypeCheckerRelations {
                 return tsig;
             }
             else {
-                const remapper = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tsig.resolvedTerms);
+                const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tsig);
                 return this.normalizeTypeSignatureIncludingTemplate(tsig.resolvedTypedef.boundType.remapTemplateBindings(remapper), tconstrain);
             }
         }
@@ -461,15 +490,13 @@ class TypeCheckerRelations {
         return true;
     }
 
-    private areSameTerms(terms1: {name: string, type: TypeSignature}[], terms2: {name: string, type: TypeSignature}[], tconstrain: TemplateConstraintScope): boolean {
-        if(terms1.length !== terms2.length) {
+    private areSameTypeScopeTemplateLists(tscope1: {tname: string, terms: TypeSignature[]}[], tscope2: {tname: string, terms: TypeSignature[]}[], tconstrain: TemplateConstraintScope): boolean {
+        if(tscope1.length !== tscope2.length) {
             return false;
         }
 
-        for(let i = 0; i < terms1.length; ++i) {
-            assert(terms1[i].name === terms2[i].name, "Mismatched terms in nominal type");
-
-            if(!this.areSameTypes(terms1[i].type, terms2[i].type, tconstrain)) {
+        for(let i = 0; i < tscope1.length; ++i) {
+            if(!this.areSameTypeSignatureLists(tscope1[i].terms, tscope2[i].terms, tconstrain)) {
                 return false;
             }
         }
@@ -515,7 +542,7 @@ class TypeCheckerRelations {
     }
 
     private nominalIsSubtypeOf(t1: NominalTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
-        const tmapping = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(t1.resolvedTerms);
+        const tmapping = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(t1);
 
         const specialprovides = this.resolveSpecialProvidesDecls(t1.resolvedDeclaration as AbstractNominalTypeDecl, tconstrain).map((t) => t.remapTemplateBindings(tmapping));
         const regularprovides = (t1.resolvedDeclaration as AbstractNominalTypeDecl).provides.map((t) => t.remapTemplateBindings(tmapping));
@@ -656,7 +683,7 @@ class TypeCheckerRelations {
             else {
                 const rd1 = nt1.resolvedDeclaration as AbstractNominalTypeDecl;
                 const rd2 = nt2.resolvedDeclaration as AbstractNominalTypeDecl;
-                res = (rd1.name === rd2.name) && this.areSameTerms(nt1.resolvedTerms, nt2.resolvedTerms, tconstrain);
+                res = (rd1.name === rd2.name) && this.areSameTypeScopeTemplateLists(nt1.tscope, nt2.tscope, tconstrain);
             }
         }
         else if(nt1 instanceof TupleTypeSignature && nt2 instanceof TupleTypeSignature) {
@@ -976,7 +1003,7 @@ class TypeCheckerRelations {
 
         const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
         if(tdecl instanceof TypedeclTypeDecl) {
-            const remapper = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tnorm.resolvedTerms);
+            const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tnorm);
             return tdecl.valuetype.remapTemplateBindings(remapper);
         }
         else {
@@ -997,7 +1024,7 @@ class TypeCheckerRelations {
             return tnorm;
         }
         else if(tdecl instanceof TypedeclTypeDecl) {
-            const remapper = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tnorm.resolvedTerms);
+            const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tnorm);
             return this.getTypeDeclBasePrimitiveType(tdecl.valuetype.remapTemplateBindings(remapper), tconstrain);
         }
         else if(tdecl instanceof InternalEntityTypeDecl) {
@@ -1037,94 +1064,98 @@ class TypeCheckerRelations {
         const corens = this.assembly.getCoreNamespace();
         const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "StringOf");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "StringOf", terms: [vtype]}], [{name: "T", type: vtype}], undefined, stringofdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "StringOf", terms: [vtype]}], undefined, stringofdecl);
     }
 
     getExStringOfType(vtype: TypeSignature): TypeSignature {
         const corens = this.assembly.getCoreNamespace();
         const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "ExStringOf");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "ExStringOf", terms: [vtype]}], [{name: "T", type: vtype}], undefined, stringofdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "ExStringOf", terms: [vtype]}], undefined, stringofdecl);
     }
 
     getEventListOf(vtype: TypeSignature): TypeSignature {
         const corens = this.assembly.getCoreNamespace();
         const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "EventList");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "EventList", terms: [vtype]}], [{name: "T", type: vtype}], undefined, stringofdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "EventList", terms: [vtype]}], undefined, stringofdecl);
     }
 
     //given a type that is of the form Something<T> return the corresponding type Option<T>
     private getOptionTypeForSomethingT(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
 
         const corens = this.assembly.getCoreNamespace();
         const optiondecl = corens.typedecls.find((tdecl) => tdecl.name === "Option");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Option", terms: [ttype]}], [{name: "T", type: ttype}], undefined, optiondecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Option", terms: [ttype]}], undefined, optiondecl);
     }
 
     //given a type that is of the form Option<T> return the corresponding type Something<T>
     private getSomethingTypeForOptionT(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
 
         const corens = this.assembly.getCoreNamespace();
         const somethingdecl = corens.typedecls.find((tdecl) => tdecl.name === "Something");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Something", terms: [ttype]}], [{name: "T", type: ttype}], undefined, somethingdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Something", terms: [ttype]}], undefined, somethingdecl);
     }
 
     private getResultTypeForErrorTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
-        const etype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "E")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
+        const etype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "E"));
 
         const corens = this.assembly.getCoreNamespace();
         const resultdecl = corens.typedecls.find((tdecl) => tdecl.name === "Result");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}], [{name: "T", type: ttype}, {name: "E", type: etype}], undefined, resultdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}], undefined, resultdecl);
     }
 
     private getResultTypeForOkTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
+        const etype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "E"));
 
         const corens = this.assembly.getCoreNamespace();
         const resultdecl = corens.typedecls.find((tdecl) => tdecl.name === "Result");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, this.wellknowntypes.get("None") as TypeSignature]}], [{name: "T", type: ttype}, {name: "E", type: this.wellknowntypes.get("None") as TypeSignature}], undefined, resultdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}], undefined, resultdecl);
     }
 
     private getErrorTypeForResultTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
-        const etype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "E")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
+        const etype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "E"));
 
         const corens = this.assembly.getCoreNamespace();
         const errdecl = (corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl).nestedEntityDecls.find((tdecl) => tdecl.name === "Err") as ErrTypeDecl;
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}, {tname: "Err", terms: []}], [{name: "T", type: ttype}, {name: "E", type: etype}], undefined, errdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}, {tname: "Err", terms: []}], undefined, errdecl);
     }
 
     private getOkTypeForResultTE(vtype: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const ttype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "T")!.type;
-        const etype = (vtype as NominalTypeSignature).resolvedTerms.find((tterm) => tterm.name === "E")!.type;
+        const mapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(vtype as NominalTypeSignature);
+        const ttype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "T"));
+        const etype = mapper.resolveTemplateMapping(new TemplateTypeSignature(vtype.sinfo, "E"));
 
         const corens = this.assembly.getCoreNamespace();
         const okdecl = (corens.typedecls.find((tdecl) => tdecl.name === "Result") as ResultTypeDecl).nestedEntityDecls.find((tdecl) => tdecl.name === "Ok") as OkTypeDecl;
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}, {tname: "Ok", terms: []}], [{name: "T", type: ttype}, {name: "E", type: etype}], undefined, okdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "Result", terms: [ttype, etype]}, {tname: "Ok", terms: []}], undefined, okdecl);
     }
 
     getNominalTypeForDecl(enclns: NamespaceDeclaration, tdecl: AbstractNominalTypeDecl): TypeSignature {
         const tterms = tdecl.terms.map((tterm) => new TemplateTypeSignature(tdecl.sinfo, tterm.name));
-        const ttresolved = tterms.map((tterm) => { return {name: tterm.name, type: new TemplateTypeSignature(tdecl.sinfo, tterm.name)}; });
-
-        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: tdecl.name, terms: tterms}], ttresolved, undefined, tdecl);
+        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: tdecl.name, terms: tterms}], undefined, tdecl);
     }
 
     getNominalTypeForNestedDecl(enclns: NamespaceDeclaration, encldecl: AbstractNominalTypeDecl, tdecl: AbstractNominalTypeDecl): TypeSignature {
         const tterms = encldecl.terms.map((tterm) => new TemplateTypeSignature(tdecl.sinfo, tterm.name));
-        const ttresolved = encldecl.terms.map((tterm) => { return {name: tterm.name, type: new TemplateTypeSignature(tdecl.sinfo, tterm.name)}; });
 
-        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: encldecl.name, terms: tterms}, {tname: tdecl.name, terms: []}], ttresolved, undefined, tdecl);
+        return new NominalTypeSignature(tdecl.sinfo, enclns.fullnamespace.ns, [{tname: encldecl.name, terms: tterms}, {tname: tdecl.name, terms: []}], undefined, tdecl);
     }
 
     resolveNamespaceDecl(ns: string[]): NamespaceDeclaration | undefined {
@@ -1209,7 +1240,7 @@ class TypeCheckerRelations {
         const tdecl = tn.resolvedDeclaration as AbstractNominalTypeDecl;
         const cci = tdecl.consts.find((c) => c.name === name);
         if(cci !== undefined) {
-            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tn.resolvedTerms));
+            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tn));
             return new MemberLookupInfo<ConstMemberDecl>(tlinfo, cci);
         }
         else {
@@ -1246,7 +1277,7 @@ class TypeCheckerRelations {
         }
 
         if(cci !== undefined) {
-            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tn.resolvedTerms));
+            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tn));
             return new MemberLookupInfo<MemberFieldDecl>(tlinfo, cci);
         }
         else {
@@ -1264,7 +1295,7 @@ class TypeCheckerRelations {
         const tdecl = tn.resolvedDeclaration as AbstractNominalTypeDecl;
         const cci = tdecl.methods.find((c) => c.name === name);
         if(cci !== undefined && cci.attributes.find((attr) => attr.name !== "override") === undefined) {
-            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tn.resolvedTerms));
+            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
@@ -1282,7 +1313,7 @@ class TypeCheckerRelations {
         const tdecl = tn.resolvedDeclaration as AbstractNominalTypeDecl;
         const cci = tdecl.methods.find((c) => c.name === name);
         if(cci !== undefined && cci.attributes.find((attr) => attr.name !== "override") === undefined) {
-            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tn.resolvedTerms));
+            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tn));
             return new MemberLookupInfo<MethodDecl>(tlinfo, cci);
         }
         else {
@@ -1300,7 +1331,7 @@ class TypeCheckerRelations {
         const tdecl = tn.resolvedDeclaration as AbstractNominalTypeDecl;
         const cci = tdecl.methods.find((c) => c.name === name);
         if(cci !== undefined && cci.attributes.find((attr) => attr.name !== "override") === undefined) {
-            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(tn.resolvedTerms));
+            const tlinfo = new TypeLookupInfo(tn, tdecl, TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tn));
             return new MemberLookupInfo<TypeFunctionDecl>(tlinfo, cci);
         }
         else {
@@ -1341,7 +1372,7 @@ class TypeCheckerRelations {
             }
 
             const pdecl = pnorm.resolvedDeclaration as ConceptTypeDecl;
-            const pterms = TypeCheckerRelations.computeNameMapperFromDirectResolvedTerms(pnorm.resolvedTerms);
+            const pterms = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(pnorm);
             pdecls.push(new TypeLookupInfo(pnorm, pdecl, pterms));
 
             //now add all of the inherited concepts
