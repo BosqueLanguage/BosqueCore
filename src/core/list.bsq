@@ -6,33 +6,33 @@ namespace List {
 
 __internal entity List<T> provides Some, Expandoable<T> {
     method size(): Nat {
-        if(ListOps.s_list_empty<T>(this)) {
+        if(ListOps::s_list_empty<T>(this)) {
             return 0n;
         }
         else {
-            return ListOps.s_list_size<T>(this);
+            return ListOps::s_list_size<T>(this);
         }
     }
 
     method empty(): Bool {
-        return ListOps.s_list_empty<T>(this);
+        return ListOps::s_list_empty<T>(this);
     }
 
     method front(): T 
-        requires !ListOps.s_list_empty<T>(this);
+        requires !ListOps::s_list_empty<T>(this);
     {
-        return ListOps.s_list_front<T>(this);
+        return ListOps::s_list_front<T>(this);
     }
 
     method back(): T 
-        requires !ListOps.s_list_empty<T>(this);
+        requires !ListOps::s_list_empty<T>(this);
     {
-        return ListOps.s_list_back<T>(this);
+        return ListOps::s_list_back<T>(this);
     }
 
     method get(i: Nat): T
-        requires i < ListOps.s_list_size<T>(this);
+        requires i < ListOps::s_list_size<T>(this);
     {
-        return ListOps.s_list_get<T>(this, i);
+        return ListOps::s_list_get<T>(this, i);
     }
 }

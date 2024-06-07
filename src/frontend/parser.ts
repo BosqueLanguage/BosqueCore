@@ -6,7 +6,7 @@ import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifi
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
-import { AllAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
 
 const { accepts, initializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -87,6 +87,7 @@ const TokenStrings = {
 
 const NAMESPACE_DECL_FIRSTS = [
     TokenStrings.Attribute,
+    TokenStrings.DocComment,
     KW_recursive, KW_recursive_q, 
     KW_function, KW_predicate, 
     KW_namespace, KW_api,
@@ -99,6 +100,7 @@ const NAMESPACE_DECL_FIRSTS = [
 
 const TYPE_DECL_FIRSTS = [
     TokenStrings.Attribute,
+    TokenStrings.DocComment,
     KW_recursive, KW_recursive_q, 
     KW_ref,
     KW_field, KW_const, KW_invariant, KW_validate, 
@@ -149,10 +151,12 @@ class Token {
 }
 
 class ParserError {
+    readonly srcfile: string;
     readonly sinfo: SourceInfo;
     readonly message: string;
 
-    constructor(sinfo: SourceInfo, message: string) {
+    constructor(srcfile: string, sinfo: SourceInfo, message: string) {
+        this.srcfile = srcfile;
         this.sinfo = sinfo;
         this.message = message;
     }
@@ -167,152 +171,76 @@ enum LexerStateScanMode {
     DisabledElse
 }
 
-class LexerState {
-    readonly modetag: string;
-    readonly scanmode: LexerStateScanMode;
+class Lexer {
+    readonly iscore: boolean;
+    readonly srcfile: string;
 
+    readonly macrodefs: string[];
+    readonly scanmode: LexerStateScanMode[];
+
+    readonly input: string;
     readonly epos: number;
+    cpos: number;
 
     cline: number;
     linestart: number;
-    cpos: number;
+    
     tokens: Token[];
-    errors: ParserError[] = [];
+    errors: ParserError[];
 
-    readonly attributes: string[];
-
-    constructor(modetag: string, scanmode: LexerStateScanMode, epos: number, cline: number, linestart: number, cpos: number, tokens: Token[], attributes: string[]) {
-        this.modetag = modetag;
-        this.scanmode = scanmode;
-
-        this.epos = epos;
-
-        this.cline = cline;
-        this.linestart = linestart;
-        this.cpos = cpos;
-        this.tokens = tokens;
-
-        this.attributes = attributes;
-    }
-
-    static createFileToplevelState(epos: number): LexerState {
-        return new LexerState("toplevel", LexerStateScanMode.Enabled, epos, 1, 0, 0, [], AllAttributes);
-    }
-
-    cloneForNested(mode: string, epos: number, attribs: string[] | undefined): LexerState {
-        return new LexerState(mode, this.scanmode, epos, this.cline, this.linestart, this.cpos, [...this.tokens], attribs || []);
-    }
-
-    cloneForTry(mode: string): LexerState {
-        return new LexerState(mode, this.scanmode, this.epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes);
-    }
-
-    cloneForMacro(smode: LexerStateScanMode): LexerState {
-        return new LexerState(this.modetag, smode, this.epos, this.cline, this.linestart, this.cpos, [...this.tokens], this.attributes);
-    }
-
-    moveStateIntoParent(child: LexerState) {
-        this.cline = child.cline;
-        this.linestart = child.linestart;
-        this.cpos = child.cpos;
-        this.tokens = child.tokens;
-        this.errors = child.errors;
-    }
-
-    pushError(sinfo: SourceInfo, message: string) {
-        if(this.scanmode === LexerStateScanMode.Enabled || this.scanmode === LexerStateScanMode.EnabledIf || this.scanmode === LexerStateScanMode.EnabledElse) {
-            this.errors.push(new ParserError(sinfo, message));
-        }
-    }
-
-    pushToken(token: Token) {
-        if(this.scanmode === LexerStateScanMode.Enabled || this.scanmode === LexerStateScanMode.EnabledIf || this.scanmode === LexerStateScanMode.EnabledElse) {
-            this.tokens.push(token);
-        }
-    }
-
-    recover() {
-        this.cpos = this.epos;
-        this.tokens = [];
-    }
-
-    skipToPosition(pos: number | undefined) {
-        this.cpos = pos || this.epos;
-        this.tokens = [];
-    }
-
-    hasErrors(): boolean {
-        return this.errors.length > 0;
-    }
-}
-
-class Lexer {
-    readonly macrodefs: string[];
-    readonly input: string;
-
-
-    readonly stateStack: LexerState[];
-
-    currentState(): LexerState {
-        return this.stateStack[this.stateStack.length - 1];
-    }
-
-    prepStateStackForNested(mode: string, epos: number, attribs: string[] | undefined) {
-        this.stateStack.push(this.currentState().cloneForNested(mode, epos, attribs));
-    }
-
-    prepStateStackForTry(mode: string) {
-        this.stateStack.push(this.currentState().cloneForTry(mode + "-try"));
-    }
-
-    prepStateStackForMacro(smode: LexerStateScanMode) {
-        this.stateStack.push(this.currentState().cloneForMacro(smode));
-    }
-
-    popStateIntoParentOk() {
-        const cf = this.stateStack.pop() as LexerState;
-        this.currentState().moveStateIntoParent(cf);
-    }
-
-    popStateReset() {
-        this.stateStack.pop();
-    }
-
-    constructor(input: string, macrodefs: string[], istate: LexerState) {
+    constructor(iscore: boolean, srcfile: string, input: string, macrodefs: string[]) {
+        this.iscore = iscore;
+        this.srcfile = srcfile;
         this.macrodefs = macrodefs;
+        this.scanmode = [LexerStateScanMode.Enabled];
+
         this.input = input;
         initializeLexer(this.input);
 
-        this.stateStack = [istate];
+        this.epos = this.input.length;
+        this.cpos = 0;
+
+        this.cline = 1;
+        this.linestart = 0;
+
+        this.tokens = [];
+        this.errors = [];
     }
 
     ////
     //Helpers
-    private recordLexToken(epos: number, kind: string) {
-        const cstate = this.currentState();
-
-        cstate.pushToken(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, kind)); //set data to kind string
-        cstate.cpos = epos;
-    }
-
-    private recordLexTokenWData(epos: number, kind: string, data: string) {
-        const cstate = this.currentState();
-
-        cstate.pushToken(new Token(cstate.cline, cstate.cpos - cstate.linestart, cstate.cpos, epos - cstate.cpos, kind, data));
-        cstate.cpos = epos;
-    }
-
-    private updatePositionInfo(spos: number, epos: number) {
-        const cstate = this.currentState();
-
-        for (let i = spos; i < epos; ++i) {
-            if (this.input[i] === "\n") {
-                cstate.cline++;
-                cstate.linestart = i + 1;
-            }
+    pushError(sinfo: SourceInfo, message: string) {
+        const cmode = this.scanmode[this.scanmode.length - 1];
+        if(cmode === LexerStateScanMode.Enabled || cmode === LexerStateScanMode.EnabledIf || cmode === LexerStateScanMode.EnabledElse) {
+            this.errors.push(new ParserError(this.srcfile, sinfo, message));
         }
     }
 
+    pushToken(token: Token) {
+        const cmode = this.scanmode[this.scanmode.length - 1];
+        if(cmode === LexerStateScanMode.Enabled || cmode === LexerStateScanMode.EnabledIf || cmode === LexerStateScanMode.EnabledElse) {
+            this.tokens.push(token);
+        }
+    }
+
+    private recordLexToken(epos: number, kind: string) {
+        this.pushToken(new Token(this.cline, this.cpos - this.linestart, this.cpos, epos - this.cpos, kind, kind)); //set data to kind string
+        this.cpos = epos;
+    }
+
+    private recordLexTokenWData(epos: number, kind: string, data: string) {
+        this.pushToken(new Token(this.cline, this.cpos - this.linestart, this.cpos, epos - this.cpos, kind, data));
+        this.cpos = epos;
+    }
+
+    private updatePositionInfo(spos: number, epos: number) {
+        for (let i = spos; i < epos; ++i) {
+            if (this.input[i] === "\n") {
+                this.cline++;
+                this.linestart = i + 1;
+            }
+        }
+    }
     
     private static readonly _s_resourceUseModRe = '/"["[?!+*-]+"]"/';
 
@@ -324,67 +252,61 @@ class Lexer {
 
     private static readonly _s_whitespaceRe = '/[ %n;%v;%f;%r;%t;]+/';
     private tryLexWS(): boolean {
-        const cstate = this.currentState();
-
-        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, cstate.cpos);
+        const arop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.cpos);
         if (arop !== null) {
             return false;
         }
 
-        const frop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, cstate.cpos);
+        const frop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.cpos);
         if (frop !== null) {
             return false;
         }
 
-        const m = lexFront(Lexer._s_whitespaceRe, cstate.cpos);
+        const m = lexFront(Lexer._s_whitespaceRe, this.cpos);
         if (m === null) {
             return false;
         }
 
-        this.updatePositionInfo(cstate.cpos, cstate.cpos + m.length);
-        cstate.cpos += m.length;
+        this.updatePositionInfo(this.cpos, this.cpos + m.length);
+        this.cpos += m.length;
 
         return true;
     }
 
     private tryLexLineComment(): boolean {
-        const cstate = this.currentState();
-
-        const m = this.input.startsWith("%%", cstate.cpos);
+        const m = this.input.startsWith("%%", this.cpos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, cstate.epos).indexOf("\n", cstate.cpos);
+        let epos = this.input.slice(0, this.epos).indexOf("\n", this.cpos);
 
         if (epos === -1) {
-            this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = cstate.epos;
+            this.updatePositionInfo(this.cpos, epos);
+            this.cpos = this.epos;
         }
         else {
             epos++;
 
-            this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = epos;
+            this.updatePositionInfo(this.cpos, epos);
+            this.cpos = epos;
         }
 
         return true;
     }
 
     private tryLexDocComment(): boolean {
-        const cstate = this.currentState();
-
-        const m = this.input.startsWith("%** ", cstate.cpos);
+        const m = this.input.startsWith("%** ", this.cpos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, cstate.epos).indexOf(" **%", cstate.cpos + 3);
+        let epos = this.input.slice(0, this.epos).indexOf(" **%", this.cpos + 4);
         if (epos !== -1) {
-            epos += 3;
+            epos += 4;
 
-            this.updatePositionInfo(cstate.cpos, epos);
-            this.recordLexTokenWData(epos, TokenStrings.DocComment, this.input.substring(cstate.cpos, epos));
+            this.updatePositionInfo(this.cpos, epos);
+            this.recordLexTokenWData(epos, TokenStrings.DocComment, this.input.substring(this.cpos, epos));
             return true;
         }
 
@@ -392,25 +314,23 @@ class Lexer {
     }
 
     private tryLexSpanComment(): boolean {
-        const cstate = this.currentState();
-
-        const m = this.input.startsWith("%*", cstate.cpos);
+        const m = this.input.startsWith("%*", this.cpos);
         if (!m) {
             return false;
         }
 
-        let epos = this.input.slice(0, cstate.epos).indexOf("*%", cstate.cpos + 2);
+        let epos = this.input.slice(0, this.epos).indexOf("*%", this.cpos + 2);
         if (epos === -1) {
-            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated span comment");
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated span comment");
             
-            this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = cstate.epos;
+            this.updatePositionInfo(this.cpos, epos);
+            this.cpos = this.epos;
         }
         else {
             epos += 2;
 
-            this.updatePositionInfo(cstate.cpos, epos);
-            cstate.cpos = epos;
+            this.updatePositionInfo(this.cpos, epos);
+            this.cpos = epos;
         }
 
         return true;
@@ -466,28 +386,24 @@ class Lexer {
 
     private static readonly _s_redundantSignRE = /^[+-]{2,}/y;
     private checkRedundantSigns() {
-        const cstate = this.currentState();
-
-        Lexer._s_redundantSignRE.lastIndex = cstate.cpos;
+        Lexer._s_redundantSignRE.lastIndex = this.cpos;
         const mm = Lexer._s_redundantSignRE.exec(this.input);
         if(mm !== null) {
-            cstate.errors.push(new ParserError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Redundant sign"));
-            cstate.cpos = Math.min(cstate.epos, cstate.cpos + mm.length - 1);
+            this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Redundant sign"));
+            this.cpos = Math.min(this.epos, this.cpos + mm.length - 1);
         }
     }
 
     private tryLexFloatCompositeLikeToken(): boolean {
-        const cstate = this.currentState();
-
-        const mcomplex = lexFront(Lexer._s_complexRe, cstate.cpos);
+        const mcomplex = lexFront(Lexer._s_complexRe, this.cpos);
         if(mcomplex !== null) {
-            this.recordLexTokenWData(cstate.cpos + mcomplex.length, TokenStrings.Complex, mcomplex);
+            this.recordLexTokenWData(this.cpos + mcomplex.length, TokenStrings.Complex, mcomplex);
             return true;
         }
 
-        const mlatlong = lexFront(Lexer._s_latlongRe, cstate.cpos);
+        const mlatlong = lexFront(Lexer._s_latlongRe, this.cpos);
         if(mlatlong !== null) {
-            this.recordLexTokenWData(cstate.cpos + mlatlong.length, TokenStrings.LatLong, mlatlong);
+            this.recordLexTokenWData(this.cpos + mlatlong.length, TokenStrings.LatLong, mlatlong);
             return true;
         }
 
@@ -495,41 +411,39 @@ class Lexer {
     }
 
     private tryLexFloatLikeToken(): boolean {
-        const cstate = this.currentState();
-
-        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, cstate.cpos);
+        const mdecimaldegree = lexFront(Lexer._s_decimalDegreeRe, this.cpos);
         if(mdecimaldegree !== null) {
-            this.recordLexTokenWData(cstate.cpos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
+            this.recordLexTokenWData(this.cpos + mdecimaldegree.length, TokenStrings.DecimalDegree, mdecimaldegree);
             return true;
         }
 
-        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, cstate.cpos);
+        const mdeltaseconds = lexFront(Lexer._s_deltasecondsRE, this.cpos);
         if(mdeltaseconds !== null) {
-            this.recordLexTokenWData(cstate.cpos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
+            this.recordLexTokenWData(this.cpos + mdeltaseconds.length, TokenStrings.DeltaSeconds, mdeltaseconds);
             return true;
         }
 
-        const mdecimal = lexFront(Lexer._s_decimalRe, cstate.cpos);
+        const mdecimal = lexFront(Lexer._s_decimalRe, this.cpos);
         if(mdecimal !== null) {
-            this.recordLexTokenWData(cstate.cpos + mdecimal.length, TokenStrings.Decimal, mdecimal);
+            this.recordLexTokenWData(this.cpos + mdecimal.length, TokenStrings.Decimal, mdecimal);
             return true;
         }
 
-        const mfloat = lexFront(Lexer._s_floatRe, cstate.cpos);
+        const mfloat = lexFront(Lexer._s_floatRe, this.cpos);
         if(mfloat !== null) {
-            this.recordLexTokenWData(cstate.cpos + mfloat.length, TokenStrings.Float, mfloat);
+            this.recordLexTokenWData(this.cpos + mfloat.length, TokenStrings.Float, mfloat);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, cstate.cpos);
+        const mnumberino = lexFront(Lexer._s_floatTaggedNumberinoRe, this.cpos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
+            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.TaggedNumberinoFloat, mnumberino);
             return true;
         }
 
-        const unumberino = lexFront(Lexer._s_floatNumberinoRe, cstate.cpos);
+        const unumberino = lexFront(Lexer._s_floatNumberinoRe, this.cpos);
         if(unumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
+            this.recordLexTokenWData(this.cpos + unumberino.length, TokenStrings.NumberinoFloat, unumberino);
             return true;
         }
 
@@ -537,17 +451,15 @@ class Lexer {
     }
 
     private tryLexIntegralCompositeLikeToken(): boolean {
-        const cstate = this.currentState();
-
-        const mrational = lexFront(Lexer._s_rationalRe, cstate.cpos);
+        const mrational = lexFront(Lexer._s_rationalRe, this.cpos);
         if(mrational !== null) {
-            this.recordLexTokenWData(cstate.cpos + mrational.length, TokenStrings.Rational, mrational);
+            this.recordLexTokenWData(this.cpos + mrational.length, TokenStrings.Rational, mrational);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, cstate.cpos);
+        const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, this.cpos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
+            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
             return true;
         }
 
@@ -555,65 +467,63 @@ class Lexer {
     }
 
     private tryLexIntegralLikeToken(): boolean {
-        const cstate = this.currentState();
-
-        const mtick = lexFront(Lexer._s_ticktimeRe, cstate.cpos);
+        const mtick = lexFront(Lexer._s_ticktimeRe, this.cpos);
         if(mtick !== null) {
-            this.recordLexTokenWData(cstate.cpos + mtick.length, TokenStrings.TickTime, mtick);
+            this.recordLexTokenWData(this.cpos + mtick.length, TokenStrings.TickTime, mtick);
             return true;
         }
 
-        const mlogical = lexFront(Lexer._s_logicaltimeRe, cstate.cpos);
+        const mlogical = lexFront(Lexer._s_logicaltimeRe, this.cpos);
         if(mlogical !== null) {
-            this.recordLexTokenWData(cstate.cpos + mlogical.length, TokenStrings.LogicalTime, mlogical);
+            this.recordLexTokenWData(this.cpos + mlogical.length, TokenStrings.LogicalTime, mlogical);
             return true;
         }
 
-        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, cstate.cpos);
+        const m_deltatick = lexFront(Lexer._s_deltaticktimeRE, this.cpos);
         if(m_deltatick !== null) {
-            this.recordLexTokenWData(cstate.cpos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
+            this.recordLexTokenWData(this.cpos + m_deltatick.length, TokenStrings.DeltaTickTime, m_deltatick);
             return true;
         }
 
-        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, cstate.cpos);
+        const m_deltalogical = lexFront(Lexer._s_deltalogicaltimeRE, this.cpos);
         if(m_deltalogical !== null) {
-            this.recordLexTokenWData(cstate.cpos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
+            this.recordLexTokenWData(this.cpos + m_deltalogical.length, TokenStrings.DeltaLogicalTime, m_deltalogical);
             return true;
         }
         
-        const mint = lexFront(Lexer._s_intRe, cstate.cpos);
+        const mint = lexFront(Lexer._s_intRe, this.cpos);
         if(mint !== null) {
-            this.recordLexTokenWData(cstate.cpos + mint.length, TokenStrings.Int, mint);
+            this.recordLexTokenWData(this.cpos + mint.length, TokenStrings.Int, mint);
             return true;
         }
 
-        const mnat = lexFront(Lexer._s_natRe, cstate.cpos);
+        const mnat = lexFront(Lexer._s_natRe, this.cpos);
         if(mnat !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnat.length, TokenStrings.Nat, mnat);
+            this.recordLexTokenWData(this.cpos + mnat.length, TokenStrings.Nat, mnat);
             return true;
         }
 
-        const mbigint = lexFront(Lexer._s_bigintRe, cstate.cpos);
+        const mbigint = lexFront(Lexer._s_bigintRe, this.cpos);
         if(mbigint !== null) {
-            this.recordLexTokenWData(cstate.cpos + mbigint.length, TokenStrings.BigInt, mbigint);
+            this.recordLexTokenWData(this.cpos + mbigint.length, TokenStrings.BigInt, mbigint);
             return true;
         }
 
-        const mbignat = lexFront(Lexer._s_bignatRe, cstate.cpos);
+        const mbignat = lexFront(Lexer._s_bignatRe, this.cpos);
         if(mbignat !== null) {
-            this.recordLexTokenWData(cstate.cpos + mbignat.length, TokenStrings.BigNat, mbignat);
+            this.recordLexTokenWData(this.cpos + mbignat.length, TokenStrings.BigNat, mbignat);
             return true;
         }
 
-        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, cstate.cpos);
+        const mtnumberino = lexFront(Lexer._s_intTaggedNumberinoRe, this.cpos);
         if(mtnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
+            this.recordLexTokenWData(this.cpos + mtnumberino.length, TokenStrings.TaggedNumberinoInt, mtnumberino);
             return true;
         }
 
-        const mnumberino = lexFront(Lexer._s_intNumberinoRe, cstate.cpos);
+        const mnumberino = lexFront(Lexer._s_intNumberinoRe, this.cpos);
         if(mnumberino !== null) {
-            this.recordLexTokenWData(cstate.cpos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
+            this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.NumberinoInt, mnumberino);
             return true;
         }
 
@@ -648,11 +558,9 @@ class Lexer {
 
     private static _s_bytebufferRe = `/"0x["[0-9a-fA-F]+"]"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexByteBuffer(): boolean {
-        const cstate = this.currentState();
-
-        const m = lexFront(Lexer._s_bytebufferRe, cstate.cpos);
+        const m = lexFront(Lexer._s_bytebufferRe, this.cpos);
         if(m !== null) {
-            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.ByteBuffer, m);
+            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.ByteBuffer, m);
             return true;
         }
 
@@ -661,11 +569,9 @@ class Lexer {
 
     private static _s_uuidRe = `/"uuid"[47]"{"[a-fA-F0-9]{8}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{4}"-"[a-fA-F0-9]{12}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexUUID(): boolean {
-        const cstate = this.currentState();
-
-        const m = lexFront(Lexer._s_uuidRe, cstate.cpos);
+        const m = lexFront(Lexer._s_uuidRe, this.cpos);
         if(m !== null) {
-            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.UUIDValue, m);
+            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.UUIDValue, m);
             return true;
         }
 
@@ -674,29 +580,24 @@ class Lexer {
 
     private static _s_shaRe = `/"sha3{"[a-fA-F0-9]{64}"}"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private tryLexHashCode(): boolean {
-        const cstate = this.currentState();
-
-        const m = lexFront(Lexer._s_shaRe, cstate.cpos);
+        const m = lexFront(Lexer._s_shaRe, this.cpos);
         if(m !== null) {
-            this.recordLexTokenWData(cstate.cpos + m.length, TokenStrings.ShaHashcode, m);
+            this.recordLexTokenWData(this.cpos + m.length, TokenStrings.ShaHashcode, m);
             return true;
         }
 
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /^_?[a-zA-Z(]/y;
-
+    private static readonly _s_literalGeneralTagRE = /^(_[_a-zA-Z])|[(]/y;
     private tryLexUnicodeString(): boolean {
-        const cstate = this.currentState();
-
-        let ncpos = cstate.cpos;
+        let ncpos = this.cpos;
         let istemplate = false;
-        if(this.input.startsWith('$"', cstate.cpos)) {
+        if(this.input.startsWith('$"', this.cpos)) {
             ncpos += 2;
             istemplate = true;
         }
-        else if(this.input.startsWith('"', cstate.cpos)) {
+        else if(this.input.startsWith('"', this.cpos)) {
             ncpos += 1;
         }
         else {
@@ -704,10 +605,10 @@ class Lexer {
         }
 
 
-        let epos = this.input.slice(0, cstate.epos).indexOf('"', ncpos);
+        let epos = this.input.slice(0, this.epos).indexOf('"', ncpos);
         if(epos === -1) {
-            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated string literal");
-            this.recordLexToken(cstate.epos, TokenStrings.Error);
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated string literal");
+            this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
@@ -719,10 +620,10 @@ class Lexer {
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
                 if(istemplate) {
-                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Template strings cannot have type tags");
+                    this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Template strings cannot have type tags");
                 }
                 else {
-                    if(!mtag[0].startsWith("_")) {
+                    if(mtag[0].startsWith("(")) {
                         strval += "[OF]"; //put special marker on back of string value for later
                     }
                     else {
@@ -732,7 +633,7 @@ class Lexer {
                 }   
             }
 
-            this.updatePositionInfo(cstate.cpos, epos);
+            this.updatePositionInfo(this.cpos, epos);
             this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateString : TokenStrings.String, strval);
             return true;
         }
@@ -740,34 +641,32 @@ class Lexer {
 
     static _s_validExStringChars = /[ -~]*/;
     private tryLexExString(): boolean {
-        const cstate = this.currentState();
-
-        let ncpos = cstate.cpos;
+        let ncpos = this.cpos;
         let istemplate = false;
-        if(this.input.startsWith("$'", cstate.cpos)) {
+        if(this.input.startsWith("$'", this.cpos)) {
             ncpos += 2;
             istemplate = true;
         }
-        else if(this.input.startsWith("'", cstate.cpos)) {
+        else if(this.input.startsWith("'", this.cpos)) {
             ncpos += 1;
         }
         else {
             return false;
         }
 
-        let epos = this.input.slice(0, cstate.epos).indexOf("'", ncpos);
+        let epos = this.input.slice(0, this.epos).indexOf("'", ncpos);
 
-        const mstr = this.input.slice(ncpos, cstate.epos);
+        const mstr = this.input.slice(ncpos, this.epos);
         if(Lexer._s_validExStringChars.test(mstr)) {
-            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Invalid chacaters in Ex string literal");
-            this.recordLexToken(cstate.epos, TokenStrings.Error);
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Invalid chacaters in Ex string literal");
+            this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
 
         if(epos === -1) {
-            cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated Ex string literal");
-            this.recordLexToken(cstate.epos, TokenStrings.Error);
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated Ex string literal");
+            this.recordLexToken(this.epos, TokenStrings.Error);
 
             return true;
         }
@@ -779,10 +678,10 @@ class Lexer {
             const mtag = Lexer._s_literalGeneralTagRE.exec(this.input);
             if(mtag !== null) {
                 if(istemplate) {
-                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Template strings cannot have type tags");
+                    this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Template strings cannot have type tags");
                 }
                 else {
-                    if(!mtag[0].startsWith("_")) {
+                    if(mtag[0].startsWith("(")) {
                         strval += "[OF]"; //put special marker on back of string value for later
                     }
                     else {
@@ -792,7 +691,7 @@ class Lexer {
                 }   
             }
 
-            this.updatePositionInfo(cstate.cpos, epos);
+            this.updatePositionInfo(this.cpos, epos);
             this.recordLexTokenWData(epos, istemplate ? TokenStrings.TemplateExString : TokenStrings.ExString, strval);
             return true;
         }
@@ -814,27 +713,23 @@ class Lexer {
 
     private static _s_regexRe = '/"%slash;"[!-.0-~ %t;%n;]+"%slash;"[ap]?/';
     private tryLexRegex() {
-        const cstate = this.currentState();
-
-        const rem = lexFront(Lexer._s_regexRe, cstate.cpos);
+        const rem = lexFront(Lexer._s_regexRe, this.cpos);
         if(rem === null) {
             return false;
         }
 
-        this.recordLexTokenWData(cstate.cpos + rem.length, TokenStrings.Regex, rem);
+        this.recordLexTokenWData(this.cpos + rem.length, TokenStrings.Regex, rem);
         return true;
     }
 
     
     private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /^_?[a-zA-Z(]/y;
+    private static readonly _s_literalPathTagRE = /^(_[_a-zA-Z])|[(*]/y;
     private tryLexPath() {
-        const cstate = this.currentState();
-
-        Lexer._s_pathRe.lastIndex = cstate.cpos;
+        Lexer._s_pathRe.lastIndex = this.cpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
         if(mpth !== null) {
-            let epos = cstate.cpos + mpth[0].length;
+            let epos = this.cpos + mpth[0].length;
             let pthval = mpth[0];
 
             Lexer._s_literalPathTagRE.lastIndex = epos;
@@ -844,16 +739,20 @@ class Lexer {
                     epos++; //eat the underscore and include it in the string
                     pthval += "_"; 
                 }
-                else if(!mtag[0].startsWith("_")) {
+                else if(mtag[0].startsWith("(")) {
                     pthval += "[OF]"; //put special marker on back of string value for later
                 }
                 else {
                     //implicit path of URI
                     pthval += "*";
+
+                    if(mtag[0] === "*") {
+                        epos++; //eat the *
+                    }
                 }
             }
 
-            this.updatePositionInfo(cstate.cpos, epos);
+            this.updatePositionInfo(this.cpos, epos);
             this.recordLexTokenWData(epos, TokenStrings.PathItem, pthval);
             return true;
         }
@@ -872,35 +771,33 @@ class Lexer {
     private static _s_timestampRE = `/${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTime() {
-        const cstate = this.currentState();
-
-        const mdt = lexFront(Lexer._s_datatimeRE, cstate.cpos);
+        const mdt = lexFront(Lexer._s_datatimeRE, this.cpos);
         if(mdt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mdt.length, TokenStrings.DateTime, mdt);
+            this.recordLexTokenWData(this.cpos + mdt.length, TokenStrings.DateTime, mdt);
             return true;
         }
 
-        const mutcdt = lexFront(Lexer._s_utcdatetimeRE, cstate.cpos);
+        const mutcdt = lexFront(Lexer._s_utcdatetimeRE, this.cpos);
         if(mutcdt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mutcdt.length, TokenStrings.UTCDateTime, mutcdt);
+            this.recordLexTokenWData(this.cpos + mutcdt.length, TokenStrings.UTCDateTime, mutcdt);
             return true;
         }
 
-        const mts = lexFront(Lexer._s_timestampRE, cstate.cpos);
+        const mts = lexFront(Lexer._s_timestampRE, this.cpos);
         if(mts !== null) {
-            this.recordLexTokenWData(cstate.cpos + mts.length, TokenStrings.Timestamp, mts);
+            this.recordLexTokenWData(this.cpos + mts.length, TokenStrings.Timestamp, mts);
             return true;
         }
 
-        const mpd = lexFront(Lexer._s_plaindateRE, cstate.cpos);
+        const mpd = lexFront(Lexer._s_plaindateRE, this.cpos);
         if(mpd !== null) {
-            this.recordLexTokenWData(cstate.cpos + mpd.length, TokenStrings.PlainDate, mpd);
+            this.recordLexTokenWData(this.cpos + mpd.length, TokenStrings.PlainDate, mpd);
             return true;
         }
 
-        const mpt = lexFront(Lexer._s_plaintimeRE, cstate.cpos);
+        const mpt = lexFront(Lexer._s_plaintimeRE, this.cpos);
         if(mpt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mpt.length, TokenStrings.PlainTime, mpt);
+            this.recordLexTokenWData(this.cpos + mpt.length, TokenStrings.PlainTime, mpt);
             return true;
         }
 
@@ -913,35 +810,33 @@ class Lexer {
     private static _s_timestampDeltaRE = `/[+-]${Lexer._s_datevalueRE}"T"${Lexer._s_timevalueRE}"."([0-9]{3})"Z"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private tryLexDateTimeDelta() {
-        const cstate = this.currentState();
-
-        const mdt = lexFront(Lexer._s_datatimeDeltaRE, cstate.cpos);
+        const mdt = lexFront(Lexer._s_datatimeDeltaRE, this.cpos);
         if(mdt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mdt.length, TokenStrings.DeltaDateTime, mdt);
+            this.recordLexTokenWData(this.cpos + mdt.length, TokenStrings.DeltaDateTime, mdt);
             return true;
         }
 
-        const mutcdt = lexFront(Lexer._s_utcdatetimeDeltaRE, cstate.cpos);
+        const mutcdt = lexFront(Lexer._s_utcdatetimeDeltaRE, this.cpos);
         if(mutcdt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mutcdt.length, TokenStrings.DeltaUTCDateTime, mutcdt);
+            this.recordLexTokenWData(this.cpos + mutcdt.length, TokenStrings.DeltaUTCDateTime, mutcdt);
             return true;
         }
 
-        const mts = lexFront(Lexer._s_timestampDeltaRE, cstate.cpos);
+        const mts = lexFront(Lexer._s_timestampDeltaRE, this.cpos);
         if(mts !== null) {
-            this.recordLexTokenWData(cstate.cpos + mts.length, TokenStrings.DeltaTimestamp, mts);
+            this.recordLexTokenWData(this.cpos + mts.length, TokenStrings.DeltaTimestamp, mts);
             return true;
         }
 
-        const mpd = lexFront(Lexer._s_plaindateDeltaRE, cstate.cpos);
+        const mpd = lexFront(Lexer._s_plaindateDeltaRE, this.cpos);
         if(mpd !== null) {
-            this.recordLexTokenWData(cstate.cpos + mpd.length, TokenStrings.DeltaPlainDate, mpd);
+            this.recordLexTokenWData(this.cpos + mpd.length, TokenStrings.DeltaPlainDate, mpd);
             return true;
         }
 
-        const mpt = lexFront(Lexer._s_plaintimeDeltaRE, cstate.cpos);
+        const mpt = lexFront(Lexer._s_plaintimeDeltaRE, this.cpos);
         if(mpt !== null) {
-            this.recordLexTokenWData(cstate.cpos + mpt.length, TokenStrings.DeltaPlainTime, mpt);
+            this.recordLexTokenWData(this.cpos + mpt.length, TokenStrings.DeltaPlainTime, mpt);
             return true;
         }
 
@@ -963,31 +858,29 @@ class Lexer {
     }
 
     private tryLexSymbol() {
-        const cstate = this.currentState();
-
-        const usemodop = lexFront(Lexer._s_resourceUseModRe, cstate.cpos);
-        const spaceop = lexFront(Lexer._s_spaceSensitiveOpsRe, cstate.cpos);
-        const frontop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, cstate.cpos);
+        const usemodop = lexFront(Lexer._s_resourceUseModRe, this.cpos);
+        const spaceop = lexFront(Lexer._s_spaceSensitiveOpsRe, this.cpos);
+        const frontop = lexFront(Lexer._s_spaceSensitiveFrontOpsRe, this.cpos);
         if(usemodop !== null) {
-            this.recordLexTokenWData(cstate.cpos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
+            this.recordLexTokenWData(this.cpos + usemodop.length, TokenStrings.ResourceUseMod, usemodop);
             return true;
         }
         else if(spaceop !== null) {
             const realstr = " " + spaceop.trim() + " ";
 
-            this.recordLexToken(cstate.cpos + spaceop.length, realstr);
+            this.recordLexToken(this.cpos + spaceop.length, realstr);
             return true; 
         }
         else if(frontop !== null) {
             const realstr = " " + spaceop.trim();
 
-            this.recordLexToken(cstate.cpos + frontop.length, realstr);
+            this.recordLexToken(this.cpos + frontop.length, realstr);
             return true; 
         }
         else {
-            const mm = StandardSymbols.find((value) => this.input.startsWith(value, cstate.cpos)) || ParenSymbols.find((value) => this.input.startsWith(value, cstate.cpos));
+            const mm = StandardSymbols.find((value) => this.input.startsWith(value, this.cpos)) || ParenSymbols.find((value) => this.input.startsWith(value, this.cpos));
             if(mm !== undefined) {
-                this.recordLexToken(cstate.cpos + mm.length, mm);
+                this.recordLexToken(this.cpos + mm.length, mm);
                 return true;
             }
 
@@ -997,23 +890,24 @@ class Lexer {
     }
 
     private tryLexAttribute() {
-        const cstate = this.currentState();
-        const attrsopt = cstate.attributes;
-
-        const mm = attrsopt.find((value) => this.input.startsWith(value, cstate.cpos));
+        const mm = AllAttributes.find((value) => this.input.startsWith(value, this.cpos));
+        if(!this.iscore && CoreOnlyAttributes.includes(mm as string)) {
+            return false;
+        }
+        
         if(mm !== undefined) {
-            let epos = cstate.cpos + mm.length;
+            let epos = this.cpos + mm.length;
             if(this.input.startsWith("[", epos)) {
-                epos = this.input.slice(epos, cstate.epos).indexOf("]", epos);
+                epos = this.input.slice(epos, this.epos).indexOf("]", epos);
                 if(epos === -1) {
-                    cstate.pushError(new SourceInfo(cstate.cline, cstate.linestart, cstate.cpos, cstate.epos - cstate.cpos), "Unterminated attribute");
-                    this.recordLexToken(cstate.epos, TokenStrings.Error);
+                    this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unterminated attribute");
+                    this.recordLexToken(this.epos, TokenStrings.Error);
                     return true;
                 }
                 epos++;
             }
 
-            this.recordLexTokenWData(epos, TokenStrings.Attribute, this.input.substring(cstate.cpos, epos));
+            this.recordLexTokenWData(epos, TokenStrings.Attribute, this.input.substring(this.cpos, epos));
             return true;
         }
 
@@ -1021,31 +915,27 @@ class Lexer {
     }
 
     private processIdentifierOptions(idm: string): boolean {
-        const cstate = this.currentState();
-
         if(Lexer.isTemplateName(idm)) {
-            this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.Template, idm);
+            this.recordLexTokenWData(this.cpos + idm.length, TokenStrings.Template, idm);
             return true;
         }
         else {        
-            this.recordLexTokenWData(cstate.cpos + idm.length, TokenStrings.IdentifierName, idm);
+            this.recordLexTokenWData(this.cpos + idm.length, TokenStrings.IdentifierName, idm);
             return true;
         }
     }
 
-    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[a-zA-Z(]?/`;
-    private static readonly _s_identiferName = '/("$_")|("$"?[a-zA-Z][_a-zA-Z0-9]*)/';
+    private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[_a-zA-Z(]/`;
+    private static readonly _s_identiferName = '/("$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
-        const cstate = this.currentState();
-
-        const mtb = lexFront(Lexer._s_taggedBooleanRE, cstate.cpos);
+        const mtb = lexFront(Lexer._s_taggedBooleanRE, this.cpos);
         if (mtb !== null) {
-            this.recordLexTokenWData(cstate.cpos + mtb.length, TokenStrings.TaggedBoolean, mtb);
+            this.recordLexTokenWData(this.cpos + mtb.length, TokenStrings.TaggedBoolean, mtb);
             return true;
         }
 
-        const identifiermatch = lexFront(Lexer._s_identiferName, cstate.cpos);
-        const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, cstate.cpos));
+        const identifiermatch = lexFront(Lexer._s_identiferName, this.cpos);
+        const kwmatch = KeywordStrings.find((value) => this.input.startsWith(value, this.cpos));
 
         if(identifiermatch === null && kwmatch === undefined) {
             return false;
@@ -1055,7 +945,7 @@ class Lexer {
             return this.processIdentifierOptions(identifiermatch);
         }
         else if(identifiermatch === null && kwmatch !== undefined) {
-            this.recordLexToken(cstate.cpos + kwmatch.length, kwmatch);
+            this.recordLexToken(this.cpos + kwmatch.length, kwmatch);
             return true;
         }
         else {
@@ -1066,7 +956,7 @@ class Lexer {
                 return this.processIdentifierOptions(nnid);
             }
             else {
-                this.recordLexToken(cstate.cpos + nnkw.length, nnkw);
+                this.recordLexToken(this.cpos + nnkw.length, nnkw);
                 return true;
             }
         }
@@ -1074,14 +964,12 @@ class Lexer {
 
     private static readonly _s_macroRe = '/("#if"" "+([A-Z][_A-Z0-9]*)|"#else"|"#endif")/';
     tryLexMacroOp(): [string, string | undefined] | undefined {
-        const cstate = this.currentState();
-
-        const m = lexFront(Lexer._s_macroRe, cstate.cpos);
+        const m = lexFront(Lexer._s_macroRe, this.cpos);
         if (m === null) {
             return undefined;
         }
 
-        cstate.cpos += m.length;
+        this.cpos += m.length;
 
         if(m.slice(0, "#if".length) === "#if") {
             return ["#if", m.slice("#if".length).trim()];
@@ -1091,44 +979,36 @@ class Lexer {
         }
     }
 
-    lexk(k: number): Token[] {
-        let cstate = this.currentState();
-        if (cstate.tokens.length > k) {
-            return cstate.tokens;
-        }
-
-        while (cstate.cpos < cstate.epos && cstate.tokens.length < k) {
+    lex(): Token[] {
+        while (this.cpos < this.epos) {
             const macro = this.tryLexMacroOp();
             if(macro !== undefined) {
                 if(macro[0] === "#if") {
                     const ifenabled = this.macrodefs.includes(macro[1] as string);
-                    const cenabled = cstate.scanmode === LexerStateScanMode.Enabled || cstate.scanmode === LexerStateScanMode.EnabledIf || cstate.scanmode === LexerStateScanMode.EnabledElse;
+                    const cmode = this.scanmode[this.scanmode.length - 1];
+                    const cenabled = cmode === LexerStateScanMode.Enabled || cmode === LexerStateScanMode.EnabledIf || cmode === LexerStateScanMode.EnabledElse;
 
                     let nscanmode = LexerStateScanMode.Disabled;
                     if(cenabled) {
                         nscanmode = ifenabled ? LexerStateScanMode.EnabledIf : LexerStateScanMode.DisabledIf;
                     }
 
-                    this.prepStateStackForMacro(nscanmode);
-                    cstate = this.currentState();
+                    this.scanmode.push(nscanmode);
                 }
                 else if(macro[0] === "#else") {
-                    const ifmode = cstate.scanmode;
-                    this.popStateIntoParentOk();
+                    const ifmode = this.scanmode[this.scanmode.length - 1];
+                    this.scanmode.pop();
 
                     if(ifmode === LexerStateScanMode.Disabled) {
-                        this.prepStateStackForMacro(LexerStateScanMode.Disabled);
+                        this.scanmode.push(LexerStateScanMode.Disabled);
                     }
                     else {
                         let nscanmode = ifmode === LexerStateScanMode.EnabledIf ? LexerStateScanMode.DisabledElse : LexerStateScanMode.EnabledElse;
-                        this.prepStateStackForMacro(nscanmode);
+                        this.scanmode.push(nscanmode);
                     }
-
-                    cstate = this.currentState();
                 }
                 else {
-                    this.popStateIntoParentOk();
-                    cstate = this.currentState();
+                    this.scanmode.pop();
                 }
             }
             else {
@@ -1157,81 +1037,104 @@ class Lexer {
                     //continue
                 }
                 else {
-                    this.recordLexToken(cstate.cpos + 1, TokenStrings.Error);
+                    this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Unrecognized token"));
+                    this.recordLexToken(this.cpos + 1, TokenStrings.Error);
                 }
             }
         }
 
-        if(cstate.cpos === cstate.epos) {
-            if(cstate.cpos === this.input.length) {
-                this.recordLexToken(this.input.length, TokenStrings.EndOfStream);
-            }
-            else {
-                this.recordLexToken(cstate.cpos, TokenStrings.Recover);
-            }
+        if(this.cpos === this.input.length) {
+            this.recordLexToken(this.input.length, TokenStrings.EndOfStream);
         }
-
-        return cstate.tokens;
-    }
-
-    lexNext(): Token {
-        this.lexk(1);
-        return this.currentState().tokens[0];
-    }
-
-    peekK(k: number): Token {
-        this.lexk(k + 1);
         
-        const cstate = this.currentState();
-        if(cstate.tokens.length < k) {
-            return cstate.tokens[cstate.tokens.length - 1];
-        }
-        else {
-            return cstate.tokens[k];
-        }
+        return this.tokens;
+    }
+}
+
+class ParserState {
+    readonly modetag: string;
+
+    readonly epos: number;
+    cpos: number;
+
+    tokens: Token[];
+    errors: ParserError[] = [];
+
+    constructor(modetag: string, cpos: number, epos: number, tokens: Token[], errors: ParserError[]) {
+        this.modetag = modetag;
+        this.epos = epos;
+
+        this.cpos = cpos;
+
+        this.tokens = tokens;
+        this.errors = errors;
     }
 
-    peekNext(): Token {
-        return this.peekK(0);
+    static createFileToplevelState(tokens: Token[]): ParserState {
+        return new ParserState("toplevel", 0, tokens.length, tokens, []);
     }
 
-    consumeK(k: number) {
-        this.lexk(k);
-
-        const tks = this.currentState().tokens;
-        while(k > 0 && (tks[0].kind !== TokenStrings.EndOfStream && tks[0].kind !== TokenStrings.Recover)) {
-            tks.shift();
-            k--;
-        }
+    cloneForNested(modetag: string, epos: number): ParserState {
+        assert(this.cpos <= epos);
+        return new ParserState(modetag, this.cpos, epos, this.tokens, this.errors);
     }
 
-    consumeToken() {
-        this.consumeK(1);
+    moveStateIntoParent(child: ParserState) {
+        this.cpos = child.cpos;
+        this.errors.push(...child.errors);
+    }
+
+    moveToRecoverPosition() {
+        this.cpos = this.epos;
+    }
+
+    skipToPosition(pos: number | undefined) {
+        assert(pos === undefined || pos <= this.epos);
+        this.cpos = pos || this.epos;
     }
 }
 
 class Parser {
-    private readonly lexer: Lexer;
-    private readonly env: ParserEnvironment;
-
     private readonly currentPhase: ParsePhase;
+    private readonly tokens: Token[];
+
+    private readonly stateStack: ParserState[];
+    private readonly env: ParserEnvironment;
 
     private wellknownTypes: Map<string, NominalTypeSignature> = new Map<string, NominalTypeSignature>();
 
-    constructor(currentFile: string, toplevelns: string, contents: string, macrodefs: string[], assembly: Assembly, currentPhase: ParsePhase) {
-        this.lexer = new Lexer(contents, macrodefs, LexerState.createFileToplevelState(contents.length));
+    constructor(currentFile: string, toplevelns: string, tokens: Token[], assembly: Assembly, currentPhase: ParsePhase) {
+        this.currentPhase = currentPhase;
+        this.tokens = tokens;
+
+        this.stateStack = [ParserState.createFileToplevelState(tokens)]
 
         const nns = assembly.ensureToplevelNamespace(toplevelns);
         this.env = new ParserEnvironment(assembly, currentFile, nns);
-
-        this.currentPhase = currentPhase;   
     }
 
     ////
     //Helpers
 
+    private currentState(): ParserState {
+        return this.stateStack[this.stateStack.length - 1];
+    }
+
+    private prepStateStackForNested(mode: string, epos: number) {
+        this.stateStack.push(this.currentState().cloneForNested(mode, epos));
+    }
+
+    private popStateIntoParentOk() {
+        const cf = this.stateStack.pop() as ParserState;
+        this.currentState().moveStateIntoParent(cf);
+    }
+
+    private popStateReset() {
+        this.stateStack.pop();
+    }
+
     private recordExpectedError(token: Token, expected: string, contextinfo: string) {
-        const cstate = this.lexer.currentState();
+        const cstate = this.currentState();
         cstate.errors.push(new ParserError(token.getSourceInfo(), `Expected "${expected}" but got "${token.data || token.kind}" when parsing "${contextinfo}"`));
     }
 
@@ -4415,7 +4318,8 @@ class Parser {
 
     private parseNamespaceMembers(endtok: string) {
         const rpos = this.scanToSyncPos(endtok);
-        this.lexer.prepStateStackForNested("namespace", rpos || this.lexer.currentState().epos, AllAttributes);
+        const rclosepos = rpos !== undefined ? this.lexer.peekK(rpos).pos : this.lexer.currentState().epos;
+        this.lexer.prepStateStackForNested("namespace", rclosepos, AllAttributes);
 
         while (!this.testToken(endtok)) {
             let attributes: DeclarationAttibute[] = [];
@@ -4425,7 +4329,8 @@ class Parser {
             }
 
             const eepos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            this.lexer.prepStateStackForNested("namespace-member", eepos || this.lexer.currentState().epos, AllAttributes);
+            const eeclosepos = eepos !== undefined ? this.lexer.peekK(eepos).pos : this.lexer.currentState().epos;
+            this.lexer.prepStateStackForNested("namespace-member", eeclosepos, AllAttributes);
 
             const sinfo = this.lexer.peekNext().getSourceInfo();
             if(this.testToken(KW_type)) {
@@ -4856,7 +4761,8 @@ class Parser {
         let allMemberNames = new Set<string>();
 
         const rpos = this.scanToSyncPos(SYM_rbrace);
-        this.lexer.prepStateStackForNested("type", rpos || this.lexer.currentState().epos, AllAttributes);
+        const rclosepos = rpos !== undefined ? this.lexer.peekK(rpos).pos : this.lexer.currentState().epos;
+        this.lexer.prepStateStackForNested("type", rclosepos, AllAttributes);
 
         while (!this.testToken(SYM_rbrace)) {
             let attributes: DeclarationAttibute[] = [];
@@ -4866,7 +4772,8 @@ class Parser {
             }
 
             const eepos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
-            this.lexer.prepStateStackForNested("type-member", eepos || this.lexer.currentState().epos, AllAttributes);
+            const eeclosepos = eepos !== undefined ? this.lexer.peekK(eepos).pos : this.lexer.currentState().epos;
+            this.lexer.prepStateStackForNested("type-member", eeclosepos, AllAttributes);
 
             const sinfo = this.lexer.peekNext().getSourceInfo();
             if (this.testToken(KW_field)) {

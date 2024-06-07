@@ -207,6 +207,18 @@ const AllAttributes = [
     ...InvokeAttributes
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
 
+const CoreOnlyAttributes = [
+    "__internal",
+    "__typedeclable",
+    "__constructable",
+    "__numeric",
+    "__universal",
+    "__inline",
+    "__safe",
+    "__assume_safe",
+    "__conditional_safe"
+].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
+
 ////////////////////////////////////////////////////////////////////////////////
 //Symbols
 
@@ -323,7 +335,7 @@ const ParenSymbols = [
 
 export {
     KeywordStrings,
-    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes,
+    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 

@@ -443,7 +443,7 @@ class LiteralTypedStringExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value + this.stype.emit(false);
+        return `${this.value}(${this.stype.emit(false)})`;
     }
 }
 
@@ -479,7 +479,7 @@ class LiteralPathExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.value + (this.ptype !== undefined ? this.ptype.emit(false) : "");
+        return `${this.value}(${this.ptype !== undefined ? this.ptype.emit(false) : ""})`;
     }
 }
 

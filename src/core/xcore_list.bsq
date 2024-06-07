@@ -7,24 +7,24 @@ namespace ListOps {
     __safe function s_list_create<T>(lr: ListRepr<T>?): List<T> = s_list_create;
 
     __safe function s_list_empty<T>(l: List<T>): Bool {
-        return ListOps.s_list_value<T>(l)?none;
+        return ListOps::s_list_value<T>(l)?none;
     } 
 
     __safe function s_list_size<T>(l: List<T>): Nat {
-        return ListRepr<T>.csize(ListOps.s_list_value<T>(l));
+        return ListRepr<T>::csize(ListOps::s_list_value<T>(l));
     } 
 
     function s_list_get<T>(l: List<T>, i: Nat): T {
-        return ListOps.s_list_value<T>(l)@!none.get(i);
+        return ListOps::s_list_value<T>(l)@!none.get(i);
     }
 
     function s_list_back<T>(l: List<T>): T {
-        let ll = ListOps.s_list_value<T>(l);
-        return ll!none.get(ListRepr<T>.csize(ll) - 1n);
+        let ll = ListOps::s_list_value<T>(l);
+        return ll!none::get(ListRepr<T>::csize(ll) - 1n);
     }
 
     function s_list_front<T>(l: List<T>): T {
-        let ll = ListOps.s_list_value<T>(l);
+        let ll = ListOps::s_list_value<T>(l);
         return ll!none.get(0n);
     }
 }
@@ -35,7 +35,7 @@ ListReprLeaf {
     field value: T; 
 }
 | ListReprNode { 
-    field count: Nat = ListRepr<T>.csize($l) + ListRepr<T>.csize($r);
+    field count: Nat = ListRepr<T>::csize($l) + ListRepr<T>::csize($r);
     field l: ListRepr<T>?;
     field r: ListRepr<T>?;
 }
@@ -63,7 +63,7 @@ ListReprLeaf {
                     return $this.r@!none.get(i);
                 }
                 else {
-                    let lcount = ListRepr<T>.csize($l);
+                    let lcount = ListRepr<T>::csize($l);
                     if (i < lcount) {
                         return $l.get(i);
                     }
