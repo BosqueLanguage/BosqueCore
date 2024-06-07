@@ -926,7 +926,7 @@ class Lexer {
     }
 
     private static readonly _s_taggedBooleanRE = `/<("true"|"false")"_">$[_a-zA-Z(]/`;
-    private static readonly _s_identiferName = '/("$"?[_a-zA-Z][_a-zA-Z0-9]*/';
+    private static readonly _s_identiferName = '/"$"?[_a-zA-Z][_a-zA-Z0-9]*/';
     private tryLexName(): boolean {
         const mtb = lexFront(Lexer._s_taggedBooleanRE, this.cpos);
         if (mtb !== null) {
@@ -1120,8 +1120,9 @@ class Parser {
         return this.stateStack[this.stateStack.length - 1];
     }
 
-    private prepStateStackForNested(mode: string, epos: number) {
-        this.stateStack.push(this.currentState().cloneForNested(mode, epos));
+    private prepStateStackForNested(mode: string, epos?: number) {
+        const repos = epos !== undefined ? epos : this.currentState().epos;
+        this.stateStack.push(this.currentState().cloneForNested(mode, repos));
     }
 
     private popStateIntoParentOk() {
@@ -1135,155 +1136,46 @@ class Parser {
 
     private recordExpectedError(token: Token, expected: string, contextinfo: string) {
         const cstate = this.currentState();
-        cstate.errors.push(new ParserError(token.getSourceInfo(), `Expected "${expected}" but got "${token.data || token.kind}" when parsing "${contextinfo}"`));
+        cstate.errors.push(new ParserError(this.env.currentFile, token.getSourceInfo(), `Expected "${expected}" but got "${token.data || token.kind}" when parsing "${contextinfo}"`));
     }
 
     private recordErrorGeneral(sinfo: SourceInfo, msg: string) {
-        const cstate = this.lexer.currentState();
-        cstate.errors.push(new ParserError(sinfo, msg));
+        const cstate = this.currentState();
+        cstate.errors.push(new ParserError(this.env.currentFile, sinfo, msg));
     }
 
-    private scanMatchingParens(lp: string, rp: string): number | undefined {
-        let pscount = 1;
-        let tpos = 1;
-
-        this.lexer.prepStateStackForNested("scan-matching-parens", this.lexer.currentState().epos, this.lexer.currentState().attributes);
-
-        let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (tok.kind === lp) {
-                pscount++;
-            }
-            else if (tok.kind === rp) {
-                pscount--;
-            }
-            else {
-                //nop
-            }
-
-            if (pscount === 0) {
-                this.lexer.popStateReset();
-                return tpos;
-            }
-
-            tpos++;
-            tok = this.lexer.peekK(tpos);
-        }
-
-        this.lexer.popStateReset();
-        return undefined;
-    }
-
-    private scanToRecover(trecover: string): number | undefined {
-        let pscount = 0;
-        let tpos = 0;
-
-        this.lexer.prepStateStackForNested("scan-to-recover", this.lexer.currentState().epos, this.lexer.currentState().attributes);
-
-        let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (LeftScanParens.indexOf(tok.kind) !== -1) {
-                pscount++;
-            }
-            else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount--;
-            }
-            else {
-                //nop
-            }
-
-            if(tok.kind === trecover && pscount === 0) {
-                this.lexer.popStateReset();
-                return tpos;
-            }
-
-            tpos++;
-            tok = this.lexer.peekK(tpos);
-        }
-
-        this.lexer.popStateReset();
-        return undefined;
-    }
-
-    private scanToSyncPos(...tsync: string[]): number | undefined {
-        let pscount = 0;
-        let tpos = 0;
-
-        this.lexer.prepStateStackForNested("scan-to-sync", this.lexer.currentState().epos, this.lexer.currentState().attributes);
-
-        let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (LeftScanParens.indexOf(tok.kind) !== -1) {
-                pscount++;
-            }
-            else if (RightScanParens.indexOf(tok.kind) !== -1) {
-                pscount--;
-            }
-            else {
-                //nop
-            }
-
-            if(tsync.includes(tok.kind) && pscount === 0) {
-                this.lexer.popStateReset();
-                return tpos;
-            }
-
-            tpos++;
-            tok = this.lexer.peekK(tpos);
-        }
-
-        this.lexer.popStateReset();
-        return undefined;
-    }
-
-    private scanToSyncEatParens(lp: string, rp: string): number | undefined {
-        this.ensureAndConsumeTokenAlways(lp, "sync-eat-parens");
+    private peekToken(pos?: number): Token {
+        const cstate = this.currentState();
         
-        let pscount = 1;
-        let tpos = 1;
-
-        this.lexer.prepStateStackForNested("scan-to-sync-eat-parens", this.lexer.currentState().epos, this.lexer.currentState().attributes);
-
-        let tok = this.lexer.peekK(tpos);
-        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
-            if (tok.kind === lp) {
-                pscount++;
-            }
-            else if (tok.kind === rp) {
-                pscount--;
+        const tpos = cstate.cpos + (pos || 0);
+        if(cstate.cpos >= cstate.epos) {
+            if(cstate.epos === this.tokens.length) {
+                return this.tokens[this.tokens.length - 1];
             }
             else {
-                //nop
+                return new Token(-1, -1, -1, 0, TokenStrings.Recover, undefined);
             }
-
-            if (pscount === 0) {
-                this.lexer.popStateReset();
-                return tpos;
-            }
-
-            tpos++;
-            tok = this.lexer.peekK(tpos);
         }
-
-        this.lexer.popStateReset();
-        return undefined;
+        else {
+            return cstate.tokens[tpos];
+        }
     }
 
-    private peekToken(pos?: number): string {
-        return this.lexer.peekK((pos || 0)).kind;
+    private peekTokenKind(pos?: number): string {
+        return this.peekToken(pos || 0).kind;
     }
 
     private peekTokenData(pos?: number): string {
-        return this.lexer.peekK((pos || 0)).data as string;
+        return this.peekToken(pos || 0).data as string;
     }
 
     private testToken(kind: string): boolean {
-        return this.lexer.peekNext().kind === kind;
+        return this.peekTokenKind() === kind;
     }
 
     private testFollows(...kinds: string[]): boolean {
         for (let i = 0; i < kinds.length; ++i) {
-            if (this.peekToken(i) !== kinds[i]) {
+            if (this.peekTokenKind(i) !== kinds[i]) {
                 return false;
             }
         }
@@ -1292,7 +1184,9 @@ class Parser {
     }
 
     private consumeToken() {
-        this.lexer.consumeToken();
+        if(this.currentState().cpos < this.currentState().epos) {
+            this.currentState().cpos++;
+        }
     }
 
     private consumeTokenIf(kind: string) {
@@ -1310,7 +1204,7 @@ class Parser {
     }
 
     private consumeTokenAndGetValue(): string {
-        const td = this.lexer.peekNext().data as string;
+        const td = this.peekTokenData();
         this.consumeToken();
 
         return td;
@@ -1321,7 +1215,7 @@ class Parser {
             return true;
         }
         else {
-            this.recordExpectedError(this.lexer.peekNext(), kind, contextinfo);
+            this.recordExpectedError(this.peekToken(), kind, contextinfo);
             return false;
         }
     }
@@ -1338,29 +1232,154 @@ class Parser {
         }
     }
 
+    private scanMatchingParens(lp: string, rp: string): number | undefined {
+        this.prepStateStackForNested("scan-matching-parens", undefined);
+
+        this.ensureAndConsumeTokenAlways(lp, "scan-matching-parens");
+        let pscount = 1;
+
+        let tpos = this.currentState().cpos;
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (tok.kind === lp) {
+                pscount++;
+            }
+            else if (tok.kind === rp) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if (pscount === 0) {
+                this.popStateReset();
+                return tpos;
+            }
+
+            tpos++;
+            this.consumeToken();
+            tok = this.peekToken();
+        }
+
+        this.popStateReset();
+        return undefined;
+    }
+
+    private scanToRecover(trecover: string): number | undefined {
+        this.prepStateStackForNested("scan-to-recover", undefined);
+        let pscount = 0;
+
+        let tpos = this.currentState().cpos;
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (LeftScanParens.indexOf(tok.kind) !== -1) {
+                pscount++;
+            }
+            else if (RightScanParens.indexOf(tok.kind) !== -1) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if(tok.kind === trecover && pscount === 0) {
+                this.popStateReset();
+                return tpos;
+            }
+
+            tpos++;
+            this.consumeToken();
+            tok = this.peekToken(tpos);
+        }
+
+        this.popStateReset();
+        return undefined;
+    }
+
+    private scanToSyncPos(...tsync: string[]): number | undefined {
+        this.prepStateStackForNested("scan-to-sync", undefined);
+        let pscount = 0;
+
+        let tpos = this.currentState().cpos;
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (LeftScanParens.indexOf(tok.kind) !== -1) {
+                pscount++;
+            }
+            else if (RightScanParens.indexOf(tok.kind) !== -1) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if(tsync.includes(tok.kind) && pscount === 0) {
+                this.popStateReset();
+                return tpos;
+            }
+
+            tpos++;
+            this.consumeToken();
+            tok = this.peekToken(tpos);
+        }
+
+        this.popStateReset();
+        return undefined;
+    }
+
+    private scanToSyncEatParens(lp: string, rp: string): number | undefined {
+        this.prepStateStackForNested("scan-to-sync-eat-parens", undefined);
+
+        this.ensureAndConsumeTokenAlways(lp, "sync-eat-parens");
+        let pscount = 1;
+
+        let tpos = this.currentState().cpos;
+        let tok = this.peekToken();
+        while (tok.kind !== TokenStrings.EndOfStream && tok.kind !== TokenStrings.Recover) {
+            if (tok.kind === lp) {
+                pscount++;
+            }
+            else if (tok.kind === rp) {
+                pscount--;
+            }
+            else {
+                //nop
+            }
+
+            if (pscount === 0) {
+                this.popStateReset();
+                return tpos + 1;
+            }
+
+            tpos++;
+            this.consumeToken();
+            tok = this.peekToken(tpos);
+        }
+
+        this.popStateReset();
+        return undefined;
+    }
+
     private parseListOf<T>(contextinfobase: string, start: string, end: string, sep: string, fn: () => T): T[] {
         const closeparen = this.scanMatchingParens(start, end);
-
-        const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
-        this.lexer.prepStateStackForNested("list-" + contextinfobase, closepos, this.lexer.currentState().attributes);
+        this.prepStateStackForNested("list-" + contextinfobase, closeparen);
 
         let result: T[] = [];
         this.ensureAndConsumeTokenAlways(start, contextinfobase);
         while (!this.testAndConsumeTokenIf(end) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
             const nextcomma = this.scanToRecover(sep);
-            const nextpos = nextcomma !== undefined ? this.lexer.peekK(nextcomma).pos : closepos;
-            this.lexer.prepStateStackForNested("element-" + contextinfobase, nextpos, this.lexer.currentState().attributes);
+            this.prepStateStackForNested("element-" + contextinfobase, nextcomma);
 
             const v = fn();
             result.push(v);
             
             if(!this.testToken(end) && !this.testToken(sep)) {
-                this.lexer.currentState().recover();
+                this.currentState().moveToRecoverPosition();
             }
 
             if(this.testToken(end)) {
                 //great this is the happy path we will exit next iter
-                this.lexer.popStateIntoParentOk();
+                this.popStateIntoParentOk();
             }
             else if(this.testToken(sep)) {
                 //consume the sep
@@ -1368,19 +1387,19 @@ class Parser {
 
                 //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
                 if(this.testToken(end)) {
-                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Stray , at end of list");
                 }
 
-                this.lexer.popStateIntoParentOk();
+                this.popStateIntoParentOk();
             }
             else {
                 //ok all going wrong lets get out of here 
-                this.lexer.popStateIntoParentOk();
-                this.lexer.currentState().recover();
+                this.popStateIntoParentOk();
+                this.currentState().moveToRecoverPosition();
             }
         }
 
-        this.lexer.popStateIntoParentOk();
+        this.popStateIntoParentOk();
         return result;
     }
 
@@ -1451,10 +1470,10 @@ class Parser {
 
     private parseIdentifierAccessChainHelper(leadingscoper: boolean, currentns: NamespaceDeclaration, scopeTokens: string[]): {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]} | undefined {
         const nsroot = this.peekTokenData(leadingscoper ? 1 : 0);
-        const hasterms = this.peekToken(leadingscoper ? 2 : 1) === SYM_langle;
+        const hasterms = this.peekTokenKind(leadingscoper ? 2 : 1) === SYM_langle;
 
         if(nsroot === "Core") {
-            this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot shadow the Core namespace");
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot shadow the Core namespace");
             return undefined;
         }
 
@@ -1650,7 +1669,7 @@ class Parser {
 
         while(this.testToken(KW_status) || this.testToken(KW_event)) {
             if(isStatus || isEvent) {
-                this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot have multiple status/event tags");
+                this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have multiple status/event tags");
             }
 
             isStatus = isStatus || this.testAndConsumeTokenIf(KW_status);
@@ -1820,7 +1839,7 @@ class Parser {
     }
 
     private parseInvokeSignatureParameter(autotypeok: boolean): FunctionParameter {
-        const cinfo = this.lexer.peekNext().getSourceInfo();
+        const cinfo = this.peekToken().getSourceInfo();
 
         const isref = this.testAndConsumeTokenIf(KW_ref);
         const isspread = this.testAndConsumeTokenIf(SYM_dotdotdot);
@@ -1894,7 +1913,7 @@ class Parser {
     }
 
     private parseLambdaDecl(): LambdaDecl | undefined {
-        const cinfo = this.lexer.peekNext().getSourceInfo();
+        const cinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -1910,10 +1929,10 @@ class Parser {
         }
 
         if(ispred && isfn) {
-            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda cannot be marked as both a pred and a fn");
+            this.recordErrorGeneral(this.peekToken(), "Lambda cannot be marked as both a pred and a fn");
         }
         if(!ispred && !isfn) {
-            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda must be either a pred or fn");
+            this.recordErrorGeneral(this.peekToken(), "Lambda must be either a pred or fn");
         }
 
         const okdecl = this.testToken(SYM_lparen);
@@ -1936,7 +1955,7 @@ class Parser {
         }
 
         if(!this.testToken(SYM_bigarrow)) {
-            this.recordExpectedError(this.lexer.peekNext(), SYM_bigarrow, "lambda declaration");
+            this.recordExpectedError(this.peekToken(), SYM_bigarrow, "lambda declaration");
         }
         else {
             this.consumeToken();
@@ -1951,7 +1970,7 @@ class Parser {
     }
 
     private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
-        const cinfo = this.lexer.peekNext().getSourceInfo();
+        const cinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -2017,7 +2036,7 @@ class Parser {
     }
 
     private parseMethodInvokeDecl(taskscope: boolean, attributes: DeclarationAttibute[], typeTerms: Set<string>): MethodDecl | TaskMethodDecl | undefined {
-        const cinfo = this.lexer.peekNext().getSourceInfo();
+        const cinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -2084,7 +2103,7 @@ class Parser {
     }
 
     private parseActionInvokeDecl(attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string): TaskActionDecl | undefined {
-        const cinfo = this.lexer.peekNext().getSourceInfo();
+        const cinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_action, "action declaration");
 
@@ -2140,7 +2159,7 @@ class Parser {
             return ltype;
         }
         else {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const sinfo = this.peekToken().getSourceInfo();
             this.consumeToken();
             const rtype = this.parseOrCombinatorType();
 
@@ -2157,12 +2176,12 @@ class Parser {
     }
 
     private parseBaseTypeReference(): TypeSignature {
-        switch (this.peekToken()) {
+        switch (this.peekTokenKind()) {
             case TokenStrings.Template: {
                 return this.parseTemplateTypeReference();
             }
             case TokenStrings.IdentifierName: {
-                const sinfo = this.lexer.peekNext().getSourceInfo();
+                const sinfo = this.peekToken().getSourceInfo();
                 const idtype = this.peekTokenData();
                 if(/[^A-Z].*/.test(idtype)) {
                     return this.parseNominalType();
@@ -2185,11 +2204,10 @@ class Parser {
                 return this.parseLambdaType();
             }
             case SYM_lparen: {
-                const sinfo = this.lexer.peekNext().getSourceInfo();
-                const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+                const sinfo = this.peekToken().getSourceInfo();
 
-                const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
-                this.lexer.prepStateStackForNested("paren-type", closepos, undefined);
+                const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
+                this.prepStateStackForNested("paren-type", closeparen);
 
                 this.consumeToken();
                 let ptype = this.parseTypeSignature();
@@ -2202,7 +2220,7 @@ class Parser {
                     }
                     else {
                         if(closeparen !== undefined) {
-                            this.lexer.currentState().recover();
+                            this.currentState().moveToRecoverPosition();
                         }
                     }
                 }
@@ -2210,13 +2228,13 @@ class Parser {
                 return ptype;
             }
             default: {
-                return new ErrorTypeSignature(this.lexer.peekNext().getSourceInfo(), undefined);
+                return new ErrorTypeSignature(this.peekToken().getSourceInfo(), undefined);
             }
         }
     }
 
     private parseTemplateTypeReference(): TypeSignature {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const tname = this.consumeTokenAndGetValue();
         return new TemplateTypeSignature(sinfo, tname);
@@ -2233,7 +2251,7 @@ class Parser {
     }
 
     private parseNominalType(): TypeSignature {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const nsr = this.parseIdentifierAccessChain();
         if(nsr === undefined) {
@@ -2254,7 +2272,7 @@ class Parser {
     }
 
     private parseTupleType(): TypeSignature {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const entries = this.parseListOf<TypeSignature>("tuple type", SYM_lbrack, SYM_rbrack, SYM_coma, () => {
             return this.parseTypeSignature();
@@ -2264,7 +2282,7 @@ class Parser {
     }
 
     private parseRecordType(): TypeSignature {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         let pnames = new Set<string>();
         const entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
@@ -2272,7 +2290,7 @@ class Parser {
 
             const name = this.consumeTokenAndGetValue();
             if(pnames.has(name)) {
-                this.recordErrorGeneral(this.lexer.peekNext(), `Duplicate property name ${name} in record type`);
+                this.recordErrorGeneral(this.peekToken(), `Duplicate property name ${name} in record type`);
             }
             pnames.add(name);
 
@@ -2286,7 +2304,7 @@ class Parser {
     }
 
     private parseLambdaType(): TypeSignature {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         let isrecursive: "yes" | "no" | "cond" = "no";
         if(this.testToken(KW_recursive) || this.testToken(KW_recursive_q)) {
@@ -2299,7 +2317,7 @@ class Parser {
             name = this.consumeTokenAndGetValue() as "fn" | "pred";
         }
         else {
-            this.recordErrorGeneral(this.lexer.peekNext(), "Lambda type must be either a fn or pred");
+            this.recordErrorGeneral(this.peekToken(), "Lambda type must be either a fn or pred");
 
             if(!this.testToken(SYM_lparen)) {
                 this.consumeToken();
@@ -2330,7 +2348,7 @@ class Parser {
 
                 //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
                 if(this.testToken(SYM_rparen)) {
-                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Stray , at end of list");
                 }
             }
             else {
@@ -2341,7 +2359,7 @@ class Parser {
                     break; //we can't scan to a known recovery token so just break and let it sort itself out
                 }
                 else {
-                    this.lexer.currentState().recover();
+                    this.currentState().moveToRecoverPosition();
                 }
             }
         }
@@ -2363,7 +2381,7 @@ class Parser {
                 return vname;
             }
             else {
-                this.recordErrorGeneral(this.lexer.peekNext(), "Binder name must start with $ and be lower case");
+                this.recordErrorGeneral(this.peekToken(), "Binder name must start with $ and be lower case");
                 return undefined;
             }
         }
@@ -2466,7 +2484,7 @@ class Parser {
                 return new ITestErr(isnot);
             }
             else {
-                this.recordErrorGeneral(this.lexer.peekNext(), "Expected ITest");
+                this.recordErrorGeneral(this.peekToken(), "Expected ITest");
                 return undefined;
             }
         }
@@ -2505,7 +2523,7 @@ class Parser {
         if(this.testToken(SYM_lbrack)) {
             this.consumeToken();
             if (!this.testToken(KW_recursive) && !this.testToken(KW_recursive_q)) {
-                this.recordErrorGeneral(this.lexer.peekNext(), "Expected recursive annotation");
+                this.recordErrorGeneral(this.peekToken(), "Expected recursive annotation");
             }
     
             recursive = this.testToken("recursive") ? "yes" : "cond";
@@ -2523,7 +2541,7 @@ class Parser {
         const args = this.parseListOf<ArgumentValue>("argument list", lparen, rparen, sep, () => {
             if(this.testToken(KW_ref)) {
                 if(!refok) {
-                    this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have a reference argument in this context");
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a reference argument in this context");
                 }
                 this.consumeToken();
                 const exp = this.parseExpression();
@@ -2535,7 +2553,7 @@ class Parser {
             }
             else if(this.testToken(SYM_dotdotdot)) {
                 if(!spreadok) {
-                    this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have a spread argument in this context");
+                    this.recordErrorGeneral(this.peekToken(), "Cannot have a spread argument in this context");
                 }
                 this.consumeToken();
                 const exp = this.parseExpression();
@@ -2568,25 +2586,25 @@ class Parser {
         const namedParams = args.filter((arg) => arg instanceof NamedArgumentValue).map((arg) => (arg as NamedArgumentValue).name);
         const duplicateNames = namedParams.find((name, index) => namedParams.indexOf(name) !== index);
         if(duplicateNames !== undefined) {
-            this.recordErrorGeneral(this.lexer.peekNext(), `Duplicate argument name ${duplicateNames}`);
+            this.recordErrorGeneral(this.peekToken(), `Duplicate argument name ${duplicateNames}`);
         }
 
         const multiplerefs = args.filter((arg) => arg instanceof RefArgumentValue).length > 1;
         if(multiplerefs) {
-            this.recordErrorGeneral(this.lexer.peekNext(), "Cannot have multiple reference arguments");
+            this.recordErrorGeneral(this.peekToken(), "Cannot have multiple reference arguments");
         }
 
         const spreadidx = args.findIndex((arg, index) => arg instanceof SpreadArgumentValue && index !== args.length - 1);
         const badspread = spreadidx !== -1 && args.slice(spreadidx).some((arg) => !(arg instanceof NamedArgumentValue));
         if(badspread) {
-            this.recordErrorGeneral(this.lexer.peekNext(), "Spread argument must be the last argument");
+            this.recordErrorGeneral(this.peekToken(), "Spread argument must be the last argument");
         }
 
         return new ArgumentList(args);
     }
     
     private parseLambdaTerm(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const ldecl = this.parseLambdaDecl();
         if(ldecl === undefined) {
@@ -2657,7 +2675,7 @@ class Parser {
     }
 
     private parseNamespaceScopedFirstExpression(nspace: NamespaceDeclaration): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(SYM_coloncolon, "namespace scoped expression");
         this.ensureToken(TokenStrings.IdentifierName, "namespace scoped expression");
@@ -2687,7 +2705,7 @@ class Parser {
     }
 
     private parseIdentifierFirstExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         if (this.peekTokenData().startsWith("$")) {
             const idname = this.consumeTokenAndGetValue();
             
@@ -2735,7 +2753,7 @@ class Parser {
     }
 
     private parseLetExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(SYM_lbracebar, "let expression");
 
@@ -2763,9 +2781,9 @@ class Parser {
     }
 
     private parsePrimaryExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
-        const tk = this.peekToken();
+        const tk = this.peekTokenKind();
         if (tk === KW_none) {
             this.consumeToken();
             return new LiteralSingletonExpression(ExpressionTag.LiteralNoneExpression, sinfo, "none");
@@ -2998,9 +3016,7 @@ class Parser {
         }
         else if(tk === SYM_lparen) {
             const closeparen = this.scanMatchingParens(SYM_lparen, SYM_rparen);
-
-            const closepos = closeparen !== undefined ? this.lexer.peekK(closeparen).pos : this.lexer.currentState().epos;
-            this.lexer.prepStateStackForNested("paren-type", closepos, undefined);
+            this.prepStateStackForNested("paren-type", closeparen);
 
             this.consumeToken();
             let exp = this.parseExpression();
@@ -3013,12 +3029,12 @@ class Parser {
                 }
                 else {
                     if(closeparen !== undefined) {
-                        this.lexer.currentState().recover();
+                        this.currentState().moveToRecoverPosition();
                     }
                 }
             }
 
-            this.lexer.popStateIntoParentOk();
+            this.popStateIntoParentOk();
             return exp;
         }
         else if (tk === TokenStrings.IdentifierName) {
@@ -3046,7 +3062,7 @@ class Parser {
 
                 //check for a stray ,) type thing at the end of the list -- if we have it report and then continue
                 if(this.testToken(SYM_rparen)) {
-                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Stray , at end of list");
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Stray , at end of list");
                 }
             }
             else {
@@ -3057,7 +3073,7 @@ class Parser {
                     break; //we can't scan to a known recovery token so just break and let it sort itself out
                 }
                 else {
-                    this.lexer.currentState().recover();
+                    this.currentState().moveToRecoverPosition();
                 }
             }
         }
@@ -3070,7 +3086,7 @@ class Parser {
 
         let ops: PostfixOperation[] = [];
         while (true) {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const sinfo = this.peekToken().getSourceInfo();
 
             if(this.testToken(SYM_question)) {
                 this.consumeToken();
@@ -3185,7 +3201,7 @@ class Parser {
     }
 
     private parsePrefixExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         let ops: [string, TypeSignature | undefined][] = [];
         while(this.testToken(SYM_bang) || this.testToken(SYM_positive) || this.testToken(SYM_negate) || this.testToken(SYM_langle)) {
@@ -3221,7 +3237,7 @@ class Parser {
     }
 
     private parseMultiplicativeExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parsePrefixExpression();
 
         if(!this.isMultiplicativeFollow()) {
@@ -3256,7 +3272,7 @@ class Parser {
     }
 
     private parseAdditiveExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parseMultiplicativeExpression();
 
         if(!this.isAdditiveFollow()) {
@@ -3282,7 +3298,7 @@ class Parser {
     }
 
     private parseRelationalExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parseAdditiveExpression();
 
         if (this.testAndConsumeTokenIf(SYM_eqeqeq)) {
@@ -3315,7 +3331,7 @@ class Parser {
     }
 
     private parseAndExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parseRelationalExpression();
 
         if (this.testAndConsumeTokenIf(SYM_ampamp)) {
@@ -3327,7 +3343,7 @@ class Parser {
     }
 
     private parseOrExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parseAndExpression();
 
         if (this.testAndConsumeTokenIf(SYM_barbar)) {
@@ -3339,7 +3355,7 @@ class Parser {
     }
 
     private parseImpliesExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const exp = this.parseOrExpression();
 
         if (this.testAndConsumeTokenIf(SYM_implies)) {
@@ -3354,9 +3370,7 @@ class Parser {
     }
 
     private parseIfTest(): IfTest {
-        const tk = this.peekToken();
-
-        if(tk !== SYM_lparen) {
+        if(this.testToken(SYM_lparen)) {
             const itest = this.parseITest();
             
             this.ensureAndConsumeTokenIf(SYM_lparen, "if test");
@@ -3375,7 +3389,7 @@ class Parser {
     }
 
     private parseIfExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.consumeToken();
         const binder = this.parseBinderInfo();
@@ -3415,7 +3429,7 @@ class Parser {
     }
 
     private parseMapEntryConstructorExpression(): Expression {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         //TODO: this will reject (2 => 3) since there are parens, maybe this is ok or maybe we should allow it?
 
         const lexp = this.parseExpression();   
@@ -3455,7 +3469,7 @@ class Parser {
 
     private parseStatementExpression(isref: boolean): Statement {
         if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const sinfo = this.peekToken().getSourceInfo();
             const name = this.consumeTokenAndGetValue();
             this.consumeToken();
 
@@ -3483,7 +3497,7 @@ class Parser {
     //Statement parsing
 
     parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
         const name = this.consumeTokenAndGetValue();
@@ -3512,7 +3526,7 @@ class Parser {
     }
 
     parseSingleAssignmentVarInfo(): string {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
         const name = this.consumeTokenAndGetValue();
@@ -3674,7 +3688,7 @@ class Parser {
     */
 
     private parseLineStatement(): Statement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         if (this.testToken(SYM_semicolon)) {
             return new EmptyStatement(sinfo);
@@ -3964,7 +3978,7 @@ class Parser {
     }
 
     private parseScopedBlockStatement(): BlockStatement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.env.pushStandardBlockScope();
         const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
@@ -3980,7 +3994,7 @@ class Parser {
     }
 
     private parseScopedBlockStatementWithBinderTracking(bindernames: string[]): {block: BlockStatement, used: {srcname: string, scopedname: string}[]} {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.env.pushBinderExpressionScope(bindernames);
         const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
@@ -3996,7 +4010,7 @@ class Parser {
     }
 
     private parseIfElseStatement(): Statement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
         const ifbinder = this.parseBinderInfo();
@@ -4042,7 +4056,7 @@ class Parser {
     }
 
     private parseSwitchStatement(): Statement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_switch, "switch statement dispatch value");
 
@@ -4082,7 +4096,7 @@ class Parser {
     }
 
     private parseMatchStatement(): Statement {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
 
@@ -4136,28 +4150,27 @@ class Parser {
         }
         else {  
             const closesemi = this.scanToRecover(SYM_semicolon);
-            const closepos = closesemi !== undefined ? this.lexer.peekK(closesemi).pos : this.lexer.currentState().epos;
-            this.lexer.prepStateStackForNested("line-statement", closepos, undefined);
+            this.prepStateStackForNested("line-statement", closesemi);
 
             const result = this.parseLineStatement();
             
             if(!this.testToken(SYM_semicolon)) {
                 //we gotta recover
-                this.lexer.currentState().recover();
+                this.currentState().moveToRecoverPosition();
             }
 
             if(this.testToken(SYM_semicolon)) {
                 this.consumeToken();
             }
 
-            this.lexer.popStateIntoParentOk();
+            this.popStateIntoParentOk();
 
             return result;
         }
     }
 
     private parseBody(attribs: DeclarationAttibute[], isPredicate: boolean, isLambda: boolean): BodyImplementation {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         if(this.testToken(SYM_semicolon)) {
             if(!attribs.some((aa) => aa.name === "abstract") && !isPredicate) {
@@ -4233,16 +4246,16 @@ class Parser {
 
     private scanOverCodeTo(...tsync: string[]) {
         const spoc = this.scanToSyncPos(...tsync);
-        this.lexer.currentState().skipToPosition(spoc);
+        this.currentState().skipToPosition(spoc);
     }
 
     private scanOverCodeParenSet(lp: string, rp: string) {
         const spoc = this.scanToSyncEatParens(lp, rp);
-        this.lexer.currentState().skipToPosition(spoc);
+        this.currentState().skipToPosition(spoc);
     }
 
     private parseNamespaceUsing() {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_using, "namespce using");
         this.ensureToken(TokenStrings.IdentifierName, "namespce using");
@@ -4309,30 +4322,27 @@ class Parser {
     private namespaceParseScanCover(endtok: string) {
         const rpos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
         if(rpos === undefined) {
-            this.lexer.currentState().recover();
+            this.currentState().moveToRecoverPosition();
         }
         else {
-            this.lexer.currentState().skipToPosition(rpos);
+            this.currentState().skipToPosition(rpos);
         }
     }
 
     private parseNamespaceMembers(endtok: string) {
         const rpos = this.scanToSyncPos(endtok);
-        const rclosepos = rpos !== undefined ? this.lexer.peekK(rpos).pos : this.lexer.currentState().epos;
-        this.lexer.prepStateStackForNested("namespace", rclosepos, AllAttributes);
+        this.prepStateStackForNested("namespace", rpos);
 
         while (!this.testToken(endtok)) {
             let attributes: DeclarationAttibute[] = [];
-            while(this.testToken(TokenStrings.Attribute)) {
+            while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
                 const attr = this.parseAttribute();
                 attributes.push(attr);
             }
 
-            const eepos = this.scanToSyncPos(endtok, ...NAMESPACE_DECL_FIRSTS);
-            const eeclosepos = eepos !== undefined ? this.lexer.peekK(eepos).pos : this.lexer.currentState().epos;
-            this.lexer.prepStateStackForNested("namespace-member", eeclosepos, AllAttributes);
+            this.prepStateStackForNested("namespace-member", undefined);
 
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const sinfo = this.peekToken().getSourceInfo();
             if(this.testToken(KW_type)) {
                 this.parseNamespaceTypedef(attributes);
             }
@@ -4377,13 +4387,15 @@ class Parser {
             }
             else {
                 this.recordErrorGeneral(sinfo, `Unknown member ${this.peekTokenData()}`);
+
+                this.consumeToken();
                 this.namespaceParseScanCover(endtok);
             }
 
-            this.lexer.popStateIntoParentOk();
+            this.popStateIntoParentOk();
         }
 
-        this.lexer.popStateIntoParentOk();
+        this.popStateIntoParentOk();
     }
 
     private parseSubNamespace() {
@@ -4392,7 +4404,7 @@ class Parser {
 
         const nsname = this.consumeTokenAndGetValue();
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if (this.env.currentNamespace.checkDeclNameClashNS(nsname)) {
                 this.recordErrorGeneral(sinfo, `Collision between namespace and other names -- ${nsname}`);
@@ -4426,7 +4438,7 @@ class Parser {
     }
 
     private parseNamespaceTypedef(attributes: DeclarationAttibute[]) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_type, "type alias");
         this.ensureToken(TokenStrings.IdentifierName, "type alias");
         const tyname = this.consumeTokenAndGetValue();
@@ -4459,7 +4471,7 @@ class Parser {
     }
 
     private parseNamespaceConstant(attributes: DeclarationAttibute[]) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_const, "const member");
 
         this.ensureToken(TokenStrings.IdentifierName, "const member");
@@ -4493,7 +4505,7 @@ class Parser {
     }
 
     private parseNamespaceFunction(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             this.consumeTokenIf(KW_recursive);
@@ -4557,7 +4569,7 @@ class Parser {
     private parseConstMember(constMembers: ConstMemberDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_const, "const member");
 
         this.ensureToken(TokenStrings.IdentifierName, "const member");
@@ -4587,7 +4599,7 @@ class Parser {
     private parseMemberFunction(memberFunctions: TypeFunctionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const fdecl = this.parseFunctionInvokeDecl("typescope", attributes, typeTerms);
 
         if(memberFunctions === undefined) {
@@ -4610,7 +4622,7 @@ class Parser {
     private parseMemberField(memberFields: MemberFieldDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_field, "member field");
 
         this.ensureToken(TokenStrings.IdentifierName, "member field");
@@ -4641,7 +4653,7 @@ class Parser {
     private parseMemberMethod(memberMethods: MethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const mdecl = this.parseMethodInvokeDecl(false, attributes, typeTerms) as MethodDecl;
 
         if(memberMethods === undefined) {
@@ -4664,7 +4676,7 @@ class Parser {
     private parseTaskMemberMethod(taskMemberMethods: TaskMethodDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const mdecl = this.parseMethodInvokeDecl(true, attributes, typeTerms) as TaskMethodDecl;
 
         if(taskMemberMethods === undefined) {
@@ -4687,7 +4699,7 @@ class Parser {
     private parseTaskMemberAction(taskMemberAction: TaskActionDecl[] | undefined, allMemberNames: Set<string>, attributes: DeclarationAttibute[], typeTerms: Set<string>, taskmain: string) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
 
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
         const adecl = this.parseActionInvokeDecl(attributes, typeTerms, taskmain);
 
         if(taskMemberAction === undefined) {
@@ -4709,7 +4721,7 @@ class Parser {
 
     private parseInvariantsInto(invs: InvariantDecl[] | undefined, vdates: ValidateDecl[] | undefined, typeTerms: Set<string>) {
         assert(isParsePhase_Enabled(this.currentPhase, ParsePhase_CompleteParsing));
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.env.pushStandardFunctionScope([], typeTerms, this.wellknownTypes.get("Bool") as TypeSignature);
         while (this.testToken(KW_invariant) || this.testToken(KW_validate)) {
@@ -4760,22 +4772,18 @@ class Parser {
         taskmain: string | undefined) {
         let allMemberNames = new Set<string>();
 
-        const rpos = this.scanToSyncPos(SYM_rbrace);
-        const rclosepos = rpos !== undefined ? this.lexer.peekK(rpos).pos : this.lexer.currentState().epos;
-        this.lexer.prepStateStackForNested("type", rclosepos, AllAttributes);
+        this.prepStateStackForNested("type", undefined);
 
         while (!this.testToken(SYM_rbrace)) {
             let attributes: DeclarationAttibute[] = [];
-            while(this.testToken(TokenStrings.Attribute)) {
+            while(this.testToken(TokenStrings.Attribute) || this.testToken(TokenStrings.DocComment)) {
                 const attr = this.parseAttribute();
                 attributes.push(attr);
             }
 
-            const eepos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
-            const eeclosepos = eepos !== undefined ? this.lexer.peekK(eepos).pos : this.lexer.currentState().epos;
-            this.lexer.prepStateStackForNested("type-member", eeclosepos, AllAttributes);
+            this.prepStateStackForNested("type-member", undefined);
 
-            const sinfo = this.lexer.peekNext().getSourceInfo();
+            const sinfo = this.peekToken().getSourceInfo();
             if (this.testToken(KW_field)) {
                 this.parseMemberField(memberFields, allMemberNames, attributes);
             }
@@ -4816,7 +4824,7 @@ class Parser {
             }
             else if(this.testToken(KW_entity)) {
                 if(specialConcept === undefined) {
-                    this.recordErrorGeneral(this.lexer.peekNext().getSourceInfo(), "Cannot have nested entities on this type");
+                    this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have nested entities on this type");
                 }
                 else {
                     this.parseNestedEntity(specialConcept, allMemberNames, attributes);
@@ -4826,20 +4834,21 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Unknown member ${this.peekTokenData()}`);
 
                 //scan to the next declaration or end brace
+                this.consumeToken();
                 const rpos = this.scanToSyncPos(SYM_rbrace, ...TYPE_DECL_FIRSTS);
                 if(rpos === undefined) {
-                    this.lexer.currentState().recover();
+                    this.currentState().moveToRecoverPosition();
                     return; 
                 }
                 else {
-                    this.lexer.currentState().skipToPosition(rpos);
+                    this.currentState().skipToPosition(rpos);
                 }
             }
 
-            this.lexer.popStateIntoParentOk();
+            this.popStateIntoParentOk();
         }
 
-        this.lexer.popStateIntoParentOk();
+        this.popStateIntoParentOk();
     }
 
     private parseNestedEntity(specialConcept: InternalConceptTypeDecl, allMemberNames: Set<string>, attributes: DeclarationAttibute[]) {
@@ -4935,7 +4944,7 @@ class Parser {
     }
 
     private parseEntity(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
@@ -5007,7 +5016,7 @@ class Parser {
     }
 
     private parseConcept(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "concept declaration");
@@ -5034,7 +5043,7 @@ class Parser {
     }
     
     private parseEnum(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_enum, "enum declaration");
@@ -5068,7 +5077,7 @@ class Parser {
     }
 
     private parseValidatorTypedecl(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_validator, "validator declaration");
         this.ensureToken(TokenStrings.IdentifierName, "validator declaration");
@@ -5127,7 +5136,7 @@ class Parser {
     }
 
     private parseTypeDecl(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_typedecl, "typedecl declaration");
@@ -5177,7 +5186,7 @@ class Parser {
     }
 
     private parseDatatypeMemberEntityTypeDecl(attributes: DeclarationAttibute[], parenttype: DatatypeTypeDecl, hasterms: boolean, etag: AdditionalTypeDeclTag) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.consumeTokenIf(SYM_bar);
 
@@ -5213,7 +5222,7 @@ class Parser {
 
             if(this.testFollows(SYM_lbrace, TokenStrings.IdentifierName, SYM_colon)) {
                 const fields = this.parseListOf<MemberFieldDecl>("datatype member entity", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const mfinfo = this.lexer.peekNext().getSourceInfo();
+                    const mfinfo = this.peekToken().getSourceInfo();
 
                     this.ensureToken(TokenStrings.IdentifierName, "datatype POD member field");
                     const name = this.consumeTokenAndGetValue();
@@ -5232,7 +5241,7 @@ class Parser {
     }
 
     private parseDataTypeDecl(attributes: DeclarationAttibute[]) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_datatype, "datatype declaration");
@@ -5272,7 +5281,7 @@ class Parser {
 
             if(this.testAndConsumeTokenIf(KW_using)) {
                 const cusing = this.parseListOf<MemberFieldDecl>("datatype", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                    const sinfo = this.lexer.peekNext().getSourceInfo();
+                    const sinfo = this.peekToken().getSourceInfo();
 
                     this.ensureToken(TokenStrings.IdentifierName, "datatype field");
                     const name = this.consumeTokenAndGetValue();
@@ -5308,7 +5317,7 @@ class Parser {
     }
 
     private parseTask(attributes: DeclarationAttibute[], endtok: string) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_task, "task declaration");
         this.ensureToken(TokenStrings.IdentifierName, "task declaration");
@@ -5492,7 +5501,7 @@ class Parser {
     }
 
     private parseAPI(attributes: DeclarationAttibute[]) {
-        const sinfo = this.lexer.peekNext().getSourceInfo();
+        const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_api, "api declaration");
         this.ensureToken(TokenStrings.IdentifierName, "api declaration");
@@ -5657,11 +5666,11 @@ class Parser {
     }
 
     private static _s_nsre = /^(declare[ ]+)?namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*/;
-    private static parseCompilationUnit(phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
+    private static parseCompilationUnit(iscore: boolean, phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
         const tcontents = Parser.eatDeadTextAtFileStart(contents);
         const nnsm = Parser._s_nsre.exec(tcontents);
         if(nnsm === null) {
-            return {ns: "[error]", isdecl: false, errors: [new ParserError(SourceInfo.implicitSourceInfo(), "Failed to find namespace declaration")]};
+            return {ns: "[error]", isdecl: false, errors: [new ParserError(file, SourceInfo.implicitSourceInfo(), "Failed to find namespace declaration")]};
         }
         let nnt = nnsm[0].trim();
 
@@ -5675,7 +5684,10 @@ class Parser {
         const ns = nnt;
         assembly.ensureToplevelNamespace(ns);
 
-        const pp = new Parser(file, ns, contents, macrodefs, assembly, phase);
+        const ll = new Lexer(iscore, file, tcontents, macrodefs);
+        const toks = ll.lex();
+
+        const pp = new Parser(file, ns, toks, assembly, phase);
 
         pp.testAndConsumeTokenIf(KW_declare);
         pp.ensureAndConsumeTokenAlways(KW_namespace, "namespace declaration");
@@ -5702,76 +5714,65 @@ class Parser {
 
         pp.parseNamespaceMembers(TokenStrings.EndOfStream);
 
-        return {ns: ns, isdecl: isdeclared, errors: pp.lexer.currentState().errors};
+        return {ns: ns, isdecl: isdeclared, errors: [...ll.errors, ...pp.currentState().errors]};
     }
 
     ////
     //Public methods
 
-    static parse(code: CodeFileInfo[], macrodefs: string[]): Assembly | ParserError[] {
-        let assembly = new Assembly();
+    static parsefiles(iscore: boolean, code: CodeFileInfo[], macrodefs: string[], assembly: Assembly): ParserError[] {
         let errors: ParserError[] = [];
 
         let registeredNamespaces = new Set<string>();
 
         //load all the names and make sure every top-level namespace is declared
         for(let i = 0; i < code.length; ++i) {
-            const cunit = Parser.parseCompilationUnit(ParsePhase_RegisterNames, code[i].srcpath, code[i].contents, macrodefs, assembly);
+            const cunit = Parser.parseCompilationUnit(iscore, ParsePhase_RegisterNames, code[i].srcpath, code[i].contents, macrodefs, assembly);
         
             if(cunit.isdecl) {
                 if(registeredNamespaces.has(cunit.ns)) {
-                    errors.push(new ParserError(SourceInfo.implicitSourceInfo(), `Duplicate namespace declaration -- ${cunit.ns}`));
+                    errors.push(new ParserError(code[i].srcpath, SourceInfo.implicitSourceInfo(), `Duplicate namespace declaration -- ${cunit.ns}`));
                 }
                 registeredNamespaces.add(cunit.ns);
             }
         }
 
         if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
-            errors.push(new ParserError(SourceInfo.implicitSourceInfo(), "Missing namespace declaration"));
+            errors.push(new ParserError("[implicit]", SourceInfo.implicitSourceInfo(), "Missing namespace declaration"));
         }
 
         //parse the code
         for(let i = 0; i < code.length; ++i) {
-            const cunit = Parser.parseCompilationUnit(ParsePhase_CompleteParsing, code[i].srcpath, code[i].contents, macrodefs, assembly);
+            const cunit = Parser.parseCompilationUnit(iscore, ParsePhase_CompleteParsing, code[i].srcpath, code[i].contents, macrodefs, assembly);
             errors.push(...cunit.errors);
         }
 
-        return errors.length === 0 ? assembly : errors;
+        return errors;
+    }
+
+    static parse(core: CodeFileInfo[], code: CodeFileInfo[], macrodefs: string[]): Assembly | ParserError[] {
+        let assembly = new Assembly();
+
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly);
+        const usererrors = Parser.parsefiles(false, code, macrodefs, assembly);
+
+        if(coreerrors.length === 0 && usererrors.length === 0) {
+            return assembly;
+        }
+        else {
+            return [...coreerrors, ...usererrors];
+        }
     }
 
     //Test methods
-    static test_parseSFunction(code: CodeFileInfo[], macrodefs: string[], sff: string): string | ParserError[] {
+    static test_parseSFunction(core: CodeFileInfo[], macrodefs: string[], sff: string): string | ParserError[] {
         let assembly = new Assembly();
-        let errors: ParserError[] = [];
 
-        let registeredNamespaces = new Set<string>();
-
-        code.push({srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${sff}`});
-
-        //load all the names and make sure every top-level namespace is declared
-        for(let i = 0; i < code.length; ++i) {
-            const cunit = Parser.parseCompilationUnit(ParsePhase_RegisterNames, code[i].srcpath, code[i].contents, macrodefs, assembly);
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly);
+        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${sff}`}], macrodefs, assembly);
         
-            if(cunit.isdecl) {
-                if(registeredNamespaces.has(cunit.ns)) {
-                    errors.push(new ParserError(SourceInfo.implicitSourceInfo(), `Duplicate namespace declaration -- ${cunit.ns}`));
-                }
-                registeredNamespaces.add(cunit.ns);
-            }
-        }
-
-        if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
-            errors.push(new ParserError(SourceInfo.implicitSourceInfo(), "Missing namespace declaration"));
-        }
-
-        //parse the code
-        for(let i = 0; i < code.length; ++i) {
-            const cunit = Parser.parseCompilationUnit(ParsePhase_CompleteParsing, code[i].srcpath, code[i].contents, macrodefs, assembly);
-            errors.push(...cunit.errors);
-        }
-
-        if(errors.length !== 0) {
-            return errors;
+        if(coreerrors.length !== 0 || ferrors.length !== 0) {
+            return [...coreerrors, ...ferrors];
         }
 
         const ns = assembly.getToplevelNamespace("Main") as NamespaceDeclaration;

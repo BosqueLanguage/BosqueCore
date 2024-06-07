@@ -64,7 +64,7 @@ function generateASM(usercode: PackageConfig): [Assembly | undefined, ParserErro
     const corecode = workflowLoadCoreSrc() as CodeFileInfo[];
 
     Status.output(`parsing...\n`);
-    const parseres = Parser.parse([...corecode, ...usercode.src], usercode.macrodefs);
+    const parseres = Parser.parse(corecode, usercode.src, usercode.macrodefs);
 
     let tasm: Assembly | undefined = undefined;
     let parseerrors: ParserError[] = [];
