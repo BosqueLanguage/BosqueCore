@@ -555,7 +555,7 @@ class TypeCheckerRelations {
 
     private stringTemplateIsSubtypeOf(t1: StringTemplateTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t2 instanceof NominalTypeSignature) {
-            return this.isSubtypeOf(t1.kind === "utf8" ? this.wellknowntypes.get("TemplateString") as NominalTypeSignature : this.wellknowntypes.get("ExTemplateString") as NominalTypeSignature, t2, tconstrain);
+            return this.isSubtypeOf(t1.kind === "utf8" ? this.wellknowntypes.get("TemplateString") as NominalTypeSignature : this.wellknowntypes.get("TemplateExString") as NominalTypeSignature, t2, tconstrain);
         }
         else if(t2 instanceof NoneableTypeSignature) {
             return this.isSubtypeOf(t1, t2.type, tconstrain);

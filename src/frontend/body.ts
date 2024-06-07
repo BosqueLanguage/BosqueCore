@@ -232,7 +232,7 @@ enum ExpressionTag {
     LiteralExTypedStringExpression = "LiteralExTypedStringExpression",
     
     LiteralTemplateStringExpression = "LiteralTemplateStringExpression",
-    LiteralExTemplateStringExpression = "LiteralExTemplateStringExpression",
+    LiteralTemplateExStringExpression = "LiteralTemplateExStringExpression",
     
     LiteralPathExpression = "LiteralPathExpression",
     LiteralPathFragmentExpression = "LiteralPathFragmentExpression",

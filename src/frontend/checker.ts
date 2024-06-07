@@ -706,7 +706,7 @@ class TypeChecker {
         return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "utf8", []));
     }
 
-    private checkLiteralExTemplateStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
+    private checkLiteralTemplateExStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
         return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "ex", []));
@@ -1490,8 +1490,8 @@ class TypeChecker {
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralExTemplateStringExpression: {
-                return this.checkLiteralExTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralTemplateExStringExpression: {
+                return this.checkLiteralTemplateExStringExpression(env, exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
@@ -4245,7 +4245,7 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Decimal", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "ExTemplateString", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "TemplateExString", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "ExRegexValidator", wellknownTypes);

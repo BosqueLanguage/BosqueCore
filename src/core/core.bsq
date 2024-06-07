@@ -134,7 +134,7 @@ __internal __typedeclable entity TemplateString provides Some {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity ExTemplateString provides Some {
+__internal __typedeclable entity TemplateExString provides Some {
 }
 
 namespace Interpolate {

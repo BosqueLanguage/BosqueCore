@@ -120,7 +120,7 @@ const PRIMITIVE_ENTITY_TYPE_NAMES = [
 
 const PRIMITIVE_CONCEPT_TYPE_NAMES = [
     "Any", "Some", "KeyType", "Tuple", "Record", "Object",
-    "RegexValidator", "ExRegexValidator",
+    "RegexValidator", "ExRegexValidator", "PathValidator",
     "IOption", "ISomething",
     "IResult", "IOk", "IError",
     "IAPIResult", "IAPIRejected", "IAPIFailed", "IAPIError", "IAPISuccess"
@@ -1076,7 +1076,7 @@ class ParserState {
 
     cloneForNested(modetag: string, epos: number): ParserState {
         assert(this.cpos <= epos);
-        return new ParserState(modetag, this.cpos, epos, this.tokens, this.errors);
+        return new ParserState(modetag, this.cpos, epos, this.tokens, []);
     }
 
     moveStateIntoParent(child: ParserState) {
@@ -1090,7 +1090,7 @@ class ParserState {
 
     skipToPosition(pos: number | undefined) {
         assert(pos === undefined || pos <= this.epos);
-        this.cpos = pos || this.epos;
+        this.cpos = (pos !== undefined ? pos : this.epos);
     }
 }
 
@@ -1289,7 +1289,7 @@ class Parser {
 
             tpos++;
             this.consumeToken();
-            tok = this.peekToken(tpos);
+            tok = this.peekToken();
         }
 
         this.popStateReset();
@@ -1320,7 +1320,7 @@ class Parser {
 
             tpos++;
             this.consumeToken();
-            tok = this.peekToken(tpos);
+            tok = this.peekToken();
         }
 
         this.popStateReset();
@@ -1353,7 +1353,7 @@ class Parser {
 
             tpos++;
             this.consumeToken();
-            tok = this.peekToken(tpos);
+            tok = this.peekToken();
         }
 
         this.popStateReset();
@@ -2972,7 +2972,7 @@ class Parser {
         }
         else if(tk === TokenStrings.TemplateExString) {
             const sstr = this.consumeTokenAndGetValue();
-            return new LiteralTemplateStringExpression(ExpressionTag.LiteralExTemplateStringExpression, sinfo, sstr);
+            return new LiteralTemplateStringExpression(ExpressionTag.LiteralTemplateExStringExpression, sinfo, sstr);
         }
         else if(tk === TokenStrings.PathItem) {
             const sstr = this.consumeTokenAndGetValue();
@@ -4343,6 +4343,8 @@ class Parser {
             this.prepStateStackForNested("namespace-member", undefined);
 
             const sinfo = this.peekToken().getSourceInfo();
+            console.log(sinfo.line);
+
             if(this.testToken(KW_type)) {
                 this.parseNamespaceTypedef(attributes);
             }
@@ -5019,7 +5021,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
-        this.ensureAndConsumeTokenAlways(KW_entity, "concept declaration");
+        this.ensureAndConsumeTokenAlways(KW_concept, "concept declaration");
         this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
         const ename = this.consumeTokenAndGetValue();
 
