@@ -3948,7 +3948,7 @@ class TypeChecker {
         this.checkAbstractNominalTypeDeclHelper(bnames, rcvr, tdecl, tdecl.fields, true);
 
         for(let i = 0; i < tdecl.associatedMemberEntityDecls.length; ++i) {
-            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i].resolvedDeclaration as DatatypeMemberEntityTypeDecl);
+            this.checkDatatypeMemberEntityTypeDecl(ns, tdecl, tdecl.associatedMemberEntityDecls[i]);
         }
         this.file = CLEAR_FILENAME;
     }

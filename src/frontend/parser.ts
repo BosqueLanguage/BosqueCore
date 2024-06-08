@@ -5181,13 +5181,9 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            const parentterms = parenttype.terms.map((term) => { return {name: term.name, type: new TemplateTypeSignature(sinfo, term.name) }; });
-            const tparent = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], undefined, parenttype);
-
-            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, tparent);
-            const dtype = new NominalTypeSignature(sinfo, this.env.currentNamespace.fullnamespace.ns, [{tname: ename, terms: []}], undefined, tdecl);
+            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, parenttype);
             
-            parenttype.associatedMemberEntityDecls.push(dtype);
+            parenttype.associatedMemberEntityDecls.push(tdecl);
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(ename);
@@ -5614,7 +5610,7 @@ class Parser {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], [], undefined, tdecl));
+        this.wellknownTypes.set(name, new NominalTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, terms: []}], undefined, tdecl));
     }
 
     private static _s_lcre = /^%%[^\n]*/y;

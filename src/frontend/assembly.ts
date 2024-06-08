@@ -1,5 +1,5 @@
 
-import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature, NominalTypeSignature } from "./type";
+import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature } from "./type";
 import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
 
 import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
@@ -1077,9 +1077,9 @@ class ConceptTypeDecl extends AbstractConceptTypeDecl {
 
 class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
-    readonly parentTypeDecl: NominalTypeSignature;
+    readonly parentTypeDecl: DatatypeTypeDecl;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: NominalTypeSignature) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
         super(file, sinfo, attributes, name, etag);
 
         this.parentTypeDecl = parentTypeDecl;
@@ -1099,7 +1099,7 @@ class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
 
 class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
-    readonly associatedMemberEntityDecls: NominalTypeSignature[] = [];
+    readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo, attributes, name, etag);
@@ -1121,9 +1121,7 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
             usingdecl = " using {\n" + this.joinBodyGroups(mg) + fmt.indent("\n}\nof\n");
         }
 
-        const edecls = this.associatedMemberEntityDecls.map((aed) => {
-            (aed.resolvedDeclaration as DatatypeMemberEntityTypeDecl).emit(fmt)
-        }).join("\n| ");
+        const edecls = this.associatedMemberEntityDecls.map((aed) => aed.emit(fmt)).join("\n| ");
 
         let etail = ";";
         if(bg.length !== 0) {

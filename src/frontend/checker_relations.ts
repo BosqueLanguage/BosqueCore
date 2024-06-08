@@ -99,18 +99,17 @@ class TypeCheckerRelations {
         //check for complete set of datatype members
         const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof NominalTypeSignature) && (t.resolvedDeclaration instanceof DatatypeMemberEntityTypeDecl));
         if(dts.length !== 0) {
-            xxxx;
             for(let i = 0; i < dts.length; ++i) {
-                const pptype = ((dts[i] as NominalTypeSignature).resolvedDeclaration as DatatypeMemberEntityTypeDecl).parentTypeDecl;
-                const realmapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo((dts[i] as NominalTypeSignature));
-                const realptype = pptype.remapTemplateBindings(realmapper);
-
-                const allmembers = ((realptype as NominalTypeSignature).resolvedDeclaration as DatatypeTypeDecl).associatedMemberEntityDecls.every((mem) => {
-                    const realmem = mem.remapTemplateBindings(realmapper);
-                    return tl.some((t) => this.areSameTypes(t, realmem, tconstrain));  
+                const ndts = dts[i] as NominalTypeSignature;
+                const pptype = (ndts.resolvedDeclaration as DatatypeMemberEntityTypeDecl).parentTypeDecl;
+                
+                const allmembers = pptype.associatedMemberEntityDecls.every((mem) => {
+                    const tmem = new NominalTypeSignature(mem.sinfo, ndts.ns, [{ tname: mem.name, terms: ndts.tscope[0].terms}], undefined, mem);
+                    return tl.some((t) => this.areSameTypes(t, tmem, tconstrain));  
                 });
 
                 if(allmembers) {
+                    const realptype = new NominalTypeSignature(ndts.sinfo, ndts.ns, [{ tname: pptype.name, terms: ndts.tscope[0].terms}], undefined, pptype);
                     tl.push(realptype);
                 }
             }
@@ -337,7 +336,11 @@ class TypeCheckerRelations {
             return {overlap: refine, remain: this.getOkTypeForResultTE(nsrc, tconstrain)};
         }
         else if(srcdecl instanceof DatatypeTypeDecl) {
-            const opts = srcdecl.associatedMemberEntityDecls.map((mem) => this.refineNominal(mem, refine, tconstrain));
+            const opts = srcdecl.associatedMemberEntityDecls.map((mem) => {
+                const tmem = new NominalTypeSignature(mem.sinfo, nsrc.ns, [{ tname: mem.name, terms: nsrc.tscope[0].terms}], undefined, mem);
+                return this.refineNominal(tmem, refine, tconstrain)
+            });
+
             const ovlp = opts.map((opt) => opt.overlap).filter((opt) => opt !== undefined);
             const rmn = opts.map((opt) => opt.remain).filter((opt) => opt !== undefined);
 
@@ -544,7 +547,7 @@ class TypeCheckerRelations {
     private nominalIsSubtypeOf(t1: NominalTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         const tmapping = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(t1);
 
-        const specialprovides = this.resolveSpecialProvidesDecls(t1.resolvedDeclaration as AbstractNominalTypeDecl, tconstrain).map((t) => t.remapTemplateBindings(tmapping));
+        const specialprovides = this.resolveSpecialProvidesDecls(t1, tconstrain).map((t) => t.remapTemplateBindings(tmapping));
         const regularprovides = (t1.resolvedDeclaration as AbstractNominalTypeDecl).provides.map((t) => t.remapTemplateBindings(tmapping));
 
         return [...specialprovides, ...regularprovides].some((t) => this.isSubtypeOf(t, t2, tconstrain));
@@ -1339,8 +1342,8 @@ class TypeCheckerRelations {
         }
     }
 
-    resolveSpecialProvidesDecls(t: AbstractNominalTypeDecl, tconstrain: TemplateConstraintScope): TypeSignature[] {
-        const tdecl = t as AbstractNominalTypeDecl;
+    resolveSpecialProvidesDecls(t: NominalTypeSignature, tconstrain: TemplateConstraintScope): TypeSignature[] {
+        const tdecl = t.resolvedDeclaration as AbstractNominalTypeDecl;
 
         if(tdecl instanceof EnumTypeDecl) {
             return [this.wellknowntypes.get("KeyType") as TypeSignature, this.wellknowntypes.get("Some") as TypeSignature];
@@ -1355,7 +1358,7 @@ class TypeCheckerRelations {
             return [this.wellknowntypes.get("PathValidator") as TypeSignature];
         }
         else if(tdecl instanceof DatatypeMemberEntityTypeDecl) {
-            return [tdecl.parentTypeDecl];
+            return [new NominalTypeSignature(t.sinfo, t.ns, [{tname: tdecl.parentTypeDecl.name, terms: t.tscope[0].terms}], undefined, tdecl.parentTypeDecl)];
         }
         else {
             return [];
