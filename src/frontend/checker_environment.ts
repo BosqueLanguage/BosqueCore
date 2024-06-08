@@ -144,7 +144,26 @@ class TypeEnvironment {
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
     }
 
-    static mergeEnvironments(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
+    static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
+        let locals: VarInfo[][] = [];
+        for(let i = 0; i < origenv.locals.length; i++) {
+            let frame: VarInfo[] = [];
+
+            for(let j = 0; j < origenv.locals[i].length; j++) {
+                const mdef = envs.every((e) => (e.resolveLocalVarInfo(origenv.locals[i][j].srcname) as VarInfo).mustDefined);
+                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].layoutType, origenv.locals[i][j].flowType, origenv.locals[i][j].isConst, mdef));
+            }
+
+            locals.push(frame);
+        }
+
+        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.returnType, locals);
+    }
+
+    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
+        //
+        //TODO: need to do the stuff if we have a simple binder variable
+        //
         let locals: VarInfo[][] = [];
         for(let i = 0; i < origenv.locals.length; i++) {
             let frame: VarInfo[] = [];

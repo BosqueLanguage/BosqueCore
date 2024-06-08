@@ -2894,7 +2894,7 @@ class TypeChecker {
             }
         }
         
-        return TypeEnvironment.mergeEnvironments(ttrue, env);
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ttrue);
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
@@ -2936,7 +2936,7 @@ class TypeChecker {
             }
         }
         
-        return TypeEnvironment.mergeEnvironments(ttrue, tfalse);
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ttrue, tfalse);
     }
 
     private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
@@ -2967,7 +2967,7 @@ class TypeChecker {
 
         const elseflow = this.checkBlockStatement(env, stmt.elseflow);
 
-        return TypeEnvironment.mergeEnvironments(env, ...branchflows, elseflow);
+        return TypeEnvironment.mergeEnvironmentsSimple(env, ...branchflows, elseflow);
     }
 
     private checkSwitchStatement(env: TypeEnvironment, stmt: SwitchStatement): TypeEnvironment {
@@ -3030,7 +3030,7 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironments(env, ...results);
+        return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
@@ -3077,7 +3077,7 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironments(env, ...results);
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ...results);
     }
 
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
