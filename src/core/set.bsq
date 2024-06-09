@@ -1,4 +1,4 @@
-//The core namespace implements the primitive concepts used in the bosque core language
+%%The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
 
 __internal entity Set<T: KeyType> provides Some, Expandoable<T> {

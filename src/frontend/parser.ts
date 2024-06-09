@@ -1373,10 +1373,6 @@ class Parser {
             const v = fn();
             result.push(v);
             
-            if(!this.testToken(end) && !this.testToken(sep)) {
-                this.currentState().moveToRecoverPosition();
-            }
-
             if(this.testToken(end)) {
                 //great this is the happy path we will exit next iter
                 this.popStateIntoParentOk();
@@ -1399,8 +1395,8 @@ class Parser {
             }
         }
 
-        this.popStateIntoParentOk();
         this.ensureAndConsumeTokenIf(end, contextinfobase);
+        this.popStateIntoParentOk();
 
         return result;
     }
@@ -3943,9 +3939,19 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.env.pushStandardBlockScope();
-        const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
-            return this.parseStatement();
-        });
+
+        const closeparen = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+        this.prepStateStackForNested("BlockStatement", closeparen);
+
+        let stmts: Statement[] = [];
+        this.ensureAndConsumeTokenAlways(SYM_lbrace, "block statement");
+        while(!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+            const stmt = this.parseStatement();
+            stmts.push(stmt);
+        }
+        this.ensureAndConsumeTokenAlways(SYM_rbrace, "block statement");
+        
+        this.popStateIntoParentOk();
         this.env.popStandardBlockScope();
 
         if(stmts.length === 0) {
@@ -3959,15 +3965,25 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.env.pushBinderExpressionScope(bindernames);
-        const stmts = this.parseListOf<Statement>("block", SYM_lbrace, SYM_rbrace, SYM_semicolon, () => {
-            return this.parseStatement();
-        });
+
+        const closeparen = this.scanMatchingParens(SYM_lbrace, SYM_rbrace);
+        this.prepStateStackForNested("BlockStatement", closeparen);
+
+        let stmts: Statement[] = [];
+        this.ensureAndConsumeTokenAlways(SYM_lbrace, "block statement");
+        while(!this.testToken(SYM_rbrace) && !this.testToken(TokenStrings.Recover) && !this.testToken(TokenStrings.EndOfStream)) {
+            const stmt = this.parseStatement();
+            stmts.push(stmt);
+        }
+        this.ensureAndConsumeTokenAlways(SYM_rbrace, "block statement");
+        
+        this.popStateIntoParentOk();
         const used = this.env.popBinderExpressionScope();
 
         if(stmts.length === 0) {
             this.recordErrorGeneral(sinfo, "Empty block statement -- should include a ';' to indicate intentionally empty block");
         }
-
+        
         return {block: new BlockStatement(sinfo, stmts), used: used};
     }
 
@@ -5699,10 +5715,8 @@ class Parser {
     ////
     //Public methods
 
-    static parsefiles(iscore: boolean, code: CodeFileInfo[], macrodefs: string[], assembly: Assembly): ParserError[] {
+    static parsefiles(iscore: boolean, code: CodeFileInfo[], macrodefs: string[], assembly: Assembly, registeredNamespaces: Set<string>): ParserError[] {
         let errors: ParserError[] = [];
-
-        let registeredNamespaces = new Set<string>();
 
         //load all the names and make sure every top-level namespace is declared
         for(let i = 0; i < code.length; ++i) {
@@ -5714,10 +5728,6 @@ class Parser {
                 }
                 registeredNamespaces.add(cunit.ns);
             }
-        }
-
-        if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
-            errors.push(new ParserError("[implicit]", SourceInfo.implicitSourceInfo(), "Missing namespace declaration"));
         }
 
         //parse the code
@@ -5732,14 +5742,24 @@ class Parser {
     static parse(core: CodeFileInfo[], code: CodeFileInfo[], macrodefs: string[]): Assembly | ParserError[] {
         let assembly = new Assembly();
 
-        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly);
-        const usererrors = Parser.parsefiles(false, code, macrodefs, assembly);
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const usererrors = Parser.parsefiles(false, code, macrodefs, assembly, registeredNamespaces);
 
-        if(coreerrors.length === 0 && usererrors.length === 0) {
+        const nsdeclerrors: ParserError[] = [];
+        if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
+            assembly.toplevelNamespaces.forEach((ns) => {
+                if(!registeredNamespaces.has(ns.name)) {
+                    nsdeclerrors.push(new ParserError("[implicit]", SourceInfo.implicitSourceInfo(), `Missing namespace declaration -- ${ns}`));
+                }
+            });
+        }
+
+        if(nsdeclerrors.length === 0 && coreerrors.length === 0 && usererrors.length === 0) {
             return assembly;
         }
         else {
-            return [...coreerrors, ...usererrors];
+            return [...nsdeclerrors, ...coreerrors, ...usererrors];
         }
     }
 
@@ -5747,8 +5767,9 @@ class Parser {
     static test_parseSFunction(core: CodeFileInfo[], macrodefs: string[], sff: string): string | ParserError[] {
         let assembly = new Assembly();
 
-        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly);
-        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${sff}`}], macrodefs, assembly);
+        let registeredNamespaces = new Set<string>();
+        const coreerrors = Parser.parsefiles(true, core, macrodefs, assembly, registeredNamespaces);
+        const ferrors = Parser.parsefiles(false, [{srcpath: "main.bsq", filename: "main.bsq", contents: `declare namespace Main; ${sff}`}], macrodefs, assembly, registeredNamespaces);
         
         if(coreerrors.length !== 0 || ferrors.length !== 0) {
             return [...coreerrors, ...ferrors];
