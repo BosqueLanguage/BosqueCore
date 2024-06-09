@@ -4222,6 +4222,8 @@ class TypeChecker {
 
     static checkAssembly(assembly: Assembly): TypeError[] {
         let wellknownTypes: Map<string, TypeSignature> = new Map<string, TypeSignature>();
+        wellknownTypes.set("Void", new VoidTypeSignature(SourceInfo.implicitSourceInfo()));
+
         TypeChecker.loadWellKnownType(assembly, "Any", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Some", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
@@ -4229,7 +4231,6 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "IOk", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "IErr", wellknownTypes);
 
-        TypeChecker.loadWellKnownType(assembly, "Void", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "None", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Nothing", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Bool", wellknownTypes);

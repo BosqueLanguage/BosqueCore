@@ -161,6 +161,18 @@ __internal __constructable entity Something<T> provides ISomething, Option<T> {
 __internal concept Option<T> provides IOption {
 }
 
+%** Generic type for all Result<T, E> to inherit from. **%
+__universal concept IResult provides Some {
+}
+
+%** Generic type for all Result<T, E>::Ok to inherit from. **%
+__universal concept IOk provides Some {
+}
+
+%** Generic type for all Result<T, E>::Err to inherit from. **%
+__universal concept IErr provides Some {
+}
+
 namespace Interpolate {
     %** Special declaration of string interpolation function. **%
     function string(): String = special_method;

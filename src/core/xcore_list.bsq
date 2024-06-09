@@ -1,6 +1,6 @@
 %%The core namespace implements the primitive concepts used in the bosque core language
 namespace Core;
-
+%*
 #if EXEC_LIBS
 namespace ListOps {
     __safe function s_list_value<T>(l: List<T>): ListRepr<T>? = s_list_value;
@@ -86,3 +86,4 @@ namespace ListOps {
     __assume_safe function s_list_front<T>(l: List<T>): T = s_list_front;
 }
 #endif
+*%
