@@ -1653,17 +1653,54 @@ class Parser {
         }
     }
 
+    private parseIdentifierAsTemplateVariable(): string {
+        const vv = this.consumeTokenAndGetValue();
+        if(!/[A-Z](Numeric)?/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid template variable name -- must be an uppercase letter or XNumeric");
+        }
+
+        return vv;
+    }
+
+    private parseIdentifierAsNamespaceOrTypeName(): string {
+        const vv = this.consumeTokenAndGetValue();
+        if(!/^[A-Z][_a-zA-Z0-9]+/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid namespace or type name -- must start with an uppercase letter");
+        }
+
+        return vv;
+    }
+
+    private parseIdentifierAsEnumMember(): string {
+        const vv = this.consumeTokenAndGetValue();
+        if(!/^[A-Z][_a-zA-Z0-9]+/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid enum member name -- must start with an uppercase letter");
+        }
+
+        return vv;
+    }
+
     private parseIdentifierAsStdVariable(): string {
         const vv = this.consumeTokenAndGetValue();
         if(vv === "_") {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
         }
 
-        return this.consumeTokenAndGetValue();
+        if(!/^[_a-z][_a-zA-Z0-9]+/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid identifier name -- must start with a lowercase letter or _");
+        }
+
+        return vv;
     }
 
     private parseIdentifierAsIgnoreableVariable(): string {
-        return this.consumeTokenAndGetValue();
+        const vv = this.consumeTokenAndGetValue();
+        
+        if(!/^[_a-z][_a-zA-Z0-9]+/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid identifier name -- must start with a lowercase letter or _");
+        }
+
+        return vv;
     }
 
     private parseInvokeTermRestriction(): InvokeTemplateTypeRestriction  {
@@ -1676,7 +1713,7 @@ class Parser {
                 this.ensureAndConsumeTokenAlways(SYM_lparen, "template term restiction");
 
                 this.ensureToken(TokenStrings.IdentifierName, "template term restiction");
-                const vname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+                const vname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsTemplateVariable() : "[error]";
 
                 this.ensureAndConsumeTokenAlways(SYM_rparen, "template term restiction");
                 this.ensureAndConsumeTokenAlways(SYM_arrow, "template term restiction");
@@ -2207,7 +2244,7 @@ class Parser {
     private parseTemplateTypeReference(): TypeSignature {
         const sinfo = this.peekToken().getSourceInfo();
 
-        const tname = this.consumeTokenAndGetValue();
+        const tname = this.parseIdentifierAsTemplateVariable();
         return new TemplateTypeSignature(sinfo, tname);
     }
 
@@ -2607,7 +2644,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(SYM_coloncolon, "namespace scoped expression");
         this.ensureToken(TokenStrings.IdentifierName, "namespace scoped expression");
 
-        const idname = this.consumeTokenAndGetValue();
+        const idname = this.parseIdentifierAsStdVariable();
 
         const constOpt = nspace.consts.find((c) => c.name === idname);
         const funOpt = nspace.functions.find((f) => f.name === idname);
@@ -2629,6 +2666,8 @@ class Parser {
 
     private parseTypeScopedFirstExpression(access: {nsScope: NamespaceDeclaration, scopeTokens: string[], typeTokens: {tname: string, terms: TypeSignature[]}[]}): Expression {
         assert(false, "Not implemented -- parseTypeScopedFirstExpression");
+
+        //TODO: make sure to handle the #enum case here
     }
 
     private parseIdentifierFirstExpression(): Expression {
@@ -4228,7 +4267,7 @@ class Parser {
             this.consumeToken();
 
             this.ensureToken(TokenStrings.IdentifierName, "body");
-            const iname = this.consumeTokenAndGetValue();
+            const iname = this.parseIdentifierAsStdVariable();
             this.ensureAndConsumeTokenIf(SYM_semicolon, "body");
 
             return new BuiltinBodyImplementation(sinfo, this.env.currentFile, iname);
@@ -4301,7 +4340,7 @@ class Parser {
             
         const chain: string[] = [];
         while(this.testToken(TokenStrings.IdentifierName)) {
-            chain.push(this.consumeTokenAndGetValue());
+            chain.push(this.parseIdentifierAsNamespaceOrTypeName());
             if(!this.testToken(SYM_coloncolon)) {
                 break;
             }
@@ -4325,7 +4364,7 @@ class Parser {
                 }
                 else {
                     this.ensureToken(TokenStrings.IdentifierName, "namespace import");
-                    const asns = this.consumeTokenAndGetValue();
+                    const asns = this.parseIdentifierAsNamespaceOrTypeName();
 
                     if(this.env.currentNamespace.istoplevel) {
                         this.env.currentNamespace.usings.push(new NamespaceUsing(this.env.currentFile, new FullyQualifiedNamespace(chain), asns));
@@ -4441,7 +4480,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_namespace, "nested namespace declaration");
         this.ensureToken(TokenStrings.IdentifierName, "nested namespace declaration");
 
-        const nsname = this.parseIdentifierAsStdVariable();
+        const nsname = this.parseIdentifierAsNamespaceOrTypeName();
 
         const sinfo = this.peekToken().getSourceInfo();
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
@@ -4480,7 +4519,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_type, "type alias");
         this.ensureToken(TokenStrings.IdentifierName, "type alias");
-        const tyname = this.parseIdentifierAsStdVariable();
+        const tyname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if (this.env.currentNamespace.checkDeclNameClashType(tyname, this.testToken(SYM_langle))) {
@@ -5007,7 +5046,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
-        const ename = this.parseIdentifierAsStdVariable();
+        const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5082,7 +5121,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_concept, "concept declaration");
         this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
-        const ename = this.parseIdentifierAsStdVariable();
+        const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5109,7 +5148,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_enum, "enum declaration");
         this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
-        const ename = this.parseIdentifierAsStdVariable();
+        const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
@@ -5118,7 +5157,7 @@ class Parser {
 
             const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
                 this.ensureToken(TokenStrings.IdentifierName, "enum member");
-                return this.parseIdentifierAsStdVariable();
+                return this.parseIdentifierAsEnumMember();
             });
 
             const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members, etag);
@@ -5142,7 +5181,7 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(KW_validator, "validator declaration");
         this.ensureToken(TokenStrings.IdentifierName, "validator declaration");
-        const iname = this.parseIdentifierAsStdVariable();
+        const iname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
@@ -5202,7 +5241,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_typedecl, "typedecl declaration");
         this.ensureToken(TokenStrings.IdentifierName, "typedecl declaration");
-        const iname = this.parseIdentifierAsStdVariable();
+        const iname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
@@ -5252,7 +5291,7 @@ class Parser {
         this.consumeTokenIf(SYM_bar);
 
         this.ensureToken(TokenStrings.IdentifierName, "datatype member entity declaration");
-        const ename = this.parseIdentifierAsStdVariable();
+        const ename = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
@@ -5303,7 +5342,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_datatype, "datatype declaration");
         this.ensureToken(TokenStrings.IdentifierName, "datatype declaration");
-        const dname = this.parseIdentifierAsStdVariable();
+        const dname = this.parseIdentifierAsNamespaceOrTypeName();
 
         let tdecl: DatatypeTypeDecl;
         let hasTerms = this.testToken(SYM_langle);
@@ -5378,7 +5417,7 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(KW_task, "task declaration");
         this.ensureToken(TokenStrings.IdentifierName, "task declaration");
-        const tname = this.parseIdentifierAsStdVariable();
+        const tname = this.parseIdentifierAsNamespaceOrTypeName();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5722,7 +5761,7 @@ class Parser {
         }
     }
 
-    private static _s_nsre = /^(declare[ ]+)?namespace[ ]+[_a-zA-Z][_a-zA-Z0-9]*/;
+    private static _s_nsre = /^(declare[ ]+)?namespace[ ]+[A-Z][_a-zA-Z0-9]*/;
     private static parseCompilationUnit(iscore: boolean, phase: ParsePhase, file: string, contents: string, macrodefs: string[], assembly: Assembly): {ns: string, isdecl: boolean, errors: ParserError[]} {
         const tcontents = Parser.eatDeadTextAtFileStart(contents);
         const nnsm = Parser._s_nsre.exec(tcontents);
@@ -5812,7 +5851,7 @@ class Parser {
         if(assembly.toplevelNamespaces.length !== registeredNamespaces.size) {
             assembly.toplevelNamespaces.forEach((ns) => {
                 if(!registeredNamespaces.has(ns.name)) {
-                    nsdeclerrors.push(new ParserError("[implicit]", SourceInfo.implicitSourceInfo(), `Missing namespace declaration -- ${ns}`));
+                    nsdeclerrors.push(new ParserError("[implicit]", SourceInfo.implicitSourceInfo(), `Missing namespace declaration -- ${ns.fullnamespace.emit()}`));
                 }
             });
         }

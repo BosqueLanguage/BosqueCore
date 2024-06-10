@@ -251,6 +251,7 @@ enum ExpressionTag {
     TaskAccessInfoExpression = "TaskAccessInfoExpression",
     AccessNamespaceConstantExpression = "AccessNamespaceConstantExpression",
     AccessStaticFieldExpression = " AccessStaticFieldExpression",
+    AccessEnumExpression = "AccessEnumExpression",
     AccessVariableExpression = "AccessVariableExpression",
 
     ConstructorPrimaryExpression = "ConstructorPrimaryExpression",
@@ -610,6 +611,21 @@ class AccessStaticFieldExpression extends Expression {
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
         return `${this.stype.emit(false)}::${this.name}`;
+    }
+}
+
+class AccessEnumExpression extends Expression {
+    readonly stype: TypeSignature;
+    readonly name: string;
+
+    constructor(sinfo: SourceInfo, stype: TypeSignature, name: string) {
+        super(ExpressionTag.AccessEnumExpression, sinfo);
+        this.stype = stype;
+        this.name = name;
+    }
+
+    emit(toplevel: boolean, fmt: CodeFormatter): string {
+        return `${this.stype.emit(false)}#${this.name}`;
     }
 }
 
@@ -2379,7 +2395,7 @@ export {
     LiteralTypeDeclValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclFloatPointValueExpression,
     InterpolateExpression,
     AccessEnvValueExpression, TaskAccessInfoExpression,
-    AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression,
+    AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessEnumExpression, AccessVariableExpression,
     ConstructorExpression, ConstructorPrimaryExpression, ConstructorTupleExpression, ConstructorRecordExpression, ConstructorEListExpression,
     ConstructorLambdaExpression, SpecialConstructorExpression,
     LetExpression,
