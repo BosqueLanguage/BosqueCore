@@ -15,12 +15,11 @@
         "@bosque/jsbrex": "0.1.0"
     },
     "devDependencies": {
-        "fs-extra": "11.2.0",
-        "mocha": "10.4.0"
+        "fs-extra": "11.2.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive"
+        "test": "node ./build/build_all.js &&  node --test --experimental-test-coverage --test-reporter tap"
     },
     "files": [
         "bin/*"
