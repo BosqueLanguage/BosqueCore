@@ -6,7 +6,8 @@ import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifi
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
 import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
-import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
+import { it } from "node:test";
 
 const { accepts, initializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -2345,29 +2346,6 @@ class Parser {
         }
     }
 
-    private static generateITestBinderName(test: ITest | undefined, exp: Expression, binder: string | undefined): [boolean, string[]] {
-        let bnames: string[] = [];
-        let isimplicit = false;
-
-        if(test !== undefined) {
-            if(binder !== undefined) {
-                bnames = [binder];
-            }
-            else if(exp instanceof AccessVariableExpression) {
-                const vname = exp.srcname;
-                if(!vname.startsWith("$")) {
-                    bnames = ["$" + vname];
-                }
-            }
-            else {
-                bnames = ["$_"];
-                isimplicit = true;
-            }
-        }
-
-        return [isimplicit, bnames];
-    }
-
     private parseMatchTypeGuard(): TypeSignature | undefined {
         if (this.testToken(KW_under)) {
             return undefined;
@@ -3327,51 +3305,80 @@ class Parser {
         }
     }
 
-    private parseIfTest(): IfTest {
-        if(this.testToken(SYM_lparen)) {
-            const itest = this.parseITest();
-            
-            this.ensureAndConsumeTokenIf(SYM_lparen, "if test");
-            const exp = this.parseExpression();
-            this.ensureAndConsumeTokenAlways(SYM_rparen, "if test");
+    private parseIfTest(postflowok: boolean): [Expression, string | undefined, boolean, boolean, ITest | undefined] {
+        let exp: Expression;
+        let bindername: string | undefined = undefined;
+        let implicitdef: boolean = true;
+        let ispostflow: boolean;
+        let itest: ITest | undefined = undefined;
 
-            return new IfTest(exp, itest);
+        this.ensureAndConsumeTokenIf(SYM_lparen, "if test");
+        if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+            bindername = this.parseBinderInfo();
+            implicitdef = false;
+            this.ensureAndConsumeTokenAlways(SYM_eq, "if test");
+        }
+        
+        exp = this.parseExpression();
+        this.ensureAndConsumeTokenIf(SYM_rparen, "if test");
+
+        if(this.testAndConsumeTokenIf(SYM_atat)) {
+            ispostflow = true;
+            itest = this.parseITest();
+        }
+        else if(this.testAndConsumeTokenIf(SYM_at)) {
+            ispostflow = false;
+            itest = this.parseITest();
         }
         else {
-            this.ensureAndConsumeTokenAlways(SYM_lparen, "if test");
-            const exp = this.parseExpression();
-            this.ensureAndConsumeTokenAlways(SYM_rparen, "if test");
-
-            return new IfTest(exp,  undefined);
+            ispostflow = false;
         }
+
+        if(!postflowok && ispostflow) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow in if-expression");
+            ispostflow = false;
+        }
+
+        if(bindername !== undefined && itest === undefined) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder without itest");
+            bindername = undefined;
+        }
+
+        if(itest !== undefined && implicitdef) {
+            if(exp instanceof AccessVariableExpression) {
+                bindername = "$" + exp.srcname;
+            }
+            else {
+                bindername = "$_";
+            }
+        }
+
+        return [exp, bindername, implicitdef, ispostflow, itest];
     }
 
     private parseIfExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.consumeToken();
-        const binder = this.parseBinderInfo();
-        const iftest = this.parseIfTest();
+        const [iexp, binder, implicitdef, _, itest] = this.parseIfTest(false);
 
         this.ensureAndConsumeTokenIf(KW_then, "if expression value")
 
-        const [isimplicit, bnames] = Parser.generateITestBinderName(iftest.itestopt, iftest.exp, binder);
-
-        const ifvalueinfo = this.parseExpressionWithBinder(bnames);
+        const ifvalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
         let btrue: BinderInfo | undefined = undefined;
         if(ifvalueinfo.used.length > 0) {
-            btrue = new BinderInfo(ifvalueinfo.used[0].srcname, ifvalueinfo.used[0].scopedname, isimplicit);
+            btrue = new BinderInfo(ifvalueinfo.used[0].srcname, ifvalueinfo.used[0].scopedname, implicitdef, false);
         }
 
         this.ensureAndConsumeTokenIf(KW_else, "if expression else value");
-        const elsevalueinfo = this.parseExpressionWithBinder(bnames);
+        const elsevalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
 
         let belse: BinderInfo | undefined = undefined;
         if(elsevalueinfo.used.length > 0) {
-            belse = new BinderInfo(elsevalueinfo.used[0].srcname, elsevalueinfo.used[0].scopedname, isimplicit);
+            belse = new BinderInfo(elsevalueinfo.used[0].srcname, elsevalueinfo.used[0].scopedname, implicitdef, false);
         }
 
-        return new IfExpression(sinfo, iftest, ifvalueinfo.exp, btrue, elsevalueinfo.exp, belse);
+        return new IfExpression(sinfo, new IfTest(iexp, itest), ifvalueinfo.exp, btrue, elsevalueinfo.exp, belse);
     }
 
     private parseExpression(): Expression {
@@ -3991,45 +3998,50 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
-        const ifbinder = this.parseBinderInfo();
-        const iftest = this.parseIfTest();
+        const [iexp, binder, implicitdef, ispostflow, itest] = this.parseIfTest(true);
 
-        const [ifisimplicit, ifbnames] = Parser.generateITestBinderName(iftest.itestopt, iftest.exp, ifbinder);
-        const ifbody = this.parseScopedBlockStatementWithBinderTracking(ifbnames);
+        const ifbody = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
         let ifbind: BinderInfo | undefined = undefined;
         if(ifbody.used.length > 0) {
-            ifbind = new BinderInfo(ifbody.used[0].srcname, ifbody.used[0].scopedname, ifisimplicit);
+            ifbind = new BinderInfo(ifbody.used[0].srcname, ifbody.used[0].scopedname, implicitdef, ispostflow);
         }
 
         let conds: {cond: IfTest, block: BlockStatement}[] = [];
         while (this.testAndConsumeTokenIf(KW_elif)) {
-            const eliftest = this.parseIfTest();
+            const [kiexp, kbinder, _k2, _k3, kitest] = this.parseIfTest(true);
+            if(kbinder !== undefined) {
+                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
+            }
             const elifbody = this.parseScopedBlockStatement();
            
-            conds.push({cond: eliftest, block: elifbody});
+            conds.push({cond: new IfTest(kiexp, kitest), block: elifbody});
         }
 
         if(conds.length === 0) {
             if(!this.testAndConsumeTokenIf(KW_else)) {
-                return new IfStatement(sinfo, iftest, ifbody.block, ifbind);
+                return new IfStatement(sinfo, new IfTest(iexp, itest), ifbody.block, ifbind);
             }
             else {
                 const elsebody = this.parseScopedBlockStatementWithBinderTracking([]);
                 let elsebind: BinderInfo | undefined = undefined;
                 if(elsebody.used.length > 0) {
-                    elsebind = new BinderInfo(elsebody.used[0].srcname, elsebody.used[0].scopedname, false);
+                    elsebind = new BinderInfo(elsebody.used[0].srcname, elsebody.used[0].scopedname, false, ispostflow);
                 }
 
-                return new IfElseStatement(sinfo, iftest, ifbody.block, ifbind, elsebody.block, elsebind);
+                return new IfElseStatement(sinfo, new IfTest(iexp, itest), ifbody.block, ifbind, elsebody.block, elsebind);
             }
         }
         else {
+            if(binder !== undefined) {
+                this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
+            }
+
             if(ifbody.used.length > 0) {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
 
             const elssebody = this.parseScopedBlockStatement();
-            return new IfElifElseStatement(sinfo, [{cond: iftest, block: ifbody.block}, ...conds], elssebody);
+            return new IfElifElseStatement(sinfo, [{cond: new IfTest(iexp, itest), block: ifbody.block}, ...conds], elssebody);
         }
     }
 

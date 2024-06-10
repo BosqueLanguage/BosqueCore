@@ -9,15 +9,17 @@ class BinderInfo {
     readonly srcname: string; //the name in the source code
     readonly scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly implicitdef: boolean;
+    readonly refineonfollow: boolean;
 
-    constructor(srcname: string, scopename: string, implicitdef: boolean) {
+    constructor(srcname: string, scopename: string, implicitdef: boolean, refineonfollow: boolean) {
         this.srcname = srcname;
         this.scopename = scopename;
         this.implicitdef = implicitdef;
+        this.refineonfollow = refineonfollow;
     }
 
-    emit(): string {
-        return !this.implicitdef ? `${this.srcname}${this.srcname !== this.scopename ? ("%*" + this.scopename + "*%") : ""}=` : "";
+    emit(): [string, string] {
+        return [!this.implicitdef ? `${this.srcname}%*${this.scopename}*% = ` : "", this.refineonfollow ? "**" : "*"];
     }
 }
 
@@ -1461,8 +1463,15 @@ class IfExpression extends Expression {
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        const ttest = (this.trueValueBinder !== undefined ? this.trueValueBinder.emit() : "") + (this.test.itestopt !== undefined ? this.test.itestopt.emit(fmt) : "") + `(${this.test.exp.emit(true, fmt)})`;
-        return `if ${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
+        let bexps: [string, string] = ["", ""];
+        if(this.trueValueBinder !== undefined) {
+            bexps = this.trueValueBinder.emit();
+        }
+
+        const itest = this.test.itestopt !== undefined ? `${this.test.itestopt.emit(fmt)}` : "";
+        
+        const ttest = `(${bexps[0]}${this.test.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+        return `if${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
     }
 }
 
@@ -1909,7 +1918,15 @@ class IfStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `if ${this.trueBinder !== undefined ? this.trueBinder.emit() : ""}${this.cond.itestopt !== undefined ? this.cond.itestopt.emit(fmt) : ""}(${this.cond.exp.emit(true, fmt)}) ${this.trueBlock.emit(fmt)}`;
+        let bexps: [string, string] = ["", ""];
+        if(this.trueBinder !== undefined) {
+            bexps = this.trueBinder.emit();
+        }
+
+        const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
+        
+        const ttest = `(${bexps[0]}${this.cond.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+        return `if${ttest} ${this.trueBlock.emit(fmt)}`;
     }
 }
 
@@ -1930,10 +1947,19 @@ class IfElseStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const ttif = `${this.trueBinder !== undefined ? this.trueBinder.emit() : ""}${this.cond.itestopt !== undefined ? this.cond.itestopt.emit(fmt) : ""}(${this.cond.exp.emit(true, fmt)}) ${this.trueBlock.emit(fmt)}`;
+        let bexps: [string, string] = ["", ""];
+        if(this.trueBinder !== undefined) {
+            bexps = this.trueBinder.emit();
+        }
+
+        const itest = this.cond.itestopt !== undefined ? `${this.cond.itestopt.emit(fmt)}` : "";
+        
+        const ttest = `(${bexps[0]}${this.cond.exp.emit(true, fmt)})${bexps[1]}${itest}`;
+        
+        const ttif = this.trueBlock.emit(fmt);
         const ttelse = this.falseBlock.emit(fmt);
 
-        return [`if ${ttif}`, `else ${ttelse}`].join("\n");
+        return [`if${ttest} ${ttif}`, `else ${ttelse}`].join("\n");
     }
 }
 
@@ -1951,8 +1977,8 @@ class IfElifElseStatement extends Statement {
         const ttcond = this.condflow.map((cf) => `${cf.cond.itestopt !== undefined ? cf.cond.itestopt.emit(fmt) : ""}(${cf.cond.exp.emit(true, fmt)}) ${cf.block.emit(fmt)}`);
         const ttelse = this.elseflow.emit(fmt);
 
-        const iif = `if ${ttcond[0]}`;
-        const ielifs = [...ttcond.slice(1).map((cc) => fmt.indent(`elif ${cc}`)), fmt.indent(`else ${ttelse}`)];
+        const iif = `if${ttcond[0]}`;
+        const ielifs = [...ttcond.slice(1).map((cc) => fmt.indent(`elif${cc}`)), fmt.indent(`else ${ttelse}`)];
 
         return [iif, ...ielifs].join("\n");
     }
@@ -1969,7 +1995,12 @@ class SwitchStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `switch ${this.sval[1] !== undefined ? this.sval[1].emit() : ""}(${this.sval[0].emit(true, fmt)})`;
+        let bexps: [string, string] = ["", ""];
+        if(this.sval[1] !== undefined) {
+            bexps = this.sval[1].emit();
+        }
+
+        const mheader = `switch(${bexps[0]}${this.sval[0].emit(true, fmt)})${bexps[1]}`;
         fmt.indentPush();
         const ttmf = this.switchflow.map((sf) => `${sf.lval ? sf.lval.exp.emit(true, fmt) : "_"} => ${sf.value.emit(fmt)}`);
         fmt.indentPop();
@@ -1992,7 +2023,12 @@ class MatchStatement extends Statement {
     }
 
     emit(fmt: CodeFormatter): string {
-        const mheader = `match ${this.sval[1] !== undefined ? this.sval[1].emit() : ""}(${this.sval[0].emit(true, fmt)})`;
+        let bexps: [string, string] = ["", ""];
+        if(this.sval[1] !== undefined) {
+            bexps = this.sval[1].emit();
+        }
+
+        const mheader = `match(${bexps[0]}${this.sval[0].emit(true, fmt)})${bexps[1]}`;
         fmt.indentPush();
         const ttmf = this.matchflow.map((mf) => `${mf.mtype ? mf.mtype.emit(true) : "_"} => ${mf.value.emit(fmt)}`);
         fmt.indentPop();

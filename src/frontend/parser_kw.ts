@@ -234,6 +234,7 @@ const SYM_langle = "<";
 const SYM_rangle = ">";
 
 const SYM_at = "@";
+const SYM_atat = "@@";
 const SYM_bang = "!";
 const SYM_colon = ":";
 const SYM_coloncolon = "::";
@@ -273,7 +274,6 @@ const SYM_div = " // ";
 const SYM_wildcard = "**";
 
 //Reserved
-const SYM_atat = "@@";
 const SYM_questionquestion = "??";
 
 const LeftScanParens = [SYM_lbrack, SYM_lparen, SYM_lbrace, SYM_lbracebar, SYM_langle];
@@ -426,6 +426,7 @@ export {
     SYM_rbracebar,
 
     SYM_at,
+    SYM_atat,
     SYM_bang,
     SYM_colon,
     SYM_coloncolon,

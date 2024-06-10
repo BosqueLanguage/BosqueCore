@@ -41,11 +41,11 @@ ListReprLeaf {
 }
 & {
     function csize(l: ListRepr<T>?): Nat {
-        if none(l) {
+        if (l)none {
             return 0n;
         }
         else {
-            match (l) {
+            match (l)@ {
                 ListReprLeaf<T>   => return 1n;
                 | ListReprNode<T> => return $l.count;
             }
@@ -53,13 +53,13 @@ ListReprLeaf {
     }
 
     method get(i: Nat): T {
-        match (this) {
+        match (this)@ {
             ListReprLeaf<T> => {
                 assert i == 0n;
                 return $this.value;
             }
             | ListReprNode<T> => {
-                if $l = none ($this.l) {
+                if ($l = $this.l)@none {
                     return $this.r@!none.get(i);
                 }
                 else {
