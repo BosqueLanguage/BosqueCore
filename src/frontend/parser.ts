@@ -7,7 +7,6 @@ import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpr
 import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl } from "./assembly";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw";
-import { it } from "node:test";
 
 const { accepts, initializeLexer, lexFront } = require("@bosque/jsbrex");
 
@@ -2364,27 +2363,6 @@ class Parser {
         }
     }
 
-    private static generateMatchBinderName(exp: Expression, binder: string | undefined): [boolean, string[]] {
-        let bnames: string[] = [];
-        let isimplicit = false;
-
-        if(binder !== undefined) {
-            bnames = [binder];
-        }
-        else if(exp instanceof AccessVariableExpression) {
-            const vname = exp.srcname;
-            if(!vname.startsWith("$")) {
-                bnames = ["$" + vname];
-            }
-        }
-        else {
-            bnames = ["$_"];
-            isimplicit = true;
-        }
-
-        return [isimplicit, bnames];
-    }
-
     private parseITest(): ITest | undefined {
         const isnot = this.testAndConsumeTokenIf(SYM_bang);
 
@@ -3305,12 +3283,13 @@ class Parser {
         }
     }
 
-    private parseIfTest(postflowok: boolean): [Expression, string | undefined, boolean, boolean, ITest | undefined] {
+    private parseIfTest(isexp: boolean): [Expression, string | undefined, boolean, boolean, ITest | undefined] {
         let exp: Expression;
         let bindername: string | undefined = undefined;
         let implicitdef: boolean = true;
         let ispostflow: boolean;
         let itest: ITest | undefined = undefined;
+        let dobind: boolean;
 
         this.ensureAndConsumeTokenIf(SYM_lparen, "if test");
         if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
@@ -3324,23 +3303,30 @@ class Parser {
 
         if(this.testAndConsumeTokenIf(SYM_atat)) {
             ispostflow = true;
-            itest = this.parseITest();
+            dobind = true
         }
         else if(this.testAndConsumeTokenIf(SYM_at)) {
             ispostflow = false;
-            itest = this.parseITest();
+            dobind = true;
         }
         else {
             ispostflow = false;
+            dobind = false;
         }
+        itest = !this.testToken(isexp ? KW_then : SYM_lbrace) ? this.parseITest() : undefined;
 
-        if(!postflowok && ispostflow) {
+        if(isexp && ispostflow) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow in if-expression");
             ispostflow = false;
         }
 
-        if(bindername !== undefined && itest === undefined) {
+        if(dobind && itest === undefined) {
             this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder without itest");
+            bindername = undefined;
+        }
+
+        if(bindername !== undefined && !dobind) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder name without '@' or '@@'");
             bindername = undefined;
         }
 
@@ -3356,11 +3342,63 @@ class Parser {
         return [exp, bindername, implicitdef, ispostflow, itest];
     }
 
+    private parseSwitchOrMatchTest(isexp: boolean): [Expression, string | undefined, boolean, boolean] {
+        let exp: Expression;
+        let bindername: string | undefined = undefined;
+        let implicitdef: boolean = true;
+        let ispostflow: boolean;
+        let dobind: boolean;
+
+        this.ensureAndConsumeTokenIf(SYM_lparen, "swtich/match test");
+        if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+            bindername = this.parseBinderInfo();
+            implicitdef = false;
+            this.ensureAndConsumeTokenAlways(SYM_eq, "if test");
+        }
+        
+        exp = this.parseExpression();
+        this.ensureAndConsumeTokenIf(SYM_rparen, "swtich/match test");
+
+        if(this.testAndConsumeTokenIf(SYM_atat)) {
+            ispostflow = true;
+            dobind = true;
+        }
+        else if(this.testAndConsumeTokenIf(SYM_at)) {
+            ispostflow = false;
+            dobind = true;
+        }
+        else {
+            ispostflow = false;
+            dobind = false;
+        }
+
+        if(isexp && ispostflow) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow in switch/match expression");
+            ispostflow = false;
+        }
+
+        if(bindername !== undefined && !dobind) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have binder name without '@' or '@@'");
+            bindername = undefined;
+        }
+
+        if(dobind && implicitdef) {
+            if(exp instanceof AccessVariableExpression) {
+                bindername = "$" + exp.srcname;
+            }
+            else {
+                bindername = "$_";
+            }
+        }
+
+        return [exp, bindername, implicitdef, ispostflow];
+    }
+
     private parseIfExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.consumeToken();
-        const [iexp, binder, implicitdef, _, itest] = this.parseIfTest(false);
+        const [iexp, binder, implicitdef, _, itest] = this.parseIfTest(true);
 
         this.ensureAndConsumeTokenIf(KW_then, "if expression value")
 
@@ -3998,7 +4036,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureAndConsumeTokenAlways(KW_if, "if statement cond");
-        const [iexp, binder, implicitdef, ispostflow, itest] = this.parseIfTest(true);
+        const [iexp, binder, implicitdef, ispostflow, itest] = this.parseIfTest(false);
 
         const ifbody = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
         let ifbind: BinderInfo | undefined = undefined;
@@ -4008,7 +4046,7 @@ class Parser {
 
         let conds: {cond: IfTest, block: BlockStatement}[] = [];
         while (this.testAndConsumeTokenIf(KW_elif)) {
-            const [kiexp, kbinder, _k2, _k3, kitest] = this.parseIfTest(true);
+            const [kiexp, kbinder, _k2, _k3, kitest] = this.parseIfTest(false);
             if(kbinder !== undefined) {
                 this.recordErrorGeneral(sinfo, "Cannot have a binder in an if-elif-else statement");
             }
@@ -4050,20 +4088,14 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_switch, "switch statement dispatch value");
 
-        const binder = this.parseBinderInfo();
-
-        this.ensureAndConsumeTokenAlways(SYM_lparen, "switch statement dispatch value");
-        const sexp = this.parseExpression();
-        this.ensureAndConsumeTokenAlways(SYM_rparen, "switch statement dispatch value");
-
-        const [mimplicit, mbnames] = Parser.generateMatchBinderName(sexp, binder);
+        const [sexp, binder, implicitdef, ispostflow] = this.parseSwitchOrMatchTest(true);
 
         let entries: { lval: LiteralExpressionValue | undefined, value: BlockStatement, bindername: string | undefined }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "switch statement options");
         
         const swlit = this.parseSwitchLiteralGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
-        const svalue = this.parseScopedBlockStatementWithBinderTracking(mbnames);
+        const svalue = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
 
         entries.push({ lval: swlit, value: svalue.block, bindername: svalue.used.length !== 0 ? svalue.used[0].srcname : undefined });
         while (this.testToken(SYM_bar)) {
@@ -4071,15 +4103,15 @@ class Parser {
 
             const swlitx = this.parseSwitchLiteralGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "switch statement entry");
-            const svaluex = this.parseScopedBlockStatementWithBinderTracking(mbnames);
+            const svaluex = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
 
             entries.push({ lval: swlitx, value: svaluex.block, bindername: svaluex.used.length !== 0 ? svaluex.used[0].srcname : undefined });
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statement options");
 
         let bindinfo: BinderInfo | undefined = undefined;
-        if(entries.some((cc) => cc.bindername !== undefined)) {
-            bindinfo = new BinderInfo(mbnames[0], this.env.getScope().getBinderVarName(mbnames[0]), mimplicit);
+        if(binder !== undefined && entries.some((cc) => cc.bindername !== undefined)) {
+            bindinfo = new BinderInfo(binder, this.env.getScope().getBinderVarName(binder), implicitdef, ispostflow);
         }
 
         return new SwitchStatement(sinfo, [sexp, bindinfo], entries);
@@ -4090,20 +4122,14 @@ class Parser {
         
         this.ensureAndConsumeTokenAlways(KW_match, "match statement dispatch value");
 
-        const binder = this.parseBinderInfo();
-
-        this.ensureAndConsumeTokenAlways(SYM_lparen, "match statement dispatch value");
-        const mexp = this.parseExpression();
-        this.ensureAndConsumeTokenAlways(SYM_rparen, "match statement dispatch value");
-
-        const [mimplicit, mbnames] = Parser.generateMatchBinderName(mexp, binder);
+        const [mexp, binder, implicitdef, ispostflow] = this.parseSwitchOrMatchTest(true);
 
         let entries: { mtype: TypeSignature | undefined, value: BlockStatement, bindername: string | undefined  }[] = [];
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "match statement options");
 
         const mtype = this.parseMatchTypeGuard();
         this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
-        const mvalue = this.parseScopedBlockStatementWithBinderTracking(mbnames);
+        const mvalue = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
 
         entries.push({ mtype: mtype, value: mvalue.block, bindername: mvalue.used.length !== 0 ? mvalue.used[0].srcname : undefined});
         while (this.testToken(SYM_bar)) {
@@ -4111,15 +4137,15 @@ class Parser {
             
             const mtypex = this.parseMatchTypeGuard();
             this.ensureAndConsumeTokenIf(SYM_bigarrow, "match statement entry");
-            const mvaluex = this.parseScopedBlockStatementWithBinderTracking(mbnames);
+            const mvaluex = this.parseScopedBlockStatementWithBinderTracking(binder === undefined ? [] : [binder]);
 
             entries.push({ mtype: mtypex, value: mvaluex.block, bindername: mvaluex.used.length !== 0 ? mvaluex.used[0].srcname : undefined});
         }
         this.ensureAndConsumeTokenAlways(SYM_rbrace, "switch statment options");
 
         let bindinfo: BinderInfo | undefined = undefined;
-        if(entries.some((cc) => cc.bindername !== undefined)) {
-            bindinfo = new BinderInfo(mbnames[0], this.env.getScope().getBinderVarName(mbnames[0]), mimplicit);
+        if(binder !== undefined && entries.some((cc) => cc.bindername !== undefined)) {
+            bindinfo = new BinderInfo(binder, this.env.getScope().getBinderVarName(binder), implicitdef, ispostflow);
         }
 
         return new MatchStatement(sinfo, [mexp, bindinfo], entries);
