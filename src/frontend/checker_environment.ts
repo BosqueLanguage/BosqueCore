@@ -1,6 +1,7 @@
 import {strict as assert} from "assert";
 
 import { TypeSignature } from "./type";
+import { BinderInfo } from "./body";
 
 class VarInfo {
     readonly srcname: string;
@@ -113,7 +114,7 @@ class TypeEnvironment {
                     frame.push(this.locals[i][j]);
                 }
                 else {
-                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(this.locals[i][j].layoutType));
+                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(ttype));
                 }
             }
 
@@ -160,23 +161,26 @@ class TypeEnvironment {
         return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.returnType, locals);
     }
 
-    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
-        //
-        //TODO: need to do the stuff if we have a simple binder variable
-        //
-        let locals: VarInfo[][] = [];
-        for(let i = 0; i < origenv.locals.length; i++) {
-            let frame: VarInfo[] = [];
-
-            for(let j = 0; j < origenv.locals[i].length; j++) {
-                const mdef = envs.every((e) => (e.resolveLocalVarInfo(origenv.locals[i][j].srcname) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].layoutType, origenv.locals[i][j].flowType, origenv.locals[i][j].isConst, mdef));
-            }
-
-            locals.push(frame);
+    static gatherEnvironmentsOptBinderFlowType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
+        if(binfo === undefined) {
+            return undefined;
         }
+        else {
+            const topts = envs.filter((e) => e.normalflow).map((e) => e.resolveLocalVarInfo(binfo.scopename) as VarInfo);
+            return topts.length !== 0 ? topts.map((v) => v.flowType) : undefined;
+        }
+    }
 
-        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.returnType, locals);
+    static mergeEnvironmentsOptBinderFlow(origenv: TypeEnvironment, binfo: BinderInfo | undefined, refinetype: TypeSignature | undefined, ...envs: TypeEnvironment[]): TypeEnvironment {
+        const menv = TypeEnvironment.mergeEnvironmentsSimple(origenv, ...envs);
+
+        if(binfo === undefined || refinetype === undefined) {
+            return menv;
+        }
+        else {
+            const refinevar = binfo.scopename;
+            return menv.retypeLocalVariable(refinevar.slice(1), refinetype)
+        }
     }
 }
 

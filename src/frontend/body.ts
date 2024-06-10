@@ -1522,15 +1522,16 @@ class EmptyEnvironmentExpression extends BaseEnvironmentOpExpression {
 }
 
 class InitializeEnvironmentExpression extends BaseEnvironmentOpExpression {
-    readonly args: ArgumentList;
+    readonly args: {envkey: LiteralExpressionValue, value: Expression}[]; //literal is a exstring
 
-    constructor(sinfo: SourceInfo, args: ArgumentList) {
+    constructor(sinfo: SourceInfo, args: {envkey: LiteralExpressionValue, value: Expression}[]) {
         super(EnvironmentGenerationExpressionTag.InitializeEnvironmentExpression, sinfo);
         this.args = args;
     }
 
     emit(fmt: CodeFormatter): string {
-        return `env${this.args.emit(fmt, "{", "}")}`;
+        const argl = this.args.map((arg) => `${arg.envkey.exp.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
+        return `env{ ${argl} }`;
     }
 }
 
@@ -1572,15 +1573,16 @@ class PostFixEnvironmentOpError extends PostfixEnvironmentOp {
 }
 
 class PostfixEnvironmentOpSet extends PostfixEnvironmentOp {
-    readonly updates: ArgumentList;
+    readonly updates: {envkey: LiteralExpressionValue, value: Expression}[]; //literal is a exstring
 
-    constructor(sinfo: SourceInfo, updates: ArgumentList) {
+    constructor(sinfo: SourceInfo, updates: {envkey: LiteralExpressionValue, value: Expression}[]) {
         super(sinfo, PostfixEnvironmentOpTag.PostfixEnvironmentOpSet);
         this.updates = updates;
     }
 
     emit(fmt: CodeFormatter): string {
-        return "." + this.updates.emit(fmt, "[", "]");
+        const updatel = this.updates.map((arg) => `${arg.envkey.exp.emit(true, fmt)} => ${arg.value.emit(true, fmt)}`).join(", ");
+        return `.[ ${updatel} ]`;
     }
 }
 

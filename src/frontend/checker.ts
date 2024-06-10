@@ -2894,7 +2894,9 @@ class TypeChecker {
             }
         }
         
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ttrue);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.trueBinder, ttrue);
+        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue);
     }
 
     private checkIfElseStatement(env: TypeEnvironment, stmt: IfElseStatement): TypeEnvironment {
@@ -2936,7 +2938,9 @@ class TypeChecker {
             }
         }
         
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ttrue, tfalse);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.trueBinder, ttrue, tfalse);
+        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue, tfalse);
     }
 
     private checkIfElifElseStatement(env: TypeEnvironment, stmt: IfElifElseStatement): TypeEnvironment {
@@ -3030,7 +3034,9 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironmentsSimple(env, ...results);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.sval[1], ...results);
+        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
     }
 
     private checkMatchStatement(env: TypeEnvironment, stmt: MatchStatement): TypeEnvironment {
@@ -3077,7 +3083,9 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
-        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, ...results);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.sval[1], ...results);
+        const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
+        return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
     }
 
     private checkAbortStatement(env: TypeEnvironment, stmt: AbortStatement): TypeEnvironment {
@@ -3467,7 +3475,8 @@ class TypeChecker {
             for(let i = 0; i < body.statements.length; ++i) {
                 env = this.checkStatement(env, body.statements[i]);
             }
-            this.checkError(body.sinfo, !env.normalflow, "Function does not have a return statement in all code paths");
+
+            this.checkError(body.sinfo, this.relations.isVoidType(rtype, this.constraints) || !env.normalflow, "Function does not have a return statement in all code paths");
         }
     }
 

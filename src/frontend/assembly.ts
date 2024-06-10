@@ -1155,7 +1155,7 @@ class StatusInfoFilter {
 }
 
 class EnvironmentVariableInformation {
-    readonly evname: string;
+    readonly evname: string; //exstring
     readonly evtype: TypeSignature;
     readonly optdefault: ConstantExpressionValue | undefined;
 

@@ -1442,6 +1442,17 @@ class TypeCheckerRelations {
 
         return this.simplifyUnionType(new UnionTypeSignature(t1.sinfo, t1, t2), tconstrain);
     }
+
+    //Compute the upper bound of two types for use in control-flow join types
+    joinAllTypes(topts: TypeSignature[], tconstrain: TemplateConstraintScope): TypeSignature {
+        assert(topts.length > 0, "Empty type list for joinAllTypes");
+        let res = topts[0];
+        for(let i = 1; i < topts.length; ++i) {
+            res = this.joinTypes(res, topts[i], tconstrain);
+        }
+
+        return res;
+    }
 }
 
 export {

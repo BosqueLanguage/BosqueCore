@@ -1653,6 +1653,19 @@ class Parser {
         }
     }
 
+    private parseIdentifierAsStdVariable(): string {
+        const vv = this.consumeTokenAndGetValue();
+        if(vv === "_") {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
+        }
+
+        return this.consumeTokenAndGetValue();
+    }
+
+    private parseIdentifierAsIgnoreableVariable(): string {
+        return this.consumeTokenAndGetValue();
+    }
+
     private parseInvokeTermRestriction(): InvokeTemplateTypeRestriction  {
         this.ensureAndConsumeTokenAlways(SYM_lbrace, "template term restiction");
         this.ensureAndConsumeTokenAlways(KW_when, "template term restiction");
@@ -1815,7 +1828,7 @@ class Parser {
         }
 
         const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
-        const pname = idok ? this.consumeTokenAndGetValue() : "[error]";
+        const pname = idok ? this.parseIdentifierAsStdVariable() : "[error]";
 
         let ptype = this.env.SpecialAutoSignature;
         if(this.testAndConsumeTokenIf(SYM_colon)) {
@@ -1964,7 +1977,7 @@ class Parser {
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "function name");
-        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
 
@@ -2016,7 +2029,7 @@ class Parser {
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "method name");
-        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
 
@@ -2076,7 +2089,7 @@ class Parser {
         const termRestrictions = this.parseInvokeTermRestrictionInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "action name");
-        const fname = this.testToken(TokenStrings.IdentifierName) ? this.consumeTokenAndGetValue() : "[error]";
+        const fname = this.testToken(TokenStrings.IdentifierName) ? this.parseIdentifierAsStdVariable() : "[error]";
 
         const terms = this.parseInvokeTemplateTerms();
 
@@ -2246,7 +2259,7 @@ class Parser {
         const entries = this.parseListOf<[string, TypeSignature]>("record type", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "record type entry property name");
 
-            const name = this.consumeTokenAndGetValue();
+            const name = this.parseIdentifierAsStdVariable();
             if(pnames.has(name)) {
                 this.recordErrorGeneral(this.peekToken(), `Duplicate property name ${name} in record type`);
             }
@@ -2332,7 +2345,7 @@ class Parser {
             return undefined;
         }
         else {
-            let vname = this.consumeTokenAndGetValue();
+            let vname = this.parseIdentifierAsIgnoreableVariable();
             this.consumeToken();
 
             if(/^\$[a-z_]/.test(vname)) {
@@ -2475,7 +2488,7 @@ class Parser {
                 return new SpreadArgumentValue(exp);
             }
             else if(this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
-                const name = this.consumeTokenAndGetValue();
+                const name = this.parseIdentifierAsStdVariable();
                 this.consumeToken();
                 const exp = this.parseExpression();
 
@@ -2621,7 +2634,7 @@ class Parser {
     private parseIdentifierFirstExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
         if (this.peekTokenData().startsWith("$")) {
-            const idname = this.consumeTokenAndGetValue();
+            const idname = this.parseIdentifierAsStdVariable();
             
             const scopename = this.env.useVariable(idname);
             if(scopename !== undefined) {
@@ -2633,7 +2646,7 @@ class Parser {
             }
         }
         else if (this.env.identifierResolvesAsVariable(this.peekTokenData())) {
-            const idname = this.consumeTokenAndGetValue();
+            const idname = this.parseIdentifierAsStdVariable();
             
             const scopename = this.env.useVariable(idname);
             if(scopename !== undefined) {
@@ -2673,7 +2686,7 @@ class Parser {
 
         const decls = this.parseListOf<{vname: string, vtype: TypeSignature | undefined, value: Expression}>("let expression", KW_let, KW_in, SYM_coma, () => {
             this.ensureToken(TokenStrings.IdentifierName, "let expression variable name");
-            const vname = this.consumeTokenAndGetValue();
+            const vname = this.parseIdentifierAsIgnoreableVariable();
 
             let vtype: TypeSignature | undefined = undefined;
             if(this.testAndConsumeTokenIf(SYM_colon)) {
@@ -3339,6 +3352,11 @@ class Parser {
             }
         }
 
+        if(ispostflow && (!implicitdef || !(exp instanceof AccessVariableExpression))) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow without implicitdef or using a non-variable expression");
+            ispostflow = false;
+        }
+
         return [exp, bindername, implicitdef, ispostflow, itest];
     }
 
@@ -3389,6 +3407,11 @@ class Parser {
             else {
                 bindername = "$_";
             }
+        }
+
+        if(ispostflow && (!implicitdef || !(exp instanceof AccessVariableExpression))) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot have postflow without implicitdef or using a non-variable expression");
+            ispostflow = false;
         }
 
         return [exp, bindername, implicitdef, ispostflow];
@@ -3473,7 +3496,7 @@ class Parser {
     private parseStatementExpression(isref: boolean): Statement {
         if(this.testFollows(TokenStrings.IdentifierName, SYM_at)) {
             const sinfo = this.peekToken().getSourceInfo();
-            const name = this.consumeTokenAndGetValue();
+            const name = this.parseIdentifierAsStdVariable();
             this.consumeToken();
 
             const badbinder = name.startsWith("$");
@@ -3503,7 +3526,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
-        const name = this.consumeTokenAndGetValue();
+        const name = this.parseIdentifierAsIgnoreableVariable();
 
         let itype = this.env.SpecialAutoSignature;
         if (this.testAndConsumeTokenIf(":")) {
@@ -3532,7 +3555,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
 
         this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
-        const name = this.consumeTokenAndGetValue();
+        const name = this.parseIdentifierAsIgnoreableVariable();
 
         
         if(!/^[a-z_]/.test(name)) {
@@ -4418,7 +4441,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_namespace, "nested namespace declaration");
         this.ensureToken(TokenStrings.IdentifierName, "nested namespace declaration");
 
-        const nsname = this.consumeTokenAndGetValue();
+        const nsname = this.parseIdentifierAsStdVariable();
 
         const sinfo = this.peekToken().getSourceInfo();
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
@@ -4457,7 +4480,7 @@ class Parser {
         const sinfo = this.peekToken().getSourceInfo();
         this.ensureAndConsumeTokenAlways(KW_type, "type alias");
         this.ensureToken(TokenStrings.IdentifierName, "type alias");
-        const tyname = this.consumeTokenAndGetValue();
+        const tyname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if (this.env.currentNamespace.checkDeclNameClashType(tyname, this.testToken(SYM_langle))) {
@@ -4491,7 +4514,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_const, "const member");
 
         this.ensureToken(TokenStrings.IdentifierName, "const member");
-        const sname = this.consumeTokenAndGetValue();
+        const sname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashMember(sname)) {
@@ -4589,7 +4612,7 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_const, "const member");
 
         this.ensureToken(TokenStrings.IdentifierName, "const member");
-        const sname = this.consumeTokenAndGetValue();
+        const sname = this.parseIdentifierAsStdVariable();
 
         this.ensureAndConsumeTokenIf(SYM_colon, "const member");
         const stype = this.parseTypeSignature();
@@ -4642,7 +4665,8 @@ class Parser {
         this.ensureAndConsumeTokenAlways(KW_field, "member field");
 
         this.ensureToken(TokenStrings.IdentifierName, "member field");
-        const fname = this.consumeTokenAndGetValue();
+        const fname = this.parseIdentifierAsStdVariable();
+
         this.ensureAndConsumeTokenIf(SYM_colon, "member field");
         const ftype = this.parseTypeSignature();
 
@@ -4983,7 +5007,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_entity, "entity declaration");
         this.ensureToken(TokenStrings.IdentifierName, "entity declaration");
-        const ename = this.consumeTokenAndGetValue();
+        const ename = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5058,7 +5082,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_concept, "concept declaration");
         this.ensureToken(TokenStrings.IdentifierName, "concept declaration");
-        const ename = this.consumeTokenAndGetValue();
+        const ename = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5085,7 +5109,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_enum, "enum declaration");
         this.ensureToken(TokenStrings.IdentifierName, "enum declaration");
-        const ename = this.consumeTokenAndGetValue();
+        const ename = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
@@ -5094,7 +5118,7 @@ class Parser {
 
             const members = this.parseListOf<string>(SYM_lbrace, SYM_rbrace, SYM_coma, "enum members", () => {
                 this.ensureToken(TokenStrings.IdentifierName, "enum member");
-                return this.consumeTokenAndGetValue();
+                return this.parseIdentifierAsStdVariable();
             });
 
             const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members, etag);
@@ -5118,7 +5142,7 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(KW_validator, "validator declaration");
         this.ensureToken(TokenStrings.IdentifierName, "validator declaration");
-        const iname = this.consumeTokenAndGetValue();
+        const iname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
@@ -5178,7 +5202,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_typedecl, "typedecl declaration");
         this.ensureToken(TokenStrings.IdentifierName, "typedecl declaration");
-        const iname = this.consumeTokenAndGetValue();
+        const iname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(iname, false)) {
@@ -5228,7 +5252,7 @@ class Parser {
         this.consumeTokenIf(SYM_bar);
 
         this.ensureToken(TokenStrings.IdentifierName, "datatype member entity declaration");
-        const ename = this.consumeTokenAndGetValue();
+        const ename = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashType(ename, false)) {
@@ -5258,7 +5282,7 @@ class Parser {
                     const mfinfo = this.peekToken().getSourceInfo();
 
                     this.ensureToken(TokenStrings.IdentifierName, "datatype POD member field");
-                    const name = this.consumeTokenAndGetValue();
+                    const name = this.parseIdentifierAsStdVariable();
                     this.ensureAndConsumeTokenIf(SYM_colon, "datatype POD member field");
 
                     const ttype = this.parseTypeSignature();
@@ -5279,7 +5303,7 @@ class Parser {
         const etag: AdditionalTypeDeclTag = this.parseAdditionalTypeDeclTag();
         this.ensureAndConsumeTokenAlways(KW_datatype, "datatype declaration");
         this.ensureToken(TokenStrings.IdentifierName, "datatype declaration");
-        const dname = this.consumeTokenAndGetValue();
+        const dname = this.parseIdentifierAsStdVariable();
 
         let tdecl: DatatypeTypeDecl;
         let hasTerms = this.testToken(SYM_langle);
@@ -5317,7 +5341,7 @@ class Parser {
                     const sinfo = this.peekToken().getSourceInfo();
 
                     this.ensureToken(TokenStrings.IdentifierName, "datatype field");
-                    const name = this.consumeTokenAndGetValue();
+                    const name = this.parseIdentifierAsStdVariable();
                     this.ensureAndConsumeTokenIf(SYM_colon, "datatype field");
 
                     const ttype = this.parseTypeSignature();
@@ -5354,7 +5378,7 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(KW_task, "task declaration");
         this.ensureToken(TokenStrings.IdentifierName, "task declaration");
-        const tname = this.consumeTokenAndGetValue();
+        const tname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             const hasterms = this.testToken(SYM_langle);
@@ -5404,7 +5428,7 @@ class Parser {
                     const ok = this.ensureToken(TokenStrings.IdentifierName, "task declaration provides");
 
                     if(ok) {
-                        const pn = this.consumeTokenAndGetValue();
+                        const pn = this.parseIdentifierAsStdVariable();
 
                         taskmain = pn;
                         tdecl.implementsapi = [iiaccess.nsScope.fullnamespace, pn];
@@ -5499,10 +5523,10 @@ class Parser {
                     }
                     else {
                         tdecl.envVarRequirementInfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                            this.ensureToken(TokenStrings.IdentifierName, "task env section");
+                            this.ensureToken(TokenStrings.ExString, "task env section");
                             const ename = this.consumeTokenAndGetValue();
-                            this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
 
+                            this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
                             const ttype = this.parseTypeSignature();
                         
                             let exp: ConstantExpressionValue | undefined = undefined;
@@ -5538,7 +5562,7 @@ class Parser {
 
         this.ensureAndConsumeTokenAlways(KW_api, "api declaration");
         this.ensureToken(TokenStrings.IdentifierName, "api declaration");
-        const apiname = this.consumeTokenAndGetValue();
+        const apiname = this.parseIdentifierAsStdVariable();
 
         if(isParsePhase_Enabled(this.currentPhase, ParsePhase_RegisterNames)) {
             if(this.env.currentNamespace.checkDeclNameClashMember(apiname)) {
@@ -5623,10 +5647,10 @@ class Parser {
 
                     this.consumeToken();
                     envinfo = this.parseListOf<EnvironmentVariableInformation>("task env section", SYM_lbrace, SYM_rbrace, SYM_coma, () => {
-                        this.ensureToken(TokenStrings.IdentifierName, "task env section");
+                        this.ensureToken(TokenStrings.ExString, "task env section");
                         const ename = this.consumeTokenAndGetValue();
-                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
 
+                        this.ensureAndConsumeTokenIf(SYM_colon, "task env section");
                         const ttype = this.parseTypeSignature();
 
                         let exp: ConstantExpressionValue | undefined = undefined;
