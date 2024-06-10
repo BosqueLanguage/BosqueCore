@@ -1,9 +1,9 @@
-import {strict as assert} from "assert";
+import assert from "node:assert";
 
-import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type";
+import { FullyQualifiedNamespace, AutoTypeSignature, RecursiveAnnotation, TypeSignature } from "./type.js";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
-import { LambdaDecl, NamespaceDeclaration } from "./assembly";
+import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
+import { LambdaDecl, NamespaceDeclaration } from "./assembly.js";
 
 class BinderInfo {
     readonly srcname: string; //the name in the source code

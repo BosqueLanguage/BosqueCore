@@ -1,7 +1,10 @@
 "use strict";
 
-const path = require("path");
-const fsx = require("fs-extra");
+import * as path from "node:path";
+import * as fsx from "fs-extra";
+
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const rootsrc = path.join(__dirname, "../", "src");
 const rootbin = path.join(__dirname, "../", "bin");

@@ -1,8 +1,8 @@
 
-import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature } from "./type";
-import { Expression, BodyImplementation, ConstantExpressionValue } from "./body";
+import { FullyQualifiedNamespace, TypeSignature, FunctionParameter, LambdaTypeSignature, RecursiveAnnotation, TemplateTypeSignature, VoidTypeSignature } from "./type.js";
+import { Expression, BodyImplementation, ConstantExpressionValue } from "./body.js";
 
-import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls";
+import { BuildLevel, CodeFormatter, SourceInfo } from "./build_decls.js";
 
 const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";

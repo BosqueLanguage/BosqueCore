@@ -84,8 +84,8 @@ __internal __typedeclable entity String provides Some, KeyType {
 %** Primitive safe string value. **%
 __internal __constructable __typedeclable entity StringOf<T: RegexValidator> provides Some, KeyType {
     private function s_into(s: String): StringOf<T> = special_inject;
-    method value(): String = special_extract;
     %*
+    method value(): String = special_extract;
     function coerce(s: String): StringOf<T> {
         assert RegexValidator::accepts<T>(s);
         return StringOf<T>::s_into(s);
@@ -100,8 +100,8 @@ __internal __typedeclable entity ExString provides Some, KeyType {
 %** Primitive safe string value. **%
 __internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
     private function s_into(s: ExString): ExStringOf<T> = special_inject;
-    method value(): ExString = special_extract;
     %*
+    method value(): ExString = special_extract;
     function coerce(s: ExString): ExStringOf<T> {
         assert ExRegexValidator::accepts<T>(s);
         return ExStringOf<T>::s_into(s);
@@ -155,7 +155,9 @@ __internal entity Nothing provides IOption {
 
 %** Type for representing the nothing option value. **%
 __internal __constructable entity Something<T> provides ISomething, Option<T> {
+    %*
     method value(): T = special_extract;
+    *%
 }
 
 __internal concept Option<T> provides IOption {

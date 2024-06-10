@@ -1,9 +1,9 @@
 
-import {strict as assert} from "assert";
+import assert from "node:assert";
 
-import { SourceInfo } from "./build_decls";
-import { Assembly, NamespaceDeclaration } from "./assembly";
-import { TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type";
+import { SourceInfo } from "./build_decls.js";
+import { Assembly, NamespaceDeclaration } from "./assembly.js";
+import { TypeSignature, AutoTypeSignature, VoidTypeSignature } from "./type.js";
 
 abstract class SourceNameDefinitionInfo {
     readonly srcname: string;

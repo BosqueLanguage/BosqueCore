@@ -1,5 +1,5 @@
-import { SourceInfo } from "./build_decls";
-import { AbstractNominalTypeDecl, NamespaceTypedef } from "./assembly";
+import { SourceInfo } from "./build_decls.js";
+import { AbstractNominalTypeDecl, NamespaceTypedef } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -177,8 +177,8 @@ class NominalTypeSignature extends TypeSignature {
 
     emit(toplevel: boolean): string {
         let nscope: string;
-        if(this.ns.length === 0) {
-            nscope = "";
+        if(this.ns[0] === "Core") {
+            nscope = this.ns.slice(1).join("::");
         }
         else {
             nscope = this.ns.join("::") + "::";

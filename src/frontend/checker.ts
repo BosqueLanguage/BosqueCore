@@ -1,11 +1,11 @@
-import {strict as assert} from "assert";
+import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly";
-import { SourceInfo } from "./build_decls";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type";
-import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body";
-import { TypeEnvironment, VarInfo } from "./checker_environment";
-import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly.js";
+import { SourceInfo } from "./build_decls.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
+import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
+import { TypeEnvironment, VarInfo } from "./checker_environment.js";
+import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
 
 const { accepts } = require("@bosque/jsbrex");
 
@@ -189,7 +189,7 @@ class TypeChecker {
             allnames.add(terminfo.name);
 
             if(this.checkTypeSignature(terminfo.tconstraint)) {
-                this.checkError(sinfo, this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
     }
@@ -204,7 +204,7 @@ class TypeChecker {
             allnames.add(terminfo.name);
 
             if(this.checkTypeSignature(terminfo.tconstraint)) {
-                this.checkError(sinfo, this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
+                this.checkError(sinfo, !this.relations.isValidTemplateRestrictionType(terminfo.tconstraint, this.constraints), `Template type ${terminfo.name} is not a valid template restriction type`);
             }
         }
     }
@@ -448,7 +448,7 @@ class TypeChecker {
         this.checkError(exp.sinfo, nval < MIN_SAFE_INT, "Int literal cannot be negative");
         this.checkError(exp.sinfo, MAX_SAFE_INT < nval, "Int literal out of valid range");
 
-        return exp.setType(this.getWellKnownType("Nat"));
+        return exp.setType(this.getWellKnownType("Int"));
     }
 
     private checkLiteralBigNatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -3476,7 +3476,7 @@ class TypeChecker {
                 env = this.checkStatement(env, body.statements[i]);
             }
 
-            this.checkError(body.sinfo, this.relations.isVoidType(rtype, this.constraints) || !env.normalflow, "Function does not have a return statement in all code paths");
+            this.checkError(body.sinfo, !this.relations.isVoidType(rtype, this.constraints) && env.normalflow, "Function does not have a return statement in all code paths");
         }
     }
 
@@ -3586,18 +3586,44 @@ class TypeChecker {
     
             this.file = fdecl.file;
             this.checkExplicitInvokeDeclTermInfo(fdecl);
+
+            if(fdecl.terms.length !== 0) {
+                this.constraints.pushConstraintScope(fdecl.terms.map((t) => [t.name, t.tconstraint]));
+            }
+
             this.checkExplicitInvokeDeclSignature(fdecl);
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
             this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
+
+            if(fdecl.terms.length !== 0) {
+                this.constraints.popConstraintScope();
+            }
+
             this.file = CLEAR_FILENAME;
         }
     }
 
     private checkTypeFunctionDecls(tdecl: AbstractNominalTypeDecl, fdecls: TypeFunctionDecl[]) {
         for(let i = 0; i < fdecls.length; ++i) {
-            assert(false, "Not implemented -- checkTypeFunctionDecl");
+            const fdecl = fdecls[i];
+    
+            this.checkExplicitInvokeDeclTermInfo(fdecl);
+
+            if(fdecl.terms.length !== 0) {
+                this.constraints.pushConstraintScope(fdecl.terms.map((t) => [t.name, t.tconstraint]));
+            }
+
+            this.checkExplicitInvokeDeclSignature(fdecl);
+            this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
+
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType);
+            this.checkBodyImplementation(env, fdecl.resultType, fdecl.body);
+
+            if(fdecl.terms.length !== 0) {
+                this.constraints.popConstraintScope();
+            }
         }
     }
 

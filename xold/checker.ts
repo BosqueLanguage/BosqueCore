@@ -1,6 +1,6 @@
-import {strict as assert} from "assert";
+import assert from "node:assert";
 
-import { Assembly } from "./assembly";
+import { Assembly } from "./assembly.js";
 import { BuildLevel, SourceInfo } from "./build_decls";
 import { FullyQualifiedNamespace, TypeSignature, VoidTypeSignature } from "./type";
 import { Expression, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType } from "./body";

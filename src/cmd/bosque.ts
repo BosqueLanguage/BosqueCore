@@ -1,6 +1,6 @@
-import { PackageConfig } from "../frontend/build_decls";
-import { Status } from "./status_output";
-import { generateASM, workflowLoadUserSrc } from "./workflows";
+import { PackageConfig } from "../frontend/build_decls.js";
+import { Status } from "./status_output.js";
+import { generateASM, workflowLoadUserSrc } from "./workflows.js";
 
 let fullargs = [...process.argv].slice(2);
 

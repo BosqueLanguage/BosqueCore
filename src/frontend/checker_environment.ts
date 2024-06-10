@@ -1,7 +1,7 @@
-import {strict as assert} from "assert";
+import assert from "node:assert";
 
-import { TypeSignature } from "./type";
-import { BinderInfo } from "./body";
+import { TypeSignature } from "./type.js";
+import { BinderInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;

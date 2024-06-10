@@ -1,5 +1,6 @@
 {
     "name": "@bosque/core",
+    "type": "module",
     "description": "Bosque programming language and tooling stack (Core).",
     "author": {
         "name": "Mark Marron <marron@cs.uky.edu>"

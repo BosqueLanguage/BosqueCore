@@ -1,12 +1,14 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { CodeFileInfo, PackageConfig } from "../frontend/build_decls";
-import { Status } from "./status_output";
-import { Assembly } from "../frontend/assembly";
-import { Parser, ParserError } from "../frontend/parser";
-import { TypeChecker, TypeError } from "../frontend/checker";
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+import { CodeFileInfo, PackageConfig } from "../frontend/build_decls.js";
+import { Status } from "./status_output.js";
+import { Assembly } from "../frontend/assembly.js";
+import { Parser, ParserError } from "../frontend/parser.js";
+import { TypeChecker, TypeError } from "../frontend/checker.js";
 
 const bosque_dir: string = path.join(__dirname, "../../../");
 

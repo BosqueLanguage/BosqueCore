@@ -1,7 +1,10 @@
 "use strict";
 
-const { exec } = require("child_process");
-const path = require("path");
+import { exec } from "node:child_process";
+import * as path from "node:path";
+
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const builddir = __dirname;
 const tscdir = path.dirname(__dirname);
