@@ -872,7 +872,7 @@ class Lexer {
             return true; 
         }
         else if(frontop !== null) {
-            const realstr = " " + spaceop.trim();
+            const realstr = " " + frontop.trim();
 
             this.recordLexToken(this.cpos + frontop.length, realstr);
             return true; 
