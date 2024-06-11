@@ -21,13 +21,18 @@ function generateExpFunction(exp: string, type: string): string {
     return `function main(): ${type} { return ${exp}; }`;
 }
 
-function parseTestExp(exp: string, type: string) {
+function parseTestExp(exp: string, rexp: string | undefined, type: string) {
     const ff = generateExpFunction(exp, type);
-    assert.equal(parseFunction(ff), wsnorm(ff));
+    const rff = rexp === undefined ? ff : generateExpFunction(rexp, type);
+    assert.equal(parseFunction(ff), wsnorm(rff));
+}
+
+function parseTestExpError(exp: string, error: string, type: string) {
+    const ff = generateExpFunction(exp, type);
+    assert.equal(parseFunction(ff), error);
 }
 
 export {
-    parseFunction,
-    generateExpFunction,
-    parseTestExp
+    parseTestExp,
+    parseTestExpError
 };

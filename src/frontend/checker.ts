@@ -23,7 +23,7 @@ class TypeError {
     constructor(file: string, line: number, msg: string) {
         this.file = file;
         this.line = line;
-        this.msg = `Type error on ${line} -- ${msg}`;
+        this.msg = msg;
     }
 }
 
@@ -4285,7 +4285,6 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
-        
 
         for(let i = 0; i < assembly.toplevelNamespaces.length; ++i) {
             checker.checkNamespaceDeclaration(assembly.toplevelNamespaces[i]);
