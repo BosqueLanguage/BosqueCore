@@ -34,6 +34,9 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
     27. Binary Logic `&&`/`||`/`==>` operators
     28. MapEntry Constructor `=>` operator
     29. If-Then-Else Expression
+    30. Switch Expression
+    31. Match Expression
+    32. [TODO] Task Expressions
 - Bosque Expression Components
     1. ITests
     2. Arguments
