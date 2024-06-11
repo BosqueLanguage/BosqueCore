@@ -12,11 +12,8 @@
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "20.10.0",
+        "@types/node": "20.14.2",
         "@bosque/jsbrex": "0.1.0"
-    },
-    "devDependencies": {
-        "fs-extra": "11.2.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",

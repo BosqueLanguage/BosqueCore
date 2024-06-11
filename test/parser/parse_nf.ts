@@ -1,5 +1,5 @@
-import { workflowLoadCoreSrc } from '../../src/cmd/workflows';
-import { Parser } from '../../src/frontend/parser';
+import { workflowLoadCoreSrc } from '../../src/cmd/workflows.js';
+import { Parser } from '../../src/frontend/parser.js';
 
 function wsnorm(s: string): string {
     return s.trim().replace(/\s+/g, " ");

@@ -1,7 +1,8 @@
 "use strict";
 
+import { execSync } from "node:child_process";
 import * as path from "node:path";
-import * as fsx from "fs-extra";
+import * as fs from "node:fs";
 
 import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -14,13 +15,13 @@ function copyResourceDir(dirfrom, dirto) {
     const dstpath = path.join(rootbin, dirto);
 
     process.stdout.write(`Copying ${srcpath} to ${dstpath}\n`);
-    fsx.ensureDirSync(dstpath);
-    fsx.emptyDirSync(dstpath);
-    fsx.copySync(srcpath, dstpath);
+    fs.mkdirSync(dstpath, {recursive: true});
+    execSync(`rm -rf ${dstpath}*`);
+    execSync(`cp -R ${srcpath}* ${dstpath}`);
 }
 
 process.stdout.write(`Copying resources...\n`);
 
-copyResourceDir("core", "core");
+copyResourceDir("core/", "core/");
 
 process.stdout.write(`done!\n`);

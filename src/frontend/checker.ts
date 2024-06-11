@@ -7,7 +7,7 @@ import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, A
 import { TypeEnvironment, VarInfo } from "./checker_environment.js";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
 
-const { accepts } = require("@bosque/jsbrex");
+import { accepts } from "@bosque/jsbrex";
 
 const MIN_SAFE_INT = -9223372036854775807n;
 const MAX_SAFE_INT = 9223372036854775807n;

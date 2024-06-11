@@ -11,7 +11,6 @@ const tscdir = path.dirname(__dirname);
 
 let donecopy = false;
 let donets = false;
-let donesmt = true;
 
 let haderror = false;
 
@@ -19,7 +18,7 @@ function doneop(iserror, msg) {
     haderror = haderror || iserror;
 
     process.stdout.write(msg + "\n");
-    if(donecopy && donets && donesmt) {
+    if(donecopy && donets) {
         if(!haderror) {
             process.stdout.write("done!\n");
             process.exit(0);
