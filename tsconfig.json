@@ -12,7 +12,10 @@
         "strictNullChecks": true,
         "target": "es2020",
         "sourceMap": true,
-        "outDir": "bin"
+        "outDir": "bin",
+        "typeRoots": [
+            "node_modules/@types"
+        ],
     },
     "include": [
         "src/frontend/*.ts",
