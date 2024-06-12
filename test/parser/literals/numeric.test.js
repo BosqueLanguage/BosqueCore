@@ -32,3 +32,12 @@ describe ("Parser -- BigInt", () => {
         parseTestExp("-2I", undefined, "BigInt");
     });
 });
+
+describe ("Parser -- Float", () => {
+    it("should parse simple floats", function () {
+        parseTestExp("0.0f", undefined, "Float");
+        parseTestExp("+2.0f", undefined, "Float");
+        parseTestExp("-2.0f", undefined, "Float");
+    });
+});
+
