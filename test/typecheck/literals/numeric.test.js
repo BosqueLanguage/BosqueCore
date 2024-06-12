@@ -3,7 +3,7 @@
 import { checkTestExp, checkTestExpError } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
-describe ("Parser -- Nat", () => {
+describe ("Checker -- Nat", () => {
     it("should check simple nats", function () {
         checkTestExp("0n", "Nat");
         checkTestExp("+2n", "Nat");
@@ -15,7 +15,7 @@ describe ("Parser -- Nat", () => {
     });
 });
 
-describe ("Parser -- Int", () => {
+describe ("Checker -- Int", () => {
     it("should check simple ints", function () {
         checkTestExp("0i", "Int");
         checkTestExp("+2i", "Int");
@@ -27,7 +27,7 @@ describe ("Parser -- Int", () => {
     });
 });
 
-describe ("Parser -- BigNat", () => {
+describe ("Checker -- BigNat", () => {
     it("should check simple big nats", function () {
         checkTestExp("0N", "BigNat");
         checkTestExp("+2N", "BigNat");
@@ -39,7 +39,7 @@ describe ("Parser -- BigNat", () => {
     });
 });
 
-describe ("Parser -- BigInt", () => {
+describe ("Checker -- BigInt", () => {
     it("should check simple big ints", function () {
         checkTestExp("0I", "BigInt");
         checkTestExp("+2I", "BigInt");
@@ -48,5 +48,29 @@ describe ("Parser -- BigInt", () => {
 
     it("should fail simple big nats", function () {
         checkTestExpError("0N", "Nat", "Expected a return value of type Nat but got BigNat");
+    });
+});
+
+describe ("Checker -- Float", () => {
+    it("should check simple floats", function () {
+        checkTestExp("0.0f", "Float");
+        checkTestExp("+2.5f", "Float");
+        checkTestExp("-2.0f", "Float");
+    });
+
+    it("should fail simple float", function () {
+        checkTestExpError("1.0f", "Nat", "Expected a return value of type Nat but got Float");
+    });
+});
+
+describe ("Checker -- Decimal", () => {
+    it("should parse simple decimals", function () {
+        checkTestExp("0.0d", "Decimal");
+        checkTestExp("+2.3d", "Decimal");
+        checkTestExp("-2.0d", "Decimal");
+    });
+
+    it("should fail simple decimal", function () {
+        checkTestExpError("1.0d", "None", "Expected a return value of type None but got Decimal");
     });
 });

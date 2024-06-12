@@ -346,16 +346,13 @@ class Lexer {
     private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
     private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
     private static readonly _s_intValueNoSignRE = `"0"|${Lexer._s_nonzeroIntValNoSignRE}`;
-    private static readonly _s_intValueRE = `"0"|${Lexer._s_nonzeroIntValRE}`;
+    private static readonly _s_intValueRE = `"0"|"+0"|${Lexer._s_nonzeroIntValRE}`;
 
-    private static readonly _s_nonzeroFloatValueNoSignRE = `[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?`;
-    private static readonly _s_nonzeroFloatValueRE = `([+-]?${Lexer._s_nonzeroFloatValueNoSignRE})([eE][-+]?[0-9]+)?`;
-    private static readonly _s_floatValueNoSignRE = `"0.0"|${Lexer._s_nonzeroFloatValueNoSignRE}`;
-    private static readonly _s_floatValueRE = `"0.0"|${Lexer._s_nonzeroFloatValueRE}`;
+    private static readonly _s_floatValueNoSignRE = `[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?`;
+    private static readonly _s_floatValueRE = `([+-]?${Lexer._s_floatValueNoSignRE})([eE][-+]?[0-9]+)?`;
 
-    private static readonly _s_nonzeroFloatSimpleValueNoSignRE = '([0-9]+"."[0-9]+)';
-    private static readonly _s_floatSimpleValueNoSignRE = `"0.0"|${Lexer._s_nonzeroFloatSimpleValueNoSignRE}`;
-    private static readonly _s_floatSimpleValueRE = `"0.0"|[+-]?${Lexer._s_nonzeroFloatSimpleValueNoSignRE}`;
+    private static readonly _s_floatSimpleValueNoSignRE = '([0-9]+"."[0-9]+)';
+    private static readonly _s_floatSimpleValueRE = `[+-]?${Lexer._s_floatSimpleValueNoSignRE}`;
 
     private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
     private static readonly _s_floatNumberinoRe = `/${Lexer._s_floatValueRE}/`;

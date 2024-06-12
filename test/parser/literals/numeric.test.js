@@ -1,12 +1,13 @@
 "use strict";
 
-import { parseTestExp } from "../../../bin/test/parser/parse_nf.js";
+import { parseTestExp, parseTestExpError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- Nat", () => {
     it("should parse simple nats", function () {
         parseTestExp("0n", undefined, "Nat");
         parseTestExp("+2n", undefined, "Nat");
+        parseTestExp("+0n", undefined, "Nat");
     });
 });
 
@@ -38,6 +39,22 @@ describe ("Parser -- Float", () => {
         parseTestExp("0.0f", undefined, "Float");
         parseTestExp("+2.0f", undefined, "Float");
         parseTestExp("-2.0f", undefined, "Float");
+    });
+
+    it("should fail missing .x float", function () {
+        parseTestExpError("1f", "Un-annotated numeric literals are not supported", "Float");
+    });
+});
+
+describe ("Parser -- Decimal", () => {
+    it("should parse simple decimals", function () {
+        parseTestExp("0.0d", undefined, "Decimal");
+        parseTestExp("+2.0d", undefined, "Decimal");
+        parseTestExp("-2.0d", undefined, "Decimal");
+    });
+
+    it.skip("should fail missing .x decimal", function () {
+        parseTestExpError("0d", "Un-annotated numeric literals are not supported", "Decimal");
     });
 });
 

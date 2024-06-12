@@ -487,19 +487,19 @@ class TypeChecker {
     }
 
     private checkLiteralFloatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        this.checkError(exp.sinfo, TypeChecker.isValidFloatLiteral(exp.value.slice(0, exp.value.length - 1)), "Invalid Float literal");
+        this.checkError(exp.sinfo, !TypeChecker.isValidFloatLiteral(exp.value.slice(0, exp.value.length - 1)), "Invalid Float literal");
 
         return exp.setType(this.getWellKnownType("Float"));
     }
 
     private checkLiteralDecimalExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        this.checkError(exp.sinfo, TypeChecker.isValidDecimalLiteral(exp.value.slice(0, exp.value.length - 1)), "Invalid Decimal literal");
+        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalLiteral(exp.value.slice(0, exp.value.length - 1)), "Invalid Decimal literal");
 
         return exp.setType(this.getWellKnownType("Decimal"));
     }
 
     private checkLiteralDecimalDegreeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        this.checkError(exp.sinfo, TypeChecker.isValidDecimalDegreeLiteral(exp.value.slice(0, exp.value.length - 2)), "Invalid DecimalDegree literal");
+        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalDegreeLiteral(exp.value.slice(0, exp.value.length - 2)), "Invalid DecimalDegree literal");
 
         return exp.setType(this.getWellKnownType("DecimalDegree"));
     }
