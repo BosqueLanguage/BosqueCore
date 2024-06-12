@@ -1,4 +1,4 @@
-import { parseTestExpError } from "/home/mark/Code/BosqueCore/bin/test/parser/parse_nf.js";
+import { parseTestExpError } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- Errors", () => {

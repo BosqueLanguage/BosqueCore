@@ -1,6 +1,6 @@
 "use strict";
 
-import { checkTestExp } from "/home/mark/Code/BosqueCore/bin/test/typecheck/typecheck_nf.js";
+import { checkTestExp } from "../../../bin/test/typecheck/typecheck_nf.js";
 import { describe, it } from "node:test";
 
 describe ("TypeChecker -- special literals", () => {

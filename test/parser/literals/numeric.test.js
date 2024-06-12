@@ -1,6 +1,6 @@
 "use strict";
 
-import { parseTestExp } from "/home/mark/Code/BosqueCore/bin/test/parser/parse_nf.js";
+import { parseTestExp } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- Nat", () => {
