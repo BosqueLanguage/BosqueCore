@@ -24,7 +24,7 @@ describe ("Parser -- BigInt addition", () => {
     });
 
     it("should fail stuck signs", function () {
-        parseTestExpError("2I-3I", 'Expected ";" but got "-3I" when parsing "line statement"', "BigInt");
+        parseTestExpError("2I+3I", 'Expected ";" but got "+3I" when parsing "line statement"', "BigInt");
     });
 });
 
