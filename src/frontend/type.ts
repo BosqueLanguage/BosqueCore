@@ -1,5 +1,5 @@
 import { SourceInfo } from "./build_decls.js";
-import { AbstractNominalTypeDecl, NamespaceTypedef } from "./assembly.js";
+import { AbstractNominalTypeDecl, NamespaceTypedef, TemplateTermDecl } from "./assembly.js";
 
 class FullyQualifiedNamespace {
     readonly ns: string[];
@@ -22,23 +22,22 @@ class FullyQualifiedNamespace {
 }
 
 class TemplateConstraintScope {
-    constraints: Map<string, TypeSignature>[] = [];
+    constraints: TemplateTermDecl[][] = [];
 
     constructor() {
     }
 
-    pushConstraintScope(constraints: [string, TypeSignature][]) {
-        let nconstraints = new Map<string, TypeSignature>(constraints);
-        this.constraints.push(nconstraints);
+    pushConstraintScope(constraints: TemplateTermDecl[]) {
+        this.constraints.push([...constraints]);
     }
 
     popConstraintScope() {
         this.constraints.pop();
     }
 
-    resolveConstraint(name: string): TypeSignature | undefined {
+    resolveConstraint(name: string): TemplateTermDecl | undefined {
         for(let i = this.constraints.length - 1; i >= 0; ++i) {
-            const res = this.constraints[i].get(name);
+            const res = this.constraints[i].find((cc) => cc.name === name);
             if(res !== undefined) {
                 return res;
             }

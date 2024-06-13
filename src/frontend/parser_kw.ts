@@ -175,14 +175,6 @@ const GeneralAttributes = [
     "sensitive"
 ];
 
-const TypeDeclAttributes = [
-    "__internal",
-    "__typedeclable",
-    "__constructable",
-    "__numeric",
-    "__universal"
-];
-
 const APIDeclAttributes = [
     "export",
     "deterministic",
@@ -193,16 +185,10 @@ const InvokeAttributes = [
     "abstract",
     "override",
     "virtual",
-    
-    "__inline",
-    "__safe",
-    "__assume_safe",
-    "__conditional_safe"
 ];
 
 const AllAttributes = [
     ...GeneralAttributes,
-    ...TypeDeclAttributes,
     ...APIDeclAttributes,
     ...InvokeAttributes
 ].sort((a, b) => { return (a.length !== b.length) ? (b.length - a.length) : ((a !== b) ? (a < b ? -1 : 1) : 0); });
@@ -211,7 +197,6 @@ const CoreOnlyAttributes = [
     "__internal",
     "__typedeclable",
     "__constructable",
-    "__numeric",
     "__universal",
     "__inline",
     "__safe",
@@ -335,7 +320,7 @@ const ParenSymbols = [
 
 export {
     KeywordStrings,
-    GeneralAttributes, TypeDeclAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
+    GeneralAttributes, APIDeclAttributes, InvokeAttributes, AllAttributes, CoreOnlyAttributes,
     LeftScanParens, RightScanParens,
     SpaceRequiredSymbols, SpaceFrontSymbols, StandardSymbols, ParenSymbols,
 

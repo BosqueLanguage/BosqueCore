@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, ConstructableTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
@@ -179,6 +179,32 @@ class TypeChecker {
         }
     }
 
+    private checkTemplateInstantiationIsOkWithDecls(sinfo: SourceInfo, targs: TypeSignature[], decls: TypeTemplateTermDecl[]): boolean {
+        assert(targs.length === decls.length, "Template instantiation mismatch");
+
+        for(let i = 0; i < targs.length; ++i) {
+            const tdecl = decls[i];
+            const targ = targs[i];
+
+            if(this.checkError(sinfo, !this.relations.isSubtypeOf(targ, tdecl.tconstraint, this.constraints), `Template argument ${tdecl.name} is not a subtype of ${tdecl.tconstraint.emit(true)}`)) {
+                return false;
+            }
+
+            if(tdecl.extraTags.length !== 0) {
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
+                    this.checkError(sinfo, !this.relations.isUniqueType(targ, this.constraints), `Template argument ${tdecl.name} is not a unique type`);
+                    return false;
+                }
+                if(tdecl.extraTags.includes(TemplateTermDeclExtraTag.Atomic)) {
+                    this.checkError(sinfo, !this.relations.isAtomicType(targ, this.constraints), `Template argument ${tdecl.name} is not an atomic type`);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private checkTemplateTypesOnType(sinfo: SourceInfo, terms: TypeTemplateTermDecl[]) {
         let allnames = new Set<string>();
 
@@ -223,15 +249,58 @@ class TypeChecker {
             return this.constraints.resolveConstraint(tnorm.name) !== undefined;
         }
         else if(tnorm instanceof NominalTypeSignature) {
-            let tnames: Set<string> = new Set<string>();
-            return tnorm.tscope.every((entry) => {
-                if(tnames.has(entry.tname)) {
+            const typesok = tnorm.tscope.every((entry) => entry.terms.every((ttval) => this.checkTypeSignatureAndStorable(ttval)));
+
+            if(!typesok) {
+                return false;
+            }
+            
+            const tdecl = tnorm.resolvedDeclaration as AbstractNominalTypeDecl;
+            const tterms = tnorm.tscope[0].terms;
+            if(tdecl instanceof ConstructableTypeDecl) {
+                if(tdecl instanceof OkTypeDecl || tdecl instanceof ErrTypeDecl) {
+                    if(tterms.length !== 2) {
+                        this.reportError(type.sinfo, `Result type ${tdecl.name} type expected 2 terms but got ${tterms.length}`);
+                        return false;
+                    }
+                    return true;
+                }
+                else if(tdecl instanceof APIErrorTypeDecl || tdecl instanceof APIFailedTypeDecl || tdecl instanceof APIRejectedTypeDecl || tdecl instanceof APISuccessTypeDecl) {
+                    if(tterms.length !== 1) {
+                        this.reportError(type.sinfo, `APIResult type ${tdecl.name} expected 1 term but got ${tterms.length}`);
+                        return false;
+                    }
+
+                    return true;
+                }
+                else {
+                    if(tterms.length !== 2) {
+                        this.reportError(type.sinfo, `MapEntry type expected 2 terms but got ${tterms.length}`);
+                        return false;
+                    }
+                    if(!this.relations.isKeyType(tterms[0], this.constraints)) {
+                        this.reportError(type.sinfo, `MapEntry key is not a key type`);
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            else if(tdecl instanceof ResultTypeDecl || tdecl instanceof APIResultTypeDecl) {
+                if(tterms.length !== tdecl.terms.length) {
+                    this.reportError(type.sinfo, `(API)Result type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
                     return false;
                 }
-                tnames.add(entry.tname);
 
-                return entry.terms.every((ttval) => this.checkTypeSignatureAndStorable(ttval));
-            });
+                return true;
+            }
+            else {
+                if(tterms.length !== tdecl.terms.length) {
+                    this.reportError(type.sinfo, `Type ${tdecl.name} expected ${tdecl.terms.length} terms but got ${tterms.length}`);
+                    return false;
+                }
+
+                return this.checkTemplateInstantiationIsOkWithDecls(type.sinfo, tterms, tdecl.terms);
+            }
         }
         else if(tnorm instanceof TupleTypeSignature) {
             return tnorm.entries.every((entry) => this.checkTypeSignatureAndStorable(entry));
@@ -240,6 +309,7 @@ class TypeChecker {
             let pnames: Set<string> = new Set<string>();
             return tnorm.entries.every((entry) => {
                 if(pnames.has(entry[0])) {
+                    this.reportError(type.sinfo, `Property name ${entry[0]} is already defined`)
                     return false;
                 }
                 pnames.add(entry[0]);
@@ -269,10 +339,12 @@ class TypeChecker {
 
                 refct += pp.isRefParam ? 1 : 0;
                 if(pp.isSpreadParam && i !== tnorm.params.length - 1) {
+                    this.reportError(type.sinfo, `Spread parameter ${pp.name} must be the last parameter in the lambda`);
                     return false;
                 }
 
                 if(pnames.has(pp.name)) {
+                    this.reportError(type.sinfo, `Parameter name ${pp.name} is already defined`)
                     return false;
                 }
                 pnames.add(pp.name);
@@ -293,25 +365,24 @@ class TypeChecker {
 
     //Given a type signature -- check that is is well formed (and not an EList or EventList) and report any issues
     private checkTypeSignatureAndStorable(type: TypeSignature): boolean {
-        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
-
         const isok = this.checkTypeSignature(type);
         if(!isok) {
             return false;
         }
 
+        const tnorm = this.relations.normalizeTypeSignature(type, this.constraints);
         return !(tnorm instanceof EListTypeSignature) && !(tnorm instanceof EventListTypeDecl);
     }
 
     //Given a type signature parameter
     private checkTypeSignatureParam(pp: FunctionParameter): boolean {
-        const tnorm = this.relations.normalizeTypeSignature(pp.type, this.constraints);
-        if(tnorm instanceof EListTypeSignature) {
+        const isok = this.checkTypeSignature(pp.type);
+        if(!isok) {
             return false;
         }
 
-        const isok = this.checkTypeSignature(tnorm);
-        if(!isok) {
+        const tnorm = this.relations.normalizeTypeSignature(pp.type, this.constraints);
+        if(tnorm instanceof EListTypeSignature) {
             return false;
         }
 
@@ -3588,7 +3659,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms.map((t) => [t.name, t.tconstraint]));
+                this.constraints.pushConstraintScope(fdecl.terms);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl);
@@ -3612,7 +3683,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclTermInfo(fdecl);
 
             if(fdecl.terms.length !== 0) {
-                this.constraints.pushConstraintScope(fdecl.terms.map((t) => [t.name, t.tconstraint]));
+                this.constraints.pushConstraintScope(fdecl.terms);
             }
 
             this.checkExplicitInvokeDeclSignature(fdecl);
@@ -3698,7 +3769,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+            this.constraints.pushConstraintScope(tdecl.terms);
         }
 
         this.checkProvides(tdecl.provides);
@@ -3762,7 +3833,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+            this.constraints.pushConstraintScope(tdecl.terms);
         }
 
         this.checkProvides(tdecl.provides);
@@ -3920,7 +3991,7 @@ class TypeChecker {
     private checkResultTypeDecl(ns: NamespaceDeclaration, tdecl: ResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        this.constraints.pushConstraintScope(tdecl.terms);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof OkTypeDecl) {
@@ -3936,7 +4007,7 @@ class TypeChecker {
     private checkAPIResultTypeDecl(ns: NamespaceDeclaration, tdecl: APIResultTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, false);
 
-        this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+        this.constraints.pushConstraintScope(tdecl.terms);
         for(let i = 0; i < tdecl.nestedEntityDecls.length; ++i) {
             const ned = tdecl.nestedEntityDecls[i];
             if(ned instanceof APIRejectedTypeDecl) {
@@ -4047,7 +4118,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+            this.constraints.pushConstraintScope(tdecl.terms);
         }
 
         const rcvr = this.relations.getNominalTypeForDecl(ns, tdecl);
@@ -4100,7 +4171,7 @@ class TypeChecker {
         this.checkTemplateTypesOnType(tdecl.sinfo, tdecl.terms);
 
         if(tdecl.terms.length !== 0) {
-            this.constraints.pushConstraintScope(tdecl.terms.map((t) => [t.name, t.tconstraint]));
+            this.constraints.pushConstraintScope(tdecl.terms);
         }
 
         this.checkTypeSignature(tdecl.boundType);
@@ -4262,6 +4333,9 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Any", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Some", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "KeyType", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Comparable", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "LinearArithmetic", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Numeric", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "ISomething", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "IOk", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "IErr", wellknownTypes);

@@ -15,6 +15,18 @@ __internal __universal concept KeyType provides Any {
     function less<T: KeyType>(a: T, b: T): Bool = special_method;
 }
 
+%** Special type for representing values that can be compared with (<, >, ==, !=, <=, and >=) currently the numeric types and typedecls on them (later other with user def operators) **%
+__internal __universal concept Comparable provides Some {
+}
+
+%** Special type for representing values that can be operated on with (-+, +, -) with standard unit-results currently the numeric types and typedecls on them (later other with user def operators) **%
+__internal __universal concept LinearArithmetic provides Some {
+}
+
+%** Special type for representing numeric values **%
+__internal __universal concept Numeric provides Comparable, LinearArithmetic {
+}
+
 %** Type for indicating that a datatype is a Validator. **%
 __internal __universal concept RegexValidator provides Some {
     function accepts<T: RegexValidator>(s: String): Bool = special_method;
@@ -38,35 +50,35 @@ __internal __typedeclable entity Bool provides Some, KeyType {
 }
 
 %** Primitive natural number value. **%
-__internal __typedeclable __numeric entity Nat provides Some, KeyType {
+__internal __typedeclable entity Nat provides Numeric, KeyType {
 }
 
 %** Primitive integer value. **%
-__internal __typedeclable __numeric entity Int provides Some, KeyType {
+__internal __typedeclable entity Int provides Numeric, KeyType {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __numeric entity BigNat provides Some, KeyType {
+__internal __typedeclable entity BigNat provides Numeric, KeyType {
 }
 
 %** Primitive big-integer value. **%
-__internal __typedeclable __numeric entity BigInt provides Some, KeyType {
+__internal __typedeclable entity BigInt provides Numeric, KeyType {
 }
 
 %** Primitive rational value. **%
-__internal __typedeclable __numeric entity Rational provides Some {
+__internal __typedeclable entity Rational provides Numeric {
 }
 
 %** Primitive float value. **%
-__internal __typedeclable __numeric entity Float provides Some {
+__internal __typedeclable entity Float provides Numeric {
 }
 
 %** Primitive float decimal value. **%
-__internal __typedeclable __numeric entity Decimal provides Some {
+__internal __typedeclable entity Decimal provides Numeric {
 }
 
 %** Primitive decimal degree value. **%
-__internal __typedeclable __numeric entity DecimalDegree provides Some {
+__internal __typedeclable entity DecimalDegree provides Numeric {
 }
 
 %** Primitive latitude/longitude value. **%
@@ -74,7 +86,7 @@ __internal __typedeclable entity LatLongCoordinate provides Some {
 }
 
 %** Primitive complex number value. **%
-__internal __typedeclable __numeric entity Complex provides Some {
+__internal __typedeclable entity Complex provides Numeric {
 }
 
 %** Primitive string value. **%

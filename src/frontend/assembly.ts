@@ -8,43 +8,58 @@ const WELL_KNOWN_RETURN_VAR_NAME = "$return";
 const WELL_KNOWN_EVENTS_VAR_NAME = "$events";
 const WELL_KNOWN_SRC_VAR_NAME = "$src";
 
-class TypeTemplateTermDecl {
+enum TemplateTermDeclExtraTag {
+    None,
+    Unique,
+    Atomic
+}
+
+class TemplateTermDecl {
     readonly name: string;
     readonly tconstraint: TypeSignature;
+    readonly extraTags: TemplateTermDeclExtraTag[];
 
-    constructor(name: string, tconstraint: TypeSignature) {
+    constructor(name: string, tconstraint: TypeSignature, extraTags: TemplateTermDeclExtraTag[]) {
         this.name = name;
         this.tconstraint = tconstraint;
+        this.extraTags = extraTags;
     }
 
-    emit(): string {
-        if(this.tconstraint.emit(true) === "Any") {
-            return this.name;
+    emitHelper(isinferable: boolean): string {
+        let ttgs: string[] = [];
+        if(this.extraTags.includes(TemplateTermDeclExtraTag.Unique)) {
+            ttgs.push("unique");
         }
-        else {
-            return `${this.name}: ${this.tconstraint.emit(true)}`;
+        if(this.extraTags.includes(TemplateTermDeclExtraTag.Atomic)) {
+            ttgs.push("atomic");
         }
+
+        let tstr = (this.tconstraint.emit(true) !== "Any") ? `: ${this.tconstraint.emit(true)}` : "";
+
+        return `${this.name}${isinferable ? "?" : ""}: ${[...ttgs, tstr].join(" ")}`;
     }
 }
 
-class InvokeTemplateTermDecl {
-    readonly name: string;
-    readonly tconstraint: TypeSignature;
+class TypeTemplateTermDecl extends TemplateTermDecl {
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature) {
+        super(name, tconstraint, tags);
+    }
+
+    emit(): string {
+        return this.emitHelper(false);
+    }
+}
+
+class InvokeTemplateTermDecl extends TemplateTermDecl {
     readonly isinferable: boolean;
 
-    constructor(name: string, tconstraint: TypeSignature, isinferable: boolean) {
-        this.name = name;
-        this.tconstraint = tconstraint;
+    constructor(name: string, tags: TemplateTermDeclExtraTag[], tconstraint: TypeSignature, isinferable: boolean) {
+        super(name, tconstraint, tags);
         this.isinferable = isinferable;
     }
 
     emit(): string {
-        if(this.tconstraint.emit(true) === "Any") {
-            return `${this.name}${this.isinferable ? "?" : ""}`;
-        }
-        else {
-            return `${this.name}${this.isinferable ? "?" : ""}: ${this.tconstraint.emit(true)}`;
-        }
+        return this.emitHelper(this.isinferable);
     }
 }
 
@@ -1638,7 +1653,7 @@ class Assembly {
 
 export {
     WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME,
-    TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
+    TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
     InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
