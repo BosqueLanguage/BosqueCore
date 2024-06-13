@@ -74,3 +74,15 @@ describe ("Checker -- Decimal", () => {
         checkTestExpError("1.0d", "None", "Expected a return value of type None but got Decimal");
     });
 });
+
+
+describe ("Checker -- Rational", () => {
+    it("should parse simple rationals", function () {
+        checkTestExp("0R", "Rational");
+        checkTestExp("+2/3R", "Rational");
+    });
+
+    it("should fail simple rational", function () {
+        checkTestExpError("1R", "None", "Expected a return value of type None but got Rational");
+    });
+});

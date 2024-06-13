@@ -1013,7 +1013,7 @@ class TypeChecker {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
         
-        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Subtraction operator requires 2 arguments of the same type")) {
+        if(this.checkError(exp.sinfo, !this.relations.areSameTypes(tlhs, trhs, this.constraints), "Addition operator requires 2 arguments of the same type")) {
             return exp.setType(new ErrorTypeSignature(exp.sinfo, undefined));
         }
 

@@ -345,13 +345,13 @@ class Lexer {
 
     private static readonly _s_nonzeroIntValNoSignRE = `[1-9][0-9]*`;
     private static readonly _s_nonzeroIntValRE = `[+-]?${Lexer._s_nonzeroIntValNoSignRE}`;
-    private static readonly _s_intValueNoSignRE = `"0"|${Lexer._s_nonzeroIntValNoSignRE}`;
-    private static readonly _s_intValueRE = `"0"|"+0"|${Lexer._s_nonzeroIntValRE}`;
+    private static readonly _s_intValueNoSignRE = `("0"|${Lexer._s_nonzeroIntValNoSignRE})`;
+    private static readonly _s_intValueRE = `("0"|"+0"|${Lexer._s_nonzeroIntValRE})`;
 
     private static readonly _s_floatValueNoSignRE = `[0-9]+"."[0-9]+([eE][-+]?[0-9]+)?`;
-    private static readonly _s_floatValueRE = `([+-]?${Lexer._s_floatValueNoSignRE})([eE][-+]?[0-9]+)?`;
+    private static readonly _s_floatValueRE = `[+-]?${Lexer._s_floatValueNoSignRE}([eE][-+]?[0-9]+)?`;
 
-    private static readonly _s_floatSimpleValueNoSignRE = '([0-9]+"."[0-9]+)';
+    private static readonly _s_floatSimpleValueNoSignRE = '[0-9]+"."[0-9]+';
     private static readonly _s_floatSimpleValueRE = `[+-]?${Lexer._s_floatSimpleValueNoSignRE}`;
 
     private static readonly _s_intNumberinoRe = `/${Lexer._s_intValueRE}/`;
@@ -368,7 +368,7 @@ class Lexer {
 
     private static readonly _s_floatRe = `/(${Lexer._s_floatValueRE})"f"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_decimalRe = `/(${Lexer._s_floatValueRE})"d"(${Lexer._s_literalTDOnlyTagRE})?/`;
-    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})"%slash;"(${Lexer._s_nonzeroIntValNoSignRE})"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
+    private static readonly _s_rationalRe = `/(${Lexer._s_intValueRE})("%slash;"(${Lexer._s_nonzeroIntValNoSignRE}))?"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_complexRe = `/(${Lexer._s_floatValueRE})[+-](${Lexer._s_floatValueNoSignRE})"j"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
     private static readonly _s_decimalDegreeRe = `/(${Lexer._s_floatSimpleValueRE})"dd"(${Lexer._s_literalTDOnlyTagRE})?/`;
@@ -381,13 +381,18 @@ class Lexer {
     private static readonly _s_deltaticktimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dt"(${Lexer._s_literalTDOnlyTagRE})?/`;
     private static readonly _s_deltalogicaltimeRE = `/[+-](${Lexer._s_intValueNoSignRE})"dl"(${Lexer._s_literalTDOnlyTagRE})?/`;
 
-    private static readonly _s_redundantSignRE = /^[+-]{2,}/y;
+    private static readonly _s_zerodenomRationalTaggedNumberinoRe = `/(${Lexer._s_intValueRE})"%slash;""0"${Lexer._s_literalTDOnlyTagRE}/`;
+    private static readonly _s_zerodenomRationalRe = `/(${Lexer._s_intValueRE})("%slash;""0")?"R"(${Lexer._s_literalTDOnlyTagRE})?/`;
+
+    private static readonly _s_redundantSignRE = /[+-]{2,}/y;
     private checkRedundantSigns() {
-        Lexer._s_redundantSignRE.lastIndex = this.cpos;
-        const mm = Lexer._s_redundantSignRE.exec(this.input);
-        if(mm !== null) {
-            this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Redundant sign"));
-            this.cpos = Math.min(this.epos, this.cpos + mm.length - 1);
+        if(this.cpos !== this.epos && (this.input[this.cpos] === "+" || this.input[this.cpos] === "-")) {
+            Lexer._s_redundantSignRE.lastIndex = this.cpos;
+            const mm = Lexer._s_redundantSignRE.exec(this.input);
+            if(mm !== null) {
+                this.errors.push(new ParserError(this.srcfile, new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Redundant sign"));
+                this.cpos = Math.min(this.epos, this.cpos + mm.length - 1);
+            }
         }
     }
 
@@ -457,6 +462,20 @@ class Lexer {
         const mnumberino = lexFront(Lexer._s_rationalTaggedNumberinoRe, this.cpos);
         if(mnumberino !== null) {
             this.recordLexTokenWData(this.cpos + mnumberino.length, TokenStrings.TaggedNumberinoRational, mnumberino);
+            return true;
+        }
+
+        const mzerodenom = lexFront(Lexer._s_zerodenomRationalRe, this.cpos);
+        if(mzerodenom !== null) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Zero denominator in rational number");
+            this.recordLexTokenWData(this.cpos + mzerodenom.length, TokenStrings.Rational, mzerodenom);
+            return true;
+        }
+
+        const mzerodenomtagged = lexFront(Lexer._s_zerodenomRationalTaggedNumberinoRe, this.cpos);
+        if(mzerodenomtagged !== null) {
+            this.pushError(new SourceInfo(this.cline, this.linestart, this.cpos, this.epos - this.cpos), "Zero denominator in rational number");
+            this.recordLexTokenWData(this.cpos + mzerodenomtagged.length, TokenStrings.TaggedNumberinoRational, mzerodenomtagged);
             return true;
         }
 
@@ -586,7 +605,7 @@ class Lexer {
         return false;
     }
 
-    private static readonly _s_literalGeneralTagRE = /^(_[_a-zA-Z])|[(]/y;
+    private static readonly _s_literalGeneralTagRE = /(_[_a-zA-Z])|[(]/y;
     private tryLexUnicodeString(): boolean {
         let ncpos = this.cpos;
         let istemplate = false;
@@ -721,7 +740,7 @@ class Lexer {
 
     
     private static _s_pathRe = /[gf]?\\[ !-Z^-~\[\]]\\/y;
-    private static readonly _s_literalPathTagRE = /^(_[_a-zA-Z])|[(*]/y;
+    private static readonly _s_literalPathTagRE = /(_[_a-zA-Z])|[(*]/y;
     private tryLexPath() {
         Lexer._s_pathRe.lastIndex = this.cpos;
         const mpth = Lexer._s_pathRe.exec(this.input);
@@ -4231,6 +4250,7 @@ class Parser {
             
             if(!this.testToken(SYM_semicolon)) {
                 //we gotta recover
+                this.recordExpectedError(this.peekToken(), SYM_semicolon, "line statement");
                 this.currentState().moveToRecoverPosition();
             }
 

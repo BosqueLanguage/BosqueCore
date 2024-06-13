@@ -9,6 +9,10 @@ describe ("Parser -- Nat", () => {
         parseTestExp("+2n", undefined, "Nat");
         parseTestExp("+0n", undefined, "Nat");
     });
+
+    it("should fail stacked signs", function () {
+        parseTestExpError("++5n", "Redundant sign", "Nat");
+    });
 });
 
 describe ("Parser -- Int", () => {
@@ -16,6 +20,10 @@ describe ("Parser -- Int", () => {
         parseTestExp("0i", undefined, "Int");
         parseTestExp("+2i", undefined, "Int");
         parseTestExp("-2i", undefined, "Int");
+    });
+
+    it("should fail stacked signs", function () {
+        parseTestExpError("--5n", "Redundant sign", "Int");
     });
 });
 
@@ -44,6 +52,10 @@ describe ("Parser -- Float", () => {
     it("should fail missing .x float", function () {
         parseTestExpError("1f", "Un-annotated numeric literals are not supported", "Float");
     });
+
+    it("should fail stacked signs", function () {
+        parseTestExpError("+-1.0f", "Redundant sign", "Float");
+    });
 });
 
 describe ("Parser -- Decimal", () => {
@@ -53,8 +65,24 @@ describe ("Parser -- Decimal", () => {
         parseTestExp("-2.0d", undefined, "Decimal");
     });
 
-    it.skip("should fail missing .x decimal", function () {
+    it("should fail missing .x decimal", function () {
         parseTestExpError("0d", "Un-annotated numeric literals are not supported", "Decimal");
     });
 });
 
+
+describe ("Parser -- Rational", () => {
+    it("should parse simple rationals", function () {
+        parseTestExp("0R", undefined, "Rational");
+        parseTestExp("1/2R", undefined, "Rational");
+        parseTestExp("-3/4R", undefined, "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0R", "Zero denominator in rational number", "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0_Foo", "Zero denominator in rational number", "Rational");
+    });
+});
