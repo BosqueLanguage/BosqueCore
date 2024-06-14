@@ -49,7 +49,7 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 # Pure Bosque Expressions
 
 ## Literals
-Constant value expressions include `none`, `nothing`, `true`, `false` _Integer_, and _String_:
+Constant value expressions include `none`, `nothing`, `true`, `false`:
 
 ```none
 none     //special none value

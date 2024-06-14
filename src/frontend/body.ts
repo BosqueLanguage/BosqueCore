@@ -278,7 +278,7 @@ enum ExpressionTag {
     PostfixOpExpression = "PostfixOpExpression",
 
     PrefixNotOpExpression = "PrefixNotOpExpression",
-    PrefixNegateOpExpression = "PrefixNegateOpExpression",
+    PrefixNegateOrPlusOpExpression = "PrefixNegateOrPlusOpExpression",
 
     BinAddExpression = "BinAddExpression",
     BinSubExpression = "BinSubExpression",
@@ -1188,7 +1188,12 @@ abstract class UnaryExpression extends Expression {
     }
 
     uopEmit(toplevel: boolean, fmt: CodeFormatter, op: string): string {
-        const ee = `${op}${this.exp.emit(false, fmt)}`;
+        let ee = `${this.exp.emit(false, fmt)}`;
+        if(op === "-" || op === "+") {
+            ee = `(${ee})`;
+        }
+        ee = `${op}${ee}`;
+        
         return toplevel ? ee : `(${ee})`;
     }
 }
@@ -1203,13 +1208,16 @@ class PrefixNotOpExpression extends UnaryExpression {
     }
 }
 
-class PrefixNegateOpExpression extends UnaryExpression {
-    constructor(sinfo: SourceInfo, exp: Expression) {
-        super(ExpressionTag.PrefixNegateOpExpression, sinfo, exp);
+class PrefixNegateOrPlusOpExpression extends UnaryExpression {
+    readonly op: "-" | "+";
+
+    constructor(sinfo: SourceInfo, exp: Expression, op: "-" | "+") {
+        super(ExpressionTag.PrefixNegateOrPlusOpExpression, sinfo, exp);
+        this.op = op;
     }
 
     emit(toplevel: boolean, fmt: CodeFormatter): string {
-        return this.uopEmit(toplevel, fmt, "-");
+        return this.uopEmit(toplevel, fmt, this.op);
     }
 }
 
@@ -2410,7 +2418,7 @@ export {
     PostfixAssignFields,
     PostfixInvoke,
     PostfixLiteralKeyAccess,
-    UnaryExpression, PrefixNotOpExpression, PrefixNegateOpExpression,
+    UnaryExpression, PrefixNotOpExpression, PrefixNegateOrPlusOpExpression,
     BinaryArithExpression, BinAddExpression, BinSubExpression, BinMultExpression, BinDivExpression,
     BinaryKeyExpression, BinKeyEqExpression, BinKeyNeqExpression,
     BinaryNumericExpression, NumericEqExpression, NumericNeqExpression, NumericLessExpression, NumericLessEqExpression, NumericGreaterExpression, NumericGreaterEqExpression,
