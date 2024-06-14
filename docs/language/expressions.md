@@ -49,7 +49,12 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 # Pure Bosque Expressions
 
 ## Literals
-Constant value expressions include `none`, `nothing`, `true`, `false`:
+
+### Unique Values
+The keywords `none`, `nothing`, `true`, `false` are the unique literal representations for the `None`, `Nothing`, and `Boolean` types. 
+
+### Integral Numbers
+The literals for `Nat`, `Int`, `BigNat`, `BigInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `BigNat` and `BigInt` values. Some examples include:
 
 ```none
 none     //special none value
@@ -70,6 +75,8 @@ false    //false boolean literal
 ascii{"ok"} //ascii string literal
 /a*b*/      //Regex
 ```
+
+Nat and BigNat literals cannot have a leading `-` sign, duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecls values such as `-2i_Foo` where this is the literal `-2i` converted to a `Foo` _not_ the value `2i_Foo` negated. 
 
 Most of these literal expressions are familiar from other languages. The numeric literals are strongly typed for each of the numeric types in the language (including BigInt/BigNat and Rationals). Bosque also differentiates string types and literals with the String type and regular quoted strings representing unicode strings. The ASCIIString type and `ascii{...}` enclosed literals are for strings made of only ASCII characters.
 
