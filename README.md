@@ -7,12 +7,12 @@
 
 # The Bosque Project
 
-Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating high-reliability software artifacts. The key philosophical 
-1. Design for Tooling & Mechanization -- make sure the entire system can be reasoned about
-2. Design for Safety -- eliminate entire classes of failure by construction
-3. WYSIWYG -- For Humans and AI Agents
-4. Design for Scale -- eliminate tail behaviors, observability is built-in 
-5. Failure is Always an Option -- failure at scale is inevitable and mitigation/recovery is a first-class citizen in the language
+Bosque is a new approach to programming models, development tooling, and runtime design that is focused on supporting mechanization at scale and establishing a new standard for creating high-reliability software artifacts. The foundational design precepts for Bosque are:
+1. Design for Tooling & Mechanization -- The entire system should be amenable to automated analysis and transformation. Avoid features or behaviors that inhibit analysis and automation.
+2. WYSIWYG -- Humans and AI Agents understand and make assumptions about the semantics (behavior) of the code from the textual representation (syntax). Minimize the presence of implicit or syntactically hidden behaviors. 
+3. Total Safety -- Don't just make mistakes hard to make, eliminate them entirely. Whenever possible rule-out entire categories of failures by construction.
+4. Reliable Performance at Scale -- At scale eliminate worst-case performance behaviors will occur and will be very problematic. Design for low-variance executions and minimizing worst case behavior instead of optimizing for the best or average case. 
+5. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
 
 
 Bosque is an open-source project focused on developing a new Programming Language and Development Tooling Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the ideas that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.

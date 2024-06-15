@@ -32,7 +32,15 @@ function parseTestExpError(exp: string, error: string, type: string) {
     assert.equal(parseFunction(ff), error);
 }
 
+function parseTestFunction(ff: string, rff: string | undefined) {
+    assert.equal(parseFunction(ff), wsnorm(rff || ff));
+}
+
+function parseTestFunctionError(ff: string, error: string) {
+    assert.equal(parseFunction(ff), error);
+}
+
 export {
-    parseTestExp,
-    parseTestExpError
+    parseTestExp, parseTestExpError,
+    parseTestFunction, parseTestFunctionError
 };

@@ -2729,6 +2729,8 @@ class Parser {
             }
         }
         else {
+            const peekname = this.peekTokenData();
+
             const isScopedConstOrFunc = this.identifierResolvesAsScopedConstOrFunction(this.peekTokenData());
             if(isScopedConstOrFunc !== undefined) {
                 return this.parseImplicitNamespaceScopedConstOrFunc(isScopedConstOrFunc);
@@ -2736,7 +2738,7 @@ class Parser {
             else {
                 const access = this.parseIdentifierAccessChain();
                 if(access === undefined) {
-                    this.recordErrorGeneral(sinfo, "Invalid expression -- could not resolve name");
+                    this.recordErrorGeneral(sinfo, `Could not resolve '${peekname}' in this context`);
                     return new ErrorExpression(sinfo, undefined, undefined);
                 }
 

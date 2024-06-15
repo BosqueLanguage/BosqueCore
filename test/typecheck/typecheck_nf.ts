@@ -48,7 +48,35 @@ function checkTestExpError(exp: string, type: string, msg: string) {
     assert.equal(errors[0].msg, msg);
 }
 
+function generateFunctionContents(ff: string): string {
+    return `declare namespace Main; ${ff}`;
+}
+
+function checkTestFunction(ff: string) {
+    const assembly = loadFunction(generateFunctionContents(ff));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    if(errors.length > 0) {
+        assert.fail(errors.map(e => e.msg).join("\n"));
+    }
+}
+
+function checkTestFunctionError(ff: string, msg: string) {
+    const assembly = loadFunction(generateFunctionContents(ff));
+
+    if(typeof(assembly) === "string") {
+        assert.fail(assembly);
+    }
+
+    const errors = TypeChecker.checkAssembly(assembly);
+    assert.equal(errors[0].msg, msg);
+}
+
 export {
-    checkTestExp,
-    checkTestExpError
+    checkTestExp, checkTestExpError,
+    checkTestFunction, checkTestFunctionError
 };
