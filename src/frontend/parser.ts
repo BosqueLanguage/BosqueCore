@@ -3610,16 +3610,22 @@ class Parser {
         }
 
         if(!/^[a-z_]/.test(name)) {
-            this.recordErrorGeneral(sinfo, `Local varialbes must start with a lowercase letter or underscore but got "${name}"`);
+            this.recordErrorGeneral(sinfo, `Local variables must start with a lowercase letter or underscore but got "${name}"`);
         }
 
         return { name: name, vtype: itype };
     }
 
-    parseMultiDeclarationVarInfo(): {name: string, vtype: TypeSignature}[] {
+    parseMultiDeclarationVarInfo(isfirst: boolean): {name: string, vtype: TypeSignature}[] {
         let decls: {name: string, vtype: TypeSignature}[] = [];
 
-        while(this.testToken(SYM_coma)) {
+        if(isfirst && this.testToken(SYM_coma)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Extranious comma in declaration list");
+        }
+
+        while(isfirst || this.testAndConsumeTokenIf(SYM_coma)) {
+            isfirst = false;
+
             const dd = this.parseSingleDeclarationVarInfo();
             decls.push(dd);
         }
@@ -3635,16 +3641,22 @@ class Parser {
 
         
         if(!/^[a-z_]/.test(name)) {
-            this.recordErrorGeneral(sinfo, `Local varialbes must start with a lowercase letter or underscore but got "${name}"`);
+            this.recordErrorGeneral(sinfo, `Local variables must start with a lowercase letter or underscore but got "${name}"`);
         }
 
         return name;
     }
 
-    parseMultiAssignmentVarInfo(): string[] {
+    parseMultiAssignmentVarInfo(isfirst: boolean): string[] {
         let assigns: string[] = [];
 
-        while(this.testToken(SYM_coma)) {
+        if(isfirst && this.testToken(SYM_coma)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Extranious comma in declaration list");
+        }
+
+        while(isfirst || this.testAndConsumeTokenIf(SYM_coma)) {
+            isfirst = false;
+
             const dd = this.parseSingleAssignmentVarInfo();
             assigns.push(dd);
         }
@@ -3799,7 +3811,7 @@ class Parser {
             const isConst = this.testToken(KW_let);
             
             this.consumeToken();
-            const assigns = this.parseMultiDeclarationVarInfo();
+            const assigns = this.parseMultiDeclarationVarInfo(true);
 
             if(this.testToken(SYM_semicolon)) {
                 if(isConst) {
@@ -3811,7 +3823,10 @@ class Parser {
                 }
 
                 assigns.forEach((vv) => {
-                    this.env.addVariable(vv.name, isConst);
+                    const okadd = this.env.addVariable(vv.name, isConst);
+                    if(!okadd) {
+                        this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
+                    }
                 });
 
                 return assigns.length === 1 ? new VariableDeclarationStatement(sinfo, assigns[0].name, assigns[0].vtype) : new VariableMultiDeclarationStatement(sinfo, assigns);
@@ -3823,7 +3838,10 @@ class Parser {
                 if(this.testToken(SYM_semicolon)) {
                     //could be elist type expression but we need to wait for type checking
                     assigns.forEach((vv) => {
-                        this.env.addVariable(vv.name, isConst);
+                        const okadd = this.env.addVariable(vv.name, isConst);
+                        if(!okadd) {
+                            this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
+                        }
                     });
 
                     return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exp) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exp);
@@ -3841,14 +3859,17 @@ class Parser {
                     }
 
                     assigns.forEach((vv) => {
-                        this.env.addVariable(vv.name, isConst);
+                        const okadd = this.env.addVariable(vv.name, isConst);
+                        if(!okadd) {
+                            this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
+                        }
                     });
 
                     return assigns.length === 1 ? new VariableInitializationStatement(sinfo, isConst, assigns[0].name, assigns[0].vtype, exps[0]) : new VariableMultiInitializationStatement(sinfo, isConst, assigns, exps);
                 }
             }
             else {
-                this.recordErrorGeneral(sinfo, `Expected a \";\" or an assignment after variable declaration but got ${this.peekToken()}`);
+                this.recordErrorGeneral(sinfo, `Expected a \";\" or an assignment after variable declaration but got ${this.peekTokenKind()}`);
                 return new ErrorStatement(sinfo);
             }
         }
@@ -3859,7 +3880,7 @@ class Parser {
             return new VariableAssignmentStatement(sinfo, vname, exp);
         }
         else if (this.testFollows(TokenStrings.IdentifierName, SYM_coma)) {
-            const vnames = this.parseMultiAssignmentVarInfo();
+            const vnames = this.parseMultiAssignmentVarInfo(true);
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
             const exp = this.parseRHSExpression();

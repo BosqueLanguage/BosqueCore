@@ -12,6 +12,14 @@ describe ("Parser -- access argument", () => {
     it("should fail undefined name", function () {
         parseTestFunctionError("function main(x: Int): Int { return y; }", "Could not resolve 'y' in this context");
     });
+
+    it("should fail _ arg", function () {
+        parseTestFunctionError("function main(_: Int): Int { return 1i; }", 'Expected "[IDENTIFIER]" but got "_" when parsing "function parameter"');
+    });
+
+    it("should fail _ name", function () {
+        parseTestFunctionError("function main(x: Int): Int { return _; }", "Unexpected token in expression -- _");
+    });
 });
 
 

@@ -5,8 +5,8 @@ import { describe, it } from "node:test";
 
 describe ("Checker -- access argument", () => {
     it("should check simple arg var access", function () {
-        checkTestFunction("function main(x: Int): Int { return x; }", undefined);
-        checkTestFunction("function main(x: Int, y: Bool): Bool { return y; }", undefined);
+        checkTestFunction("function main(x: Int): Int { return x; }");
+        checkTestFunction("function main(x: Int, y: Bool): Bool { return y; }");
     });
 
     it("should fail simple wrong result type", function () {

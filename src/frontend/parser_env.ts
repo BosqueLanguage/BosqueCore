@@ -170,7 +170,10 @@ abstract class ParserScopeInfo {
     }
 
     checkCanDeclareLocalVar(srcname: string): boolean {
-        return this.blockscope.every((bs) => bs.lookupVariableInfo(srcname) !== undefined) && ! this.args.some((arg) => arg.srcname === srcname);
+        const islocalredecl = this.blockscope.some((bs) => bs.lookupVariableInfo(srcname) !== undefined);
+        const isargredecl = this.args.some((arg) => arg.srcname === srcname);
+
+        return !islocalredecl && !isargredecl;
     }
 
     checkCanAssignVariable(srcname: string): boolean {
