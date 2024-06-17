@@ -25,6 +25,44 @@ class VarInfo {
     }
 }
 
+abstract class TypeInferContext {
+    static asSimpleType(ctx: TypeInferContext | undefined): TypeSignature | undefined {
+        if(ctx === undefined) {
+            return undefined
+        }
+        else {
+            return ctx instanceof SimpleTypeInferContext ? ctx.ttype : undefined;
+        }
+    }
+
+    static asEListOptions(ctx: TypeInferContext | undefined): TypeSignature[] | undefined {
+        if(ctx === undefined) {
+            return undefined
+        }
+        else {
+            return ctx instanceof EListStyleTypeInferContext ? ctx.elist : undefined;
+        }
+    }
+}
+
+class SimpleTypeInferContext extends TypeInferContext {
+    readonly ttype: TypeSignature;
+
+    constructor(ttype: TypeSignature) {
+        super();
+        this.ttype = ttype;
+    }
+}
+
+class EListStyleTypeInferContext extends TypeInferContext {
+    readonly elist: TypeSignature[];
+
+    constructor(elist: TypeSignature[]) {
+        super();
+        this.elist = elist;
+    }
+}
+
 class TypeEnvironment {
     readonly normalflow: boolean;
     readonly returnflow: boolean;
@@ -86,7 +124,7 @@ class TypeEnvironment {
         return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, isConst, mustDefined)]]);
     }
 
-    assignLocalVariable(vname: string): TypeEnvironment {
+    assignLocalVariable(vname: string, ttype: TypeSignature): TypeEnvironment {
         let locals: VarInfo[][] = [];
         for(let i = this.locals.length - 1; i >= 0; i--) {
             let frame: VarInfo[] = [];
@@ -95,7 +133,7 @@ class TypeEnvironment {
                     frame.push(this.locals[i][j]);
                 }
                 else {
-                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(this.locals[i][j].layoutType));
+                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(ttype));
                 }
             }
 
@@ -186,5 +224,6 @@ class TypeEnvironment {
 
 export {
     VarInfo,
+    TypeInferContext, SimpleTypeInferContext, EListStyleTypeInferContext,
     TypeEnvironment
 };

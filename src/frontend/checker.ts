@@ -4,7 +4,7 @@ import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIR
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
-import { TypeEnvironment, VarInfo } from "./checker_environment.js";
+import { TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
 
 import { accepts } from "@bosque/jsbrex";
@@ -1442,7 +1442,7 @@ class TypeChecker {
 
     ////////
     //statement expressions
-    private checkExpression(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
+    private checkExpression(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
         switch (exp.tag) {
             case ExpressionTag.LiteralNoneExpression: {
                 return this.checkLiteralNoneExpression(env, exp as LiteralSingletonExpression);
@@ -1604,16 +1604,16 @@ class TypeChecker {
                 return this.checkConstructorPrimaryExpression(env, exp as ConstructorPrimaryExpression);
             }
             case ExpressionTag.ConstructorTupleExpression: {
-                return this.checkConstructorTupleExpression(env, exp as ConstructorTupleExpression, expectedtype);
+                return this.checkConstructorTupleExpression(env, exp as ConstructorTupleExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.ConstructorRecordExpression: {
-                return this.checkConstructorRecordExpression(env, exp as ConstructorRecordExpression, expectedtype);
+                return this.checkConstructorRecordExpression(env, exp as ConstructorRecordExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.ConstructorEListExpression: {
-                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, expectedtype);
+                return this.checkConstructorEListExpression(env, exp as ConstructorEListExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.ConstructorLambdaExpression: {
-                return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, expectedtype);
+                return this.checkConstructorLambdaExpression(env, exp as ConstructorLambdaExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.LetExpression: {
                 return this.checkLetExpression(env, exp as LetExpression);
@@ -1640,7 +1640,7 @@ class TypeChecker {
                 return this.checkParseAsTypeExpression(env, exp as ParseAsTypeExpression);
             }
             case ExpressionTag.PostfixOpExpression: {
-                return this.checkPostfixOp(env, exp as PostfixOp, expectedtype);
+                return this.checkPostfixOp(env, exp as PostfixOp, typeinfer);
             }
             case ExpressionTag.PrefixNotOpExpression: {
                 return this.checkPrefixNotOpExpression(env, exp as PrefixNotOpExpression);
@@ -1697,10 +1697,10 @@ class TypeChecker {
                 return this.checkBinLogicIFFExpression(env, exp as BinLogicIFFExpression);
             }
             case ExpressionTag.MapEntryConstructorExpression: {
-                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, expectedtype);
+                return this.checkMapEntryConstructorExpression(env, exp as MapEntryConstructorExpression, TypeInferContext.asSimpleType(typeinfer));
             }
             case ExpressionTag.IfExpression: {
-                return this.checkIfExpression(env, exp as IfExpression, expectedtype);
+                return this.checkIfExpression(env, exp as IfExpression, typeinfer);
             }
             default: {
                 assert(exp.tag === ExpressionTag.ErrorExpression, "Unknown expression kind");
@@ -1741,7 +1741,7 @@ class TypeChecker {
         assert(false, "Not Implemented -- checkTaskRaceExpression");
     }
 
-    private checkExpressionRHS(env: TypeEnvironment, exp: Expression, expectedtype: TypeSignature | undefined): TypeSignature {
+    private checkExpressionRHS(env: TypeEnvironment, exp: Expression, typeinfer: TypeInferContext | undefined): TypeSignature {
         const ttag = exp.tag;
         switch (ttag) {
             case ExpressionTag.CallRefThisExpression: {
@@ -2587,7 +2587,7 @@ class TypeChecker {
         //TODO: do we need to update any other type env info here based on RHS actions???
 
         this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression cannot be assigned to variable of type ${stmt.vtype.emit(true)}`);
-        return env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true); //try to recover a bit
+        return stmt.name !== "_" ? env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true) : env; //try to recover a bit
     }
 
     private checkVariableMultiInitializationStatement(env: TypeEnvironment, stmt: VariableMultiInitializationStatement): TypeEnvironment {
@@ -2597,6 +2597,7 @@ class TypeChecker {
 
         const iopts = stmt.decls.map((decl) => !(decl.vtype instanceof AutoTypeSignature) ? decl.vtype : undefined);
 
+        xxxx;
         let evals: TypeSignature[] = [];
         if(!Array.isArray(stmt.exp)) {
             const iinfer = iopts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, iopts as TypeSignature[]);    
@@ -2625,8 +2626,10 @@ class TypeChecker {
             const itype = iopts[i];
             const etype = evals[i];
 
+            //TODO: do we need to update any other type env info here based on RHS actions???
+
             this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
-            env = env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true); //try to recover a bit
+            env = decl.name !== "_" ? env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true) : env; //try to recover a bit
         }
 
         return env;
@@ -2634,17 +2637,26 @@ class TypeChecker {
 
     private checkVariableAssignmentStatement(env: TypeEnvironment, stmt: VariableAssignmentStatement): TypeEnvironment {
         const vinfo = env.resolveLocalVarInfo(stmt.name);
-        if(vinfo === undefined) {
+        if(vinfo === undefined && stmt.name !== "_") {
             this.reportError(stmt.sinfo, `Variable ${stmt.name} is not declared`);
             return env;
         }
 
-        this.checkError(stmt.sinfo, !vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
+        let decltype: TypeSignature | undefined = undefined;
+        let flowtype: TypeSignature | undefined = undefined;
+        if(vinfo !== undefined) {
+            this.checkError(stmt.sinfo, vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
 
-        const rhs = this.checkExpressionRHS(env, stmt.exp, vinfo.flowType);
-        this.checkError(stmt.sinfo, !this.relations.isSubtypeOf(rhs, vinfo.flowType, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable of type ${vinfo.flowType.emit(true)}`);
+            decltype = vinfo.layoutType;
+            flowtype = vinfo.flowType;
+        }
 
-        return env.assignLocalVariable(stmt.name);
+        const rhs = this.checkExpressionRHS(env, stmt.exp, flowtype);
+
+        //TODO: do we need to update any other type env info here based on RHS actions???
+
+        this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable`);
+        return stmt.name !== "_" ? env.assignLocalVariable(stmt.name, rhs) : env;
     }
 
     private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
@@ -2654,10 +2666,13 @@ class TypeChecker {
                 this.checkError(stmt.sinfo, (opts[i] as VarInfo).isConst, `Variable ${stmt.names[i]} is declared as const and cannot be assigned`);
             }
             else {
-                this.reportError(stmt.sinfo, `Variable ${stmt.names[i]} is not declared`);
+                if(stmt.names[i] !== "_") {
+                    this.reportError(stmt.sinfo, `Variable ${stmt.names[i]} is not declared`);
+                }
             }
         }
 
+        xxxx;
         let evals: TypeSignature[] = [];
         if(!Array.isArray(stmt.exp)) {
             const iinfer = opts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, opts.map((opt) => (opt as VarInfo).flowType));    
@@ -2686,8 +2701,10 @@ class TypeChecker {
             const itype = opts[i] !== undefined ? (opts[i] as VarInfo).flowType : undefined;
             const etype = evals[i];
 
+            //TODO: do we need to update any other type env info here based on RHS actions???
+
             this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
-            env = env.assignLocalVariable(name);
+            env = name !== "_" ? env.assignLocalVariable(name) : env; 
         }
 
         return env;

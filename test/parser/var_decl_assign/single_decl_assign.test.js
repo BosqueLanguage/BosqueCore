@@ -44,6 +44,28 @@ describe ("Parser -- simple declare-assign only", () => {
     it("should fail declare-assign only -- shadow", function () {
         parseTestFunctionError("function main(x: Int): Int { let x: Int = 3i; return 1i; }", "Variable x is already defined");
     });
+
+    it("should fail simple no decl naked _", function () {
+        parseTestFunctionError("function main(): Bool { let _ = 5i; return x; }", "Variable _ cannot be defined");
+    });
 });
 
+describe ("Parser -- simple assign", () => {
+    it("should parse simple assign", function () {
+        parseTestFunction("function main(): Int { var x: Int = 1i; x = 2i; return x; }", undefined);
+        parseTestFunction("function main(): Int { _ = 2i; return 0i; }", undefined);
+    });
+
+    it("should fail assign -- const", function () {
+        parseTestFunctionError("function main(): Int { let x = 1i; x = 2i; return x; }", "Cannot assign to variable x");
+    });
+
+    it("should fail assign -- const arg", function () {
+        parseTestFunctionError("function main(x: Int): Int { x = 2i; return x; }", "Cannot assign to variable x");
+    });
+
+    it("should fail assign -- undecl", function () {
+        parseTestFunctionError("function main(x: Int): Int { y = 2i; return 0i; }", "Cannot assign to variable y");
+    });
+});
 

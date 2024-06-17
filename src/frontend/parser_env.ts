@@ -180,13 +180,13 @@ abstract class ParserScopeInfo {
         //can't assign to a binder (so dont even check there) and can't assign to any lambda captures so no need to check there either
         for (let i = this.blockscope.length - 1; i >= 0; --i) {
             const vinfo = this.blockscope[i].lookupVariableInfo(srcname);
-            if (vinfo !== undefined && !vinfo.isConst) {
-                return true;
+            if (vinfo !== undefined) {
+                return !vinfo.isConst();
             }
         }
 
         const argi = this.args.find((arg) => arg.srcname === srcname);
-        return argi !== undefined && !argi.isConst;
+        return argi !== undefined && !argi.isConst();
     }
 
     useVariable_helper(srcname: string): string | undefined {
@@ -342,21 +342,31 @@ class ParserEnvironment {
         return this.scope.useVariable(srcname) !== undefined;
     }
 
-    addVariable(srcname: string, isconst: boolean): boolean {
+    addVariable(srcname: string, isconst: boolean, ignoreok: boolean): boolean {
         assert(this.scope !== undefined);
 
-        if(!this.scope.checkCanDeclareLocalVar(srcname)) {
-            return false;
+        if(srcname === "_") {
+            return ignoreok;
         }
+        else {
+            if(!this.scope.checkCanDeclareLocalVar(srcname)) {
+                return false;
+            }
 
-        this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new LocalVariableDefinitionInfo(srcname, isconst));
-        return true;
+            this.scope.blockscope[this.scope.blockscope.length - 1].locals.push(new LocalVariableDefinitionInfo(srcname, isconst));
+            return true;
+        }
     }
 
     assignVariable(srcname: string): boolean {
         assert(this.scope !== undefined);
 
-        return this.scope.checkCanAssignVariable(srcname);
+        if(srcname === "_") {
+            return true;
+        }
+        else {
+            return this.scope.checkCanAssignVariable(srcname);
+        }
     }
 
     useVariable(srcname: string): [string, boolean] | undefined {

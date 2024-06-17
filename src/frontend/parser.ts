@@ -1255,6 +1255,17 @@ class Parser {
         }
     }
 
+    private ensureTokenOptions(...kinds: string[]): boolean {
+        for (let i = 0; i < kinds.length; ++i) {
+            if (this.testToken(kinds[i])) {
+                return true;
+            }
+        }
+
+        this.recordErrorGeneral(this.peekToken().getSourceInfo(), `Expected one of ${kinds.join(", ")}`);
+        return false;
+    }
+
     private scanMatchingParens(lp: string, rp: string): number | undefined {
         this.prepStateStackForNested("scan-matching-parens", undefined);
 
@@ -3601,7 +3612,7 @@ class Parser {
     parseSingleDeclarationVarInfo(): {name: string, vtype: TypeSignature} {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
+        this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
         const name = this.parseIdentifierAsIgnoreableVariable();
 
         let itype = this.env.SpecialAutoSignature;
@@ -3636,10 +3647,9 @@ class Parser {
     parseSingleAssignmentVarInfo(): string {
         const sinfo = this.peekToken().getSourceInfo();
 
-        this.ensureToken(TokenStrings.IdentifierName, "assignment statement");
+        this.ensureTokenOptions(TokenStrings.IdentifierName, KW_under);
         const name = this.parseIdentifierAsIgnoreableVariable();
 
-        
         if(!/^[a-z_]/.test(name)) {
             this.recordErrorGeneral(sinfo, `Local variables must start with a lowercase letter or underscore but got "${name}"`);
         }
@@ -3823,9 +3833,9 @@ class Parser {
                 }
 
                 assigns.forEach((vv) => {
-                    const okadd = this.env.addVariable(vv.name, isConst);
+                    const okadd = this.env.addVariable(vv.name, isConst, false);
                     if(!okadd) {
-                        this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
+                        this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                     }
                 });
 
@@ -3838,9 +3848,9 @@ class Parser {
                 if(this.testToken(SYM_semicolon)) {
                     //could be elist type expression but we need to wait for type checking
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst);
+                        const okadd = this.env.addVariable(vv.name, isConst, assigns.length > 1);
                         if(!okadd) {
-                            this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
+                            this.recordErrorGeneral(sinfo, `Variable ${vv.name} cannot be defined`);
                         }
                     });
 
@@ -3859,7 +3869,7 @@ class Parser {
                     }
 
                     assigns.forEach((vv) => {
-                        const okadd = this.env.addVariable(vv.name, isConst);
+                        const okadd = this.env.addVariable(vv.name, isConst, true);
                         if(!okadd) {
                             this.recordErrorGeneral(sinfo, `Variable ${vv.name} is already defined`);
                         }
@@ -3873,13 +3883,20 @@ class Parser {
                 return new ErrorStatement(sinfo);
             }
         }
-        else if (this.testFollows(TokenStrings.IdentifierName, SYM_eq)) {
+        else if (this.testFollows(TokenStrings.IdentifierName, SYM_eq) || this.testFollows(KW_under, SYM_eq)) {
             const vname = this.parseSingleAssignmentVarInfo();
+
+            const okassign = this.env.assignVariable(vname);
+            if(!okassign) {
+                this.recordErrorGeneral(sinfo, `Cannot assign to variable ${vname}`);
+            }
+
+            this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
             const exp = this.parseRHSExpression();
 
             return new VariableAssignmentStatement(sinfo, vname, exp);
         }
-        else if (this.testFollows(TokenStrings.IdentifierName, SYM_coma)) {
+        else if (this.testFollows(TokenStrings.IdentifierName, SYM_coma) || this.testFollows(KW_under, SYM_coma)) {
             const vnames = this.parseMultiAssignmentVarInfo(true);
 
             this.ensureAndConsumeTokenIf(SYM_eq, "assignment statement");
@@ -3888,7 +3905,10 @@ class Parser {
             if(this.testToken(SYM_semicolon)) {
                 //could be elist type expression but we need to wait for type checking
                 vnames.forEach((vv) => {
-                    this.env.assignVariable(vv);
+                    const okassign = this.env.assignVariable(vv);
+                    if(!okassign) {
+                        this.recordErrorGeneral(sinfo, `Cannot assign to variable ${vv}`);
+                    }
                 });
 
                 return vnames.length === 1 ? new VariableAssignmentStatement(sinfo, vnames[0], exp) : new VariableMultiAssignmentStatement(sinfo, vnames, exp);
