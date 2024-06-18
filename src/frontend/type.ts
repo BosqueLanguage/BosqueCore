@@ -271,31 +271,31 @@ class StringTemplateTypeSignature extends TypeSignature {
 
 type RecursiveAnnotation = "yes" | "no" | "cond";
 
-class FunctionParameter {
+class LambdaParameterSignature {
     readonly name: string;
     readonly type: TypeSignature;
     readonly isRefParam: boolean;
-    readonly isSpreadParam: boolean;
+    readonly isRestParam: boolean;
 
-    constructor(name: string, type: TypeSignature, isRefParam: boolean, isSpreadParam: boolean) {
+    constructor(name: string, type: TypeSignature, isRefParam: boolean, isRestParam: boolean) {
         this.name = name;
         this.type = type;
         this.isRefParam = isRefParam;
-        this.isSpreadParam = isSpreadParam;
+        this.isRestParam = isRestParam;
     }
 
     emit(): string {
-        return `${(this.isRefParam ? "ref " : "")}${this.isSpreadParam ? "..." : ""}${this.name}: ${this.type.emit(true)}`;
+        return `${(this.isRefParam ? "ref " : "")}${this.isRestParam ? "..." : ""}${this.name}: ${this.type.emit(true)}`;
     }
 }
 
 class LambdaTypeSignature extends TypeSignature {
     readonly recursive: RecursiveAnnotation;
     readonly name: "fn" | "pred";
-    readonly params: FunctionParameter[];
+    readonly params: LambdaParameterSignature[];
     readonly resultType: TypeSignature;
 
-    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: FunctionParameter[], resultType: TypeSignature) {
+    constructor(sinfo: SourceInfo, recursive: RecursiveAnnotation, name: "fn" | "pred", params: LambdaParameterSignature[], resultType: TypeSignature) {
         super(sinfo);
         this.recursive = recursive;
         this.name = name;
@@ -308,7 +308,7 @@ class LambdaTypeSignature extends TypeSignature {
     }
 
     remapTemplateBindings(mapper: TemplateNameMapper): TypeSignature {
-        const rbparams = this.params.map((pp) => new FunctionParameter(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isSpreadParam));
+        const rbparams = this.params.map((pp) => new LambdaParameterSignature(pp.name, pp.type.remapTemplateBindings(mapper), pp.isRefParam, pp.isRestParam));
         return new LambdaTypeSignature(this.sinfo, this.recursive, this.name, rbparams, this.resultType.remapTemplateBindings(mapper));
     }
 }
@@ -358,5 +358,5 @@ export {
     TypeSignature, ErrorTypeSignature, VoidTypeSignature, AutoTypeSignature, 
     TemplateTypeSignature, NominalTypeSignature, 
     TupleTypeSignature, RecordTypeSignature, EListTypeSignature, StringTemplateTypeSignature,
-    RecursiveAnnotation, FunctionParameter, LambdaTypeSignature, NoneableTypeSignature, UnionTypeSignature
+    RecursiveAnnotation, LambdaParameterSignature, LambdaTypeSignature, NoneableTypeSignature, UnionTypeSignature
 };

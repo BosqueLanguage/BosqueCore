@@ -2,9 +2,9 @@
 import assert from "node:assert";
 
 import { LocalVariableDefinitionInfo, ParserEnvironment, StandardScopeInfo } from "./parser_env.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessNamespaceConstantExpression, AccessVariableExpression, ArgumentList, ArgumentValue, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, ConstantExpressionValue, ConstructorEListExpression, ConstructorLambdaExpression, DebugStatement, EmptyStatement, ErrorExpression, ErrorStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, IfTest, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, MapEntryConstructorExpression, MatchStatement, NamedArgumentValue, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PositionalArgumentValue, PostfixAsConvert, PostfixIsTest, PostfixOp, PostfixOperation, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, RefArgumentValue, ReturnStatement, SpreadArgumentValue, StandardBodyImplementation, Statement, SwitchStatement, SynthesisBodyImplementation, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
-import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag } from "./assembly.js";
+import { APIDecl, APIResultTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, DeclarationAttibute, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, EventListTypeDecl, ExpandoableTypeDecl, FunctionInvokeDecl, InternalConceptTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, InvokeTemplateTypeRestriction, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestrictionClauseUnify, LambdaDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, NamespaceUsing, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceAccessModes, ResourceInformation, ResultTypeDecl, SetTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, WELL_KNOWN_SRC_VAR_NAME, SomethingTypeDecl, OptionTypeDecl, TemplateTermDeclExtraTag, InvokeParameterDecl } from "./assembly.js";
 import { BuildLevel, CodeFileInfo, CodeFormatter, SourceInfo } from "./build_decls.js";
 import { AllAttributes, CoreOnlyAttributes, KW__debug, KW_abort, KW_action, KW_api, KW_as, KW_assert, KW_chktest, KW_concept, KW_const, KW_datatype, KW_debug, KW_declare, KW_elif, KW_else, KW_ensures, KW_entity, KW_enum, KW_env, KW_err, KW_errtest, KW_event, KW_example, KW_false, KW_field, KW_fn, KW_function, KW_if, KW_implements, KW_in, KW_invariant, KW_let, KW_match, KW_method, KW_namespace, KW_none, KW_nothing, KW_of, KW_ok, KW_pred, KW_predicate, KW_provides, KW_recursive, KW_recursive_q, KW_ref, KW_release, KW_requires, KW_resource, KW_return, KW_safety, KW_self, KW_softcheck, KW_some, KW_something, KW_spec, KW_status, KW_switch, KW_task, KW_test, KW_then, KW_this, KW_true, KW_type, KW_typedecl, KW_under, KW_using, KW_validate, KW_validator, KW_var, KW_when, KeywordStrings, LeftScanParens, ParenSymbols, RightScanParens, SYM_HOLE, SYM_amp, SYM_ampamp, SYM_arrow, SYM_at, SYM_atat, SYM_bang, SYM_bangeq, SYM_bangeqeq, SYM_bar, SYM_barbar, SYM_bigarrow, SYM_colon, SYM_coloncolon, SYM_coma, SYM_div, SYM_dotdotdot, SYM_eq, SYM_eqeq, SYM_eqeqeq, SYM_gt, SYM_gteq, SYM_iff, SYM_implies, SYM_langle, SYM_lbrace, SYM_lbracebar, SYM_lbrack, SYM_lparen, SYM_lt, SYM_lteq, SYM_minus, SYM_negate, SYM_plus, SYM_positive, SYM_question, SYM_rangle, SYM_rbrace, SYM_rbracebar, SYM_rbrack, SYM_rparen, SYM_semicolon, SYM_times, SYM_wildcard, SpaceFrontSymbols, SpaceRequiredSymbols, StandardSymbols } from "./parser_kw.js";
 
@@ -1888,13 +1888,54 @@ class Parser {
         return samples;
     }
 
-    private parseInvokeSignatureParameter(autotypeok: boolean): FunctionParameter {
+    private parseLambdaSignatureParameter(): LambdaParameterSignature {
         const cinfo = this.peekToken().getSourceInfo();
 
         const isref = this.testAndConsumeTokenIf(KW_ref);
-        const isspread = this.testAndConsumeTokenIf(SYM_dotdotdot);
+        const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
 
-        if(isref && isspread) {
+        if(isref && isrest) {
+            this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a spread");
+        }
+
+        const idok = this.ensureToken(TokenStrings.IdentifierName, "function parameter");
+        const pname = idok ? this.parseIdentifierAsStdVariable() : "[error]";
+
+        let ptype = this.env.SpecialAutoSignature;
+        if(this.testAndConsumeTokenIf(SYM_colon)) {
+            ptype = this.parseTypeSignature();
+        }
+
+        if(this.testToken(SYM_eq)) {
+            this.recordErrorGeneral(this.peekToken(), "Cannot have default values for lambda parameters");
+            this.consumeToken();
+            this.parseExpression(); //try to eat the expression to recover nicely
+        }
+
+        return new LambdaParameterSignature(pname, ptype, isref, isrest);
+    }
+
+    private parseLambdaSignatureParameters(cinfo: SourceInfo): LambdaParameterSignature[] {
+        const params = this.parseListOf<LambdaParameterSignature>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseLambdaSignatureParameter()
+        });
+        
+        if(params.length !== 0) {
+            if(params.slice(0, -1).some((param) => param.isRestParam)) {
+                this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
+            }
+        }
+
+        return params;
+    }
+
+    private parseInvokeDeclParameter(): InvokeParameterDecl {
+        const cinfo = this.peekToken().getSourceInfo();
+
+        const isref = this.testAndConsumeTokenIf(KW_ref);
+        const isrest = this.testAndConsumeTokenIf(SYM_dotdotdot);
+
+        if(isref && isrest) {
             this.recordErrorGeneral(cinfo, "Cannot have a parameter that is both a reference and a spread");
         }
 
@@ -1906,26 +1947,33 @@ class Parser {
             ptype = this.parseTypeSignature();
         }
         else {
-            if(!autotypeok) {
-                this.recordErrorGeneral(cinfo, "Missing type specifier -- auto typing is only supported for lambda parameter declarations");
+            this.recordErrorGeneral(cinfo, "Missing : type specifier -- auto typing is only supported for lambda parameter declarations");
 
-                //maybe do a try parse type here in case someone just forgot the colon
-                if(!this.testToken(SYM_coma) && !this.testToken(SYM_rparen)) {
-                    ptype = this.parseTypeSignature();
-                }
+            //maybe do a try parse type here in case someone just forgot the colon
+            if(!this.testToken(SYM_coma) && !this.testToken(SYM_rparen) && !this.testToken(SYM_eq)) {
+                ptype = this.parseTypeSignature();
             }
         }
 
-        return new FunctionParameter(pname, ptype, isref, isspread);
+        let optDefaultExp: ConstantExpressionValue | undefined = undefined;
+        if(this.testToken(SYM_eq)) {
+            optDefaultExp = this.parseConstExpression(ptype);
+        }
+
+        if(isref && optDefaultExp !== undefined) {
+            this.recordErrorGeneral(cinfo, "Cannot have a default value for reference parameters");
+        }
+
+        return new InvokeParameterDecl(pname, ptype, optDefaultExp, isref, isrest);
     }
 
-    private parseInvokeSignatureParameters(cinfo: SourceInfo, autotypeok: boolean, implicitRefAllowed: boolean): FunctionParameter[] {
-        const params = this.parseListOf<FunctionParameter>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
-            return this.parseInvokeSignatureParameter(autotypeok)
+    private parseInvokeDeclParameters(cinfo: SourceInfo, implicitRefAllowed: boolean): InvokeParameterDecl[] {
+        const params = this.parseListOf<InvokeParameterDecl>("function parameter list", SYM_lparen, SYM_rparen, SYM_coma, () => {
+            return this.parseInvokeDeclParameter()
         });
         
         if(params.length !== 0) {
-            if(params.slice(0, -1).some((param) => param.isSpreadParam)) {
+            if(params.slice(0, -1).some((param) => param.isRestParam)) {
                 this.recordErrorGeneral(cinfo, "Spread parameter must be the last parameter");
             }
 
@@ -1999,7 +2047,7 @@ class Parser {
             return undefined;
         }
 
-        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, true, true);
+        const params: LambdaParameterSignature[] = this.parseLambdaSignatureParameters(cinfo);
 
         const allTypedParams = params.every((param) => !(param.type instanceof AutoTypeSignature));
         const someTypedParams = params.some((param) => !(param.type instanceof AutoTypeSignature));
@@ -2025,7 +2073,8 @@ class Parser {
         const body = this.parseBody([], false, true);
         this.env.popLambdaScope();
 
-        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, params, resultInfo, body, lambdaenv.capturedVars, !someTypedParams);
+        const lambdapdecls = params.map((p) => new InvokeParameterDecl(p.name, p.type, undefined, p.isRefParam, p.isRestParam));
+        return new LambdaDecl(this.env.currentFile, cinfo, [], ispred ? "pred" : "fn", isrecursive, lambdapdecls, resultInfo, body, lambdaenv.capturedVars, !someTypedParams);
     }
 
     private parseFunctionInvokeDecl(functionkind: "namespace" | "predicate" | "errtest" | "chktest" | "typescope", attributes: DeclarationAttibute[], typeTerms: Set<string>): FunctionInvokeDecl | undefined {
@@ -2067,7 +2116,7 @@ class Parser {
             return undefined;
         }
 
-        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, true);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, true);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2119,7 +2168,7 @@ class Parser {
             return undefined;
         }
 
-        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, !isref);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, !isref);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2179,7 +2228,7 @@ class Parser {
             return undefined;
         }
 
-        const params: FunctionParameter[] = this.parseInvokeSignatureParameters(cinfo, false, false);
+        const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(cinfo, false);
         
         let resultInfo = this.env.SpecialVoidSignature;
         if (this.testAndConsumeTokenIf(SYM_colon)) {
@@ -2375,7 +2424,7 @@ class Parser {
             }
         }
 
-        const params = this.parseInvokeSignatureParameters(sinfo, false, false);
+        const params = this.parseLambdaSignatureParameters(sinfo);
 
         this.ensureAndConsumeTokenAlways(SYM_arrow, "lambda type reference");
         const resultInfo = this.parseTypeSignature();
@@ -5708,7 +5757,7 @@ class Parser {
                 return;
             }
 
-            const params: FunctionParameter[] = this.parseInvokeSignatureParameters(sinfo, false, false);
+            const params: InvokeParameterDecl[] = this.parseInvokeDeclParameters(sinfo, false);
         
             let resultInfo = this.env.SpecialVoidSignature;
             if (this.testAndConsumeTokenIf(SYM_colon)) {
