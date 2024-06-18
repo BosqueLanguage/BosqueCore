@@ -69,17 +69,19 @@ class TypeEnvironment {
     readonly parent: TypeEnvironment | undefined;
 
     readonly args: VarInfo[];
-    readonly returnType: TypeSignature;
+    readonly declReturnType: TypeSignature;
+    readonly inferReturn: TypeInferContext;
 
     readonly locals: VarInfo[][];
 
-    constructor(normalflow: boolean, returnflow: boolean, parent: TypeEnvironment | undefined, args: VarInfo[], returnType: TypeSignature, locals: VarInfo[][]) {
+    constructor(normalflow: boolean, returnflow: boolean, parent: TypeEnvironment | undefined, args: VarInfo[], returnType: TypeSignature, inferctx: TypeInferContext, locals: VarInfo[][]) {
         this.normalflow = normalflow;
         this.returnflow = returnflow;
         this.parent = parent;
 
         this.args = args;
-        this.returnType = returnType;
+        this.declReturnType = returnType;
+        this.inferReturn = inferctx;
 
         this.locals = locals;
     }
@@ -88,12 +90,12 @@ class TypeEnvironment {
         return locals.map((l) => [...l]);
     }
 
-    static createInitialStdEnv(args: VarInfo[], returnType: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(true, false, undefined, args, returnType, []);
+    static createInitialStdEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext): TypeEnvironment {
+        return new TypeEnvironment(true, false, undefined, args, declReturnType, inferReturn, []);
     }
 
-    static createInitialLambdaEnv(args: VarInfo[], returnType: TypeSignature, enclosing: TypeEnvironment): TypeEnvironment {
-        return new TypeEnvironment(true, false, enclosing, args, returnType, []);
+    static createInitialLambdaEnv(args: VarInfo[], declReturnType: TypeSignature, inferReturn: TypeInferContext, enclosing: TypeEnvironment): TypeEnvironment {
+        return new TypeEnvironment(true, false, enclosing, args, declReturnType, inferReturn, []);
     }
 
     resolveLambdaCaptureVarType(vname: string): TypeSignature | undefined {
@@ -121,7 +123,7 @@ class TypeEnvironment {
     }
 
     addLocalVariable(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, isConst, mustDefined)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, isConst, mustDefined)]]);
     }
 
     assignLocalVariable(vname: string, ttype: TypeSignature): TypeEnvironment {
@@ -140,7 +142,7 @@ class TypeEnvironment {
             locals = [frame, ...locals];
         }
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, locals);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, locals);
     }
 
     retypeLocalVariable(vname: string, ttype: TypeSignature): TypeEnvironment {
@@ -159,28 +161,28 @@ class TypeEnvironment {
             locals = [frame, ...locals];
         }
 
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, locals);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, locals);
     }
 
     setDeadFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, false, this.parent, [...this.args], this.returnType, TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment(false, false, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals));
     }
 
     setReturnFlow(): TypeEnvironment {
-        return new TypeEnvironment(false, true, this.parent, [...this.args], this.returnType, TypeEnvironment.cloneLocals(this.locals));
+        return new TypeEnvironment(false, true, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals));
     }
 
     pushNewLocalScope(): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.returnType, [...TypeEnvironment.cloneLocals(this.locals), []]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), []]);
     }
 
     pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.returnType, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, true, true)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, true, true)]]);
     }
 
     popLocalScope(): TypeEnvironment {
         assert(this.locals.length > 0);
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.returnType, TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, TypeEnvironment.cloneLocals(this.locals).slice(0, this.locals.length - 1));
     }
 
     static mergeEnvironmentsSimple(origenv: TypeEnvironment, ...envs: TypeEnvironment[]): TypeEnvironment {
@@ -196,7 +198,7 @@ class TypeEnvironment {
             locals.push(frame);
         }
 
-        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.returnType, locals);
+        return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
     static gatherEnvironmentsOptBinderFlowType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
