@@ -15,7 +15,6 @@ describe ("Parser -- Nat addition", () => {
     });
 });
 
-
 describe ("Parser -- BigInt addition", () => {
     it("should parse simple nats", function () {
         parseTestExp("0I + 1I", undefined, "BigInt");

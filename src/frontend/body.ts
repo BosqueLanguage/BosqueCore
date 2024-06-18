@@ -19,7 +19,7 @@ class BinderInfo {
     }
 
     emit(): [string, string] {
-        return [!this.implicitdef ? `${this.srcname}%*${this.scopename}*% = ` : "", this.refineonfollow ? "**" : "*"];
+        return [!this.implicitdef ? `${this.srcname}%*${this.scopename}*% = ` : "", this.refineonfollow ? "@@" : "@"];
     }
 }
 

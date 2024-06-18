@@ -14,29 +14,34 @@ Bosque is a new approach to programming models, development tooling, and runtime
 4. Reliable Performance at Scale -- At scale eliminate worst-case performance behaviors will occur and will be very problematic. Design for low-variance executions and minimizing worst case behavior instead of optimizing for the best or average case. 
 5. Failure is Always an Option -- Failure is inevitable and mitigation/recovery is a requirement for reliable and scalable systems. Give un-happy path processing first-class support in the language and ensure observability throughout the system.
 
-
-Bosque is an open-source project focused on developing a new Programming Language and Development Tooling Stack. The foundation of this project is the view that mechanization and automated reasoning, along with human and AI agents that leverage them, are the ideas that will define the next era of software development. The foundation of the Bosque language and stack is a carefully constructed core calculus and computation model that are uniquely amenable to automated reasoning. Building on top of this core calculus the Bosque language, as seen by a developer, is a hybrid of functional programming design, ergonomic block & assignment-based syntax, and a number of new features designed to simplify and support writing high reliability code.
-
-Features in the **_Bosque Programming Language_** include [typed strings](#typed-strings) and paths[TODO], [block-syntax](#sgn), [functor-libs](#flibs), dynamic operator multi-dispatch [TODO], [ref methods](#ref-methods), explicit-flow [typing/binding](#typing-binding), [typedecls](#typedecls) & [datatypes](#datatypes), [task-flows](#tasks), and extensive logical assertion integration (including [data invariants](#invariants)). Logical strutures, like block-syntax, ref methods, and the elimination of loops in favor of functor-libs, allow us to maintain many of the classic benefits of a functionl programming language, with compositional reasoning and immutable state, while providing a familiar and ergonomic block-structured syntax with variable assignment. Data representation features, like typed strings/paths, typedecls, and datatypes, make it simple to express intent and role of a datatype in the application. The logical assertion support features provide builtin mechanisms to specify and check for correct behaviors/values in a program. Finally, the structure of the task-flows, and extensive integration of observability, monitoring, and debugging features in them, are designed to make writing (and maintaing) asynchronous applications, either local or distributed, simple and painless.
-
-The **_Bosque Development Stack_** provides state of the art observability and debugging features (including time-travel debugging) [TODO], a novel symbolic testing framework ([prototype](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/checker)), and, with the introduction of APITypes [TODO], a new way to version and validate package behaviors. These features provide a developers with the ability to generate tests for an API before a line of code is even written, test against imported code (or external services) using auto-generated mocks and, check that package updates do not (intentionally or maliciously) change the package behavior, introduce new data outputs, or expose sensitive data to unintended outputs! The testing tools allow for deep analysis of code flows in an application and can find compact debuggable inputs that trigger and error or failing test *or* prove that there is no small input that will trigger the error! For any bugs that do make it into the wild the ability to record and then locally replay the exact error accelerates their diagnosis resolution as well as makes _non-repro_ and _intermitent_ issues a thing of the past. 
-
-The **_Bosque Runtime_** is a novel _pathology free_ design that focuses on predictable latency, pauses, and 99th percentile behavior. This starts with a new garbage collector ([prototype implementation](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/icpp/interpreter/runtime)) that is guaranteed to never need a stop-the-world collection, that only uses live-heap + an additional small constant in memory to run, and supports incremental external defragmentation! Beyond the GC behavior the runtime design excludes pathological regex behavior, dynamic execution bailout overload, and catastrophic amortized operation behaviors such as repeated rehashing (instead using stable [log-time persistent structures](https://immutable-js.com)). Depending on the application Bosque supports transpilation/compilation to JavaScript/Node.js [TODO], Morphir [TODO], and an AOT compiler ([prototype implementation](https://github.com/BosqueLanguage/BosqueCore/tree/forkbase/impl/src/tooling/icpp)). The semantics of the language also open interesting compiler work on eliminating cache conflicts, trusted computation offloading, and compilation for accelerator (e.g. FPGA or dataflow) architectures.
-
 # News
 After extensive(!) experimentation and prototype work the project has reached a point where all the pieces are in place for a 1.0 release! We have 2 key components that bring new ways to deal with structured text processing ([BREX](https://github.com/BosqueLanguage/BREX)) and literal value representation ([BSQON](https://github.com/BosqueLanguage/BSQON)). We also have a solid baseline compiler and runtime for the compute part of the language. The 1.0 push will be to integrate, refine, and update the components into a state where we can self-host the next parts of the compiler and have a stable language for development in general. The 2.0 push will be to write, in Bosque, a full Small Model Verifier for the Bosque compiler!
 
-There are no hard deadlines on this work but targeting a 1.0 by early summer and a 2.0 by the start of the fall! Community involvement is welcome. There are some fidgity parts that I probably just need to manage but I have tried to open issues, and where possible, flag some that are amenable for outside help. This process will be taking place on `main` so, if you need to keep stability, I have created the `stable_pre1` branch. 
+There are no hard deadlines on this work but targeting a 1.0 this summer and a 2.0 by the start of the fall! Community involvement is welcome. There are some fidgity parts that I probably just need to manage but I have tried to open issues, and where possible, flag some that are amenable for outside help. This process will be taking place on `main` so, if you need to keep stability, I have created the `stable_pre1` branch. 
+
+
+# Platform Road Map 
+
+## Current Work Items 
+
+## Planned Next Steps
+
+## Looking for Contributors
+
+### Breakout Features
+
+### High-Value Enhancements
+
+### Chunckable Work Items
+xxxx
 
 # Documentation
 
-Small samples of code and unique Bosque tooling are below in the [Code Snippets](#Code-Snippets) and Tooling [TODO] sections. Complete documenation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively.
+Complete documenation for the language and standard libraries are on the [Language](docs/overview.md) and [Libraries](docs/overview.md) doc pages respectively. Sample code snippets below provide a quick feel of the language and syntax.
 
 Detailed Documentation, Tutorials, and Technical Information:
 * [Language Docs](docs/overview.md)
 * [Library Docs](docs/overview.md)
-* Runtime and GC Docs -- !TODO!
-* Tooling -- !TODO!
 * [Technical Papers](docs/papers/publist.md)
 
 ## Code Snippets
@@ -50,23 +55,21 @@ function add2(x: Nat, y: Nat): Nat {
 add2(3n, 4n) //7n
 add2(3n, 0n) //3n
 
-add2(3i, 4f) //type error -- defined on Nat but given Int and Float args 
-add2(3, 4)   //type error -- all numeric literals must have kind specifier
+add2(3i, 4.0f) //type error -- defined on Nat but given Int and Float args 
+add2(3, 4)     //type error -- all numeric literals must have kind specifier
 ```
 
-<a name="flibs"></a>
 **All positive check using rest parameters and lambda:**
 ```none
-function allPositive(args: List<Int>): Bool {
-    return args.allOf(fn(x) => x >= 0i);
+function allPositive(...args: List<Int>): Bool {
+    return args.allOf(pred(x) => x >= 0i);
 }
 
-allPositive([1, 3, 4])  //true
-allPositive([])         //true
-allPositive([1, 3, -4]) //false
+allPositive(1, 3, 4)  //true
+allPositive()         //true
+allPositive(1, 3, -4) //false
 ```
 
-<a name="sgn"></a>
 **Sign (with blocks and assignment):**
 ```none
 function sign(x: Int): Int {
@@ -76,7 +79,7 @@ function sign(x: Int): Int {
         y = 0i;
     }
     else {
-        y = (x > 0i) ? 1i : -1i;
+        y = if (x > 0i) then 1i else -1i;
     }
 
     return y;
@@ -86,7 +89,6 @@ sign(5i)    //1
 sign(-5i)   //-1
 ```
 
-<a name="invariants"></a>
 **Nominal Types with Multi-Inheritance & Data Invariants:**
 ```
 concept WithName {
@@ -113,7 +115,7 @@ entity GenericGreeting provides Greeting {
 
 entity NamedGreeting provides WithName, Greeting {
     override method sayHello(): String {
-        return String::concat("hello ", this.name);
+        return String::concat("hello", " ", this.name);
     }
 }
 
@@ -125,7 +127,6 @@ NamedGreeting{""}.sayHello()         //invariant error
 NamedGreeting{"bob"}.sayHello()      //"hello bob"
 ```
 
-<a name="typedecl"></a>
 **Typedecl Types**
 ```
 typedecl Fahrenheit = Int;
@@ -143,84 +144,57 @@ function isFreezing(temp: Celsius): Bool {
     return temp <= 0i_Celsius;
 }
 
-isFreezing(5i)           //type error not a celsius number
+isFreezing(5i)          //type error not a celsius number
 isFreezing(5i_Celsius)  //false
 isFreezing(-5i_Celsius) //true
 
 ```
 
-<a name="ref-methods"></a>
-**Ref Methods:**
-```
-entity Counter {
-    field ctr: Nat;
-
-    function create(): Counter {
-        return Counter{0n};
-    }
-
-    method ref generateNextID(): Nat {
-        let id = this.ctr;
-        
-        //TODO: this syntax is not final
-        this = Counter{this.ctr + 1n};
-
-        return id;
-    }
-} 
-
-var ctr = Counter::create();         //create a Counter 
-let id1 = ref ctr.generateNextID(); //id1 is 0 -- ctr is updated
-let id2 = ref ctr.generateNextID(); //id2 is 1 -- ctr is updated again
-```
-
-<a name="typing-binding"></a>
 **Flow and Binders:**
 ```
 function flowit(x: Nat?): Nat {
     //ITest for none as special
-    if none (x) {
+    if(x)@none {
         return 0n;
     }
     else {
-        //ITest allows binder for $ to value of x (with type inference)
-        return $ + 10n;
+        //ITest allows binder for $x to value of x (with type inference)
+        return $x + 10n;
     }
 }
 
 function restrict(x: Nat?): Nat {
-    if none (x) {
+    if(x)@@none {
         return 0n;
     }
-    x@<Nat>; //assert that x is a Nat here (error otherwise) and type infer
+    //x is a Nat here and type infer
 
     return x + 10n;
 }
 ```
 
-<a name="datatypes"></a>
 **(Algebraic Data Types)++ and Union Types**
 ```
 datatype BoolOp using {
     line: Nat
 } of
-LConst { val: Bool }
+Const { val: Bool }
 | NotOp { arg: BoolOp }
 | AndOp { larg: BoolOp, rarg: BoolOp }
 | OrOp { larg: BoolOp, rarg: BoolOp }
 & {
     recursive method evaluate(): Bool {
-        match(this) {
-            LConst  => return $.val;
-            | NotOp => return !$.arg.evaluate[recursive]();
-            | AndOp => return $.larg.evaluate[recursive]() && $.rarg.evaluate[recursive]();
-            | OrOp  => return $.larg.evaluate[recursive]() || $.rarg.evaluate[recursive]();
+        match(this)@ {
+            Const  => return $this.val;
+            | NotOp => return !$this.arg.evaluate[recursive]();
+            | AndOp => return $this.larg.evaluate[recursive]() && $this.rarg.evaluate[recursive]();
+            | OrOp  => return $this.larg.evaluate[recursive]() || $this.rarg.evaluate[recursive]();
         }
     } 
 }
 
-AndOp{2n, LConst{1n, true}, LConst{1n, false}}.evaluate[recursive]() //false
-OrOp{2n, LConst{1n, true}, LConst{1n, false}}.evaluate[recursive]()  //true
+AndOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]() //false
+OrOp{2n, Const{1n, true}, Const{1n, false}}.evaluate[recursive]()  //true
 
 function printType(x: Bool | Int | String | None): String {
     return match(x) {
@@ -237,43 +211,32 @@ printType(none) //"n"
 
 ```
 
-<a name="typed-strings"></a>
 **Validated Strings:**
 ```
-typedecl ZipcodeUS = /[0-9]{5}("-"[0-9]{4})?/;
-typedecl CSSpt = /[0-9]+"pt"/;
+validator ValidZipcodeUS = /[0-9]{5}("-"[0-9]{4})?/;
+validator ValidCSSpt = /[0-9]+"pt"/;
 
-function is3pt(s1: StringOf<CSSpt>): Bool {
+function is3pt(s1: StringOf<ValidCSSpt>): Bool {
     return s1.value() === "3pt";
 }
 
-ZipcodeUS::accepts("98052-0000") //true
-ZipcodeUS::accepts("1234")       //false
+RegexValidator::accepts<ValidZipcodeUS>("98052-0000") //true
+RegexValidator::accepts<ValidZipcodeUS>("1234")       //false
 
 is3pt("12")              //type error not a StringOf<CSSpt>
-is3pt("98052"ZipcodeUS) //type error not a StringOf<CSSpt>
+is3pt("98052"(ValidZipcodeUS)) //type error not a StringOf<CSSpt>
 
-is3pt("3pt"CSSpt) //true
-is3pt("4pt"CSSpt) //false
+is3pt("3pt"(ValidCSSpt)) //true
+is3pt("4pt"(ValidCSSpt)) //false
 ```
 
-**Tasks:**
-[WORK IN PROGRESS]
-```
-const timestamp = Task::run<SyncronizedTime::Timestamp>[timeout=100i_Milliseconds](SyncronizedTime::Protocol::NTP) ?? err;
-
-const msg = String::concat(List<String>{"hello world", " @ ", timestamp.toString()});
-return Task::run<Scratch::Write>("/hello.txt", msg);
-```
-
-# Installing the Bosque Language (Development)
+# Installing the Bosque Language (Currently Development Only)
 
 In order to install/build the project the following are needed:
 
-- 64 bit Operating System (Ubuntu or MacOS)
-- Version 16+ of [node.js](https://nodejs.org/en/download/) ( According to your OS )
-- Deno runtime [deno](https://deno.land/)
-- Typescript (install with: `npm i typescript -g`)
+- 64 bit Linux Operating System (Ubuntu 22 recommended)
+- Version 20+ of [node.js](https://nodejs.org/en/download/) (v20 or higher)
+- Typescript (5.3 or higher) -- install with: `npm i typescript -g`
 - Git and [git-lfs](https://git-lfs.github.com/) setup
 
 ## Build & Test
@@ -281,28 +244,15 @@ In order to install/build the project the following are needed:
 ```none
 npm install && npm test
 ```
-
 The Z3 theorem prover is provided as a binary dependency in the repo via git LFS. To ensure these are present you will need to have [git-lfs](https://git-lfs.github.com/) installed, run `git lfs install` to setup the needed hooks, and pull. 
 
-## Run a Bosque Program
-The current focus of the project is incrementally standing up features and supporting small applications. So, the only supported way to run a Bosque program is to use the _very_ basic compiler that emits JavaScript code. The compiler is invoked as follows:
+## Parser & Typechecker
 
-```none
-node ./bin/runtimes/javascript/cmd.js [files.bsq]
-```
+Current work is on spinning up the Parser/Typechecker and some basic LSP support. Key design goals in these systems are simplicity and general efficiency. Fast turnaround times in the developer loop tools are a priority so all features are geared towards a max O(n log n) complexity -- no exponential blowups (or turing completeness) in the type system, a relatively efficient 2 pass parser, and a fast emit to JavaScript.
 
-The compiler expects an function named `main` to be present in the program and in the namespace `Main`. This file will be called with the arguments passed on the command line, which are JSON objects and will be parsed per the parameter types on the function.
+## Compiler & Runtime
 
-```none
-> ./bin/runtimes/javascript/cmd.js ./test/bsqsrc/small_apps/tic_tac_toe/tic_tac_toe.bsq
-...
-
-> node ./jsout/_main_.mjs '"[[0, 0, \"Main::PlayerMark::x\"]]"'
-["Result::Ok<Main::PlayerMark|None, String>",null]
-
-> node ./jsout/_main_.mjs '"[[0, 0, \"Main::PlayerMark::x\"], [1, 0, \"Main::PlayerMark::x\"], [2, 0, \"Main::PlayerMark::x\"]]"'
-["Result::Ok<Main::PlayerMark|None, String>","Main::PlayerMark::x"]
-```
+Next open task on the roadmap is a JavaScript runtime and NPM package generator. This will be targeted as a fast turnaround for developer tasks and ease of implementation (+ nice features like supporting a web-playground or REPL). A secondary task is an optimized AOT compiler with the O(1)-GC and and a focus on fast startup, low memory usage, and predictable latency.
 
 ## Visual Studio Code Integration
 
