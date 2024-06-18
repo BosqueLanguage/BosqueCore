@@ -4,7 +4,7 @@ import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIR
 import { SourceInfo } from "./build_decls.js";
 import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FunctionParameter, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
-import { SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
+import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
 
 import { accepts } from "@bosque/jsbrex";
@@ -52,6 +52,10 @@ class TypeChecker {
         }
 
         return cond;
+    }
+
+    private static safeTypePrint(tsig: TypeSignature | undefined): string {
+        return tsig === undefined ? "[undef_type]" : tsig.emit(true);
     }
 
     getErrorList(): TypeError[] {
@@ -861,9 +865,8 @@ class TypeChecker {
             }
             else {
                 this.checkError(exp.sinfo, !vinfo.mustDefined, `Variable ${exp.scopename} may not be defined on all control flow paths`);
-                
-                exp.layoutType = vinfo.layoutType;
-                return exp.setType(vinfo.flowType);
+
+                return exp.setType(vinfo.vtype);
             }
         }
     }
@@ -2586,7 +2589,7 @@ class TypeChecker {
         
         //TODO: do we need to update any other type env info here based on RHS actions???
 
-        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression cannot be assigned to variable of type ${stmt.vtype.emit(true)}`);
+        this.checkError(stmt.sinfo, itype !== undefined && !(rhs instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rhs, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
         return stmt.name !== "_" ? env.addLocalVariable(stmt.name, itype || rhs, stmt.isConst, true) : env; //try to recover a bit
     }
 
@@ -2596,23 +2599,21 @@ class TypeChecker {
         }
 
         const iopts = stmt.decls.map((decl) => !(decl.vtype instanceof AutoTypeSignature) ? decl.vtype : undefined);
-
-        xxxx;
         let evals: TypeSignature[] = [];
-        if(!Array.isArray(stmt.exp)) {
-            const iinfer = iopts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, iopts as TypeSignature[]);    
-            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer, xxx);
+        if(Array.isArray(stmt.exp)) {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
+                evals.push(etype);
+            }
+        }
+        else {
+            const iinfer = new EListStyleTypeInferContext(iopts);
+            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
             if(etype instanceof EListTypeSignature) {
                 evals.push(...etype.entries);
             }
             else {
                 this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
-            }
-        }
-        else {
-            for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length ? iopts[i] : undefined, xxx); //undefined out-of-bounds is ok here
-                evals.push(etype);
             }
         }
 
@@ -2628,7 +2629,7 @@ class TypeChecker {
 
             //TODO: do we need to update any other type env info here based on RHS actions???
 
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
             env = decl.name !== "_" ? env.addLocalVariable(decl.name, itype || etype, stmt.isConst, true) : env; //try to recover a bit
         }
 
@@ -2645,47 +2646,48 @@ class TypeChecker {
         let decltype: TypeSignature | undefined = undefined;
         if(vinfo !== undefined) {
             this.checkError(stmt.sinfo, vinfo.isConst, `Variable ${stmt.name} is declared as const and cannot be assigned`);
-
-            decltype = vinfo.layoutType;
+            decltype = vinfo.vtype;
         }
 
         const rhs = this.checkExpressionRHS(env, stmt.exp, decltype !== undefined ? new SimpleTypeInferContext(decltype) : undefined);
 
         //TODO: do we need to update any other type env info here based on RHS actions???
 
-        this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${rhs.emit(true)} cannot be assigned to variable`);
-        return stmt.name !== "_" ? env.assignLocalVariable(stmt.name, rhs) : env;
+        this.checkError(stmt.sinfo, decltype !== undefined && !this.relations.isSubtypeOf(rhs, decltype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(rhs)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(decltype)}`);
+        return stmt.name !== "_" ? env.assignLocalVariable(stmt.name) : env;
     }
 
     private checkVariableMultiAssignmentStatement(env: TypeEnvironment, stmt: VariableMultiAssignmentStatement): TypeEnvironment {
         const opts = stmt.names.map((vname) => env.resolveLocalVarInfo(vname));
+        let iopts: (TypeSignature | undefined)[] = [];
         for(let i = 0; i < opts.length; ++i) {
             if(opts[i] !== undefined) {
                 this.checkError(stmt.sinfo, (opts[i] as VarInfo).isConst, `Variable ${stmt.names[i]} is declared as const and cannot be assigned`);
+                iopts.push((opts[i] as VarInfo).vtype);
             }
             else {
                 if(stmt.names[i] !== "_") {
                     this.reportError(stmt.sinfo, `Variable ${stmt.names[i]} is not declared`);
                 }
+                iopts.push(undefined);
             }
         }
 
-        xxxx;
         let evals: TypeSignature[] = [];
-        if(!Array.isArray(stmt.exp)) {
-            const iinfer = opts.some((opt) => opt === undefined) ? undefined : new EListTypeSignature(stmt.sinfo, opts.map((opt) => (opt as VarInfo).flowType));    
-            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer, xxxx);
+        if(Array.isArray(stmt.exp)) {
+            for(let i = 0; i < stmt.exp.length; ++i) {
+                const etype = this.checkExpressionRHS(env, stmt.exp[i], i < iopts.length && iopts[i] !== undefined ? new SimpleTypeInferContext(iopts[i] as TypeSignature) : undefined); 
+                evals.push(etype);
+            }
+        }
+        else {
+            const iinfer = new EListStyleTypeInferContext(iopts);
+            const etype = this.checkExpressionRHS(env, stmt.exp, iinfer);
             if(etype instanceof EListTypeSignature) {
                 evals.push(...etype.entries);
             }
             else {
                 this.reportError(stmt.sinfo, "Expected a EList for multi-variable initialization");
-            }
-        }
-        else {
-            for(let i = 0; i < stmt.exp.length; ++i) {
-                const etype = this.checkExpressionRHS(env, stmt.exp[i], (i < opts.length && opts[i] !== undefined) ? (opts[i] as VarInfo).flowType : undefined, xxxx);
-                evals.push(etype);
             }
         }
 
@@ -2696,12 +2698,12 @@ class TypeChecker {
 
         for(let i = 0; i < stmt.names.length; ++i) {
             const name = stmt.names[i];
-            const itype = opts[i] !== undefined ? (opts[i] as VarInfo).flowType : undefined;
+            const itype = i < iopts.length && iopts[i] !== undefined ? (iopts[i] as TypeSignature) : undefined;
             const etype = evals[i];
 
             //TODO: do we need to update any other type env info here based on RHS actions???
 
-            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression cannot be assigned to variable of type ${etype.emit(true)}`);
+            this.checkError(stmt.sinfo, itype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, itype, this.constraints), `Expression of type ${TypeChecker.safeTypePrint(etype)} cannot be assigned to variable of type ${TypeChecker.safeTypePrint(itype)}`);
             env = name !== "_" ? env.assignLocalVariable(name) : env; 
         }
 
@@ -2723,10 +2725,10 @@ class TypeChecker {
             return env;
         }
 
-        const splits = this.processITest(stmt.sinfo, env, vinfo.flowType, stmt.ttest);
+        const splits = this.processITest(stmt.sinfo, env, vinfo.vtype, stmt.ttest);
         this.checkError(stmt.sinfo, splits.ttrue === undefined, `retype will always fail`);
 
-        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.flowType);
+        return env.retypeLocalVariable(stmt.name, splits.ttrue || vinfo.vtype);
     }
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
@@ -2734,21 +2736,20 @@ class TypeChecker {
             this.checkError(stmt.sinfo, !this.relations.isVoidType(env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(false)}`);
         }
         else if(!Array.isArray(stmt.value)) {
-            const rtype = this.checkExpressionRHS(env, stmt.value, env.returnType, xxxx);
-            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.returnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(false)} but got ${rtype.emit(false)}`);
+            const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
+            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(false)} but got ${rtype.emit(false)}`);
         }
         else {
-            const crtype = this.relations.tryResolveAsEListType(env.returnType, this.constraints);
-            if(this.checkError(stmt.sinfo, crtype === undefined, `Multiple return requires an Elist type but got ${env.declReturnType.emit(false)}`)) {
+            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit(false)}`)) {
                 return env.setReturnFlow();
             }
 
-            const rtypes = (crtype as EListTypeSignature).entries;
+            const rtypes = TypeInferContext.asEListOptions(env.inferReturn) as (TypeSignature | undefined)[];
             this.checkError(stmt.sinfo, rtypes.length !== stmt.value.length, `Mismatch in number of return values and expected return types`);
 
             for(let i = 0; i < stmt.value.length; ++i) {
                 const rtype = i < rtypes.length ? rtypes[i] : undefined;
-                const etype = this.checkExpressionRHS(env, stmt.value[i], rtype, xxxx);
+                const etype = this.checkExpressionRHS(env, stmt.value[i], rtype);
 
                 const rtname = rtype !== undefined ? rtype.emit(false) : "skip";
                 this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit(false)}`);
@@ -2788,7 +2789,7 @@ class TypeChecker {
             }
         }
         
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.trueBinder, ttrue);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, env);
         const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue);
     }
@@ -2832,7 +2833,7 @@ class TypeChecker {
             }
         }
         
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.trueBinder, ttrue, tfalse);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.trueBinder, ttrue, tfalse);
         const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.trueBinder, mtype, ttrue, tfalse);
     }
@@ -2928,7 +2929,7 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Switch statement must be exhaustive or have a wildcard match at the end");
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.sval[1], ...results);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.sval[1], ...results);
         const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
     }
@@ -2977,7 +2978,7 @@ class TypeChecker {
         }
         
         this.checkError(stmt.sinfo, !exhaustive, "Match statement must be exhaustive or have a wildcard match at the end");
-        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderFlowType(stmt.sval[1], ...results);
+        const btypes = TypeEnvironment.gatherEnvironmentsOptBinderType(stmt.sval[1], ...results);
         const mtype = btypes !== undefined ? this.relations.joinAllTypes(btypes, this.constraints) : undefined;
         return TypeEnvironment.mergeEnvironmentsOptBinderFlow(env, stmt.sval[1], mtype, ...results);
     }
@@ -3393,7 +3394,7 @@ class TypeChecker {
 
         for(let i = 0; i < refvars.length; ++i) {
             const v = refvars[i];
-            eev = eev.addLocalVariable("$" + v, (env.resolveLocalVarInfo(v) as VarInfo).layoutType, true, true);
+            eev = eev.addLocalVariable("$" + v, (env.resolveLocalVarInfo(v) as VarInfo).vtype, true, true);
         }
 
         for(let i = 0; i < ensures.length; ++i) {
@@ -3404,7 +3405,7 @@ class TypeChecker {
     }
 
     private checkInvariants(bnames: {name: string, type: TypeSignature}[], invariants: InvariantDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
@@ -3414,7 +3415,7 @@ class TypeChecker {
     }
 
     private checkValidates(bnames: {name: string, type: TypeSignature}[], validates: ValidateDecl[]) {
-        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
+        const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, true, true)), this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
 
         for(let i = 0; i < validates.length; ++i) {
             const etype = this.checkExpression(env, validates[i].exp.exp, undefined);
@@ -3465,7 +3466,7 @@ class TypeChecker {
     }
 
     private checkExplicitInvokeDeclMetaData(idecl: ExplicitInvokeDecl, specialvinfo: VarInfo[], specialrefvars: string[], eventtype: TypeSignature | undefined) {
-        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true))];
+        const fullvinfo = [...specialvinfo, ...idecl.params.map((p) => new VarInfo(p.name, p.type, !p.isRefParam, true))];
         const fullrefvars = [...specialrefvars, ...idecl.params.filter((p) => p.isRefParam).map((p) => p.name)];
 
         const ienv = TypeEnvironment.createInitialStdEnv(fullvinfo, this.getWellKnownType("Bool"), new SimpleTypeInferContext(this.getWellKnownType("Bool")));
@@ -3490,7 +3491,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, !p.isRefParam, true)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3515,7 +3516,7 @@ class TypeChecker {
             this.checkExplicitInvokeDeclMetaData(fdecl, [], [], undefined);
 
             const infertype = this.relations.convertTypeSignatureToTypeInferCtx(fdecl.resultType, this.constraints);
-            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, p.type, !p.isRefParam, true)), fdecl.resultType, infertype);
+            const env = TypeEnvironment.createInitialStdEnv(fdecl.params.map((p) => new VarInfo(p.name, p.type, !p.isRefParam, true)), fdecl.resultType, infertype);
             this.checkBodyImplementation(env, fdecl.body);
 
             if(fdecl.terms.length !== 0) {
@@ -3567,7 +3568,7 @@ class TypeChecker {
             if(this.checkTypeSignatureAndStorable(f.declaredType)) {
                 if(f.defaultValue !== undefined) {
                     const infertype = this.relations.convertTypeSignatureToTypeInferCtx(f.declaredType, this.constraints);
-                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, bn.type, true, true)), f.declaredType, infertype);
+                    const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, true, true)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
                     this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(false)} but got ${decltype.emit(false)}`);

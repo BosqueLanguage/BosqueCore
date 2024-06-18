@@ -634,8 +634,6 @@ class AccessVariableExpression extends Expression {
     readonly scopename: string;    //maybe a different name that gets used for shadowing binders
     readonly isCaptured: boolean;
 
-    layoutType: TypeSignature | undefined = undefined;
-
     constructor(sinfo: SourceInfo, srcname: string, scopename: string, isCaptured: boolean) {
         super(ExpressionTag.AccessVariableExpression, sinfo);
         this.srcname = srcname;

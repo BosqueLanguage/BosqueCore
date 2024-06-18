@@ -5,23 +5,25 @@ import { BinderInfo } from "./body.js";
 
 class VarInfo {
     readonly srcname: string;
-    readonly layoutType: TypeSignature;
-    readonly flowType: TypeSignature;
+    readonly vtype: TypeSignature;
 
     readonly isConst: boolean;
     readonly mustDefined: boolean;
 
-    constructor(srcname: string, ltype: TypeSignature, ftype: TypeSignature, isConst: boolean, mustDefined: boolean) {
+    constructor(srcname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean) {
         this.srcname = srcname;
-        this.layoutType = ltype;
-        this.flowType = ftype;
+        this.vtype = vtype;
 
         this.isConst = isConst;
         this.mustDefined = mustDefined;
     }
 
-    updateFlowTypeAndDefine(ttype: TypeSignature): VarInfo {
-        return new VarInfo(this.srcname, this.layoutType, ttype, this.isConst, true);
+    updateTypeAndDefine(ttype: TypeSignature): VarInfo {
+        return new VarInfo(this.srcname, ttype, this.isConst, true);
+    }
+
+    updateDefine(): VarInfo {
+        return new VarInfo(this.srcname, this.vtype, this.isConst, true);
     }
 }
 
@@ -35,7 +37,7 @@ abstract class TypeInferContext {
         }
     }
 
-    static asEListOptions(ctx: TypeInferContext | undefined): TypeSignature[] | undefined {
+    static asEListOptions(ctx: TypeInferContext | undefined): (TypeSignature | undefined)[] | undefined {
         if(ctx === undefined) {
             return undefined
         }
@@ -55,9 +57,9 @@ class SimpleTypeInferContext extends TypeInferContext {
 }
 
 class EListStyleTypeInferContext extends TypeInferContext {
-    readonly elist: TypeSignature[];
+    readonly elist: (TypeSignature | undefined)[];
 
-    constructor(elist: TypeSignature[]) {
+    constructor(elist: (TypeSignature | undefined)[]) {
         super();
         this.elist = elist;
     }
@@ -103,7 +105,7 @@ class TypeEnvironment {
         while(parent !== undefined) {
             const vv = parent.resolveLocalVarInfo(vname);
             if(vv !== undefined) {
-                return vv.flowType;
+                return vv.vtype;
             }
         }
 
@@ -123,10 +125,10 @@ class TypeEnvironment {
     }
 
     addLocalVariable(vname: string, vtype: TypeSignature, isConst: boolean, mustDefined: boolean): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, isConst, mustDefined)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this.parent, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, isConst, mustDefined)]]);
     }
 
-    assignLocalVariable(vname: string, ttype: TypeSignature): TypeEnvironment {
+    assignLocalVariable(vname: string): TypeEnvironment {
         let locals: VarInfo[][] = [];
         for(let i = this.locals.length - 1; i >= 0; i--) {
             let frame: VarInfo[] = [];
@@ -135,7 +137,7 @@ class TypeEnvironment {
                     frame.push(this.locals[i][j]);
                 }
                 else {
-                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(ttype));
+                    frame.push(this.locals[i][j].updateDefine());
                 }
             }
 
@@ -154,7 +156,7 @@ class TypeEnvironment {
                     frame.push(this.locals[i][j]);
                 }
                 else {
-                    frame.push(this.locals[i][j].updateFlowTypeAndDefine(ttype));
+                    frame.push(this.locals[i][j].updateTypeAndDefine(ttype));
                 }
             }
 
@@ -177,7 +179,7 @@ class TypeEnvironment {
     }
 
     pushNewLocalBinderScope(vname: string, vtype: TypeSignature): TypeEnvironment {
-        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, vtype, true, true)]]);
+        return new TypeEnvironment(this.normalflow, this.returnflow, this, [...this.args], this.declReturnType, this.inferReturn, [...TypeEnvironment.cloneLocals(this.locals), [new VarInfo(vname, vtype, true, true)]]);
     }
 
     popLocalScope(): TypeEnvironment {
@@ -192,7 +194,7 @@ class TypeEnvironment {
 
             for(let j = 0; j < origenv.locals[i].length; j++) {
                 const mdef = envs.every((e) => (e.resolveLocalVarInfo(origenv.locals[i][j].srcname) as VarInfo).mustDefined);
-                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].layoutType, origenv.locals[i][j].flowType, origenv.locals[i][j].isConst, mdef));
+                frame.push(new VarInfo(origenv.locals[i][j].srcname, origenv.locals[i][j].vtype, origenv.locals[i][j].isConst, mdef));
             }
 
             locals.push(frame);
@@ -201,13 +203,13 @@ class TypeEnvironment {
         return new TypeEnvironment(origenv.normalflow, origenv.returnflow, origenv.parent, [...origenv.args], origenv.declReturnType, origenv.inferReturn, locals);
     }
 
-    static gatherEnvironmentsOptBinderFlowType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
+    static gatherEnvironmentsOptBinderType(binfo: BinderInfo | undefined, ...envs: TypeEnvironment[]): TypeSignature[] | undefined {
         if(binfo === undefined) {
             return undefined;
         }
         else {
             const topts = envs.filter((e) => e.normalflow).map((e) => e.resolveLocalVarInfo(binfo.scopename) as VarInfo);
-            return topts.length !== 0 ? topts.map((v) => v.flowType) : undefined;
+            return topts.length !== 0 ? topts.map((v) => v.vtype) : undefined;
         }
     }
 

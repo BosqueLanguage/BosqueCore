@@ -14,7 +14,7 @@ describe ("Parser -- simple declare only", () => {
     });
 
     it("should fail declare only -- bad name _", function () {
-        parseTestFunctionError("function main(x: Int): Int { var _: Int; return 0i; }", 'Expected "[IDENTIFIER]" but got "_" when parsing "assignment statement"');
+        parseTestFunctionError("function main(x: Int): Int { var _: Int; return 0i; }", "Variable _ cannot be defined");
     });
 
     it("should fail declare only -- const var", function () {
@@ -26,7 +26,7 @@ describe ("Parser -- simple declare only", () => {
     });
 
     it("should fail declare only -- shadow", function () {
-        parseTestFunctionError("function main(x: Int): Int { var x: Int; return 1i; }", "Variable x is already defined");
+        parseTestFunctionError("function main(x: Int): Int { var x: Int; return 1i; }", "Variable x cannot be defined");
     });
 });
 
@@ -42,7 +42,7 @@ describe ("Parser -- simple declare-assign only", () => {
     });
 
     it("should fail declare-assign only -- shadow", function () {
-        parseTestFunctionError("function main(x: Int): Int { let x: Int = 3i; return 1i; }", "Variable x is already defined");
+        parseTestFunctionError("function main(x: Int): Int { let x: Int = 3i; return 1i; }", "Variable x cannot be defined");
     });
 
     it("should fail simple no decl naked _", function () {
