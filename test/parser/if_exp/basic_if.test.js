@@ -1,4 +1,4 @@
-import { parseTestExp, parseTestExpError, parseTestFunction, parseTestFunctionError } from "../../../bin/test/parser/parse_nf.js";
+import { parseTestExp, parseTestExpError, parseTestFunction } from "../../../bin/test/parser/parse_nf.js";
 import { describe, it } from "node:test";
 
 describe ("Parser -- if-expression", () => {
@@ -12,6 +12,7 @@ describe ("Parser -- if-expression", () => {
         parseTestExp("if(true)!none then 2i else 3i", undefined, "Int");
         parseTestExp("if(3n)some then 2i else 3i", undefined, "Int");
         parseTestExp("if(3n)<Some> then 2i else 3i", undefined, "Int");
+        parseTestExp("if(if(true) then false else true) then 2i else 3i", undefined, "Int");
 
         parseTestFunction("function main(x: Int?): Int { return if(x)@!none then $x else 3i; }", undefined);
         parseTestFunction("function main(x: Int?): Int { return if(x + 1i)@!none then $_ else 3i; }", undefined);

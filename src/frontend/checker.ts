@@ -1421,7 +1421,7 @@ class TypeChecker {
                 ttrue = this.checkExpression(env, exp.trueValue, typeinfer);
             }
             else {
-                const nenv = env.addLocalVariable(exp.trueValueBinder.scopename, splits.ttrue as TypeSignature, true, true);
+                const nenv = env.addLocalVariable(exp.trueValueBinder.scopename, splits.ttrue || eetype, true, true);
                 ttrue = this.checkExpression(nenv, exp.trueValue, typeinfer);
             }
 
@@ -1429,7 +1429,7 @@ class TypeChecker {
                 tfalse = this.checkExpression(env, exp.falseValue, typeinfer);
             }
             else {
-                const nenv = env.addLocalVariable(exp.falseValueBinder.scopename, splits.tfalse as TypeSignature, true, true);
+                const nenv = env.addLocalVariable(exp.falseValueBinder.scopename, splits.tfalse || eetype, true, true);
                 tfalse = this.checkExpression(nenv, exp.falseValue, typeinfer);
             }
         }
@@ -2733,14 +2733,14 @@ class TypeChecker {
 
     private checkReturnStatement(env: TypeEnvironment, stmt: ReturnStatement): TypeEnvironment {
         if(stmt.value === undefined) {
-            this.checkError(stmt.sinfo, !this.relations.isVoidType(env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(false)}`);
+            this.checkError(stmt.sinfo, !this.relations.isVoidType(env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(true)}`);
         }
         else if(!Array.isArray(stmt.value)) {
             const rtype = this.checkExpressionRHS(env, stmt.value, env.inferReturn);
-            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(false)} but got ${rtype.emit(false)}`);
+            this.checkError(stmt.sinfo, !(rtype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(rtype, env.declReturnType, this.constraints), `Expected a return value of type ${env.declReturnType.emit(true)} but got ${rtype.emit(true)}`);
         }
         else {
-            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit(false)}`)) {
+            if(this.checkError(stmt.sinfo, !(env.inferReturn instanceof EListStyleTypeInferContext), `Multiple return requires an Elist type but got ${env.declReturnType.emit(true)}`)) {
                 return env.setReturnFlow();
             }
 
@@ -2751,8 +2751,8 @@ class TypeChecker {
                 const rtype = i < rtypes.length ? rtypes[i] : undefined;
                 const etype = this.checkExpressionRHS(env, stmt.value[i], rtype);
 
-                const rtname = rtype !== undefined ? rtype.emit(false) : "skip";
-                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit(false)}`);
+                const rtname = rtype !== undefined ? rtype.emit(true) : "skip";
+                this.checkError(stmt.sinfo, rtype !== undefined && !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, rtype, this.constraints), `Expected a return value of type ${rtname} but got ${etype.emit(true)}`);
             }
 
             return env.setReturnFlow();
@@ -2804,7 +2804,7 @@ class TypeChecker {
                 ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             }
             else {
-                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue as TypeSignature);
+                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue || eetype);
                 ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
             }
         }
@@ -2842,7 +2842,7 @@ class TypeChecker {
                 ttrue = this.checkBlockStatement(env, stmt.trueBlock);
             }
             else {
-                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue as TypeSignature);
+                const nenv = env.pushNewLocalBinderScope(stmt.trueBinder.scopename, splits.ttrue || eetype);
                 ttrue = this.checkStatement(nenv, stmt.trueBlock).popLocalScope();
             }
 
@@ -2850,7 +2850,7 @@ class TypeChecker {
                 tfalse = this.checkBlockStatement(env, stmt.falseBlock);
             }
             else {
-                const nenv = env.pushNewLocalBinderScope(stmt.falseBinder.scopename, splits.tfalse as TypeSignature);
+                const nenv = env.pushNewLocalBinderScope(stmt.falseBinder.scopename, splits.tfalse || eetype);
                 tfalse = this.checkStatement(nenv, stmt.falseBlock).popLocalScope();
             }
         }
@@ -2873,7 +2873,7 @@ class TypeChecker {
                     etype = this.getWellKnownType("Bool");
                 }
 
-                this.checkError(stmt.condflow[i].cond.exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean expression but got ${etype.emit(false)}`);
+                this.checkError(stmt.condflow[i].cond.exp.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean expression but got ${etype.emit(true)}`);
             
                 const resenv = this.checkBlockStatement(env, stmt.condflow[i].block);
                 branchflows.push(resenv);
@@ -3022,7 +3022,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for assert condition but got ${etype.emit(false)}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for assert condition but got ${etype.emit(true)}`);
         return env;
     }
 
@@ -3032,7 +3032,7 @@ class TypeChecker {
             return env;
         }
 
-        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for validate condition but got ${etype.emit(false)}`);
+        this.checkError(stmt.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Expected a boolean type for validate condition but got ${etype.emit(true)}`);
         return env;
     }
 
@@ -3390,7 +3390,7 @@ class TypeChecker {
 
         if(body instanceof ExpressionBodyImplementation) {
             const etype = this.checkExpression(env, body.exp, env.inferReturn);
-            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit(false)} but got ${etype.emit(false)}`);
+            this.checkError(body.sinfo, !this.relations.isSubtypeOf(etype, env.declReturnType, this.constraints), `Expression body does not match expected return type -- expected ${env.declReturnType.emit(true)} but got ${etype.emit(true)}`);
         }
         else {
             assert(body instanceof StandardBodyImplementation);
@@ -3408,7 +3408,7 @@ class TypeChecker {
         for(let i = 0; i < requires.length; ++i) {
             const precond = requires[i];
             const etype = this.checkExpression(env, precond.exp, undefined);
-            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Requires expression does not have a boolean type -- got ${etype.emit(false)}`);
+            this.checkError(precond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Requires expression does not have a boolean type -- got ${etype.emit(true)}`);
         }
     }
 
@@ -3429,7 +3429,7 @@ class TypeChecker {
         for(let i = 0; i < ensures.length; ++i) {
             const postcond = ensures[i];
             const etype = this.checkExpression(eev, postcond.exp, undefined);
-            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Ensures expression does not have a boolean type -- got ${etype.emit(false)}`);
+            this.checkError(postcond.sinfo, !this.relations.isBooleanType(etype, this.constraints), `Ensures expression does not have a boolean type -- got ${etype.emit(true)}`);
         }
     }
 
@@ -3439,7 +3439,7 @@ class TypeChecker {
         for(let i = 0; i < invariants.length; ++i) {
             const inv = invariants[i];
             const etype = this.checkExpression(env, inv.exp.exp, undefined);
-            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Invariant expression does not have a boolean type -- got ${etype.emit(false)}`);
+            this.checkError(invariants[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Invariant expression does not have a boolean type -- got ${etype.emit(true)}`);
         }
     }
 
@@ -3448,7 +3448,7 @@ class TypeChecker {
 
         for(let i = 0; i < validates.length; ++i) {
             const etype = this.checkExpression(env, validates[i].exp.exp, undefined);
-            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Validate expression does not have a boolean type -- got ${etype.emit(false)}`);
+            this.checkError(validates[i].sinfo, !this.relations.isBooleanType(etype, this.constraints), `Validate expression does not have a boolean type -- got ${etype.emit(true)}`);
         }
     }
 
@@ -3494,7 +3494,7 @@ class TypeChecker {
                 const env = TypeEnvironment.createInitialStdEnv(fullvinfo, idecl.resultType, new SimpleTypeInferContext(idecl.resultType));
                 const etype = this.checkExpression(env, p.optDefaultValue.exp, p.type);
 
-                this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit(false)} but got ${etype.emit(false)}`);
+                this.checkError(idecl.sinfo, !(etype instanceof ErrorTypeSignature) && !this.relations.isSubtypeOf(etype, p.type, this.constraints), `Default value does not match declared type -- expected ${p.type.emit(true)} but got ${etype.emit(true)}`);
             }
         }
 
@@ -3590,7 +3590,7 @@ class TypeChecker {
                 const env = TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype);
 
                 const decltype = this.checkExpression(env, m.value.exp, new SimpleTypeInferContext(m.declaredType));
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(true)} but got ${decltype.emit(true)}`);
             }
         }
     }
@@ -3605,7 +3605,7 @@ class TypeChecker {
                     const env = TypeEnvironment.createInitialStdEnv(bnames.map((bn) => new VarInfo("$" + bn.name, bn.type, true, true)), f.declaredType, infertype);
 
                     const decltype = this.checkExpression(env, f.defaultValue.exp, new SimpleTypeInferContext(f.declaredType));
-                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+                    this.checkError(f.sinfo, !this.relations.isSubtypeOf(decltype, f.declaredType, this.constraints), `Field initializer does not match declared type -- expected ${f.declaredType.emit(true)} but got ${decltype.emit(true)}`);
                 }
             }
         }
@@ -3617,7 +3617,7 @@ class TypeChecker {
             this.checkTypeSignature(p);
 
             if(!this.relations.isValidProvidesType(p, this.constraints)) {
-                this.reportError(p.sinfo, `Invalid provides type -- ${p.emit(false)}`);
+                this.reportError(p.sinfo, `Invalid provides type -- ${p.emit(true)}`);
             }
         }
     }
@@ -3713,7 +3713,7 @@ class TypeChecker {
 
         if(this.checkTypeSignature(tdecl.valuetype)) {
             //make sure the base type is typedeclable
-            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(false)}`);
+            this.checkError(tdecl.sinfo, this.relations.isTypedeclableType(tdecl.valuetype, this.constraints), `Base type is not typedeclable -- ${tdecl.valuetype.emit(true)}`);
 
             //make sure all of the invariants on this typecheck
             this.checkInvariants([{name: "value", type: tdecl.valuetype}], tdecl.invariants);
@@ -3932,7 +3932,7 @@ class TypeChecker {
             for(let i = 0; i < einfo.length; ++i) {
                 const oksig = this.checkTypeSignature(einfo[i]);
                 if(oksig) {
-                    this.checkError(einfo[i].sinfo, !this.relations.isEventDataType(einfo[i], this.constraints), `Event type is not a valid event type -- ${einfo[i].emit(false)}`);
+                    this.checkError(einfo[i].sinfo, !this.relations.isEventDataType(einfo[i], this.constraints), `Event type is not a valid event type -- ${einfo[i].emit(true)}`);
                 }
             }
         }
@@ -3945,12 +3945,12 @@ class TypeChecker {
 
         const okstdsig = status.standard !== undefined && this.checkTypeSignature(status.standard);
         if(okstdsig) {
-            this.checkError(status.standard.sinfo, !this.relations.isStatusDataType(status.standard, this.constraints), `Status type is not a valid status type -- ${status.standard.emit(false)}`);
+            this.checkError(status.standard.sinfo, !this.relations.isStatusDataType(status.standard, this.constraints), `Status type is not a valid status type -- ${status.standard.emit(true)}`);
         }
 
         const okverbosesig = status.verbose !== undefined && this.checkTypeSignature(status.verbose);
         if(okverbosesig) {
-            this.checkError(status.verbose.sinfo, !this.relations.isStatusDataType(status.verbose, this.constraints), `Status type is not a valid status type -- ${status.verbose.emit(false)}`);
+            this.checkError(status.verbose.sinfo, !this.relations.isStatusDataType(status.verbose, this.constraints), `Status type is not a valid status type -- ${status.verbose.emit(true)}`);
         }
     }
 
@@ -4026,7 +4026,7 @@ class TypeChecker {
                 const infertype = this.relations.convertTypeSignatureToTypeInferCtx(m.declaredType, this.constraints);
                 const decltype = this.checkExpression(TypeEnvironment.createInitialStdEnv([], m.declaredType, infertype), m.value.exp, m.declaredType);
 
-                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(false)} but got ${decltype.emit(false)}`);
+                this.checkError(m.sinfo, !this.relations.isSubtypeOf(decltype, m.declaredType, this.constraints), `Const initializer does not match declared type -- expected ${m.declaredType.emit(true)} but got ${decltype.emit(true)}`);
             }
             this.file = CLEAR_FILENAME;
         }

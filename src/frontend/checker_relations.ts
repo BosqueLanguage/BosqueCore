@@ -93,7 +93,7 @@ class TypeCheckerRelations {
         TypeCheckerRelations.flattenUnionType(tt, tl);
 
         //check for None+Some -> Any
-        if(this.includesNoneType(tt, tconstrain) && this.isSubtypeOf(this.wellknowntypes.get("Some") as TypeSignature, tt, tconstrain)) {
+        if(this.includesNoneType(tt, tconstrain) && this.includesSomeType(tt, tconstrain)) {
             return this.wellknowntypes.get("Any") as TypeSignature;
         }
 
@@ -836,14 +836,44 @@ class TypeCheckerRelations {
     includesNoneType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
         
-        return this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t, tconstrain);
+        if(t instanceof NoneableTypeSignature) {
+            return true;
+        }
+        else if(t instanceof UnionTypeSignature) {
+            return this.includesNoneType(t.ltype, tconstrain) || this.includesNoneType(t.rtype, tconstrain);
+        }
+        else {
+            return this.isSubtypeOf(this.wellknowntypes.get("None") as TypeSignature, t, tconstrain);
+        }
     }
 
     //Check if t incudes Nothing (e.g. Nothing is a subtype of t)
     includesNothingType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
         
-        return this.isSubtypeOf(this.wellknowntypes.get("Nothing") as TypeSignature, t, tconstrain);
+        if(t instanceof NoneableTypeSignature) {
+            return this.includesNothingType(t.type, tconstrain);
+        }
+        else if(t instanceof UnionTypeSignature) {
+            return this.includesNothingType(t.ltype, tconstrain) || this.includesNothingType(t.rtype, tconstrain);
+        }
+        else {
+            return this.isSubtypeOf(this.wellknowntypes.get("Nothing") as TypeSignature, t, tconstrain);
+        }
+    }
+
+    includesSomeType(t: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
+        assert(!(t instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        
+        if(t instanceof NoneableTypeSignature) {
+            return this.includesSomeType(t.type, tconstrain);
+        }
+        else if(t instanceof UnionTypeSignature) {
+            return this.includesSomeType(t.ltype, tconstrain) || this.includesSomeType(t.rtype, tconstrain);
+        }
+        else {
+            return this.isSubtypeOf(this.wellknowntypes.get("Some") as TypeSignature, t, tconstrain);
+        }
     }
 
     //Check is this type is unique (i.e. not a union or concept type)
@@ -1476,8 +1506,8 @@ class TypeCheckerRelations {
 
     //Compute the upper bound of two types for use in control-flow join types
     joinTypes(t1: TypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        assert(t1 instanceof ErrorTypeSignature, "Checking subtypes on errors");
-        assert(t2 instanceof ErrorTypeSignature, "Checking subtypes on errors");
+        assert(!(t1 instanceof ErrorTypeSignature), "Checking subtypes on errors");
+        assert(!(t2 instanceof ErrorTypeSignature), "Checking subtypes on errors");
 
         return this.simplifyUnionType(new UnionTypeSignature(t1.sinfo, t1, t2), tconstrain);
     }
