@@ -75,7 +75,6 @@ describe ("Checker -- Decimal", () => {
     });
 });
 
-
 describe ("Checker -- Rational", () => {
     it("should parse simple rationals", function () {
         checkTestExp("0R", "Rational");
@@ -84,5 +83,39 @@ describe ("Checker -- Rational", () => {
 
     it("should fail simple rational", function () {
         checkTestExpError("1R", "None", "Expected a return value of type None but got Rational");
+    });
+});
+
+describe ("Checker -- Decimal Degree", () => {
+    it("should parse simple decimal degree", function () {
+        checkTestExp("0.0dd", "DecimalDegree");
+        checkTestExp("200.123dd", "DecimalDegree");
+        checkTestExp("+0.123dd", "DecimalDegree");
+    });
+
+    it("should fail simple rational", function () {
+        checkTestExpError("0.0dd", "None", "Expected a return value of type None but got DecimalDegree");
+    });
+});
+
+describe ("Checker -- Lat/Long", () => {
+    it("should parse simple lat/long", function () {
+        checkTestExp("2.0lat-90.123long", "LatLongCoordinate");
+        checkTestExp("xxx", "LatLongCoordinate");
+    });
+
+    it("should fail simple rational", function () {
+        checkTestExpError("2.0lat-90.123long", "DecimalDegree", "Expected a return value of type DecimalDegree but got LatLongCoordinate");
+    });
+});
+
+describe ("Checker -- Complex", () => {
+    it("should parse simple complex", function () {
+        checkTestExp("0.0+0.0j", "Complex");
+        checkTestExp("-2.0-0.5j", "Complex");
+    });
+
+    it("should fail simple rational", function () {
+        checkTestExpError("-2.0-0.5j", "Float", "Expected a return value of type Float but got Complex");
     });
 });

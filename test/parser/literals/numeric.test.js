@@ -70,9 +70,56 @@ describe ("Parser -- Decimal", () => {
     });
 });
 
-
 describe ("Parser -- Rational", () => {
     it("should parse simple rationals", function () {
+        parseTestExp("0R", undefined, "Rational");
+        parseTestExp("1/2R", undefined, "Rational");
+        parseTestExp("-3/4R", undefined, "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0R", "Zero denominator in rational number", "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0_Foo", "Zero denominator in rational number", "Rational");
+    });
+});
+
+describe ("Parser -- DecimalDegree", () => {
+    it("should parse simple decimal degree", function () {
+        parseTestExp("0R", undefined, "Rational");
+        parseTestExp("1/2R", undefined, "Rational");
+        parseTestExp("-3/4R", undefined, "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0R", "Zero denominator in rational number", "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0_Foo", "Zero denominator in rational number", "Rational");
+    });
+});
+
+describe ("Parser -- Lat/Long", () => {
+    it("should parse simple lat/long", function () {
+        parseTestExp("0R", undefined, "Rational");
+        parseTestExp("1/2R", undefined, "Rational");
+        parseTestExp("-3/4R", undefined, "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0R", "Zero denominator in rational number", "Rational");
+    });
+
+    it("should fail zero denom rational", function () {
+        parseTestExpError("1/0_Foo", "Zero denominator in rational number", "Rational");
+    });
+});
+
+describe ("Parser -- Complex", () => {
+    it("should parse simple complex", function () {
         parseTestExp("0R", undefined, "Rational");
         parseTestExp("1/2R", undefined, "Rational");
         parseTestExp("-3/4R", undefined, "Rational");
