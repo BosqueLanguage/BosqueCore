@@ -53,32 +53,42 @@ Expressions are a key component in Bosque programming. Thus, Bosque provides a r
 ### Unique Values
 The keywords `none`, `nothing`, `true`, `false` are the unique literal representations for the `None`, `Nothing`, and `Boolean` types. 
 
-### Integral Numbers
-The literals for `Nat`, `Int`, `BigNat`, `BigInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `BigNat` and `BigInt` values. Some examples include:
-
 ```none
 none     //special none value
 nothing  //special nothing value
 
 true     //true boolean literal
 false    //false boolean literal
+```
 
+### Integral Numbers
+The literals for `Nat`, `Int`, `BigNat`, `BigInt` are of the form `[+-][0-9]+[n|i|N|I]`. The `n`/`i` suffix is used for `Nat` and `Int` values, the `N`/`I` suffix is used for `BigNat` and `BigInt` values. Some examples include:
+
+```none
 0n       //0 as a Nat
 0i       //0 as an Int
 -1I      //-1 as an BigInt
+100N     //100 as a BigNat
+```
+
+Int and BigNat literals cannot have a leading `-` sign, duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecl values such as `-2i_Foo` where this is the literal `-2i` as a `Foo` _not_ the value `2i_Foo` negated. 
+
+### Real Approximation Numbers
+The literals for `Float` and `Decimal` are of the form `[+-][0-9]+[.][0-9]+[f|d]`. The `f` suffix is used for `Float` values, which are 64bit IEEE values (excluding NaN and Infinities), the `d` suffix is used for base-10 `Decimal` floating point values (also excluding NaN and Infinities). Literal `Rational` values are of the form `[+-][0-9]+(/[0-9]?R` and 
+represent approximate rational values -- with a `BigInt` numerator and a `Nat` denominator. So infinite range and precision of up to 1/(2^63) which is rounded (TODO: what mode).
+
+Some examples include:
+```none
 0.5f     //0.0 as a Float
 5.2d     //5.0 as a Decimal
 5/2R     //5/2 as a Rational
-
-"ok"        //string literal
-""          //empty string literal
-ascii{"ok"} //ascii string literal
-/a*b*/      //Regex
 ```
 
-Nat and BigNat literals cannot have a leading `-` sign, duplicate signs are an error, and the sign is _explicitly_ part of the number literal -- thus `-2i` and `-(2i)` are not the same semantically which is important for literal typedecls values such as `-2i_Foo` where this is the literal `-2i` converted to a `Foo` _not_ the value `2i_Foo` negated. 
+### Common Special Numerics
+xxxx
 
-Most of these literal expressions are familiar from other languages. The numeric literals are strongly typed for each of the numeric types in the language (including BigInt/BigNat and Rationals). Bosque also differentiates string types and literals with the String type and regular quoted strings representing unicode strings. The ASCIIString type and `ascii{...}` enclosed literals are for strings made of only ASCII characters.
+### String Literals
+xxx
 
 ## Parameters/Variables/Captures
 Variables in Bosque are of the form `[_a-z][_a-zA-Z0-9]`. Local variables can be declared using a `let` for immutable bindings or `var` for mutable bindings. Parameters are 

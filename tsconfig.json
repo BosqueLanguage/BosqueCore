@@ -19,6 +19,7 @@
     },
     "include": [
         "src/frontend/*.ts",
+        "src/backend/*.ts",
         "src/cmd/*.ts",
         "test/parser/parse_nf.ts",
         "test/typecheck/typecheck_nf.ts",

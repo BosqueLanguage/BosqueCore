@@ -200,27 +200,36 @@ class ValidateDecl extends ConditionDecl {
     }
 }
 
-abstract class InvokeExample extends AbstractDecl {
-    readonly istest: boolean;
+enum InvokeExampleKind {
+    Std,
+    Test,
+    Spec
+}
 
-    constructor(file: string, sinfo: SourceInfo, istest: boolean) {
+abstract class InvokeExample extends AbstractDecl {
+    readonly kind: InvokeExampleKind;
+
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind) {
         super(file, sinfo);
-        this.istest = istest;
+        this.kind = ekind;
     }
 }
 
 class InvokeExampleDeclInline extends InvokeExample {
     readonly entries: {args: Expression[], output: Expression}[];
 
-    constructor(file: string, sinfo: SourceInfo, istest: boolean, entries: {args: Expression[], output: Expression}[]) {
-        super(file, sinfo, istest);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, entries: {args: Expression[], output: Expression}[]) {
+        super(file, sinfo, ekind);
         this.entries = entries;
     }
 
     emit(fmt: CodeFormatter): string {
         const estr = this.entries.map((e) => `(${e.args.map((a) => a.emit(true, fmt)).join(", ")}) => ${e.output.emit(true, fmt)}`).join("; ");
 
-        if(this.istest) {
+        if(this.kind === InvokeExampleKind.Spec) {
+            return fmt.indent(`spec { ${estr} }`);
+        }
+        else if(this.kind === InvokeExampleKind.Test) {
             return fmt.indent(`test { ${estr} }`);
         }
         else {
@@ -232,13 +241,13 @@ class InvokeExampleDeclInline extends InvokeExample {
 class InvokeExampleDeclFile extends InvokeExample {
     readonly filepath: string; //may use the ROOT and SRC environment variables
 
-    constructor(file: string, sinfo: SourceInfo, istest: boolean, filepath: string) {
-        super(file, sinfo, istest);
+    constructor(file: string, sinfo: SourceInfo, ekind: InvokeExampleKind, filepath: string) {
+        super(file, sinfo, ekind);
         this.filepath = filepath;
     }
 
     emit(fmt: CodeFormatter): string {
-        if(this.istest) {
+        if(this.kind === InvokeExampleKind.Test) {
             return fmt.indent(`test ${this.filepath};`);
         }
         else {
@@ -1678,7 +1687,7 @@ export {
     TemplateTermDeclExtraTag, TemplateTermDecl, TypeTemplateTermDecl, InvokeTemplateTermDecl, InvokeTemplateTypeRestrictionClause, InvokeTemplateTypeRestrictionClauseUnify, InvokeTemplateTypeRestrictionClauseSubtype, InvokeTemplateTypeRestriction, 
     AbstractDecl, 
     ConditionDecl, PreConditionDecl, PostConditionDecl, InvariantDecl, ValidateDecl,
-    InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
+    InvokeExampleKind, InvokeExample, InvokeExampleDeclInline, InvokeExampleDeclFile, 
     DeclarationAttibute, AbstractCoreDecl,
     InvokeParameterDecl, AbstractInvokeDecl, 
     LambdaDecl,
