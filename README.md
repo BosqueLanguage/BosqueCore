@@ -19,21 +19,51 @@ After extensive(!) experimentation and prototype work the project has reached a 
 
 There are no hard deadlines on this work but targeting a 1.0 this summer and a 2.0 by the start of the fall! Community involvement is welcome. There are some fidgity parts that I probably just need to manage but I have tried to open issues, and where possible, flag some that are amenable for outside help. This process will be taking place on `main` so, if you need to keep stability, I have created the `stable_pre1` branch. 
 
-
 # Platform Road Map 
+The current (approximate) roadmap for the Bosque project is broken down into a series of major components that are being developed in parallel + smaller but high-impact work items. These cover a range of complexity and required skills, from academic level publication results, through non-trivial software engineering lifts, and into smaller tasks that are good starter projects. If you are interested in one of these please find (or open) an issue for more detail.
 
 ## Current Work Items 
+The current work items are focused on the 1.0 release of the Bosque language and it actively in-progress:
+- Base Language design -- mostly workable (in the `assembly.ts` and `body.ts` files) with needs for documentations
+- Core Libraries -- not much but lots of opportunity to build out from previous prototype code.
+- Parser and Type-Checker -- partially complete with plenty of todos and needs for documentation/tests.
+- Basic JS Runtime -- starting...
+- Visual Studio Code Integration -- Just a simple syntax highlighter at the moment next steps are to build out a full LSP server.
 
 ## Planned Next Steps
+The next steps are focused on the 2.0 release of the Bosque language are focused on fulfilling two major promises in the tooling and runtime space:
+- Small Model Verifier -- a symbolic checker with guarantees of the decidability of the presence or absence of small inputs that trigger any runtime failure/assertion/pre/post/invariant condition.
+- A Ω(n lg n) time and O(1) space runtime and AOT compiler -- a runtime that is designed to be performant, low memory, and predictable in its behavior.
 
-## Looking for Contributors
+## Inviting for Contributors
+The Bosque project is actively inviting contributors as we move from a research focused into a practically focused project! We want to make this a a great place to learn and contribute to the next era in programming languages, compilers, and runtime systems. Below are some topics that are open for contributions and where help is greatly appreciated, we are happy to help mentor and guide you through the process.
 
 ### Breakout Features
+These items are headline features that are large and complex(possibly open research) but will have major impact on the future of software development. They are great for someone, highly-motivated and skilled, looking to make a big impact on the project.
+
+- O(1)-GC -- a garbage collector with constant memory overhead, constant work per allocation, constant collector pauses, and compaction! 
+- Versioning and Packaging -- build a well-founded semantics for versioning + ability to verify if changes/version errors. For users the ability to confidently upgrade dependencies (also prep for package manager and testing features).
+- Termination and Bounds analysis -- a static analysis that can prove the termination of a function/task/api and the bounds on the resources it consumes.
+- Extend StringOf 
+- API-Embodied Meta-Cognitive AI-Agent (AMC-AI) -- a big acronym but big potential! Take the idea of Bosque APIs, which are well suited for synthesis with generative AI, and combine with the verifier to have a _fully-grounded_ and API (tool) using agent that can reliably accomplish user tasks.
 
 ### High-Value Enhancements
+These items are more defined in scope, and will make a big difference for the project, but still require a substantial level of technical skill and effort.
+
+- LSP Server -- a full language server protocol server for Bosque that provides code completion, diagnostics, and other IDE features.
+- API Manager and Broker -- to enable bundling and calling of APIs in a uniform and efficient method. Needs a bit of semantic work + OS and Cloud support.
+- Testing framework -- both to run traditional unit-tests, examples, small-model verification, and fuzzing. Also doc-gen from code artifacts.
+- Power-Proroguing -- take the idea [here](https://earlbarr.com/publications/prorogue.pdf) and use the capabilities of [BSQON](https://github.com/BosqueLanguage/BSQON/blob/main/docs/publications/bsqon_techreport.pdf) (full-fidelity literals and references) to make it practical -- also maybe have some fun with LLMs!
+
 
 ### Chunckable Work Items
-xxxx
+These are well-defined items that can be done in a few hours to a maybe a couple weeks and don't require much (if any) special expertise. They are great for someone looking to get started with the project -- also see good-first-issues.
+
+- Standard Library -- build out the standard library with a focus on the core data structures and algorithms that are needed for general programming tasks.
+- Documentation -- write documentation for the language, libraries, and tools. This is a great way to learn the language and help others.
+- Tests -- write tests for the language, libraries, and tools. This is a great way to learn the language and help others.
+- Shell -- a Bosque shell that can be used standalone or for scripting. Mainly writing a host for tracking tasks and interacting with them + writing some tasks that implement basic shell functionality.
+- TTD and Debugger -- time-travel-debugging is actually a pretty simple to implement feature in Bosque. Would be great to have this and a debugger that can use it! Might split this into deterministic replay & debugger as two tasks.
 
 # Documentation
 
