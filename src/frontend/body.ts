@@ -19,7 +19,8 @@ class BinderInfo {
     }
 
     emit(): [string, string] {
-        return [!this.implicitdef ? `${this.srcname}%*${this.scopename}*% = ` : "", this.refineonfollow ? "@@" : "@"];
+        const tag = (this.srcname !== this.scopename) ? `%*${this.scopename}*%` : "";
+        return [!this.implicitdef ? `${this.srcname}${tag} = ` : "", this.refineonfollow ? "@@" : "@"];
     }
 }
 
@@ -1493,7 +1494,9 @@ class IfExpression extends Expression {
         const itest = this.test.itestopt !== undefined ? `${this.test.itestopt.emit(fmt)}` : "";
         
         const ttest = `(${bexps[0]}${this.test.exp.emit(true, fmt)})${bexps[1]}${itest}`;
-        return `if${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
+        const iif =  `if${ttest} then ${this.trueValue.emit(true, fmt)} else ${this.falseValue.emit(true, fmt)}`;
+
+        return toplevel ? iif : `(${iif})`;
     }
 }
 

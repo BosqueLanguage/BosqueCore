@@ -1714,6 +1714,19 @@ class Parser {
         return vv;
     }
 
+    private parseIdentifierAsBinderVariable(): string {
+        const vv = this.consumeTokenAndGetValue();
+        if(vv === "_") {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Cannot use _ as an identifier name -- it is special ignored variable");
+        }
+
+        if(!/^[$][_a-z][_a-zA-Z0-9]*/.test(vv)) {
+            this.recordErrorGeneral(this.peekToken().getSourceInfo(), "Invalid binder name -- must start with $ followed by a valid identifier name");
+        }
+
+        return vv;
+    }
+
     private parseIdentifierAsStdVariable(): string {
         const vv = this.consumeTokenAndGetValue();
         if(vv === "_") {
@@ -2493,16 +2506,7 @@ class Parser {
             return undefined;
         }
         else {
-            let vname = this.parseIdentifierAsIgnoreableVariable();
-            this.consumeToken();
-
-            if(/^\$[a-z_]/.test(vname)) {
-                return vname;
-            }
-            else {
-                this.recordErrorGeneral(this.peekToken(), "Binder name must start with $ and be lower case");
-                return undefined;
-            }
+            return this.parseIdentifierAsBinderVariable();
         }
     }
 
@@ -2784,7 +2788,7 @@ class Parser {
     private parseIdentifierFirstExpression(): Expression {
         const sinfo = this.peekToken().getSourceInfo();
         if (this.peekTokenData().startsWith("$")) {
-            const idname = this.parseIdentifierAsStdVariable();
+            const idname = this.parseIdentifierAsBinderVariable();
             
             const scopename = this.env.useVariable(idname);
             if(scopename !== undefined) {
@@ -3578,7 +3582,7 @@ class Parser {
         this.consumeToken();
         const [iexp, binder, implicitdef, _, itest] = this.parseIfTest(true);
 
-        this.ensureAndConsumeTokenIf(KW_then, "if expression value")
+        this.ensureAndConsumeTokenIf(KW_then, "if-expression")
 
         const ifvalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
         let btrue: BinderInfo | undefined = undefined;
@@ -3586,7 +3590,7 @@ class Parser {
             btrue = new BinderInfo(ifvalueinfo.used[0].srcname, ifvalueinfo.used[0].scopedname, implicitdef, false);
         }
 
-        this.ensureAndConsumeTokenIf(KW_else, "if expression else value");
+        this.ensureAndConsumeTokenIf(KW_else, "if-expression");
         const elsevalueinfo = this.parseExpressionWithBinder(binder === undefined ? [] : [binder]);
 
         let belse: BinderInfo | undefined = undefined;

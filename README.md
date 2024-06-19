@@ -33,7 +33,7 @@ The current work items are focused on the 1.0 release of the Bosque language and
 ## Planned Next Steps
 The next steps are focused on the 2.0 release of the Bosque language are focused on fulfilling two major promises in the tooling and runtime space:
 - Small Model Verifier -- a symbolic checker with guarantees of the decidability of the presence or absence of small inputs that trigger any runtime failure/assertion/pre/post/invariant condition.
-- A Ω(n lg n) time and O(1) space runtime and AOT compiler -- a runtime that is designed to be performant, low memory, and predictable in its behavior.
+- A Ω()-time and O(1)-space runtime and AOT compiler -- a runtime that is designed to be performant, low memory, and predictable in its behavior.
 
 ## Inviting for Contributors
 The Bosque project is actively inviting contributors as we move from a research focused into a practically focused project! We want to make this a a great place to learn and contribute to the next era in programming languages, compilers, and runtime systems. Below are some topics that are open for contributions and where help is greatly appreciated, we are happy to help mentor and guide you through the process.
