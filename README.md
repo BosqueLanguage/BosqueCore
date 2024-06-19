@@ -44,7 +44,7 @@ These items are headline features that are large and complex(possibly open resea
 - O(1)-GC -- a garbage collector with constant memory overhead, constant work per allocation, constant collector pauses, and compaction! 
 - Versioning and Packaging -- build a well-founded semantics for versioning + ability to verify if changes/version errors. For users the ability to confidently upgrade dependencies (also prep for package manager and testing features).
 - Termination and Bounds analysis -- a static analysis that can prove the termination of a function/task/api and the bounds on the resources it consumes.
-- Extend StringOf 
+- Extending StringOf to allow for context-free languages. Create an easy to write and generally expressive CFG language for use in Bosque and enable it for safe strings and general use.
 - API-Embodied Meta-Cognitive AI-Agent (AMC-AI) -- a big acronym but big potential! Take the idea of Bosque APIs, which are well suited for synthesis with generative AI, and combine with the verifier to have a _fully-grounded_ and API (tool) using agent that can reliably accomplish user tasks.
 
 ### High-Value Enhancements
