@@ -1,27 +1,27 @@
 {
     "compilerOptions": {
-        "module": "Node16",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "alwaysStrict": true,
         "strict": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "noUnusedLocals": true,
+        "noImplicitOverride": true,
         "strictNullChecks": true,
         "target": "es2020",
         "sourceMap": true,
-        "outDir": "bin"
+        "outDir": "bin",
+        "typeRoots": [
+            "node_modules/@types"
+        ],
     },
     "include": [
-        "src/frontend/*.ts", 
-        "src/frontend/ast/*.ts", 
-        "src/frontend/tree_ir/*.ts",
-        "src/frontend/typechecker/*.ts",
-        "src/runtimes/javascript/*.ts",
-        "src/runtimes/javascript/compiler/*.ts",
-        "src/transformer/*.ts"
-    ],
-    "exclude": [
-        "src/runtimes/javascript/runtime/*.ts"
+        "src/frontend/*.ts",
+        "src/backend/*.ts",
+        "src/cmd/*.ts",
+        "test/parser/parse_nf.ts",
+        "test/typecheck/typecheck_nf.ts",
     ]
 }

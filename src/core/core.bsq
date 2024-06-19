@@ -1,549 +1,208 @@
-//The core namespace implements the primitive types used in the Bosque language
-namespace Core;
+%%The core namespace implements the primitive types used in the Bosque language
+declare namespace Core;
 
-//<summary>Special type which all values are instances of.</summary>
-__universal concept Any {
+%** Special type which all values are instances of. **%
+__internal __universal concept Any {
 }
 
-//<summary>Special type for representing all non-none values.</summary>
-__universal concept Some provides Any {
+%** Special type for representing all non-none values. **%
+__internal __universal concept Some provides Any {
 }
 
-//<summary>Special type for indicating a value can be used as a key in a collection.</summary>
-__universal concept KeyType provides Any {
-    function equal<T grounded KeyType>(a: T, b: T): Bool = special_method;
-    function less<T grounded KeyType>(a: T, b: T): Bool = special_method;
+%** Special type for indicating a value can be used as a key in a collection. **%
+__internal __universal concept KeyType provides Any {
+    function equal<T: KeyType>(a: T, b: T): Bool = special_method;
+    function less<T: KeyType>(a: T, b: T): Bool = special_method;
 }
 
-//<summary>Type for indicating that a datatype is a Validator.</summary>
-__universal concept Validator provides Any {
+%** Special type for representing values that can be compared with (<, >, ==, !=, <=, and >=) currently the numeric types and typedecls on them (later other with user def operators) **%
+__internal __universal concept Comparable provides Some {
 }
 
-//<summary>Type for representing the none value.</summary>
+%** Special type for representing values that can be operated on with (-+, +, -) with standard unit-results currently the numeric types and typedecls on them (later other with user def operators) **%
+__internal __universal concept LinearArithmetic provides Some {
+}
+
+%** Special type for representing numeric values **%
+__internal __universal concept Numeric provides Comparable, LinearArithmetic {
+}
+
+%** Type for indicating that a datatype is a Validator. **%
+__internal __universal concept RegexValidator provides Some {
+    function accepts<T: RegexValidator>(s: String): Bool = special_method;
+}
+
+%** Type for indicating that a datatype is a Validator. **%
+__internal __universal concept ExRegexValidator provides Some {
+    function accepts<T: ExRegexValidator>(s: ExString): Bool = special_method;
+}
+
+%** Type for indicating that a datatype is a Validator. **%
+__internal __universal concept PathValidator provides Some {
+}
+
+%** Type for representing the none value. **%
 __internal entity None provides KeyType {
 }
 
-//<summary>Primitive boolean value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity Bool provides Some, KeyType {
+%** Primitive boolean value. **%
+__internal __typedeclable entity Bool provides Some, KeyType {
 }
 
-//<summary>Primitive integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Int provides Some, KeyType {
-    method toNat(): Nat { assert(this >= 0i); return NumericOps::s_intToNat(this); }
-    method toBigNat(): BigNat { assert(this >= 0i); return NumericOps::s_bigIntToBigNat(NumericOps::s_intToBigInt(this)); }
-    method toBigInt(): BigInt { return NumericOps::s_intToBigInt(this); }
-
-    function min(a: Int, b: Int): Int {if(a < b) { return a; } else { return b; }}
-    function max(a: Int, b: Int): Int {if(a > b) { return a; } else { return b; }}
+%** Primitive natural number value. **%
+__internal __typedeclable entity Nat provides Numeric, KeyType {
 }
 
-//<summary>Primitive natural number value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity Nat provides Some, KeyType {
-    method toBigNat(): BigNat { return NumericOps::s_natToBigNat(this); }
-    method toInt(): Int { return NumericOps::s_natToInt(this); }
-    method toBigInt(): BigInt { return NumericOps::s_bigNatToBigInt(NumericOps::s_natToBigNat(this)); }
-
-    function min(a: Nat, b: Nat): Nat {if(a < b) { return a; } else { return b; }}
-    function max(a: Nat, b: Nat): Nat {if(a > b) { return a; } else { return b; }}
+%** Primitive integer value. **%
+__internal __typedeclable entity Int provides Numeric, KeyType {
 }
 
-//<summary>Primitive big-integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigInt provides Some, KeyType {
-    function min(a: BigInt, b: BigInt): BigInt {if(a < b) { return a; } else { return b; }}
-    function max(a: BigInt, b: BigInt): BigInt {if(a > b) { return a; } else { return b; }}
+%** Primitive big-integer value. **%
+__internal __typedeclable entity BigNat provides Numeric, KeyType {
 }
 
-//<summary>Primitive big-integer value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase __numeric entity BigNat provides Some, KeyType {
-    function min(a: BigNat, b: BigNat): BigNat {if(a < b) { return a; } else { return b; }}
-    function max(a: BigNat, b: BigNat): BigNat {if(a > b) { return a; } else { return b; }}
+%** Primitive big-integer value. **%
+__internal __typedeclable entity BigInt provides Numeric, KeyType {
 }
 
-//<summary>Primitive rational value.</summary>
-__internal __typedeclable __typebase __numeric entity Rational provides Some {
-    function min(a: Rational, b: Rational): Rational {if(a < b) { return a; } else { return b; }}
-    function max(a: Rational, b: Rational): Rational {if(a > b) { return a; } else { return b; }}
+%** Primitive rational value. **%
+__internal __typedeclable entity Rational provides Numeric {
 }
 
-//<summary>Primitive float value defaults to 64bit.</summary>
-__internal __typedeclable __typebase __numeric entity Float provides Some {
-    const pi: Float = 3.1415926535897931f;
-    const e: Float = 2.7182818284590451f;
-
-    function min(a: Float, b: Float): Float {if(a < b) { return a; } else { return b; }}
-    function max(a: Float, b: Float): Float {if(a > b) { return a; } else { return b; }}
-
-    method floor(): Float { return NumericOps::s_floatFloor(this); }
-    method ceiling(): Float { return NumericOps::s_floatCeil(this); }
-    method truncate(): Float { return NumericOps::s_floatTruncate(this); }
-
-    method pow(x: Float): Float {
-        return NumericOps::s_floatPower(this, x);
-    }
-
-    method square(): Float {
-        return this * this;
-    }
-
-    method cube(): Float {
-        return this * this * this;
-    }
-
-    method sqrt(): Float
-        requires this >= 0.0f;
-    {
-        return NumericOps::s_floatSqrt(this);
-    }
+%** Primitive float value. **%
+__internal __typedeclable entity Float provides Numeric {
 }
 
-//<summary>Primitive float decimal value.</summary>
-__internal __typedeclable __typebase __numeric entity Decimal provides Some {
-    const pi: Decimal = 3.1415926535897931d;
-    const e: Decimal = 2.7182818284590451d;
-
-    function min(a: Decimal, b: Decimal): Decimal {if(a < b) { return a; } else { return b; }}
-    function max(a: Decimal, b: Decimal): Decimal {if(a > b) { return a; } else { return b; }}
-
-    method floor(): Decimal { return NumericOps::s_decimalFloor(this); }
-    method ceiling(): Decimal { return NumericOps::s_decimalCeil(this); }
-    method truncate(): Decimal { return NumericOps::s_decimalTruncate(this); }
-
-    method pow(x: Decimal): Decimal {
-        return NumericOps::s_decimalPower(this, x);
-    }
-
-    method square(): Decimal {
-        return this * this;
-    }
-
-    method cube(): Decimal {
-        return this * this * this;
-    }
-
-    method sqrt(): Decimal
-        requires this >= 0.0d;
-    {
-        return NumericOps::s_decimalSqrt(this);
-    }
+%** Primitive float decimal value. **%
+__internal __typedeclable entity Decimal provides Numeric {
 }
 
-//<summary>Primitive string value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity String provides Some, KeyType {
-    function concat(sl: List<String>): String {
-        return StringOps::s_strconcat(sl);
-    }
-
-    function join(sep: String, sl: List<String>): String {
-        return StringOps::s_strjoin(sl, sep);
-    }
-
-    method empty(): Bool {
-        return StringOps::s_empty(this);
-    }
-
-    method append(s: String): String {
-        return StringOps::s_concat2(this, s);
-    }
-
-    method prepend(s: String): String {
-        return StringOps::s_concat2(s, this);
-    }
-
-    //
-    //TODO: add regex support to these
-    //
-
-    method startsWith(s: String): Bool {
-        return StringOps::s_startsWith(this, s);
-    }
-
-    method extractFront(s: String): String {
-        return StringOps::s_extractFront(this, s);
-    }
-
-    method removeFront(s: String): String {
-        return StringOps::s_removeFront(this, s);
-    }
-
-    method endsWith(s: String): Bool {
-        return StringOps::s_endsWith(this, s);
-    }
-
-    method extractEnd(s: String): String {
-        return StringOps::s_extractEnd(this, s);
-    }
-
-    method removeEnd(s: String): String {
-        return StringOps::s_removeEnd(this, s);
-    }
-
-    method contains(s: String): Bool {
-        return StringOps::s_contains(this, s);
-    }
-
-    method replaceUnique(str: String, withstr: String): String 
-        requires this.contains(str);
-    {
-        return StringOps::s_replaceUnique(this, str, withstr);
-    }
-
-    method replaceUniqueTry(str: String, withstr: String): String {
-        return StringOps::s_replaceUnique(this, str, withstr);
-    }
-
-    method replaceAll(str: String, withstr: String): String
-        requires this.contains(str);
-    {
-        return StringOps::s_replaceAll(this, str, withstr);
-    }
-
-    method replaceAllTry(str: String, withstr: String): String {
-        return StringOps::s_replaceAll(this, str, withstr);
-    }
-
-    function interpolate(): String = special_method;
-
-    function fromNat(n: Nat): String {
-        return StringOps::s_natToStr(n);
-    }
-
-    /*
-    //TODO: other fromX operations
-
-    //TODO: other toX operations
-
-    method startsWith(v: String | Regex): Bool {
-        use RE(.*)
-    }
-
-    method endsWith(v: String | Regex): Bool {
-        use (.*)RE
-    }
-
-    method includes(v: String | Regex): Bool {
-        use (.*)RE(.*)
-    }
-
-    method extractFront(v: String | Regex): String {
-        use search on RE(.*) -- take maximal slice
-    }
-
-    method extractEnd(v: String | Regex): String {
-        use search on (.*)RE -- take maximal slice
-    }
-
-    method removeFront(v: String | Regex): String {
-        use search on RE(.*) -- take maximal slice
-    }
-
-    method removeEnd(v: String | Regex): String {
-        use search on (.*)RE -- take maximal slice
-    }
-
-    method splitAtFirst(v: String | Regex): String, String, String {
-        use search on min position of RE(.*)
-    }
-
-    method splitAll(...seps: List<String>): List<String> {
-        split on every sep provided
-    }
-    */
+%** Primitive decimal degree value. **%
+__internal __typedeclable entity DecimalDegree provides Numeric {
 }
 
-//<summary>Primitive safe string value.</summary>
-__internal __constructable __enumable __litvaluetype __typedeclable entity StringOf<T unique Validator> provides Some, KeyType {
+%** Primitive latitude/longitude value. **%
+__internal __typedeclable entity LatLongCoordinate provides Some {
+}
+
+%** Primitive complex number value. **%
+__internal __typedeclable entity Complex provides Numeric {
+}
+
+%** Primitive string value. **%
+__internal __typedeclable entity String provides Some, KeyType {
+}
+
+%** Primitive safe string value. **%
+__internal __constructable __typedeclable entity StringOf<T: RegexValidator> provides Some, KeyType {
     private function s_into(s: String): StringOf<T> = special_inject;
+    %*
     method value(): String = special_extract;
-
     function coerce(s: String): StringOf<T> {
-        assert T::accepts(s);
+        assert RegexValidator::accepts<T>(s);
         return StringOf<T>::s_into(s);
-    } 
-
-    function tryCoerce(s: String): StringOf<T>? {
-        if(!T::accepts(s)) {
-            return none;
-        } 
-        else {
-            return StringOf<T>::s_into(s);
-        }
     }
+    *%
 }
 
-//<summary>Primitive string value.</summary>
-__internal __enumable __litvaluetype __typedeclable __typebase entity ASCIIString provides Some, KeyType {
-    __safe private function s_empty(s: ASCIIString): Bool = s_ascii_string_empty;
-    __assume_safe private function s_concat2(s1: ASCIIString, s2: ASCIIString): ASCIIString = s_ascii_string_append;
+%** Primitive string value. **%
+__internal __typedeclable entity ExString provides Some, KeyType {
+}
 
-    function concat(sl: List<ASCIIString>): ASCIIString {
-        return ASCIIStringOps::s_strconcat(sl);
+%** Primitive safe string value. **%
+__internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
+    private function s_into(s: ExString): ExStringOf<T> = special_inject;
+    %*
+    method value(): ExString = special_extract;
+    function coerce(s: ExString): ExStringOf<T> {
+        assert ExRegexValidator::accepts<T>(s);
+        return ExStringOf<T>::s_into(s);
     }
-
-    function join(sep: ASCIIString, sl: List<ASCIIString>): ASCIIString {
-        return ASCIIStringOps::s_strjoin(sl, sep);
-    }
-
-    method empty(): Bool {
-        return ASCIIString::s_empty(this);
-    }
-
-    method append(s: ASCIIString): ASCIIString {
-        return ASCIIString::s_concat2(this, s);
-    }
-
-    method prepend(s: ASCIIString): ASCIIString {
-        return ASCIIString::s_concat2(s, this);
-    }
-
-    function interpolate(): ASCIIString = special_method;
+    *%
 }
 
-//<summary>Primitive safe string value.</summary>
-__internal __constructable __enumable __litvaluetype __typedeclable entity ASCIIStringOf<T unique Validator> provides Some, KeyType {
-    private function s_into(s: ASCIIString): ASCIIStringOf<T> = special_inject;
-    method value(): ASCIIString = special_extract;
-
-    function coerce(s: ASCIIString): ASCIIStringOf<T> {
-        assert T::accepts(s);
-        return ASCIIStringOf<T>::s_into(s);
-    } 
-
-    function tryCoerce(s: ASCIIString): ASCIIStringOf<T>? {
-        if(!T::accepts(s)) {
-            return none;
-        } 
-        else {
-            return ASCIIStringOf<T>::s_into(s);
-        }
-    }
-}
-
-//<summary>An efficient byte buffer for data.</summary>
-__internal entity ByteBuffer provides Some {
-    //TODO: do we want to make this typedeclable too?
-}
-
-//<summary>Validator for TimeZone</summary>
-typedecl ValidTimeZoneName = /[A-Z]{2,5}/;
-typedecl TimeZoneCode = StringOf<ValidTimeZoneName>;
-
-//<summary>Primitive DateTime value.</summary>
-__internal __typedeclable __typebase entity DateTime provides Some {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime = datetime_create;
-
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, tzdata: TimeZoneCode): DateTime
-        requires 1900n <= year && year <= 2200n;
-        requires month < 12n;
-        requires DateOps::s_check_DayInMonth(day, month, year);
-        requires hour < 24n;
-        requires min < 60n;
-        requires sec < 61n;
-    {
-        return DateTime::s_create(year, month, day, hour, min, sec, tzdata);
-    }
-}
-
-__internal __typedeclable __typebase entity UTCDateTime provides Some, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime = utcdatetime_create;
-
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat): UTCDateTime
-        requires 1900n <= year && year <= 2200n;
-        requires month < 12n;
-        requires DateOps::s_check_DayInMonth(day, month, year);
-        requires hour < 24n;
-        requires min < 60n;
-        requires sec < 61n;
-    {
-        return UTCDateTime::s_create(year, month, day, hour, min, sec);
-    }
-}
-
-__internal __typedeclable __typebase entity PlainDate provides Some, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat): PlainDate = plaindate_create;
-
-    function create(year: Nat, month: Nat, day: Nat): PlainDate
-        requires 1900n <= year && year <= 2200n;
-        requires month < 12n;
-        requires DateOps::s_check_DayInMonth(day, month, year);
-    {
-        return PlainDate::s_create(year, month, day);
-    }
-}
-
-__internal __typedeclable __typebase entity PlainTime provides Some, KeyType {
-    __assume_safe internal function s_create(hour: Nat, min: Nat, sec: Nat): PlainTime = plaintime_create;
-
-    function create(hour: Nat, min: Nat, sec: Nat): PlainTime
-        requires hour < 24n;
-        requires min < 60n;
-        requires sec < 61n;
-    {
-        return PlainTime::s_create(hour, min, sec);
-    }
-}
-
-//
-//TODO: Duration type!
-//
-
-//<summary>Primitive TickTime value (TIA time).</summary>
-__internal __typedeclable __typebase entity TickTime provides Some, KeyType {
-}
-
-//<summary>Primitive LogicalTime value.</summary>
-__internal __typedeclable __typebase entity LogicalTime provides Some, KeyType {
-    __safe internal function s_zero(): LogicalTime = logicaltime_zero;
-    __safe internal function s_increment(t: LogicalTime): LogicalTime = logicaltime_increment;
-
-    const zero: LogicalTime = LogicalTime::s_zero();
-
-    method increment(): LogicalTime {
-        return LogicalTime::s_increment(this);
-    }
-}
-
-__internal __typedeclable __typebase entity ISOTimeStamp provides Some, KeyType {
-    __assume_safe internal function s_create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp = isotimestamp_create;
-
-    function create(year: Nat, month: Nat, day: Nat, hour: Nat, min: Nat, sec: Nat, millis: Nat): ISOTimeStamp
-        requires 1900n <= year && year <= 2200n;
-        requires month < 12n;
-        requires DateOps::s_check_DayInMonth(day, month, year);
-        requires hour < 24n;
-        requires min < 60n;
-        requires sec < 61n;
-        requires millis < 1000n;
-    {
-        return ISOTimeStamp::s_create(year, month, day, hour, min, sec, millis);
-    }
-}
-
-//<summary>Primitive UUIDv4 value.</summary>
-__internal __typedeclable __typebase entity UUIDv4 provides Some, KeyType {
-}
-
-//<summary>Primitive UUIDv7 value.</summary>
-__internal __typedeclable __typebase entity UUIDv7 provides Some, KeyType {
-}
-
-//<summary>Primitive hash value suitable for content addressable operations or crypto secure digests.</summary>
-__internal __typedeclable __typebase entity SHAContentHash provides Some, KeyType {
-}
-
-//<summary>Primitive regex value.</summary>
-__internal entity Regex provides Some {
-    __safe internal function s_accepts(re: Regex, s: String): Bool = regex_accepts;
-
+%** Primitive unicode regex value. **%
+__internal entity UnicodeRegex provides Some {
+    __safe internal function s_accepts(re: UnicodeRegex, s: String): Bool = regex_accepts;
+    %*
     method accepts(s: String): Bool {
+        return UnicodeRegex::s_accepts(this, s);
+    }
+    *%
+}
+
+%** Primitive unicode regex value. **%
+__internal entity ExRegex provides Some {
+    __safe internal function s_accepts(re: ExRegex, s: ExString): Bool = regex_accepts;
+    %*
+    method accepts(s: ExString): Bool {
         return Regex::s_accepts(this, s);
     }
+    *%
 }
 
-//<summary>Primitive type for task identifiers</summary>
-typedecl TaskID = UUIDv4;
-
-//<summary>Static methods for Tuples.</summary>
-__universal concept Tuple provides Some {
+%** Primitive unicode regex value. **%
+__internal entity PathRegex provides Some {
 }
 
-//<summary>Static methods for Records.</summary>
-__universal concept Record provides Some {
+%** Primitive template string value. **%
+__internal __typedeclable entity TemplateString provides Some {
 }
 
-//<summary>Generic type for all Option<T> to inherit from.</summary>
+%** Primitive string value. **%
+__internal __typedeclable entity TemplateExString provides Some {
+}
+
+%** Generic type for all Option<T> to inherit from. **%
 __universal concept IOption provides Some {
 }
 
-//<summary>Generic type for all Something<T> to inherit from.</summary>
+%** Generic type for all Something<T> to inherit from. **%
 __universal concept ISomething provides IOption {
 }
 
-//<summary>Type for representing the nothing option value.</summary>
+%** Type for representing the nothing option value. **%
 __internal entity Nothing provides IOption {
 }
 
-//<summary>Type for representing the nothing option value.</summary>
+%** Type for representing the nothing option value. **%
 __internal __constructable entity Something<T> provides ISomething, Option<T> {
+    %*
     method value(): T = special_extract;
+    *%
 }
 
-//<summary>Type for flagging T projection from Option -- kludge that has no other purpose.</summary>
-__universal concept IOptionT provides Some {
+__internal concept Option<T> provides IOption {
 }
 
-concept Option<T> provides IOption {
-    method data(): T {
-        return this@<Something<T>>.value();
-    }
-
-    method convert<V>(): Option<V> {
-        if(this === nothing) {
-            return nothing;
-        }
-        else {
-            return Something{this.data()@<V>};
-        }
-    }
-}
-
-//<summary>Generic type for all Result<T, E> to inherit from.</summary>
+%** Generic type for all Result<T, E> to inherit from. **%
 __universal concept IResult provides Some {
 }
 
-//<summary>Generic type for all Result<T, E>::Ok to inherit from.</summary>
+%** Generic type for all Result<T, E>::Ok to inherit from. **%
 __universal concept IOk provides Some {
 }
 
-//<summary>Generic type for all Result<T, E>::Err to inherit from.</summary>
+%** Generic type for all Result<T, E>::Err to inherit from. **%
 __universal concept IErr provides Some {
 }
 
-//<summary>Type for flagging T projection from Result -- kludge that has no other purpose.</summary>
-__universal concept IResultT provides Some {
+namespace Interpolate {
+    %** Special declaration of string interpolation function. **%
+    function string(): String = special_method;
+
+    %** Special declaration of string interpolation function. **%
+    function stringOf<T: RegexValidator>(): StringOf<T> = special_method;
+
+    %** Special declaration of string interpolation function. **%
+    function exstring(): ExString = special_method;
+
+    %** Special declaration of string interpolation function. **%
+    function exstringOf<T: ExRegexValidator>(): ExStringOf<T> = special_method;
 }
 
-//<summary>Type for flagging E projection from Result -- kludge that has no other purpose.</summary>
-__universal concept IResultE provides Some {
-}
-
-//<summary>Result type.</summary>
-concept Result<T, E> provides IResult {
-    __internal __constructable entity Ok provides IOk, Result<T, E> {
-        method getv(): T = special_extract;
-    }
-
-    __internal __constructable entity Err provides IErr, Result<T, E> {
-        method gete(): E = special_extract;
-    }
-
-    method isOk(): Bool {
-        return this@<Result<T, E>::Ok>;
-    }
-
-    method isErr(): Bool {
-        return this@<Result<T, E>::Err>;
-    }
-
-    method value(): T {
-        return this@<Result<T, E>::Ok>.getv();
-    }
-
-    method error(): E {
-        return this@<Result<T, E>::Err>.gete();
-    }
-
-    method convert<U, V>(): Result<U, V> {
-        if(this?<Result<T, E>::Ok>) {
-            return Result<U, V>::Ok{this.value()@<U>};
-        }
-        else {
-            return Result<U, V>::Err{this.error()@<V>};
-        }
-    }
-}
-
-//<summary>All actual entities/concepts implicitly provide this concept.</summary>
-__universal concept Object provides Some {
+%** All actual entities/concepts implicitly provide this concept. **%
+__internal __universal concept Object provides Some {
 }
 
 #if CHECK_LIBS
@@ -552,8 +211,9 @@ internal function s_blockingfailure<T>(): T = s_blockingfailure;
 internal function s_reshavoc<T>(): T = s_reshavoc;
 #endif
 
-//<summary>All collections provide this concept so we can expand them with spread operators.</summary>
-__universal concept Expandoable<T> provides Some {
+%** All collections provide this concept so we can expand them with spread operators. **%
+__internal __universal concept Expandoable<T> provides Some {
 }
 
 __assume_safe internal function s_safeAs<T, U>(v: T): U = special_function;
+

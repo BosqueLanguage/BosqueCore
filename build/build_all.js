@@ -1,14 +1,16 @@
 "use strict";
 
-const { exec } = require("child_process");
-const path = require("path");
+import { exec } from "node:child_process";
+import * as path from "node:path";
+
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const builddir = __dirname;
 const tscdir = path.dirname(__dirname);
 
 let donecopy = false;
 let donets = false;
-let donesmt = true;
 
 let haderror = false;
 
@@ -16,7 +18,7 @@ function doneop(iserror, msg) {
     haderror = haderror || iserror;
 
     process.stdout.write(msg + "\n");
-    if(donecopy && donets && donesmt) {
+    if(donecopy && donets) {
         if(!haderror) {
             process.stdout.write("done!\n");
             process.exit(0);

@@ -15,6 +15,10 @@ class SourceInfo {
     static implicitSourceInfo(): SourceInfo {
         return new SourceInfo(-1, -1, -1, -1);
     }
+
+    static computeInfoSpan(start: SourceInfo, end: SourceInfo): SourceInfo {
+        return new SourceInfo(start.line, start.column, start.pos, (start.pos - end.pos) + end.span);
+    }
 }
 
 type CodeFileInfo = { 
@@ -23,102 +27,24 @@ type CodeFileInfo = {
     contents: string
 };
 
-type LoggerLevel = number;
-const LoggerLevel_fatal = 1;
-const LoggerLevel_error = 2;
-const LoggerLevel_warn = 3;
-const LoggerLevel_info = 4;
-const LoggerLevel_detail = 5;
-const LoggerLevel_trace = 6;
+class CodeFormatter {
+    private level: number;
 
-function logLevelName(ll: LoggerLevel): string {
-    return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"][ll];
-}
-
-
-function logLevelNumber(ll: string): LoggerLevel {
-    return ["disabled", "fatal", "error", "warn", "info", "detail", "trace"].indexOf(ll);
-}
-
-
-function escapeString(str: string): string {
-    let ret = "";
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === "%") {
-            ret += "%%;";
-        }
-        else if(str[i] === "\"") {
-            ret += "%;";
-        }
-        else if(str[i] === "`") {
-            ret += "%backtick;";
-        }
-        else {
-            ret += str[i];
-        }
+    constructor() {
+        this.level = 0;
     }
 
-    return ret;
-}
-
-function unescapeString(str: string): string {
-    let ret = "";
-    for (let i = 0; i < str.length; i++) {
-        if (str[i] === "%") {
-            i++;
-            const epos = str.indexOf(";", i);
-
-            if (str[i] === "%") {
-                ret += "%";
-            }
-            else if (str[i] === "n") {
-                ret += "\n";
-            }
-            else if (str[i] === "r") {
-                ret += "\r";
-            }
-            else if (str[i] === "t") {
-                ret += "\t";
-            }
-            else if (str[i] === "b") {
-                ret += "`";
-            }
-            else if (str[i] === ";") {
-                ret += "\"";
-            }
-            else {
-                const hex = str.substring(i, epos);
-                ret += String.fromCharCode(parseInt(hex, 16));
-            }
-
-            i = epos;
-        }
-        else {
-            ret += str[i];
-        }
+    indentPush() {
+        this.level++;
     }
-
-    return ret;
-}
-
-function extractLiteralStringValue(str: string, unescape: boolean): string {
-    return unescape ? unescapeString(str.substring(1, str.length - 1)) : str;
-}
-
-function extractLiteralASCIIStringValue(str: string, unescape: boolean): string {
-    const ll = str.substring("ascii{".length + 1, str.length - (1 + "}".length));
-    return unescape ? unescapeString(ll) : ("\"" + ll + "\"");
-}
-
-function cleanCommentsStringsFromFileContents(str: string): string {
-    const commentRe = /(\/\/.*)|(\/\*(.|\s)*?\*\/)/ug;
-    const stringRe = /"[^"]*"/ug;
-    const typedStringRe = /`[^`]*`/ug;
-
-    return str
-        .replace(commentRe, "")
-        .replace(stringRe, "\"\"")
-        .replace(typedStringRe, "''");
+    
+    indentPop() {
+        this.level--;
+    }
+    
+    indent(code: string): string {
+        return "    ".repeat(this.level) + code;
+    }   
 }
 
 type BuildLevel = "spec" | "debug" | "test" | "release" | "safety";
@@ -161,10 +87,7 @@ class PackageConfig {
 }
 
 export {
-    escapeString, unescapeString,
     BuildLevel, isBuildLevelEnabled,
+    CodeFormatter,
     SourceInfo, CodeFileInfo, PackageConfig,
-    LoggerLevel, LoggerLevel_fatal, LoggerLevel_error, LoggerLevel_warn, LoggerLevel_info, LoggerLevel_detail, LoggerLevel_trace, logLevelName, logLevelNumber,
-    extractLiteralStringValue, extractLiteralASCIIStringValue,
-    cleanCommentsStringsFromFileContents
-}
+};

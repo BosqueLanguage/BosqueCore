@@ -5,16 +5,14 @@
     2. Variable Declaration
     3. Variable Assignment
     4. Variable Re-Type
-    5. RefCall Statement
-    6. Return Statement
-    7. Short-Circuit Return
-    8. Variable Short-Circuit Re-Type
-    9. If-Else Statement
-    10. Switch Statement
-    11. Match Statement
-    12. Abort Statement
-    13. Assert Statement
-    14. Debug Statement
+    5. Return Statement
+    6. If-Else Statement
+    7. Switch Statement
+    8. Match Statement
+    9. Abort Statement
+    10. Assert Statement
+    11. Validate Statement
+    12. Debug Statement
 
 ## Empty Statement
 The empty statement in Bosque is denoted with `;`. It has no effect on the program state but is useful for emphasizing structure and logical flow.

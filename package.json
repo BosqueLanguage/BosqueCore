@@ -1,38 +1,29 @@
 {
     "name": "@bosque/core",
+    "type": "module",
     "description": "Bosque programming language and tooling stack (Core).",
     "author": {
-        "name": "Mark Marron <mark.marron@protonmail.com>"
+        "name": "Mark Marron <marron@cs.uky.edu>"
     },
     "license": "MIT",
-    "version": "0.10.0",
+    "version": "1.0.0-dev",
     "repository": {
         "type": "git",
         "url": "https://github.com/BosqueLanguage/BosqueCore"
     },
     "dependencies": {
-        "@types/node": "20.10.0",
-        "refa": "0.10.0"
-    },
-    "devDependencies": {
-        "chai": "4.3.7",
-        "decimal.js": "10.4.3",
-        "deep-object-diff": "1.1.9",
-        "fraction.js": "4.2.0",
-        "fs-extra": "11.1.1",
-        "immutable": "4.3.0",
-        "mocha": "10.2.0",
-        "uuidv4": "6.2.13"
+        "@types/node": "20.14.2",
+        "@bosque/jsbrex": "0.2.0"
     },
     "scripts": {
         "build": "node ./build/build_all.js",
-        "test": "node ./build/build_all.js && node ./node_modules/mocha/bin/mocha.js --recursive --slow 10000"
+        "test": "node ./build/build_all.js &&  node --test --experimental-test-coverage ./test/*/*/*.test.js"
     },
     "files": [
         "bin/*"
     ],
     "bin": {
-        "bosque": "./impl/bin/cmd/bosque.js"
+        "bosque": "./bin/cmd/bosque.js"
     },
     "engines": {
         "node": ">=20.10.0",
