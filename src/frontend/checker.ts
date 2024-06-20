@@ -556,9 +556,14 @@ class TypeChecker {
         return true;
     }
 
-    private static isValidDecimalDegreeLiteral(val: string): boolean {
-        //TODO we need to do a bit more on the bounds and precision here -- e.g. 8 decimal places or more???
-        return true;
+    private static isValidDecimalDegreeLiteral(val: string, min: number, max: number): boolean {
+        const pcstr = val.slice(val.indexOf("."));
+        if(pcstr.length > 8) {
+            return false; //max 8 decimal places of precision
+        }
+
+        const fval = Number.parseFloat(val);
+        return !Number.isNaN(fval) && Number.isFinite(fval) && min <= fval && fval <= max;
     }
 
     private checkLiteralFloatExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
@@ -574,7 +579,7 @@ class TypeChecker {
     }
 
     private checkLiteralDecimalDegreeExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
-        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalDegreeLiteral(exp.value.slice(0, exp.value.length - 2)), "Invalid DecimalDegree literal");
+        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalDegreeLiteral(exp.value.slice(0, exp.value.length - 2), -360.0, 360.0), "Invalid DecimalDegree literal");
 
         return exp.setType(this.getWellKnownType("DecimalDegree"));
     }
@@ -584,7 +589,8 @@ class TypeChecker {
         const latval = exp.value.slice(0, latsplit);
         const longval = exp.value.slice(latsplit + 3, exp.value.length - 4);
 
-        this.checkError(exp.sinfo, TypeChecker.isValidDecimalDegreeLiteral(latval) && TypeChecker.isValidDecimalDegreeLiteral(longval), "Invalid Latitude value");
+        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalDegreeLiteral(latval, -180.0, 180.0), "Invalid Latitude value");
+        this.checkError(exp.sinfo, !TypeChecker.isValidDecimalDegreeLiteral(longval, -90.0, 90.0), "Invalid Longitude value");
 
         return exp.setType(this.getWellKnownType("LatLongCoordinate"));
     }
@@ -598,7 +604,8 @@ class TypeChecker {
         const realval = exp.value.slice(0, spos);
         const imagval = exp.value.slice(spos, exp.value.length - 1);
 
-        this.checkError(exp.sinfo, TypeChecker.isValidFloatLiteral(realval) && TypeChecker.isValidFloatLiteral(imagval), "Invalid Complex literal");
+        this.checkError(exp.sinfo, !TypeChecker.isValidFloatLiteral(realval), "Invalid Complex literal real value");
+        this.checkError(exp.sinfo, !TypeChecker.isValidFloatLiteral(imagval), "Invalid Complex literal imaginary value");
 
         return exp.setType(this.getWellKnownType("Complex"));
     }
@@ -4216,6 +4223,9 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Rational", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Float", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "Decimal", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "DecimalDegree", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "LatLongCoordinate", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "TemplateExString", wellknownTypes);

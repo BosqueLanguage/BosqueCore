@@ -1174,7 +1174,7 @@ class PostfixLiteralKeyAccess extends PostfixOperation {
     }
 
     emit(fmt: CodeFormatter): string {
-        return `![${this.kexp.emit}]`;
+        return `![${this.kexp.emit(true, fmt)}]`;
     }
 }
 
