@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter } from "./enitter_support.js";
-import { Expression, ExpressionTag, LiteralSimpleExpression } from "../frontend/body.js";
+import { AccessEnvValueExpression, Expression, ExpressionTag, InterpolateExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, TaskAccessInfoExpression } from "../frontend/body.js";
 
 class BodyEmitter {
     readonly fmt: JSCodeFormatter;
@@ -23,19 +23,187 @@ class BodyEmitter {
     }
 
     private emitLiteralNatExpression(exp: LiteralSimpleExpression): string {
-        return "[NOT IMPLEMENTED]";
+        return `$Runtime.nat(${exp.value.slice(0, -1)}n)`;
     }
 
     private emitLiteralIntExpression(exp: LiteralSimpleExpression): string {
-        return "[NOT IMPLEMENTED]";
+        return `$Runtime.int(${exp.value.slice(0, -1)}n)`;
     }
 
     private emitLiteralBigNatExpression(exp: LiteralSimpleExpression): string {
-        return "[NOT IMPLEMENTED]";
+        return `$Runtime.bignat(${exp.value.slice(0, -1)}n)`;
     }
 
     private emitLiteralBigIntExpression(exp: LiteralSimpleExpression): string {
-        return "[NOT IMPLEMENTED]";
+        return `$Runtime.bigint(${exp.value.slice(0, -1)}n)`;
+    }
+
+    private emitLiteralRationalExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+
+    private emitLiteralFloatExpression(exp: LiteralSimpleExpression): string {
+        return `$Runtime.float(${exp.value}.slice(0, -1))`;
+    }
+    
+    private emitLiteralDecimalExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDecimalDegreeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralLatLongCoordinateExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralComplexNumberExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralByteBufferExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralUUIDv4Expression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralUUIDv7Expression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralSHAContentHashExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDateTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralUTCDateTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralPlainDateExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralPlainTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralLogicalTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTickTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralISOTimeStampExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaDateTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaPlainDateExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaPlainTimeExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaISOTimeStampExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaSecondsExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaTickExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralDeltaLogicalExpression(exp: LiteralSimpleExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralUnicodeRegexExpression(exp: LiteralRegexExpression): string {
+        return `$Runtime.regex(${exp.value})`;
+    }
+    
+    private emitLiteralExRegexExpression(exp: LiteralRegexExpression): string {
+        return `$Runtime.regex(${exp.value})`;
+    }
+    
+    private emitLiteralStringExpression(exp: LiteralSimpleExpression): string {
+        return `$Runtime.string(${exp.value})`;
+    }
+    
+    private emitLiteralExStringExpression(exp: LiteralSimpleExpression): string {
+        return `$Runtime.exstring(${exp.value})`;
+    }
+    
+    private emitLiteralTypedStringExpression(exp: LiteralTypedStringExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralExTypedStringExpression(exp: LiteralTypedStringExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTemplateStringExpression(exp: LiteralTemplateStringExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTemplateExStringExpression(exp: LiteralTemplateStringExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralPathExpression(exp: LiteralPathExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralPathFragmentExpression(exp: LiteralPathExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralPathGlobExpression(exp: LiteralPathExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTypeDeclValueExpression(exp: LiteralTypeDeclValueExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTypeDeclIntegralValueExpression(exp: LiteralTypeDeclIntegralValueExpression): string {
+        assert(false, "Not implemented");
+    }
+    
+    private emitLiteralTypeDeclFloatPointValueExpression(exp: LiteralTypeDeclFloatPointValueExpression): string {
+        assert(false, "Not implemented");
+    }
+
+    private emitInterpolateExpression(exp: InterpolateExpression): string {
+        assert(false, "Not implemented");
+    }
+        
+    private emitHasEnvValueExpression(exp: AccessEnvValueExpression): string {
+        assert(false, "Not implemented");
+    }
+            
+    private emitAccessEnvValueExpression(exp: AccessEnvValueExpression): string {
+        assert(false, "Not implemented");
+    }
+            
+    private emitTaskAccessInfoExpression(exp: TaskAccessInfoExpression): string {
+        assert(false, "Not implemented");
     }
 
     emitExpression(exp: Expression): string {
@@ -61,133 +229,133 @@ class BodyEmitter {
             case ExpressionTag.LiteralBigIntExpression: {
                 return this.emitLiteralBigIntExpression(exp as LiteralSimpleExpression);
             }
-            /*
             case ExpressionTag.LiteralRationalExpression: {
-                return this.checkLiteralRationalExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralRationalExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralFloatExpression: {
-                return this.checkLiteralFloatExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralFloatExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDecimalExpression: {
-                return this.checkLiteralDecimalExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDecimalExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDecimalDegreeExpression: {
-                return this.checkLiteralDecimalDegreeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDecimalDegreeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralLatLongCoordinateExpression: {
-                return this.checkLiteralLatLongCoordinateExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralLatLongCoordinateExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralComplexNumberExpression: {
-                return this.checkLiteralComplexNumberExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralComplexNumberExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralByteBufferExpression: {
-                return this.checkLiteralByteBufferExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralByteBufferExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralUUIDv4Expression: {
-                return this.checkLiteralUUIDv4Expression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralUUIDv4Expression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralUUIDv7Expression: {
-                return this.checkLiteralUUIDv7Expression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralUUIDv7Expression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralSHAContentHashExpression: {
-                return this.checkLiteralSHAContentHashExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralSHAContentHashExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDateTimeExpression: {
-                return this.checkLiteralDateTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDateTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralUTCDateTimeExpression: {
-                return this.checkLiteralUTCDateTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralUTCDateTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPlainDateExpression: {
-                return this.checkLiteralPlainDateExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralPlainDateExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralPlainTimeExpression: {
-                return this.checkLiteralPlainTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralPlainTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralLogicalTimeExpression: {
-                return this.checkLiteralLogicalTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralLogicalTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTickTimeExpression: {
-                return this.checkLiteralTickTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralTickTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralISOTimeStampExpression: {
-                return this.checkLiteralISOTimeStampExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralISOTimeStampExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaDateTimeExpression: {
-                return this.checkLiteralDeltaDateTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaDateTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaPlainDateExpression: {
-                return this.checkLiteralDeltaPlainDateExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaPlainDateExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaPlainTimeExpression: {
-                return this.checkLiteralDeltaPlainTimeExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaPlainTimeExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaISOTimeStampExpression: {
-                return this.checkLiteralDeltaISOTimeStampExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaISOTimeStampExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaSecondsExpression: {
-                return this.checkLiteralDeltaSecondsExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaSecondsExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaTickExpression: {
-                return this.checkLiteralDeltaTickExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaTickExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralDeltaLogicalExpression: {
-                return this.checkLiteralDeltaLogicalExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralDeltaLogicalExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralUnicodeRegexExpression: {
-                return this.checkLiteralUnicodeRegexExpression(env, exp as LiteralRegexExpression);
+                return this.emitLiteralUnicodeRegexExpression(exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralExRegexExpression: {
-                return this.checkLiteralExRegexExpression(env, exp as LiteralRegexExpression);
+                return this.emitLiteralExRegexExpression(exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
-                return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralExStringExpression: {
-                return this.checkLiteralExStringExpression(env, exp as LiteralSimpleExpression);
+                return this.emitLiteralExStringExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
-                return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
+                return this.emitLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralExTypedStringExpression: {
-                return this.checkLiteralExTypedStringExpression(env, exp as LiteralTypedStringExpression);
+                return this.emitLiteralExTypedStringExpression(exp as LiteralTypedStringExpression);
             }
             case ExpressionTag.LiteralTemplateStringExpression: {
-                return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
+                return this.emitLiteralTemplateStringExpression(exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralTemplateExStringExpression: {
-                return this.checkLiteralTemplateExStringExpression(env, exp as LiteralTemplateStringExpression);
+                return this.emitLiteralTemplateExStringExpression(exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
-                return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
+                return this.emitLiteralPathExpression(exp as LiteralPathExpression);
             }
             case ExpressionTag.LiteralPathFragmentExpression: {
-                return this.checkLiteralPathFragmentExpression(env, exp as LiteralPathExpression);
+                return this.emitLiteralPathFragmentExpression(exp as LiteralPathExpression);
             }
             case ExpressionTag.LiteralPathGlobExpression: {
-                return this.checkLiteralPathGlobExpression(env, exp as LiteralPathExpression);
+                return this.emitLiteralPathGlobExpression(exp as LiteralPathExpression);
             }
             case ExpressionTag.LiteralTypeDeclValueExpression: {
-                return this.checkLiteralTypeDeclValueExpression(env, exp as LiteralTypeDeclValueExpression);
+                return this.emitLiteralTypeDeclValueExpression(exp as LiteralTypeDeclValueExpression);
             }
             case ExpressionTag.LiteralTypeDeclIntegralValueExpression: {
-                return this.checkLiteralTypeDeclIntegralValueExpression(env, exp as LiteralTypeDeclIntegralValueExpression);
+                return this.emitLiteralTypeDeclIntegralValueExpression(exp as LiteralTypeDeclIntegralValueExpression);
             }
             case ExpressionTag.LiteralTypeDeclFloatPointValueExpression: {
-                return this.checkLiteralTypeDeclFloatPointValueExpression(env, exp as LiteralTypeDeclFloatPointValueExpression);
+                return this.emitLiteralTypeDeclFloatPointValueExpression(exp as LiteralTypeDeclFloatPointValueExpression);
             }
             case ExpressionTag.InterpolateExpression: {
-                return this.checkInterpolateExpression(env, exp as InterpolateExpression);
+                return this.emitInterpolateExpression(exp as InterpolateExpression);
             }
             case ExpressionTag.HasEnvValueExpression: {
-                return this.checkHasEnvValueExpression(env, exp as AccessEnvValueExpression);
+                return this.emitHasEnvValueExpression(exp as AccessEnvValueExpression);
             }
             case ExpressionTag.AccessEnvValueExpression: {
-                return this.checkAccessEnvValueExpression(env, exp as AccessEnvValueExpression);
+                return this.emitAccessEnvValueExpression(exp as AccessEnvValueExpression);
             }
             case ExpressionTag.TaskAccessInfoExpression: {
-                return this.checkTaskAccessInfoExpression(env, exp as TaskAccessInfoExpression);
+                return this.emitTaskAccessInfoExpression(exp as TaskAccessInfoExpression);
             }
+            /*
             case ExpressionTag.AccessNamespaceConstantExpression: {
                 return this.checkAccessNamespaceConstantExpression(env, exp as AccessNamespaceConstantExpression);
             }

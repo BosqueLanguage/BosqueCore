@@ -75,7 +75,6 @@ describe ("Checker -- Decimal", () => {
     });
 });
 
-
 describe ("Checker -- Rational", () => {
     it("should parse simple rationals", function () {
         checkTestExp("0R", "Rational");
@@ -84,5 +83,67 @@ describe ("Checker -- Rational", () => {
 
     it("should fail simple rational", function () {
         checkTestExpError("1R", "None", "Expected a return value of type None but got Rational");
+    });
+});
+
+describe ("Checker -- Decimal Degree", () => {
+    it("should parse simple decimal degree", function () {
+        checkTestExp("0.0dd", "DecimalDegree");
+        checkTestExp("200.123dd", "DecimalDegree");
+        checkTestExp("+0.123dd", "DecimalDegree");
+        checkTestExp("360.0dd", "DecimalDegree");
+        checkTestExp("-360.0dd", "DecimalDegree");
+    });
+
+    it("should fail simple decimal degree", function () {
+        checkTestExpError("0.0dd", "None", "Expected a return value of type None but got DecimalDegree");
+    });
+
+    it("should fail too overflow pos", function () {
+        checkTestExpError("360.1dd", "DecimalDegree", "Invalid DecimalDegree literal");
+    });
+
+    it("should fail too overflow neg", function () {
+        checkTestExpError("-360.1dd", "None", "Invalid DecimalDegree literal");
+    });
+});
+
+describe ("Checker -- Lat/Long", () => {
+    it("should parse simple lat/long", function () {
+        checkTestExp("2.0lat-80.123long", "LatLongCoordinate");
+        checkTestExp("-2.0lat+80.123long", "LatLongCoordinate");
+        checkTestExp("-180.0lat-90.0long", "LatLongCoordinate");
+        checkTestExp("+180.0lat+90.0long", "LatLongCoordinate");
+    });
+
+    it("should fail simple LatLong", function () {
+        checkTestExpError("2.0lat-80.123long", "DecimalDegree", "Expected a return value of type DecimalDegree but got LatLongCoordinate");
+    });
+
+    it("should fail too overflow pos lat", function () {
+        checkTestExpError("180.1lat-90.0long", "LatLongCoordinate", "Invalid Latitude value");
+    });
+
+    it("should fail too overflow neg lat", function () {
+        checkTestExpError("-180.1lat-90.0long", "LatLongCoordinate", "Invalid Latitude value");
+    });
+
+    it("should fail too overflow pos long", function () {
+        checkTestExpError("-180.0lat+91.0long", "LatLongCoordinate", "Invalid Longitude value");
+    });
+
+    it("should fail too overflow neg long", function () {
+        checkTestExpError("-180.0lat-100.0long", "LatLongCoordinate", "Invalid Longitude value");
+    });
+});
+
+describe ("Checker -- Complex", () => {
+    it("should parse simple complex", function () {
+        checkTestExp("0.0+0.0j", "Complex");
+        checkTestExp("-2.0-0.5j", "Complex");
+    });
+
+    it("should fail simple complex", function () {
+        checkTestExpError("-2.0-0.5j", "Float", "Expected a return value of type Float but got Complex");
     });
 });
