@@ -566,6 +566,7 @@ enum AdditionalTypeDeclTag {
 
 abstract class AbstractNominalTypeDecl extends AbstractDecl {
     readonly attributes: DeclarationAttibute[];
+    readonly ns: FullyQualifiedNamespace;
     readonly name: string;
 
     readonly terms: TypeTemplateTermDecl[] = [];
@@ -580,10 +581,11 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 
     readonly etag: AdditionalTypeDeclTag;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
         super(file, sinfo);
 
         this.attributes = attributes;
+        this.ns = ns;
         this.name = name;
 
         this.etag = etag;
@@ -637,16 +639,16 @@ abstract class AbstractNominalTypeDecl extends AbstractDecl {
 }
 
 abstract class AbstractEntityTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 }
 
 class EnumTypeDecl extends AbstractEntityTypeDecl {
     readonly members: string[];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, members: string[], etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, members: string[], etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.members = members;
     }
@@ -663,8 +665,8 @@ class EnumTypeDecl extends AbstractEntityTypeDecl {
 class TypedeclTypeDecl extends AbstractEntityTypeDecl {
     valuetype: TypeSignature;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, valuetype: TypeSignature) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.valuetype = valuetype;
     }
@@ -687,7 +689,7 @@ class TypedeclTypeDecl extends AbstractEntityTypeDecl {
 
 abstract class InternalEntityTypeDecl extends AbstractEntityTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+        super(file, sinfo, attributes, new FullyQualifiedNamespace(["Core"]) , name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -984,8 +986,8 @@ class EventListTypeDecl extends AbstractCollectionTypeDecl {
 class EntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1001,14 +1003,14 @@ class EntityTypeDecl extends AbstractEntityTypeDecl {
 }
 
 abstract class AbstractConceptTypeDecl extends AbstractNominalTypeDecl {
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 }
 
 abstract class InternalConceptTypeDecl extends AbstractConceptTypeDecl {
     constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+        super(file, sinfo, attributes, new FullyQualifiedNamespace(["Core"]), name, AdditionalTypeDeclTag.Std);
     }
 }
 
@@ -1105,8 +1107,8 @@ class ExpandoableTypeDecl extends InternalConceptTypeDecl {
 class ConceptTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1125,8 +1127,8 @@ class DatatypeMemberEntityTypeDecl extends AbstractEntityTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly parentTypeDecl: DatatypeTypeDecl;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag, parentTypeDecl: DatatypeTypeDecl) {
+        super(file, sinfo, attributes, ns, name, etag);
 
         this.parentTypeDecl = parentTypeDecl;
     }
@@ -1147,8 +1149,8 @@ class DatatypeTypeDecl extends AbstractConceptTypeDecl {
     readonly fields: MemberFieldDecl[] = [];
     readonly associatedMemberEntityDecls: DatatypeMemberEntityTypeDecl[] = [];
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string, etag: AdditionalTypeDeclTag) {
-        super(file, sinfo, attributes, name, etag);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string, etag: AdditionalTypeDeclTag) {
+        super(file, sinfo, attributes, ns, name, etag);
     }
 
     emit(fmt: CodeFormatter): string {
@@ -1367,8 +1369,8 @@ class TaskDecl extends AbstractNominalTypeDecl {
     //If this is defined then the info is all taken from the API
     implementsapi: [FullyQualifiedNamespace, string] | undefined = undefined;
 
-    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], name: string) {
-        super(file, sinfo, attributes, name, AdditionalTypeDeclTag.Std);
+    constructor(file: string, sinfo: SourceInfo, attributes: DeclarationAttibute[], ns: FullyQualifiedNamespace, name: string) {
+        super(file, sinfo, attributes, ns, name, AdditionalTypeDeclTag.Std);
     }
 
     emit(fmt: CodeFormatter): string {

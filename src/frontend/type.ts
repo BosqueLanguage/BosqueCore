@@ -163,7 +163,7 @@ class NominalTypeSignature extends TypeSignature {
     readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
     readonly resolvedTypedef: NamespaceTypedef | undefined;
-    readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
+    private readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
 
     constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTypedef: NamespaceTypedef | undefined, resolvedDeclaration: AbstractNominalTypeDecl | undefined) {
         super(sinfo);
@@ -192,8 +192,14 @@ class NominalTypeSignature extends TypeSignature {
             return { tname: t.tname, terms: t.terms.map((tt) => tt.remapTemplateBindings(mapper)) };
         });
 
-        return new NominalTypeSignature(this.sinfo, this.ns, rtscope, this.resolvedTypedef , this.resolvedDeclaration);
+        return new NominalTypeSignature(this.sinfo, this.ns, rtscope, this.resolvedTypedef, this.resolvedDeclaration);
     }
+}
+
+class ResolvedNominalTypeSignature extends TypeSignature {
+}
+
+class ConcreteNominalTypeSignature extends TypeSignature {
 }
 
 class TupleTypeSignature extends TypeSignature {

@@ -1,92 +1,81 @@
 import assert from "node:assert";
 
 import { JSCodeFormatter } from "./jsemitter_support.js";
-import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
+import { AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, CallNamespaceFunctionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, Expression, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, SpecialConstructorExpression, TaskAccessInfoExpression } from "../frontend/body.js";
 import { TypeCheckerRelations } from "../frontend/checker_relations.js";
-import { TemplateConstraintScope } from "../frontend/type.js";
+import { TemplateConstraintScope, TypeSignature } from "../frontend/type.js";
 
 class JSEmitter {
     readonly fmt: JSCodeFormatter;
     readonly relations: TypeCheckerRelations;
-    readonly tconstraints: TemplateConstraintScope[];
 
-    constructor(relations: TypeCheckerRelations, tconstraints: TemplateConstraintScope[], iidnt: number) {
-        this.fmt = new JSCodeFormatter(iidnt);
+    constructor(relations: TypeCheckerRelations) {
+        this.fmt = new JSCodeFormatter(0);
         this.relations = relations;
-        this.tconstraints = tconstraints;
     }
 
     private emitITest_None(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}None()`;
     }
 
-    private processITest_Some(val: string, isnot: boolean): string {
+    private emitITest_Some(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Some()`;
     }
 
-    private processITest_Nothing(val: string, isnot: boolean): string {
+    private emitITest_Nothing(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Nothing()`;
     }
 
-    private processITest_Something(val: string, isnot: boolean): string {
+    private emitITest_Something(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Something()`;
     }
 
-    private processITest_Ok(val: string, isnot: boolean): string {
+    private emitITest_Ok(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Ok()`;
     }
 
-    private processITest_Err(val: string, isnot: boolean): string {
+    private emitITest_Err(val: string, isnot: boolean): string {
         return `${val}.$is${isnot ? "Not" : ""}Err()`;
     }
 
-    private processITest_Literal(val: string, isnot: boolean): string{
-        xxxx;
+    private emitITest_Literal(val: string, literal: string, isnot: boolean): string{
+        return `${val}.$is${isnot ? "Not" : ""}KeyEqual(${literal})`;
     }
 
-    private processITest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
+    private emitITest_Type(val: string, oftype: TypeSignature, isnot: boolean): string {
         const ttype = this.relations.normalizeTypeSignatureIncludingTemplate(oftype, this.tconstraints);
         const nns = ttype.;
 
         return `${val}.$is${isnot ? "Not" : ""}SubTypeOf(${xxxx})`;
     }
     
-    private processITest(sinfo: SourceInfo, env: TypeEnvironment, src: TypeSignature, tt: ITest): { ttrue: TypeSignature | undefined, tfalse: TypeSignature | undefined } {
+    private processITest(val: string, tt: ITest, tconstraints: TemplateConstraintScope): string {
         if(tt instanceof ITestType) {
-            this.checkTypeSignature(tt.ttype);
-            return this.processITest_Type(src, tt.ttype, tt.isnot);
+            return this.emitITest_Type(val, tt.ttype, tt.isnot);
         }
         else if(tt instanceof ITestLiteral) {
-            if(!this.canCompileTimeReduceConstantExpression(tt.literal.exp)) {
-                this.reportError(sinfo, "Invalid literal expression value");
-                return { ttrue: src, tfalse: src };
-            }
-            else {
-                const lltype = this.checkExpression(env, tt.literal.exp, undefined);
-                this.checkError(sinfo, !(lltype instanceof ErrorTypeSignature) && !this.relations.isKeyType(lltype, this.constraints), "Literal value must be a key type");
-
-                return this.processITest_Literal(env, src, lltype, tt.isnot);
-            }
+            const ll = this.emitExpression(tt.literal.exp, true);
+            return this.emitITest_Literal(val, ll, tt.isnot);
         }
         else {
             if(tt instanceof ITestNone) {
-                return this.processITest_None(src, tt.isnot);
+                return this.emitITest_None(val, tt.isnot);
             }
             else if(tt instanceof ITestSome) {
-                return this.processITest_Some(src, tt.isnot);
+                return this.emitITest_Some(val, tt.isnot);
             }
             else if(tt instanceof ITestNothing) {
-                return this.processITest_Nothing(src, tt.isnot);
+                return this.emitITest_Nothing(val, tt.isnot);
             }
             else if(tt instanceof ITestSomething) {
-                return this.processITest_Something(src, tt.isnot);
+                return this.emitITest_Something(val, tt.isnot);
             }
             else if(tt instanceof ITestOk) {
-                return this.processITest_Ok(src, tt.isnot);
+                return this.emitITest_Ok(val, tt.isnot);
             }
             else {
                 assert(tt instanceof ITestErr, "missing case in ITest");
-                return this.processITest_Err(src, tt.isnot);
+                return this.emitITest_Err(val, tt.isnot);
             }
         }
     }

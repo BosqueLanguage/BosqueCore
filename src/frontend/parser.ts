@@ -5150,7 +5150,7 @@ class Parser {
         else {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive entity parse");
 
-            tdecl = new EntityTypeDecl(this.env.currentFile, sinfo, attributes, name, etag);
+            tdecl = new EntityTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, name, etag);
         }
 
         assert(tdecl !== undefined, "Failed to register entity type");
@@ -5242,7 +5242,7 @@ class Parser {
         else {
             assert(!attributes.some((attr) => attr.name === "__internal"), "Missing special case on primitive concept parse");
 
-            tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, name, etag);
+            tdecl = new ConceptTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, name, etag);
         }
 
         assert(tdecl !== undefined, "Failed to register entity type");
@@ -5320,7 +5320,7 @@ class Parser {
                 return this.parseIdentifierAsEnumMember();
             });
 
-            const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, ename, members, etag);
+            const enumtype = new EnumTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, ename, members, etag);
             this.env.currentNamespace.typedecls.push(enumtype);
 
             this.env.currentNamespace.declaredNames.add(ename);
@@ -5408,7 +5408,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${iname}`);
             }
 
-            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, attributes, iname, etag, new ErrorTypeSignature(sinfo, undefined));
+            const tdecl = new TypedeclTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, iname, etag, new ErrorTypeSignature(sinfo, undefined));
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(iname);
@@ -5458,7 +5458,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${ename}`);
             }
 
-            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, ename, etag, parenttype);
+            const tdecl = new DatatypeMemberEntityTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, ename, etag, parenttype);
             
             parenttype.associatedMemberEntityDecls.push(tdecl);
             this.env.currentNamespace.typedecls.push(tdecl);
@@ -5511,7 +5511,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${dname}`);
             }
 
-            tdecl = new DatatypeTypeDecl(this.env.currentFile, sinfo, attributes, dname, etag);
+            tdecl = new DatatypeTypeDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, dname, etag);
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(dname);
@@ -5586,7 +5586,7 @@ class Parser {
                 this.recordErrorGeneral(sinfo, `Collision between type and other names -- ${tname}`);
             }
 
-            const tdecl = new TaskDecl(this.env.currentFile, sinfo, attributes, tname);
+            const tdecl = new TaskDecl(this.env.currentFile, sinfo, attributes, this.env.currentNamespace.fullnamespace, tname);
             this.env.currentNamespace.typedecls.push(tdecl);
 
             this.env.currentNamespace.declaredNames.add(tname);

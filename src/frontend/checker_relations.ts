@@ -194,6 +194,62 @@ class TypeCheckerRelations {
     }
 
     /**
+     * Given a type signature that is nested just do the simplification steps (don't try and resolve any aliases or templates)
+     */
+    normalizeTypeSignatureNoResolve(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
+        if(tsig instanceof ErrorTypeSignature || tsig instanceof VoidTypeSignature || tsig instanceof AutoTypeSignature) {
+            return tsig;
+        }
+        else if(tsig instanceof TemplateTypeSignature) {
+            return tsig;
+        }
+        else if(tsig instanceof NominalTypeSignature) {
+            if(tsig.resolvedTypedef === undefined) {
+                xxxx;
+            }
+            else {
+                xxxx;
+            }
+        }
+        else if(tsig instanceof TupleTypeSignature) {
+            xxxx;
+        }
+        else if(tsig instanceof RecordTypeSignature) {
+            xxxx;
+        }
+        else if(tsig instanceof EListTypeSignature) {
+            xxxx;
+        }
+        else if(tsig instanceof StringTemplateTypeSignature) {
+            return tsig;
+        }
+        else if(tsig instanceof LambdaTypeSignature) {
+            xxxx;
+        }
+        else if(tsig instanceof NoneableTypeSignature) {
+            const ots = this.normalizeTypeSignatureIncludingTemplate(tsig.type, tconstrain);
+            if(this.includesNoneType(ots, tconstrain)) {
+                return ots;
+            }
+            else if(this.isSomeType(ots, tconstrain)) {
+                return this.wellknowntypes.get("Any") as TypeSignature;
+            }
+            else {
+                return new NoneableTypeSignature(tsig.sinfo, ots);
+            }
+        }
+        else if(tsig instanceof UnionTypeSignature) {
+            const lnorm = this.normalizeTypeSignatureIncludingTemplate(tsig.ltype, tconstrain);
+            const rnorm = this.normalizeTypeSignatureIncludingTemplate(tsig.rtype, tconstrain);
+
+            return this.simplifyUnionType(new UnionTypeSignature(tsig.sinfo, lnorm, rnorm), tconstrain);
+        }
+        else {
+            assert(false, "Unknown type signature");
+        }
+    }
+
+    /**
      * Given a the signature resolve it (at the top-level) with any aliases or union / intersection simplifications
      */
     normalizeTypeSignature(tsig: TypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
@@ -205,7 +261,7 @@ class TypeCheckerRelations {
         }
         else if(tsig instanceof NominalTypeSignature) {
             if(tsig.resolvedTypedef === undefined) {
-                return tsig;
+                return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
             }
             else {
                 const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tsig);
@@ -213,13 +269,13 @@ class TypeCheckerRelations {
             }
         }
         else if(tsig instanceof TupleTypeSignature || tsig instanceof RecordTypeSignature || tsig instanceof EListTypeSignature) {
-            return tsig;
+            return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
         }
         else if(tsig instanceof StringTemplateTypeSignature) {
             return tsig;
         }
         else if(tsig instanceof LambdaTypeSignature) {
-            return tsig;
+            return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
         }
         else if(tsig instanceof NoneableTypeSignature) {
             const ots = this.normalizeTypeSignature(tsig.type, tconstrain);
@@ -262,7 +318,7 @@ class TypeCheckerRelations {
         }
         else if(tsig instanceof NominalTypeSignature) {
             if(tsig.resolvedTypedef === undefined) {
-                return tsig;
+                return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
             }
             else {
                 const remapper = TypeCheckerRelations.computeNameMapperFromDirectTypeSignatureInfo(tsig);
@@ -270,13 +326,13 @@ class TypeCheckerRelations {
             }
         }
         else if(tsig instanceof TupleTypeSignature || tsig instanceof RecordTypeSignature || tsig instanceof EListTypeSignature) {
-            return tsig;
+            return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
         }
         else if(tsig instanceof StringTemplateTypeSignature) {
             return tsig;
         }
         else if(tsig instanceof LambdaTypeSignature) {
-            return tsig;
+            return this.normalizeTypeSignatureNoResolve(tsig, tconstrain);
         }
         else if(tsig instanceof NoneableTypeSignature) {
             const ots = this.normalizeTypeSignatureIncludingTemplate(tsig.type, tconstrain);
