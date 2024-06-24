@@ -158,12 +158,18 @@ class TemplateTypeSignature extends TypeSignature {
     }
 }
 
-class NominalTypeSignature extends TypeSignature {
+abstract class NominalTypeSignature extends TypeSignature {
+    constructor(sinfo: SourceInfo) {
+        super(sinfo);
+    }
+}
+
+class NominalParsedTypeSignature extends NominalTypeSignature {
     readonly ns: string[];
     readonly tscope: {tname: string, terms: TypeSignature[]}[];
 
     readonly resolvedTypedef: NamespaceTypedef | undefined;
-    private readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
+    readonly resolvedDeclaration: AbstractNominalTypeDecl | undefined;
 
     constructor(sinfo: SourceInfo, ns: string[], tscope: {tname: string, terms: TypeSignature[]}[], resolvedTypedef: NamespaceTypedef | undefined, resolvedDeclaration: AbstractNominalTypeDecl | undefined) {
         super(sinfo);
@@ -196,10 +202,10 @@ class NominalTypeSignature extends TypeSignature {
     }
 }
 
-class ResolvedNominalTypeSignature extends TypeSignature {
+class ResolvedNominalTypeSignature extends NominalTypeSignature {
 }
 
-class ConcreteNominalTypeSignature extends TypeSignature {
+class ConcreteNominalTypeSignature extends NominalTypeSignature {
 }
 
 class TupleTypeSignature extends TypeSignature {

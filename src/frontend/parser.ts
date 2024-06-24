@@ -2398,6 +2398,7 @@ class Parser {
                 return new ErrorTypeSignature(sinfo, nsr.nsScope.fullnamespace);
             }
             else {
+                xxxx;
                 return new NominalTypeSignature(sinfo, nsr.scopeTokens, nsr.typeTokens, ...resolved);
             }
         }
