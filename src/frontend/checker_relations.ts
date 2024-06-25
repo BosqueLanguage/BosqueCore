@@ -1,7 +1,7 @@
 import assert from "node:assert";
 
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, ResolvedNominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
-import { APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, ExRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, FullyQualifiedNamespace, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, NominalResolvedTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateNameMapper, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
+import { APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APISuccessTypeDecl, AbstractConceptTypeDecl, AbstractEntityTypeDecl, AbstractNominalTypeDecl, AdditionalTypeDeclTag, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, ErrTypeDecl, CRegexValidatorTypeDecl, InternalEntityTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, OkTypeDecl, OptionTypeDecl, PathValidatorTypeDecl, PrimitiveEntityTypeDecl, RegexValidatorTypeDecl, ResultTypeDecl, SomethingTypeDecl, TaskDecl, TemplateTermDeclExtraTag, TypeFunctionDecl, TypedeclTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeInferContext } from "./checker_environment.js";
 
@@ -63,34 +63,9 @@ class TypeCheckerRelations {
         this.wellknowntypes = wellknowntypes;
     }
 
-    private static flattenUnionType(tt: UnionTypeSignature, into: TypeSignature[]) {
-        if(tt.ltype instanceof UnionTypeSignature) {
-            this.flattenUnionType(tt.ltype, into);
-        }
-        else {
-            into.push(tt.ltype);
-        }
-
-        if(tt.rtype instanceof UnionTypeSignature) {
-            this.flattenUnionType(tt.rtype, into);
-        }
-        else {
-            into.push(tt.rtype);
-        }
-    }
-
-    private static treeifyUnionType(sinfo: SourceInfo, tl: TypeSignature[]): UnionTypeSignature {
-        if(tl.length === 2) {
-            return new UnionTypeSignature(tl[0].sinfo, tl[0], tl[1]);
-        }
-        else {
-            return new UnionTypeSignature(tl[0].sinfo, tl[0], this.treeifyUnionType(sinfo, tl.slice(1)));
-        }
-    }
 
     private simplifyUnionType(tt: UnionTypeSignature, tconstrain: TemplateConstraintScope): TypeSignature {
-        const tl: TypeSignature[] = [];
-        TypeCheckerRelations.flattenUnionType(tt, tl);
+        const tl: TypeSignature[] = [...tt.types];
 
         //check for None+Some -> Any
         if(this.includesNoneType(tt, tconstrain) && this.includesSomeType(tt, tconstrain)) {
@@ -98,19 +73,19 @@ class TypeCheckerRelations {
         }
 
         //check for complete set of datatype members
-        const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof ResolvedNominalTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl));
+        const dts = tl.map((t) => this.normalizeTypeSignature(t, tconstrain)).filter((t) => (t instanceof NominalResolvedTypeSignature) && (t.decl instanceof DatatypeMemberEntityTypeDecl));
         if(dts.length !== 0) {
             for(let i = 0; i < dts.length; ++i) {
-                const ndts = dts[i] as ResolvedNominalTypeSignature;
+                const ndts = dts[i] as NominalResolvedTypeSignature;
                 const pptype = (ndts.decl as DatatypeMemberEntityTypeDecl).parentTypeDecl;
                 
                 const allmembers = pptype.associatedMemberEntityDecls.every((mem) => {
-                    const tmem = new ResolvedNominalTypeSignature(mem.sinfo, mem, ndts.alltermargs);
+                    const tmem = new NominalResolvedTypeSignature(mem.sinfo, mem, ndts.alltermargs);
                     return tl.some((t) => this.areSameTypes(t, tmem, tconstrain));  
                 });
 
                 if(allmembers) {
-                    const realptype = new ResolvedNominalTypeSignature(ndts.sinfo, pptype, ndts.alltermargs);
+                    const realptype = new NominalResolvedTypeSignature(ndts.sinfo, pptype, ndts.alltermargs);
                     tl.push(realptype);
                 }
             }
@@ -146,6 +121,7 @@ class TypeCheckerRelations {
                 restypel = [...restypel.filter((rt) => !this.isSubtypeOf(rt, ntt, tconstrain)), ntt];
             }
         }
+        restypel.sort((a, b) => a.tkeystr.localeCompare(b.tkeystr));
 
         if(restypel.length === 1) {
             return restypel[0];
@@ -154,7 +130,7 @@ class TypeCheckerRelations {
             return new NoneableTypeSignature(tt.sinfo, restypel.find((t) => !this.isNoneType(t, tconstrain)) as TypeSignature);
         }
         else {
-            return TypeCheckerRelations.treeifyUnionType(tt.sinfo, restypel);
+            return new UnionTypeSignature(tt.sinfo, restypel);
         }
     }
 
@@ -203,31 +179,49 @@ class TypeCheckerRelations {
         else if(tsig instanceof TemplateTypeSignature) {
             return tsig;
         }
-        else if(tsig instanceof NominalTypeSignature) {
-            if(tsig.resolvedTypedef === undefined) {
-                xxxx;
-            }
-            else {
-                xxxx;
-            }
+        else if(tsig instanceof NominalParsedTypeSignature) {
+            const rttypes = tsig.tscope.map((ts) => {
+                return { tname: ts.tname, tterms: ts.tterms.map((t) => this.normalizeTypeSignatureNoResolve(t, tconstrain)) };
+            });
+
+            return new NominalParsedTypeSignature(tsig.sinfo, tsig.ns, rttypes, tsig.resolvedinfo);
+        }
+        else if(tsig instanceof NominalResolvedTypeSignature) {
+            const rttypes = tsig.alltermargs.map((ts) => {
+                return this.normalizeTypeSignatureNoResolve(ts, tconstrain);
+            });
+
+            return new NominalResolvedTypeSignature(tsig.sinfo, tsig.decl, rttypes);
         }
         else if(tsig instanceof TupleTypeSignature) {
-            xxxx;
+            const rttypes = tsig.entries.map((ts) => {
+                return this.normalizeTypeSignatureNoResolve(ts, tconstrain)
+            });
+
+            return new TupleTypeSignature(tsig.sinfo, rttypes);
         }
         else if(tsig instanceof RecordTypeSignature) {
-            xxxx;
+            const rttypes = tsig.entries.map((ts) => {
+                return [ts[0], this.normalizeTypeSignatureNoResolve(ts[1], tconstrain)] as [string, TypeSignature];
+            }).sort((a, b) => a[0].localeCompare(b[0]));
+
+            return new RecordTypeSignature(tsig.sinfo, rttypes);
         }
         else if(tsig instanceof EListTypeSignature) {
-            xxxx;
+            const rttypes = tsig.entries.map((ts) => {
+                return this.normalizeTypeSignatureNoResolve(ts, tconstrain)
+            });
+
+            return new EListTypeSignature(tsig.sinfo, rttypes);
         }
         else if(tsig instanceof StringTemplateTypeSignature) {
-            return tsig;
+            xxxx;
         }
         else if(tsig instanceof LambdaTypeSignature) {
             xxxx;
         }
         else if(tsig instanceof NoneableTypeSignature) {
-            const ots = this.normalizeTypeSignatureIncludingTemplate(tsig.type, tconstrain);
+            const ots = this.normalizeTypeSignatureNoResolve(tsig.type, tconstrain);
             if(this.includesNoneType(ots, tconstrain)) {
                 return ots;
             }
@@ -239,10 +233,8 @@ class TypeCheckerRelations {
             }
         }
         else if(tsig instanceof UnionTypeSignature) {
-            const lnorm = this.normalizeTypeSignatureIncludingTemplate(tsig.ltype, tconstrain);
-            const rnorm = this.normalizeTypeSignatureIncludingTemplate(tsig.rtype, tconstrain);
-
-            return this.simplifyUnionType(new UnionTypeSignature(tsig.sinfo, lnorm, rnorm), tconstrain);
+            const ntypes = tsig.types.map((ts) => this.normalizeTypeSignatureNoResolve(ts, tconstrain));
+            return this.simplifyUnionType(new UnionTypeSignature(tsig.sinfo, ntypes), tconstrain);
         }
         else {
             assert(false, "Unknown type signature");
@@ -642,7 +634,7 @@ class TypeCheckerRelations {
 
     private stringTemplateIsSubtypeOf(t1: StringTemplateTypeSignature, t2: TypeSignature, tconstrain: TemplateConstraintScope): boolean {
         if(t2 instanceof NominalTypeSignature) {
-            return this.isSubtypeOf(t1.kind === "utf8" ? this.wellknowntypes.get("TemplateString") as NominalTypeSignature : this.wellknowntypes.get("TemplateExString") as NominalTypeSignature, t2, tconstrain);
+            return this.isSubtypeOf(t1.kind === "utf8" ? this.wellknowntypes.get("TemplateString") as NominalTypeSignature : this.wellknowntypes.get("TemplateCString") as NominalTypeSignature, t2, tconstrain);
         }
         else if(t2 instanceof NoneableTypeSignature) {
             return this.isSubtypeOf(t1, t2.type, tconstrain);
@@ -1165,11 +1157,11 @@ class TypeCheckerRelations {
         return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "StringOf", terms: [vtype]}], undefined, stringofdecl);
     }
 
-    getExStringOfType(vtype: TypeSignature): TypeSignature {
+    getCStringOfType(vtype: TypeSignature): TypeSignature {
         const corens = this.assembly.getCoreNamespace();
-        const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "ExStringOf");
+        const stringofdecl = corens.typedecls.find((tdecl) => tdecl.name === "CStringOf");
 
-        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "ExStringOf", terms: [vtype]}], undefined, stringofdecl);
+        return new NominalTypeSignature(vtype.sinfo, ["Core"], [{tname: "CStringOf", terms: [vtype]}], undefined, stringofdecl);
     }
 
     getEventListOf(vtype: TypeSignature): TypeSignature {
@@ -1278,7 +1270,7 @@ class TypeCheckerRelations {
             if(tnorm.resolvedDeclaration instanceof RegexValidatorTypeDecl) {
                 return new SingleRegexValidatorPack(tnorm.resolvedDeclaration.regex);
             }
-            else if(tnorm.resolvedDeclaration instanceof ExRegexValidatorTypeDecl) {
+            else if(tnorm.resolvedDeclaration instanceof CRegexValidatorTypeDecl) {
                 return new SingleRegexValidatorPack(tnorm.resolvedDeclaration.regex);
             }
             else {
@@ -1446,8 +1438,8 @@ class TypeCheckerRelations {
         else if(tdecl instanceof RegexValidatorTypeDecl) {
             return [this.wellknowntypes.get("RegexValidator") as TypeSignature];
         }
-        else if(tdecl instanceof ExRegexValidatorTypeDecl) {
-            return [this.wellknowntypes.get("ExRegexValidator") as TypeSignature];
+        else if(tdecl instanceof CRegexValidatorTypeDecl) {
+            return [this.wellknowntypes.get("CRegexValidator") as TypeSignature];
         }
         else if(tdecl instanceof PathValidatorTypeDecl) {
             return [this.wellknowntypes.get("PathValidator") as TypeSignature];

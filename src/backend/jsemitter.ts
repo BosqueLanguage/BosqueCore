@@ -208,7 +208,7 @@ class JSEmitter {
         return `$Runtime.regex(${exp.value})`;
     }
     
-    private emitLiteralExRegexExpression(exp: LiteralRegexExpression): string {
+    private emitLiteralCRegexExpression(exp: LiteralRegexExpression): string {
         return `$Runtime.regex(${exp.value})`;
     }
     
@@ -216,8 +216,8 @@ class JSEmitter {
         return `$Runtime.string(${exp.value})`;
     }
     
-    private emitLiteralExStringExpression(exp: LiteralSimpleExpression): string {
-        return `$Runtime.exstring(${exp.value})`;
+    private emitLiteralCStringExpression(exp: LiteralSimpleExpression): string {
+        return `$Runtime.cstring(${exp.value})`;
     }
     
     private emitLiteralTypedStringExpression(exp: LiteralTypedStringExpression): string {
@@ -232,8 +232,8 @@ class JSEmitter {
         assert(false, "Not implemented -- TemplateString");
     }
     
-    private emitLiteralTemplateExStringExpression(exp: LiteralTemplateStringExpression): string {
-        assert(false, "Not implemented -- TemplateExString");
+    private emitLiteralTemplateCStringExpression(exp: LiteralTemplateStringExpression): string {
+        assert(false, "Not implemented -- TemplateCString");
     }
     
     private emitLiteralPathExpression(exp: LiteralPathExpression): string {
@@ -555,14 +555,14 @@ class JSEmitter {
             case ExpressionTag.LiteralUnicodeRegexExpression: {
                 return this.emitLiteralUnicodeRegexExpression(exp as LiteralRegexExpression);
             }
-            case ExpressionTag.LiteralExRegexExpression: {
-                return this.emitLiteralExRegexExpression(exp as LiteralRegexExpression);
+            case ExpressionTag.LiteralCRegexExpression: {
+                return this.emitLiteralCRegexExpression(exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.emitLiteralStringExpression(exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralExStringExpression: {
-                return this.emitLiteralExStringExpression(exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralCStringExpression: {
+                return this.emitLiteralCStringExpression(exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.emitLiteralTypedStringExpression(exp as LiteralTypedStringExpression);
@@ -573,8 +573,8 @@ class JSEmitter {
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.emitLiteralTemplateStringExpression(exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralTemplateExStringExpression: {
-                return this.emitLiteralTemplateExStringExpression(exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralTemplateCStringExpression: {
+                return this.emitLiteralTemplateCStringExpression(exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.emitLiteralPathExpression(exp as LiteralPathExpression);

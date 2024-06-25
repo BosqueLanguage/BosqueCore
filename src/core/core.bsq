@@ -33,8 +33,8 @@ __internal __universal concept RegexValidator provides Some {
 }
 
 %** Type for indicating that a datatype is a Validator. **%
-__internal __universal concept ExRegexValidator provides Some {
-    function accepts<T: ExRegexValidator>(s: ExString): Bool = special_method;
+__internal __universal concept CRegexValidator provides Some {
+    function accepts<T: CRegexValidator>(s: CString): Bool = special_method;
 }
 
 %** Type for indicating that a datatype is a Validator. **%
@@ -106,17 +106,17 @@ __internal __constructable __typedeclable entity StringOf<T: RegexValidator> pro
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity ExString provides Some, KeyType {
+__internal __typedeclable entity CString provides Some, KeyType {
 }
 
 %** Primitive safe string value. **%
-__internal __constructable __typedeclable entity ExStringOf<T: ExRegexValidator> provides Some, KeyType {
-    private function s_into(s: ExString): ExStringOf<T> = special_inject;
+__internal __constructable __typedeclable entity CStringOf<T: CRegexValidator> provides Some, KeyType {
+    private function s_into(s: CString): CStringOf<T> = special_inject;
     %*
-    method value(): ExString = special_extract;
-    function coerce(s: ExString): ExStringOf<T> {
-        assert ExRegexValidator::accepts<T>(s);
-        return ExStringOf<T>::s_into(s);
+    method value(): CString = special_extract;
+    function coerce(s: CString): CStringOf<T> {
+        assert CRegexValidator::accepts<T>(s);
+        return CStringOf<T>::s_into(s);
     }
     *%
 }
@@ -132,11 +132,11 @@ __internal entity UnicodeRegex provides Some {
 }
 
 %** Primitive unicode regex value. **%
-__internal entity ExRegex provides Some {
-    __safe internal function s_accepts(re: ExRegex, s: ExString): Bool = regex_accepts;
+__internal entity CRegex provides Some {
+    __safe internal function s_accepts(re: CRegex, s: CString): Bool = cregex_accepts;
     %*
-    method accepts(s: ExString): Bool {
-        return Regex::s_accepts(this, s);
+    method accepts(s: CString): Bool {
+        return CRegex::s_accepts(this, s);
     }
     *%
 }
@@ -150,7 +150,7 @@ __internal __typedeclable entity TemplateString provides Some {
 }
 
 %** Primitive string value. **%
-__internal __typedeclable entity TemplateExString provides Some {
+__internal __typedeclable entity TemplateCString provides Some {
 }
 
 %** Generic type for all Option<T> to inherit from. **%
@@ -195,10 +195,10 @@ namespace Interpolate {
     function stringOf<T: RegexValidator>(): StringOf<T> = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function exstring(): ExString = special_method;
+    function cstring(): CString = special_method;
 
     %** Special declaration of string interpolation function. **%
-    function exstringOf<T: ExRegexValidator>(): ExStringOf<T> = special_method;
+    function cstringOf<T: CRegexValidator>(): CStringOf<T> = special_method;
 }
 
 %** All actual entities/concepts implicitly provide this concept. **%

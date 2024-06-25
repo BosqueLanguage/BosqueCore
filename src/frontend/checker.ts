@@ -1,8 +1,8 @@
 import assert from "node:assert";
 
-import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, ExRegexValidatorTypeDecl, ExStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, ConstructableTypeDecl } from "./assembly.js";
+import { APIDecl, APIErrorTypeDecl, APIFailedTypeDecl, APIRejectedTypeDecl, APIResultTypeDecl, APISuccessTypeDecl, CRegexValidatorTypeDecl, CStringOfTypeDecl, AbstractNominalTypeDecl, Assembly, ConceptTypeDecl, ConstMemberDecl, DatatypeMemberEntityTypeDecl, DatatypeTypeDecl, EntityTypeDecl, EnumTypeDecl, EnvironmentVariableInformation, ErrTypeDecl, EventListTypeDecl, ExpandoableTypeDecl, ExplicitInvokeDecl, InternalConceptTypeDecl, InternalEntityTypeDecl, InvariantDecl, InvokeExample, InvokeExampleDeclFile, InvokeExampleDeclInline, InvokeTemplateTermDecl, ListTypeDecl, MapEntryTypeDecl, MapTypeDecl, MemberFieldDecl, MethodDecl, NamespaceConstDecl, NamespaceDeclaration, NamespaceFunctionDecl, NamespaceTypedef, OkTypeDecl, OptionTypeDecl, PathFragmentOfTypeDecl, PathGlobOfTypeDecl, PathOfTypeDecl, PathValidatorTypeDecl, PostConditionDecl, PreConditionDecl, PrimitiveConceptTypeDecl, PrimitiveEntityTypeDecl, QueueTypeDecl, RegexValidatorTypeDecl, ResourceInformation, ResultTypeDecl, SetTypeDecl, SomethingTypeDecl, StackTypeDecl, StatusInfoFilter, StringOfTypeDecl, TaskActionDecl, TaskDecl, TaskMethodDecl, TypeFunctionDecl, TypeTemplateTermDecl, TypedeclTypeDecl, ValidateDecl, WELL_KNOWN_EVENTS_VAR_NAME, WELL_KNOWN_RETURN_VAR_NAME, TemplateTermDeclExtraTag, ConstructableTypeDecl } from "./assembly.js";
 import { SourceInfo } from "./build_decls.js";
-import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, ResolvedNominalTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
+import { AutoTypeSignature, EListTypeSignature, ErrorTypeSignature, LambdaParameterSignature, LambdaTypeSignature, NominalParsedTypeSignature, NominalTypeSignature, NoneableTypeSignature, RecordTypeSignature, NominalResolvedTypeSignature, StringTemplateTypeSignature, TemplateConstraintScope, TemplateTypeSignature, TupleTypeSignature, TypeSignature, UnionTypeSignature, VoidTypeSignature } from "./type.js";
 import { AbortStatement, AbstractBodyImplementation, AccessEnvValueExpression, AccessNamespaceConstantExpression, AccessStaticFieldExpression, AccessVariableExpression, AssertStatement, BinAddExpression, BinDivExpression, BinKeyEqExpression, BinKeyNeqExpression, BinLogicAndExpression, BinLogicIFFExpression, BinLogicImpliesExpression, BinLogicOrExpression, BinMultExpression, BinSubExpression, BinderInfo, BlockStatement, BodyImplementation, BuiltinBodyImplementation, CallNamespaceFunctionExpression, CallRefSelfExpression, CallRefThisExpression, CallTaskActionExpression, CallTypeFunctionExpression, ConstructorEListExpression, ConstructorLambdaExpression, ConstructorPrimaryExpression, ConstructorRecordExpression, ConstructorTupleExpression, DebugStatement, EmptyStatement, EnvironmentBracketStatement, EnvironmentUpdateStatement, Expression, ExpressionBodyImplementation, ExpressionTag, ITest, ITestErr, ITestLiteral, ITestNone, ITestNothing, ITestOk, ITestSome, ITestSomething, ITestType, IfElifElseStatement, IfElseStatement, IfExpression, IfStatement, InterpolateExpression, LambdaInvokeExpression, LetExpression, LiteralExpressionValue, LiteralPathExpression, LiteralRegexExpression, LiteralSimpleExpression, LiteralSingletonExpression, LiteralTemplateStringExpression, LiteralTypeDeclFloatPointValueExpression, LiteralTypeDeclIntegralValueExpression, LiteralTypeDeclValueExpression, LiteralTypedStringExpression, LogicActionAndExpression, LogicActionOrExpression, MapEntryConstructorExpression, MatchStatement, NumericEqExpression, NumericGreaterEqExpression, NumericGreaterExpression, NumericLessEqExpression, NumericLessExpression, NumericNeqExpression, ParseAsTypeExpression, PostfixAccessFromIndex, PostfixAccessFromName, PostfixAsConvert, PostfixAssignFields, PostfixInvoke, PostfixIsTest, PostfixLiteralKeyAccess, PostfixOp, PostfixOpTag, PostfixProjectFromIndecies, PostfixProjectFromNames, PostfixTypeDeclValue, PredicateUFBodyImplementation, PrefixNegateOrPlusOpExpression, PrefixNotOpExpression, ReturnStatement, SelfUpdateStatement, SpecialConstructorExpression, StandaloneExpressionStatement, StandardBodyImplementation, Statement, StatementTag, SwitchStatement, SynthesisBodyImplementation, TaskAccessInfoExpression, TaskAllExpression, TaskDashExpression, TaskEventEmitStatement, TaskMultiExpression, TaskRaceExpression, TaskRunExpression, TaskStatusStatement, TaskYieldStatement, ThisUpdateStatement, ValidateStatement, VariableAssignmentStatement, VariableDeclarationStatement, VariableInitializationStatement, VariableMultiAssignmentStatement, VariableMultiDeclarationStatement, VariableMultiInitializationStatement, VariableRetypeStatement } from "./body.js";
 import { EListStyleTypeInferContext, SimpleTypeInferContext, TypeEnvironment, TypeInferContext, VarInfo } from "./checker_environment.js";
 import { ErrorRegexValidatorPack, OrRegexValidatorPack, RegexValidatorPack, SingleRegexValidatorPack, TypeCheckerRelations } from "./checker_relations.js";
@@ -697,11 +697,11 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("UnicodeRegex"));
     }
 
-    private checkLiteralExRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
+    private checkLiteralCRegexExpression(env: TypeEnvironment, exp: LiteralRegexExpression): TypeSignature {
         //TODO: validate regex parse is error free
 
-        if(exp.value.endsWith("a")) {
-            return exp.setType(this.getWellKnownType("ExRegex"));
+        if(exp.value.endsWith("c")) {
+            return exp.setType(this.getWellKnownType("CRegex"));
         }
         else {
             return exp.setType(this.getWellKnownType("PathRegex"));
@@ -714,10 +714,10 @@ class TypeChecker {
         return exp.setType(this.getWellKnownType("String"));
     }
 
-    private checkLiteralExStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
+    private checkLiteralCStringExpression(env: TypeEnvironment, exp: LiteralSimpleExpression): TypeSignature {
         //TODO: validate string encoding is correct
         
-        return exp.setType(this.getWellKnownType("ExString"));
+        return exp.setType(this.getWellKnownType("CString"));
     }
 
     private runValidatorRegex(sinfo: SourceInfo, restr: string, litstr: string): boolean {
@@ -790,10 +790,10 @@ class TypeChecker {
         return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "utf8", []));
     }
 
-    private checkLiteralTemplateExStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
+    private checkLiteralTemplateCStringExpression(env: TypeEnvironment, exp: LiteralTemplateStringExpression): TypeSignature {
         //TODO: validate string encoding is correct and extract template arguments + types
         
-        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "ex", []));
+        return exp.setType(new StringTemplateTypeSignature(exp.sinfo, "chars", []));
     }
 
     private checkLiteralPathExpression(env: TypeEnvironment, exp: LiteralPathExpression): TypeSignature {
@@ -814,7 +814,7 @@ class TypeChecker {
         }
 
         const rconsttype = this.relations.normalizeTypeSignature(exp.constype, this.constraints);
-        if(!(rconsttype instanceof ResolvedNominalTypeSignature) || !(rconsttype.decl instanceof TypedeclTypeDecl)) {
+        if(!(rconsttype instanceof NominalResolvedTypeSignature) || !(rconsttype.decl instanceof TypedeclTypeDecl)) {
             this.reportError(exp.sinfo, `Invalid type for literal typedecl expression -- ${exp.constype}`);
             return exp.setType(exp.constype);
         }
@@ -1555,14 +1555,14 @@ class TypeChecker {
             case ExpressionTag.LiteralUnicodeRegexExpression: {
                 return this.checkLiteralUnicodeRegexExpression(env, exp as LiteralRegexExpression);
             }
-            case ExpressionTag.LiteralExRegexExpression: {
-                return this.checkLiteralExRegexExpression(env, exp as LiteralRegexExpression);
+            case ExpressionTag.LiteralCRegexExpression: {
+                return this.checkLiteralCRegexExpression(env, exp as LiteralRegexExpression);
             }
             case ExpressionTag.LiteralStringExpression: {
                 return this.checkLiteralStringExpression(env, exp as LiteralSimpleExpression);
             }
-            case ExpressionTag.LiteralExStringExpression: {
-                return this.checkLiteralExStringExpression(env, exp as LiteralSimpleExpression);
+            case ExpressionTag.LiteralCStringExpression: {
+                return this.checkLiteralCStringExpression(env, exp as LiteralSimpleExpression);
             }
             case ExpressionTag.LiteralTypedStringExpression: {
                 return this.checkLiteralTypedStringExpression(env, exp as LiteralTypedStringExpression);
@@ -1573,8 +1573,8 @@ class TypeChecker {
             case ExpressionTag.LiteralTemplateStringExpression: {
                 return this.checkLiteralTemplateStringExpression(env, exp as LiteralTemplateStringExpression);
             }
-            case ExpressionTag.LiteralTemplateExStringExpression: {
-                return this.checkLiteralTemplateExStringExpression(env, exp as LiteralTemplateStringExpression);
+            case ExpressionTag.LiteralTemplateCStringExpression: {
+                return this.checkLiteralTemplateCStringExpression(env, exp as LiteralTemplateStringExpression);
             }
             case ExpressionTag.LiteralPathExpression: {
                 return this.checkLiteralPathExpression(env, exp as LiteralPathExpression);
@@ -3764,7 +3764,7 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkExRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: ExRegexValidatorTypeDecl) {
+    private checkCRegexValidatorTypeDecl(ns: NamespaceDeclaration, tdecl: CRegexValidatorTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -3776,7 +3776,7 @@ class TypeChecker {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
-    private checkExStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: ExStringOfTypeDecl) {
+    private checkCStringOfTypeDecl(ns: NamespaceDeclaration, tdecl: CStringOfTypeDecl) {
         this.checkInteralSimpleTypeDeclHelper(ns, tdecl, true);
     }
 
@@ -4077,8 +4077,8 @@ class TypeChecker {
             else if(tt instanceof RegexValidatorTypeDecl) {
                 this.checkRegexValidatorTypeDecl(ns, tt);
             }
-            else if(tt instanceof ExRegexValidatorTypeDecl) {
-                this.checkExRegexValidatorTypeDecl(ns, tt);
+            else if(tt instanceof CRegexValidatorTypeDecl) {
+                this.checkCRegexValidatorTypeDecl(ns, tt);
             }
             else if(tt instanceof PathValidatorTypeDecl) {
                 this.checkPathValidatorTypeDecl(ns, tt);
@@ -4086,8 +4086,8 @@ class TypeChecker {
             else if(tt instanceof StringOfTypeDecl) {
                 this.checkStringOfTypeDecl(ns, tt);
             }
-            else if(tt instanceof ExStringOfTypeDecl) {
-                this.checkExStringOfTypeDecl(ns, tt);
+            else if(tt instanceof CStringOfTypeDecl) {
+                this.checkCStringOfTypeDecl(ns, tt);
             }
             else if(tt instanceof PathOfTypeDecl) {
                 this.checkPathOfTypeDecl(ns, tt);
@@ -4201,7 +4201,7 @@ class TypeChecker {
         const tdecl = ccore.typedecls.find((td) => td.name === name);
         assert(tdecl !== undefined, "Failed to find well known type");
 
-        wellknownTypes.set(name, new NominalParsedTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, tterms: []}], {aliasopt: undefined, declopt: tdecl, alltermargs: []}));
+        wellknownTypes.set(name, new NominalParsedTypeSignature(tdecl.sinfo, ["Core"], [{tname: name, tterms: []}], {aliasopt: undefined, declopt: tdecl}));
     }
 
     static checkAssembly(assembly: Assembly): TypeError[] {
@@ -4233,10 +4233,10 @@ class TypeChecker {
         TypeChecker.loadWellKnownType(assembly, "Complex", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "TemplateString", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "TemplateExString", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "TemplateCString", wellknownTypes);
 
         TypeChecker.loadWellKnownType(assembly, "RegexValidator", wellknownTypes);
-        TypeChecker.loadWellKnownType(assembly, "ExRegexValidator", wellknownTypes);
+        TypeChecker.loadWellKnownType(assembly, "CRegexValidator", wellknownTypes);
         TypeChecker.loadWellKnownType(assembly, "PathValidator", wellknownTypes);
 
         const checker = new TypeChecker(new TemplateConstraintScope(), new TypeCheckerRelations(assembly, wellknownTypes));
